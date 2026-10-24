@@ -40,6 +40,8 @@ const messages = {
   consumed:
     "Permintaan ini tidak dapat dikirim ulang. Tidak ada permintaan baru yang dikirim.",
   unavailable: "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+  orderLimit:
+    "Pertanyaan untuk pesanan ini belum dapat dibuat lagi. Email support@nuave.ai, kami bantu menyelesaikannya.",
   interrupted:
     "Permintaan pembuatan pertanyaan terputus. Pertanyaan mungkin sudah dibuat dan mungkin sudah dikenai biaya, tetapi tidak diterima.",
   syntheticInterrupted:
@@ -73,6 +75,7 @@ const reasons = {
   transport: "interrupted",
   internal_error: "unavailable",
   spend_cap: "unavailable",
+  order_question_limit: "orderLimit",
 } as const;
 /** Locally defined preflight codes plus the existing shared-gate codes. */
 const codes = {

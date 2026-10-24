@@ -3,9 +3,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ getCloudflareContext: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  getCloudflareContext: vi.fn(),
+  dataForSeoAvailability: vi.fn(),
+}));
 vi.mock("@opennextjs/cloudflare", () => ({
   getCloudflareContext: mocks.getCloudflareContext,
+}));
+// Spec 018 R-22: payment start reads DataForSEO's balance; these tests use a
+// fake Midtrans for `fetch`, so the balance answer is set here.
+vi.mock("../checks/balance", () => ({
+  dataForSeoAvailability: mocks.dataForSeoAvailability,
 }));
 
 import { POST as startPOST } from "../../app/api/payments/start/route";
@@ -51,6 +59,7 @@ beforeEach(() => {
     ORDER_STATUS_CALLER_RATE_LIMITER: allow,
   };
   bind();
+  mocks.dataForSeoAvailability.mockResolvedValue({ ok: true, balanceUsd: 10 });
   fake = createFakeMidtrans();
   vi.stubGlobal("fetch", fake.fetch);
   logs = [];
@@ -171,7 +180,7 @@ describe("start payment (R-05, AC-01, AC-07, AC-10, AC-11)", () => {
     const sent = JSON.parse(snap!.body!);
     expect(sent.transaction_details).toEqual({
       order_id: `${number(id)}-1`,
-      gross_amount: 99000,
+      gross_amount: 249000,
     });
     expect(sent.customer_details).toEqual({ email: "owner@example.com" });
     expect(sent.callbacks.finish).toBe("https://v2.nuave.test/audit");
@@ -287,6 +296,33 @@ describe("start payment (R-05, AC-01, AC-07, AC-10, AC-11)", () => {
     });
     expect((await start(preview)).status).toBe(404);
     expect(fake.requests).toEqual([]);
+  });
+
+  it("Spec 018 R-22/AC-13: refuses a payment while DataForSEO is unavailable, with one notice per day and no attempt", async () => {
+    const id = await unpaidOrder();
+    mocks.dataForSeoAvailability.mockResolvedValue({
+      ok: false,
+      reason: "balance",
+      statusCode: 20000,
+      balanceUsd: 0.59,
+    });
+    const first = await start(id);
+    expect(first.status).toBe(503);
+    expect((await first.json()).error).toBe(UNAVAILABLE);
+    expect((await start(id)).status).toBe(503);
+    expect(attempts()).toHaveLength(0);
+    expect(fake.requests).toHaveLength(0);
+    const unavailable = notices().filter(
+      (notice) => notice.kind === "dataforseo_unavailable",
+    );
+    expect(unavailable).toHaveLength(1);
+    expect(JSON.parse(String(unavailable[0]!.detail_json))).toMatchObject({
+      reason: "balance",
+      balance_usd: 0.59,
+    });
+    // As soon as the check passes, new payments are accepted again.
+    mocks.dataForSeoAvailability.mockResolvedValue({ ok: true, balanceUsd: 3 });
+    expect((await start(id)).status).toBe(200);
   });
 
   it("obeys the emergency switch, its rate limit, the email list and the settings, before any write (AC-07, AC-20, AC-23)", async () => {
@@ -520,7 +556,7 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
     );
     expect(attempts()[0]).toMatchObject({
       status: "paid",
-      amount: "99000.00",
+      amount: "249000.00",
       currency: "IDR",
     });
     expect(
@@ -622,7 +658,7 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
   it("a settled transaction with a wrong amount or currency becomes needs refund with a notice (AC-03)", async () => {
     for (const [amount, currency] of [
       ["98000.00", "IDR"],
-      ["99000.00", "USD"],
+      ["249000.00", "USD"],
     ] as const) {
       const id = await unpaidOrder();
       await start(id);
@@ -672,7 +708,7 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
     ],
     ["USD", "USD", "settlement", undefined, "needs_refund"],
   ] as const)(
-    "Q15: a settled 99000.00 answer with currency %s",
+    "Q15: a settled 249000.00 answer with currency %s",
     async (_name, currency, status, fraud, outcome) => {
       const id = await unpaidOrder();
       await start(id);

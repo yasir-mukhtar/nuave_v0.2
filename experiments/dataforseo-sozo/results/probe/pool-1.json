@@ -1,0 +1,547 @@
+{
+  "clinic": "MS Glow Aesthetic Clinic",
+  "place": {
+    "display": "Bandung",
+    "code": 1007700
+  },
+  "phrases": [
+    "laser kecantikan",
+    "meso kecantikan",
+    "skin rejuvenation",
+    "v shape"
+  ],
+  "businessNamesSeen": [
+    "vorta vorta di",
+    "skinnaire spesialis kulit kelamin",
+    "lavalen",
+    "instagram beautymeclinic",
+    "tivaza co id",
+    "instagram revitalclinic",
+    "adeeva",
+    "instagram clinicdevotrepeau",
+    "instagram charlene",
+    "what s new indonesia",
+    "theclinicindonesia com",
+    "instagram naleiaclinic",
+    "siloam hospitals",
+    "instagram ellaskincareofficial",
+    "reglow",
+    "beautyplusclinic com",
+    "hdmall indonesia",
+    "instagram beningsclinic",
+    "dny skincare",
+    "truckandagri co za"
+  ],
+  "topics": [
+    {
+      "topic": "laser kecantikan",
+      "volume": 70,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "laser"
+      ]
+    },
+    {
+      "topic": "biaya laser wajah di klinik kecantikan",
+      "volume": 260,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "biaya",
+        "laser",
+        "wajah",
+        "di"
+      ]
+    },
+    {
+      "topic": "laser untuk kecantikan",
+      "volume": 70,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "laser",
+        "untuk"
+      ]
+    },
+    {
+      "topic": "harga laser tahi lalat di klinik kecantikan",
+      "volume": 40,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "laser",
+        "tahi",
+        "lalat",
+        "di"
+      ]
+    },
+    {
+      "topic": "harga laser milia di klinik kecantikan",
+      "volume": 20,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "laser",
+        "milia",
+        "di"
+      ]
+    },
+    {
+      "topic": "alat laser kecantikan",
+      "volume": 20,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "alat",
+        "laser"
+      ]
+    },
+    {
+      "topic": "harga laser wajah di klinik kecantikan",
+      "volume": 20,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "laser",
+        "wajah",
+        "di"
+      ]
+    },
+    {
+      "topic": "kursus laser kecantikan",
+      "volume": 10,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "kursus",
+        "laser"
+      ]
+    },
+    {
+      "topic": "manfaat laser wajah untuk kecantikan",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "manfaat",
+        "laser",
+        "wajah",
+        "untuk"
+      ]
+    },
+    {
+      "topic": "berapa harga laser wajah di klinik kecantikan",
+      "volume": 10,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "berapa",
+        "harga",
+        "laser",
+        "wajah",
+        "di"
+      ]
+    },
+    {
+      "topic": "harga alat laser kecantikan",
+      "volume": 10,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "alat",
+        "laser"
+      ]
+    },
+    {
+      "topic": "laser kecantikan wajah",
+      "volume": 10,
+      "intent": "transactional",
+      "month": "2026-08",
+      "core": [
+        "laser",
+        "wajah"
+      ]
+    },
+    {
+      "topic": "arti meso dalam kecantikan",
+      "volume": 20,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "arti",
+        "meso",
+        "dalam"
+      ]
+    },
+    {
+      "topic": "skin rejuvenation",
+      "volume": 320,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "skin",
+        "rejuvenation"
+      ]
+    },
+    {
+      "topic": "skin treatment rejuvenation",
+      "volume": 320,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "skin",
+        "treatment",
+        "rejuvenation"
+      ]
+    },
+    {
+      "topic": "skin rejuvenation treatment",
+      "volume": 320,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "skin",
+        "rejuvenation",
+        "treatment"
+      ]
+    },
+    {
+      "topic": "laser treatment skin rejuvenation",
+      "volume": 110,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "laser",
+        "treatment",
+        "skin",
+        "rejuvenation"
+      ]
+    },
+    {
+      "topic": "ipl skin rejuvenation treatment",
+      "volume": 40,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "ipl",
+        "skin",
+        "rejuvenation",
+        "treatment"
+      ]
+    },
+    {
+      "topic": "skin rejuvenation laser treatment",
+      "volume": 30,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "skin",
+        "rejuvenation",
+        "laser",
+        "treatment"
+      ]
+    },
+    {
+      "topic": "laser skin rejuvenation treatment",
+      "volume": 30,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "laser",
+        "skin",
+        "rejuvenation",
+        "treatment"
+      ]
+    },
+    {
+      "topic": "harga skin rejuvenation",
+      "volume": 20,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "skin",
+        "rejuvenation"
+      ]
+    },
+    {
+      "topic": "v shape",
+      "volume": 1600,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "v",
+        "shape"
+      ]
+    }
+  ],
+  "counted": [
+    {
+      "origin": "Orang lain juga bertanya",
+      "text": "Berapa harga sekali laser wajah?",
+      "topic": "laser kecantikan wajah",
+      "volume": 10,
+      "provider": true,
+      "keepsLabel": false
+    },
+    {
+      "origin": "Orang lain juga bertanya",
+      "text": "Berapa biaya laser untuk menghilangkan bekas luka di kaki?",
+      "topic": "laser untuk kecantikan",
+      "volume": 70,
+      "provider": true,
+      "keepsLabel": false
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "v shape klinik",
+      "topic": "v shape",
+      "volume": 1600,
+      "provider": true,
+      "keepsLabel": false
+    }
+  ],
+  "dropped": [
+    {
+      "text": "laser kecantikan",
+      "why": "duplicate"
+    },
+    {
+      "text": "klinik kecantikan laser wajah terdekat",
+      "why": "navigational"
+    },
+    {
+      "text": "jual alat laser kecantikan",
+      "why": "not relevant"
+    },
+    {
+      "text": "klinik kecantikan laser terdekat",
+      "why": "navigational"
+    },
+    {
+      "text": "klinik kecantikan laser",
+      "why": "navigational"
+    },
+    {
+      "text": "klinik kecantikan laser wajah",
+      "why": "navigational"
+    },
+    {
+      "text": "perawatan kecantikan dengan laser",
+      "why": "volume < 10"
+    },
+    {
+      "text": "meso kecantikan",
+      "why": "volume < 10"
+    },
+    {
+      "text": "skin rejuvenation treatments",
+      "why": "not relevant"
+    },
+    {
+      "text": "skin rejuvenation",
+      "why": "duplicate"
+    },
+    {
+      "text": "rejuvenation skin",
+      "why": "not relevant"
+    },
+    {
+      "text": "skin rejuvenation adalah",
+      "why": "not relevant"
+    },
+    {
+      "text": "ipl skin rejuvenation",
+      "why": "not relevant"
+    },
+    {
+      "text": "skin rejuvenation ipl",
+      "why": "not relevant"
+    },
+    {
+      "text": "ipl skin rejuvenation adalah",
+      "why": "not relevant"
+    },
+    {
+      "text": "skin rejuvenation laser",
+      "why": "not relevant"
+    },
+    {
+      "text": "laser skin rejuvenation",
+      "why": "not relevant"
+    },
+    {
+      "text": "skin rejuvenation laser treatments",
+      "why": "not relevant"
+    },
+    {
+      "text": "ipl skin rejuvenation larissa",
+      "why": "not relevant"
+    },
+    {
+      "text": "manfaat ipl skin rejuvenation",
+      "why": "not relevant"
+    },
+    {
+      "text": "apa itu skin rejuvenation",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape",
+      "why": "duplicate"
+    },
+    {
+      "text": "v shape body",
+      "why": "not relevant"
+    },
+    {
+      "text": "v body shape",
+      "why": "not relevant"
+    },
+    {
+      "text": "v-shape body",
+      "why": "not relevant"
+    },
+    {
+      "text": "v face shape",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape facial",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape face",
+      "why": "not relevant"
+    },
+    {
+      "text": "v-shape facial",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape adalah",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape audio",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape jawline",
+      "why": "not relevant"
+    },
+    {
+      "text": "wajah v shape",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape jaw",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape hair cutting",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape hair cut",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape pattern",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape eq",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape back",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape iem",
+      "why": "navigational"
+    },
+    {
+      "text": "hifu v shape",
+      "why": "not relevant"
+    },
+    {
+      "text": "Klinik kecantikan untuk apa?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa harga dokter kulit di Bandung?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Gaji di klinik kecantikan berapa?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa biaya facial wajah di klinik?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa lama hasil facial terlihat?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa itu laser CO2?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa efek samping laser bekas luka?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa lama laser wajah?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa efek samping laser muka?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa kali laser agar hasil maksimal?",
+      "why": "not relevant"
+    },
+    {
+      "text": "ulasan rejuve bandung",
+      "why": "not relevant"
+    },
+    {
+      "text": "rejuve bandung",
+      "why": "not relevant"
+    },
+    {
+      "text": "rejuran bandung",
+      "why": "not relevant"
+    },
+    {
+      "text": "gambar rejuve bandung",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape bra",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape brightening face",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shape belt",
+      "why": "not relevant"
+    },
+    {
+      "text": "v shaper",
+      "why": "not relevant"
+    }
+  ]
+}

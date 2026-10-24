@@ -479,6 +479,9 @@ test("rich reading reaches one review and question review without more typing", 
   expect(calls).toEqual([
     "GET /api/audit/identity",
     "POST /api/audit/extract",
+    // Spec 018 R-04: search discovery runs in its own request before the
+    // questions are written.
+    "POST /api/audit/discovery",
     "POST /api/audit/glm-questions",
   ]);
   await backToReview(page);
@@ -545,6 +548,9 @@ test("the labelled rich preparation carries locations and category suggestions i
   expect(calls).toEqual([
     "GET /api/audit/identity",
     "POST /api/audit/extract",
+    // Spec 018 R-04: search discovery runs in its own request before the
+    // questions are written.
+    "POST /api/audit/discovery",
     "POST /api/audit/glm-questions",
   ]);
 });
@@ -680,7 +686,11 @@ test("a required answer left open routes the summary CTA to its owning screen", 
   await pressLanjut(page);
   await expectSummary(page);
   await expect(
-    page.getByText("Perlu dipastikan: Jangkauan pasar.", { exact: true }),
+    // Spec 018 AC-01: with no confirmed area, "Kota untuk pencarian" is open
+    // too, so the summary lists it as well.
+    page.getByText("Perlu dipastikan: Jangkauan pasar, Kota untuk pencarian.", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(reviewFact(page, "Area")).toHaveText("Perlu dipastikan");
   await expect(

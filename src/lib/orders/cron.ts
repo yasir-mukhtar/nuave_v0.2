@@ -21,6 +21,12 @@ import {
   siteOrigin,
 } from "./config";
 import { fakeMailSender, resendMailSender, type MailSender } from "./mail";
+import {
+  dataForSeoCredentialsPresent,
+  liveDataForSeoTransport,
+} from "../discovery/dataforseo";
+import { sendCheck, type CheckSend } from "../checks/send";
+import { syntheticCheckSend } from "../checks/synthetic";
 import { runOrders, type RunSummary } from "./runner";
 import type { OrderMode } from "./store";
 
@@ -116,6 +122,24 @@ export async function runScheduledOrders(
       mode === "live"
         ? liveGenerateReportContent
         : generateSyntheticLocalReport,
+    // Spec 018: ChatGPT and Google checks through DataForSEO (live), or the
+    // labelled synthetic answers. Without credentials a live check is refused
+    // unsent, as DataForSEO would refuse it (R-14, R-21).
+    checks: {
+      send: (input) => {
+        const now = new Date();
+        if (mode !== "live")
+          return Promise.resolve(syntheticCheckSend({ ...input, now }));
+        if (!dataForSeoCredentialsPresent())
+          return Promise.resolve(credentialsMissing(now));
+        return sendCheck({
+          source: input.source,
+          body: input.body,
+          transport: liveDataForSeoTransport,
+          now: () => new Date(),
+        });
+      },
+    },
     sender,
     auditEnabled: auditSkipped === undefined,
     // The notices and the payment email need only the database and Resend; the
@@ -130,4 +154,18 @@ export async function runScheduledOrders(
   return auditSkipped
     ? { ran: true, outcomes, auditSkipped }
     : { ran: true, outcomes };
+}
+
+/** A live check without DataForSEO credentials: refused, nothing sent. */
+function credentialsMissing(at: Date): CheckSend {
+  return {
+    outcome: "unavailable",
+    statusCode: 40100,
+    result: null,
+    costUsd: 0,
+    taskId: "",
+    startedAt: at,
+    completedAt: at,
+    transportError: null,
+  };
 }

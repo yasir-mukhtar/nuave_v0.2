@@ -11,8 +11,10 @@ import {
 import { makeSmartCustomerEvidenceExport } from "../audit/customer-evidence-export";
 import { projectQuestionFactsV2 } from "../audit/question-facts-v3";
 import { buildDirectTenWriterBrief } from "../audit/questions-id-direct-ten";
+import { INDONESIA_SEARCH_PLACE } from "../discovery/places";
 import {
   confirmSmartSelection,
+  effectiveSearchPlace,
   initialSmartSelection,
   prepareUnderstanding,
   parseFrozenSmartIntake,
@@ -181,7 +183,13 @@ describe("smart intake exact confirmed meaning", () => {
         verified_decision_criteria: [],
       });
       const selection = initialSmartSelection(proposal);
+      // National reach pre-fills no city: the owner picks (Spec 018 AC-01).
+      selection.searchPlace = INDONESIA_SEARCH_PLACE;
       const { context } = confirmSmartSelection(proposal, selection, 1);
+      expect(context.searchPlace).toEqual({
+        value: INDONESIA_SEARCH_PLACE,
+        origin: "owner",
+      });
       expect(context.market).toEqual({
         value: { reach, areas: [] },
         origin: "website",
@@ -239,12 +247,16 @@ describe("smart intake exact confirmed meaning", () => {
     const selection = initialSmartSelection(proposal);
     expect(selection.focus).toBe("brand");
     expect(selection.marketReach).toBe("beberapa");
-    expect(requiredSmartGaps(selection)).toEqual(["Area layanan"]);
+    expect(requiredSmartGaps(selection)).toEqual([
+      "Area layanan",
+      "Kota untuk pencarian",
+    ]);
     expect(() => confirmSmartSelection(proposal, selection, 1)).toThrow(
-      "Lengkapi: Area layanan.",
+      "Lengkapi: Area layanan, Kota untuk pencarian.",
     );
     selection.marketAreas = ["Wilayah pilihan pemilik"];
     selection.origins.market = "owner";
+    selection.searchPlace = INDONESIA_SEARCH_PLACE;
     const { context } = confirmSmartSelection(proposal, selection, 1);
     expect(context.market).toEqual({
       value: { reach: "beberapa", areas: ["Wilayah pilihan pemilik"] },
@@ -538,6 +550,9 @@ describe("smart intake exact confirmed meaning", () => {
     selection.focus = "cabang";
     selection.locationName = "Cabang Timur";
     selection.locationAddress = "Jl. Contoh 12";
+    // No city in the address: nothing is pre-filled and the owner picks.
+    expect(requiredSmartGaps(selection)).toEqual(["Kota untuk pencarian"]);
+    selection.searchPlace = INDONESIA_SEARCH_PLACE;
     const location = confirmSmartSelection(proposal, selection, 3).context;
     expect(location.market).toBeNull();
     expect(location.category.value).toBe("kedai kopi");
@@ -581,7 +596,38 @@ describe("smart intake exact confirmed meaning", () => {
       "Produk atau layanan utama",
       "Cara layanan",
       "Jangkauan pasar",
+      "Kota untuk pencarian",
     ]);
+  });
+
+  it("pre-fills Kota untuk pencarian from one clear area and saves it (Spec 018 AC-01, AC-04c)", () => {
+    const proposal = prepared({
+      market_reach: "sekitar",
+      market_areas: ["Jakarta Selatan"],
+    });
+    const selection = initialSmartSelection(proposal);
+    expect(effectiveSearchPlace(selection)).toEqual({
+      kind: "place",
+      code: 9072592,
+      display: "Jakarta Selatan",
+    });
+    const { context } = confirmSmartSelection(proposal, selection, 1);
+    expect(context.searchPlace).toEqual({
+      value: { kind: "place", code: 9072592, display: "Jakarta Selatan" },
+      origin: "nuave",
+    });
+    expect(
+      directTenContextSchema.safeParse({
+        ...context,
+        searchPlace: {
+          value: { kind: "place", code: 9072592, display: "Jakarta Pusat" },
+          origin: "owner",
+        },
+      }).success,
+    ).toBe(false);
+    selection.marketAreas = ["Depok"];
+    expect(effectiveSearchPlace(selection)).toBeNull();
+    expect(requiredSmartGaps(selection)).toEqual(["Kota untuk pencarian"]);
   });
 
   it.each(["", "   "])("routes an empty business name %j to brand", (name) => {

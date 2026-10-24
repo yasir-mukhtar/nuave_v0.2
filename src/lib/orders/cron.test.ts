@@ -425,7 +425,7 @@ describe("the cron with the emergency switch off or AI settings missing (R-23, A
     vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "founder@example.test");
     d1.query(
       `INSERT INTO founder_notices (id, kind, subject, detail_json, status, created_at)
-       VALUES ('n1', 'needs_refund', 'tx-1', '{"order_number":"NV-AAAAAA","amount":"99000.00"}', 'pending', '2026-10-12T10:00:00.000Z') RETURNING 1`,
+       VALUES ('n1', 'needs_refund', 'tx-1', '{"order_number":"NV-AAAAAA","amount":"249000.00"}', 'pending', '2026-10-12T10:00:00.000Z') RETURNING 1`,
     );
     const result = await runScheduledOrders();
     expect(result).toMatchObject({ ran: true, outcomes: ["notice"] });

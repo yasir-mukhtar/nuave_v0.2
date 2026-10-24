@@ -22,8 +22,8 @@ export const SNAP_TIMEOUT_MS = 15_000;
 export const STATUS_TIMEOUT_MS = 10_000;
 
 /** R-05: the one price, in rupiah, and how Midtrans writes it back (R-09). */
-export const ORDER_GROSS_AMOUNT = 99000;
-export const ORDER_GROSS_AMOUNT_TEXT = "99000.00";
+export const ORDER_GROSS_AMOUNT = 249000;
+export const ORDER_GROSS_AMOUNT_TEXT = "249000.00";
 export const ORDER_CURRENCY = "IDR";
 /** R-05 / Q3: one 60-minute window for every method. */
 export const PAYMENT_WINDOW_MINUTES = 60;

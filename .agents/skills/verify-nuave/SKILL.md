@@ -1,6 +1,6 @@
 ---
 name: verify-nuave
-description: Drive the Nuave web app's public audit journey (landing → /audit website step → free business check → business found → three steps → checkout with the Rp99.000 price → simulated payment → paid reading → intake → review → ten questions → start sheet → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
+description: Drive the Nuave web app's public audit journey (landing → /audit website step → free business check → business found → three steps → checkout with the Rp249.000 price → simulated payment → paid reading → intake → review → ten questions → start sheet → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
 ---
 
 # verify-nuave

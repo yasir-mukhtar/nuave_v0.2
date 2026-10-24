@@ -157,7 +157,7 @@ The preview is not the personalized audit. It shows no result, competitor,
 finding, recommendation, or score and makes no personalized preparation or
 observation call.
 
-The unpaid preview quotes **Rp99.000 total**, with no additional tax or fee
+The unpaid preview quotes **Rp249.000 total**, with no additional tax or fee
 added by Nuave at checkout, for 30 days. After expiry, refresh the business
 preview, price, and policy versions before allowing payment. This does not
 expire or change an already-paid order.
@@ -172,7 +172,7 @@ payment unlocks Business Facts preparation. It does not start observations or
 consume the audit entitlement.
 
 Production checkout uses Midtrans with QRIS, bank transfer, GoPay, and DANA.
-The current total is Rp99.000 with no additional checkout tax or fee. In the
+The current total is Rp249.000 with no additional checkout tax or fee. In the
 already-approved journey-shell specification the checkout remains a historical
 numeric-free simulator labelled **Simulasi pembayaran — tidak ada tagihan**;
 it collects no payment details, emits no receipt, and cannot be mistaken for a
@@ -633,7 +633,7 @@ and receive the approved remedy when delivery fails.
 **Work**
 
 - Implement and verify Midtrans as the selected payment provider.
-- Replace the simulator through the Midtrans payment adapter at Rp99.000 total,
+- Replace the simulator through the Midtrans payment adapter at Rp249.000 total,
   with no additional Nuave checkout tax or fee.
 - Enforce the 30-day unpaid quote expiry and refresh behavior.
 - Enable and test QRIS, bank transfer, GoPay, and DANA.

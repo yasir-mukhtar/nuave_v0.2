@@ -206,8 +206,19 @@ async function throughDetails() {
   mulai();
   await heading("Ini profil yang akan Nuave pakai");
 }
+/** Spec 018 AC-01: when no place could be pre-filled, the owner picks one
+ * ("Seluruh Indonesia" here) in the "Kota untuk pencarian" sheet. */
+function ensureSearchPlace() {
+  if (!screen.queryByText(/Perlu dipastikan:.*Kota untuk pencarian/)) return;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Ubah Kota untuk pencarian" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Seluruh Indonesia" }));
+  fireEvent.click(screen.getByRole("button", { name: "Simpan" }));
+}
 /** J25: the owner ticks the confirmation, then asks for the questions. */
 function makeQuestions() {
+  ensureSearchPlace();
   fireEvent.click(
     screen.getByRole("checkbox", {
       name: "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.",
@@ -271,7 +282,9 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
       screen.getByRole("textbox", { name: "Email penerima laporan" }),
     ).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Rp\s?\d|IDR|USD|harga/i);
-    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Bayar Rp249.000" }),
+    ).toBeNull();
   });
 
   it("makes no order and no paid call for a missing or bad email", async () => {
