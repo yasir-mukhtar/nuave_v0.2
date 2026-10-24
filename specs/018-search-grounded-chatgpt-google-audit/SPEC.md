@@ -1053,17 +1053,26 @@ naming "ChatGPT dan Google AI Overview".
     reconciliation keeps its 29-unit share.
   - Spend (R-09, R-25): the ledger holds two per-order stage ceilings that
     count every attempt, retries included: discovery USD 0.12 (shared by
-    both runs) and question writing USD 0.25 (five Cheaper Inference calls
-    of USD 0.05). One discovery request makes at most 2 retries; its worst
-    case measured 27 subrequests. `spend-worst-case.test.ts` puts the order
+    both runs; **founder decision pending (N-17)**: R-09 and R-25 still say
+    USD 0.12 per run, and with the shared limit a second run after a place
+    change sends only about half its calls and no autocomplete) and question
+    writing USD 0.25 (five Cheaper Inference calls of USD 0.05; when it is
+    spent the customer is told to email support@nuave.ai and the founder
+    gets one `questions_limit` notice). One discovery request makes at most
+    2 retries; it measured 33 subrequests when every call answers, 39 when
+    every call asks to retry and 27 when every call times out, all under 50. `spend-worst-case.test.ts` puts the order
     at about USD 1.96 at worst: reading 0.82, report 0.42, checks 0.36,
     questions 0.25, discovery 0.12.
   - The report-writing model reads the ChatGPT answers (phone numbers
     removed) and code-built Google facts per question (AI Overview shown,
     not shown or failed; named or not in its text; cited domains) with both
     sources' counts. The conclusion and every finding must name their source
-    and may not contradict the counts; a draft that does gets one revision,
-    and one that still does fails the attempt. The Google counts, the Google
+    and may not state an absolute negation ("sama sekali", "tidak pernah",
+    "mana pun"…) that contradicts a non-zero count; partial or counted
+    sentences are fine. A draft that breaks this gets one revision; if the
+    revision still does, code replaces the sentence with the per-source
+    count sentence (a finding with no source is marked "Di ChatGPT:"). A
+    paid order is never failed for it. The Google counts, the Google
     finding, the per-source lists, "Topik yang belum menyebut Anda" and the
     "Tentang audit ini" sentence are built by code.
 - **Free testing first.** Development and automated tests use the DataForSEO

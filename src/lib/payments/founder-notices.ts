@@ -339,6 +339,17 @@ export function noticeEmail(
         ],
       };
       break;
+    case "questions_limit":
+      // Spec 018 N-18: the order's question-writing limit is spent.
+      built = {
+        subject: `Nuave: an order cannot get its questions${order ? ` (${order})` : ""}`,
+        lines: [
+          "An order reached its question-writing limit, so the customer cannot write the ten questions again. The screen tells them to email support@nuave.ai.",
+          order ? `Order number: ${order}.` : null,
+          "Reply within one business day. Help the customer by hand, or refund if it cannot be resolved.",
+        ],
+      };
+      break;
     case "dataforseo_unavailable":
       // Spec 018 R-21/R-22: credentials, access, balance or cost limit.
       built = {

@@ -20,6 +20,8 @@ import {
 import { getOrder } from "../orders/store";
 import { CONTEXT, makeOrder } from "../orders/orders.test-helper";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
+import { reserveOrderCall } from "../spending/spend-ledger";
+import { questionPublicMessage } from "../intake/question-public-errors";
 import { matchPlace } from "./places";
 import { isProviderChoice, type QuestionOrigin } from "./question-rules";
 import type { DiscoveryPool } from "./pool";
@@ -465,6 +467,45 @@ describe("discovery refused by DataForSEO (R-14, R-21, N-7)", () => {
     expect(
       d1.query<{ kind: string }>(
         "SELECT kind FROM founder_notices WHERE kind = 'dataforseo_unavailable'",
+      ),
+    ).toHaveLength(1);
+  });
+});
+
+describe("the question-writing limit (N-18)", () => {
+  it("a spent question-writing limit tells the customer to email support and notifies the founder once", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
+    vi.stubEnv("OPENAI_AUDIT_CARRYOVER_COST_USD", "0");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+    const id = await makeOrder(d1.db, { mode: "live", now: new Date() });
+    for (let call = 0; call < 5; call += 1)
+      await reserveOrderCall(d1.db, {
+        orderId: id,
+        provider: "cheaper-inference",
+        stage: "questions",
+        usd: 0.05,
+        now: () => new Date(),
+      });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const response = await glmPOST(
+        post("/api/audit/glm-questions", {
+          method: "direct-ten",
+          order_id: id,
+          intake: frozen(CONTEXT),
+        }),
+      );
+      const body = (await response.json()) as { reason?: string };
+      expect(body.reason).toBe("order_question_limit");
+      expect(questionPublicMessage(body, true)).toBe(
+        "Pertanyaan untuk pesanan ini belum dapat dibuat lagi. Email support@nuave.ai, kami bantu menyelesaikannya.",
+      );
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(
+      d1.query<{ kind: string }>(
+        "SELECT kind FROM founder_notices WHERE kind = 'questions_limit'",
       ),
     ).toHaveLength(1);
   });

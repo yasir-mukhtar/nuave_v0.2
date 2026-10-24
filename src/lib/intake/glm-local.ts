@@ -648,10 +648,15 @@ export async function prepareGlmQuestionsForIntake(input: {
       });
     } catch (error) {
       if (!(error instanceof SpendCapError)) throw error;
+      // N-18: the order's own question-writing limit cannot recover with
+      // time, so it is told apart from the daily cap.
+      const orderLimit = error.reason === "order_limit";
       return {
         status: "failed",
-        reason: "spend_cap",
-        detail: "daily spend cap reached or unavailable; nothing was sent",
+        reason: orderLimit ? "order_question_limit" : "spend_cap",
+        detail: orderLimit
+          ? "the order's question-writing limit is reached; nothing was sent"
+          : "daily spend cap reached or unavailable; nothing was sent",
         provenance: provenanceFor(transport.kind),
         providerContact: "none",
       };
