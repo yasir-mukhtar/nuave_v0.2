@@ -401,10 +401,12 @@ async function smartIntakeSummary(ctx: DriveContext) {
     "POST /api/orders": 1,
     "POST /api/payments/start": 1,
     "POST /api/audit/extract": 1,
+    // Spec 018: the search-data request that the questions are chosen from.
+    "POST /api/audit/discovery": 1,
     "POST /api/audit/glm-questions": 1,
   });
   ctx.check(
-    "Exactly one identity, one order, one simulated payment, one extract and one question request",
+    "Exactly one identity, one order, one simulated payment, one extract, one discovery and one question request",
   );
 }
 
@@ -627,10 +629,12 @@ async function richPreparation(ctx: DriveContext) {
     "POST /api/orders": 1,
     "POST /api/payments/start": 1,
     "POST /api/audit/extract": 1,
+    // Spec 018: the search-data request that the questions are chosen from.
+    "POST /api/audit/discovery": 1,
     "POST /api/audit/glm-questions": 1,
   });
   ctx.check(
-    "Exactly one identity, one order, one simulated payment, one extract and one question request (the free saved-order status checks are not counted)",
+    "Exactly one identity, one order, one simulated payment, one extract, one discovery and one question request (the free saved-order status checks are not counted)",
   );
 }
 
@@ -773,7 +777,9 @@ async function openLinkInFreshBrowser(
 
 async function questionReview(ctx: DriveContext) {
   const { page } = ctx;
-  const wording = "Kedai kopi apa yang cocok untuk pekerja di Indonesia?";
+  // Spec 018 R-11a: an edit keeps the rules (at least 7 questions about
+  // choosing a place), so the edited question stays one.
+  const wording = "Rekomendasi kedai kopi yang cocok untuk pekerja kantoran?";
   await ctx.step("question-review", async () => {
     await toQuestions(page);
   });
@@ -813,8 +819,29 @@ async function auditRun(ctx: DriveContext) {
   const link = await deliverAudit(ctx);
   const fresh = await openLinkInFreshBrowser(ctx, link);
   const report = reportLocator(fresh);
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
-  ctx.check("The saved report shows ten answers");
+  // Spec 018 (AC-16): ChatGPT and Google AI Overview per question. The
+  // synthetic run fails question 7's ChatGPT check every time, shows an empty
+  // AI Overview twice for question 3 and none for question 5.
+  await expect(
+    report.locator('[data-source-answer="chatgpt"] [data-answer-body]'),
+  ).toHaveCount(9);
+  await expect(report.locator("[data-source-card]")).toHaveCount(2);
+  await expect(report.locator("[data-failed-slot]")).toHaveCount(1);
+  await expect(
+    report.locator('[data-report-answer="7"] [data-failed-slot]'),
+  ).toContainText("Tidak dapat diuji");
+  await expect(
+    report
+      .locator('[data-report-answer="7"]')
+      .getByRole("link", { name: "Minta bantuan" }),
+  ).toHaveAttribute("href", /^mailto:support@nuave\.ai\?subject=/);
+  await expect(report.locator("[data-not-shown]")).toHaveCount(2);
+  await expect(report.locator("[data-failed-count]")).toContainText(
+    "1 pemeriksaan tidak dapat diuji",
+  );
+  ctx.check(
+    "The saved report shows both sources per question: nine ChatGPT answers, question 7's failed check as Tidak dapat diuji with Minta bantuan, and no AI Overview for questions 3 (empty twice) and 5",
+  );
   await expect(
     fresh.getByText("Audit uji — jawaban sintetis", { exact: true }),
   ).toBeVisible();
@@ -876,17 +903,17 @@ async function reportLink(ctx: DriveContext) {
     (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length,
   );
   await fresh.emulateMedia({ media: "screen" });
-  ctx.check("All ten answers are visible in print media; A4 PDF saved");
+  ctx.check("Every answer is visible in print media; A4 PDF saved");
   const { download, json } = await downloadEvidenceJson(fresh);
   await download.saveAs(join(ctx.dir, "download-evidence.json"));
   ctx.artifacts.json = "download-evidence.json";
   ctx.artifacts.jsonSuggestedName = download.suggestedFilename();
-  expect(json.export_version).toBe("nuave-evidence-v5");
+  expect(json.export_version).toBe("nuave-evidence-two-source-v1");
   expect(json.observations).toHaveLength(10);
   expect(json.report).toBeTruthy();
   expect(JSON.stringify(json)).not.toContain(ORDER_EMAIL);
   ctx.check(
-    "`Unduh bukti JSON` downloads nuave-evidence-v5 with ten observations and a report, and no email",
+    "`Unduh bukti JSON` downloads nuave-evidence-two-source-v1 with ten observations and a report, and no email",
   );
   // A wrong secret gets the plain not-available page and nothing else.
   const wrong = await ctx.freshBrowserPage();

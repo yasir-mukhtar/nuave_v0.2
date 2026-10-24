@@ -36,8 +36,11 @@ The report is opened later from the emailed link.
   browser shows the running audit.
 - `run-delivered`: once the server finishes, the tab says "Laporan Anda sudah
   siap" (J30) and shows no report.
-- `run-report-by-link`: the link from the email opens the report with ten
-  `[data-answer-body]` and the notice "Audit uji — jawaban sintetis".
+- `run-report-by-link`: the link from the email opens the report with the
+  ChatGPT and Google AI Overview cards, nine ChatGPT `[data-answer-body]`
+  (question 7's synthetic check fails every time and shows "Tidak dapat
+  diuji" with "Minta bantuan"), no AI Overview for questions 3 (empty twice)
+  and 5 (Spec 018 AC-16), and the notice "Audit uji — jawaban sintetis".
 
 ## How to get to it (user POV)
 
@@ -91,7 +94,9 @@ Run `$V drive audit-run`. Steps, in order:
 - **Report by link.** Reads the link from `.local-evidence/test-mail/` and
   opens it in a never-used browser context; the page is `noindex`, not cached
   and sends no referrer. Evidence: `11-report-by-link`.
-- **Ten answers and label.** Ten `[data-answer-body]`; the notice "Audit uji —
+- **Answers and label.** Both source cards; nine ChatGPT `[data-answer-body]`,
+  one `[data-failed-slot]` (question 7) and two `[data-not-shown]`; the
+  notice "Audit uji —
   jawaban sintetis" is visible. A reload keeps the report. Evidence:
   `12-report-after-reload`.
 - **Proof.** `network.json.apiCalls` has `POST /api/orders: 1`,
