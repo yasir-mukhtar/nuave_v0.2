@@ -1,9 +1,17 @@
 # Spec 018: Real-search questions, answered by ChatGPT and Google (Rp249.000)
 
-> Status: **In review**. Revision 5 answers the round-3 plan review (FAIL, 3
-> blocking) and the probe results. Not approved; do not build.
+> Status: **In review** — plan review round 4 PASS+NOTES (notes applied in
+> revision 6); waiting for founder approval and answers to Q-2/Q-3. Not
+> approved; do not build.
 > Owner: orchestrator
-> Updated: 2026-10-24. Revision 5 changes:
+> Updated: 2026-10-24. Revision 6 applies the round-4 notes: other-place
+> matching is longest-name-first and never hits the customer's own place, with
+> an explicit Jakarta rule (R-10a); the new checks apply to every pack,
+> including the fallback and customer edits (R-11a); the probe's provider-choice
+> and "dr."/"drg." checks match the spec, and the one-letter-word step is gone
+> (R-04a, AC-00); repeated place names show regency and province.
+>
+> Revision 5 changes:
 > - every provider-choice question names the search place, and no question
 >   names another place (R-10a), because ChatGPT treats a question with no
 >   city as Jakarta;
@@ -276,8 +284,9 @@ want to know:
        Jakarta" matches "Jakarta");
      - otherwise, including reach `seluruh` or `luar`, or when more than one
        entry matches (for example "Depok"): empty, and the customer must
-       choose. Names that repeat are shown with their province, for example
-       "Depok (Jawa Barat)".
+       choose. Names that repeat are shown with their regency or city and
+       province taken from the stored list's parent entries, for example
+       "Depok (Kota Depok, Jawa Barat)"; the "Cisarua" entries likewise.
    - Helper text (true for both sources): "Google kami tanya seolah-olah dari
      kota ini. ChatGPT hanya bisa diatur per negara, jadi ChatGPT ditanya dari
      Indonesia. Karena itu, pertanyaan tentang memilih tempat akan menyebut
@@ -384,10 +393,11 @@ Reports saved before this change keep rendering exactly as today (R-29).
   into one search phrase:
   1. lowercase it;
   2. remove text in brackets, digits, units (ml, cc, g, gr, kg, unit, sesi,
-     x), any one-letter word left over, and punctuation (a hyphen becomes a
-     space);
+     x) and punctuation (a hyphen becomes a space). One-letter words such as
+     the "v" in "V shape" stay;
   3. remove the business's **brand tokens** (R-02) and the filler words
-     "layanan", "paket", "promo", "dan", "untuk", "di". Brand tokens are the
+     "layanan", "paket", "promo", "dan", "untuk", "di", "treatment",
+     "perawatan". Brand tokens are the
      words of the business name, confirmed aliases and domain label **minus
      generic words**. Generic words are the category's words plus a small
      founder-editable list kept in code (starting with: klinik, clinic, skin,
@@ -404,6 +414,12 @@ Reports saved before this change keep rendering exactly as today (R-29).
      no word left after removing "klinik", or the subject word is already in
      the phrase, the phrase is used as is;
   6. if nothing remains, the service is skipped.
+
+  Known limitation: the phrase keeps the customer's own words. A service typed
+  as "Botox treatment" gives "botox treatment", so a common search like
+  "harga botox" may not be found for it (seen on Sozo's real intake). "treatment"
+  and "perawatan" are added to the filler words in step 3, which turns that
+  example into "botox"; other wordings are checked in the Q-5 probe re-run.
 
   The phrase's **core words** are its words minus "klinik" and minus the
   category's subject word, unless that would leave none (then all its words).
@@ -485,7 +501,8 @@ Reports saved before this change keep rendering exactly as today (R-29).
     once more per order, within the R-09 budget. After that the field and the
     services are locked for discovery, and the latest pool is reused.
 - **R-08: Fallback.** If discovery fails or the pool is thin, Cheaper
-  Inference writes ten questions from the business facts, as today.
+  Inference writes ten questions from the business facts, as today, but they
+  must pass R-10, R-10a and R-11 like any pack (R-11a).
   - A **real wording** counts toward the pool only if it is brand-free (R-02),
     relevant (R-05a), names no other business (R-05b), names no place other
     than the search place (R-10a), is at most 120 characters, and is not a
@@ -536,10 +553,23 @@ Reports saved before this change keep rendering exactly as today (R-29).
     reworded with the place added. It is then labelled "Disusun dari topik
     yang dicari", never "Dicari di Google" or "Orang lain juga bertanya".
   - **No question, and no counted pool text, names any other place** from
-    the R-03 list (display names, matched as consecutive whole words). Place
-    names that are also ordinary words are skipped by this check, from a
-    small founder-editable list in code starting with "batu", "medan" and
-    "palu" (the search place itself is always checked).
+    the R-03 list. Matching:
+    1. find place names as consecutive whole words, **longest name first**;
+       words already matched are not matched again (so "Tangerang Selatan"
+       is one match, never also "Tangerang");
+    2. a match equal to the search place is the customer's own place and
+       never counts as another place. Because of step 1, the words of the
+       customer's own place are used up by that match, so "Tangerang" inside
+       "Tangerang Selatan" or "Padang" inside "Padang Panjang" is never seen
+       on its own; a standalone "Tangerang" in a Tangerang Selatan question
+       is another place;
+    3. **Jakarta rule:** for a customer in one Jakarta part (for example
+       "Jakarta Barat"), "Jakarta" alone is allowed and the other four parts
+       count as other places; for a customer whose place is "Jakarta", all
+       five parts are allowed;
+    4. place names that are also ordinary words are skipped, from a small
+       founder-editable list in code starting with "batu", "medan", "palu"
+       and "padang" (the search place itself is always checked).
   - With "Seluruh Indonesia", no question names any place, and questions
     with "terdekat", "dekat sini", "di sekitar" or "near me" are not used.
 - **R-11: Validator.** These checks are added to `validateDirectTenQuestions`,
@@ -560,6 +590,23 @@ Reports saved before this change keep rendering exactly as today (R-29).
   - A question carries a number only if it contains its topic's core words.
 
   A failing pack is retried once; then R-08 applies.
+- **R-11a: Where the checks run.** The same validator runs everywhere it runs
+  today, so every new check applies at each point:
+  - **generated packs** (`prepareGlmQuestionsForIntake`, `glm-local.ts`);
+  - **the fallback pack (R-08):** it also follows R-10 and R-10a, including
+    the place rule and the 7/2 split, so the fallback instruction tells
+    Cheaper Inference to name the search place in provider-choice
+    questions. If it still fails after the existing retry, the order takes
+    the existing `validation_failed` path: the questions screen shows its
+    current error and its existing "try again" limit, and nothing new is
+    invented;
+  - **customer edits** (`SmartQuestionsScreen.tsx`): an edit must keep the
+    place rule and the 7/2 split. A failing edit shows, under that question:
+    "Sebutkan kota <kota> di pertanyaan ini." (place missing), "Pertanyaan
+    ini menyebut kota lain. Gunakan <kota>." (other place), or "Minimal 7
+    pertanyaan harus tentang memilih tempat." (split broken);
+  - **approval** (`api/orders/approve/route.ts`) and the **report pipeline**
+    (`report-pipeline.ts`): rejected as today when a check fails.
 
 ### Asking ChatGPT and Google
 
@@ -800,8 +847,10 @@ shown as missing, never estimated or filled in.
   call; Indonesian; 2–9 sources); cost USD 0.244.** Its lists showed the
   quality gaps now handled by R-03, R-05a, R-05b and R-10a. The founder
   approved about USD 0.20, with a hard stop at USD 0.30. The `probe` stage of
-  `experiments/dataforseo-sozo/run.mjs` implements R-04a, R-04, R-05, R-08 and
-  R-12 exactly as written, and runs on three real clinics. Their services are
+  `experiments/dataforseo-sozo/run.mjs` implements, as revision 6 writes them,
+  R-03 (place lookup and the Jakarta entries), R-04a, R-04, R-05, R-05a,
+  R-05b, R-08, R-10 (provider-choice detection), R-10a (place matching) and
+  R-12, and runs on three real clinics. Their services are
   taken as an intake would hold them, from public listings on 2026-10-24:
 
   | Clinic | Category | Kota | Brand and alias words | Services (as confirmed) |
@@ -861,7 +910,15 @@ shown as missing, never estimated or filled in.
   cannot pass validation. Given "Seluruh Indonesia", no question names a
   place and no "terdekat"-type question is used. Given "Bagaimana cara
   memilih klinik?", the pair rule does not match "mana"; given "Berapa lama
-  efek laser wajah terlihat?", it is an advice question.
+  efek laser wajah terlihat?", it is an advice question. Given the place
+  "Tangerang Selatan", "klinik gigi terbaik di tangerang selatan" passes and
+  "klinik gigi terbaik di tangerang" is rejected as another place. Given the
+  place "Jakarta Barat", "fisioterapi stroke jakarta" passes and "…jakarta
+  selatan" is rejected. Given the place "Padang Panjang", a question naming
+  "Padang Panjang" passes. Given "fisioterapi stroke jakarta barat" with no
+  provider-choice word, it is an advice question (naming a place alone does
+  not make a question provider-choice). Given a customer edit that drops the
+  place, the R-11a message shows and approval is blocked.
 - **AC-04b:** Given a pool with "wonder dental spesialis implan gigi
   surabaya" and a seen local-pack name "Wonder Dental", the text is not
   counted, and a question containing "wonder" is rejected by the validator.
@@ -870,8 +927,9 @@ shown as missing, never estimated or filled in.
   Given the same topic returned twice, it counts once.
 - **AC-04c:** Given the market area "Jakarta Selatan", the field is pre-filled
   "Jakarta Selatan" and Google uses that part's code; given "DKI Jakarta",
-  "Jakarta" (1007716); given "Depok", nothing is pre-filled; "Tangerang
-  Selatan" never pre-fills "Tangerang".
+  "Jakarta" (1007716); given "Depok", nothing is pre-filled and the choices
+  show regency and province; "Tangerang Selatan" never pre-fills
+  "Tangerang".
 - **AC-05:** Given a simulated discovery failure or a thin pool, the R-08 pack
   is used and labelled, and the report says so once.
 - **AC-06:** Given an approved pack, each question has one ChatGPT and one
@@ -972,8 +1030,8 @@ Answered on 2026-10-24:
   and a refund is given only if they cannot be fixed.
 - **No re-run button** in this spec.
 - **"Kota untuk pencarian":** added. Clarification (2026-10-24): it sets the
-  place for Google; ChatGPT can only be asked as "Indonesia", so the question
-  text carries the city where place matters.
+  place for Google; ChatGPT can only be asked as "Indonesia", so every
+  provider-choice question names the place (R-10a).
 - **The probe:** approved, and run (AC-00).
 
 Answered on 2026-10-23: one package, Rp249.000, the existing report design, and

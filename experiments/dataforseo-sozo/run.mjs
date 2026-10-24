@@ -201,7 +201,7 @@ async function answers() {
 }
 
 
-// Probe (Spec 018 AC-00, revision 5 rules): runs R-03, R-04a, R-04, R-05,
+// Probe (Spec 018 AC-00, revision 6 rules): runs R-03, R-04a, R-04, R-05,
 // R-05a, R-05b, R-08, R-10a and R-12 as the spec writes them, on three real
 // clinics. Saves only extracted summaries and the extracted pool (texts,
 // volumes, intents, business names seen): no raw responses, no phone numbers.
@@ -217,8 +217,8 @@ const PROFILES = [
 const GENERIC = ["klinik", "clinic", "skin", "beauty", "aesthetic", "aesthetics", "estetika", "dental", "dentist", "gigi", "kecantikan", "care", "center", "centre", "health", "medika", "medical", "fisioterapi", "physio", "physiotherapy"];
 const OUT_OF_DOMAIN = ["bra", "belt", "sabuk", "celana", "baju", "kaos", "sepatu", "obat", "salep", "apotek", "apotik", "icd", "sikat", "pasta", "jual", "beli", "shopee", "tokopedia", "lazada", "diy", "sendiri", "alami", "rumahan", "tanpa"];
 const CONTEXT = ["klinik", "dokter", "drg", "dr", "treatment", "perawatan", "terapi", "tindakan", "pasang", "pemasangan", "harga", "biaya", "tarif", "murah", "terbaik", "rekomendasi", "terdekat"];
-const ORDINARY_PLACE_WORDS = ["batu", "medan", "palu"];
-const FILLER = new Set(["layanan", "paket", "promo", "dan", "untuk", "di"]);
+const ORDINARY_PLACE_WORDS = ["batu", "medan", "palu", "padang"];
+const FILLER = new Set(["layanan", "paket", "promo", "dan", "untuk", "di", "treatment", "perawatan"]);
 const UNITS = new Set(["ml", "cc", "g", "gr", "kg", "unit", "sesi", "x"]);
 const PROVIDER_WORDS = ["rekomendasi", "terbaik", "terdekat", "bagus", "dimana", "tempat", "klinik", "harga", "biaya", "tarif", "murah"];
 const PROVIDER_PAIRS = [["di", "mana"], ["mana", "yang"], ["yang", "mana"], ["berapa", "harga"], ["berapa", "biaya"], ["berapa", "tarif"]];
@@ -243,7 +243,7 @@ const brandTokens = (p) => [...new Set(p.brandWords.flatMap(toks))].filter((w) =
 function searchPhrase(service, p) {
   const brand = new Set(brandTokens(p));
   const t = service.toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, " ").replace(/-/g, " ").replace(/[0-9]/g, " ").replace(/[^\p{L}\s]/gu, " ");
-  let w = t.split(/\s+/).filter(Boolean).filter((x) => x.length > 1 && !UNITS.has(x) && !brand.has(x) && !FILLER.has(x)).slice(0, 4);
+  let w = t.split(/\s+/).filter(Boolean).filter((x) => !UNITS.has(x) && !brand.has(x) && !FILLER.has(x)).slice(0, 4);
   if (!w.length) return null;
   const subj = subjectWord(p.category);
   if (w.length === 1 && subj && !w.includes(subj)) w = [...w, subj];
@@ -276,15 +276,25 @@ function matchPlace(entries, input) {
   const hits = entries.filter((e) => norm(e.display) === k);
   return hits.length === 1 ? hits[0] : null; // R-03: empty when 0 or more than 1 match
 }
-// R-10a: names another place (whole-word sequence), skipping ordinary words.
+// R-10a: names another place. Longest names first, no overlapping matches;
+// the customer's own place never counts; Jakarta rule: a Jakarta-part customer
+// may say "Jakarta" alone, a "Jakarta" customer may name any of the five parts.
 function otherPlace(text, entries, place) {
-  const own = place ? toks(place.display) : [];
-  for (const e of entries) {
-    const d = toks(e.display);
-    if (!d.length || (d.length === 1 && ORDINARY_PLACE_WORDS.includes(d[0]))) continue;
-    if (own.length && d.join(" ") === own.join(" ")) continue;
-    if (place?.display.startsWith("Jakarta") && d[0] === "jakarta") continue; // Jakarta parts and Jakarta itself
-    if (hasSeq(text, d)) return e.display;
+  const t = toks(text);
+  const used = new Array(t.length).fill(false);
+  const own = place ? norm(place.display) : null;
+  const sorted = entries.map((e) => ({ e, d: toks(e.display) })).filter((x) => x.d.length).sort((a, b) => b.d.length - a.d.length);
+  for (const { e, d } of sorted) {
+    for (let i = 0; i + d.length <= t.length; i++) {
+      if (!d.every((w, j) => t[i + j] === w && !used[i + j])) continue;
+      for (let j = 0; j < d.length; j++) used[i + j] = true;
+      const name = d.join(" ");
+      if (own && name === own) continue;
+      if (own?.startsWith("jakarta ") && name === "jakarta") continue;
+      if (own === "jakarta" && d[0] === "jakarta") continue;
+      if (d.length === 1 && ORDINARY_PLACE_WORDS.includes(d[0])) continue;
+      return e.display;
+    }
   }
   return null;
 }
@@ -301,10 +311,11 @@ function distinctiveNames(names, p, entries, phrases) {
   const skip = new Set([...genericFor(p), ...entries.flatMap((e) => toks(e.display)), ...phrases.flatMap(toks)]);
   return [...new Set(names.map((n) => toks(n).filter((w) => !skip.has(w)).join(" ")).filter(Boolean))];
 }
-const namesBusiness = (text, distinct) => distinct.find((d) => hasSeq(text, toks(d))) ?? (/\b(dr|drg)\.?\s+\p{L}/iu.test(text) ? "dr./drg." : null);
+// "dr." / "drg." with the dot, followed by a name word; bare "drg" stays a context word.
+const namesBusiness = (text, distinct) => distinct.find((d) => hasSeq(text, toks(d))) ?? (/\b(dr|drg)\.\s*\p{L}{2,}/iu.test(text) ? "dr./drg." : null);
 
 async function probe() {
-  const md = ["# Probe (Spec 018 AC-00, revision 5 rules): discovery on three clinics + real ChatGPT app", ""];
+  const md = ["# Probe (Spec 018 AC-00, revision 6 rules): discovery on three clinics + real ChatGPT app", ""];
   const langs = await call("/ai_optimization/chat_gpt/llm_scraper/languages");
   const hasId = (langs?.tasks?.[0]?.result ?? []).some((l) => l.language_code === "id");
   const entries = await placeList();
@@ -396,7 +407,7 @@ async function probe() {
       seen.add(key);
       if (why) { dropped.push({ text: w.text, why }); continue; }
       const t = topics.filter((x) => containsAll(w.text, x.core)).sort((a, b) => b.topic.length - a.topic.length)[0];
-      const provider = isProvider(w.text) || namesPlace(w.text, place);
+      const provider = isProvider(w.text); // R-10: naming the place alone does not make it provider-choice
       counted.push({ ...w, topic: t?.topic ?? null, volume: t?.volume ?? null, provider, keepsLabel: !provider || !place || namesPlace(w.text, place) });
     }
     const thin = topics.length < 6 && counted.length < 5;
