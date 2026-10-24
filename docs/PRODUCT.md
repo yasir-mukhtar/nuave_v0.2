@@ -34,6 +34,10 @@ The initial focus is one category and location where customers research and
 compare options before choosing, and where accurate representation could
 materially affect consideration.
 
+**Target market (2026-10-24, [decision](./DECISION_LOG.md#2026-10-24--target-market-beauty-clinics-in-jabodetabek-and-bandung)):**
+beauty clinics in Jabodetabek and Bandung first, bought by the clinic owner or
+the person who runs its marketing. Other clinic types are secondary.
+
 Their practical question is:
 
 > When someone asks AI about my kind of business in my area, do I come up, and
