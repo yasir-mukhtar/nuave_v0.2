@@ -71,15 +71,24 @@ describe("R-04a search phrases (AC-03)", () => {
       "https://sozoskinclinic.com/",
     );
     expect(brandTokens(sozo)).toEqual(["sozo", "sozoskinclinic"]);
-    // A business named after its city keeps its own words as brand words,
-    // never the city: questions must name the search place (R-10a).
+    // A business named after its search city keeps its own words as brand
+    // words, never that city: questions must name the search place (R-10a).
     const fiksi = brand(
       "Kedai Fiksi",
       "kedai kopi",
       ["Kedai Fiksi Bandung"],
       "https://kedai-fiksi.example/",
     );
-    expect(brandTokens(fiksi)).toEqual(["fiksi"]);
+    expect(brandTokens({ ...fiksi, place: "Bandung" })).toEqual(["fiksi"]);
+    // Any other place word in the name stays protected (N-3): "Batu Dental"
+    // searched from Surabaya keeps "batu"; from Batu it does not.
+    const batu = brand("Batu Dental", "klinik gigi", [], "https://bd.example/");
+    expect(brandTokens({ ...batu, place: "Surabaya" })).toEqual(["batu", "bd"]);
+    expect(brandTokens({ ...batu, place: "Batu" })).toEqual(["bd"]);
+    expect(brandTokens({ ...fiksi, place: "Jakarta" })).toEqual([
+      "fiksi",
+      "bandung",
+    ]);
     expect(searchPhrase("Skin Booster", sozo)).toBe("skin booster");
     // Step 5 adds the subject word to a one-word phrase.
     expect(searchPhrase("Botox treatment", sozo)).toBe("botox kecantikan");
@@ -119,6 +128,22 @@ describe("R-03 places (AC-04c)", () => {
       "Cisarua (Kabupaten Bandung Barat, Jawa Barat)",
       "Cisarua (Kabupaten Bogor, Jawa Barat)",
     ]);
+  });
+
+  it("pre-fills the Jakarta part a branch address names, not the trailing province (N-8)", () => {
+    expect(
+      prefillSearchPlace({
+        focus: "cabang",
+        locationAddress:
+          "Jl. Wolter Monginsidi No. 5, Kebayoran Baru, Jakarta Selatan, DKI Jakarta 12110",
+      }),
+    ).toMatchObject({ code: 9072592, display: "Jakarta Selatan" });
+    expect(
+      prefillSearchPlace({
+        focus: "cabang",
+        locationAddress: "Jl. Sudirman 1, DKI Jakarta 10220",
+      }),
+    ).toMatchObject({ code: 1007716, display: "Jakarta" });
   });
 
   it("pre-fills only from one clear match", () => {
@@ -576,6 +601,14 @@ describe("R-11 pack validation (AC-04, AC-04a, AC-04b, AC-19)", () => {
       comparators: { value: { mode: "unknown" }, origin: "nuave" },
     } as DirectTenAuditContext;
     const bandung = place("Bandung");
+    context.searchPlace = {
+      value: {
+        kind: "place",
+        code: (bandung as { code: number }).code,
+        display: "Bandung",
+      },
+      origin: "nuave",
+    };
     const texts = syntheticFallbackTexts(context, bandung);
     expect(texts[0]).toBe("Rekomendasi kedai kopi terbaik di Bandung?");
     expect(

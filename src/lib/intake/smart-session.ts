@@ -122,6 +122,9 @@ export type SmartSession = {
      * then on the reading never starts by itself: a failed or interrupted
      * reading waits for the customer's own Lanjut (Spec 013 R-04). */
     readingStarted?: true;
+    /** Spec 018 R-07: set once the server said discovery ran twice for this
+     * order; "Kota untuk pencarian" can no longer change. */
+    searchPlaceLocked?: true;
   } | null;
   /** An order the customer left by changing the website or the brand. It may
    * still be open; the next order tells the server to expire it, so it stops
@@ -372,6 +375,8 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         (value.order.paid !== undefined && value.order.paid !== true) ||
         (value.order.readingStarted !== undefined &&
           value.order.readingStarted !== true) ||
+        (value.order.searchPlaceLocked !== undefined &&
+          value.order.searchPlaceLocked !== true) ||
         (value.order.number !== undefined &&
           (typeof value.order.number !== "string" ||
             !/^NV-[A-Z0-9]{6}$/.test(value.order.number))))

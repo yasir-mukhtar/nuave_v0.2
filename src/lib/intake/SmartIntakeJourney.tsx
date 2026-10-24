@@ -1667,7 +1667,7 @@ export default function SmartIntakeJourney({
     setBusy("questions");
     setError(null);
     const started_at = new Date().toISOString();
-    const committed: SmartSession = {
+    let committed: SmartSession = {
       ...session,
       stage: "questions",
       confirmedSelection: session.selection,
@@ -1702,11 +1702,27 @@ export default function SmartIntakeJourney({
           body: JSON.stringify({ order_id: session.order.id, intake: frozen }),
         }).catch(() => null);
         const discoveryBody = discovery
-          ? ((await discovery.json().catch(() => ({}))) as { code?: string })
+          ? ((await discovery.json().catch(() => ({}))) as {
+              code?: string;
+              locked?: boolean;
+            })
           : {};
         if (discoveryBody.code === "ORDER_REQUIRED") {
           expireOrder(session, "summary");
           return;
+        }
+        // R-07: once discovery ran twice, the place stays as it is.
+        if (
+          discoveryBody.locked === true &&
+          !committed.order?.searchPlaceLocked
+        ) {
+          committed = {
+            ...committed,
+            order: committed.order
+              ? { ...committed.order, searchPlaceLocked: true }
+              : committed.order,
+          };
+          goStage(committed);
         }
       }
       const response = await fetch("/api/audit/glm-questions", {
@@ -2456,6 +2472,7 @@ export default function SmartIntakeJourney({
       <SmartReview
         headingRef={headingRef}
         prepared={prepared}
+        searchPlaceLocked={Boolean(session.order?.searchPlaceLocked)}
         selection={selection}
         onChange={updateSelection}
         confirmed={reviewConfirmed}

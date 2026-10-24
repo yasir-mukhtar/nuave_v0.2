@@ -126,11 +126,20 @@ export function prefillSearchPlace(input: {
       .map((part) => part.replace(/\d{5}/g, "").trim())
       .filter(Boolean)
       .reverse();
-    for (const part of parts) {
+    const matches = parts.flatMap((part) => {
       const place = matchPlace(part);
-      if (place) return toSearchPlace(place);
+      return place ? [place] : [];
+    });
+    const first = matches[0] ?? null;
+    // N-8: "…, Jakarta Selatan, DKI Jakarta" names the city part; the
+    // trailing province must not win over it.
+    if (first && first.display === "Jakarta") {
+      const part = matches.find((place) =>
+        place.display.startsWith("Jakarta "),
+      );
+      if (part) return toSearchPlace(part);
     }
-    return null;
+    return toSearchPlace(first);
   }
   if (input.marketReach !== "sekitar" && input.marketReach !== "beberapa")
     return null;

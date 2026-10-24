@@ -743,8 +743,10 @@ async function deliverAudit(ctx: DriveContext) {
   await ctx.step("server-finishes-audit", async () => {
     // Stands in for the production cron, one audit step per order per run.
     await runServerAuditToDelivery(ctx.page);
-    await ctx.page.reload();
-    await expectAuditDelivered(ctx.page);
+    // N-11: no reload. The page's own status poll (every 5 s) shows the
+    // delivered state and then clears the saved order (Spec 016 R-31); a
+    // reload racing that poll could land on the entry screen.
+    await expectAuditDelivered(ctx.page, 30_000);
   });
   ctx.check(
     'The server ran ten questions and the report; the tab says "Laporan Anda sudah siap" (and does not show the report)',
