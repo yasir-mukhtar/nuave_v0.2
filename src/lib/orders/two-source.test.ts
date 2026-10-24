@@ -332,6 +332,111 @@ const refused = (statusCode: number, now: Date): CheckSend => ({
   transportError: null,
 });
 
+describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", () => {
+  it("the synthetic conclusion and findings name their source and agree with the counts; the method counts both sources", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    await runUntilEnded(deps(), id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(two.counts.google.named).toBeGreaterThan(0);
+    expect(report.conclusion).toContain("Di ChatGPT");
+    expect(report.conclusion).toContain("Google AI Overview");
+    expect(report.conclusion).not.toMatch(/mana pun/);
+    expect(report.conclusion).toContain(
+      `di ${two.counts.google.named} dari ${two.counts.google.summaries} ringkasan`,
+    );
+    for (const finding of report.key_findings)
+      expect(`${finding.title} ${finding.explanation}`).toMatch(
+        /ChatGPT|Google/,
+      );
+    expect(report.method_summary).toBe(
+      "Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google (AI Overview), ditanyakan melalui DataForSEO. 9 dari 10 pemeriksaan ChatGPT dan 10 dari 10 pemeriksaan Google selesai; 1 pemeriksaan tidak dapat diuji.",
+    );
+    expect(report.method_summary).not.toMatch(/LLM Scraper|synthetic-local/);
+  });
+
+  it("the report writer gets the Google facts; a draft without sources gets one revision, and a draft that still contradicts the counts fails the attempt", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        // The draft says Google did not name the business, which the counts
+        // contradict; the revision says the same again.
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion:
+              "Di Google AI Overview, bisnis Anda tidak disebut sama sekali.",
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    // Each attempt asks for one revision naming the contradiction; past the
+    // report ceiling the order fails rather than ship the false sentence.
+    expect(revisions.length).toBeGreaterThan(0);
+    expect(JSON.stringify(revisions[0])).toContain("contradicts the counts");
+    expect(orderRow(id).state).toBe("failed");
+    expect(orderRow(id).report_json).toBeNull();
+  });
+
+  it("the report writer reads code-built Google facts for both sources (R-28)", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    const input = t.reportInputs[0] as {
+      two_source_facts: {
+        counts: { chatgpt: unknown; google: { named: number } };
+        google: {
+          outcome: string;
+          business_named: boolean | null;
+          cited_domains: string[];
+        }[];
+      };
+    };
+    expect(input.two_source_facts.counts.google.named).toBe(3);
+    expect(input.two_source_facts.google).toHaveLength(10);
+    expect(input.two_source_facts.google[4]!.outcome).toBe("not_shown");
+    const text = JSON.stringify(input.two_source_facts);
+    expect(containsPhoneNumber(text)).toBe(false);
+    expect(text).not.toMatch(/"text"|raw/);
+  });
+
+  it("AC-05: an edited question in a fallback pack does not claim Google search data", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    const fallback = {
+      label: "disusun_dari_profil",
+      topic: null,
+      volume: null,
+      dataMonth: null,
+      core: null,
+    };
+    const edited = { ...fallback, label: "diubah_oleh_anda" };
+    await approveTwoSource(d1.db, id, {
+      now: clock,
+      questionMode: "fallback",
+      origins: [edited, ...Array.from({ length: 9 }, () => fallback)],
+    });
+    await runUntilEnded(deps(), id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.two_source!.search_data_available).toBe(false);
+  });
+
+  it("a grounded pack keeps its search data when the customer edits a question", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock, questionMode: "grounded" });
+    await runUntilEnded(deps(), id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.two_source!.search_data_available).toBe(true);
+  });
+});
+
 describe("the report gate and failures (R-14, R-19, R-21, AC-10, AC-13)", () => {
   it("AC-10: with 6 failed ChatGPT checks no report is made; the order fails as today with one paid_order_failed notice", async () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");

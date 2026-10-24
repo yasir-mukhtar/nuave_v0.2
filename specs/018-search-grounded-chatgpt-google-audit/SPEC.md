@@ -1042,18 +1042,30 @@ naming "ChatGPT dan Google AI Overview".
 ## Implementation notes
 
 - **Built in PR 2 (worker notes):**
-  - A city word in the business name (for example "Surabaya" in "Kopi
-    Surabaya") is not a brand word when the questions are checked for the
-    business's name (`brandTokens` skips place words); without this, no
-    question about the city could pass.
+  - The words of the confirmed search place in the business name (for
+    example "Surabaya" in "Kopi Surabaya" searched from Surabaya) are not
+    brand words when the questions are checked for the business's name;
+    without this, no question about the city could pass. Any other place
+    word in the name stays a brand word ("Batu Dental" searched from
+    Surabaya keeps "batu").
   - Production runs on Workers Paid: a two-source question step measures 23
     units, so `RUN_COST.question` is 24 and `RUN_UNIT_LIMIT` is 80 (R-15);
-    reconciliation keeps its 29-unit share. `spend-worst-case.test.ts`
-    measures about USD 1.82 per order at worst (R-25).
-  - The report-writing model still reads only the ChatGPT answers (with
-    phone numbers removed) and their code-decided facts; every Google count,
-    the Google finding, the per-source lists and "Topik yang belum menyebut
-    Anda" are built by code.
+    reconciliation keeps its 29-unit share.
+  - Spend (R-09, R-25): the ledger holds two per-order stage ceilings that
+    count every attempt, retries included: discovery USD 0.12 (shared by
+    both runs) and question writing USD 0.25 (five Cheaper Inference calls
+    of USD 0.05). One discovery request makes at most 2 retries; its worst
+    case measured 27 subrequests. `spend-worst-case.test.ts` puts the order
+    at about USD 1.96 at worst: reading 0.82, report 0.42, checks 0.36,
+    questions 0.25, discovery 0.12.
+  - The report-writing model reads the ChatGPT answers (phone numbers
+    removed) and code-built Google facts per question (AI Overview shown,
+    not shown or failed; named or not in its text; cited domains) with both
+    sources' counts. The conclusion and every finding must name their source
+    and may not contradict the counts; a draft that does gets one revision,
+    and one that still does fails the attempt. The Google counts, the Google
+    finding, the per-source lists, "Topik yang belum menyebut Anda" and the
+    "Tentang audit ini" sentence are built by code.
 - **Free testing first.** Development and automated tests use the DataForSEO
   sandbox (`sandbox.dataforseo.com`, free, same request and response layout,
   fixed sample data) or recorded fixtures. Paid calls are only for the AC-00

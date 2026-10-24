@@ -6,7 +6,6 @@
  */
 import { failedChatGptObservation, type ChatGptFacts } from "../checks/chatgpt";
 import type { GoogleCheck } from "../checks/google";
-import { visibleAnswerText } from "../checks/named";
 import {
   subjectAliases,
   subjectBrandName,
@@ -16,8 +15,10 @@ import {
   googleCoverageFinding,
   topicsMissing,
   TWO_SOURCE_REPORT_VERSION,
+  urlDomain,
   type TwoSourceQuestion,
   type TwoSourceReport,
+  type TwoSourceReportFacts,
 } from "../audit/two-source-report";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
@@ -51,6 +52,9 @@ export type TwoSourceSetup = {
   /** The business name and confirmed aliases (R-16). */
   names: string[];
   origins: QuestionOrigin[] | null;
+  /** How the approved pack was written (R-08); null for a pack approved
+   * before the mode was recorded. */
+  questionMode: "grounded" | "fallback" | null;
 };
 
 type Intake = {
@@ -58,6 +62,7 @@ type Intake = {
   prompts: AuditPrompt[];
   checks?: unknown;
   question_origins?: unknown;
+  question_mode?: unknown;
 };
 
 /** The two-source setup of an approved intake, or null for a one-source order
@@ -80,7 +85,24 @@ export function twoSourceSetup(intake: Intake): TwoSourceSetup | null {
       intake.question_origins.length === intake.prompts.length
         ? (intake.question_origins as QuestionOrigin[])
         : null,
+    questionMode:
+      intake.question_mode === "grounded" || intake.question_mode === "fallback"
+        ? intake.question_mode
+        : null,
   };
+}
+
+/** AC-05: search data backs the pack only when it was written from the pool.
+ * A customer's edit never turns a fallback pack into a search-data one. */
+export function searchDataAvailable(setup: TwoSourceSetup): boolean {
+  if (setup.questionMode) return setup.questionMode === "grounded";
+  return setup.origins
+    ? setup.origins.some(
+        (origin) =>
+          origin.label !== "disusun_dari_profil" &&
+          origin.label !== "diubah_oleh_anda",
+      )
+    : false;
 }
 
 const final = (status: string | null) =>
@@ -148,19 +170,65 @@ export function twoSourceObservations(input: {
   });
 }
 
+/** Spec 018 R-28: what the report-writing model reads about both sources,
+ * built by code from the saved checks. */
+export function twoSourceReportFacts(input: {
+  rows: readonly OrderQuestionRow[];
+  prompts: readonly AuditPrompt[];
+}): TwoSourceReportFacts {
+  let chatgptCompleted = 0;
+  let chatgptNamed = 0;
+  const google = input.prompts.map((prompt) => {
+    const row = input.rows.find((item) => item.prompt_id === prompt.prompt_id);
+    if (row?.status === "done") {
+      chatgptCompleted += 1;
+      if (parse<ChatGptFacts>(row.c_facts_json)?.named === "named")
+        chatgptNamed += 1;
+    }
+    const check =
+      row?.g_status === "done"
+        ? parse<GoogleCheck>(row.g_result_json ?? null)
+        : null;
+    if (!check)
+      return {
+        prompt_id: prompt.prompt_id,
+        outcome: "failed" as const,
+        business_named: null,
+        cited_domains: [],
+      };
+    return {
+      prompt_id: prompt.prompt_id,
+      outcome: check.outcome,
+      business_named:
+        check.outcome === "summary" ? check.named === "named" : null,
+      cited_domains: [
+        ...new Set(
+          check.references.flatMap((reference) => {
+            const domain = urlDomain(reference.url);
+            return domain ? [domain] : [];
+          }),
+        ),
+      ].slice(0, 10),
+    };
+  });
+  return {
+    counts: {
+      chatgpt: { completed: chatgptCompleted, named: chatgptNamed },
+      google: {
+        completed: google.filter((fact) => fact.outcome !== "failed").length,
+        summaries: google.filter((fact) => fact.outcome === "summary").length,
+        named: google.filter((fact) => fact.business_named === true).length,
+      },
+    },
+    google,
+  };
+}
+
 function normalized(value: string): string {
   return value
     .toLocaleLowerCase("en-US")
     .replace(/[^a-z0-9]+/gi, " ")
     .trim();
-}
-
-function namedIn(text: string, name: string): boolean {
-  const needle = normalized(name);
-  return (
-    needle.length > 0 &&
-    ` ${normalized(visibleAnswerText(text))} `.includes(` ${needle} `)
-  );
 }
 
 /** The code-built block saved with a two-source report. */
@@ -175,6 +243,7 @@ export function buildTwoSourceReport(input: {
   const { setup } = input;
   const ownNames = new Set(setup.names.map(normalized));
   const chatgptBusinesses: string[] = [];
+  const googleBusinesses: string[] = [];
   const times: string[] = [];
   const questions = input.prompts.map((prompt, index) => {
     const row = input.rows.find((item) => item.prompt_id === prompt.prompt_id);
@@ -197,6 +266,10 @@ export function buildTwoSourceReport(input: {
           chatgptBusinesses.push(name);
     const googleDone = row?.g_status === "done" && google !== null;
     if (googleDone) times.push(google.observed_at);
+    if (googleDone && google.outcome === "summary")
+      for (const name of google.businesses ?? [])
+        if (!ownNames.has(normalized(name)) && !googleBusinesses.includes(name))
+          googleBusinesses.push(name);
     const detail = input.report.details.find(
       (item) => item.prompt_id === prompt.prompt_id,
     );
@@ -247,7 +320,6 @@ export function buildTwoSourceReport(input: {
   );
   const summaries = questions.filter((q) => q.google.outcome === "summary");
   const sorted = [...times].sort();
-  const googleText = summaries.map((q) => q.google.text).join("\n");
   return {
     version: TWO_SOURCE_REPORT_VERSION,
     order_number: input.orderNumber,
@@ -257,9 +329,7 @@ export function buildTwoSourceReport(input: {
     },
     checked_from: sorted[0] ?? null,
     checked_to: sorted[sorted.length - 1] ?? null,
-    search_data_available: setup.origins
-      ? setup.origins.some((origin) => origin.label !== "disusun_dari_profil")
-      : false,
+    search_data_available: searchDataAvailable(setup),
     questions: questions.map((question) => {
       const { chatgptSources, ...rest } = question;
       void chatgptSources;
@@ -289,9 +359,7 @@ export function buildTwoSourceReport(input: {
     topics_missing: topicsMissing(questions),
     other_businesses: {
       chatgpt: chatgptBusinesses.slice(0, 10),
-      google: chatgptBusinesses
-        .filter((name) => namedIn(googleText, name))
-        .slice(0, 10),
+      google: googleBusinesses.slice(0, 10),
     },
   };
 }

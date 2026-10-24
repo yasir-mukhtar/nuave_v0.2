@@ -429,7 +429,9 @@ export function TopicsMissing({ two }: { two: TwoSourceReport }) {
             </p>
             <p className={styles.supporting}>
               {row.volume !== null
-                ? `±${volumeFormat.format(row.volume)} pencarian/bulan di Google`
+                ? `±${volumeFormat.format(row.volume)} pencarian/bulan di Google, seluruh Indonesia${
+                    row.data_month ? ` (data ${monthText(row.data_month)})` : ""
+                  }`
                 : "Tidak ada data jumlah pencarian"}
               {` · Pertanyaan ${row.ordinal}`}
             </p>
@@ -452,8 +454,9 @@ export function TwoSourceMethod({ two }: { two: TwoSourceReport }) {
     <ul className={styles.method} data-two-source-method>
       {two.search_data_available ? (
         <li>
-          Pertanyaan diambil dari data pencarian Google melalui DataForSEO
-          {month ? ` (data ${monthText(month)})` : ""}, seluruh Indonesia.
+          Pertanyaan diambil dari data pencarian Google melalui DataForSEO.
+          Jumlah pencarian berlaku untuk seluruh Indonesia
+          {month ? ` (data ${monthText(month)})` : ""}.
         </li>
       ) : null}
       <li>

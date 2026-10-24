@@ -1,4 +1,8 @@
 import {
+  twoSourceWritingViolations,
+  type TwoSourceReportFacts,
+} from "./two-source-report";
+import {
   buildAuditReport,
   normalizeReportEvidence,
   REPORT_SYNTHESIS_PROMPT_VERSION_V2,
@@ -94,6 +98,10 @@ export type ReportPipelineInput = {
    * answers of a two-source order. Failed checks are allowed as honest failed
    * records; at least MIN_COMPLETED_CHATGPT_ANSWERS must be completed. */
   two_source?: boolean;
+  /** Server-internal (Spec 018 R-28): the code-built Google facts and counts
+   * for both sources. When present the conclusion and findings must name
+   * their source and agree with the counts. */
+  two_source_facts?: TwoSourceReportFacts;
 };
 
 /** Spec 018 R-19 (founder Q-2): the ChatGPT source needs at least 5 of its 10
@@ -446,7 +454,13 @@ export async function createValidatedAuditReport(
   }
 
   const isIndonesian = lockedInput.language === "id";
-  const languageErrors = languageErrorsFor(lockedInput, content);
+  const sourceFacts = lockedInput.two_source_facts;
+  const sourceErrorsFor = (draft: typeof content) =>
+    sourceFacts ? twoSourceWritingViolations(draft, sourceFacts) : [];
+  const languageErrors = [
+    ...languageErrorsFor(lockedInput, content),
+    ...sourceErrorsFor(content),
+  ];
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
@@ -524,6 +538,21 @@ export async function createValidatedAuditReport(
       const finalLanguageErrors = languageErrorsFor(lockedInput, content);
       if (finalLanguageErrors.length) diagnostics.add("language_warning");
     }
+  }
+
+  // Spec 018: a two-source report never ships a conclusion or finding that
+  // speaks for no source or contradicts the code counts. The one revision
+  // call above was the fix; past it, the attempt fails and the runner may try
+  // again within the report-call ceiling.
+  const finalSourceErrors = sourceErrorsFor(content);
+  if (finalSourceErrors.length) {
+    throw new ReportPipelineError(
+      finalSourceErrors.join(" "),
+      422,
+      reportCalls,
+      "REPORT_USEFULNESS_FAILURE",
+      [...diagnostics],
+    );
   }
 
   // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and

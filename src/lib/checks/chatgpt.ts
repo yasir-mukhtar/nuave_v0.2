@@ -15,7 +15,7 @@ import type {
 import { SOURCE_TITLE_MAX_LENGTH } from "../audit/types";
 import { INDONESIA_LOCATION_CODE } from "../discovery/places";
 import { namedOutcome, type NamedOutcome } from "./named";
-import { stripPhoneNumbers } from "./phones";
+import { stripPhoneNumbers, phoneSafeUrl } from "./phones";
 import type { CheckSend } from "./send";
 
 /** Recorded as the observation's instruction version: the question is sent
@@ -94,7 +94,8 @@ export function chatgptSources(result: Json): { url: string; title: string }[] {
   const seen = new Set<string>();
   const sources: { url: string; title: string }[] = [];
   const add = (item: Json) => {
-    const url = httpUrl(item.url);
+    const raw = httpUrl(item.url);
+    const url = raw ? phoneSafeUrl(raw) : null;
     if (!url || seen.has(url)) return;
     seen.add(url);
     sources.push({

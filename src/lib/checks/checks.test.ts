@@ -10,11 +10,12 @@ import {
   chatgptCheckBody,
   readChatGptAttempt,
 } from "./chatgpt";
-import { googleCheckBody, readGoogleAttempt } from "./google";
+import { googleBusinesses, googleCheckBody, readGoogleAttempt } from "./google";
 import { namedOutcome } from "./named";
 import {
   containsPhoneNumber,
   PHONE_REMOVED,
+  phoneSafeUrl,
   stripPhoneNumbers,
 } from "./phones";
 import type { CheckSend } from "./send";
@@ -407,5 +408,48 @@ describe("DataForSEO availability for payment start (R-22)", () => {
       reason: "credentials",
     });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("phone numbers in cited links (N-5)", () => {
+  it("drops messaging links and cleans or drops links that carry a number", () => {
+    expect(phoneSafeUrl("https://wa.me/6281234567890")).toBeNull();
+    expect(
+      phoneSafeUrl("https://api.whatsapp.com/send?phone=6281234567890"),
+    ).toBeNull();
+    expect(phoneSafeUrl("tel:+6281234567890")).toBeNull();
+    expect(
+      phoneSafeUrl("https://klinik.example/kontak?hp=081234567890&ref=x"),
+    ).toBe("https://klinik.example/kontak");
+    expect(
+      phoneSafeUrl("https://klinik.example/hubungi-081234567890"),
+    ).toBeNull();
+    expect(phoneSafeUrl("https://klinik.example/harga?utm_source=openai")).toBe(
+      "https://klinik.example/harga?utm_source=openai",
+    );
+  });
+});
+
+describe("Google's own business list (N-6)", () => {
+  it("keeps names from Google's page that its AI Overview also names, never the business itself", () => {
+    const result = {
+      items: [
+        {
+          type: "local_pack",
+          title: "Klinik Gigi Senyum",
+          phone: "+62 31 555 0101",
+        },
+        { type: "local_pack", title: "Kopi Nuave" },
+        { type: "organic", website_name: "Dental Prima" },
+        { type: "organic", website_name: "Halodoc" },
+      ],
+    };
+    expect(
+      googleBusinesses(
+        result,
+        "Pilihan populer: **Klinik Gigi Senyum** dan Dental Prima. Kopi Nuave juga disebut.",
+        ["Kopi Nuave"],
+      ),
+    ).toEqual(["Klinik Gigi Senyum", "Dental Prima"]);
   });
 });

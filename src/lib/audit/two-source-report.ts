@@ -190,3 +190,101 @@ export function topicsMissing(
     )
     .slice(0, 5);
 }
+
+/**
+ * Spec 018 R-28 and the Report layout ("findings name their source"): the
+ * code-built facts the report-writing model reads beside the ChatGPT answers.
+ * Never raw responses, answer text from Google, or phone numbers.
+ */
+export type TwoSourceReportFacts = {
+  counts: {
+    chatgpt: { completed: number; named: number };
+    google: { completed: number; summaries: number; named: number };
+  };
+  google: {
+    prompt_id: string;
+    outcome: "summary" | "not_shown" | "failed";
+    /** Named in the AI Overview text; null when no summary was shown. */
+    business_named: boolean | null;
+    cited_domains: string[];
+  }[];
+};
+
+export const SOURCE_CHATGPT = "ChatGPT";
+export const SOURCE_GOOGLE = "Google AI Overview";
+
+const NEGATIVE =
+  /\btidak\s+(?:pernah\s+)?(?:disebut|disebutkan|muncul|menyebut|ditemukan|direkomendasikan)\b/i;
+
+function sentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?;])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+/**
+ * The source checks for a two-source report: the conclusion and every key
+ * finding name the source they speak about, and no sentence says a source
+ * did not name the business when the code counts show it did.
+ */
+export function twoSourceWritingViolations(
+  content: {
+    conclusion: string;
+    key_findings: { title: string; explanation: string }[];
+  },
+  facts: TwoSourceReportFacts,
+): string[] {
+  const violations: string[] = [];
+  const names = (text: string) =>
+    text.includes(SOURCE_CHATGPT) || text.includes("Google");
+  if (!names(content.conclusion))
+    violations.push(
+      `The conclusion must name its source: write "Di ${SOURCE_CHATGPT}" and/or "Di ${SOURCE_GOOGLE}".`,
+    );
+  content.key_findings.forEach((finding, index) => {
+    if (!names(`${finding.title} ${finding.explanation}`))
+      violations.push(
+        `Key finding ${index + 1} must name its source ("${SOURCE_CHATGPT}" or "${SOURCE_GOOGLE}").`,
+      );
+  });
+  const texts = [
+    content.conclusion,
+    ...content.key_findings.flatMap((f) => [f.title, f.explanation]),
+  ];
+  for (const sentence of texts.flatMap(sentences)) {
+    if (!NEGATIVE.test(sentence)) continue;
+    const aboutChatGpt = sentence.includes(SOURCE_CHATGPT);
+    const aboutGoogle = sentence.includes("Google");
+    if (aboutChatGpt && !aboutGoogle && facts.counts.chatgpt.named > 0)
+      violations.push(
+        `"${sentence}" contradicts the counts: ChatGPT named the business in ${facts.counts.chatgpt.named} answers.`,
+      );
+    if (aboutGoogle && !aboutChatGpt && facts.counts.google.named > 0)
+      violations.push(
+        `"${sentence}" contradicts the counts: Google AI Overview named the business in ${facts.counts.google.named} summaries.`,
+      );
+    if (
+      ((aboutChatGpt && aboutGoogle) || (!aboutChatGpt && !aboutGoogle)) &&
+      /\b(?:mana pun|semua|seluruh|kedua)\b/i.test(sentence) &&
+      facts.counts.chatgpt.named + facts.counts.google.named > 0
+    )
+      violations.push(
+        `"${sentence}" contradicts the counts: the business was named in at least one answer.`,
+      );
+  }
+  return [...new Set(violations)];
+}
+
+/**
+ * "Tentang audit ini" for a two-source report: both sources' checks, in plain
+ * Indonesian, with no internal system labels (N-10). It replaces the
+ * one-source method sentence, which counted ChatGPT only.
+ */
+export function twoSourceMethodSentence(
+  two: Pick<TwoSourceReport, "counts">,
+): string {
+  const { chatgpt, google, failed } = two.counts;
+  const failedPart = failed ? `; ${failed} pemeriksaan tidak dapat diuji` : "";
+  return `Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google (AI Overview), ditanyakan melalui DataForSEO. ${chatgpt.completed} dari 10 pemeriksaan ChatGPT dan ${google.completed} dari 10 pemeriksaan Google selesai${failedPart}.`;
+}

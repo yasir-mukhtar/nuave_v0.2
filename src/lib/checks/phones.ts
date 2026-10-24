@@ -32,3 +32,38 @@ export function stripPhoneNumbers(text: string): string {
 export function containsPhoneNumber(text: string): boolean {
   return [...text.matchAll(CANDIDATE)].some(([match]) => looksLikePhone(match));
 }
+
+const MESSAGING_HOSTS = /(^|\.)(wa\.me|whatsapp\.com|wa\.link)$/i;
+
+/**
+ * N-5: a cited link can carry a phone number (wa.me/62…, tel:, ?phone=…).
+ * Messaging links are dropped; any other link that still holds a phone-like
+ * run of digits loses its query and fragment, and is dropped when its path
+ * holds one too. Returns null when the link cannot be kept.
+ */
+export function phoneSafeUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (!/^https?:$/i.test(parsed.protocol)) return null;
+  if (MESSAGING_HOSTS.test(parsed.hostname)) return null;
+  const decoded = (value: string) => {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+  if (containsPhoneNumber(decoded(parsed.pathname))) return null;
+  if (
+    containsPhoneNumber(decoded(parsed.search)) ||
+    containsPhoneNumber(decoded(parsed.hash))
+  ) {
+    parsed.search = "";
+    parsed.hash = "";
+  }
+  return parsed.toString();
+}

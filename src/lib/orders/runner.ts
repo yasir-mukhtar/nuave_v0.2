@@ -29,10 +29,12 @@ import {
   AuditCallExecutionError,
   serverOwnedAuditBudget,
 } from "../audit/telemetry";
+import { twoSourceMethodSentence } from "../audit/two-source-report";
 import type {
   AuditCallTelemetry,
   AuditObservation,
   AuditPrompt,
+  AuditReport,
 } from "../audit/types";
 import { SpendCapError, withOrderSpend } from "../spending/provider-spend";
 import {
@@ -72,6 +74,7 @@ import {
   twoSourceObservations,
   twoSourceSetup,
   type TwoSourceSetup,
+  twoSourceReportFacts,
 } from "./two-source";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "../audit/types";
 import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
@@ -1299,8 +1302,17 @@ async function reportStep(
     // Server-internal: the labeled synthetic substitute's evidence is admitted
     // only in synthetic mode, never by request.
     ...(deps.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
-    // Spec 018 R-19: failed ChatGPT checks are honest failed records.
-    ...(setup ? { two_source: true } : {}),
+    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
+    // the model reads code-built Google facts and both sources' counts.
+    ...(setup
+      ? {
+          two_source: true,
+          two_source_facts: twoSourceReportFacts({
+            rows,
+            prompts: intake.prompts,
+          }),
+        }
+      : {}),
   };
 
   let code: ReportFailureCode;
@@ -1334,25 +1346,27 @@ async function reportStep(
           return deps.generateReport(...args);
         }),
     );
+    // Spec 018: the code-built block, saved with the report; the method
+    // sentence counts both sources and names no internal system (N-10).
+    const withTwoSourceBlock = (written: AuditReport) => {
+      const two = buildTwoSourceReport({
+        report: written,
+        rows,
+        prompts: intake.prompts,
+        observations,
+        setup: setup!,
+        orderNumber: order.order_number,
+      });
+      return {
+        ...written,
+        method_summary: twoSourceMethodSentence(two),
+        two_source: two,
+      };
+    };
     const saved = await saveReport(deps.db, {
       orderId: order.id,
       owner,
-      reportJson: JSON.stringify(
-        setup
-          ? {
-              ...report,
-              // Spec 018: the code-built block, saved with the report.
-              two_source: buildTwoSourceReport({
-                report,
-                rows,
-                prompts: intake.prompts,
-                observations,
-                setup,
-                orderNumber: order.order_number,
-              }),
-            }
-          : report,
-      ),
+      reportJson: JSON.stringify(setup ? withTwoSourceBlock(report) : report),
       now: deps.now(),
     });
     if (!saved) return "skipped";

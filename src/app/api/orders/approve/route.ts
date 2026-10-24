@@ -79,7 +79,10 @@ function searchGroundedApproval(
   context: DirectTenAuditContext,
   approved: string[],
   shown: unknown[] | undefined,
-): { origins: QuestionOrigin[] } | { errors: string[] } | null {
+):
+  | { origins: QuestionOrigin[]; mode: "grounded" | "fallback" }
+  | { errors: string[] }
+  | null {
   const place = contextSearchPlace(context);
   if (!place) return null;
   let saved: SavedQuestions | null = null;
@@ -110,7 +113,7 @@ function searchGroundedApproval(
   });
   return issues.length
     ? { errors: [...new Set(issues.map((issue) => issue.message))] }
-    : { origins };
+    : { origins, mode: saved.mode === "grounded" ? "grounded" : "fallback" };
 }
 
 /**
@@ -255,7 +258,11 @@ export async function POST(request: Request) {
         originals: input.originals,
         // Spec 018: an intake with a search place asks ChatGPT and Google.
         ...(search
-          ? { question_origins: search.origins, checks: TWO_SOURCE_CHECKS }
+          ? {
+              question_origins: search.origins,
+              question_mode: search.mode,
+              checks: TWO_SOURCE_CHECKS,
+            }
           : {}),
       }),
       twoSource: Boolean(search),

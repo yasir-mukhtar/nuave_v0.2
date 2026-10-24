@@ -6,8 +6,8 @@
  * phone numbers), and never the raw response (R-28).
  */
 import { SOURCE_TITLE_MAX_LENGTH } from "../audit/types";
-import { namedOutcome, type NamedOutcome } from "./named";
-import { stripPhoneNumbers } from "./phones";
+import { namedOutcome, type NamedOutcome, visibleAnswerText } from "./named";
+import { stripPhoneNumbers, phoneSafeUrl } from "./phones";
 import type { CheckSend } from "./send";
 
 export const GOOGLE_CHECK_VERSION = "nuave-google-check-v1" as const;
@@ -45,6 +45,10 @@ export type GoogleCheck = {
   text: string;
   references: { url: string; title: string }[];
   named: NamedOutcome;
+  /** Business names Google itself listed on the same page (local pack,
+   * organic results) that its AI Overview text also names. Absent on checks
+   * saved before this field. */
+  businesses?: string[];
   task_id: string;
   cost_usd: number;
   call_ms: number;
@@ -99,8 +103,12 @@ export function overviewReferences(
     const node = record(value);
     if (!node) return;
     if (node.type === "ai_overview_reference") {
-      const url = text(node.url).trim();
-      if (/^https?:\/\//i.test(url) && url.length <= 2_000 && !seen.has(url)) {
+      const raw = text(node.url).trim();
+      const url =
+        /^https?:\/\//i.test(raw) && raw.length <= 2_000
+          ? (phoneSafeUrl(raw) ?? "")
+          : "";
+      if (url && !seen.has(url)) {
         seen.add(url);
         references.push({
           url,
@@ -114,6 +122,41 @@ export function overviewReferences(
   };
   walk(item);
   return references;
+}
+
+function comparable(value: string): string {
+  return value
+    .toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim();
+}
+
+/** N-6: the businesses Google's own page lists that its summary names. */
+export function googleBusinesses(
+  result: Json,
+  summary: string,
+  ownNames: readonly string[],
+): string[] {
+  const haystack = ` ${comparable(visibleAnswerText(summary))} `;
+  const own = new Set(ownNames.map(comparable));
+  const names: string[] = [];
+  for (const item of list(result.items)) {
+    const name =
+      item.type === "local_pack"
+        ? text(item.title).trim()
+        : item.type === "organic"
+          ? text(item.website_name).trim()
+          : "";
+    const key = comparable(name);
+    if (
+      key &&
+      !own.has(key) &&
+      haystack.includes(` ${key} `) &&
+      !names.some((existing) => comparable(existing) === key)
+    )
+      names.push(stripPhoneNumbers(name).slice(0, SOURCE_TITLE_MAX_LENGTH));
+  }
+  return names;
 }
 
 /** Reads one SERP call into a Google result or a failed attempt. */
@@ -130,6 +173,7 @@ export function readGoogleAttempt(input: {
     outcome: GoogleOutcome,
     body = "",
     references: GoogleCheck["references"] = [],
+    businesses: string[] = [],
   ): GoogleAttempt => ({
     kind: "done",
     check: {
@@ -150,6 +194,7 @@ export function readGoogleAttempt(input: {
               names: input.names,
             })
           : "absent",
+      businesses,
       task_id: send.taskId,
       cost_usd: send.costUsd,
       call_ms: Math.max(
@@ -195,7 +240,12 @@ export function readGoogleAttempt(input: {
   if (!overview) return done("not_shown");
   const body = stripPhoneNumbers(overviewText(overview));
   if (!body.trim()) return { kind: "empty", costUsd: send.costUsd };
-  return done("summary", body, overviewReferences(overview));
+  return done(
+    "summary",
+    body,
+    overviewReferences(overview),
+    googleBusinesses(send.result, body, input.names),
+  );
 }
 
 /** R-17: an element empty twice is counted as not shown. */

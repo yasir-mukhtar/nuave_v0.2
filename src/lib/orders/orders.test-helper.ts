@@ -234,7 +234,7 @@ export const TWO_SOURCE_ORIGINS = TWO_SOURCE_PROMPTS.map((_, index) =>
 );
 
 export function twoSourceIntakeJson(
-  options: { origins?: unknown[] } = {},
+  options: { origins?: unknown[]; questionMode?: "grounded" | "fallback" } = {},
 ): string {
   return JSON.stringify({
     context: TWO_SOURCE_CONTEXT,
@@ -245,6 +245,7 @@ export function twoSourceIntakeJson(
     }).prompts,
     originals: TWO_SOURCE_PROMPTS.map((prompt) => prompt.question),
     question_origins: options.origins ?? TWO_SOURCE_ORIGINS,
+    ...(options.questionMode ? { question_mode: options.questionMode } : {}),
     checks: "chatgpt-google-v1",
   });
 }
@@ -253,13 +254,21 @@ export function twoSourceIntakeJson(
 export async function approveTwoSource(
   db: SpendDb,
   orderId: string,
-  options: { mode?: OrderMode; now?: Date; origins?: unknown[] } = {},
+  options: {
+    mode?: OrderMode;
+    now?: Date;
+    origins?: unknown[];
+    questionMode?: "grounded" | "fallback";
+  } = {},
 ) {
   const approved = await approveOrder(db, {
     orderId,
     environment: "production",
     mode: options.mode ?? "synthetic",
-    intakeJson: twoSourceIntakeJson({ origins: options.origins }),
+    intakeJson: twoSourceIntakeJson({
+      origins: options.origins,
+      questionMode: options.questionMode,
+    }),
     businessName: TWO_SOURCE_CONTEXT.identity.name,
     promptIds: TWO_SOURCE_PROMPTS.map((prompt) => prompt.prompt_id),
     now: options.now ?? T0,
