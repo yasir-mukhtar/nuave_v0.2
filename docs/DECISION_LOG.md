@@ -6,6 +6,22 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
+
+Yasir set the target market:
+
+- **First customers:** beauty clinics in Jabodetabek and Bandung.
+- **Who buys:** the clinic owner or the person who runs the clinic's
+  marketing.
+- **Secondary:** other clinic types (dental, skin, children's, and the
+  "Lainnya" tab). The clinic landing page keeps them as they are
+  ([PR #152](https://github.com/yasir-mukhtar/nuave_v0.2/pull/152)).
+
+This replaces the 2026-08-17 wedge (dental clinics in Depok) and settles the
+2026-07-19 open question on the first city. It sets who outreach, copy and
+terms are written for; it does not add a check that turns other businesses
+away at checkout.
+
 ## 2026-10-24 — Delivery promise wording and the clinic report label
 
 Yasir decided, reviewing the clinic landing page (PR #152, lofi v2.2):
