@@ -722,7 +722,7 @@ export async function generateReportContent(
             ? [
                 "The observations are answers from the ChatGPT app. google_ai_overview gives, for the same prompt IDs, code-checked facts from Google AI Overview (shown or not, whether the business was named in its text, the cited domains); source_counts gives the code counts for both sources.",
                 'Name the source in the conclusion and in every key finding: write "Di ChatGPT" or "Di Google AI Overview". Never state a result for both sources unless the counts support it for each.',
-                'Do not contradict source_counts: when a source named the business at least once, never write an absolute negation for it ("sama sekali", "tidak pernah", "di mana pun", "di semua jawaban"). A statement limited to some questions, or one that carries a count, is fine.',
+                'Do not contradict source_counts: when a source named the business at least once, never write that it did not name, mention or show the business ("tidak disebut", "tidak muncul", "tidak menyebut") unless the sentence is limited to some questions ("pada pertanyaan lain", "di 5 ringkasan lainnya") or gives that source\'s exact count from source_counts ("disebut di 3 dari 8 ringkasan").',
                 "Findings, priorities and evidence_prompt_ids still cite only what the ChatGPT answers or the supplied Google facts show.",
               ]
             : []),

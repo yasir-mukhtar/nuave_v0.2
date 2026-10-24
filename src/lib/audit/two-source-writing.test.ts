@@ -142,4 +142,106 @@ describe("two-source writing checks", () => {
     );
     expect(sentence).not.toMatch(/LLM Scraper/);
   });
+
+  it("B-5: rejects a plain negation about a source that named the business, and a wrong count", () => {
+    const ok = finding(
+      "Di ChatGPT, klinik lain dipilih",
+      "Di ChatGPT, tiga klinik lain disebut.",
+    );
+    const cases: [string, "conclusion" | "title"][] = [
+      ["Di Google AI Overview, bisnis Anda tidak disebut.", "conclusion"],
+      ["Di ChatGPT, bisnis Anda tidak muncul", "title"],
+      ["Di ChatGPT, jawaban tidak menyebut bisnis Anda.", "conclusion"],
+      [
+        "Di ChatGPT, bisnis Anda sama sekali tidak disebut (0 dari 9 jawaban).",
+        "conclusion",
+      ],
+      [
+        "Kopi Nuave tidak disebut di ChatGPT maupun Google AI Overview.",
+        "conclusion",
+      ],
+    ];
+    for (const [sentence, where] of cases) {
+      const content =
+        where === "conclusion"
+          ? { conclusion: sentence, key_findings: [ok] }
+          : {
+              conclusion:
+                "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban.",
+              key_findings: [
+                finding(
+                  sentence,
+                  "Di ChatGPT, klinik lain lebih sering dipilih.",
+                ),
+              ],
+            };
+      expect(
+        twoSourceWritingViolations(content, facts(3, 3)),
+        sentence,
+      ).not.toEqual([]);
+    }
+  });
+
+  it("B-5: keeps a negation that carries the source's correct count or is limited", () => {
+    expect(
+      twoSourceWritingViolations(
+        {
+          conclusion:
+            "Di ChatGPT, bisnis Anda tidak disebut di 6 dari 9 jawaban. Di Google AI Overview, bisnis Anda tidak muncul di 5 dari 8 ringkasan.",
+          key_findings: [
+            finding("Di ChatGPT, bisnis Anda tidak muncul pada kebutuhan lain"),
+            finding(
+              "Di Google AI Overview, bisnis Anda belum disebut untuk pertanyaan tentang botox",
+            ),
+            finding("Di ChatGPT, Anda disebut tetapi tidak direkomendasikan"),
+          ],
+        },
+        facts(3, 3),
+      ),
+    ).toEqual([]);
+  });
+
+  it("B-5: code repairs a plain negation and keeps the sentence's place", () => {
+    const { content } = repairTwoSourceWriting(
+      {
+        conclusion:
+          "Di ChatGPT, bisnis Anda tidak disebut; di Google AI Overview, klinik lain lebih sering muncul.",
+        key_findings: [
+          finding(
+            "Di ChatGPT, bisnis Anda tidak muncul",
+            "Di ChatGPT, klinik lain lebih sering dipilih.",
+          ),
+          finding("Ringkasan AI Overview lebih sering menyebut klinik lain"),
+        ],
+      },
+      facts(3, 3),
+    );
+    expect(content.conclusion).toBe(
+      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban; di Google AI Overview, klinik lain lebih sering muncul.",
+    );
+    expect(content.key_findings[0]!.title).toBe(
+      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban",
+    );
+    // "AI Overview" alone names Google (N-26): no "Di ChatGPT:" prefix.
+    expect(content.key_findings[1]!.explanation).toBe("");
+    expect(twoSourceWritingViolations(content, facts(3, 3))).toEqual([]);
+  });
+
+  it("N-26: a source with nothing to count says so instead of 0 dari 0", () => {
+    const none: TwoSourceReportFacts = {
+      counts: {
+        chatgpt: { completed: 9, named: 2 },
+        google: { completed: 6, summaries: 0, named: 0 },
+      },
+      google: [],
+    };
+    const { content } = repairTwoSourceWriting(
+      { conclusion: "Bisnis Anda jarang disebut.", key_findings: [] },
+      none,
+    );
+    expect(content.conclusion).toBe(
+      "Di ChatGPT, bisnis Anda disebut di 2 dari 9 jawaban; di Google AI Overview, Google tidak menampilkan AI Overview untuk pertanyaan yang diuji. Bisnis Anda jarang disebut.",
+    );
+    expect(content.conclusion).not.toMatch(/0 dari 0/);
+  });
 });

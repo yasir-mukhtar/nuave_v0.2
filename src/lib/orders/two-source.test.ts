@@ -417,6 +417,34 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
     expect(report.conclusion).toContain("tidak disebut di 5 ringkasan lainnya");
   });
 
+  it("B-5: a plain negation the counts contradict is revised once, then repaired by code, and the order is delivered", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion: "Di Google AI Overview, bisnis Anda tidak disebut.",
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(1);
+    expect(JSON.stringify(revisions[0])).toContain("contradicts the counts");
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(report.conclusion).toBe(
+      `Di Google AI Overview, bisnis Anda disebut di ${two.counts.google.named} dari ${two.counts.google.summaries} ringkasan.`,
+    );
+  });
+
   it("the report writer reads code-built Google facts for both sources (R-28)", async () => {
     const id = await makeOrder(d1.db, { now: clock });
     await approveTwoSource(d1.db, id, { now: clock });
