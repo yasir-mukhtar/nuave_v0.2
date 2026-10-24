@@ -91,6 +91,11 @@ export type OrderRow = {
   paid_attempt_id: string | null;
   paid_transaction_id: string | null;
   refunded_at: string | null;
+  /** Spec 018 R-07 (migration 9). */
+  discovery_json: string | null;
+  discovery_key: string | null;
+  discovery_runs: number;
+  questions_json: string | null;
 };
 
 /** R-18: SQL for "this order may run paid work": paid through Midtrans, a
@@ -1044,5 +1049,41 @@ export async function savePreparedReading(
        WHERE id = ?1 AND state = 'open' AND prepared_json IS NULL`,
     )
     .bind(input.orderId, input.preparedJson)
+    .run();
+}
+
+/** Spec 018 R-07: discovery runs at most twice per order. */
+export const MAX_DISCOVERY_RUNS = 2;
+
+/** Spec 018 R-07: saves a discovery pool on an open order and counts the
+ * run. False when the order is not open or has used both runs. */
+export async function saveDiscoveryPool(
+  db: SpendDb,
+  input: { orderId: string; poolJson: string; key: string },
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE orders
+       SET discovery_json = ?2, discovery_key = ?3,
+           discovery_runs = discovery_runs + 1
+       WHERE id = ?1 AND state = 'open' AND discovery_runs < ?4`,
+    )
+    .bind(input.orderId, input.poolJson, input.key, MAX_DISCOVERY_RUNS)
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** Spec 018 R-07: the ten questions the writer returned and their
+ * server-owned origins, re-checked when the customer approves. */
+export async function saveGeneratedQuestions(
+  db: SpendDb,
+  input: { orderId: string; questionsJson: string },
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE orders SET questions_json = ?2
+       WHERE id = ?1 AND state = 'open'`,
+    )
+    .bind(input.orderId, input.questionsJson)
     .run();
 }

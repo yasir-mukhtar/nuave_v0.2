@@ -5,10 +5,18 @@ import {
 } from "@/lib/audit/deployment-gate";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import { orderRuntime } from "@/lib/orders/http";
-import { orderInState } from "@/lib/orders/store";
+import { orderInState, saveGeneratedQuestions } from "@/lib/orders/store";
 import { withOrderSpend } from "@/lib/spending/provider-spend";
 import { prepareGlmQuestionsForIntake } from "@/lib/intake/glm-local";
-import { SMART_INTAKE_INPUT_VERSION } from "@/lib/intake/smart-intake-contract";
+import {
+  parseFrozenSmartIntake,
+  SMART_INTAKE_INPUT_VERSION,
+} from "@/lib/intake/smart-intake-contract";
+import {
+  contextSearchPlace,
+  parseSavedPool,
+} from "@/lib/discovery/order-discovery";
+import { prepareSearchGroundedQuestions } from "@/lib/discovery/questions";
 import {
   projectQuestionOutcome,
   questionPreflightError,
@@ -107,6 +115,34 @@ export async function POST(request: Request) {
       });
     }
 
+    // Spec 018: an intake with "Kota untuk pencarian" is written from the
+    // saved search pool (R-10) or the fallback (R-08); the questions and their
+    // server-owned origins are saved on the order for approval (R-07).
+    const frozen = parseFrozenSmartIntake(record.intake);
+    const place = frozen ? contextSearchPlace(frozen.context) : null;
+    if (frozen && place) {
+      const grounded = await withOrderSpend(
+        { db: server.db, orderId: order.id },
+        () =>
+          prepareSearchGroundedQuestions({
+            intake: record.intake,
+            context: frozen.context,
+            pool: parseSavedPool(order.discovery_json),
+            place,
+            stubBehavior: record.stubBehavior,
+          }),
+      );
+      if (grounded.status === "ok" && grounded.origins)
+        await saveGeneratedQuestions(server.db, {
+          orderId: order.id,
+          questionsJson: JSON.stringify({
+            mode: grounded.mode,
+            questions: grounded.questions,
+            origins: grounded.origins,
+          }),
+        });
+      return NextResponse.json(projectQuestionOutcome(grounded));
+    }
     const outcome = await withOrderSpend(
       { db: server.db, orderId: order.id },
       () =>

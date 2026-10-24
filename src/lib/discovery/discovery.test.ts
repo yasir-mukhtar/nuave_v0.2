@@ -426,12 +426,10 @@ describe("DataForSEO status codes (AC-13)", () => {
   });
 
   it("retries 50301 once and never retries an unknown code", async () => {
-    const send = vi
-      .fn()
-      .mockResolvedValue({
-        httpStatus: 200,
-        json: { tasks: [{ status_code: 50301 }] },
-      });
+    const send = vi.fn().mockResolvedValue({
+      httpStatus: 200,
+      json: { tasks: [{ status_code: 50301 }] },
+    });
     await callDataForSeo({
       call: "autocomplete",
       body: { keyword: "behel gigi" },
@@ -609,7 +607,6 @@ describe("R-11 pack validation (AC-04, AC-04a, AC-04b, AC-19)", () => {
         approved: edited,
         generated: questions,
         generatedOrigins: origins,
-        pool,
       }),
       place: pool.place,
       pool,
@@ -633,7 +630,6 @@ describe("R-11 pack validation (AC-04, AC-04a, AC-04b, AC-19)", () => {
       approved,
       generated: questions,
       generatedOrigins: origins,
-      pool,
     });
     expect(result[1]).toMatchObject({
       label: "diubah_oleh_anda",

@@ -62,6 +62,7 @@ import {
   SMART_INTAKE_INPUT_VERSION,
 } from "./smart-intake-contract";
 import type { GlmPackProvenance, GlmQuestionsOutcome } from "./local-questions";
+import type { QuestionOrigin } from "../discovery/question-rules";
 
 export type GlmTransportEnvelope = {
   httpStatus: number;
@@ -330,8 +331,9 @@ function syntheticDirectTenTexts(facts: {
 function syntheticResponseBody(
   facts: Parameters<typeof syntheticDirectTenTexts>[0],
   behavior: GlmStubBehavior,
+  override?: string[],
 ) {
-  const texts = syntheticDirectTenTexts(facts);
+  const texts = override ?? syntheticDirectTenTexts(facts);
   const malformed =
     behavior === "malformed"
       ? `## 1. Market interpretation\n\nSintetis.\n\n## 3. Self-critique\n\nSintetis; bagian pertanyaan sengaja dihilangkan.`
@@ -373,6 +375,8 @@ function syntheticResponseBody(
 export function createSyntheticGlmTransport(input: {
   facts: Parameters<typeof syntheticDirectTenTexts>[0];
   behavior?: GlmStubBehavior;
+  /** Spec 018: labelled synthetic questions built from the search pool. */
+  texts?: string[];
 }): GlmQuestionTransport {
   const behavior = input.behavior ?? "ok";
   return {
@@ -387,7 +391,7 @@ export function createSyntheticGlmTransport(input: {
       }
       return {
         httpStatus: 200,
-        body: syntheticResponseBody(input.facts, behavior),
+        body: syntheticResponseBody(input.facts, behavior, input.texts),
       };
     },
   };
@@ -440,10 +444,16 @@ export const liveGlmTransport: GlmQuestionTransport = {
   },
 };
 
+function withExtraBrief(brief: string, extra: string | undefined): string {
+  return extra ? `${brief}\n${extra}` : brief;
+}
+
 /** Shared intake → facts → request pipeline used by both the freeze step and
  * the send path, so the frozen request is provably the same body. */
 function buildFromIntake(
   intake: unknown,
+  /** Spec 018: search data and rules appended to the one brief. */
+  extraBrief?: string,
 ):
   | { ok: true; facts: QuestionFactsV3; requestBody: unknown }
   | { ok: false; outcome: GlmQuestionsOutcome } {
@@ -481,7 +491,7 @@ function buildFromIntake(
       ok: true,
       facts: projected.facts,
       requestBody: buildDirectTenQuestionRequest(
-        buildDirectTenWriterBrief(projected.facts),
+        withExtraBrief(buildDirectTenWriterBrief(projected.facts), extraBrief),
       ),
     };
   }
@@ -535,7 +545,7 @@ function buildFromIntake(
     ok: true,
     facts,
     requestBody: buildDirectTenQuestionRequest(
-      buildDirectTenWriterBrief(facts),
+      withExtraBrief(buildDirectTenWriterBrief(facts), extraBrief),
     ),
   };
 }
@@ -566,6 +576,16 @@ export async function prepareGlmQuestionsForIntake(input: {
   stubBehavior?: unknown;
   transport?: GlmQuestionTransport;
   evidenceDir?: string;
+  /** Spec 018 R-10: search data and rules appended to the brief. */
+  extraBrief?: string;
+  /** Spec 018 R-27: labelled synthetic questions for the stub. */
+  syntheticTexts?: string[];
+  /** Spec 018 R-11: the added checks, which also give each question's
+   * server-owned origin. */
+  postValidate?: (questions: string[]) => {
+    issues: string[];
+    origins: QuestionOrigin[];
+  };
 }): Promise<GlmQuestionsOutcome> {
   const method: GlmQuestionMethod = "direct-ten";
   const requestId = `local-glm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -584,7 +604,7 @@ export async function prepareGlmQuestionsForIntake(input: {
       assessment.returnedModel !== assessment.requestedModel,
     transport: kind,
   });
-  const built = buildFromIntake(input.intake);
+  const built = buildFromIntake(input.intake, input.extraBrief);
   if (!built.ok) return built.outcome;
   const { facts, requestBody } = built;
   const liveRequested = auditMode() === "live";
@@ -606,6 +626,7 @@ export async function prepareGlmQuestionsForIntake(input: {
       ? liveGlmTransport
       : createSyntheticGlmTransport({
           facts,
+          texts: input.syntheticTexts,
           behavior: GLM_STUB_BEHAVIORS.includes(
             input.stubBehavior as GlmStubBehavior,
           )
@@ -783,6 +804,8 @@ export async function prepareGlmQuestionsForIntake(input: {
   const issues = validateDirectTenQuestionPack(extraction.questions, facts).map(
     (issue) => issue.message,
   );
+  const searchChecks = input.postValidate?.(extraction.questions);
+  if (searchChecks) issues.push(...searchChecks.issues);
   const billedUsd = assessment.ok
     ? assessment.billedCostUsd
     : cheaperInferenceBilledCostUsd(envelope.body);
@@ -810,5 +833,6 @@ export async function prepareGlmQuestionsForIntake(input: {
     provenance,
     cost,
     ...(examination ? { examination } : {}),
+    ...(searchChecks ? { origins: searchChecks.origins } : {}),
   };
 }

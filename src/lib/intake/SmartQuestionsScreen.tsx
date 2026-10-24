@@ -32,6 +32,15 @@ import {
 } from "../audit/direct-ten-context-v2";
 import { validateDirectTenQuestions } from "../audit/questions-id-direct-ten";
 import type { SmartQuestionPack } from "./smart-session";
+import {
+  isProviderChoice,
+  MAX_ADVICE_QUESTIONS,
+  MIN_PROVIDER_QUESTIONS,
+  PROVIDER_SPLIT_MESSAGE,
+  questionPlaceMessage,
+} from "../discovery/question-rules";
+import { resolveSearchPlace } from "../discovery/places";
+import { currentOrigins, questionOriginLines } from "./question-origin-lines";
 import { OriginTag, ScreenError } from "./intake-bits";
 import { ScreenHeader } from "./step-one-screens";
 
@@ -410,6 +419,7 @@ export default function SmartQuestionsScreen({
     ),
   ];
   const ranges = nameRanges(draft, ownNames, comparators);
+  const origins = currentOrigins(pack);
   const edit = (slot: number) => {
     setIndex(slot);
     setDraft(pack.approved[slot] ?? "");
@@ -434,8 +444,23 @@ export default function SmartQuestionsScreen({
         issue.slot === null ||
         !before.has(key(issue)),
     );
-    if (found.length) {
-      setIssues(found.map((issue) => issue.message));
+    // Spec 018 R-11a: an edit keeps the place rule and the 7/2 split.
+    const place = context.searchPlace
+      ? resolveSearchPlace(context.searchPlace.value)
+      : null;
+    const searchIssues: string[] = [];
+    if (place && pack.origins) {
+      const message = questionPlaceMessage(next[index]!, place);
+      if (message) searchIssues.push(message);
+      const provider = next.filter(isProviderChoice).length;
+      if (
+        provider < MIN_PROVIDER_QUESTIONS ||
+        next.length - provider > MAX_ADVICE_QUESTIONS
+      )
+        searchIssues.push(PROVIDER_SPLIT_MESSAGE);
+    }
+    if (found.length || searchIssues.length) {
+      setIssues([...found.map((issue) => issue.message), ...searchIssues]);
       return;
     }
     if (next[index] !== pack.approved[index])
@@ -467,44 +492,65 @@ export default function SmartQuestionsScreen({
         </Collapsible.Panel>
       </Collapsible.Root>
       <ol className="m-0 mt-3 list-none p-0">
-        {pack.approved.map((question, slot) => (
-          <motion.li
-            key={slot}
-            className="flex items-start gap-3 border-t border-line-200 py-4"
-            data-question-slot={slot + 1}
-            initial={animate ? { opacity: 0, y: 8 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...SPRING_SETTLE, delay: animate ? slot * 0.035 : 0 }}
-          >
-            <span
-              className="type-mono-sm mt-0.5 w-5 shrink-0 text-ink-500 tabular-nums"
-              aria-hidden="true"
+        {pack.approved.map((question, slot) => {
+          const lines = origins?.[slot]
+            ? questionOriginLines(question, origins[slot]!)
+            : null;
+          return (
+            <motion.li
+              key={slot}
+              className="flex items-start gap-3 border-t border-line-200 py-4"
+              data-question-slot={slot + 1}
+              initial={animate ? { opacity: 0, y: 8 } : false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                ...SPRING_SETTLE,
+                delay: animate ? slot * 0.035 : 0,
+              }}
             >
-              {String(slot + 1).padStart(2, "0")}
-            </span>
-            <div className="grid min-w-0 flex-1 gap-1">
-              <p className="type-copy m-0 break-words text-ink-900">
-                <span className="sr-only">Pertanyaan {slot + 1}: </span>
-                {question}
-              </p>
-              <p className="type-caption m-0 text-ink-500">
-                Tanpa menyebut bisnis Anda
-                {question !== pack.originals[slot] ? " · diubah" : ""}
-              </p>
-            </div>
-            <button
-              type="button"
-              aria-label={`Ubah pertanyaan ${slot + 1}`}
-              disabled={approving}
-              onClick={() => edit(slot)}
-              className="grid size-11 shrink-0 place-items-center rounded-full text-ink-700 transition-transform active:scale-[0.94] disabled:opacity-50"
-            >
-              <span className="grid size-9 place-items-center rounded-full border border-line-200 bg-white">
-                <IconPencil size={16} stroke={1.75} aria-hidden="true" />
+              <span
+                className="type-mono-sm mt-0.5 w-5 shrink-0 text-ink-500 tabular-nums"
+                aria-hidden="true"
+              >
+                {String(slot + 1).padStart(2, "0")}
               </span>
-            </button>
-          </motion.li>
-        ))}
+              <div className="grid min-w-0 flex-1 gap-1">
+                <p className="type-copy m-0 break-words text-ink-900">
+                  <span className="sr-only">Pertanyaan {slot + 1}: </span>
+                  {question}
+                </p>
+                <p className="type-caption m-0 text-ink-500">
+                  Tanpa menyebut bisnis Anda
+                  {question !== pack.originals[slot] ? " · diubah" : ""}
+                </p>
+                {lines ? (
+                  <>
+                    <p
+                      className="type-caption m-0 text-ink-700"
+                      data-question-origin={origins![slot]!.label}
+                    >
+                      {lines.label}
+                    </p>
+                    <p className="type-caption m-0 text-ink-500">
+                      {lines.topic}
+                    </p>
+                  </>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                aria-label={`Ubah pertanyaan ${slot + 1}`}
+                disabled={approving}
+                onClick={() => edit(slot)}
+                className="grid size-11 shrink-0 place-items-center rounded-full text-ink-700 transition-transform active:scale-[0.94] disabled:opacity-50"
+              >
+                <span className="grid size-9 place-items-center rounded-full border border-line-200 bg-white">
+                  <IconPencil size={16} stroke={1.75} aria-hidden="true" />
+                </span>
+              </button>
+            </motion.li>
+          );
+        })}
       </ol>
       <p
         className="type-caption m-0 mt-2 border-t border-line-200 pt-4 text-ink-500"
@@ -569,6 +615,7 @@ export default function SmartQuestionsScreen({
 export function QuestionsPreparing({
   headingRef,
   preparing,
+  searching = false,
   live,
   onRetry,
   onBack,
@@ -576,6 +623,8 @@ export function QuestionsPreparing({
 }: {
   headingRef?: RefObject<HTMLHeadingElement | null>;
   preparing: boolean;
+  /** Spec 018: the questions start from a search for real questions. */
+  searching?: boolean;
   /** A live provider request may add AI cost. */
   live: boolean;
   onRetry: () => void;
@@ -597,6 +646,11 @@ export function QuestionsPreparing({
             : "Coba lagi hanya jika Anda ingin membuat permintaan baru."
         }
       />
+      {preparing && searching ? (
+        <p role="status" className="type-copy-sm m-0 mt-3 text-ink-600">
+          Mencari pertanyaan yang benar-benar dicari orang…
+        </p>
+      ) : null}
       {preparing ? (
         <ol className="m-0 mt-6 list-none p-0" aria-hidden="true">
           {Array.from({ length: 10 }, (_, slot) => (

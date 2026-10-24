@@ -19,6 +19,7 @@ import {
   type MinimizedIndonesianBrief,
 } from "../audit/questions-id";
 import type { QuestionFactsV3 } from "../audit/question-facts-v3";
+import type { QuestionOrigin } from "../discovery/question-rules";
 import {
   validateIndonesianQuestionPackV3,
   type CheaperInferenceDiagnostics,
@@ -83,6 +84,9 @@ export type GlmQuestionsOutcome =
         selfCritique: string;
         intentLabels: (string | null)[];
       };
+      /** Spec 018 R-07: server-owned origin of each question (label, topic,
+       * number), in question order. Absent for intakes before Spec 018. */
+      origins?: QuestionOrigin[];
     }
   | {
       status: "validation_failed";

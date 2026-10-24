@@ -1112,8 +1112,15 @@ describe("smart blank intake", () => {
     expect(
       await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" }),
     ).toBeTruthy();
-    expect(requests).toHaveLength(4);
-    const sent = requests[3]!.body!;
+    // Spec 018 R-15: discovery runs in its own request, just before the
+    // questions, for the same order and the same confirmed intake.
+    expect(requests).toHaveLength(5);
+    expect(requests[3]!.url).toBe("/api/audit/discovery");
+    expect(requests[3]!.body).toEqual({
+      order_id: ORDER_ID,
+      intake: requests[4]!.body!.intake,
+    });
+    const sent = requests[4]!.body!;
     expect(sent.order_id).toBe(ORDER_ID);
     expect(sent).not.toHaveProperty("brief");
     expect(sent.intake).toMatchObject({
@@ -1133,7 +1140,7 @@ describe("smart blank intake", () => {
     expect(
       JSON.parse(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}"),
     ).toMatchObject({ version: 9, stage: "questions" });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
   });
 
   it("holds a literal started v1 pair without changing its bytes or calling a provider", async () => {
@@ -3709,6 +3716,7 @@ describe("Spec 013 J7 final review", () => {
       "/api/orders",
       "/api/audit/extract",
       "/api/orders/status",
+      "/api/audit/discovery",
       "/api/audit/glm-questions",
     ]);
   });
@@ -4060,6 +4068,7 @@ describe("Spec 013 JQ customer screens", () => {
       "identity",
       "/api/orders",
       "/api/audit/extract",
+      "/api/audit/discovery",
       "/api/audit/glm-questions",
     ]);
     const [context] = jqQuestionBodies(fetchMock);

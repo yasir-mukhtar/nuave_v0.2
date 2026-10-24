@@ -81,6 +81,7 @@ import {
   SmartCompetitorsScreen,
   SmartTargetCustomerScreen,
 } from "./smart-customer-screens";
+import { currentOrigins } from "./question-origin-lines";
 import SmartQuestionsScreen, {
   QuestionsPreparing,
 } from "./SmartQuestionsScreen";
@@ -1599,6 +1600,9 @@ export default function SmartIntakeJourney({
           context: session.frozen.context,
           prompts: smartPackPrompts(session.pack),
           originals: session.pack.originals,
+          ...(session.pack.origins
+            ? { question_origins: currentOrigins(session.pack) }
+            : {}),
         }),
       });
       const body = (await response.json().catch(() => ({}))) as {
@@ -1688,6 +1692,23 @@ export default function SmartIntakeJourney({
       live,
     );
     try {
+      // Spec 018 R-04/R-15: search discovery runs in its own request first.
+      // Its pool stays on the server; if it fails, the questions are written
+      // from the business facts (R-08).
+      if (session.order?.id && frozen.context.searchPlace) {
+        const discovery = await fetch("/api/audit/discovery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order_id: session.order.id, intake: frozen }),
+        }).catch(() => null);
+        const discoveryBody = discovery
+          ? ((await discovery.json().catch(() => ({}))) as { code?: string })
+          : {};
+        if (discoveryBody.code === "ORDER_REQUIRED") {
+          expireOrder(session, "summary");
+          return;
+        }
+      }
       const response = await fetch("/api/audit/glm-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1744,6 +1765,9 @@ export default function SmartIntakeJourney({
           revision: 0,
           provenance,
           billedCostUsd: cost.billedUsd,
+          ...(Array.isArray(outcome.origins) && outcome.origins.length === 10
+            ? { origins: outcome.origins }
+            : {}),
         };
         // Do not replace the started unknown attempt until the pack is valid.
         canonicalLockedDirectTenPack(smartPackPrompts(pack), frozen.context);
@@ -2517,6 +2541,7 @@ export default function SmartIntakeJourney({
       <QuestionsPreparing
         headingRef={headingRef}
         preparing={busy === "questions"}
+        searching={Boolean(session.frozen.context.searchPlace)}
         live={live}
         onRetry={() => void confirm()}
         onBack={goBack}

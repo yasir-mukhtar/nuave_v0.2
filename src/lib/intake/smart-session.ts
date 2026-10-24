@@ -5,6 +5,7 @@ import {
 } from "../audit/types";
 import { DIRECT_TEN_PROMPT_IDS } from "../audit/locked-question-pack";
 import type { GlmPackProvenance } from "./local-questions";
+import type { QuestionOrigin } from "../discovery/question-rules";
 import type { GenerationAttempt } from "./local-session";
 import {
   parseFrozenSmartIntake,
@@ -22,6 +23,8 @@ export type SmartQuestionPack = {
   revision: number;
   provenance: GlmPackProvenance;
   billedCostUsd: number | null;
+  /** Spec 018 R-07: the server's origin for each written question. */
+  origins?: QuestionOrigin[];
 };
 
 export type SmartStage = SmartSession["stage"];
@@ -413,7 +416,9 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         !pack.originals.every((item) => typeof item === "string") ||
         !pack.approved.every((item) => typeof item === "string") ||
         !Number.isInteger(pack.revision) ||
-        !isRecord(pack.provenance)
+        !isRecord(pack.provenance) ||
+        (pack.origins !== undefined &&
+          (!Array.isArray(pack.origins) || pack.origins.length !== 10))
       )
         return null;
     }

@@ -47,6 +47,9 @@ export type QuestionOrigin = {
   topic: string | null;
   volume: number | null;
   dataMonth: string | null;
+  /** The topic's core words (R-06), so a number can be checked against an
+   * edited text without the pool. */
+  core: string[] | null;
   /** For an edited question: the topic it started from (Experience 3). */
   originalTopic?: string | null;
 };
@@ -97,15 +100,11 @@ export function topicCoreFor(
 
 /** A number is shown only when the question contains its topic's core words
  * (R-06, R-11, AC-19). */
-export function numberShown(
-  question: string,
-  origin: QuestionOrigin,
-  pool: Pick<DiscoveryPool, "topics"> | null,
-): boolean {
-  const topic = origin.topic ?? origin.originalTopic ?? null;
-  const core = topicCoreFor(topic, pool);
+export function numberShown(question: string, origin: QuestionOrigin): boolean {
   return (
-    origin.volume !== null && core !== null && containsAllWords(question, core)
+    origin.volume !== null &&
+    origin.core !== null &&
+    containsAllWords(question, origin.core)
   );
 }
 
@@ -191,14 +190,19 @@ export function validateSearchGroundedPack(input: {
           add("Topik pertanyaan tidak sesuai.");
       }
     }
-    if (origin.volume !== null && !numberShown(question, origin, pool))
+    if (origin.volume !== null && !numberShown(question, origin))
       add("Jumlah pencarian tidak sesuai dengan pertanyaan.");
-    if (origin.volume !== null && origin.label !== "diubah_oleh_anda") {
-      const topic = pool?.topics.find((entry) => entry.text === origin.topic);
+    // A topic, number or core words not exactly as saved was changed on the
+    // way (R-07, AC-04).
+    const topicText = origin.topic ?? origin.originalTopic ?? null;
+    if (origin.volume !== null || topicText !== null) {
+      const topic = pool?.topics.find((entry) => entry.text === topicText);
       if (
         !topic ||
-        topic.volume !== origin.volume ||
-        topic.dataMonth !== origin.dataMonth
+        (origin.volume !== null &&
+          (topic.volume !== origin.volume ||
+            topic.dataMonth !== origin.dataMonth)) ||
+        JSON.stringify(topic.core) !== JSON.stringify(origin.core)
       )
         add("Jumlah pencarian tidak sesuai.");
     }
@@ -232,6 +236,7 @@ export function originForGenerated(
       topic: exact.topic,
       volume: exact.volume,
       dataMonth: exact.dataMonth,
+      core: topicCoreFor(exact.topic, pool),
     };
   }
   const topic = longestTopicIn(question, pool.topics);
@@ -241,6 +246,7 @@ export function originForGenerated(
         topic: topic.text,
         volume: topic.volume,
         dataMonth: topic.dataMonth,
+        core: topic.core,
       }
     : null;
 }
@@ -261,6 +267,7 @@ export const FALLBACK_ORIGIN: QuestionOrigin = {
   topic: null,
   volume: null,
   dataMonth: null,
+  core: null,
 };
 
 /** R-07 / AC-19: the server's origins for the approved texts. An unchanged
@@ -271,7 +278,6 @@ export function originsForApproved(input: {
   approved: readonly string[];
   generated: readonly string[];
   generatedOrigins: readonly QuestionOrigin[];
-  pool: DiscoveryPool | null;
 }): QuestionOrigin[] {
   return input.approved.map((question, index) => {
     const origin = input.generatedOrigins[index] ?? FALLBACK_ORIGIN;
@@ -284,9 +290,10 @@ export function originsForApproved(input: {
       topic: null,
       volume: origin.volume,
       dataMonth: origin.dataMonth,
+      core: origin.core,
       originalTopic: origin.topic ?? origin.originalTopic ?? null,
     };
-    return numberShown(question, edited, input.pool)
+    return numberShown(question, edited)
       ? edited
       : { ...edited, volume: null, dataMonth: null };
   });

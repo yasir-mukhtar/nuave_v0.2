@@ -83,6 +83,8 @@ export type OrderState =
  * runner's. */
 export const ORDER_STAGE_STATES: Record<string, readonly OrderState[]> = {
   extract: ["open"],
+  /** Spec 018 R-04: search discovery, before the questions are written. */
+  discovery: ["open"],
   questions: ["open"],
   observation: ["running"],
   report: ["reporting"],
