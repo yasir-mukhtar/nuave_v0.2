@@ -151,17 +151,26 @@ export function buildReportPresentation(
     observationIds.some((id, index) => id !== detailIds[index])
   )
     return unavailable("binding");
+  // Spec 018 R-20: a two-source report keeps honest failed ChatGPT records,
+  // bound to a failed detail and to a failed outcome in its code-built block.
+  // Every other report still needs ten completed answers.
+  const failedAllowed = (id: string) =>
+    report.two_source?.questions.some(
+      (q) => q.prompt_id === id && q.chatgpt.outcome === "failed",
+    ) === true;
+  const detailRun = new Map(report.details.map((d) => [d.prompt_id, d.run]));
   if (
     !contentSchema.safeParse(report).success ||
     observations.some(
       (o) =>
         !evidenceSchema.safeParse(o).success ||
-        o.run_status !== "completed" ||
         !o.question.trim() ||
-        !o.raw_answer.trim() ||
-        !Number.isFinite(Date.parse(o.observed_at)),
-    ) ||
-    report.details.some((d) => d.run !== "completed")
+        !Number.isFinite(Date.parse(o.observed_at)) ||
+        (o.run_status === "completed"
+          ? !o.raw_answer.trim() || detailRun.get(o.prompt_id) !== "completed"
+          : !failedAllowed(o.prompt_id) ||
+            detailRun.get(o.prompt_id) !== "failed"),
+    )
   )
     return unavailable("evidence");
   const references = [

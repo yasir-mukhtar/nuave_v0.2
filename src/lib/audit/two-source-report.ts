@@ -70,6 +70,8 @@ export type TopicRow = {
 
 export type TwoSourceReport = {
   version: typeof TWO_SOURCE_REPORT_VERSION;
+  /** For the "Minta bantuan" email (R-20); null when the order has none. */
+  order_number: string | null;
   places: {
     google: { code: number; name: string };
     chatgpt: { code: number; name: string };

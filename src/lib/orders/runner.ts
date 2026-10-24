@@ -1340,6 +1340,7 @@ async function reportStep(
                 prompts: intake.prompts,
                 observations,
                 setup,
+                orderNumber: order.order_number,
               }),
             }
           : report,

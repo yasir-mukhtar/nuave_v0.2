@@ -10,6 +10,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 
 import { generateSyntheticLocalReport } from "../audit/local-direct-ten-audit";
 import type { AuditReport } from "../audit/types";
+import { makeSmartCustomerEvidenceExport } from "../audit/customer-evidence-export";
 import { containsPhoneNumber } from "../checks/phones";
 import type { CheckSend } from "../checks/send";
 import { syntheticCheckSend } from "../checks/synthetic";
@@ -235,6 +236,34 @@ describe("a two-source order, synthetic, whole path (R-12..R-20, AC-02, AC-06, A
     }
     expect(containsPhoneNumber(orderRow(id).report_json!)).toBe(false);
     expect(containsPhoneNumber(JSON.stringify(t.reportInputs))).toBe(false);
+    // The JSON export built from the same data (R-28, R-29): its own version,
+    // no phone number and nothing of the raw DataForSEO response.
+    const intake = JSON.parse(orderRow(id).intake_json!) as {
+      context: Parameters<typeof makeSmartCustomerEvidenceExport>[0];
+      prompts: Parameters<typeof makeSmartCustomerEvidenceExport>[1];
+    };
+    const exported = JSON.stringify(
+      makeSmartCustomerEvidenceExport(
+        intake.context,
+        intake.prompts,
+        saved.map((row) => JSON.parse(row.observation_json!)),
+        report,
+      ),
+    );
+    expect(JSON.parse(exported).export_version).toBe(
+      "nuave-evidence-two-source-v1",
+    );
+    expect(containsPhoneNumber(exported)).toBe(false);
+    for (const seen of [
+      exported,
+      orderRow(id).report_json!,
+      JSON.stringify(t.reportInputs),
+      ...saved.map((row) => row.observation_json ?? ""),
+    ]) {
+      expect(seen).not.toMatch(
+        /chat_gpt_local_businesses|brand_entities|"phone"|ai_overview_element/,
+      );
+    }
     // The ready email went out once.
     expect(t.mail.sent.filter((m) => m.subject.includes("siap"))).toHaveLength(
       1,

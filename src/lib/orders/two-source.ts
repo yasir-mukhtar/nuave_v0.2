@@ -170,6 +170,7 @@ export function buildTwoSourceReport(input: {
   prompts: readonly AuditPrompt[];
   observations: readonly AuditObservation[];
   setup: TwoSourceSetup;
+  orderNumber: string | null;
 }): TwoSourceReport {
   const { setup } = input;
   const ownNames = new Set(setup.names.map(normalized));
@@ -249,6 +250,7 @@ export function buildTwoSourceReport(input: {
   const googleText = summaries.map((q) => q.google.text).join("\n");
   return {
     version: TWO_SOURCE_REPORT_VERSION,
+    order_number: input.orderNumber,
     places: {
       google: setup.google,
       chatgpt: { code: INDONESIA_LOCATION_CODE, name: "Indonesia" },
