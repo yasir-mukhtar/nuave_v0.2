@@ -17,5 +17,9 @@ export default defineConfig([
     ".local-evidence/**",
     ".secrets/**",
     "acceptance-review-*/**",
+    // Third-party Claude skills copied in as-is; their example code is not app code.
+    ".claude/skills/remotion-ads/**",
+    ".claude/skills/remotion-best-practices/**",
+    ".claude/skills/video-ad-generator/**",
   ]),
 ]);
