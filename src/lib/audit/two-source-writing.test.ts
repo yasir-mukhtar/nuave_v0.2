@@ -299,6 +299,22 @@ describe("round-4 notes: counts, limits, abbreviations and details", () => {
       expect(sentenceFlagged(sentence, f), sentence).toBe(false);
   });
 
+  it("N-37: an absolute negation is never excused by a question word", () => {
+    const f = facts(3, 3);
+    for (const sentence of [
+      "Di ChatGPT, bisnis Anda tidak disebut di pertanyaan mana pun.",
+      "Di ChatGPT, bisnis Anda tidak muncul pada pertanyaan yang diuji.",
+      "Di Google AI Overview, bisnis Anda tidak disebut untuk topik mana pun.",
+      "Di ChatGPT, bisnis Anda sama sekali tidak muncul dalam pencarian.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(true);
+    for (const sentence of [
+      "Di ChatGPT, bisnis Anda tidak muncul untuk kebutuhan implan gigi.",
+      "Di ChatGPT, bisnis Anda tidak disebut di 6 jawaban.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
+  });
+
   it("N-34: a sentence about a detail or other businesses is not about the business being named", () => {
     const f = facts(3, 3);
     for (const sentence of [

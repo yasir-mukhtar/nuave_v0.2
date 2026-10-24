@@ -264,6 +264,10 @@ const RECOMMEND = /\bdirekomendasikan|merekomendasikan\b/i;
 const LIMITED =
   /\b(?:pertanyaan|kebutuhan|jawaban|ringkasan|topik|pencarian|layanan)\s+(?:lain(?:nya)?|tentang|soal|mengenai|untuk)\b|\b(?:sebagian|beberapa)\s+(?:pertanyaan|jawaban|ringkasan|topik|kebutuhan|pencarian)\b|\bkecuali\b|\b(?:untuk|pada|dalam|di)\s+(?:pertanyaan|kebutuhan|topik|pencarian)\b|\bketika\b|\bsebagai\b|\bsaat\s+(?:pelanggan|orang|pasien|calon)\b|\bpertanyaan\s+(?:ke-?\s*)?\d/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
+/** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
+ * question word next to them never limits the negation. */
+const ABSOLUTE =
+  /\bmana\s*pun\b|\bsatu\s+pun\b|\bsama\s+sekali\b|\byang\s+diuji\b/i;
 const COUNT = /\b(\d+)\s+dari\s+(\d+)\b/g;
 /** "di 6 jawaban", "pada 5 ringkasan": a count with no "dari". */
 const BARE_COUNT =
@@ -463,7 +467,7 @@ function contradictedSources(
       continue;
     }
     if (kind !== "business") continue;
-    if (negative && !LIMITED.test(clause)) {
+    if (negative && (ABSOLUTE.test(clause) || !LIMITED.test(clause))) {
       // "tidak disebut di ChatGPT maupun Google" is false when either named
       // it; with no source in the sentence, when any did.
       for (const source of at.sources)
