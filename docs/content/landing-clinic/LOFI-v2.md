@@ -6,7 +6,7 @@
 > - **History:** it replaces [`LOFI.md`](./LOFI.md) (v1.1). v2.0 and v2.1 are in git history.
 > - **Who:** built by the designer agent from [`COPY-v2.md`](./COPY-v2.md) v2.2, with every text placed word for word; checked by the orchestrator.
 >
-> **Release gate:** the page describes the Spec 018 audit (approved, not merged; branch `claude/laughing-fermi-prsgqf`). It ships only in the same release as Spec 018.
+> **Release gate:** the page describes the Spec 018 audit, which went live on 24 October 2026 (PR #151). The product side is met; the page still has to be built. The notes inside the lofi and on the Figma boards are the v2.2 snapshot, so they still say "Klinik Anda" is not built.
 > **Figma:** file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2):
 > - [00 · Strategy at a glance · v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=54-2)
 > - [01 · Mobile 390 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=55-2), with a note beside each section. Below the page it has these extra frames:
@@ -83,7 +83,7 @@ The five gaps found in v2.1, now closed:
 | S2 | Makin banyak pasien pilih dokter lewat AI. | Three number cards, Indonesia first: 2024 (Google AI Overview mulai muncul di pencarian di Indonesia), 47% (warga AS, rater8), 40 juta (OpenAI). One source line in the same order |
 | S3 | Satu pertanyaan pasien, dua jawaban AI. | The same question in a **ChatGPT** chat (with its "Tanyakan apa saja" input bar) and on a **Google** results page with the labelled **AI Overview** box (two source chips). The chat names Klinik A, B and C; the AI Overview box names Klinik A, D and E. Both end in the dashed "Klinik Anda?". The line ends "Klinik Anda termasuk?" |
 | S4 | Kami tanya AI persis seperti pasien Anda. | Three steps, each with its picture: the website field and the found clinic; the real probe question card ("implan gigi surabaya harga", "Dicari di Google", ±4.400 pencarian/bulan, data September 2026); the "Tim Nuave" email. Tags Gratis / Rp249.000. Caption under the steps |
-| S5 | Lihat apa kata AI tentang klinik Anda. | **The two-source report in 4 tabs** (Skor · Jawaban AI · Klinik lain · Perbaikan), with the Spec 018 labels in their clinic wording: "Klinik Anda muncul di ...", "Klinik lain yang disebut" (Yasir's decision; the product change is recorded in Spec 018, not built yet). All four states are drawn beside the mobile board |
+| S5 | Lihat apa kata AI tentang klinik Anda. | **The two-source report in 4 tabs** (Skor · Jawaban AI · Klinik lain · Perbaikan), with the Spec 018 labels in their clinic wording: "Klinik Anda muncul di ...", "Klinik lain yang disebut" (Yasir's decision, built in Spec 018; the live report still heads the other clinics "Bisnis lain yang disebut"). All four states are drawn beside the mobile board |
 | S6 | Bukti, bukan janji. | Four cards: Apa adanya · Bahasa pasien · Data publik · Batasnya jelas |
 | S7 | Yang Anda dapat dari satu audit. | One card: "AI Visibility Report · Diperiksa di ChatGPT dan Google AI Overview", nine rows with ticks, then the price block: Rp249.000, "Bayar setelah klinik Anda ketemu.", **the form**, payment chips, "Laporan siap dalam 15 menit setelah audit dimulai." Desktop: list left, price right; mobile: stacked |
 | S8 | FAQ | 11 rows, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq |
@@ -146,10 +146,12 @@ Most of mobile's extra length is the step pictures in S4 (about +280px), now on 
 - **Delivery line:** "Laporan siap dalam 15 menit setelah audit dimulai." Spec 018's promise text now matches (PR #151, commit 727843a).
 - **Naming:** "Google AI Overview" everywhere, including inside the Google mock; no "Ringkasan AI".
 - **Contact:** email only (support@nuave.ai); no WhatsApp.
-- **Report label:** "Klinik Anda" in the report, as the S5 mock shows. It is recorded in Spec 018 but not built yet, and must ship before this page does.
+- **Report label:** "Klinik Anda" in the report, as the S5 mock shows. Spec 018 built it and is live, except the heading of the other clinics list (below).
 - **No "coba sendiri" line**, and the H1 stays as it is.
 - **rater8:** the figure stays, labelled as a US survey ("di AS").
 
 **Still open:**
 - **Refund wording:** approve the spoken version in "Kalau ada masalah?".
 - **Search engines:** let them in at launch (`src/app/robots.ts` blocks the whole site while it is pre-release).
+- **Other clinics heading:** the live report says "Bisnis lain yang disebut"; the S5 mock says "Klinik lain yang disebut". Recommendation: the product says "Klinik lain yang disebut" for clinics.
+- **Which clinic leads the examples:** the target market is now beauty clinics in Jabodetabek and Bandung. Recommendation: "Kecantikan" becomes the first, selected tab, and S3 to S5 use a beauty example in Jabodetabek or Bandung ([`STRATEGY-v2.md`](./STRATEGY-v2.md) §13).

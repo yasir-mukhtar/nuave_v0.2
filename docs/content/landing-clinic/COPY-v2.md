@@ -2,10 +2,10 @@
 
 > Status: final draft copy v2.2 for the light page (24 October 2026). Not live. v2.2 applies Yasir's annotations and Fable's Indonesian-voice review of v2.1 (see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §11). v2.1 added the new price, both sources, questions based on Google searches, and a list of what the clinic gets; v2.0 and v2.1 are in git history. It replaces [`COPY.md`](./COPY.md) (v1, kept as history).
 > Strategy: [`STRATEGY-v2.md`](./STRATEGY-v2.md) (§10 covers v2.1). Layout: [`LOFI-v2.md`](./LOFI-v2.md). Growth check: [`GROWTH.md`](./GROWTH.md) Part 5; "growth N" below means item N there.
-> **Release gate:** this copy describes the Spec 018 audit: the ChatGPT app and Google AI Overview, questions based on Google search data, Rp249.000. Spec 018 is approved but not merged (branch `claude/laughing-fermi-prsgqf`). Publish this page only in the same release as Spec 018. Until then, the live page keeps Rp99.000.
+> **Release gate:** this copy describes the Spec 018 audit: the ChatGPT app and Google AI Overview, questions based on Google search data, Rp249.000. Spec 018 went live on 24 October 2026 (PR #151), so the product now matches this copy, except one report heading (see the founder notes). What remains is building the page; the open items are in the founder notes.
 
 > Author: copywriter agent (round 5), with the growth marketer's must-fixes folded in and two orchestrator edits (the step 2 wording, and a "Ringkasan AI" mention in the FAQ that Yasir later removed).
-> Facts: rater8 (US survey), OpenAI January 2026 (global), Google Indonesia 2024. Product facts: Spec 018 and `docs/VOICE.md` on the Spec 018 branch. Example search numbers: the Spec 018 probe (Google, all of Indonesia, data September 2026). No other numbers.
+> Facts: rater8 (US survey), OpenAI January 2026 (global), Google Indonesia 2024. Product facts: Spec 018 and `docs/VOICE.md`, now on main. Example search numbers: the Spec 018 probe (Google, all of Indonesia, data September 2026). No other numbers.
 > Founder placeholders live only in the notes at the end, never on the page.
 
 ## Word count
@@ -219,7 +219,7 @@ Header in every tab:
   - **Google menampilkan AI Overview di 6 dari 10 pertanyaan**
   - **Klinik Anda muncul di 1 dari 6 pertanyaan** · six beads, 1 filled
 
-> Note: Yasir decided on 24 October 2026 that clinic reports say "Klinik Anda" where the product says "Bisnis Anda". The product change is recorded in Spec 018 but not built yet; it must ship before this page does, so the mock stays true.
+> Note: Yasir decided on 24 October 2026 that clinic reports say "Klinik Anda" where the product says "Bisnis Anda". Spec 018 built it for these result lines before going live. The "Klinik lain" tab is the exception: the live report still heads that list "Bisnis lain yang disebut" (see the founder notes).
 - Button **Download PDF**
 
 **Jawaban AI** (title in the mock: **Jawaban ChatGPT dan Google AI Overview**)
@@ -377,12 +377,14 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 - **Delivery line:** "Laporan siap dalam 15 menit setelah audit dimulai." It is used in the price card, in step 3 (short form) and in "Berapa lama?". Spec 018's promise text (order preview, checkout, payment email) was aligned to it the same day (PR #151, commit 727843a).
 - **Naming:** "Google AI Overview" everywhere, including the label inside the Google mock; no "Ringkasan AI" (the FAQ mention is removed).
 - **Contact:** email only, support@nuave.ai; no WhatsApp.
-- **Report label:** clinic reports say "Klinik Anda" (the S5 mock shows it). It is recorded in Spec 018 and the decision log, but not built yet; build it before this page ships.
+- **Report label:** clinic reports say "Klinik Anda" (the S5 mock shows it). Spec 018 built it for the result lines and is live; one heading still differs (below).
 - **No "coba sendiri" line** under S2.
 - **The H1 stays:** "Pasien sekarang tanya AI dulu, baru pilih klinik." (no variant).
 
 **Still open:**
 - `[KONFIRMASI]` "Kalau ada masalah?" says the R-23 refund rule in spoken words ("Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan."). Approve or adjust.
+- **Other clinics heading:** the live report heads the list "Bisnis lain yang disebut", clinics included; the S5 mock says "Klinik lain yang disebut". Recommendation: make clinic reports say "Klinik lain yang disebut" (a small product change). Otherwise the mock takes the product's words.
+- **Which clinic leads the examples:** the target market is now beauty clinics in Jabodetabek and Bandung (decision log, 24 October 2026). The examples lead with dental clinics: the "Gigi" tab, braces in Depok, implants in Surabaya. Recommendation: lead with beauty clinics; see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §13.
 - Search capture needs the site to be indexable (`robots` is `disallow /` today) and, per growth, one short article on "cara muncul di Google AI Overview" that links here.
 
 **Notes:**

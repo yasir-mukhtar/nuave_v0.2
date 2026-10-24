@@ -976,7 +976,7 @@ Before any live traffic, run the same pair (long vs short) as a **preference tes
 
 ### Where each fix landed (orchestrator)
 
-1. **Launch gate:** written into the status of `COPY-v2.md`, `LOFI-v2.md` and `STRATEGY-v2.md` §10. v2.1 ships only with Spec 018; v2 (Rp99.000) stays live until then.
+1. **Launch gate:** written into the status of `COPY-v2.md`, `LOFI-v2.md` and `STRATEGY-v2.md` §10. v2.1 ships only with Spec 018; v2 (Rp99.000) stays live until then. Update: Spec 018 went live on 24 October 2026, so the product side of this gate is met.
 2. **Value list:** nine items in growth's order under "Yang Anda dapat dari satu audit.", with the price in the line under it, drawn as one report-style card with the price card joined at its foot.
 3. **Delivery and failure:** "biasanya 15 menit" in step 3; the R-23 sentence in the price card; R-23 in "Berapa lama?" and "Kalau ada masalah?"; marked `[KONFIRMASI Q-1]` for Yasir.
 4. **No "asli":** the hero fact says "10 pertanyaan berdasarkan pencarian Google", and so does step 2. The answers are "ditanyakan langsung ke ChatGPT, dijawab utuh". The new FAQ "Dari mana pertanyaannya?" explains the labels.

@@ -1,6 +1,7 @@
 # Clinic landing page: content strategy v2 (light)
 
 > Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list), then to **v2.2** after his and Fable's review (see §11: one spoken register, his wording, mobile = desktop). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
+> **Update, later on 24 October 2026:** Spec 018 is merged and live: Rp249.000, the new delivery line, and "Klinik Anda" in clinic reports. Yasir also set the target market: beauty clinics in Jabodetabek and Bandung. See §13.
 > Reading note: §1 to §9 are the v2.0 strategy as approved (Rp99.000, the old S3 and price section). Where they differ from §10 and §11, the later section wins.
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
@@ -192,7 +193,7 @@ v1's *"Klinik Anda disebut AI, atau klinik sebelah?"* is not recommended. The ja
 | Google shows AI answers in Indonesia (2024), and AI Mode works in Bahasa Indonesia (2025) | Google Indonesia blog, 5 September 2024 and 9 September 2025 | |
 | v2.1: the feature's Indonesian name is "Ringkasan AI" | Google Search Help in Indonesian, [support.google.com/websearch/answer/14901683?hl=id](https://support.google.com/websearch/answer/14901683?hl=id), checked 24 October 2026 | The page keeps the settled name "Google AI Overview" and mentions "Ringkasan AI" once in the FAQ. |
 | v2.1 example numbers: "harga implan gigi" ±4.400, "clear aligner" ±3.600, "harga pemasangan behel di dokter gigi" ±1.300 searches a month | Spec 018 probe, 24 October 2026: Google search data for all of Indonesia, data month September 2026 | Shown only as labelled examples ("Contoh"), with the full topic line, never as a clinic's own numbers. |
-| v2.1 product facts: questions based on Google search data, both sources, report labels, Rp249.000, "biasanya 15 menit" | Spec 018 (approved 24 October 2026) and its `docs/VOICE.md`, on branch `claude/laughing-fermi-prsgqf` | Not merged yet. True on the live site only once Spec 018 is live. |
+| v2.1 product facts: questions based on Google search data, both sources, report labels, Rp249.000, "biasanya 15 menit" | Spec 018 (approved 24 October 2026) and its `docs/VOICE.md` | Live since 24 October 2026 (PR #151). The delivery line is now "Laporan siap dalam 15 menit setelah audit dimulai." (§12). |
 
 The rater8 press release (3 June 2026) also says 60% trusted an AI summary without checking further, and 66% had met wrong provider information from AI. These are strong but come only from the vendor's own release. They are left off the page unless Yasir wants them. "Wrong information" would be a good second line for the blind-spot section.
 
@@ -225,13 +226,13 @@ The hero headline as recommended, the rater8 figure labelled as a US survey, the
 2. Say that Nuave checks clinics in **ChatGPT and Google AI Overview**. A clinic marketer who wonders how to appear in Google AI Overview should find the answer here. Show a patient getting an answer in both.
 3. Say that the questions come from real search volume, without naming the data source. Then list everything the clinic gets, so the value feels far beyond Rp249.000.
 
-**What the product will do.** [Spec 018](https://github.com/yasir-mukhtar/nuave_v0.2/blob/claude/laughing-fermi-prsgqf/specs/018-search-grounded-chatgpt-google-audit/SPEC.md) was approved by Yasir on 24 October 2026 and is being built on branch `claude/laughing-fermi-prsgqf`. It is not merged yet. It says:
+**What the product will do.** [Spec 018](https://github.com/yasir-mukhtar/nuave_v0.2/blob/main/specs/018-search-grounded-chatgpt-google-audit/SPEC.md) was approved by Yasir on 24 October 2026, while it was still being built. It went live later that day (§13). It says:
 - **Questions:** the ten questions come from Google search data for the clinic's type and city. Each one carries an origin label and, when known, a monthly search number for its topic.
 - **Answers:** each question is asked word for word to the ChatGPT app and to Google AI Overview.
 - **Report:** one result card per source, both answers with their sources, the other clinics named, the topics that don't name the clinic yet, and the fix list.
 - **Price and delivery:** Rp249.000, and the report is usually ready in 15 minutes.
 
-**Release gate.** v2.1 describes that audit. It ships in the same release as Spec 018. Until then, v2 (Rp99.000) stays the live version.
+**Release gate.** v2.1 describes that audit. It ships in the same release as Spec 018. Until then, v2 (Rp99.000) stays the live version. Update: Spec 018 went live on 24 October 2026, so the product side of this gate is met (§13).
 
 **What changed on the page.**
 
@@ -333,7 +334,29 @@ v2.2 is on the page "Lofi v2.2 · Light". Fable marked each card [P1] fix before
   It was committed on the Spec 018 branch (PR #151, commit 727843a), and the Spec 018 session was told to pull it.
 - **Google AI Overview, not "Ringkasan AI".** The one FAQ mention of "Ringkasan AI" is removed; the Google mock keeps the "AI Overview" label.
 - **Email only.** The founder line stays "Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai."; no WhatsApp.
-- **"Klinik Anda" in the report.** The S5 report pictures now say "Klinik Anda muncul di ..." and "Klinik lain yang disebut". The product still says "Bisnis Anda". The change is recorded in Spec 018 (a note under its report layout) and in the decision log, but it is not built yet. It must ship before this page does, or the picture would promise something the product doesn't do.
+- **"Klinik Anda" in the report.** The S5 report pictures now say "Klinik Anda muncul di ..." and "Klinik lain yang disebut". The product still says "Bisnis Anda". The change is recorded in Spec 018 (a note under its report layout) and in the decision log, but it is not built yet. It must ship before this page does, or the picture would promise something the product doesn't do. Update: Spec 018 built it before going live; one heading still differs (§13).
 - **No "coba sendiri" line**, and **the H1 stays** "Pasien sekarang tanya AI dulu, baru pilih klinik.".
 
 Still open: the refund wording in the FAQ "Kalau ada masalah?", and letting search engines in at launch.
+
+## 13. After Spec 018 went live (24 October 2026)
+
+- **Spec 018 is live.** It was merged into main as [PR #151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151) and deployed the same day. The deployed product now:
+  - charges Rp249.000;
+  - shows the delivery line "Laporan siap dalam 15 menit setelah audit dimulai.";
+  - asks the ChatGPT app and Google AI Overview.
+
+  So the product side of the release gate (§10) is met. This page still has to be built.
+- **"Klinik Anda" is built** for the result lines. A clinic's report says "Klinik Anda muncul di X dari N pertanyaan" and "Klinik Anda direkomendasikan di Y dari N pertanyaan", and the Google card says "Klinik Anda muncul di W dari Z pertanyaan".
+- **One label still differs.** Every report, clinics included, heads its list of other places named "Bisnis lain yang disebut". The S5 mock says "Klinik lain yang disebut". Recommendation: a small product change so clinic reports say "Klinik lain yang disebut" too. The other way is to put the product's words in the mock.
+- **Target market** ([decision log](../../DECISION_LOG.md#2026-10-24--target-market-beauty-clinics-in-jabodetabek-and-bandung), 24 October 2026): beauty clinics in Jabodetabek and Bandung come first. The buyer is the clinic owner or the person who runs its marketing, which is who this page already speaks to. Other clinic types are secondary, and the decision keeps them on this page as they are.
+- **Open: which clinic leads the examples.** Today the examples lead with dental clinics:
+  - the hero's first tab, selected by default, is "Gigi";
+  - S3 asks about braces in Depok;
+  - S4 and S5 use "Klinik Gigi Fiksi" in Surabaya, outside the target cities, with real dental search numbers.
+
+  Recommendation: lead with beauty clinics.
+  - Make "Kecantikan" the first, selected tab.
+  - Use beauty questions in S3, S4 and S5, set in Jabodetabek or Bandung.
+
+  The Spec 018 probe has real beauty data for Bandung, for example "v shape klinik" (Dicari di Google; topic "v shape", ±1.600 pencarian/bulan, data September 2026). So S4 can still show a real question and a real number. The H1, the structure and the other tabs stay.
