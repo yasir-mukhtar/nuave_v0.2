@@ -5,6 +5,8 @@
 > Market: clinic owners and clinic marketing teams in Jakarta, Bogor, Depok,
 > Tangerang, Bekasi and Bandung
 > Channels: Instagram first, then Facebook, then Threads
+> First segment: **beauty and aesthetic clinics** (founder, 2026-10-24)
+> Founder answers of 2026-10-24 are recorded in section 12
 
 This is the whole plan in plain words: why, who, what we say, what videos to
 make, how to set up the account, how to test, when to stop or grow an ad, and
@@ -23,7 +25,7 @@ yet". Before paid ads send strangers to `v2.nuave.ai`, these must be done:
 | S6: landing page reworked for clinics | Every ad sends people here. A weak page wastes every rupiah. | Founder |
 | G1: one real purchase and refund | Proves money actually works before we pay to bring buyers. | Founder + worker |
 | Workers Paid plan | Ads bring bursts of visitors; the free plan's CPU limit can stop the site. | Founder |
-| Raise the daily AI spending cap | Today it is USD 5 a day and each order holds USD 2. That means only about **2 paid orders a day**. One good ad day could hit the cap and turn paying customers away. Suggest USD 30 a day for the ad period (about 15 orders in flight; actual cost per audit is about USD 0.14–0.20). | Founder decision |
+| Raise the daily AI spending cap | Today it is USD 5 a day and each order holds USD 2. That means only about **2 paid orders a day**. One good ad day could hit the cap and turn paying customers away. Founder accepts up to USD 50 a day for the ad period (about 25 orders in flight; actual cost per audit is about USD 0.14–0.20). | Founder (accepted 2026-10-24; set at launch) |
 | Meta Pixel + Conversions API on the site | Without it, Meta cannot see who checked or paid, so it cannot find more people like them, and we cannot measure ROAS. The privacy page must mention it. | Worker (Claude can build it) |
 
 We can still do all the preparation now (accounts, videos, warm-up posts), so
@@ -88,8 +90,14 @@ confirm it.
 ## 2. Who we target
 
 **The person:** clinic owner, doctor-owner, or the clinic's marketing person.
-Dental, aesthetic/skin, general and specialist clinics. Already pays for ads,
-influencers or a marketing agency. Usually 25–50 years old.
+**We start with beauty and aesthetic clinics** (klinik kecantikan / estetika:
+facial, acne, laser, skin care), the kind of clinic Sozo is. Other clinic
+types come later, once one segment works. Already pays for ads, influencers
+or a marketing agency. Usually 25–50 years old.
+
+Beauty clinics fit well: they already spend heavily on Instagram ads and
+influencers, they compete hard with nearby clinics, and their patients
+compare options before booking — exactly when people ask AI.
 
 **How big is this group?** A rough guess: 5.000–10.000 clinics across
 Jabodetabek and Bandung, so perhaps 10.000–25.000 people we want. That is
@@ -149,7 +157,7 @@ measuring it for you".
 | 1 | Shift | "Pasien Anda sekarang tanya ChatGPT dulu sebelum pilih klinik." |
 | 2 | Only a few names | "ChatGPT biasanya cuma menyebut 3 klinik. Klinik Anda masuk atau tidak?" |
 | 3 | Invisible leak | "Iklan Anda terukur. Yang ini tidak: calon pasien yang tanya AI lalu pilih klinik lain." |
-| 4 | Pesaing | "Saya tanya AI 'klinik gigi terbaik di Depok'. Yang disebut bukan klinik yang paling ramai iklannya." |
+| 4 | Pesaing | "Saya tanya AI 'klinik kecantikan terbaik untuk jerawat di Depok'. Yang disebut bukan klinik yang paling ramai iklannya." |
 | 5 | Cheap check | "Rp99.000 untuk tahu apa kata AI tentang klinik Anda, dari 10 pertanyaan calon pasien." |
 
 ### Words we must follow (from `docs/VOICE.md` and the product promise)
@@ -175,8 +183,8 @@ to be on camera. Four formats, from cheapest to strongest:
 
 ### Format A — "Screen test" (cheapest, make first)
 
-A phone screen recording: someone types "klinik gigi yang bagus di Depok
-yang mana ya?" into ChatGPT, the answer appears with three clinic names, then
+A phone screen recording: someone types "klinik kecantikan yang bagus
+untuk jerawat di Depok yang mana ya?" into ChatGPT, the answer appears with three clinic names, then
 text on screen: "Klinik Anda tidak disebut. Kenapa?" Voice-over explains.
 Feels real, costs almost nothing, very strong for a "never heard of this"
 product. Use a city per version (Depok, Bekasi, Bandung…) so it feels local.
@@ -230,7 +238,7 @@ Alternative hooks for the first 3 seconds:
 
 | Time | On screen | Voice-over |
 |---|---|---|
-| 0–3s | Text: "Saya tanya AI: klinik gigi terbaik di Depok?" Typing on phone | "Saya coba tanya AI: klinik gigi terbaik di Depok yang mana?" |
+| 0–3s | Text: "Saya tanya AI: klinik jerawat terbaik di Depok?" Typing on phone | "Saya coba tanya AI: klinik kecantikan terbaik untuk jerawat di Depok yang mana?" |
 | 3–10s | The answer scrolls, three names highlighted (blurred) | "Yang disebut cuma tiga. Dan bukan yang paling banyak pasang iklan." |
 | 10–18s | Text: "Kenapa? AI memilih klinik yang informasinya paling jelas." | "AI memilih bisnis yang informasinya jelas dan konsisten di internet. Iklan tidak bisa membeli tempat di jawaban ini." |
 | 18–25s | Nuave report example + button | "Mau tahu klinik Anda disebut atau tidak? Cek gratis dulu di Nuave." |
@@ -247,17 +255,30 @@ clinics. (3) Most clinic owners have never checked what AI says about them.
 in Indonesian. (5) It starts free, the full report is Rp99.000. Do not
 promise more patients or a top position. Do not read a script word for word."
 
-### Who makes the videos
+### Who makes the videos (founder choice: Rp0, Claude + ElevenLabs)
 
-| Option | Cost (rough) | Notes |
+| Step | Tool | Cost |
 |---|---|---|
-| You + CapCut + Indonesian AI voice or your own voice-over | Rp0 | Fine for Format A tests. |
-| Freelance editor (Fastwork, Sribulancer, Instagram editors) | Rp300.000–1.500.000 per video | Give them the scripts above. Ask for 3 hooks per video. |
-| Voice actor (Indonesian) | Rp150.000–500.000 per script | Makes Format B sound credible. |
-| Creator for Format C | Rp1–5 juta per video | Month 2, after angles are proven. |
+| Script, storyboard, hooks, captions | Claude | Rp0 |
+| Indonesian voice-over | ElevenLabs | Your plan. Check it allows **commercial use**; the free plan does not. The cheapest paid plan is enough for 10–20 short scripts a month. |
+| Screen recordings (Format A) | Your phone's screen recorder + the ChatGPT app | Rp0 |
+| Animated explainer (Format B) | Claude builds the animation in code and renders the MP4 with your voice-over file, in this cloud session | Rp0 |
+| Final touches, music, burned-in subtitles | CapCut (free version is enough) | Rp0 |
+| Icons, photos, music | Canva free, Pexels, CapCut library | Rp0 |
 
-Claude can write every script, storyboard, caption and editor brief, and
-review each cut before it runs.
+How it works: Claude writes the script → you make the voice-over in
+ElevenLabs and upload the audio file → Claude renders the animated video to
+the audio's timing → you check it on your phone → small fixes in CapCut.
+
+**Where spending money would pay off (optional, later):**
+
+| Spend | When | Why |
+|---|---|---|
+| Rp150.000–300.000 for one real person's face (a friend, a hired actor from a casting group) reading the hook to camera for 3 seconds, used across many videos | If our hook rate stays under 25% | A human face in the first second usually stops more thumbs than text or animation. |
+| Rp300.000–500.000 for one freelance editor to polish the winning video | Once one video clearly wins | The winner then runs for weeks; a better edit pays back on all that spend. |
+| Rp1–5 juta for a creator (Format C) | Month 2+, only after sales come in | Borrowed trust; biggest gain but not needed to start. |
+
+Nothing above is needed to start.
 
 ---
 
@@ -302,7 +323,7 @@ di AI").
    it reduces the risk of the account being restricted.
 7. **Two-factor login** on your Facebook account. New ad accounts get hacked
    and banned often.
-8. Start with a **small daily budget** (Rp150.000–300.000). New accounts that
+8. Start with a **small daily budget** (Rp100.000, section 8). New accounts that
    spend big on day one often get flagged.
 
 ### Events the site will send to Meta
@@ -331,13 +352,13 @@ Add UTM tags to every ad link so our own numbers agree with Meta's:
 
 ```
 Campaign 1  "N1 | Test | Free check"    (Sales objective, optimise: Free check done)
-  ├─ Ad set A: Broad + call-out          (Rp150.000/day)
+  ├─ Ad set A: Broad + call-out          (all of the budget at step 1)
   │    ├─ Video angle 1, hook a/b/c
   │    ├─ Video angle 2, hook a/b/c
   │    └─ ...
-  └─ Ad set B: Interest hint             (Rp150.000/day, same ads)
+  └─ Ad set B: Interest hint             (from step 2, same ads)
 
-Campaign 2  "N2 | Retarget"  (from week 2; Rp75.000–100.000/day)
+Campaign 2  "N2 | Retarget"  (from step 2; about 20% of the daily budget)
   └─ Ad set: video viewers 50%, site visitors, IG engagers (30 days),
              excluding buyers
        ├─ Proof carousel (report example)
@@ -411,25 +432,39 @@ versions, and a copy in the Scale campaign.
 
 ---
 
-## 8. Budget
+## 8. Budget: the step-up ladder (founder approach)
 
-| Period | Daily | Total | Goal |
-|---|---|---|---|
-| Week 0 (warm-up, after gates) | Rp150.000 | ~Rp1 juta | Account health, first data |
-| Weeks 1–4 | Rp300.000–400.000 | ~Rp10 juta | Find winning angle, first 10–30 purchases |
-| Month 2 | Rp400.000–700.000 | ~Rp15 juta | Break even, retargeting, creator video |
-| Month 3+ | Grows only with ROAS ≥ 1,1 | — | Scale winners |
+Founder approach: start small, and spend more only when money comes back. No
+fixed monthly cap. This works well, with two rules so each step gives a fair
+answer:
 
-Plus video production: about Rp2–5 juta in month 1 (4–6 videos with
-freelancers), more if you hire a creator. Plus PPN on ad spend.
+1. **"Rp100.000" means Rp100.000 a day**, not in total. Rp100.000 in total
+   buys about 3.000–5.000 views and usually zero sales, whatever the ad. That
+   says nothing.
+2. **Each step runs at least 7 days** before we judge it. Meta's own system
+   needs a few days to settle, and weekdays differ from weekends.
 
-If the total must be smaller, keep the same structure with one ad set and
-fewer angles (3 instead of 5). Below about Rp150.000 a day, the tests take too
-long to give answers.
+| Step | Daily | About 7 days | Move up when | Go back / stop when |
+|---|---|---|---|---|
+| 1 | Rp100.000 | Rp700.000 | Cost per free check under Rp20.000 and at least 1 purchase | No free checks after Rp300.000, or hook rate under 20% on all ads |
+| 2 | Rp200.000 | Rp1,4 juta | ROAS 0,7 or better over the step | ROAS under 0,4 → back to step 1 with new videos |
+| 3 | Rp500.000 | Rp3,5 juta | ROAS 1,1 or better (break even) | ROAS under 0,7 → back to step 2 |
+| 4 | Rp1 juta | Rp7 juta | ROAS 1,5 or better | ROAS under 1,1 → back to step 3 |
+| 5+ | Up 20–30% every 3 days | — | ROAS stays at or above target | ROAS drops two days in a row → hold |
 
-**Hard stop:** if after Rp10 juta of ad spend we have fewer than 5 purchases,
-we pause and look at the offer and landing page before spending more. More ad
-money will not fix a page or offer that does not convert.
+At step 1 (Rp100.000 a day), keep the test small so each ad gets enough
+views: **one campaign, one ad set (broad + call-out), 3 angles × 2 hooks = 6
+ads.** Retargeting starts at step 2, with about 20% of the daily budget.
+
+Remember: one sale is likely to cost Rp150.000–250.000 at first, so in step 1
+"getting a return" means **free checks at a good price plus the first one or
+two sales**, not profit yet. Profit is the goal from step 3.
+
+Video production: Rp0 (section 4). Plus PPN on ad spend.
+
+**Hard stop:** if after Rp5 juta of total ad spend we have fewer than 3
+purchases, we pause and fix the offer or landing page before spending more.
+More ad money will not fix a page or offer that does not convert.
 
 ---
 
@@ -495,27 +530,27 @@ Spending more is not, so it always asks.
 - [ ] Privacy page mentions Meta Pixel
 - [ ] Page and Instagram have 6–9 posts
 - [ ] Ad account in IDR, Asia/Jakarta, payment added, 2FA on, domain verified
-- [ ] At least 3 angles × 3 hooks ready (9 ads)
+- [ ] At least 3 angles × 2 hooks ready (6 ads)
 - [ ] UTM tags on every link
 - [ ] Kill lines written down (section 7) and agreed
 - [ ] Someone ready to answer WhatsApp and support email within a few hours
 
 ---
 
-## 12. Questions for the founder
+## 12. Founder answers (2026-10-24)
 
-These change the plan; the rest of it can go ahead without them.
-
-1. **Monthly budget** for ads (and for video production) in the first month?
-2. **Which clinics first?** Dental, aesthetic/skin, or all clinics? One
-   type first gives sharper videos.
-3. **Example report:** do we have a clinic that will let us show its real
-   report (blurred or named) in ads? Real proof is the strongest ad.
-4. **WhatsApp:** can you (or someone) answer clinic owners on WhatsApp during
-   working hours?
-5. **A trusted voice:** do you know a doctor-owner, clinic consultant or
-   marketing creator who would appear in a video?
-6. **Daily AI cap:** are you willing to raise it from USD 5 to about USD 30
-   for the ad period?
-7. **Timing:** when do you expect S5, S6 and G1 to be done? That date is the
-   launch date.
+1. **Budget:** start at Rp100.000 a day and step up as returns come
+   (section 8). No fixed cap. Video production: Rp0, using Claude and
+   ElevenLabs (section 4).
+2. **First segment:** beauty and aesthetic clinics, like Sozo.
+3. **Example report:** none yet. The founder may ask a colleague who owns a
+   circumcision (khitan) clinic. Worth doing: a real report, shared with
+   written permission (name may be blurred), is the strongest proof we can
+   show, even though it is a different clinic type. It also opens khitan
+   clinics as a possible second segment.
+4. **WhatsApp:** the founder can answer at the start.
+5. **Trusted voice:** none for now. Start with faceless formats A, B and D.
+6. **Daily AI cap:** the founder accepts raising it, up to USD 50 a day, for
+   the live ad period. To be set when ads go live and recorded in
+   `DECISION_LOG.md`.
+7. **Timing:** depends on S5, S6 and G1 (see `docs/PAYING_CUSTOMER_PLAN.md`).
