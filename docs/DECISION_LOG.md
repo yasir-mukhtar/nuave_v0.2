@@ -34,6 +34,21 @@ what the audit sold to the first paying customers will be:
   design and evaluate later.
 - **Promise:** the order preview and checkout name "ChatGPT dan Google".
 
+**2026-10-24 founder answers** (after the round-1 plan review of Spec 018):
+
+1. **ChatGPT label:** the ChatGPT part uses DataForSEO's ChatGPT LLM Scraper,
+   which reads the real ChatGPT app, so the report may say "ChatGPT". The
+   OpenAI API stays for the business reading and report writing only.
+2. **Failed checks (ChatGPT or Google):** the report is still delivered; the
+   failed part points the customer to support; Yasir resolves it by hand; a
+   refund only when it cannot be fixed. This replaces the ten-evaluable rule
+   for these orders.
+3. **No free re-run button** for now; it may become its own small spec.
+4. **"Kota untuk pencarian":** one field on the review screen, pre-filled and
+   editable, used for both Google and ChatGPT.
+5. **Probe approved:** about USD 0.20 of DataForSEO credit to test discovery
+   and the ChatGPT app on three clinics before building the question part.
+
 ## 2026-10-23 — Errors use Jeton red
 
 Yasir chose red for errors, "probably Jeton red" (Figma page 09's JETON
