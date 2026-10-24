@@ -3,7 +3,7 @@
 The whole path of an order, in synthetic mode against the local database
 (spec 016 AC-20, spec 017 AC-24): the owner types a website, confirms the
 business the free check found, sees the three steps and checkout with its
-price (Rp99.000, sekali bayar), gives an email and pays with the labelled
+price (Rp249.000, sekali bayar), gives an email and pays with the labelled
 simulated payment (no Midtrans, no money). The paid reading then starts by
 itself. The owner answers the intake, reviews the profile and starts the audit
 from the start sheet. The audit runs on the server, so the tab may be closed.
@@ -14,10 +14,10 @@ The report is opened later from the emailed link.
 - `order-free-first`: the business found (J05), "Tinggal 3 langkah" (J06) and
   checkout (J07) make no order and no paid request. Checkout shows the card
   `Ringkasan pesanan` ("AI Visibility Report", "Kedai Fiksi · 10 pertanyaan",
-  Total Rp99.000, "Sekali bayar. …", the delivery promise) and, in the bottom
-  bar, `Bayar Rp99.000` over the consent with links to `/terms` and
+  Total Rp249.000, "Sekali bayar. …", the delivery promise) and, in the bottom
+  bar, `Bayar Rp249.000` over the consent with links to `/terms` and
   `/privacy`.
-- `order-paid-simulated`: `Bayar Rp99.000` with an email makes one order
+- `order-paid-simulated`: `Bayar Rp249.000` with an email makes one order
   (`POST /api/orders`) and starts the simulated payment
   (`POST /api/payments/start`, answered `{simulated: true}`; Midtrans is never
   called).
@@ -42,7 +42,7 @@ The report is opened later from the emailed link.
 ## How to get to it (user POV)
 
 - Press `Ya, ini bisnis saya` on the business found, `Lanjut ke pembayaran`
-  on the three steps, type an email and press `Bayar Rp99.000` at checkout.
+  on the three steps, type an email and press `Bayar Rp249.000` at checkout.
   After the paid reading, press `Mulai` and answer the intake. On the ten
   questions press `Jalankan audit`, then `Mulai audit sekarang`.
 - Close the tab, wait for the email, open its link.
@@ -62,12 +62,12 @@ Run `$V drive audit-run`. Steps, in order:
 - **Checkout.** `Ya, ini bisnis saya` → "Tinggal 3 langkah" →
   `Lanjut ke pembayaran`. Checkout ("Konfirmasi dan bayar") shows the order
   card with "AI Visibility Report", "Kedai Fiksi · 10 pertanyaan", "Total",
-  "Rp99.000", the price note and the delivery promise (Q5, word for word);
-  the bottom bar shows `Bayar Rp99.000`, the consent "Dengan membayar, Anda
+  "Rp249.000", the price note and the delivery promise (Q5, word for word);
+  the bottom bar shows `Bayar Rp249.000`, the consent "Dengan membayar, Anda
   menyetujui Syarat Penggunaan dan Kebijakan Privasi." and both links. Still
   no order. Evidence: `03-order-summary`.
 - **Simulated payment and paid reading.** Types the email and presses
-  `Bayar Rp99.000`. With no further press, the paid reading shows
+  `Bayar Rp249.000`. With no further press, the paid reading shows
   "Pembayaran diterima · NV-…" and "Yang sudah kami temukan". An 800 ms
   same-origin delay on the extract request keeps it visible. Evidence:
   `04-simulated-payment-paid-reading`.

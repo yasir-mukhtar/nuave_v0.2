@@ -1953,12 +1953,12 @@ export default function SmartIntakeJourney({
   const orderAction: string | null = !orderMatches
     ? testPass
       ? "Lanjut"
-      : "Bayar Rp99.000"
+      : "Bayar Rp249.000"
     : currentPayment?.state === "paid" ||
         currentPayment?.state === "not_required"
       ? "Lanjut"
       : currentPayment?.state === "unpaid"
-        ? "Bayar Rp99.000"
+        ? "Bayar Rp249.000"
         : null;
   const lookupElapsed =
     lookupStartedAt !== null ? Math.max(0, lookupNow - lookupStartedAt) : 0;

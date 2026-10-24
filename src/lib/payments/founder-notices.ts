@@ -210,7 +210,7 @@ const RAISE_CAP =
 const REFUND_DEADLINE =
   "Refund the customer within three business days (D3). Bank transfers are refunded by hand from the bank; ask the customer for the account number by support email.";
 
-/** "99000.00" -> "Rp99.000". Anything else is shown as received. */
+/** "249000.00" -> "Rp249.000". Anything else is shown as received. */
 function rupiah(amount: unknown): string {
   const value = Number(amount);
   return Number.isFinite(value) && value > 0
@@ -325,6 +325,31 @@ export function noticeEmail(
       };
       break;
     }
+    case "checks_failed":
+      // Spec 018 R-21/R-21a: a delivered order with failed checks. The
+      // customer saw "Minta bantuan"; nothing is refunded unless support
+      // cannot provide the missing results.
+      built = {
+        subject: `Nuave: a delivered report has failed checks${order ? ` (${order})` : ""}`,
+        lines: [
+          'A report was delivered with checks that could not be completed. The customer sees "Tidak dapat diuji" and "Minta bantuan" for them.',
+          order ? `Order number: ${order}.` : null,
+          d.failed ? `Failed checks: ${String(d.failed)}.` : null,
+          "Reply to the customer's support email within one business day. You may run the failed checks again by hand and email the results to the order email. Refund only if they cannot be provided.",
+        ],
+      };
+      break;
+    case "dataforseo_unavailable":
+      // Spec 018 R-21/R-22: credentials, access, balance or cost limit.
+      built = {
+        subject: "Nuave: DataForSEO is unavailable",
+        lines: [
+          `DataForSEO refused a request on UTC day ${row.subject}${d.status_code ? ` (status ${String(d.status_code)})` : ""}${d.balance_usd !== undefined && d.balance_usd !== null ? `; balance USD ${String(d.balance_usd)}` : ""}.`,
+          "New payments are refused until it works again (the balance must be at least USD 2.00). Paid orders continue; their failed checks show Minta bantuan.",
+          "Check DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in the deploy secrets and top up the DataForSEO balance.",
+        ],
+      };
+      break;
     default:
       built = {
         subject: `Nuave: ${row.kind}`,

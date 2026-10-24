@@ -28,6 +28,7 @@ import {
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { Art } from "@/components/product/journey/Art";
 import { FloatingField } from "@/components/product/journey/FloatingField";
+import { AUDIT_SOURCES_TEXT } from "@/lib/orders/promise";
 import { cn } from "@/lib/utils";
 
 /** Headline + supporting line, the same rhythm on every journey screen. */
@@ -194,7 +195,7 @@ export function WebsiteForm({
         id="website-note"
         className="type-copy-sm m-0 text-center text-ink-500"
       >
-        Pratinjau gratis. Audit Rp99.000, sekali bayar.
+        Pratinjau gratis. Audit Rp249.000, sekali bayar.
       </p>
     </form>
   );
@@ -830,7 +831,7 @@ export function BusinessFoundScreen({
 const THREE_STEPS = [
   {
     title: "Konfirmasi dan bayar",
-    body: "Cek bisnis Anda, lalu bayar Rp99.000 sekali. Tanpa langganan.",
+    body: "Cek bisnis Anda, lalu bayar Rp249.000 sekali. Tanpa langganan.",
     art: "website" as const,
     artWidth: 71,
   },
@@ -898,10 +899,11 @@ export function StepsScreen({
         transition={{ ...SPRING_SETTLE, delay: 0.3 }}
       >
         <p className="type-title-sm m-0 text-ink-900">
-          Rp99.000 untuk satu audit
+          Rp249.000 untuk satu audit
         </p>
         <p className="type-copy-sm m-0 mt-0.5 text-ink-600">
-          Tidak ada pajak atau biaya tambahan dari Nuave.
+          Diperiksa di {AUDIT_SOURCES_TEXT}. Tidak ada pajak atau biaya tambahan
+          dari Nuave.
         </p>
       </motion.div>
     </section>

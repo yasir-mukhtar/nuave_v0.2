@@ -547,7 +547,7 @@ export async function renameBusiness(page: Page, name: string) {
 /* ───────────────────────── J06–J10: steps, checkout, paid reading ───────────────────────── */
 
 /** Spec 017: the price, the button and the copy of the checkout (J07). */
-export const PAY_BUTTON = "Bayar Rp99.000";
+export const PAY_BUTTON = "Bayar Rp249.000";
 export const PAID_HEADING = "Pembayaran diterima";
 export const ORDER_PRICE_NOTE =
   "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan ini berlaku 30 hari.";
@@ -556,7 +556,7 @@ export const PAY_CONSENT =
   "Dengan membayar, Anda menyetujui Syarat Penggunaan dan Kebijakan Privasi.";
 /** Q5, word for word: mirrors `DELIVERY_PROMISE` in `src/lib/orders/promise.ts`. */
 export const ORDER_DELIVERY_PROMISE =
-  "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.";
+  "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda.";
 /** The code `/uji` keeps in session storage (the e2e server's own test code). */
 export const E2E_TEST_PASS_CODE = "e2e-test-pass-code-not-a-secret-0001";
 /** Mirrors `TEST_PASS_STORAGE_KEY` in `src/lib/intake/test-pass.ts`. */
@@ -597,7 +597,7 @@ export async function expectOrderSummaryPrice(
     card.getByText(`${businessName} · 10 pertanyaan`, { exact: true }),
   ).toBeVisible();
   await expect(card.getByText("Total", { exact: true })).toBeVisible();
-  await expect(card.getByText("Rp99.000", { exact: true })).toBeVisible();
+  await expect(card.getByText("Rp249.000", { exact: true })).toBeVisible();
   await expect(card.getByText(ORDER_PRICE_NOTE, { exact: true })).toBeVisible();
   await expect(
     card.getByText(ORDER_DELIVERY_PROMISE, { exact: true }),

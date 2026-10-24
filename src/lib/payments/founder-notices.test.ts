@@ -193,7 +193,7 @@ describe("per-subject notices (R-21, AC-18)", () => {
         subject: "tx-1",
         detail: {
           order_number: "NV-AAAAAA",
-          amount: "99000.00",
+          amount: "249000.00",
           method: "qris",
         },
         now: clock,
@@ -225,7 +225,11 @@ describe("per-subject notices (R-21, AC-18)", () => {
     await recordFounderNotice(d1.db, {
       kind: "needs_refund",
       subject: "tx-9",
-      detail: { order_number: "NV-BBBBBB", amount: "99000.00", method: "dana" },
+      detail: {
+        order_number: "NV-BBBBBB",
+        amount: "249000.00",
+        method: "dana",
+      },
       now: clock,
     });
     await recordFounderNotice(d1.db, {
@@ -319,7 +323,7 @@ describe("paid orders that fail (R-21, AC-18) and the 7-day sweep (R-13, AC-14)"
       message.subject.includes(number),
     )!;
     expect(founder.text).toContain(`Order number: ${number}`);
-    expect(founder.text).toContain("Rp99.000");
+    expect(founder.text).toContain("Rp249.000");
     expect(founder.text).toContain("three business days");
     // The customer got the S3 failure email with the number.
     const failure = toCustomer(mail).find((message) =>
@@ -468,9 +472,9 @@ describe("the payment-received email (R-22, AC-19)", () => {
     expect(message.subject).toBe("Pembayaran Nuave Anda sudah diterima");
     expect(message.text).toContain("Kopi Nuave");
     expect(message.text).toContain(`Nomor pesanan: ${number}`);
-    expect(message.text).toContain("Rp99.000");
+    expect(message.text).toContain("Rp249.000");
     expect(message.text).toContain(
-      "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.",
+      "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda.",
     );
     expect(message.text).toContain(
       "Lanjutkan di browser yang sama untuk mengisi data bisnis Anda",
@@ -591,7 +595,7 @@ describe("the founder email for each kind (R-21)", () => {
   const detail = JSON.stringify({
     order_number: "NV-7K3Q9P",
     midtrans_order_id: "NV-7K3Q9P-1",
-    amount: "99000.00",
+    amount: "249000.00",
     method: "bank_transfer",
     reason: "wrong_amount_or_currency",
   });
@@ -605,7 +609,7 @@ describe("the founder email for each kind (R-21)", () => {
     (kind) => {
       const mail = noticeEmail({ kind, subject: "tx-1", detail_json: detail });
       expect(mail.text).toContain("Order number: NV-7K3Q9P");
-      expect(mail.text).toContain("Rp99.000");
+      expect(mail.text).toContain("Rp249.000");
       expect(mail.text).toContain("bank_transfer");
       expect(mail.text).toContain("three business days");
       expect(mail.subject).toContain("NV-7K3Q9P");

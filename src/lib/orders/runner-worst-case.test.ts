@@ -597,7 +597,7 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
     await recordFounderNotice(d1.db, {
       kind: "needs_refund",
       subject: "tx-wait",
-      detail: { order_number: "NV-AAAAAA", amount: "99000.00" },
+      detail: { order_number: "NV-AAAAAA", amount: "249000.00" },
       now: clock,
     });
     // Three stale unpaid orders to expire, and the report step's ready email is

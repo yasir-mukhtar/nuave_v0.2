@@ -282,7 +282,7 @@ describe("the order screen (R-01, R-06, AC-01)", () => {
       screen.getByRole("textbox", { name: "Email penerima laporan" }),
     ).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Rp\s?\d|IDR|USD|harga/i);
-    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
   });
 
   it("makes no order and no paid call for a missing or bad email", async () => {

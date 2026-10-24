@@ -173,7 +173,7 @@ function heldReading() {
 }
 async function pay() {
   await typeEmail();
-  fireEvent.click(await button("Bayar Rp99.000"));
+  fireEvent.click(await button("Bayar Rp249.000"));
 }
 /** The saved session of a customer who made an order and left to pay. */
 async function reloadWith(stub: Stub) {
@@ -188,7 +188,7 @@ describe("the order summary (Experience 2, 3)", () => {
     stubServer();
     render(<SmartIntakeJourney live />);
     await toOrderScreen();
-    expect(screen.getByText("Rp99.000")).toBeTruthy();
+    expect(screen.getByText("Rp249.000")).toBeTruthy();
     expect(
       screen.getByText(
         "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan ini berlaku 30 hari.",
@@ -210,7 +210,7 @@ describe("the order summary (Experience 2, 3)", () => {
     expect(
       screen.getByRole("textbox", { name: "Email penerima laporan" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Bayar Rp99.000" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Bayar Rp249.000" })).toBeTruthy();
     // A real payment screen has no simulation label.
     expect(document.body.textContent).not.toContain("Pembayaran simulasi");
   });
@@ -309,7 +309,7 @@ describe("the order summary (Experience 2, 3)", () => {
     );
     expect(navigated).toBeNull();
     // Nothing is lost: the same order can be tried again later.
-    expect(await button("Bayar Rp99.000")).toBeTruthy();
+    expect(await button("Bayar Rp249.000")).toBeTruthy();
   });
 
   it("shows 'Pembayaran belum bisa dimulai' when Snap fails, and the retry reuses the same order", async () => {
@@ -338,7 +338,7 @@ describe("the order summary (Experience 2, 3)", () => {
       expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull(),
     );
     failing = false;
-    fireEvent.click(await button("Bayar Rp99.000"));
+    fireEvent.click(await button("Bayar Rp249.000"));
     await waitFor(() => expect(navigated).toBe(MIDTRANS_PAGE));
     expect(stub.calls.filter((call) => call === "/api/orders")).toHaveLength(1);
   });
@@ -392,7 +392,7 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
         .getByRole("link", { name: "Lihat cara bayar" })
         .getAttribute("href"),
     ).toBe(MIDTRANS_PAGE);
-    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
   });
 
   it.each([
@@ -420,7 +420,7 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
     const { stub, set } = await returnWith({ state: "checking" });
     await heading("Kami sedang memeriksa pembayaran Anda");
     expect(screen.queryByRole("link", { name: "Lihat cara bayar" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Lanjut" })).toBeNull();
     // Cek lagi asks the status again, and the answer is shown.
     const before = stub.calls.filter(
@@ -494,7 +494,7 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
     set({ state: "open", payment: { state: "unpaid" } });
     fireEvent.click(await button("Coba bayar lagi"));
     await typeEmail();
-    fireEvent.click(await button("Bayar Rp99.000"));
+    fireEvent.click(await button("Bayar Rp249.000"));
     await waitFor(() => expect(stub.bodies["/api/orders"]).toHaveLength(2));
     expect(stub.bodies["/api/orders"]![1]).toMatchObject({
       email: EMAIL,
@@ -549,7 +549,7 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
         screen.getByRole("link", { name: "support@nuave.ai" }),
       ).toBeTruthy();
       expect(
-        screen.queryByRole("button", { name: "Bayar Rp99.000" }),
+        screen.queryByRole("button", { name: "Bayar Rp249.000" }),
       ).toBeNull();
       expect(
         screen.queryByRole("button", { name: "Coba bayar lagi" }),
@@ -652,7 +652,7 @@ describe("a replacement refused because the payment is unknown (Q14)", () => {
       payment: { state: "closed_unknown", order_number: NUMBER },
     };
     await typeEmail();
-    fireEvent.click(await button("Bayar Rp99.000"));
+    fireEvent.click(await button("Bayar Rp249.000"));
     await heading("Pembayaran belum dapat dipastikan");
     expect(screen.getByText(NUMBER)).toBeTruthy();
     expect(created).toBe(2);
@@ -660,13 +660,13 @@ describe("a replacement refused because the payment is unknown (Q14)", () => {
       1,
     );
     expect(readSmartSession()?.order?.id).toBe(ORDER_ID);
-    expect(screen.queryByRole("button", { name: "Bayar Rp99.000" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
   });
 });
 
 describe("ended payment states lock the order (Q13 A, R-12, R-19)", () => {
   it.each(["closed_unknown", "needs_refund"])(
-    "a %s order has no Kembali, no Ubah and no way to Bayar Rp99.000",
+    "a %s order has no Kembali, no Ubah and no way to Bayar Rp249.000",
     async (state) => {
       await returnWith({ state, order_number: NUMBER }, { state: "failed" });
       await screen.findByText(NUMBER);
@@ -676,7 +676,7 @@ describe("ended payment states lock the order (Q13 A, R-12, R-19)", () => {
       ).toBeNull();
       expect(screen.queryByRole("button", { name: /Ubah/ })).toBeNull();
       expect(
-        screen.queryByRole("button", { name: "Bayar Rp99.000" }),
+        screen.queryByRole("button", { name: "Bayar Rp249.000" }),
       ).toBeNull();
       expect(screen.queryByRole("textbox", { name: /Email/ })).toBeNull();
     },
@@ -744,7 +744,7 @@ describe("a late payment after Coba bayar lagi (R-11, R-19)", () => {
       payment: { state: "paid", order_number: NUMBER },
     };
     await typeEmail();
-    fireEvent.click(await button("Bayar Rp99.000"));
+    fireEvent.click(await button("Bayar Rp249.000"));
     await heading("Pembayaran diterima");
     expect(screen.getByText(NUMBER)).toBeTruthy();
     expect(created).toBe(2);
@@ -814,7 +814,7 @@ describe("a replacement refused because the old order is active (R-19)", () => {
     );
     await heading("Konfirmasi dan bayar");
     await typeEmail();
-    fireEvent.click(await button("Bayar Rp99.000"));
+    fireEvent.click(await button("Bayar Rp249.000"));
     await waitFor(() => expect(created).toBe(2));
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toContain("sudah dibayar"),
@@ -910,7 +910,7 @@ describe("the founder test pass (R-20)", () => {
     });
     render(<SmartIntakeJourney live />);
     await toOrderScreen();
-    expect(screen.queryByText("Rp99.000")).toBeNull();
+    expect(screen.queryByText("Rp249.000")).toBeNull();
     await typeEmail();
     fireEvent.click(await button("Lanjut"));
     // No payment: the paid reading runs at once and the intake continues.

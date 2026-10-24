@@ -666,7 +666,7 @@ async function deliverAudit(ctx: DriveContext) {
   });
   expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
   ctx.check(
-    '"Tinggal 3 langkah" then checkout ("Konfirmasi dan bayar"): AI Visibility Report, Total Rp99.000, "Sekali bayar…", the delivery promise, the email field, and in the bottom bar `Bayar Rp99.000` over the Terms and Privacy consent; still no order and no paid request',
+    '"Tinggal 3 langkah" then checkout ("Konfirmasi dan bayar"): AI Visibility Report, Total Rp249.000, "Sekali bayar…", the delivery promise, the email field, and in the bottom bar `Bayar Rp249.000` over the Terms and Privacy consent; still no order and no paid request',
   );
   let orderNumber = "";
   await ctx.step("simulated-payment-paid-reading", async () => {

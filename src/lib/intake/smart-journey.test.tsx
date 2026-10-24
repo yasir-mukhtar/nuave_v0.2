@@ -4997,7 +4997,7 @@ describe("independent review, round 1", () => {
     render(<SmartIntakeJourney live={false} />);
     await screen.findByText(/Website toko-lain\.example belum diperiksa/);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Bayar Rp99.000" }),
+      await screen.findByRole("button", { name: "Bayar Rp249.000" }),
     );
     await waitFor(() => expect(calls).toContain("/api/payments/start"));
     expect(screen.queryByText(/belum diperiksa/)).toBeNull();
