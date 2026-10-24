@@ -445,6 +445,111 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
     );
   });
 
+  it("N-32: a wrong count in a positive sentence is revised once, then repaired by code, and the order is delivered", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        const counts = (
+          args[0] as {
+            two_source_facts: {
+              counts: { chatgpt: { completed: number; named: number } };
+            };
+          }
+        ).two_source_facts.counts.chatgpt;
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion: `Di ChatGPT, bisnis Anda disebut di ${counts.named + 2} dari ${counts.completed} jawaban.`,
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(1);
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(report.conclusion).toBe(
+      `Di ChatGPT, bisnis Anda disebut di ${two.counts.chatgpt.named} dari ${two.counts.chatgpt.completed} jawaban.`,
+    );
+  });
+
+  it("N-33: a false sentence with drg. is replaced whole, not split, and the order is delivered", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion:
+              "Di Google AI Overview, drg. Linda Dental tidak disebut. Di ChatGPT, klinik lain lebih sering dipilih.",
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(report.conclusion).toBe(
+      `Di Google AI Overview, bisnis Anda disebut di ${two.counts.google.named} dari ${two.counts.google.summaries} ringkasan. Di ChatGPT, klinik lain lebih sering dipilih.`,
+    );
+  });
+
+  it("N-35: a revision that changes a finding's evidence is discarded; the first draft is repaired and the order is delivered", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    let revised = false;
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        const revision = Boolean(args[1]);
+        if (revision) revised = true;
+        const findings = result.content.key_findings.map((f, index) =>
+          index === 0
+            ? {
+                ...f,
+                title: "Di Google AI Overview, bisnis Anda tidak muncul",
+                ...(revision
+                  ? {
+                      evidence_prompt_ids: [...f.evidence_prompt_ids]
+                        .reverse()
+                        .slice(0, 1)
+                        .map((pid) =>
+                          pid.endsWith("01")
+                            ? pid.replace(/01$/, "02")
+                            : pid.replace(/\d\d$/, "01"),
+                        ),
+                    }
+                  : {}),
+              }
+            : f,
+        );
+        return {
+          ...result,
+          content: { ...result.content, key_findings: findings },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revised).toBe(true);
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(report.key_findings[0]!.title).toBe(
+      `Di Google AI Overview, bisnis Anda disebut di ${two.counts.google.named} dari ${two.counts.google.summaries} ringkasan`,
+    );
+    expect(orderRow(id).report_json).toContain("revision_discarded");
+  });
+
   it("the report writer reads code-built Google facts for both sources (R-28)", async () => {
     const id = await makeOrder(d1.db, { now: clock });
     await approveTwoSource(d1.db, id, { now: clock });

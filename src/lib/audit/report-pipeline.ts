@@ -526,7 +526,16 @@ export async function createValidatedAuditReport(
           lockedInput.question_method,
         ),
       ];
-      if (retryIntegrityErrors.length) {
+      if (retryIntegrityErrors.length && sourceFacts) {
+        // Spec 018 N-35: the first draft already passed every evidence
+        // check, so a revision that breaks the protected shape is discarded
+        // instead of failing the paid order. The code repair below then fixes
+        // any source sentence the first draft still had.
+        content = original;
+        final = initial;
+        diagnostics.add("revision_discarded");
+        diagnostics.add("language_warning");
+      } else if (retryIntegrityErrors.length) {
         throw new ReportPipelineError(
           retryIntegrityErrors.join(" "),
           422,
@@ -534,10 +543,10 @@ export async function createValidatedAuditReport(
           "REPORT_INTEGRITY_FAILURE",
           [...diagnostics, "unrecoverable_report_failure"],
         );
+      } else {
+        const finalLanguageErrors = languageErrorsFor(lockedInput, content);
+        if (finalLanguageErrors.length) diagnostics.add("language_warning");
       }
-
-      const finalLanguageErrors = languageErrorsFor(lockedInput, content);
-      if (finalLanguageErrors.length) diagnostics.add("language_warning");
     }
   }
 

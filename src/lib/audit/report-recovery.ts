@@ -20,6 +20,7 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "usefulness_minimum_not_met",
   "unrecoverable_report_failure",
   "source_sentence_replaced",
+  "revision_discarded",
 ] as const;
 
 export type ReportDiagnosticCode = (typeof REPORT_DIAGNOSTIC_CODES)[number];
