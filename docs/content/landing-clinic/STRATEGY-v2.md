@@ -1,6 +1,6 @@
 # Clinic landing page: content strategy v2 (light)
 
-> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
+> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
 ## 1. What went wrong in v1, in plain words
@@ -189,6 +189,9 @@ v1's *"Klinik Anda disebut AI, atau klinik sebelah?"* is not recommended. The ja
 | 47% of patients have used a tool like ChatGPT or Google's AI Overviews to research a provider (up from 31% nine months earlier); AI shapes choice more than Google search or a doctor's referral | rater8, *2026 Patient Choice Report*, 992 US adults, April 2026, reported by Medical Economics | US data. rater8 sells online reputation services, so it is not a neutral source. Label it "survei di AS". |
 | 40 million people ask ChatGPT health questions every day | OpenAI, *AI as a Healthcare Ally*, January 2026, via Medical Economics | Global, not Indonesia |
 | Google shows AI answers in Indonesia (2024), and AI Mode works in Bahasa Indonesia (2025) | Google Indonesia blog, 5 September 2024 and 9 September 2025 | |
+| v2.1: the feature's Indonesian name is "Ringkasan AI" | Google Search Help in Indonesian, [support.google.com/websearch/answer/14901683?hl=id](https://support.google.com/websearch/answer/14901683?hl=id), checked 24 October 2026 | The page keeps the settled name "Google AI Overview" and mentions "Ringkasan AI" once in the FAQ. |
+| v2.1 example numbers: "harga implan gigi" ±4.400, "clear aligner" ±3.600, "harga pemasangan behel di dokter gigi" ±1.300 searches a month | Spec 018 probe, 24 October 2026: Google search data for all of Indonesia, data month September 2026 | Shown only as labelled examples ("Contoh"), with the full topic line, never as a clinic's own numbers. |
+| v2.1 product facts: questions based on Google search data, both sources, report labels, Rp249.000, "biasanya 15 menit" | Spec 018 (approved 24 October 2026) and its `docs/VOICE.md`, on branch `claude/laughing-fermi-prsgqf` | Not merged yet. True on the live site only once Spec 018 is live. |
 
 The rater8 press release (3 June 2026) also says 60% trusted an AI summary without checking further, and 66% had met wrong provider information from AI. These are strong but come only from the vendor's own release. They are left off the page unless Yasir wants them. "Wrong information" would be a good second line for the blind-spot section.
 
@@ -212,3 +215,43 @@ The hero headline as recommended, the rater8 figure labelled as a US survey, the
 5. **Still open from v1:** delivery time, refund line (S5), and the production colour of the dark section.
 
 **Next step once approved:** the copywriter polishes this copy, the designer redraws the lofi with these weight rules, and the growth marketer checks the shorter funnel. Then Figma is updated.
+
+## 10. Update v2.1 (24 October 2026)
+
+**Why.** Yasir on lofi v2: "It is much better now." Then three asks:
+
+1. The price is now Rp249.000.
+2. Say that Nuave checks clinics in **ChatGPT and Google AI Overview**. A clinic marketer who wonders how to appear in Google AI Overview should find the answer here. Show a patient getting an answer in both.
+3. Say that the questions come from real search volume, without naming the data source. Then list everything the clinic gets, so the value feels far beyond Rp249.000.
+
+**What the product will do.** [Spec 018](https://github.com/yasir-mukhtar/nuave_v0.2/blob/claude/laughing-fermi-prsgqf/specs/018-search-grounded-chatgpt-google-audit/SPEC.md) was approved by Yasir on 24 October 2026 and is being built on branch `claude/laughing-fermi-prsgqf`. It is not merged yet. It says:
+- **Questions:** the ten questions come from Google search data for the clinic's type and city. Each one carries an origin label and, when known, a monthly search number for its topic.
+- **Answers:** each question is asked word for word to the ChatGPT app and to Google AI Overview.
+- **Report:** one result card per source, both answers with their sources, the other clinics named, the topics that don't name the clinic yet, and the fix list.
+- **Price and delivery:** Rp249.000, and the report is usually ready in 15 minutes.
+
+**Release gate.** v2.1 describes that audit. It ships in the same release as Spec 018. Until then, v2 (Rp99.000) stays the live version.
+
+**What changed on the page.**
+
+| # | Section | v2.1 |
+|---|---|---|
+| S1 | Hero | Line: "Lihat apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang dibenahi." Facts: "10 pertanyaan berdasarkan pencarian Google · ChatGPT dan Google AI Overview · Tanpa data pasien". The floating report card has one row per source. Rp249.000 in the microcopy. |
+| S2 | AI kini jadi rujukan pasien | The 47% card uses rater8's wording ("AI seperti ChatGPT atau Google AI Overview"). The 2024 card says "Google AI Overview hadir di Indonesia." |
+| S3 | **New picture** | "Pasien bertanya ke ChatGPT dan mencari di Google." The same question is answered in a ChatGPT chat and in a Google results page with the AI Overview box; both name a few clinics and end in "Klinik Anda?". The caption says Google does not always show an AI Overview. |
+| S4 | Cara kerja | Step 2 says the questions are based on Google searches and shows a real example question with its label and search number. Step 3 names both sources and says "Biasanya 15 menit." |
+| S5 | Laporan | The four tabs show the two-source report with the exact Spec 018 labels. |
+| S7 | **New value list + price** | "Yang Anda dapat dari satu audit." The price sits in the line under it, then nine concrete items, then the price card with the form. No "senilai", no struck-through price. |
+| S8 | FAQ | Eleven questions. The first is "Bagaimana cara klinik muncul di Google AI Overview?", answered honestly with no promise. New: "Dari mana pertanyaannya?". The delivery time and the refund rule come from Spec 018. |
+| Meta | Title and description | "Klinik Anda muncul di Google AI Overview dan ChatGPT? \| Nuave", plus a description with the same phrase, set on the clinic page itself. |
+
+**Decided by the orchestrator in this round (Yasir can overrule):**
+- **Not "asli" (real):** questions are "berdasarkan pencarian Google", because some are reworded to add the city or built from the profile when search data is thin. Answers are "ditanyakan langsung ke ChatGPT, dijawab utuh", because answers vary by time, account and place.
+- **The S3 heading says patients "mencari di Google"**, because people search on Google and Google answers with an AI Overview only sometimes.
+- **"Ringkasan AI" appears once in the FAQ**, so readers who use Google in Indonesian recognise the feature.
+
+**For Yasir:**
+1. Approve the exact delivery and refund words from Spec 018 (its Q-1). They appear in step 3, the price card, "Berapa lama?" and "Kalau ada masalah?".
+2. Keep or remove the one "Ringkasan AI" mention.
+3. At launch, let search engines in. `src/app/robots.ts` blocks the whole site today, on purpose, while the site is pre-release.
+4. Optional next touchpoint: one short article on "cara muncul di Google AI Overview" that links to this page. A "how to" search is usually won by an article, not a landing page.
