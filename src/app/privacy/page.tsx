@@ -56,12 +56,17 @@ const PROVIDERS: Array<[string, string, string]> = [
   [
     "Midtrans",
     "Pembayaran",
-    "Data transaksi dan data yang Anda isi langsung di halaman Midtrans",
+    "Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans",
   ],
   [
     "Resend",
     "Mengirim email pesanan dan link laporan",
     "Email pesanan, nama bisnis, nomor pesanan, dan link laporan",
+  ],
+  [
+    "Penyedia kotak masuk email kami",
+    "Menerima dan membalas email ke support@nuave.ai",
+    "Isi email yang Anda kirim ke kami",
   ],
   [
     "Meta Platforms",
@@ -85,7 +90,7 @@ const RETENTION: Array<[string, string]> = [
   ["Email bantuan dan keluhan", "12 bulan setelah masalahnya selesai"],
   [
     "Catatan pembayaran",
-    "Selama diperlukan untuk pembayaran, pajak, pencegahan penipuan, atau kewajiban hukum",
+    "Paling sedikit 24 bulan, atau lebih lama jika diwajibkan untuk pajak atau hukum",
   ],
   [
     "Salinan email di Resend",
@@ -107,7 +112,7 @@ export default function PrivacyPage() {
         <p>
           Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang
           ikut memprosesnya, berapa lama disimpan, dan pilihan Anda. Prinsip
-          kami sederhana. Kami ambil data seperlunya dan memakainya sesuai
+          kami sederhana. Kami mengambil data seperlunya dan memakainya sesuai
           tujuan. Laporan Anda tidak kami bagikan tanpa izin.
         </p>
 
@@ -119,20 +124,22 @@ export default function PrivacyPage() {
           <p>
             Pertanyaan dan permintaan soal data dikirim ke{" "}
             <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Kami
-            membalas dalam {SUPPORT_REPLY} (Senin sampai Jumat, waktu Jakarta).
+            membalas dalam {SUPPORT_REPLY} (Senin sampai Jumat, WIB).
           </p>
         </Section>
 
         <Section title="2. Data yang kami pakai">
           <ul>
             <li>
-              <strong>Alamat website bisnis</strong> yang Anda masukkan, dan
-              informasi publik yang kami baca dari website itu, seperti nama,
-              alamat, dan layanan.
+              <strong>Alamat website atau akun Instagram bisnis</strong> yang
+              Anda masukkan, dan informasi publik yang kami baca dari sana,
+              seperti nama, alamat, dan layanan.
             </li>
             <li>
               <strong>Email pesanan.</strong> Kami pakai untuk konfirmasi
-              pembayaran, link laporan, dan jawaban bantuan.
+              pembayaran, link laporan, dan jawaban bantuan. Jika Anda
+              menyetujui cookie Meta, email ini juga dikirim ke Meta dalam
+              bentuk kode acak saat pembelian (bagian 9).
             </li>
             <li>
               <strong>Data pembayaran dari Midtrans:</strong> status, jumlah,
@@ -166,8 +173,8 @@ export default function PrivacyPage() {
           </p>
           <p>
             Jika data seperti itu sampai ke kami, kami batasi aksesnya dan
-            berhenti memprosesnya. Lalu kami hapus, kecuali ada kewajiban untuk
-            menyimpannya.
+            berhenti memprosesnya. Lalu kami menghapusnya, kecuali ada kewajiban
+            untuk menyimpannya.
           </p>
         </Section>
 
@@ -181,8 +188,9 @@ export default function PrivacyPage() {
             <li>mengembalikan uang jika diperlukan;</li>
             <li>menjaga keamanan layanan dan mencegah penyalahgunaan;</li>
             <li>
-              mengukur iklan Nuave di Facebook dan Instagram, hanya jika Anda
-              setuju (bagian 9); dan
+              mengukur iklan Nuave di Facebook dan Instagram, dan menampilkan
+              iklan kepada orang yang mirip dengan pembeli Nuave, hanya jika
+              Anda setuju (bagian 9); dan
             </li>
             <li>memenuhi kewajiban pembukuan dan hukum.</li>
           </ul>
@@ -237,7 +245,7 @@ export default function PrivacyPage() {
           <p>
             Kami juga dapat memberikan data jika diminta secara sah oleh
             pemerintah atau penegak hukum, atau jika perlu untuk melindungi
-            keamanan pengguna dan layanan.
+            keamanan orang yang memakai Nuave dan layanan kami.
           </p>
         </Section>
 
@@ -284,8 +292,9 @@ export default function PrivacyPage() {
           <p>
             Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa
             melanjutkan setelah halaman dimuat ulang. Data ini tetap di
-            perangkat Anda dan terhapus paling lama 7 hari. Cloudflare juga
-            dapat memasang cookie keamanan untuk menahan lalu lintas berbahaya.
+            perangkat Anda. Setelah 7 hari data itu tidak dipakai lagi, dan
+            dihapus saat Anda membuka Nuave berikutnya. Cloudflare juga dapat
+            memasang cookie keamanan untuk menahan lalu lintas berbahaya.
           </p>
           <p>
             Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai
@@ -297,18 +306,23 @@ export default function PrivacyPage() {
           <p>Jika Anda setuju, yang dikirim ke Meta Platforms adalah:</p>
           <ul>
             <li>
-              halaman Nuave yang Anda buka, cookie Meta di browser Anda, dan
-              informasi teknis yang biasa dikirim browser, seperti alamat IP dan
-              jenis perangkat;
+              halaman Nuave yang Anda buka dan seberapa jauh Anda membacanya,
+              cookie Meta di browser Anda, dan informasi teknis yang biasa
+              dikirim browser, seperti alamat IP dan jenis perangkat;
             </li>
             <li>
               tanda bahwa cek gratis selesai, checkout dibuka, dan pembayaran
-              berhasil, beserta nilai pembelian (Rp249.000); dan
+              berhasil, beserta nilai pembelian (Rp249.000);
             </li>
             <li>
-              untuk pembelian, email pesanan yang sudah diacak (hash) sebelum
-              dikirim, agar Meta bisa mencocokkannya dengan akun Facebook atau
-              Instagram Anda.
+              untuk cek gratis dan pembelian, catatan yang sama dari server
+              kami, beserta alamat IP, jenis browser, dan kode cookie Meta Anda;
+              dan
+            </li>
+            <li>
+              untuk pembelian, email pesanan yang sudah diubah menjadi kode acak
+              (hash) sebelum dikirim. Meta memakainya untuk mencocokkan
+              pembelian dengan akun Facebook atau Instagram Anda.
             </li>
           </ul>
           <p>
@@ -348,8 +362,8 @@ export default function PrivacyPage() {
             Kami memakai koneksi HTTPS, membatasi siapa yang bisa membuka data,
             menyimpan kunci akses hanya di server, dan memperbarui perangkat
             lunak. Tidak ada sistem yang bebas risiko. Jika terjadi kebocoran
-            yang menyangkut data Anda, kami periksa, batasi dampaknya, dan
-            memberi tahu Anda.
+            yang menyangkut data Anda, kami akan memeriksanya, membatasi
+            dampaknya, dan memberi tahu Anda.
           </p>
         </Section>
 
@@ -379,8 +393,9 @@ export default function PrivacyPage() {
             Siapa pun yang memegang link laporan bisa membukanya. Jangan
             teruskan link itu ke orang yang tidak berhak. Jika link terlanjur
             tersebar, tulis ke{" "}
-            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Kami
-            matikan link lama dan mengirim link baru ke email pesanan.
+            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> dari email
+            pesanan. Kami akan mematikan link lama dan mengirim link baru ke
+            email pesanan.
           </p>
         </Section>
 

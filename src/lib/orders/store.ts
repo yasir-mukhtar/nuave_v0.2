@@ -441,12 +441,14 @@ export type QuestionProgress =
   "pending" | "running" | "retrying" | "completed" | "failed";
 
 /** R-21: what the tab may see: the state and question progress only. Never
- * the report, the email or the link secret. */
+ * the report, the email or the link secret. `started_at` (S5) lets a reloaded
+ * page tell when the audit passed the 15-minute promise. */
 export type OrderStatus = {
   state: OrderState;
   completed: number;
   total: number;
   questions: Array<{ prompt_id: string; status: QuestionProgress }>;
+  started_at: string | null;
 };
 
 export async function orderStatus(
@@ -481,6 +483,7 @@ export async function orderStatus(
     completed: mapped.filter((item) => item.status === "completed").length,
     total: 10,
     questions: mapped,
+    started_at: order.started_at,
   };
 }
 

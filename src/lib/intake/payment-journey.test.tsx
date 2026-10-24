@@ -191,12 +191,12 @@ describe("the order summary (Experience 2, 3)", () => {
     expect(screen.getByText("Rp249.000")).toBeTruthy();
     expect(
       screen.getByText(
-        "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan ini berlaku 30 hari.",
+        "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave.",
       ),
     ).toBeTruthy();
     expect(screen.getByText(DELIVERY_PROMISE)).toBeTruthy();
     // The consent line sits under the pay button, in the bottom bar.
-    const terms = screen.getByRole("link", { name: "Syarat Penggunaan" });
+    const terms = screen.getByRole("link", { name: "Syarat dan Ketentuan" });
     expect(terms.getAttribute("href")).toBe("/terms");
     expect(
       screen
@@ -204,7 +204,7 @@ describe("the order summary (Experience 2, 3)", () => {
         .getAttribute("href"),
     ).toBe("/privacy");
     expect(terms.parentElement?.textContent).toBe(
-      "Dengan membayar, Anda menyetujui Syarat Penggunaan dan Kebijakan Privasi.",
+      "Dengan membayar, Anda menyetujui Syarat dan Ketentuan dan Kebijakan Privasi.",
     );
     expect(terms.closest('[data-intake-screen="order"]')).toBeNull();
     expect(

@@ -223,7 +223,7 @@ function ExampleReportSheet({
 
 const FOOTER_LINKS = [
   { href: "/faq", label: "FAQ" },
-  { href: "/terms", label: "Syarat Penggunaan" },
+  { href: "/terms", label: "Syarat dan Ketentuan" },
   { href: "/privacy", label: "Kebijakan Privasi" },
   { href: "/support", label: "Kontak" },
 ];

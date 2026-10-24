@@ -22,17 +22,17 @@ yang gagal, pengembalian dana, atau data Anda.
 # Kontak dan bantuan
 
 Ada pertanyaan atau masalah? Tulis ke support@nuave.ai. Kami balas dalam 1 hari
-kerja, Senin sampai Jumat, waktu Jakarta.
+kerja, Senin sampai Jumat (WIB).
 
 Nuave adalah layanan independen yang dijalankan oleh PT Nuave Arah Baru
 di Jakarta Selatan, Indonesia.
 
-## Biar kami bisa cepat membantu
+## Agar kami bisa cepat membantu
 
 Sertakan:
 
 - email yang Anda pakai saat memesan;
-- nomor pesanan, jika ada (contoh: NV-45M3AW);
+- nomor pesanan, jika ada (contoh: NV-ABC123);
 - nama bisnis yang diaudit; dan
 - masalahnya, dan apa yang Anda harapkan dari kami.
 

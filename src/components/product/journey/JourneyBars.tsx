@@ -11,7 +11,9 @@ import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { cn } from "@/lib/utils";
 import { NuaveLogo } from "./NuaveLogo";
 
-export const SUPPORT_EMAIL = "support@nuave.ai";
+import { SUPPORT_EMAIL } from "@/lib/legal";
+
+export { SUPPORT_EMAIL };
 
 /** A 36px pill with a 44px touch area (Simpan & keluar, Bantuan). */
 export function PillButton({

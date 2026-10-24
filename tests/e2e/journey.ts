@@ -550,10 +550,10 @@ export async function renameBusiness(page: Page, name: string) {
 export const PAY_BUTTON = "Bayar Rp249.000";
 export const PAID_HEADING = "Pembayaran diterima";
 export const ORDER_PRICE_NOTE =
-  "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan ini berlaku 30 hari.";
+  "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave.";
 /** The consent line under the pay button, in the bottom bar. */
 export const PAY_CONSENT =
-  "Dengan membayar, Anda menyetujui Syarat Penggunaan dan Kebijakan Privasi.";
+  "Dengan membayar, Anda menyetujui Syarat dan Ketentuan dan Kebijakan Privasi.";
 /** Q5, word for word: mirrors `DELIVERY_PROMISE` in `src/lib/orders/promise.ts`. */
 export const ORDER_DELIVERY_PROMISE =
   "Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda.";
@@ -606,7 +606,7 @@ export async function expectOrderSummaryPrice(
   await expect(bar.getByRole("button", { name: PAY_BUTTON })).toBeVisible();
   await expect(bar).toContainText(PAY_CONSENT);
   await expect(
-    bar.getByRole("link", { name: "Syarat Penggunaan" }),
+    bar.getByRole("link", { name: "Syarat dan Ketentuan" }),
   ).toHaveAttribute("href", "/terms");
   await expect(
     bar.getByRole("link", { name: "Kebijakan Privasi" }),

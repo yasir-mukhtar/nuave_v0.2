@@ -53,8 +53,7 @@ export default function SupportPage() {
             >
               {SUPPORT_EMAIL}
             </a>
-            . Kami balas dalam {SUPPORT_REPLY}, Senin sampai Jumat, waktu
-            Jakarta.
+            . Kami balas dalam {SUPPORT_REPLY}, Senin sampai Jumat (WIB).
           </p>
           <p className="type-copy text-[#6B7280] m-0 mt-4">
             Nuave adalah layanan independen yang dijalankan oleh {OPERATOR_NAME}{" "}
@@ -63,13 +62,13 @@ export default function SupportPage() {
 
           <section className="mt-16">
             <h2 className="type-heading-md m-0 mb-6">
-              Biar kami bisa cepat membantu
+              Agar kami bisa cepat membantu
             </h2>
             <div className="rounded-[12px] border border-[#E5E7EB] bg-[#F9FAFB] p-8">
               <p className="type-copy m-0 mb-3">Sertakan:</p>
               <ul className="type-copy list-disc pl-5 m-0 flex flex-col gap-2">
                 <li>email yang Anda pakai saat memesan;</li>
-                <li>nomor pesanan, jika ada (contoh: NV-45M3AW);</li>
+                <li>nomor pesanan, jika ada (contoh: NV-ABC123);</li>
                 <li>nama bisnis yang diaudit; dan</li>
                 <li>masalahnya, dan apa yang Anda harapkan dari kami.</li>
               </ul>

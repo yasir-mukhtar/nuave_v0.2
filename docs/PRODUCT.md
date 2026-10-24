@@ -75,9 +75,9 @@ scientifically derived one.
 
 The current price is **Rp249.000 total for one audit** (Spec 018; it was
 Rp99.000), with no additional tax or
-fee charged to the customer at checkout. An unpaid Order Preview keeps that
-quoted total for 30 days; after expiry the customer refreshes the preview before
-paying. There are no public tiers, subscriptions, bundles, credits, or volume
+fee charged to the customer at checkout. No quote validity is promised: an
+unpaid order ends after 2 hours (Spec 016 Q2), and the checkout no longer says
+"Ringkasan ini berlaku 30 hari" (founder, 2026-10-24, S5). There are no public tiers, subscriptions, bundles, credits, or volume
 plans before real purchasing behaviour supports them. The price remains
 provisional until strangers respond to it.
 

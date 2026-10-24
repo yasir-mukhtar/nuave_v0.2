@@ -18,16 +18,23 @@
 - **Before the Meta Pixel or Conversions API goes live** (founder decision
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
-  1. show a cookie notice with **Setuju** and **Tolak**, and load nothing
-     from Meta until the visitor taps Setuju;
-  2. send server events (Conversions API) only for visitors who agreed;
+  1. show a cookie notice with **Setuju** and **Tolak** that names the hashed
+     order email, and load nothing from Meta until the visitor taps Setuju;
+  2. send server events (Conversions API) only for visitors who agreed, and
+     send no fields beyond those section 9 lists (event, value, IP address,
+     browser type, Meta cookie codes, hashed email for purchases);
   3. add a **Pengaturan cookie** link in the footer that reopens the choice;
   4. send purchase value 249000 IDR (the price since Spec 018), not 99000;
-  5. never send the report, the audit questions, AI answers or intake facts.
+  5. never load the Pixel on `/r` (the report link keeps its secret in the
+     address) or `/uji` (the founder test pass);
+  6. never send the report, the audit questions, AI answers or intake facts.
   If any of these changes, section 9 below must change first.
-- Deletion at the end of each period in section 8 is not automated yet. The
-  first failed-order records reach 30 days in November 2026, so a cleanup job
-  (or a manual purge) must exist by then for section 8 to stay true.
+- **Deletion:** nothing deletes expired records yet. Founder decision
+  2026-10-24: build an automatic cleanup job before the first failed orders
+  reach 30 days (mid-November 2026). Until it exists, section 8 is a promise
+  the system does not yet keep.
+- **Support inbox provider:** section 6 names it generically. Add the
+  company's name once it is confirmed.
 
 ---
 
@@ -44,7 +51,7 @@ Berlaku sejak 24 Oktober 2026 · Versi 1.0
 
 Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang ikut
 memprosesnya, berapa lama disimpan, dan pilihan Anda. Prinsip kami sederhana.
-Kami ambil data seperlunya dan memakainya sesuai tujuan. Laporan Anda tidak
+Kami mengambil data seperlunya dan memakainya sesuai tujuan. Laporan Anda tidak
 kami bagikan tanpa izin.
 
 ## 1. Siapa yang bertanggung jawab
@@ -53,14 +60,15 @@ Nuave adalah layanan independen yang dijalankan oleh PT Nuave Arah Baru
 di Jakarta Selatan, Indonesia.
 
 Pertanyaan dan permintaan soal data dikirim ke support@nuave.ai. Kami membalas
-dalam 1 hari kerja (Senin sampai Jumat, waktu Jakarta).
+dalam 1 hari kerja (Senin sampai Jumat, WIB).
 
 ## 2. Data yang kami pakai
 
-- **Alamat website bisnis** yang Anda masukkan, dan informasi publik yang kami
-  baca dari website itu, seperti nama, alamat, dan layanan.
+- **Alamat website atau akun Instagram bisnis** yang Anda masukkan, dan
+  informasi publik yang kami baca dari sana, seperti nama, alamat, dan layanan.
 - **Email pesanan.** Kami pakai untuk konfirmasi pembayaran, link laporan, dan
-  jawaban bantuan.
+  jawaban bantuan. Jika Anda menyetujui cookie Meta, email ini juga dikirim ke
+  Meta dalam bentuk kode acak saat pembelian (bagian 9).
 - **Data pembayaran dari Midtrans:** status, jumlah, waktu, cara bayar, dan
   nomor transaksi. Kami tidak menerima nomor kartu, PIN, kata sandi bank, atau
   kode OTP.
@@ -79,7 +87,7 @@ pasien, rekam medis, daftar pelanggan, kata sandi, data keuangan pribadi, atau
 data sensitif lain.
 
 Jika data seperti itu sampai ke kami, kami batasi aksesnya dan berhenti
-memprosesnya. Lalu kami hapus, kecuali ada kewajiban untuk menyimpannya.
+memprosesnya. Lalu kami menghapusnya, kecuali ada kewajiban untuk menyimpannya.
 
 ## 4. Untuk apa data dipakai
 
@@ -90,8 +98,8 @@ memprosesnya. Lalu kami hapus, kecuali ada kewajiban untuk menyimpannya.
 - mengirim link laporan dan membantu jika ada masalah;
 - mengembalikan uang jika diperlukan;
 - menjaga keamanan layanan dan mencegah penyalahgunaan;
-- mengukur iklan Nuave di Facebook dan Instagram, hanya jika Anda setuju
-  (bagian 9); dan
+- mengukur iklan Nuave di Facebook dan Instagram, dan menampilkan iklan kepada
+  orang yang mirip dengan pembeli Nuave, hanya jika Anda setuju (bagian 9); dan
 - memenuhi kewajiban pembukuan dan hukum.
 
 Kami tidak menjual data pribadi Anda. Kami tidak memakai laporan Anda sebagai
@@ -116,12 +124,13 @@ kebijakan masing-masing.
 | OpenAI | Membaca website bisnis, menyiapkan ringkasan bisnis, dan menyusun laporan | Alamat dan isi website bisnis, data bisnis yang Anda konfirmasi, pertanyaan, dan jawaban yang diperiksa |
 | Cheaper Inference | Menyusun draf sepuluh pertanyaan | Data bisnis yang Anda konfirmasi dan data pencarian Google |
 | DataForSEO | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
-| Midtrans | Pembayaran | Data transaksi dan data yang Anda isi langsung di halaman Midtrans |
+| Midtrans | Pembayaran | Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans |
 | Resend | Mengirim email pesanan dan link laporan | Email pesanan, nama bisnis, nomor pesanan, dan link laporan |
+| Penyedia kotak masuk email kami | Menerima dan membalas email ke support@nuave.ai | Isi email yang Anda kirim ke kami |
 | Meta Platforms | Iklan dan pengukuran iklan, hanya jika Anda setuju | Lihat bagian 9 |
 
 Kami juga dapat memberikan data jika diminta secara sah oleh pemerintah atau
-penegak hukum, atau jika perlu untuk melindungi keamanan pengguna dan layanan.
+penegak hukum, atau jika perlu untuk melindungi keamanan orang yang memakai Nuave dan layanan kami.
 
 ## 7. Pemrosesan di luar Indonesia
 
@@ -139,7 +148,7 @@ menyediakannya. Tanyakan ke support@nuave.ai jika Anda ingin tahu lebih lanjut.
 | Catatan biaya per pesanan (tanpa email) | 24 bulan |
 | Kemajuan pesanan di browser Anda | Paling lama 7 hari, di perangkat Anda |
 | Email bantuan dan keluhan | 12 bulan setelah masalahnya selesai |
-| Catatan pembayaran | Selama diperlukan untuk pembayaran, pajak, pencegahan penipuan, atau kewajiban hukum |
+| Catatan pembayaran | Paling sedikit 24 bulan, atau lebih lama jika diwajibkan untuk pajak atau hukum |
 | Salinan email di Resend | Sesuai masa simpan Resend, kami atur sesingkat yang tersedia |
 
 Setelah masa itu, data dihapus atau dibuat tidak lagi menunjuk ke Anda.
@@ -149,8 +158,8 @@ kewajiban hukum yang belum selesai.
 ## 9. Cookie, penyimpanan di browser, dan iklan Meta
 
 Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa melanjutkan
-setelah halaman dimuat ulang. Data ini tetap di perangkat Anda dan terhapus
-paling lama 7 hari. Cloudflare juga dapat memasang cookie keamanan untuk
+setelah halaman dimuat ulang. Data ini tetap di perangkat Anda. Setelah 7 hari data itu tidak dipakai lagi, dan
+dihapus saat Anda membuka Nuave berikutnya. Cloudflare juga dapat memasang cookie keamanan untuk
 menahan lalu lintas berbahaya.
 
 Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai Meta Pixel
@@ -160,12 +169,16 @@ memilih, Nuave tidak memasang cookie Meta dan tidak mengirim data Anda ke Meta.
 
 Jika Anda setuju, yang dikirim ke Meta Platforms adalah:
 
-- halaman Nuave yang Anda buka, cookie Meta di browser Anda, dan informasi
-  teknis yang biasa dikirim browser, seperti alamat IP dan jenis perangkat;
+- halaman Nuave yang Anda buka dan seberapa jauh Anda membacanya, cookie Meta di
+  browser Anda, dan informasi teknis yang biasa dikirim browser, seperti alamat
+  IP dan jenis perangkat;
 - tanda bahwa cek gratis selesai, checkout dibuka, dan pembayaran berhasil,
-  beserta nilai pembelian (Rp249.000); dan
-- untuk pembelian, email pesanan yang sudah diacak (hash) sebelum dikirim, agar
-  Meta bisa mencocokkannya dengan akun Facebook atau Instagram Anda.
+  beserta nilai pembelian (Rp249.000);
+- untuk cek gratis dan pembelian, catatan yang sama dari server kami, beserta
+  alamat IP, jenis browser, dan kode cookie Meta Anda; dan
+- untuk pembelian, email pesanan yang sudah diubah menjadi kode acak (hash)
+  sebelum dikirim. Meta memakainya untuk mencocokkan pembelian dengan akun
+  Facebook atau Instagram Anda.
 
 Tujuannya untuk mengetahui iklan mana yang benar-benar menghasilkan cek gratis
 dan pembelian. Data ini juga dipakai untuk menampilkan iklan Nuave kepada orang
@@ -185,8 +198,7 @@ cookie di pengaturan browser Anda.
 
 Kami memakai koneksi HTTPS, membatasi siapa yang bisa membuka data, menyimpan
 kunci akses hanya di server, dan memperbarui perangkat lunak. Tidak ada sistem
-yang bebas risiko. Jika terjadi kebocoran yang menyangkut data Anda, kami
-periksa, batasi dampaknya, dan memberi tahu Anda.
+yang bebas risiko. Jika terjadi kebocoran yang menyangkut data Anda, kami akan memeriksanya, membatasi dampaknya, dan memberi tahu Anda.
 
 ## 11. Hak Anda
 
@@ -206,9 +218,8 @@ meminta konfirmasi dari email tersebut.
 ## 12. Link laporan bersifat pribadi
 
 Siapa pun yang memegang link laporan bisa membukanya. Jangan teruskan link itu
-ke orang yang tidak berhak. Jika link terlanjur tersebar, tulis ke
-support@nuave.ai. Kami matikan link lama dan mengirim link baru ke email
-pesanan.
+ke orang yang tidak berhak. Jika link terlanjur tersebar, tulis ke support@nuave.ai dari email pesanan. Kami akan mematikan link lama
+dan mengirim link baru ke email pesanan.
 
 ## 13. Usia
 

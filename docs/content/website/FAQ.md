@@ -26,14 +26,16 @@ menunjukkan hasilnya dalam satu laporan.
 
 ## Pertanyaannya dari mana?
 
-Pertanyaan disusun dari hal yang benar-benar dicari orang di Google untuk
-layanan dan kota Anda. Anda membaca dan boleh mengubah sepuluh pertanyaan itu
+Pertanyaan disusun dari hal yang dicari orang di Google untuk layanan dan kota
+Anda. Jika data pencarian untuk bisnis Anda terlalu sedikit, pertanyaan disusun
+dari profil bisnis Anda, dan laporan menyebutkannya. Anda membaca dan boleh mengubah sepuluh pertanyaan itu
 sebelum audit dimulai. Setelah Anda setuju, pertanyaan dikunci.
 
 ## Apa yang saya terima?
 
 - berapa kali bisnis Anda disebut di ChatGPT dan di Google AI Overview;
-- jawaban lengkap dari kedua sumber untuk tiap pertanyaan;
+- jawaban dari kedua sumber untuk tiap pertanyaan. Google sering tidak
+  menampilkan AI Overview, dan itu dicatat sebagai temuan;
 - bisnis lain yang disebut dan sumber yang dibaca AI;
 - hal yang bisa Anda perbaiki; dan
 - laporan di web, dengan Download PDF.
@@ -42,7 +44,9 @@ sebelum audit dimulai. Setelah Anda setuju, pertanyaan dikunci.
 
 Rp249.000 untuk satu audit, sekali bayar. Tidak ada langganan dan tidak ada
 biaya tambahan saat checkout. Bayar lewat QRIS, transfer bank, GoPay, atau DANA.
-Cek gratis di awal hanya memastikan bisnis Anda.
+Cek gratis di awal hanya memastikan bisnis Anda. Setelah membayar, lanjutkan
+isian di browser yang sama. Jika pertanyaan belum Anda setujui dalam 7 hari,
+pesanan berakhir dan uang Anda kembali penuh.
 
 ## Kapan laporan siap?
 
@@ -55,9 +59,10 @@ halaman. Link laporan dikirim ke email pesanan dan berlaku 12 bulan.
 
 ## Bagaimana jika ada pemeriksaan yang gagal?
 
-Pertanyaan yang gagal diperiksa ditandai Tidak dapat diuji, dengan tombol Minta
+Pertanyaan yang gagal diperiksa ditandai Tidak dapat diuji, dengan tautan Minta
 bantuan. Itu bukan hasil buruk. Kami coba periksa ulang dan mengirim hasilnya.
-Jika tetap tidak bisa, uang Anda kembali. Rinciannya ada di
+Jika tetap tidak bisa, kami kembalikan
+Rp12.450 untuk setiap pemeriksaan yang gagal. Rinciannya ada di
 [Syarat dan ketentuan](/terms).
 
 ## Apakah hasilnya peringkat atau jaminan?
@@ -68,7 +73,8 @@ penjualan akan naik.
 
 ## Data apa yang perlu saya isi?
 
-Cukup website bisnis dan data bisnis yang sudah publik. Jangan isi data pasien,
+Cukup website bisnis, data bisnis yang sudah publik, dan email untuk menerima
+laporan. Jangan isi data pasien,
 data pelanggan, atau kata sandi. Baca [Kebijakan privasi dan data](/privacy).
 
 ## Bagaimana minta bantuan?

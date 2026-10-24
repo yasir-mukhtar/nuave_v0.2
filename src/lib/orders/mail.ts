@@ -31,7 +31,7 @@ export type MailResult = {
 
 export type MailSender = (message: MailMessage) => Promise<MailResult>;
 
-const SUPPORT_EMAIL = "support@nuave.ai";
+import { SUPPORT_EMAIL } from "@/lib/legal";
 
 export function escapeHtml(value: string): string {
   return value

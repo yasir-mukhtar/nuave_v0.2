@@ -42,6 +42,8 @@ type OrderStatusAnswer = {
   total: number;
   questions: Array<{ prompt_id: string; status: QuestionStatus }>;
   payment?: { order_number?: string };
+  /** When the server started the audit (S5); absent from older answers. */
+  started_at?: string | null;
 };
 
 const POLL_MS = 5_000;
@@ -225,15 +227,20 @@ export default function SmartAuditStage({
     };
   }, [orderId, pollMs]);
 
+  // The server's start time covers a reloaded page, which no longer holds
+  // the time this tab started the audit.
+  const serverStart = status?.started_at ? Date.parse(status.started_at) : NaN;
+  const since =
+    startedAt ?? (Number.isFinite(serverStart) ? serverStart : null);
   const running =
     !ended &&
     (!status || ["open", "running", "reporting"].includes(status.state));
   // The elapsed time ticks once a second while the audit runs.
   useEffect(() => {
-    if (!running || startedAt === null) return;
+    if (!running || since === null) return;
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
-  }, [running, startedAt]);
+  }, [running, since]);
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
@@ -376,7 +383,7 @@ export default function SmartAuditStage({
             </p>
             <a
               href={helpHref("Minta bantuan: audit belum selesai", orderNumber)}
-              className="type-title-sm mt-4 inline-flex text-ink-900 underline underline-offset-[3px]"
+              className="type-title mt-6 inline-flex h-14 w-full items-center justify-center rounded-button border-[1.5px] border-ink-900 bg-white px-6 text-ink-900 no-underline transition-[background-color,transform] duration-150 hover:bg-stone-50 active:scale-[0.97]"
               data-order-help="failed"
             >
               Minta bantuan
@@ -438,10 +445,10 @@ export default function SmartAuditStage({
           <p className="type-title m-0 text-ink-900">
             {completed} dari 10 pertanyaan selesai
           </p>
-          {startedAt !== null ? (
+          {since !== null ? (
             <p className="type-caption m-0 flex items-center gap-1.5 text-ink-500">
               <IconClock size={14} stroke={1.75} aria-hidden="true" />
-              Waktu berjalan: {elapsedText(now - startedAt)}
+              Waktu berjalan: {elapsedText(now - since)}
             </p>
           ) : null}
         </div>
@@ -520,14 +527,14 @@ export default function SmartAuditStage({
           </p>
         )}
       </section>
-      {startedAt !== null && now - startedAt > DELAY_NOTICE_MS ? (
+      {since !== null && now - since > DELAY_NOTICE_MS ? (
         <p
           role="status"
           className="type-copy-sm m-0 mt-3 text-ink-600"
           data-order-note="delayed"
         >
-          Audit ini lebih lama dari biasanya. Audit tetap berjalan, dan link
-          laporan tetap dikirim ke email Anda.{" "}
+          Audit ini berjalan lebih lama dari biasanya. Prosesnya masih berjalan,
+          dan kami kabari hasilnya lewat email.{" "}
           <a
             href={helpHref("Minta bantuan: audit lebih lama", orderNumber)}
             className="text-ink-900 underline underline-offset-[3px]"

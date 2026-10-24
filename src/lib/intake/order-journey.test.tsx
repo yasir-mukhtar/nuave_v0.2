@@ -960,7 +960,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
         startedAt={Date.now() - 16 * 60_000}
       />,
     );
-    await screen.findByText(/Audit ini lebih lama dari biasanya/);
+    await screen.findByText(/Audit ini berjalan lebih lama dari biasanya/);
     await waitFor(() =>
       expect(
         screen
@@ -968,6 +968,30 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
           .getAttribute("href"),
       ).toContain(encodeURIComponent("NV-TEST01")),
     );
+  });
+
+  it("a reloaded page uses the server's start time for the delay note (S5)", async () => {
+    writeActiveOrder(ORDER_ID);
+    // Fixed once, before the page reads the clock.
+    const startedAt = new Date(Date.now() - 20 * 60_000).toISOString();
+    stubServer({
+      status: () => ({
+        state: "running",
+        completed: 7,
+        total: 10,
+        questions: [],
+        started_at: startedAt,
+      }),
+    });
+    // No startedAt: this tab did not approve the questions.
+    render(
+      <SmartAuditStage orderId={ORDER_ID} pollMs={10} onRestart={() => {}} />,
+    );
+    await screen.findByText(/berjalan lebih lama dari biasanya/);
+    expect(screen.getByText(/Waktu berjalan: 20 menit/)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Minta bantuan" }).getAttribute("href"),
+    ).toMatch(/^mailto:support@nuave\.ai\?subject=/);
   });
 
   it("within 15 minutes the running page shows no delay note", async () => {

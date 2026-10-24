@@ -73,6 +73,11 @@ export default function TermsPage() {
             dibaca AI, dan hal yang bisa Anda perbaiki.
           </p>
           <p>
+            Google sering tidak menampilkan AI Overview untuk sebuah pertanyaan.
+            Laporan mencatatnya sebagai temuan, bukan sebagai pemeriksaan yang
+            gagal.
+          </p>
+          <p>
             Pesanan tidak mencakup pemantauan rutin, dashboard, langganan, jasa
             SEO, atau pengerjaan saran di laporan. Cek ulang adalah pesanan
             terpisah.
@@ -92,7 +97,7 @@ export default function TermsPage() {
 
         <Section title="4. Harga dan pembayaran">
           <p>
-            Harga satu audit <strong>Rp249.000</strong>, sudah total. Nuave
+            Harga satu audit <strong>Rp249.000</strong>. Itu harga total: Nuave
             tidak menambah pajak atau biaya lain saat checkout. Pembayaran lewat
             Midtrans dengan QRIS, transfer bank, GoPay, atau DANA. Kami tidak
             menerima nomor kartu, PIN, atau kode OTP Anda.
@@ -100,6 +105,12 @@ export default function TermsPage() {
           <p>
             Cek gratis di awal hanya memastikan bisnis Anda. Setelah membayar,
             Anda memeriksa data bisnis dan menyetujui sepuluh pertanyaan.
+          </p>
+          <p>
+            Lanjutkan isian di browser yang sama dengan tempat Anda membayar,
+            karena isian hanya tersimpan di browser itu. Jika sepuluh pertanyaan
+            belum Anda setujui dalam 7 hari setelah membayar, pesanan berakhir
+            dan kami kembalikan uang Anda penuh.
           </p>
         </Section>
 
@@ -124,14 +135,15 @@ export default function TermsPage() {
             Google karena gangguan teknis. Laporan tetap dikirim jika setiap
             sumber berhasil memeriksa sedikitnya 5 dari 10 pertanyaan.
             Pemeriksaan yang gagal ditandai <strong>Tidak dapat diuji</strong>{" "}
-            dengan tombol <strong>Minta bantuan</strong>, dan tidak dihitung
+            dengan tautan <strong>Minta bantuan</strong>, dan tidak dihitung
             sebagai hasil buruk.
           </p>
           <p>
             Jika Anda minta bantuan, kami balas dalam {SUPPORT_REPLY}. Kami coba
             periksa ulang pertanyaan yang gagal dan mengirim hasilnya ke email
             pesanan. Jika hasilnya tetap tidak bisa didapat, kami kembalikan
-            uang Anda.
+            Rp12.450 untuk setiap pemeriksaan yang gagal. Angka itu adalah
+            Rp249.000 dibagi 20 pemeriksaan (10 di ChatGPT dan 10 di Google).
           </p>
           <p>
             Jika kurang dari 5 pertanyaan berhasil di salah satu sumber, laporan
@@ -165,19 +177,35 @@ export default function TermsPage() {
             </li>
           </ul>
           <p>
-            Uang dikembalikan lewat Midtrans ke cara bayar semula, paling lambat
-            3 hari kerja setelah kami memastikan pengembalian dana. Lama dana
-            sampai ke rekening atau dompet digital Anda tergantung bank atau
-            penyedia pembayaran.
+            Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim
+            pengembalian dana paling lambat 3 hari kerja setelah kegagalan
+            tercatat, atau setelah kami menerima pembatalan Anda.
+          </p>
+          <ul>
+            <li>
+              <strong>QRIS, GoPay, dan DANA:</strong> uang dikembalikan lewat
+              Midtrans ke cara bayar semula. Jika cara itu tidak tersedia, kami
+              transfer ke rekening Anda.
+            </li>
+            <li>
+              <strong>Transfer bank:</strong> kami transfer dari rekening kami.
+              Kami tanyakan nomor rekening Anda lewat email, dan nomor itu tidak
+              kami simpan di sistem Nuave.
+            </li>
+          </ul>
+          <p>
+            Lama dana sampai ke rekening atau dompet digital Anda tergantung
+            bank atau penyedia pembayaran.
           </p>
         </Section>
 
         <Section title="8. Salah email atau salah bisnis">
           <p>
             Tulis ke <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
-            Kami bantu secara manual. Untuk mengirim link ke email lain, kami
-            perlu konfirmasi dari email pesanan dan dari email baru. Nomor
-            pesanan saja tidak cukup. Laporan yang sudah dibuat tidak diubah.
+            Kami bantu secara manual. Link laporan hanya kami kirim ulang ke
+            email pesanan, dan permintaannya harus datang dari email itu. Nomor
+            pesanan saja tidak cukup untuk membuktikan pesanan itu milik Anda.
+            Laporan yang sudah dibuat tidak diubah.
           </p>
         </Section>
 
@@ -227,14 +255,15 @@ export default function TermsPage() {
           <p>
             Kami menjalankan audit sesuai yang Anda setujui dan berusaha menjaga
             laporan tetap akurat. Kami tidak mengendalikan ChatGPT, Google, atau
-            situs pihak lain.
+            situs pihak lain. Nuave tidak berafiliasi dengan OpenAI, Google,
+            atau Meta.
           </p>
           <p>
             Syarat ini tidak menghapus hak Anda sebagai konsumen menurut hukum
             Indonesia. Jika ada masalah, hubungi kami dulu di{" "}
             <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> dengan nomor
-            pesanan. Kami balas dalam {SUPPORT_REPLY} (Senin sampai Jumat, waktu
-            Jakarta). Syarat ini tunduk pada hukum Republik Indonesia.
+            pesanan. Kami balas dalam {SUPPORT_REPLY} (Senin sampai Jumat, WIB).
+            Syarat ini tunduk pada hukum Republik Indonesia.
           </p>
         </Section>
 

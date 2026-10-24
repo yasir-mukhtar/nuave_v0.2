@@ -18,15 +18,24 @@
 | Full refund if no report 24 hours after the start | S0 D3 |
 | Report sent when each source completed at least 5 of 10 checks | Spec 018 R-19 (Q-2) |
 | Failed check: "Tidak dapat diuji", "Minta bantuan", re-run by hand, refund if the results cannot be provided | Spec 018 R-20, R-21a |
-| Refund within 3 business days of the decision, through Midtrans | S0 D3 |
+| Refund within 3 business days of the recorded failure or the cancellation | S0 D3 |
+| Refund route: Midtrans for QRIS, GoPay, DANA; transfer from the founder's bank for bank transfer | Decision 2026-10-14 Q9 |
+| Rp12.450 per failed check that cannot be re-run | Founder decision 2026-10-24 (S5) |
+| Continue in the same browser; questions not approved in 7 days end the order with a full refund | Spec 016 Q4; Spec 017 R-13 |
+| Google showing no AI Overview is a finding, not a failure | Spec 018 Q-3 |
 | Full refund for cancelling before the audit starts | Founder decision 2026-10-24 (S5) |
 | Report link valid 12 months | S0 D1; decision 2026-10-18 |
-| Wrong email or business handled by hand; order number is not proof | S0 D5, D7 |
+| Wrong email or business handled by hand; the link is reissued only to the order email; order number is not proof | S0 D5, D7, D8 |
 | Reply within 1 business day | S0 D4 |
 
 The earlier draft promised a free replacement audit, a 30-day quote, a fixed
 correction window and refunds in 7 to 14 business days. None of those is a
 founder decision or what the system does, so they are gone.
+
+New commitments this page makes that the founder approves with the final
+wording: 18 or older, how the report may be used, no refund for results the
+customer dislikes, refusing an order, and "not affiliated with OpenAI,
+Google or Meta".
 
 ---
 
@@ -62,6 +71,9 @@ Laporan berisi jawaban dari kedua sumber, berapa kali bisnis Anda disebut di
 masing-masing, bisnis lain yang disebut, sumber yang dibaca AI, dan hal yang
 bisa Anda perbaiki.
 
+Google sering tidak menampilkan AI Overview untuk sebuah pertanyaan. Laporan
+mencatatnya sebagai temuan, bukan sebagai pemeriksaan yang gagal.
+
 Pesanan tidak mencakup pemantauan rutin, dashboard, langganan, jasa SEO, atau
 pengerjaan saran di laporan. Cek ulang adalah pesanan terpisah.
 
@@ -75,12 +87,16 @@ Audit tidak membutuhkannya.
 
 ## 4. Harga dan pembayaran
 
-Harga satu audit **Rp249.000**, sudah total. Nuave tidak menambah pajak atau
+Harga satu audit **Rp249.000**. Itu harga total: Nuave tidak menambah pajak atau
 biaya lain saat checkout. Pembayaran lewat Midtrans dengan QRIS, transfer bank,
 GoPay, atau DANA. Kami tidak menerima nomor kartu, PIN, atau kode OTP Anda.
 
 Cek gratis di awal hanya memastikan bisnis Anda. Setelah membayar, Anda
 memeriksa data bisnis dan menyetujui sepuluh pertanyaan.
+
+Lanjutkan isian di browser yang sama dengan tempat Anda membayar, karena isian
+hanya tersimpan di browser itu. Jika sepuluh pertanyaan belum Anda setujui dalam
+7 hari setelah membayar, pesanan berakhir dan kami kembalikan uang Anda penuh.
 
 ## 5. Kapan laporan siap
 
@@ -101,11 +117,12 @@ penuh.
 Kadang satu pertanyaan tidak berhasil diperiksa di ChatGPT atau Google karena
 gangguan teknis. Laporan tetap dikirim jika setiap sumber berhasil memeriksa
 sedikitnya 5 dari 10 pertanyaan. Pemeriksaan yang gagal ditandai **Tidak dapat
-diuji** dengan tombol **Minta bantuan**, dan tidak dihitung sebagai hasil buruk.
+diuji** dengan tautan **Minta bantuan**, dan tidak dihitung sebagai hasil buruk.
 
 Jika Anda minta bantuan, kami balas dalam 1 hari kerja. Kami coba periksa ulang
-pertanyaan yang gagal dan mengirim hasilnya ke email pesanan. Jika hasilnya
-tetap tidak bisa didapat, kami kembalikan uang Anda.
+pertanyaan yang gagal dan mengirim hasilnya ke email pesanan. Jika hasilnya tetap tidak bisa didapat, kami kembalikan Rp12.450 untuk setiap
+pemeriksaan yang gagal. Angka itu adalah Rp249.000 dibagi 20 pemeriksaan (10 di
+ChatGPT dan 10 di Google).
 
 Jika kurang dari 5 pertanyaan berhasil di salah satu sumber, laporan tidak
 dibuat. Kami kabari lewat email dan mengembalikan uang Anda penuh.
@@ -123,15 +140,23 @@ dibuat. Kami kabari lewat email dan mengembalikan uang Anda penuh.
   pesaing lebih sering disebut, bukan alasan pengembalian dana. Yang Anda beli
   adalah pemeriksaan dan laporannya, bukan hasil tertentu.
 
-Uang dikembalikan lewat Midtrans ke cara bayar semula, paling lambat 3 hari
-kerja setelah kami memastikan pengembalian dana. Lama dana sampai ke rekening
-atau dompet digital Anda tergantung bank atau penyedia pembayaran.
+Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim pengembalian
+dana paling lambat 3 hari kerja setelah kegagalan tercatat, atau setelah kami
+menerima pembatalan Anda.
+
+- **QRIS, GoPay, dan DANA:** uang dikembalikan lewat Midtrans ke cara bayar
+  semula. Jika cara itu tidak tersedia, kami transfer ke rekening Anda.
+- **Transfer bank:** kami transfer dari rekening kami. Kami tanyakan nomor
+  rekening Anda lewat email, dan nomor itu tidak kami simpan di sistem Nuave.
+
+Lama dana sampai ke rekening atau dompet digital Anda tergantung bank atau
+penyedia pembayaran.
 
 ## 8. Salah email atau salah bisnis
 
-Tulis ke support@nuave.ai. Kami bantu secara manual. Untuk mengirim link ke
-email lain, kami perlu konfirmasi dari email pesanan dan dari email baru. Nomor
-pesanan saja tidak cukup. Laporan yang sudah dibuat tidak diubah.
+Tulis ke support@nuave.ai. Kami bantu secara manual. Link laporan hanya kami kirim ulang ke email pesanan,
+dan permintaannya harus datang dari email itu. Nomor pesanan saja tidak cukup
+untuk membuktikan pesanan itu milik Anda. Laporan yang sudah dibuat tidak diubah.
 
 ## 9. Batasan audit
 
@@ -166,11 +191,12 @@ Anda setuju menerima promosi.
 ## 13. Tanggung jawab dan keluhan
 
 Kami menjalankan audit sesuai yang Anda setujui dan berusaha menjaga laporan
-tetap akurat. Kami tidak mengendalikan ChatGPT, Google, atau situs pihak lain.
+tetap akurat. Kami tidak mengendalikan ChatGPT, Google, atau situs pihak lain. Nuave tidak
+berafiliasi dengan OpenAI, Google, atau Meta.
 
 Syarat ini tidak menghapus hak Anda sebagai konsumen menurut hukum Indonesia.
 Jika ada masalah, hubungi kami dulu di support@nuave.ai dengan nomor pesanan.
-Kami balas dalam 1 hari kerja (Senin sampai Jumat, waktu Jakarta). Syarat ini
+Kami balas dalam 1 hari kerja (Senin sampai Jumat, WIB). Syarat ini
 tunduk pada hukum Republik Indonesia.
 
 ## 14. Perubahan syarat

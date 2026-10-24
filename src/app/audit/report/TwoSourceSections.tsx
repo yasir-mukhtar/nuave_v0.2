@@ -31,7 +31,9 @@ import styles from "./report-body.module.css";
  * a model. Reports saved before Spec 018 never reach this file (R-29).
  */
 
-export const SUPPORT_EMAIL = "support@nuave.ai";
+import { SUPPORT_EMAIL } from "@/lib/legal";
+
+export { SUPPORT_EMAIL };
 export const TWO_SOURCE_ANSWERS_TITLE =
   "Jawaban ChatGPT dan Google AI Overview";
 

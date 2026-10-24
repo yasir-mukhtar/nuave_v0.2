@@ -6,23 +6,37 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
-## 2026-10-24 — S5: Meta consent, privacy contact, operator, cancellation
+## 2026-10-24 — S5: Meta consent, operator, refunds and record deletion
 
-Yasir answered four questions before the S5 wording (terms, privacy, support
-and FAQ pages):
+Yasir answered eight questions while the S5 wording (terms, privacy,
+support and FAQ pages) was written and reviewed:
 
 - **Meta ads tracking:** keep the promise of a choice before tracking. The
-  Meta Pixel and Conversions API run only for visitors who tap **Setuju** on
-  a cookie notice. The tracking change (separate from S5) must add that
-  notice, a **Pengaturan cookie** footer link, and send server events only
-  for visitors who agreed. The privacy page already says this.
-- **Privacy contact:** support@nuave.ai handles privacy requests too, with
-  the S0 D4 reply time (1 business day).
-- **Operator:** the terms, privacy and support pages say Nuave is run by
-  **PT Nuave Arah Baru** in **Jakarta Selatan**.
+  Meta Pixel and Conversions API run only for visitors who agree on a cookie
+  notice. That notice belongs to the separate tracking change.
+- **Privacy contact:** support@nuave.ai handles privacy requests too.
+- **Operator:** the pages say Nuave is run by **PT Nuave Arah Baru** in
+  **Jakarta Selatan**.
 - **Cancellation:** a customer who cancels after paying but before the audit
-  starts (before approving the ten questions) gets a full refund, by hand,
-  within 3 business days like S0 D3.
+  starts (before approving the ten questions) gets a full refund.
+- **Record deletion:** keep the record lifetimes of Spec 016 Q3 on the
+  privacy page and build an automatic cleanup job before the first failed
+  orders reach 30 days (mid-November 2026). This replaces "no deletion now"
+  for those lifetimes; the job needs its own change.
+- **Failed checks in a delivered report:** when a failed check cannot be
+  re-run, the refund is by share: Rp12.450 per failed check (Rp249.000 over
+  20 checks, 10 on ChatGPT and 10 on Google).
+- **Support email:** kept 12 months after the issue is closed.
+- **Quote validity:** remove "Ringkasan ini berlaku 30 hari" from the
+  checkout; no quote validity is promised (an unpaid order ends after 2
+  hours, Spec 016 Q2).
+
+Worker choices in the same change, for Yasir to approve with the final
+wording: the refund clock starts when the failure is recorded or the
+cancellation is received (S0 D3); refund routes follow Q9 of 2026-10-14
+(Midtrans for QRIS, GoPay and DANA; a transfer from the founder's bank for
+bank transfer); the tracking change must also add a **Pengaturan cookie**
+footer link and send server events only for visitors who agreed.
 
 ## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
 
