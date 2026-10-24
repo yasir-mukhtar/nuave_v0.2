@@ -43,33 +43,39 @@ export type ReportPresentation =
     };
 
 const count = z.number().int().min(0).max(10);
-const measureSchema = z
-  .object({
-    overall: z.object({ appeared: count, total: z.literal(10) }),
-    unbranded: z.object({ appeared: count, total: count }),
-    branded: z.object({ appeared: count, total: count }),
-    recommendation: z.object({ recommended: count, assessed: z.literal(10) }),
-    comparison: z.object({ client_preferred: count, assessed: count }),
-    information: z.object({
-      confirmed: count,
-      incomplete: count,
-      conflicting: count,
-      assessed: count,
-    }),
-  })
-  .refine(
-    (m) =>
-      m.unbranded.appeared <= m.unbranded.total &&
-      m.branded.appeared <= m.branded.total &&
-      m.unbranded.total + m.branded.total === m.overall.total &&
-      m.unbranded.appeared + m.branded.appeared === m.overall.appeared &&
-      m.recommendation.recommended <= m.overall.appeared &&
-      m.comparison.client_preferred <= m.comparison.assessed &&
-      m.information.confirmed +
-        m.information.incomplete +
-        m.information.conflicting ===
-        m.information.assessed,
-  );
+// Spec 018 R-19: a two-source report assesses recommendation only on the
+// completed ChatGPT answers, so its denominator may be under ten.
+const measureSchemaFor = (twoSource: boolean) =>
+  z
+    .object({
+      overall: z.object({ appeared: count, total: z.literal(10) }),
+      unbranded: z.object({ appeared: count, total: count }),
+      branded: z.object({ appeared: count, total: count }),
+      recommendation: z.object({
+        recommended: count,
+        assessed: twoSource ? count : z.literal(10),
+      }),
+      comparison: z.object({ client_preferred: count, assessed: count }),
+      information: z.object({
+        confirmed: count,
+        incomplete: count,
+        conflicting: count,
+        assessed: count,
+      }),
+    })
+    .refine(
+      (m) =>
+        m.unbranded.appeared <= m.unbranded.total &&
+        m.branded.appeared <= m.branded.total &&
+        m.unbranded.total + m.branded.total === m.overall.total &&
+        m.unbranded.appeared + m.branded.appeared === m.overall.appeared &&
+        m.recommendation.recommended <= m.overall.appeared &&
+        m.comparison.client_preferred <= m.comparison.assessed &&
+        m.information.confirmed +
+          m.information.incomplete +
+          m.information.conflicting ===
+          m.information.assessed,
+    );
 
 // Validate only the retained reading boundary. Empty older analysis remains
 // inspectable; PR B2 owns the minimum for newly synthesized reports.
@@ -151,17 +157,26 @@ export function buildReportPresentation(
     observationIds.some((id, index) => id !== detailIds[index])
   )
     return unavailable("binding");
+  // Spec 018 R-20: a two-source report keeps honest failed ChatGPT records,
+  // bound to a failed detail and to a failed outcome in its code-built block.
+  // Every other report still needs ten completed answers.
+  const failedAllowed = (id: string) =>
+    report.two_source?.questions.some(
+      (q) => q.prompt_id === id && q.chatgpt.outcome === "failed",
+    ) === true;
+  const detailRun = new Map(report.details.map((d) => [d.prompt_id, d.run]));
   if (
     !contentSchema.safeParse(report).success ||
     observations.some(
       (o) =>
         !evidenceSchema.safeParse(o).success ||
-        o.run_status !== "completed" ||
         !o.question.trim() ||
-        !o.raw_answer.trim() ||
-        !Number.isFinite(Date.parse(o.observed_at)),
-    ) ||
-    report.details.some((d) => d.run !== "completed")
+        !Number.isFinite(Date.parse(o.observed_at)) ||
+        (o.run_status === "completed"
+          ? !o.raw_answer.trim() || detailRun.get(o.prompt_id) !== "completed"
+          : !failedAllowed(o.prompt_id) ||
+            detailRun.get(o.prompt_id) !== "failed"),
+    )
   )
     return unavailable("evidence");
   const references = [
@@ -177,7 +192,11 @@ export function buildReportPresentation(
     )
   )
     return unavailable("references");
-  if (!measureSchema.safeParse(report.measures).success)
+  if (
+    !measureSchemaFor(report.two_source !== undefined).safeParse(
+      report.measures,
+    ).success
+  )
     return unavailable("measures");
   const detailById = new Map(report.details.map((d) => [d.prompt_id, d]));
   const answers: AnswerPresentation[] = observations.map(

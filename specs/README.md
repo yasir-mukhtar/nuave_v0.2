@@ -50,6 +50,12 @@ verification is against its acceptance criteria.
 any, and the active milestone. The entries below record each package's
 latest status.
 
+- [`018-search-grounded-chatgpt-google-audit/SPEC.md`](./018-search-grounded-chatgpt-google-audit/SPEC.md)
+  — **Approved** (2026-10-24, revision 7). Questions from real Google search
+  data, each answered by the real ChatGPT app and Google AI Overview; price
+  Rp249.000. Plan review round 4 PASS+NOTES (notes applied). Build after the
+  AC-00 probe re-run passes.
+
 - [`017-payment-and-test-pass/SPEC.md`](./017-payment-and-test-pass/SPEC.md)
   — **Approved** (2026-10-14, revision 6). S4:
   Midtrans Snap payment (sandbox), founder test pass, short order number,

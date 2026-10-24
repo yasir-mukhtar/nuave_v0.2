@@ -17,6 +17,7 @@ import {
   INTAKE_TEXT_RESTRICTED_MESSAGE,
   type ExtractionDraft,
 } from "../audit/types";
+import { prefillSearchPlace, type SearchPlace } from "../discovery/places";
 
 export const SMART_INTAKE_INPUT_VERSION =
   "nuave-local-intake-input-v2" as const;
@@ -98,6 +99,9 @@ export type SmartSelection = {
   differentiator: string;
   publicFact: string;
   origins: Record<string, Origin>;
+  /** Spec 018 R-01: the owner's "Kota untuk pencarian" pick. Absent or null
+   * means not chosen yet; the review then shows the pre-fill, if any. */
+  searchPlace?: SearchPlace | null;
 };
 
 export type FrozenSmartIntake = {
@@ -674,6 +678,20 @@ export function initialSmartSelection(
     : syncSmartCategory(prepared, selection);
 }
 
+/** Spec 018 Experience 2: the owner's pick, else the pre-fill from the
+ * branch address or the confirmed areas, else null (the owner must pick). */
+export function effectiveSearchPlace(
+  selection: SmartSelection,
+): SearchPlace | null {
+  if (selection.searchPlace) return selection.searchPlace;
+  return prefillSearchPlace({
+    focus: selection.focus,
+    locationAddress: selection.locationAddress,
+    marketReach: selection.marketReach,
+    marketAreas: selection.marketAreas,
+  });
+}
+
 /** Required meanings the review must route back to their owning screen. */
 export function requiredSmartGaps(selection: SmartSelection): string[] {
   const gaps: string[] = [];
@@ -692,6 +710,7 @@ export function requiredSmartGaps(selection: SmartSelection): string[] {
   if (selection.focus !== "cabang" && !smartMarketReady(selection))
     gaps.push(selection.marketReach ? "Area layanan" : "Jangkauan pasar");
   if (!smartComparatorsReady(selection)) gaps.push("Bisnis pembanding");
+  if (!effectiveSearchPlace(selection)) gaps.push("Kota untuk pencarian");
   return gaps;
 }
 
@@ -829,6 +848,10 @@ export function confirmSmartSelection(
     ...(optionalText(selection.publicFact, "publicFact")
       ? { publicFact: optionalText(selection.publicFact, "publicFact") }
       : {}),
+    searchPlace: {
+      value: effectiveSearchPlace(selection),
+      origin: selection.searchPlace ? "owner" : "nuave",
+    },
   } as DirectTenAuditContext;
   const parsed = directTenContextSchema.parse(context);
   const fields = [

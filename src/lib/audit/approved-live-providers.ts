@@ -25,3 +25,12 @@ export const APPROVED_LIVE_SYSTEMS = [
   OPENAI_SYSTEM,
   OPENCODEGO_SYSTEM,
 ] as const;
+
+/**
+ * Spec 018 R-12: the ChatGPT app, asked through DataForSEO's ChatGPT LLM
+ * Scraper. It is not an OpenAI API transport: its evidence has its own method
+ * check (`chatgptScraperObservationErrors`), so it is kept out of
+ * APPROVED_LIVE_SYSTEMS and recorded on its own.
+ */
+export const DATAFORSEO_CHATGPT_SYSTEM =
+  "DataForSEO ChatGPT LLM Scraper" as const;

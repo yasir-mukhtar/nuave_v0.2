@@ -60,7 +60,7 @@ the founder stepping in:
 1. Open `v2.nuave.ai` and enter their business website. Nuave reads the
    site's public name and details to show "is this your business?" This step
    is free and uses no AI.
-2. See the price (Rp99.000) and what they get, and pay through Midtrans.
+2. See the price (Rp249.000) and what they get, and pay through Midtrans.
 3. Go through the Airbnb-style intake: Nuave shows what it understood, and the
    owner confirms, corrects, or answers a few quiz-like choices.
 4. Review and approve the ten questions.
@@ -521,7 +521,7 @@ These come from the original plan's Phase 4 exit gate
 
 - Add payment to the order summary that S3 built (it already collects the
   email, which delivery and support D3, D5, D7, D8 depend on). The summary now
-  also shows the Rp99.000 total, the delivery promise, and links to Terms and
+  also shows the Rp249.000 total, the delivery promise, and links to Terms and
   Privacy. It sits right after the free "is this your business?" result.
   Payment comes **before** the intake asks for or prepares any business
   details.
@@ -587,7 +587,7 @@ only if asked.
    evidence in the PR.
 2. Founder switches Midtrans to production keys.
 3. Founder buys one real audit for a business they own or have permission for
-   (Rp99.000), reaches the report on a phone, and refunds it from the Midtrans
+   (Rp249.000), reaches the report on a phone, and refunds it from the Midtrans
    dashboard.
 4. Founder records "open for paying customers" in `DECISION_LOG.md`.
 
@@ -599,7 +599,7 @@ three questions. **Approved by the founder on 2026-09-27** (recorded in
 
 1. Did this report tell you something you didn't know about your business?
 2. Would you do anything differently because of it? What?
-3. Would you pay Rp99.000 for a report like this about your own business?
+3. Would you pay Rp249.000 for a report like this about your own business?
 
 Record each owner's answers in one short note. Findings go to the parking lot
 unless they show the report is unsellable. In that case, stop and re-plan.
@@ -632,7 +632,7 @@ founder moves it into a milestone.
 **Open questions** (from the former `NOW.md`; Track V starts on the first
 three)
 - Will Indonesian small-business owners pay for one audit at all, and at
-  Rp99.000?
+  Rp249.000?
 - Does an owner act on the report, or read it, agree, and do nothing?
 - Will owners buy a re-check, and at what interval?
 - How much does ordinary run-to-run variation move the count out of ten?

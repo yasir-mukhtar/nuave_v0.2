@@ -1,10 +1,126 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-23
+> Updated: 2026-10-24
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
+
+Yasir set the target market:
+
+- **First customers:** beauty clinics in Jabodetabek and Bandung.
+- **Who buys:** the clinic owner or the person who runs the clinic's
+  marketing.
+- **Secondary:** other clinic types (dental, skin, children's, and the
+  "Lainnya" tab). The clinic landing page keeps them as they are
+  ([PR #152](https://github.com/yasir-mukhtar/nuave_v0.2/pull/152)).
+
+This replaces the 2026-08-17 wedge (dental clinics in Depok) and settles the
+2026-07-19 open question on the first city. It sets who outreach, copy and
+terms are written for; it does not add a check that turns other businesses
+away at checkout.
+
+## 2026-10-24 — Delivery promise wording and the clinic report label
+
+Yasir decided, reviewing the clinic landing page (PR #152, lofi v2.2):
+
+- **Delivery promise (Spec 018 Q-1, R-23):** "Laporan siap dalam 15 menit
+  setelah audit dimulai." replaces "Laporan biasanya siap dalam 15 menit
+  setelah Anda menyetujui pertanyaan, paling lama 24 jam." The refund
+  sentence after it is unchanged. The order preview, checkout and payment
+  email all use `DELIVERY_PROMISE` (`src/lib/orders/promise.ts`), so they now
+  say the same as the landing page.
+- **Clinic report label:** for a clinic, the report says "Klinik Anda" where
+  it says "Bisnis Anda" ("Klinik Anda muncul di X dari N pertanyaan", and so
+  on). Other businesses keep "Bisnis Anda". Not built yet: Spec 018 or a
+  follow-up builds it and updates the settled labels in `docs/VOICE.md` at
+  the same time.
+- **Clinic landing page:** keep "Google AI Overview" (not "Ringkasan AI"),
+  contact by email only (support@nuave.ai, no WhatsApp), no "coba sendiri"
+  line, and keep the H1 "Pasien sekarang tanya AI dulu, baru pilih klinik."
+
+## 2026-10-24 — Approve Spec 018
+
+Yasir approved [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+(revision 7) after four plan review rounds (the last PASS+NOTES, notes
+applied), with every recommendation:
+
+- **Report gate (Q-2):** a report is delivered when each source completed at
+  least 5 of its 10 checks; otherwise the order fails as today and the founder
+  resolves it.
+- **Google AI Overview coverage (Q-3):** accept that Google often shows no AI
+  Overview; the report says how often it did, as a finding.
+- **Workers (Q-4):** production is already on Cloudflare Workers Paid.
+- **Probe re-run (Q-5):** re-run the three-clinic probe on the current rules
+  before PR 1 (about USD 0.25).
+- **Name:** customers see "ChatGPT dan Google AI Overview" (not "ChatGPT dan
+  Google"); Google's AI summary is called "Google AI Overview" wherever
+  customers see it.
+- Q-1 (exact delivery-promise wording) is approved in PR 2.
+- **Later the same day (revision 8):** DataForSEO's "navigational" label no
+  longer drops a search; only a search that names a business does. The probe
+  re-run showed the label removed good local searches such as "klinik
+  kecantikan laser terdekat".
+- **N-17 accepted (later the same day):** discovery's USD 0.12 is one budget
+  per order, shared by both runs; a second run after a place change spends
+  only what is left. The DataForSEO repository secrets exist; the balance
+  top-up comes before the live run (AC-14).
+- **"Klinik Anda" built in Spec 018 (later the same day):** Yasir asked for the
+  clinic label (decided in the entry above) to be built now, before the live
+  run, as AC-20.
+
+## 2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000
+
+Yasir decided, after the DataForSEO test on Sozo Skin Clinic
+([`experiments/dataforseo-sozo/`](../experiments/dataforseo-sozo/), USD 0.16),
+what the audit sold to the first paying customers will be:
+
+- **Questions from real searches:** the ten questions come from real Google
+  search data for the business's type and city (People also ask,
+  autocomplete, keyword volumes), keep real human wording, and show how often
+  their topic is searched. Cheaper Inference stays the question writer and the
+  fallback when search data is missing.
+- **Two answers per question:** the same question is asked to ChatGPT and to
+  Google's AI summary (via DataForSEO). This reopens the earlier "two grounded
+  API surfaces for v0" row for this one addition; Gemini is left out for now.
+- **One package, no tiers.**
+- **City:** the business's main city by default, or the branch the customer
+  chooses.
+- **Price:** Rp249.000 (was Rp99.000).
+- **Order:** build this first ([Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)),
+  then S5 (terms, price and promise wording), S6 (landing page) and G1, so the
+  promise and landing page describe the new audit once.
+- **Failed checks:** one free re-run of only the failed part; if it still
+  fails, the customer is sent to support; a refund only when it cannot be
+  fixed.
+- **Report design:** no Figma design now; build from the existing report
+  design and evaluate later.
+- **Promise:** the order preview and checkout name "ChatGPT dan Google".
+
+**2026-10-24 founder answers** (after the round-1 plan review of Spec 018):
+
+1. **ChatGPT label:** the ChatGPT part uses DataForSEO's ChatGPT LLM Scraper,
+   which reads the real ChatGPT app, so the report may say "ChatGPT". The
+   OpenAI API stays for the business reading and report writing only.
+2. **Failed checks (ChatGPT or Google):** the report is still delivered; the
+   failed part points the customer to support; Yasir resolves it by hand; a
+   refund only when it cannot be fixed. This replaces the ten-evaluable rule
+   for these orders.
+3. **No free re-run button** for now; it may become its own small spec.
+4. **"Kota untuk pencarian":** one field on the review screen, pre-filled and
+   editable, used for both Google and ChatGPT.
+5. **Probe approved:** about USD 0.20 of DataForSEO credit to test discovery
+   and the ChatGPT app on three clinics before building the question part.
+   It ran on 2026-10-24 for USD 0.244 (within the USD 0.30 stop).
+
+**2026-10-24 clarification** (fact found in the round-2 plan review, not a new
+decision): DataForSEO's ChatGPT scraper accepts countries only, so ChatGPT is
+always asked as "Indonesia". Answer 4's city sets the place for Google, and
+every question about choosing a provider names the city in its text so both
+sources answer for the same place. (The probe showed ChatGPT treats a question
+with no city as Jakarta; Spec 018 revision 5, R-10a.)
 
 ## 2026-10-23 — Errors use Jeton red
 

@@ -547,7 +547,7 @@ export async function renameBusiness(page: Page, name: string) {
 /* ───────────────────────── J06–J10: steps, checkout, paid reading ───────────────────────── */
 
 /** Spec 017: the price, the button and the copy of the checkout (J07). */
-export const PAY_BUTTON = "Bayar Rp99.000";
+export const PAY_BUTTON = "Bayar Rp249.000";
 export const PAID_HEADING = "Pembayaran diterima";
 export const ORDER_PRICE_NOTE =
   "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan ini berlaku 30 hari.";
@@ -556,7 +556,7 @@ export const PAY_CONSENT =
   "Dengan membayar, Anda menyetujui Syarat Penggunaan dan Kebijakan Privasi.";
 /** Q5, word for word: mirrors `DELIVERY_PROMISE` in `src/lib/orders/promise.ts`. */
 export const ORDER_DELIVERY_PROMISE =
-  "Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami kembalikan uang Anda.";
+  "Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda.";
 /** The code `/uji` keeps in session storage (the e2e server's own test code). */
 export const E2E_TEST_PASS_CODE = "e2e-test-pass-code-not-a-secret-0001";
 /** Mirrors `TEST_PASS_STORAGE_KEY` in `src/lib/intake/test-pass.ts`. */
@@ -597,7 +597,7 @@ export async function expectOrderSummaryPrice(
     card.getByText(`${businessName} · 10 pertanyaan`, { exact: true }),
   ).toBeVisible();
   await expect(card.getByText("Total", { exact: true })).toBeVisible();
-  await expect(card.getByText("Rp99.000", { exact: true })).toBeVisible();
+  await expect(card.getByText("Rp249.000", { exact: true })).toBeVisible();
   await expect(card.getByText(ORDER_PRICE_NOTE, { exact: true })).toBeVisible();
   await expect(
     card.getByText(ORDER_DELIVERY_PROMISE, { exact: true }),
@@ -1273,9 +1273,28 @@ export function reviewConfirmation(page: Page) {
   });
 }
 
+/** Spec 018 AC-01: when no place could be pre-filled, picks "Seluruh
+ * Indonesia" in the "Kota untuk pencarian" sheet. */
+export async function ensureSearchPlace(page: Page) {
+  const gap = reviewScreen(page).getByText(
+    /Perlu dipastikan:.*Kota untuk pencarian/,
+  );
+  if (!(await gap.count())) return;
+  await page
+    .getByRole("button", { name: "Ubah Kota untuk pencarian", exact: true })
+    .click();
+  const sheet = page.getByRole("dialog", { name: "Ubah Kota untuk pencarian" });
+  await sheet
+    .getByRole("button", { name: "Seluruh Indonesia", exact: true })
+    .click();
+  await sheet.getByRole("button", { name: "Simpan", exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+}
+
 /** Ticks the confirmation (the button stays disabled until then) and presses
  * `Buat pertanyaan audit`. */
 export async function confirmSummary(page: Page) {
+  await ensureSearchPlace(page);
   const box = reviewConfirmation(page);
   const create = page.getByRole("button", {
     name: CONFIRM_SUMMARY,
@@ -1484,17 +1503,29 @@ export async function readyLinkFromMail(
 }
 
 /** Local tests only: runs the cron through the development trigger until the
- * ready email has gone out (ten questions, then the report). */
+ * page's order is delivered: ten questions (with the synthetic retries of
+ * Spec 018), then the report and its ready email. Spec 018 R-15 lets two
+ * orders step in one run, so the order is followed by the id the page holds,
+ * not by the first saved report of any order. */
 export async function runServerAuditToDelivery(
   page: Page,
-  maxRuns = 16,
+  maxRuns = 20,
 ): Promise<string[]> {
+  const stored = await page.evaluate(() =>
+    localStorage.getItem("nuave.activeOrder.v1"),
+  );
+  const orderId = (JSON.parse(stored ?? "{}") as { orderId?: string }).orderId;
+  expect(orderId).toMatch(/^[0-9a-f]{32}$/);
   const outcomes: string[] = [];
   for (let run = 0; run < maxRuns; run += 1) {
     const result = await runRunnerOnce(page);
     expect(result.ran).toBe(true);
     outcomes.push(...(result.outcomes ?? []));
-    if (outcomes.includes("report_saved")) return outcomes;
+    const status = await page.request.post("/api/orders/status", {
+      data: { order_id: orderId },
+    });
+    if (((await status.json()) as { state?: string }).state === "delivered")
+      return outcomes;
   }
   throw new Error(`the audit did not reach a saved report in ${maxRuns} runs`);
 }

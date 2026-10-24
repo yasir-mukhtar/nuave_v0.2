@@ -8,6 +8,13 @@
 > Scope of this change: documentation only; no runtime, dependency, fixture, provider, or deployment changes
 > Closeout (2026-09-26): A/B1/B2 merged and deployed; founder accepted the current report for now with AC-18's original comparison unperformed and deferred. Independent closeout passed with the AC-18 exception; see [orchestrator acceptance](./CLOSEOUT_ACCEPTANCE.md). See [Closeout and provenance notes](#closeout-and-provenance-notes-2026-09-26).
 
+> **Changed by Spec 018 (2026-10-24):** for Spec 018 two-source orders, the
+> ten-of-ten denominators no longer apply. Counts are per source (ChatGPT N =
+> completed answers; Google M = completed checks, Z = AI Overviews with text),
+> failed checks are shown as "Tidak dapat diuji", and the answers section is
+> "Jawaban ChatGPT dan Google AI Overview". Reports saved before Spec 018 keep
+> this spec's layout. See [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md) R-17..R-20, R-29.
+
 All eight founder decisions below are settled. This document is the reviewable
 implementation contract requested by block 0 of the plan. It is
 **Approved** by the founder on 2026-09-22 after review 1; approval does not

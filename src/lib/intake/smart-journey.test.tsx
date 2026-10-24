@@ -150,8 +150,19 @@ const fact = (label: string) =>
 const REVIEW_CONFIRMATION =
   "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.";
 
+/** Spec 018 AC-01: when no place could be pre-filled, the owner picks one
+ * ("Seluruh Indonesia" here) in the "Kota untuk pencarian" sheet. */
+function ensureSearchPlace() {
+  if (!screen.queryByText(/Perlu dipastikan:.*Kota untuk pencarian/)) return;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Ubah Kota untuk pencarian" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Seluruh Indonesia" }));
+  fireEvent.click(screen.getByRole("button", { name: "Simpan" }));
+}
 /** J25: the owner's tick, which unlocks "Buat pertanyaan audit". */
 const tickReview = () => {
+  ensureSearchPlace();
   const box = screen.getByRole("checkbox", { name: REVIEW_CONFIRMATION });
   if (box.getAttribute("aria-checked") !== "true") fireEvent.click(box);
 };
@@ -1101,8 +1112,15 @@ describe("smart blank intake", () => {
     expect(
       await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" }),
     ).toBeTruthy();
-    expect(requests).toHaveLength(4);
-    const sent = requests[3]!.body!;
+    // Spec 018 R-15: discovery runs in its own request, just before the
+    // questions, for the same order and the same confirmed intake.
+    expect(requests).toHaveLength(5);
+    expect(requests[3]!.url).toBe("/api/audit/discovery");
+    expect(requests[3]!.body).toEqual({
+      order_id: ORDER_ID,
+      intake: requests[4]!.body!.intake,
+    });
+    const sent = requests[4]!.body!;
     expect(sent.order_id).toBe(ORDER_ID);
     expect(sent).not.toHaveProperty("brief");
     expect(sent.intake).toMatchObject({
@@ -1122,7 +1140,7 @@ describe("smart blank intake", () => {
     expect(
       JSON.parse(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY) ?? "{}"),
     ).toMatchObject({ version: 9, stage: "questions" });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
   });
 
   it("holds a literal started v1 pair without changing its bytes or calling a provider", async () => {
@@ -1188,6 +1206,7 @@ function stubPreparation(
     holdIdentity?: Promise<void>;
     holdExtract?: Promise<void>;
     draft?: Record<string, unknown>;
+    discoveryLocked?: boolean;
   } = {},
 ) {
   const calls: string[] = [];
@@ -1221,6 +1240,12 @@ function stubPreparation(
       });
     }
     if (url === "/api/audit/glm-questions") return questionsResponse();
+    if (url === "/api/audit/discovery" && options.discoveryLocked !== undefined)
+      return Response.json({
+        status: "ready",
+        searchData: true,
+        locked: options.discoveryLocked,
+      });
     throw new Error(`Unexpected request ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -3698,6 +3723,7 @@ describe("Spec 013 J7 final review", () => {
       "/api/orders",
       "/api/audit/extract",
       "/api/orders/status",
+      "/api/audit/discovery",
       "/api/audit/glm-questions",
     ]);
   });
@@ -4049,6 +4075,7 @@ describe("Spec 013 JQ customer screens", () => {
       "identity",
       "/api/orders",
       "/api/audit/extract",
+      "/api/audit/discovery",
       "/api/audit/glm-questions",
     ]);
     const [context] = jqQuestionBodies(fetchMock);
@@ -4977,7 +5004,7 @@ describe("independent review, round 1", () => {
     render(<SmartIntakeJourney live={false} />);
     await screen.findByText(/Website toko-lain\.example belum diperiksa/);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Bayar Rp99.000" }),
+      await screen.findByRole("button", { name: "Bayar Rp249.000" }),
     );
     await waitFor(() => expect(calls).toContain("/api/payments/start"));
     expect(screen.queryByText(/belum diperiksa/)).toBeNull();
@@ -5298,5 +5325,42 @@ describe("independent review, round 1", () => {
       parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
         ?.frozen?.context.comparators,
     ).toMatchObject({ value: { mode: "category-alternatives" } });
+  });
+});
+
+describe("Spec 018 N-24: the place lock reaches the review screen", () => {
+  it("keeps the discovery route's locked answer on the order and shows it on the review", async () => {
+    stubPreparation({ discoveryLocked: true });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    expect(
+      screen.queryByText("Kota sudah terkunci untuk pesanan ini."),
+    ).toBeNull();
+    tickReview();
+    fireEvent.click(buatPertanyaan());
+    await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" });
+    const saved = parseSmartSession(
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    );
+    expect(saved?.order?.searchPlaceLocked).toBe(true);
+    fireEvent.click(screen.getAllByRole("button", { name: "Kembali" })[0]!);
+    expect(
+      await screen.findByText("Kota sudah terkunci untuk pesanan ini."),
+    ).toBeTruthy();
+  });
+
+  it("leaves the place editable when discovery does not lock it", async () => {
+    stubPreparation({ discoveryLocked: false });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    tickReview();
+    fireEvent.click(buatPertanyaan());
+    await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" });
+    expect(
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.order?.searchPlaceLocked,
+    ).not.toBe(true);
   });
 });
