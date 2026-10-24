@@ -20,6 +20,7 @@ import {
   KeyboardAccessory,
   useCoarsePointer,
 } from "@/components/product/journey/KeyboardAccessory";
+import { SUPPORT_EMAIL } from "@/lib/legal";
 import { AUDIT_SOURCES_TEXT, DELIVERY_PROMISE } from "@/lib/orders/promise";
 import { cn } from "@/lib/utils";
 import { emailCompletions, emailTypoSuggestion } from "./email-assist";
@@ -42,8 +43,6 @@ export type OrderPayment = {
   redirect_url?: string;
   last_try?: string;
 };
-
-import { SUPPORT_EMAIL } from "@/lib/legal";
 
 const TRY_MESSAGE: Record<string, string> = {
   denied: "Pembayaran ditolak. Anda bisa mencoba lagi di halaman pembayaran.",
@@ -627,7 +626,7 @@ export function PayConsent() {
       >
         Syarat dan Ketentuan
       </a>{" "}
-      dan{" "}
+      serta{" "}
       <a
         className="underline decoration-1 underline-offset-2"
         href="/privacy"

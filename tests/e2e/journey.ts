@@ -553,7 +553,7 @@ export const ORDER_PRICE_NOTE =
   "Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave.";
 /** The consent line under the pay button, in the bottom bar. */
 export const PAY_CONSENT =
-  "Dengan membayar, Anda menyetujui Syarat dan Ketentuan dan Kebijakan Privasi.";
+  "Dengan membayar, Anda menyetujui Syarat dan Ketentuan serta Kebijakan Privasi.";
 /** Q5, word for word: mirrors `DELIVERY_PROMISE` in `src/lib/orders/promise.ts`. */
 export const ORDER_DELIVERY_PROMISE =
   "Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda.";

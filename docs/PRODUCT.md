@@ -332,8 +332,7 @@ These are questions to test, not claims that Nuave has proven them.
 
 ## Open terms before a paid offer
 
-Before accepting a paid audit, state the Rp249.000 total and 30-day quote
-validity, a realistic delivery promise, the exact report scope, privacy and
+Before accepting a paid audit, state the Rp249.000 total (no quote validity is promised; S5), a realistic delivery promise, the exact report scope, privacy and
 retention treatment, and the approved correction and remedy path. Legal or
 regulatory requirements remain subject to qualified review; do not present an
 internal checklist as legal advice or a completed compliance review.

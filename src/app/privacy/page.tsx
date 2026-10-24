@@ -144,7 +144,9 @@ export default function PrivacyPage() {
             <li>
               <strong>Data pembayaran dari Midtrans:</strong> status, jumlah,
               waktu, cara bayar, dan nomor transaksi. Kami tidak menerima nomor
-              kartu, PIN, kata sandi bank, atau kode OTP.
+              kartu, PIN, kata sandi bank, atau kode OTP. Jika uang perlu
+              dikembalikan untuk pembayaran transfer bank, kami menanyakan nomor
+              rekening Anda lewat email bantuan.
             </li>
             <li>
               <strong>Data bisnis yang Anda periksa:</strong> kota untuk
@@ -172,9 +174,11 @@ export default function PrivacyPage() {
             keuangan pribadi, atau data sensitif lain.
           </p>
           <p>
-            Jika data seperti itu sampai ke kami, kami batasi aksesnya dan
-            berhenti memprosesnya. Lalu kami menghapusnya, kecuali ada kewajiban
-            untuk menyimpannya.
+            Pengecualiannya nomor rekening yang kami tanyakan untuk pengembalian
+            dana. Nomor itu hanya kami pakai untuk transfer tersebut. Jika data
+            lain seperti itu sampai ke kami, kami batasi aksesnya dan berhenti
+            memprosesnya. Lalu kami menghapusnya, kecuali ada kewajiban untuk
+            menyimpannya.
           </p>
         </Section>
 

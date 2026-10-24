@@ -533,7 +533,7 @@ export default function SmartAuditStage({
           className="type-copy-sm m-0 mt-3 text-ink-600"
           data-order-note="delayed"
         >
-          Audit ini berjalan lebih lama dari biasanya. Prosesnya masih berjalan,
+          Audit ini berjalan lebih lama dari biasanya. Prosesnya belum selesai,
           dan kami kabari hasilnya lewat email.{" "}
           <a
             href={helpHref("Minta bantuan: audit lebih lama", orderNumber)}

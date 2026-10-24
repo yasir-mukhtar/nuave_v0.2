@@ -140,14 +140,16 @@ dibuat. Kami kabari lewat email dan mengembalikan uang Anda penuh.
   pesaing lebih sering disebut, bukan alasan pengembalian dana. Yang Anda beli
   adalah pemeriksaan dan laporannya, bukan hasil tertentu.
 
-Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim pengembalian
-dana paling lambat 3 hari kerja setelah kegagalan tercatat, atau setelah kami
-menerima pembatalan Anda.
+Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim
+pengembalian dana paling lambat 3 hari kerja setelah kegagalan
+tercatat, setelah kami menerima pembatalan Anda, atau setelah
+pemeriksaan ulang tidak berhasil. Untuk transfer bank, waktu itu
+dihitung sejak kami menerima nomor rekening Anda.
 
 - **QRIS, GoPay, dan DANA:** uang dikembalikan lewat Midtrans ke cara bayar
   semula. Jika cara itu tidak tersedia, kami transfer ke rekening Anda.
-- **Transfer bank:** kami transfer dari rekening kami. Kami tanyakan nomor
-  rekening Anda lewat email, dan nomor itu tidak kami simpan di sistem Nuave.
+- **Transfer bank:** kami transfer dari rekening kami. Kami tanyakan nomor rekening Anda lewat email. Nomor itu hanya ada
+  di email bantuan, tidak kami simpan di sistem pesanan Nuave.
 
 Lama dana sampai ke rekening atau dompet digital Anda tergantung bank atau
 penyedia pembayaran.

@@ -22,6 +22,7 @@ import {
 } from "@/components/product/report/TenBeads";
 import { AnswerMarkdown } from "./AnswerMarkdown";
 import { AnswerControls, observationTime } from "./ReportAnswer";
+import { SUPPORT_EMAIL } from "@/lib/legal";
 import styles from "./report-body.module.css";
 
 /**
@@ -30,8 +31,6 @@ import styles from "./report-body.module.css";
  * is code-built from the evidence saved with the report; nothing is written by
  * a model. Reports saved before Spec 018 never reach this file (R-29).
  */
-
-import { SUPPORT_EMAIL } from "@/lib/legal";
 
 export { SUPPORT_EMAIL };
 export const TWO_SOURCE_ANSWERS_TITLE =

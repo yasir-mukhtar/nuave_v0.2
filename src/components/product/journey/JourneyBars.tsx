@@ -9,9 +9,8 @@ import { BottomSheet } from "@/components/motion/BottomSheet";
 import { SPRING_SETTLE } from "@/components/motion/presets";
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { cn } from "@/lib/utils";
-import { NuaveLogo } from "./NuaveLogo";
-
 import { SUPPORT_EMAIL } from "@/lib/legal";
+import { NuaveLogo } from "./NuaveLogo";
 
 export { SUPPORT_EMAIL };
 

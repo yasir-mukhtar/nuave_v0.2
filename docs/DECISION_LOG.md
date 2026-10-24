@@ -36,7 +36,13 @@ wording: the refund clock starts when the failure is recorded or the
 cancellation is received (S0 D3); refund routes follow Q9 of 2026-10-14
 (Midtrans for QRIS, GoPay and DANA; a transfer from the founder's bank for
 bank transfer); the tracking change must also add a **Pengaturan cookie**
-footer link and send server events only for visitors who agreed.
+footer link and send server events only for visitors who agreed; if
+Midtrans cannot refund a QRIS, GoPay or DANA payment, the founder transfers
+the refund by bank; the order status answer now carries `started_at` (a
+change to Spec 016 R-21's field list, still with no email, report or
+secret), so a reloaded running page shows the elapsed time and the
+15-minute delay notice. That last point supersedes the "no clock after a
+reload" part of item 7 of the 2026-10-21 journey design decision.
 
 ## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
 

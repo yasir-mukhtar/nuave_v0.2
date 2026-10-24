@@ -204,7 +204,7 @@ describe("the order summary (Experience 2, 3)", () => {
         .getAttribute("href"),
     ).toBe("/privacy");
     expect(terms.parentElement?.textContent).toBe(
-      "Dengan membayar, Anda menyetujui Syarat dan Ketentuan dan Kebijakan Privasi.",
+      "Dengan membayar, Anda menyetujui Syarat dan Ketentuan serta Kebijakan Privasi.",
     );
     expect(terms.closest('[data-intake-screen="order"]')).toBeNull();
     expect(

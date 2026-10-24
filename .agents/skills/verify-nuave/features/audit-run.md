@@ -67,7 +67,7 @@ Run `$V drive audit-run`. Steps, in order:
   card with "AI Visibility Report", "Kedai Fiksi · 10 pertanyaan", "Total",
   "Rp249.000", the price note and the delivery promise (Q5, word for word);
   the bottom bar shows `Bayar Rp249.000`, the consent "Dengan membayar, Anda
-  menyetujui Syarat dan Ketentuan dan Kebijakan Privasi." and both links. Still
+  menyetujui Syarat dan Ketentuan serta Kebijakan Privasi." and both links. Still
   no order. Evidence: `03-order-summary`.
 - **Simulated payment and paid reading.** Types the email and presses
   `Bayar Rp249.000`. With no further press, the paid reading shows

@@ -179,7 +179,9 @@ export default function TermsPage() {
           <p>
             Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim
             pengembalian dana paling lambat 3 hari kerja setelah kegagalan
-            tercatat, atau setelah kami menerima pembatalan Anda.
+            tercatat, setelah kami menerima pembatalan Anda, atau setelah
+            pemeriksaan ulang tidak berhasil. Untuk transfer bank, waktu itu
+            dihitung sejak kami menerima nomor rekening Anda.
           </p>
           <ul>
             <li>
@@ -189,8 +191,8 @@ export default function TermsPage() {
             </li>
             <li>
               <strong>Transfer bank:</strong> kami transfer dari rekening kami.
-              Kami tanyakan nomor rekening Anda lewat email, dan nomor itu tidak
-              kami simpan di sistem Nuave.
+              Kami tanyakan nomor rekening Anda lewat email. Nomor itu hanya ada
+              di email bantuan, tidak kami simpan di sistem pesanan Nuave.
             </li>
           </ul>
           <p>

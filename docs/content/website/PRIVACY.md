@@ -27,7 +27,10 @@
   4. send purchase value 249000 IDR (the price since Spec 018), not 99000;
   5. never load the Pixel on `/r` (the report link keeps its secret in the
      address) or `/uji` (the founder test pass);
-  6. never send the report, the audit questions, AI answers or intake facts.
+  6. never send the report, the audit questions, AI answers or intake facts;
+  7. pass the visitor's IP address and browser type to Meta at request time
+     without storing them, so section 2's "Nuave sendiri tidak menyimpan
+     alamat IP Anda" stays true.
   If any of these changes, section 9 below must change first.
 - **Deletion:** nothing deletes expired records yet. Founder decision
   2026-10-24: build an automatic cleanup job before the first failed orders
@@ -70,8 +73,9 @@ dalam 1 hari kerja (Senin sampai Jumat, WIB).
   jawaban bantuan. Jika Anda menyetujui cookie Meta, email ini juga dikirim ke
   Meta dalam bentuk kode acak saat pembelian (bagian 9).
 - **Data pembayaran dari Midtrans:** status, jumlah, waktu, cara bayar, dan
-  nomor transaksi. Kami tidak menerima nomor kartu, PIN, kata sandi bank, atau
-  kode OTP.
+  nomor transaksi. Kami tidak menerima nomor kartu, PIN, kata sandi bank, atau kode
+  OTP. Jika uang perlu dikembalikan untuk pembayaran transfer bank,
+  kami menanyakan nomor rekening Anda lewat email bantuan.
 - **Data bisnis yang Anda periksa:** kota untuk pencarian, kategori, layanan,
   calon pelanggan, pesaing, dan fakta publik lain yang Anda konfirmasi.
 - **Data audit:** sepuluh pertanyaan yang Anda setujui, jawaban ChatGPT dan
@@ -86,7 +90,9 @@ Nuave memeriksa bisnis, bukan pasien atau pelanggan Anda. Jangan kirim data
 pasien, rekam medis, daftar pelanggan, kata sandi, data keuangan pribadi, atau
 data sensitif lain.
 
-Jika data seperti itu sampai ke kami, kami batasi aksesnya dan berhenti
+Pengecualiannya nomor rekening yang kami tanyakan untuk pengembalian
+dana. Nomor itu hanya kami pakai untuk transfer tersebut. Jika data
+lain seperti itu sampai ke kami, kami batasi aksesnya dan berhenti
 memprosesnya. Lalu kami menghapusnya, kecuali ada kewajiban untuk menyimpannya.
 
 ## 4. Untuk apa data dipakai
