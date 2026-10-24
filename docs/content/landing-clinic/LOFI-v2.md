@@ -8,14 +8,14 @@
 >
 > **Release gate:** the page describes the Spec 018 audit (approved, not merged; branch `claude/laughing-fermi-prsgqf`). It ships only in the same release as Spec 018.
 > **Figma:** file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2):
-> - [00 · Strategy at a glance · v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=49-2)
-> - [01 · Mobile 390 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=50-2), with a note beside each section. Below the page it has these extra frames:
+> - [00 · Strategy at a glance · v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=54-2)
+> - [01 · Mobile 390 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=55-2), with a note beside each section. Below the page it has these extra frames:
 >   - the fold check;
 >   - the menu opened;
 >   - the sticky bar in use;
 >   - the demo tabs, including "Lainnya";
 >   - all four report tabs.
-> - [02 · Desktop 1440 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=51-2), with notes on the right, the sticky bar in use, and the 1200×630 link-preview image
+> - [02 · Desktop 1440 · lofi v2.2](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=56-2), with notes on the right, the sticky bar in use, and the 1200×630 link-preview image
 >
 > The reviewed v2.1 frames, with Yasir's annotations, Fable's blue review column and Fable's summary frame, are kept on the page [Lofi v2.1 · review notes (Yasir + Fable)](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=48-2). v1.1 stays on "Lofi v1 · history (too heavy)".
 >
@@ -83,7 +83,7 @@ The five gaps found in v2.1, now closed:
 | S2 | Makin banyak pasien pilih dokter lewat AI. | Three number cards, Indonesia first: 2024 (Google AI Overview mulai muncul di pencarian di Indonesia), 47% (warga AS, rater8), 40 juta (OpenAI). One source line in the same order |
 | S3 | Satu pertanyaan pasien, dua jawaban AI. | The same question in a **ChatGPT** chat (with its "Tanyakan apa saja" input bar) and on a **Google** results page with the labelled **AI Overview** box (two source chips). The chat names Klinik A, B and C; the AI Overview box names Klinik A, D and E. Both end in the dashed "Klinik Anda?". The line ends "Klinik Anda termasuk?" |
 | S4 | Kami tanya AI persis seperti pasien Anda. | Three steps, each with its picture: the website field and the found clinic; the real probe question card ("implan gigi surabaya harga", "Dicari di Google", ±4.400 pencarian/bulan, data September 2026); the "Tim Nuave" email. Tags Gratis / Rp249.000. Caption under the steps |
-| S5 | Lihat apa kata AI tentang klinik Anda. | **The two-source report in 4 tabs** with the exact Spec 018 labels (Skor · Jawaban AI · Klinik lain · Perbaikan); all four states drawn beside the mobile board |
+| S5 | Lihat apa kata AI tentang klinik Anda. | **The two-source report in 4 tabs** (Skor · Jawaban AI · Klinik lain · Perbaikan), with the Spec 018 labels in their clinic wording: "Klinik Anda muncul di ...", "Klinik lain yang disebut" (Yasir's decision; the product change is recorded in Spec 018, not built yet). All four states are drawn beside the mobile board |
 | S6 | Bukti, bukan janji. | Four cards: Apa adanya · Bahasa pasien · Data publik · Batasnya jelas |
 | S7 | Yang Anda dapat dari satu audit. | One card: "AI Visibility Report · Diperiksa di ChatGPT dan Google AI Overview", nine rows with ticks, then the price block: Rp249.000, "Bayar setelah klinik Anda ketemu.", **the form**, payment chips, "Laporan siap dalam 15 menit setelah audit dimulai." Desktop: list left, price right; mobile: stacked |
 | S8 | FAQ | 11 rows, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq |
@@ -140,15 +140,16 @@ The demo's tab row starts just above the 640 fold. At 390×844 the demo's top ed
 
 Most of mobile's extra length is the step pictures in S4 (about +280px), now on both boards. If the page must get shorter, the cheapest cut is smaller step 1 and step 3 pictures, on both boards.
 
-## Open items for Yasir (also in the notes)
+## Decisions and open items (also in the notes)
 
-- **Delivery wording:** decided by Yasir ("Laporan siap dalam 15 menit setelah audit dimulai."). Spec 018's promise text (R-23) still says "biasanya ... paling lama 24 jam"; align them before launch.
+**Decided by Yasir (24 October 2026):**
+- **Delivery line:** "Laporan siap dalam 15 menit setelah audit dimulai." Spec 018's promise text now matches (PR #151, commit 727843a).
+- **Naming:** "Google AI Overview" everywhere, including inside the Google mock; no "Ringkasan AI".
+- **Contact:** email only (support@nuave.ai); no WhatsApp.
+- **Report label:** "Klinik Anda" in the report, as the S5 mock shows. It is recorded in Spec 018 but not built yet, and must ship before this page does.
+- **No "coba sendiri" line**, and the H1 stays as it is.
+- **rater8:** the figure stays, labelled as a US survey ("di AS").
+
+**Still open:**
 - **Refund wording:** approve the spoken version in "Kalau ada masalah?".
-- **WhatsApp:** a WhatsApp number next to the founder line (Fable).
-- **"Ringkasan AI":** use it as the label inside the Google mock and the preview image (Fable's vote)? For now the mock keeps "AI Overview".
-- **Report label:** "Bisnis Anda" or "Klinik Anda" (a Spec 018 product question).
-- **Indonesian proof:** a "coba sendiri" line under S2, only after a quick test.
-- **H1 variant:** the optional "Pasien mulai tanya AI dulu, baru pilih klinik.".
-- **Launch:** let search engines in (`src/app/robots.ts` blocks the whole site while it is pre-release).
-
-Already decided: the rater8 figure stays, labelled as a US survey ("di AS").
+- **Search engines:** let them in at launch (`src/app/robots.ts` blocks the whole site while it is pre-release).

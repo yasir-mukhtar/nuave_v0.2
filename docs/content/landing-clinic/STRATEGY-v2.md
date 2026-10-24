@@ -321,4 +321,19 @@ v2.2 is on the page "Lofi v2.2 · Light". Fable marked each card [P1] fix before
 - **Value card:** its "AI Visibility Report" label and the row ticks.
 - **Sticky bar:** "Gratis dulu · Audit Rp249.000" now appears on desktop as well, in the sticky menu bar after the hero.
 
-**One thing to align before launch.** Yasir's delivery line drops "biasanya" and "paling lama 24 jam". Spec 018's promise text (R-23) on the order preview and checkout still has both. The page and the product should promise the same thing.
+**One thing to align before launch.** Yasir's delivery line drops "biasanya" and "paling lama 24 jam". Spec 018's promise text (R-23) on the order preview and checkout still had both. Done the same day; see §12.
+
+## 12. Decisions after v2.2 (Yasir, 24 October 2026)
+
+- **Delivery promise aligned.** Spec 018's promise text now says "Laporan siap dalam 15 menit setelah audit dimulai." followed by the unchanged refund sentence, the same as the page. It changed in three places:
+  - the spec (R-23, Q-1);
+  - the code constant used by the order preview, checkout and payment email;
+  - the tests and the decision log.
+
+  It was committed on the Spec 018 branch (PR #151, commit 727843a), and the Spec 018 session was told to pull it.
+- **Google AI Overview, not "Ringkasan AI".** The one FAQ mention of "Ringkasan AI" is removed; the Google mock keeps the "AI Overview" label.
+- **Email only.** The founder line stays "Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai."; no WhatsApp.
+- **"Klinik Anda" in the report.** The S5 report pictures now say "Klinik Anda muncul di ..." and "Klinik lain yang disebut". The product still says "Bisnis Anda". The change is recorded in Spec 018 (a note under its report layout) and in the decision log, but it is not built yet. It must ship before this page does, or the picture would promise something the product doesn't do.
+- **No "coba sendiri" line**, and **the H1 stays** "Pasien sekarang tanya AI dulu, baru pilih klinik.".
+
+Still open: the refund wording in the FAQ "Kalau ada masalah?", and letting search engines in at launch.

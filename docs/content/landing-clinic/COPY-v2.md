@@ -4,7 +4,7 @@
 > Strategy: [`STRATEGY-v2.md`](./STRATEGY-v2.md) (§10 covers v2.1). Layout: [`LOFI-v2.md`](./LOFI-v2.md). Growth check: [`GROWTH.md`](./GROWTH.md) Part 5; "growth N" below means item N there.
 > **Release gate:** this copy describes the Spec 018 audit: the ChatGPT app and Google AI Overview, questions based on Google search data, Rp249.000. Spec 018 is approved but not merged (branch `claude/laughing-fermi-prsgqf`). Publish this page only in the same release as Spec 018. Until then, the live page keeps Rp99.000.
 
-> Author: copywriter agent (round 5), with the growth marketer's must-fixes folded in and two orchestrator edits (the step 2 wording and the "Ringkasan AI" mention).
+> Author: copywriter agent (round 5), with the growth marketer's must-fixes folded in and two orchestrator edits (the step 2 wording, and a "Ringkasan AI" mention in the FAQ that Yasir later removed).
 > Facts: rater8 (US survey), OpenAI January 2026 (global), Google Indonesia 2024. Product facts: Spec 018 and `docs/VOICE.md` on the Spec 018 branch. Example search numbers: the Spec 018 probe (Google, all of Indonesia, data September 2026). No other numbers.
 > Founder placeholders live only in the notes at the end, never on the page.
 
@@ -213,11 +213,13 @@ Header in every tab:
 
 **Skor** (two cards, stacked)
 - Card **ChatGPT**
-  - **Bisnis Anda muncul di 3 dari 10 pertanyaan** · ten beads, 2, 5, 7 filled
-  - **Bisnis Anda direkomendasikan di 1 dari 10 pertanyaan** · bead 5 filled
+  - **Klinik Anda muncul di 3 dari 10 pertanyaan** · ten beads, 2, 5, 7 filled
+  - **Klinik Anda direkomendasikan di 1 dari 10 pertanyaan** · bead 5 filled
 - Card **Google AI Overview**
   - **Google menampilkan AI Overview di 6 dari 10 pertanyaan**
-  - **Bisnis Anda muncul di 1 dari 6 pertanyaan** · six beads, 1 filled
+  - **Klinik Anda muncul di 1 dari 6 pertanyaan** · six beads, 1 filled
+
+> Note: Yasir decided on 24 October 2026 that clinic reports say "Klinik Anda" where the product says "Bisnis Anda". The product change is recorded in Spec 018 but not built yet; it must ship before this page does, so the mock stays true.
 - Button **Download PDF**
 
 **Jawaban AI** (title in the mock: **Jawaban ChatGPT dan Google AI Overview**)
@@ -232,7 +234,7 @@ Header in every tab:
   - **"...Beberapa klinik gigi di Surabaya yang melayani pemasangan behel antara lain Klinik A, Klinik D, dan Klinik E. Sebaiknya bandingkan biaya dan jadwal kontrol sebelum memilih..."**
   - Source chips: **direktori.contoh** · **klinik-d.contoh** · **klinikgigifiksi.contoh** with the tag **Dipakai sebagai sumber**
 
-**Klinik lain** (title in the mock: **Bisnis lain yang disebut**)
+**Klinik lain** (title in the mock: **Klinik lain yang disebut**)
 - **ChatGPT**
   - **Klinik A** · Pertanyaan 2, 5
   - **Klinik B** · Pertanyaan 3, 7, 8
@@ -313,7 +315,7 @@ Tujuannya mirip, tempatnya beda. SEO mengurus posisi website di hasil Google, se
 Bisa, coba saja. Bedanya, Anda cuma lihat satu jawaban dari satu akun di satu waktu, sedangkan Nuave tanya 10 pertanyaan berdasarkan pencarian Google ke ChatGPT dan Google AI Overview dari kota Anda, lalu catat jawaban, sumber, klinik lain yang disebut, dan yang perlu dibenahi.
 
 **AI apa yang diuji?**
-ChatGPT dan Google AI Overview (di Google berbahasa Indonesia disebut Ringkasan AI), dengan pertanyaan yang sama persis. Google sering tidak menampilkan AI Overview untuk pencarian lokal, dan laporan mencatat seberapa sering.
+ChatGPT dan Google AI Overview, dengan pertanyaan yang sama persis. Google sering tidak menampilkan AI Overview untuk pencarian lokal, dan laporan mencatat seberapa sering.
 
 **Dari mana pertanyaannya?**
 Dari data pencarian Google untuk jenis klinik dan kota Anda, dan tiap pertanyaan diberi label asalnya. Kalau datanya sedikit, sebagian kami susun dari profil klinik, dan labelnya menyebut itu.
@@ -371,14 +373,19 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 
 ## Notes for the founder (not on the page)
 
-- **Decided by Yasir (v2.2):** the delivery line "Laporan siap dalam 15 menit setelah audit dimulai." It is used in the price card, step 3 (short form) and "Berapa lama?". Spec 018's promise text (R-23, on the order preview and checkout) still says "biasanya ... paling lama 24 jam"; align the two before launch so the page and the product promise the same thing.
-- `[KONFIRMASI]` "Kalau ada masalah?" now says the R-23 refund rule in spoken words ("Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan."). Approve or adjust.
-- **WhatsApp next to the founder line** (Fable): clinic owners and admins live in WhatsApp, and an email-only contact reads foreign. It needs a number and a person answering.
-- **"Ringkasan AI" inside the Google mock and the link-preview image** (Fable's vote): Google's Indonesian help page names the feature "Ringkasan AI" (checked 24 October 2026: support.google.com/websearch/answer/14901683?hl=id). For now the mock keeps "AI Overview"; prose keeps "Google AI Overview"; the FAQ "AI apa yang diuji?" bridges the two.
-- **Report label "Bisnis Anda" vs "Klinik Anda"** (Fable): the S5 mock shows the settled label "Bisnis Anda muncul di ..." on a page that says "klinik" everywhere else. A Spec 018 product question; the mock stays honest until it changes.
-- **An Indonesian proof under S2** (Fable): "Coba sendiri: ketik 'klinik gigi [kota Anda] yang bagus' di Google ...", only if a quick test on about ten clinic searches shows the AI box most of the time.
-- **Optional H1 variant** (Fable): "Pasien mulai tanya AI dulu, baru pilih klinik." ("mulai" stays true without Indonesian data). The approved H1 stays until Yasir says otherwise.
+**Decided by Yasir (24 October 2026):**
+- **Delivery line:** "Laporan siap dalam 15 menit setelah audit dimulai." It is used in the price card, in step 3 (short form) and in "Berapa lama?". Spec 018's promise text (order preview, checkout, payment email) was aligned to it the same day (PR #151, commit 727843a).
+- **Naming:** "Google AI Overview" everywhere, including the label inside the Google mock; no "Ringkasan AI" (the FAQ mention is removed).
+- **Contact:** email only, support@nuave.ai; no WhatsApp.
+- **Report label:** clinic reports say "Klinik Anda" (the S5 mock shows it). It is recorded in Spec 018 and the decision log, but not built yet; build it before this page ships.
+- **No "coba sendiri" line** under S2.
+- **The H1 stays:** "Pasien sekarang tanya AI dulu, baru pilih klinik." (no variant).
+
+**Still open:**
+- `[KONFIRMASI]` "Kalau ada masalah?" says the R-23 refund rule in spoken words ("Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan."). Approve or adjust.
 - Search capture needs the site to be indexable (`robots` is `disallow /` today) and, per growth, one short article on "cara muncul di Google AI Overview" that links here.
+
+**Notes:**
 - The S2 47% card is 12 words, two over the card rule, to keep rater8's "seperti". rater8 sells reputation services; the source line names the survey.
 - FAQ "Aman soal aturan iklan kesehatan?": not legal advice.
 
@@ -393,7 +400,7 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 | No em or en dashes in Indonesian text | Pass (checked by code point) |
 | "Anda" throughout | Pass |
 | "pertanyaan", never "prompt" | Pass |
-| "klinik lain yang disebut" / "Bisnis lain yang disebut", never "kompetitor" | Pass |
+| "klinik lain yang disebut" / "Klinik lain yang disebut", never "kompetitor" | Pass |
 | "ChatGPT dan Google AI Overview", never "ChatGPT dan Google" alone, never "AI buatan OpenAI" | Pass |
 | No "asli" for questions or answers | Pass (answers are "langsung" and "utuh") |
 | Never implies Google always shows an AI Overview | Pass (S3 caption, S7 row 4, mock 6 of 10, FAQ 1 and 4) |
