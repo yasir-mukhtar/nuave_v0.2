@@ -41,7 +41,7 @@ verbatim, even when it does not follow the general prose rules.
 | Meaning | Prefer (customer-facing) | Avoid |
 |---|---|---|
 | Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**) | brand Anda (except **Seluruh brand**, see the notes) |
-| Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari N pertanyaan** · **Bisnis Anda direkomendasikan di Y dari N pertanyaan** (N is the source's completed checks, 10 when all completed; Spec 018) · **Tidak diuji** · **Download PDF** | any paraphrase or spelling variant of these six |
+| Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari N pertanyaan** · **Bisnis Anda direkomendasikan di Y dari N pertanyaan** (N is the source's completed checks, 10 when all completed; Spec 018) · **Tidak diuji** · **Download PDF**. In a Spec 018 report for a clinic (confirmed category contains "klinik") the two count labels read **Klinik Anda muncul di X dari N pertanyaan** and **Klinik Anda direkomendasikan di Y dari N pertanyaan** (founder, 2026-10-24) | any paraphrase or spelling variant of these six |
 | Prospective customer | **calon pelanggan** | calon klien, calon customer, customer potensial, bare "customer" |
 | Existing customer | **pelanggan** | klien, customer |
 | The AI model as the answering/deciding actor, in the report and intake | **model AI** | bare "AI" where it means the model ("disebut oleh model AI", "diuji ke model AI") |
@@ -250,6 +250,12 @@ The voice is constant; the register and vocabulary shift per surface.
   untuk X dari M pertanyaan ini.**, **K pemeriksaan tidak dapat diuji**,
   **Tidak ada data jumlah pencarian**, **dipakai sebagai sumber** (shown as
   **Dipakai sebagai sumber**), **Topik yang belum menyebut Anda**.
+- For a clinic (confirmed category contains "klinik"), a Spec 018 report says
+  **Klinik Anda** wherever it would say **Bisnis Anda**: **Klinik Anda muncul
+  di X dari N pertanyaan**, **Klinik Anda direkomendasikan di Y dari N
+  pertanyaan**, "profil **klinik Anda**", and the code-built count sentences
+  ("Di ChatGPT, **klinik Anda** disebut di …"). Other businesses keep
+  **Bisnis Anda**; reports saved before Spec 018 are unchanged.
 - For direct-ten, use this section order on screen and PDF: **Hasil singkat**,
   **Jawaban model AI**, **Analisis Nuave**, **Yang dapat dilakukan**,
   **Tentang audit ini**. In a Spec 018 two-source report the second section

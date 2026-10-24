@@ -355,13 +355,22 @@ type. The section names below are the current ones.
 
 Reports saved before this change keep rendering exactly as today (R-29).
 
-**Founder decision, 2026-10-24 (not built yet):** for a clinic, the report
+**Founder decision, 2026-10-24 (built, AC-20):** for a clinic, the report
 says "Klinik Anda" wherever it says "Bisnis Anda", for example "Klinik Anda
 muncul di X dari N pertanyaan", in both source cards, on screen, in the PDF
 and in the JSON export. Other businesses keep "Bisnis Anda". It matches the
-clinic landing page, whose report pictures show "Klinik Anda". When it is
-built, the settled labels in `docs/VOICE.md` change with it (see the decision
-log).
+clinic landing page, whose report pictures show "Klinik Anda".
+
+- **Which businesses are clinics:** the confirmed category contains the
+  whole word "klinik" in any case ("Klinik kecantikan", "klinik gigi",
+  "Fisioterapi (klinik)"). "Poliklinik" alone does not count. The result is
+  saved with the report as `two_source.subject` ("klinik" or "bisnis") when
+  the report is made, so a saved report never changes; a two-source report
+  saved without it reads as "bisnis", and one-source reports are untouched.
+- **Where it applies:** both source cards, the "profil klinik Anda" sentence
+  (R-08), the code-built count and repair sentences (B-4/B-5), and the
+  report-writing instruction, which tells the model to write "klinik Anda".
+  The settled labels in `docs/VOICE.md` carry both forms.
 
 ## Requirements
 
@@ -533,7 +542,9 @@ log).
     no number.
   - The report says once that search data was not available.
 - **R-09: Discovery budget.**
-  - The target is USD 0.08 or less per run, with a hard stop at USD 0.12.
+  - The target is USD 0.08 or less per run. The hard stop is USD 0.12 per
+    **order**, shared by both discovery runs (founder, 2026-10-24, N-17): a
+    second run after a place change spends only what is left.
   - When the hard stop is reached midway, discovery keeps what it collected
     and applies R-08.
   - Discovery keeps response sizes small (the limits above), so the
@@ -792,7 +803,9 @@ log).
   - Each call then settles to the `cost` the API returns, under the existing
     daily cap and per-order hold.
   - The worst case per order in dollars:
-    - discovery: 2 runs × USD 0.12 = USD 0.24;
+    - discovery: USD 0.12 per order, shared by both runs (N-17, accepted
+      2026-10-24);
+    - question writing: USD 0.25 per order (five calls of USD 0.05);
     - checks: 10 questions × 2 sources × 3 attempts × USD 0.006 = USD 0.36;
     - plus today's reading, questions and report.
 
@@ -1017,6 +1030,16 @@ shown as missing, never estimated or filled in.
 - **AC-19:** Given the customer edits a question, it shows "Diubah oleh Anda"
   and "Topik awal". Its number is shown only if the text still contains the
   topic's core words.
+- **AC-20 (Klinik Anda):** Given a two-source order whose confirmed category
+  contains the word "klinik", the saved report has `subject` "klinik"; both
+  cards say "Klinik Anda muncul di …" (and "direkomendasikan" for ChatGPT),
+  the R-08 sentence says "profil klinik Anda", the code-built count and
+  repair sentences say "klinik Anda", the writer is told to use "klinik
+  Anda", and no "Bisnis Anda" remains in the report. Given another category,
+  or a two-source report saved without `subject`, it says "Bisnis Anda".
+  Tests: `two-source-writing.test.ts` ("AC-20: …"),
+  `two-source-report.test.tsx` ("AC-20: …"), `two-source.test.ts` ("AC-20: a
+  clinic order …").
 
 ## Open questions
 
@@ -1064,9 +1087,9 @@ naming "ChatGPT dan Google AI Overview".
     reconciliation keeps its 29-unit share.
   - Spend (R-09, R-25): the ledger holds two per-order stage ceilings that
     count every attempt, retries included: discovery USD 0.12 (shared by
-    both runs; **founder decision pending (N-17)**: R-09 and R-25 still say
-    USD 0.12 per run, and with the shared limit a second run after a place
-    change sends only about half its calls and no autocomplete) and question
+    both runs; **accepted by the founder on 2026-10-24 (N-17)**: a second run
+    after a place change sends only about half its calls and no
+    autocomplete) and question
     writing USD 0.25 (five Cheaper Inference calls of USD 0.05; when it is
     spent the customer is told to email support@nuave.ai and the founder
     gets one `questions_limit` notice). One discovery request makes at most

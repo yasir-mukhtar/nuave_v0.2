@@ -47,6 +47,13 @@ applied), with every recommendation:
   longer drops a search; only a search that names a business does. The probe
   re-run showed the label removed good local searches such as "klinik
   kecantikan laser terdekat".
+- **N-17 accepted (later the same day):** discovery's USD 0.12 is one budget
+  per order, shared by both runs; a second run after a place change spends
+  only what is left. The DataForSEO repository secrets exist; the balance
+  top-up comes before the live run (AC-14).
+- **"Klinik Anda" built in Spec 018 (later the same day):** Yasir asked for the
+  clinic label (decided in the entry above) to be built now, before the live
+  run, as AC-20.
 
 ## 2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000
 
