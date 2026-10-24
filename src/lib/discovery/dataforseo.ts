@@ -56,8 +56,13 @@ export function dataForSeoCredentialsPresent(): boolean {
   );
 }
 
-/** One request as sent: the path and the single task body. */
-export type DataForSeoRequest = { path: string; body: Record<string, unknown> };
+/** One request as sent: the path and the single task body. Checks (R-12)
+ * pass a longer timeout than discovery. */
+export type DataForSeoRequest = {
+  path: string;
+  body: Record<string, unknown>;
+  timeoutMs?: number;
+};
 
 export type DataForSeoEnvelope = {
   httpStatus: number;
@@ -73,7 +78,7 @@ export type DataForSeoTransport = {
 
 export const liveDataForSeoTransport: DataForSeoTransport = {
   kind: "live",
-  send: async ({ path, body }) => {
+  send: async ({ path, body, timeoutMs }) => {
     const base = process.env.DATAFORSEO_BASE_URL?.trim() || DEFAULT_BASE_URL;
     const auth = btoa(
       `${process.env.DATAFORSEO_LOGIN ?? ""}:${process.env.DATAFORSEO_PASSWORD ?? ""}`,
@@ -86,7 +91,7 @@ export const liveDataForSeoTransport: DataForSeoTransport = {
           "content-type": "application/json",
         },
         body: JSON.stringify([body]),
-        signal: AbortSignal.timeout(DISCOVERY_CALL_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs ?? DISCOVERY_CALL_TIMEOUT_MS),
         redirect: "manual",
       });
       const json = await response.json().catch(() => null);

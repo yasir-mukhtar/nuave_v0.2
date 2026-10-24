@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { APPROVED_LIVE_SYSTEMS } from "./approved-live-providers";
+import {
+  APPROVED_LIVE_SYSTEMS,
+  DATAFORSEO_CHATGPT_SYSTEM,
+} from "./approved-live-providers";
 import { parseSourceInput } from "./source-input";
 import type { AuditQuestionMethod } from "./locked-question-pack";
 
@@ -314,6 +317,8 @@ export const auditObservationSchema = z.object({
   instruction_version: z.string().optional(),
   system: z.enum([
     ...APPROVED_LIVE_SYSTEMS,
+    // Spec 018: the ChatGPT app through DataForSEO, with its own method check.
+    DATAFORSEO_CHATGPT_SYSTEM,
     "Google Gemini API",
     "Groq + Tavily",
     "OpenRouter",
