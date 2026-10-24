@@ -48,12 +48,14 @@ what the audit sold to the first paying customers will be:
    editable, used for both Google and ChatGPT.
 5. **Probe approved:** about USD 0.20 of DataForSEO credit to test discovery
    and the ChatGPT app on three clinics before building the question part.
+   It ran on 2026-10-24 for USD 0.244 (within the USD 0.30 stop).
 
 **2026-10-24 clarification** (fact found in the round-2 plan review, not a new
 decision): DataForSEO's ChatGPT scraper accepts countries only, so ChatGPT is
-always asked as "Indonesia". Answer 4's city sets the place for Google; where
-an answer depends on place, the question text names the city so both sources
-answer for the same place.
+always asked as "Indonesia". Answer 4's city sets the place for Google, and
+every question about choosing a provider names the city in its text so both
+sources answer for the same place. (The probe showed ChatGPT treats a question
+with no city as Jakarta; Spec 018 revision 5, R-10a.)
 
 ## 2026-10-23 — Errors use Jeton red
 
