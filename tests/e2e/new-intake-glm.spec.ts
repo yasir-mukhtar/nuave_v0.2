@@ -99,8 +99,9 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   expect(calls["POST /api/orders"]).toBe(1);
   expect(calls["POST /api/audit/extract"]).toBe(1);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
-  const wording =
-    "Pilihan kedai kopi apa yang cocok untuk pekerja di Indonesia?";
+  // Spec 018 R-11a: an edit keeps the rules (at least 7 questions about
+  // choosing a place, at most 2 advice), so the edited question stays one.
+  const wording = "Rekomendasi kedai kopi yang cocok untuk pekerja kantoran?";
   await editQuestion(page, 1, wording);
   // AC-19: progress is kept in this browser, so a reload loses nothing.
   await page.reload();

@@ -34,6 +34,7 @@ import {
   type QuestionOrigin,
 } from "./question-rules";
 import { syntheticDataForSeoTransport } from "./synthetic";
+import { searchChecks, syntheticFallbackTexts } from "./questions";
 import type { DirectTenAuditContext } from "../audit/direct-ten-context-v2";
 
 const place = (display: string): SearchPlace => {
@@ -70,6 +71,15 @@ describe("R-04a search phrases (AC-03)", () => {
       "https://sozoskinclinic.com/",
     );
     expect(brandTokens(sozo)).toEqual(["sozo", "sozoskinclinic"]);
+    // A business named after its city keeps its own words as brand words,
+    // never the city: questions must name the search place (R-10a).
+    const fiksi = brand(
+      "Kedai Fiksi",
+      "kedai kopi",
+      ["Kedai Fiksi Bandung"],
+      "https://kedai-fiksi.example/",
+    );
+    expect(brandTokens(fiksi)).toEqual(["fiksi"]);
     expect(searchPhrase("Skin Booster", sozo)).toBe("skin booster");
     // Step 5 adds the subject word to a one-word phrase.
     expect(searchPhrase("Botox treatment", sozo)).toBe("botox kecantikan");
@@ -544,6 +554,44 @@ describe("R-11 pack validation (AC-04, AC-04a, AC-04b, AC-19)", () => {
   const origins = questions.map((q) =>
     originForGenerated(q, pool),
   ) as QuestionOrigin[];
+
+  it("accepts the city in every question for a business named after its city", () => {
+    const context = {
+      version: "nuave-direct-ten-context-v2",
+      identity: {
+        name: "Kedai Fiksi",
+        source: "https://kedai-fiksi.example/",
+        sourceOrigin: "owner",
+        aliases: ["Kedai Fiksi Bandung"],
+        origin: "website",
+      },
+      focus: { value: { kind: "brand" }, origin: "nuave" },
+      category: { value: "kedai kopi", origin: "website" },
+      offerings: { value: ["kopi susu", "roti"], origin: "website" },
+      serviceChannels: { value: ["on_premise"], origin: "website" },
+      market: {
+        value: { reach: "beberapa", areas: ["Bandung", "Cimahi"] },
+        origin: "website",
+      },
+      comparators: { value: { mode: "unknown" }, origin: "nuave" },
+    } as DirectTenAuditContext;
+    const bandung = place("Bandung");
+    const texts = syntheticFallbackTexts(context, bandung);
+    expect(texts[0]).toBe("Rekomendasi kedai kopi terbaik di Bandung?");
+    expect(
+      searchChecks(texts, "fallback", null, bandung, context).issues,
+    ).toEqual([]);
+    // The brand word itself is still refused.
+    expect(
+      searchChecks(
+        ["Kedai Fiksi di Bandung bagus?", ...texts.slice(1)],
+        "fallback",
+        null,
+        bandung,
+        context,
+      ).issues,
+    ).toContain("Pertanyaan tidak boleh menyebut nama bisnis Anda.");
+  });
 
   it("labels exact pool texts and accepts a valid pack", () => {
     expect(origins[0]).toMatchObject({
