@@ -1,7 +1,7 @@
 # Clinic landing page: lofi layout
 
-> Status: lofi v1.1, final for founder review (not hi-fi, not built). Written by the designer agent; reviewed by the orchestrator and the growth marketer.
-> **Figma:** file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), page "Lofi v1 · Landing klinik":
+> Status: history. Lofi v1.1, superseded by [`LOFI-v2.md`](./LOFI-v2.md) after Yasir found v1 too heavy (24 October 2026). Written by the designer agent; reviewed by the orchestrator and the growth marketer.
+> **Figma:** file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), page "Lofi v1 · history (too heavy)":
 > - [00 · Strategy at a glance](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=7-2)
 > - [01 · Mobile 390 · lofi v1.1](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=8-2), with a note beside each section, plus the fold checks, the outreach variant and the sticky bar
 > - [02 · Desktop 1440 · lofi v1.1](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=9-2), with notes on the right and the 1200×630 link-preview image

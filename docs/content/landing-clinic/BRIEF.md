@@ -1,6 +1,6 @@
 # Clinic landing page: orchestrator brief
 
-> Status: the opening brief for the copy, growth and design team (kept as history). The finished work is in [`STRATEGY.md`](./STRATEGY.md), [`COPY.md`](./COPY.md), [`GROWTH.md`](./GROWTH.md) and [`LOFI.md`](./LOFI.md).
+> Status: the opening brief for the copy, growth and design team (kept as history). The current work is in [`STRATEGY-v2.md`](./STRATEGY-v2.md), [`COPY-v2.md`](./COPY-v2.md), [`LOFI-v2.md`](./LOFI-v2.md) and [`GROWTH.md`](./GROWTH.md). The first, heavier round ([`STRATEGY.md`](./STRATEGY.md), [`COPY.md`](./COPY.md), [`LOFI.md`](./LOFI.md)) is kept as history.
 > Written: 24 October 2026, for Yasir (founder)
 > Scope: the public landing page at `v2.nuave.ai`, rewritten for clinic owners and clinic marketing teams
 > Output: a lofi landing page (mobile and desktop) with real copy placed and every visual described, in Figma file `pE6HryXbVyJo24lxqy6JZE`

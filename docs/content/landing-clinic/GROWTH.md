@@ -1,8 +1,8 @@
 # Clinic landing page: growth plan and reviews
 
 > Status: draft for founder review. Written by the growth marketer agent; decisions marked **[FOUNDER]** need Yasir.
-> Read with [`STRATEGY.md`](./STRATEGY.md), [`COPY.md`](./COPY.md) and [`LOFI.md`](./LOFI.md).
-> Contents: **Part 1** the funnel, conversion requirements, metrics and test plan (written before the copy). **Part 2** the review of copy v2, whose fixes are in the final copy. **Part 3** the review of the first lofi, whose fixes are in the final lofi, plus the short page for the first live test (long vs short).
+> Read with [`STRATEGY-v2.md`](./STRATEGY-v2.md), [`COPY-v2.md`](./COPY-v2.md) and [`LOFI-v2.md`](./LOFI-v2.md). Parts 2 and 3 review the first, heavier round ([`STRATEGY.md`](./STRATEGY.md), [`COPY.md`](./COPY.md), [`LOFI.md`](./LOFI.md)), kept as history.
+> Contents: **Part 1** the funnel, conversion requirements, metrics and test plan (written before the copy). **Part 2** the review of copy v2, whose fixes are in the final copy. **Part 3** the review of the first lofi, whose fixes are in the final lofi, plus the short page for the first live test (long vs short). **Part 4** the risk check of the light page (v2), whose fixes are in the v2 copy and lofi.
 > No number in this file is a Nuave result unless it says "observed". Benchmarks are named as benchmarks.
 
 ---
@@ -884,3 +884,49 @@ Each screen was blurred with a 6 px Gaussian blur. Question: on every screen wit
 - **Prerequisite:** the landing events from Part 1 §5.2 (`lp_viewed` with `variant`, `lp_cta_clicked`, `lp_section_viewed`, `lp_form_focused`) must be live before T5 starts, or the test can't be read. **[FOUNDER]**
 
 Before any live traffic, run the same pair (long vs short) as a **preference test with 5–8 owners** (Part 1 §6.2). Ask each one to scroll as far as they'd naturally read and mark where they would stop or tap. That gives an early read on where the long page loses people, at no cost.
+
+---
+
+# Part 4. Risk check of the light page (v2)
+
+> Reviewer: growth marketer, 24 October 2026. Checked [`STRATEGY-v2.md`](./STRATEGY-v2.md) against Part 1 §3 and my reviews in Parts 2 and 3.
+> Only must-fix items, ranked by conversion risk. The weight rules are respected: every fix fits the word budgets (headline ≤ 8 words, line ≤ 15, card line ≤ 10).
+> Outcome: all eight fixes are in [`COPY-v2.md`](./COPY-v2.md) and [`LOFI-v2.md`](./LOFI-v2.md). Where the final wording differs from a suggestion below, `COPY-v2.md` wins; the last list shows where each fix landed.
+
+**Verdict:** the right weight, and most of my earlier requirements survive. Eight items need fixing before lofi v2 is final.
+
+| # | Risk (one line) | Fix |
+|---|---|---|
+| 1 | **The hero never says the first step is free.** "Cek klinik saya di AI" plus "Nuave menunjukkan apakah AI merekomendasikan klinik Anda" reads as "tap = AI result". "Rp99.000 ... Bayar setelah ..." under it makes some people think tapping means paying, and others feel baited at J05. | Under the button: **"Gratis: kami temukan klinik Anda dulu. Audit AI Rp99.000, sekali bayar."** (11 words). Use the same line under the final form. |
+| 2 | **First-screen fold at 360×640.** With the HaloAI-style demo inside the hero, the field and the price line drop below the fold, especially inside the WhatsApp and Instagram in-app browsers (my estimate is about 560 to 580 px visible). | On mobile, the order is H1 → line → field → button → price line → three facts → **then** the demo. The demo's top edge should peek above the fold at 390×844. Pass criterion: the button and the price line end by about 520 px at 360 wide. |
+| 3 | **Step 2 hides the owner's own work.** "Kami tanya AI" implies done-for-you. After paying, the product asks the owner to check details (J10 to J26) and approve 10 questions. Paid visitors who didn't expect that are the costliest drop-off: paid with no report means a support case and a refund. | Step 2: **"Bayar, lalu cek detail dan 10 pertanyaan. Sebagian besar sudah kami isi."** Keep the Rp99.000 tag. Step 3 stays. |
+| 4 | **The rater8 card mislabels the stat and mixes scopes without saying so.** The stat is "used a tool like ChatGPT or AI Overviews to research a provider", from 992 US adults. "Pasien di AS sudah mencari dokter lewat AI" reads as all US patients. The 40 juta card is global but unlabelled. The line under the H2 states a US vendor survey as a general fact. | Put the scope on each card, not only in the source line: **"47% · orang dewasa di AS memakai AI untuk mencari info dokter (survei rater8, 2026)"** · **"40 juta · orang di dunia bertanya soal kesehatan ke ChatGPT setiap hari"** · **"2024 · Google mulai menampilkan jawaban AI di Indonesia"**. Line under the H2: **"Di AS, AI sudah ikut menentukan pilihan dokter dan klinik."** Name rater8 in the source line as a survey by a reputation-services company (FAQ or notes if space is short). |
+| 5 | **The report H2 "Lihat posisi klinik Anda" implies a ranking**, which contradicts "Bukan peringkat" two sections later. A careful owner will notice. | **"Lihat apa kata AI tentang klinik Anda."** (7 words). Keep "Tahu apa yang dibenahi." as the line under it. |
+| 6 | **The final H2 "Tahu jawabannya sebelum pasien bertanya" is a promise we can't keep.** Answers vary and the report is one snapshot. It is the last line before the decision. | **"Baca sendiri apa kata AI tentang klinik Anda."** Or, for future pacing: **"Saat pasien bertanya ke AI, Anda sudah tahu polanya."** I prefer the first. |
+| 7 | **The objection a sceptical owner raises first, "jawaban AI kan berubah-ubah" (O3), has no answer anywhere.** "Bisa dicek ulang" on the Jujur card also reads as a free re-check. | Jujur card: **"Satu potret, bukan peringkat. Cek ulang disarankan 6 sampai 8 minggu."** Add FAQ: **"Jawaban AI kan berubah-ubah?"** → **"Benar. Laporan mencatat jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya. Karena itu kami sarankan cek ulang setelah 6 sampai 8 minggu."** Merge "Perlu data pasien?" into the "Tanpa data pasien" card to keep 9 FAQ questions. |
+| 8 | **The bottom bar "Rp99.000 · Cek klinik saya" drops the free step.** On a 9-screen page it is the CTA most taps go through, so it must carry the free/paid truth. | Left text: **"Gratis dulu · Audit Rp99.000"**; button: **"Cek klinik saya"**. It shows after the hero form leaves view. It hides while the hero form, the price-card form or the final form is on screen, and while the keyboard is open. Tapping it scrolls to the **nearest form below** (the price card) and focuses the field; if no form is below, to the final form. Add safe-area padding. |
+
+### Bridge form
+
+**Not needed.** On a page of about 9 screens, the hero form, the price-card form (about screen 6), the final form and the sticky bar are enough. A fourth form would add weight without adding reach.
+
+### Checked and fine (no action)
+
+- **One action:** the same form and button in three places, plus the sticky bar. ✓
+- **Proof early:** the report card in the hero, and the report tabs at about 50% of the page. ✓ The hero "3 dari 10" card must sit under the same "Contoh. Nama klinik fiktif." caption as the chat.
+- **Price card with the form inside**, the reason line above the form, and payment chips. ✓ (These were my v1.1 changes.)
+- **Objections now covered:** DIY (O2), Google (O12), cost and subscription (O8), branches (O14), Instagram-only (O11, placeholder), the regulation (O5), patient data (O6), PDF for the team (O15), not a ranking (O16), who's behind (O13, via the founder line).
+- **Deliberately dropped and not a conversion risk:** O4 (small clinics) and O1 (Maps and Instagram) are carried well enough by section 2.
+- **Still placeholders (notes only, not on the page):** delivery time and refund.
+- **The long vs short test can't be read without analytics.** The landing events (`lp_viewed` with `variant`, `lp_cta_clicked` with `position`, `lp_form_focused`) must be live before v1 is tested against v2. **[FOUNDER]**
+
+### Where each fix landed (orchestrator)
+
+1. Hero and final form: "Gratis: kami temukan klinik Anda dulu. Audit Rp99.000, sekali bayar."
+2. Mobile order as asked. The fold check passes: the price line ends at 461 px at 360×640 ([`LOFI-v2.md`](./LOFI-v2.md)).
+3. Step 2: "Bayar dan cek" with "Cek detail dan 10 pertanyaan. Sebagian besar sudah kami isi."
+4. Each card names its scope (di AS, di dunia, di Indonesia), and the source line names rater8 and the survey size. The line under the H2 keeps the report's finding, scoped to the US: "Di AS, AI sudah lebih berpengaruh daripada Google saat pasien memilih dokter." The notes call rater8 a vendor survey.
+5. Report H2: "Lihat apa kata AI tentang klinik Anda."
+6. Final H2: "Cek klinik Anda sebelum pasien berikutnya bertanya." It asks for the check and promises nothing about the answer.
+7. Jujur card: "Satu potret, bukan peringkat. Cek ulang setelah 6 sampai 8 minggu." The FAQ "Jawaban AI kan berubah-ubah?" is in.
+8. Sticky bar: "Gratis dulu · Audit Rp99.000" and "Cek klinik saya", with the show and hide rules in the lofi notes.
