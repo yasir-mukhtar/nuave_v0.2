@@ -49,6 +49,12 @@ what the audit sold to the first paying customers will be:
 5. **Probe approved:** about USD 0.20 of DataForSEO credit to test discovery
    and the ChatGPT app on three clinics before building the question part.
 
+**2026-10-24 clarification** (fact found in the round-2 plan review, not a new
+decision): DataForSEO's ChatGPT scraper accepts countries only, so ChatGPT is
+always asked as "Indonesia". Answer 4's city sets the place for Google; where
+an answer depends on place, the question text names the city so both sources
+answer for the same place.
+
 ## 2026-10-23 — Errors use Jeton red
 
 Yasir chose red for errors, "probably Jeton red" (Figma page 09's JETON

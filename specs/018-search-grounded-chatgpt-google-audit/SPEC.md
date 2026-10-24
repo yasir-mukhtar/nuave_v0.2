@@ -1,19 +1,23 @@
 # Spec 018: Real-search questions, answered by ChatGPT and Google (Rp249.000)
 
-> Status: **In review**. Revision 3 answers the round-1 plan review (FAIL, 7
-> blocking) and the founder's answers of 2026-10-24. Not approved; do not build.
+> Status: **In review**. Revision 4 answers the round-2 plan review (FAIL, 3
+> blocking). Not approved; do not build.
 > Owner: orchestrator
-> Updated: 2026-10-24. Revision 3 changes:
-> - the ChatGPT part now uses the real ChatGPT app;
-> - a failed check goes to support instead of a re-run;
-> - a "Kota untuk pencarian" field is added;
-> - discovery and Google counting are defined;
-> - the doc updates are listed.
+> Updated: 2026-10-24. Revision 4 changes:
+> - ChatGPT is asked from "Indonesia" only (DataForSEO has no city for it);
+>   every place claim now says so, and questions that depend on a place name
+>   the city in their text;
+> - a rule turns each confirmed service into a search phrase (R-04a), and the
+>   probe (AC-00) runs that rule on three real clinics, with a separate pass
+>   rule for the ChatGPT scraper that gates the checks;
+> - the price and promise ship together with the checks, never before;
+> - the round-2 notes (labels, no-report path, retries, business cards,
+>   numbers, city names, status codes) are applied; Q-2 is new.
 >
 > Implements: the new audit the founder chose to sell first (Option A, before
 > S5 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md)).
 > Decision basis: [2026-10-23: Real-search questions, ChatGPT and Google, Rp249.000](../../docs/DECISION_LOG.md#2026-10-23--real-search-questions-chatgpt-and-google-rp249000),
-> including its 2026-10-24 addendum.
+> including its 2026-10-24 addendum and clarification.
 > Evidence: [`experiments/dataforseo-sozo/`](../../experiments/dataforseo-sozo/).
 > The test on Sozo Skin Clinic ran on 2026-10-23 and cost USD 0.16. The
 > three-clinic probe (stage `probe`) is approved but has not run yet (AC-00).
@@ -23,13 +27,15 @@
 Read in order:
 
 1. `AGENTS.md`.
-2. `docs/DECISION_LOG.md`: the 2026-10-23 entry and its 2026-10-24 addendum.
+2. `docs/DECISION_LOG.md`: the 2026-10-23 entry, its 2026-10-24 addendum and
+   clarification, and D-05 of 2026-09-22 (the settled report labels).
 3. The experiment results:
    - `experiments/dataforseo-sozo/results/discover/SUMMARY.md`;
    - `experiments/dataforseo-sozo/results/answers/SUMMARY.md`;
    - `results/probe/SUMMARY.md`, once AC-00 has run.
 
-   `run.mjs` shows the working API calls.
+   `run.mjs` shows the working API calls; its `probe` stage implements R-04a,
+   R-04, R-05, R-08 and R-12 exactly as written here.
 4. The specs this one changes:
    - `specs/016-order-and-saved-report/SPEC.md`;
    - `specs/017-payment-and-test-pass/SPEC.md`;
@@ -45,6 +51,7 @@ Read in order:
      - `src/lib/audit/questions-id-direct-ten.ts` (the validator, from line 399)
      - `src/lib/audit/direct-ten-context-v2.ts`
      - `src/lib/audit/provider.ts`
+     - `src/lib/audit/call-timeouts.ts`
      - `src/lib/audit/report-pipeline.ts`
      - `src/lib/audit/contracts.ts`
    - Orders and spending:
@@ -61,7 +68,8 @@ Read in order:
      - `src/lib/payments/midtrans.ts`
      - `src/lib/payments/apply.ts`
      - `src/lib/payments/founder-notices.ts`
-   - Report pages: `src/app/audit/report/` and `src/app/r/`.
+   - Report pages: `src/app/audit/report/` and `src/app/r/` (including
+     `SavedReport.tsx`, which builds the JSON export in the browser).
    - Deploy and checks: `.github/workflows/ci.yml` and
      `.agents/skills/verify-nuave/`.
 7. DataForSEO documentation, current version, read when building:
@@ -100,8 +108,8 @@ Evidence from Sozo Skin Clinic, 2026-10-23, and the founder's report review:
   by volume returned mostly unrelated searches, such as "harga emas hari ini"
   and "persija jakarta". Two of the five good Google questions came from a
   search that included the brand name, which this spec forbids (R-02). So
-  discovery must use a narrower method (R-01), and it must be proven before
-  it is built (AC-00).
+  discovery must use a narrower method (R-04), and it must be proven on real
+  intakes before it is built (AC-00).
 
 Interpretation: customers will trust and act on the audit more when each
 question is a real one, carries a demand number, and is answered by the real
@@ -114,9 +122,13 @@ A paying customer gets one report in which each of ten questions:
 1. comes from real Google search data for their business type, with demand
    measured across Indonesia;
 2. keeps real human wording, with a label saying where the wording came from;
-3. shows how often its topic is searched; and
+3. shows how often its topic is searched, when that is known; and
 4. is answered by the **ChatGPT app** and by **Google's AI summary**, with the
-   exact same question text, for the place the customer confirmed.
+   exact same question text. Google is asked from the city the customer
+   confirmed; ChatGPT is asked from Indonesia, because DataForSEO cannot set a
+   city for it. The report shows both places when they differ. A question
+   whose answer depends on place (for example "terdekat") names the city in
+   its own text, so both sources answer for the same place.
 
 It is one product at Rp249.000.
 
@@ -133,15 +145,16 @@ want to know:
 
 - **Place for the search:** a "Kota untuk pencarian" field on the intake
   review screen.
-- **Discovery:** searching for the confirmed services and place.
+- **Discovery:** turning each confirmed service into a search phrase, then
+  searching for those phrases and the confirmed place.
 - **The ten questions:** chosen from that data, with a fallback when the data
   fails.
 - **Asking:** each question goes to the ChatGPT app and to Google AI summary
-  through DataForSEO, in the same runner step.
+  through DataForSEO, in the same runner step on the first attempt.
 - **The report:** both answers, demand numbers and sources in the web report,
   the PDF and the JSON export.
-- **Failed checks:** delivered as "Tidak dapat diperiksa" with "Minta
-  bantuan", and the founder fixes them by hand.
+- **Failed checks:** delivered as "Tidak dapat diuji" with "Minta bantuan",
+  and the founder resolves them by hand (R-21a).
 - **Price:** Rp249.000 everywhere it is shown or charged, and "ChatGPT dan
   Google" named on the order preview and checkout.
 - **Delivery promise:** the text changes to match the support-first rule
@@ -149,7 +162,7 @@ want to know:
 - **Provider operations:** spend guard, secrets, status codes and deployment
   for DataForSEO.
 - **Document updates:** listed under "Document updates". They ship in the same
-  PRs as the behaviour they describe.
+  merge as the behaviour they describe (see the build order).
 
 ## Non-scope
 
@@ -160,6 +173,7 @@ want to know:
   branches in one order.
 - **Positions:** rankings, map-pack or organic positions, monitoring,
   scheduled re-checks, dashboards.
+- **A city for ChatGPT.** DataForSEO's ChatGPT scraper accepts countries only.
 - **A free re-run button.** Failed checks go to support in this spec. A
   self-serve re-run may become its own small spec later.
 - **DataForSEO's AI-assistant volume estimate.** It is built from Google's
@@ -172,24 +186,34 @@ want to know:
   "not found". That is a separate fix. In this spec's report, "named" is
   decided by code (R-16).
 
-## Document updates (ship with the PRs that change the behaviour)
+## Document updates (ship in the same merge as the behaviour they describe)
 
 - **`docs/VOICE.md`:**
-  - §2 and the `ChatGPT` notes: the report may now call answers "ChatGPT",
-    because they come from the ChatGPT app (through DataForSEO). Keep "AI
-    buatan OpenAI" only for answers that come from the OpenAI API, such as
-    reports saved before this change.
+  - §2 and the `ChatGPT` rows (lines 50–51): the report may now call answers
+    "ChatGPT", because they come from the ChatGPT app (through DataForSEO).
+    Keep "AI buatan OpenAI" only for answers that come from the OpenAI API,
+    such as reports saved before this change.
+  - Line 44 (settled exact labels) and line 228 (§7.4): the D-05 sentences
+    stay word for word, with the denominator taken per source: "Bisnis Anda
+    muncul di X dari N pertanyaan" and "Bisnis Anda direkomendasikan di Y dari
+    N pertanyaan". N is 10 whenever all checks of that source completed.
+  - Line 60 (failed test): "Tidak dapat diuji" stays the failed-check text.
+  - §7.3: add the five question origin labels (Experience 3) as settled
+    labels, as §7.2 does for its source labels.
   - §4 and §7.1: Rp99.000 becomes Rp249.000, and "Bayar Rp99.000" becomes
     "Bayar Rp249.000".
-  - §7.4: the new report section name, if renamed (see Report layout).
+  - §7.4: the renamed answers section (see Report layout).
 - **`docs/AUDIT.md`:**
   - the scope of one audit: ten questions, two sources;
   - the method: ChatGPT app and Google AI summary through DataForSEO, and
     OpenAI only for the business reading and report writing;
-  - replace "ten evaluable observations before delivery" (lines 20 and 196)
-    with the gate in R-19.
-- **`docs/PRODUCT.md`:** the price (lines 72, 149 and 311) and how results are
-  reported (per source, with failed checks shown).
+  - replace "ten evaluable observations before delivery" (lines 20, 196 and
+    418) and "counts out of ten" (lines 419–420) with the gate and
+    denominators in R-19.
+- **`docs/PRODUCT.md`:** the price (lines 72, 149 and 311); how results are
+  reported (per source, with failed checks shown); line 183 (question review:
+  the origin labels and topic line) and lines 205–207 (results only after
+  10/10; counts out of ten) replaced by R-19.
 - **`docs/PAYING_CUSTOMER_PLAN.md`:** G1 and the §5 price lines say Rp249.000.
 - **`specs/012`, `016` and `017`:** add a "Changed by Spec 018" note where this
   spec amends them:
@@ -205,17 +229,20 @@ want to know:
    - the delivery promise uses the R-23 text;
    - Midtrans charges 249,000.
 2. **Intake review screen:** one new field, **"Kota untuk pencarian"**:
-   - It is a searchable pick-list of supported Indonesian cities (R-03), plus
-     **"Seluruh Indonesia"**.
+   - It is a searchable pick-list of supported Indonesian cities shown with
+     their Indonesian names (R-03), plus **"Seluruh Indonesia"**.
    - It is pre-filled as follows:
      - branch focus (`cabang`): the city in the branch address, if it matches
-       a list entry;
+       a list entry (R-03 name matching);
      - brand or product focus with a market reach of `sekitar` or `beberapa`:
-       the first confirmed market area that matches a list entry;
+       the first confirmed market area that matches a list entry (for example
+       "Jakarta Selatan" matches "Jakarta");
      - otherwise, including reach `seluruh` or `luar`: empty, and the customer
        must choose.
-   - Helper text: "Kami bertanya ke ChatGPT dan Google seolah-olah dari kota
-     ini."
+   - Helper text (true for both sources): "Google kami tanya seolah-olah dari
+     kota ini. ChatGPT hanya bisa diatur per negara, jadi ChatGPT ditanya dari
+     Indonesia. Pertanyaan yang bergantung pada lokasi akan menyebut kota ini."
+   - After discovery has run for the second time (R-07), the field is locked.
 3. **Ten questions screen:**
    - While the questions are prepared: "Mencari pertanyaan yang benar-benar
      dicari orang…".
@@ -228,22 +255,25 @@ want to know:
        the question contains the topic's core words;
      - **"Disusun dari profil bisnis"**: the fallback (R-08);
      - **"Diubah oleh Anda"**: the customer edited it.
-   - Under each question with a topic: "Topik: laser flek hitam · ±12.100
-     pencarian/bulan di Google, seluruh Indonesia (data <bulan tahun>)".
+   - Under each question whose text contains its topic's core words: "Topik:
+     laser flek hitam · ±12.100 pencarian/bulan di Google, seluruh Indonesia
+     (data <bulan tahun>)". Other questions show no number (R-06).
    - An edited question shows "Topik awal: …". Its number is dropped if the
      edited text no longer contains the topic's core words.
 4. **Audit:**
    - It runs on the server as today.
-   - One runner step asks one question to both sources (R-15), so ten steps
-     and the 15-minute promise stay.
+   - On the first attempt, one runner step asks one question to both sources
+     (R-15). A retry asks only the source that failed (R-14). So ten steps
+     cover a run without retries, and the 15-minute promise stays.
    - The progress screen still counts ten questions.
 5. **Report:** see "Report layout".
 6. **Failed checks:**
    - The report is delivered whenever the R-19 gate passes.
-   - A failed answer slot shows **"Tidak dapat diperiksa"** and **"Minta
+   - A failed answer slot shows **"Tidak dapat diuji"** and **"Minta
      bantuan"**, a mailto link to `support@nuave.ai` that includes the order
      number.
-   - The founder gets one notice per order (R-21) and resolves it by hand.
+   - The founder gets one notice per order (R-21) and resolves it by hand
+     (R-21a).
    - A refund is given only when support cannot fix it.
 7. **Language:** all customer text is Indonesian and follows `docs/VOICE.md`,
    as updated above.
@@ -257,12 +287,12 @@ type. The section names below are the current ones.
 
 | Section | Today | Proposed |
 |---|---|---|
-| Header | Business name, date | Adds "Diperiksa di ChatGPT dan Google · <tempat yang dipakai> · <tanggal>". The place is what was actually used (R-13). |
-| Hasil singkat | One result card with ten beads | **Two cards, stacked:**<br>**"ChatGPT":** disebut di X dari N; direkomendasikan di R dari N.<br>**"Google · Ringkasan AI":** ringkasan AI muncul di Z dari M; Anda disebut di Y dari Z.<br>Beads show only completed checks. A line "K pemeriksaan tidak dapat diperiksa" appears when K > 0. The conclusion and the limit note stay; the limit note adds the place and date. |
-| Jawaban model AI → "Jawaban ChatGPT dan Google" | One answer block per question | **One block per question:** the number, the question, the origin label, the topic line, then **two stacked answers** in the existing answer style. Each answer has a source heading ("ChatGPT", "Google · Ringkasan AI"), the existing name highlight and references list, and the outcome text from R-16/R-17. There are no tabs, so the PDF shows everything. |
+| Header | Business name, date | Adds "Diperiksa di ChatGPT dan Google · <tanggal>" and the places actually used (R-13): one place when both are the same, otherwise "Google: <kota> · ChatGPT: Indonesia". |
+| Hasil singkat | One result card with ten beads | **Two cards, stacked**, each keeping the D-05 sentences with its own denominator:<br>**"ChatGPT":** "Bisnis Anda muncul di X dari N pertanyaan"; "Bisnis Anda direkomendasikan di Y dari N pertanyaan".<br>**"Google · Ringkasan AI":** "Google menampilkan ringkasan AI di Z dari M pertanyaan"; "Bisnis Anda muncul di W dari Z pertanyaan". Google has no "direkomendasikan" line.<br>A count whose denominator is 0 shows "Tidak diuji", never "0 dari 0". Beads show only completed checks. A line "K pemeriksaan tidak dapat diuji" appears when K > 0. The conclusion and the limit note stay; the limit note adds the places and date. |
+| Jawaban model AI → "Jawaban ChatGPT dan Google" | One answer block per question | **One block per question:** the number, the question, the origin label, the topic line, then **two stacked answers** in the existing answer style. Each answer has a source heading ("ChatGPT", "Google · Ringkasan AI"), the place used, the existing name highlight and references list, and the outcome text from R-16/R-17. There are no tabs, so the PDF shows everything. |
 | Analisis Nuave | Findings; "Bisnis lain yang disebut" | Findings name the source they come from. "Bisnis lain yang disebut" becomes one short list per source, taken from the answer text. |
 | Yang dapat dilakukan | Priorities | Same, plus a **code-built** block "Topik yang belum menyebut Anda" (R-18). |
-| Tentang audit ini | Method | Adds:<br>- where the questions came from (Google data through DataForSEO, data month, place);<br>- that ChatGPT answers come from the ChatGPT app and Google answers from Google's results page, both through DataForSEO;<br>- that answers vary by time, account and place. |
+| Tentang audit ini | Method | Adds:<br>- where the questions came from (Google data through DataForSEO, data month, place);<br>- that ChatGPT answers come from the ChatGPT app, asked from Indonesia, and Google answers from Google's results page for the stated place, both through DataForSEO;<br>- that answers vary by time, account and place. |
 
 Reports saved before this change keep rendering exactly as today (R-29).
 
@@ -272,7 +302,7 @@ Reports saved before this change keep rendering exactly as today (R-29).
 
 - **R-01: Search place.** The confirmed "Kota untuk pencarian" is saved on the
   order with the intake.
-  - It sets the Google location and the ChatGPT location (R-03).
+  - It sets the Google location (R-03). ChatGPT always uses Indonesia.
   - Discovery volumes are always for all of Indonesia, because DataForSEO Labs
     data is country-level.
 - **R-02: No brand in requests.** No request to DataForSEO contains the
@@ -281,55 +311,81 @@ Reports saved before this change keep rendering exactly as today (R-29).
   brand-free under the existing rule.
 - **R-03: Location mapping.**
   - The pick-list comes from a snapshot of DataForSEO's Google SERP locations
-    for Indonesia (type City), stored in the repo with its date.
-  - Google uses that city's `location_code`.
-  - The ChatGPT scraper uses the same city if its own locations list has it.
-    Otherwise it uses Indonesia (2360).
-  - "Seluruh Indonesia" uses 2360 for both.
+    for Indonesia (type City), stored in the repo with its date. Each entry
+    maps the DataForSEO name (English, with region, for example
+    "Surabaya,East Java,Indonesia") to an Indonesian display name
+    ("Surabaya").
+  - Name matching for pre-fill compares case-insensitively after removing
+    "Kota", "Kabupaten", and the compass words "Utara", "Selatan", "Barat",
+    "Timur", "Pusat" (so "Jakarta Selatan" matches "Jakarta").
+  - Google uses that city's `location_code`. "Seluruh Indonesia" uses 2360.
+  - The ChatGPT scraper always uses Indonesia (2360). Its locations list has
+    countries only (215 entries, checked 2026-10-24).
+  - Seeds and question text use the Indonesian display name.
 
 ### Discovery
 
+- **R-04a: Search phrase from a service.** Code turns each confirmed service
+  into one search phrase:
+  1. lowercase it;
+  2. remove text in brackets, digits, units (ml, cc, unit, sesi, x) and
+     punctuation (a hyphen becomes a space);
+  3. remove every word of the business name, confirmed aliases and domain
+     (R-02), and the filler words "layanan", "paket", "promo", "dan", "untuk",
+     "di";
+  4. keep the first 4 remaining words;
+  5. if exactly 1 word remains, it is generic: append the category's subject
+     word, which is the last word of the category after removing "klinik"
+     (for example "laser" in a "klinik gigi" becomes "laser gigi", and "meso"
+     in a "klinik kecantikan" becomes "meso kecantikan"); if the category has
+     no word left after removing "klinik", or the subject word is already in
+     the phrase, the phrase is used as is;
+  6. if nothing remains, the service is skipped.
+
+  The phrase's **core words** are its words minus "klinik" and minus the
+  category's subject word, unless that would leave none (then all its words).
 - **R-04: Discovery calls.** After intake confirmation, the server collects
-  the following (to be confirmed by the AC-00 probe):
-  - **Topics:** for each confirmed service, DataForSEO Labs Google `keyword_suggestions`.
-    - Use up to 4 services: the first four confirmed. If fewer than 2 are
-      confirmed, also use the category.
-    - Settings: the service phrase as seed, Indonesia, language `id`,
-      `include_seed_keyword: true`, `limit` 20, ordered by search volume.
-  - **Autocomplete:** Google autocomplete for "<service> <kota>" for each
-    service, with the Google location from R-03.
+  the following, on the phrases from R-04a:
+  - **Topics:** for each of the first four phrases, DataForSEO Labs Google
+    `keyword_suggestions`: the phrase as seed, Indonesia (2360), language
+    `id`, `include_seed_keyword: true`, `limit` 20, ordered by search volume.
+    If fewer than 2 phrases exist, the category is also used as a seed.
+  - **Autocomplete:** Google autocomplete for "<phrase> <kota>" for each of
+    those phrases, with the Google location from R-03 and language `id`.
   - **"People also ask":** Google organic SERP with
     `people_also_ask_click_depth: 1` for two seeds, "<category> terbaik di
-    <kota>" and "biaya <first service>". It uses the Google location and
-    language `id`.
+    <kota>" and "biaya <first phrase>", with the Google location and language
+    `id`.
   - With "Seluruh Indonesia", "<kota>" is left out of the seeds.
 - **R-05: Usable topic.** A keyword counts as a usable topic when:
-  - it contains every core word of its service phrase (words other than the
-    category word, such as "klinik" or "gigi", unless the phrase is that word
-    alone);
+  - it contains every core word of its phrase;
   - its monthly search volume is at least 10; and
   - it contains no brand, alias or domain from R-02.
 
   Its data month is the latest month in its `monthly_searches`.
 - **R-06: Topic and number for real wordings.** An autocomplete or "People
-  also ask" text gets a topic as follows:
-  - It takes the longest usable topic contained in the text.
-  - If none is contained, it takes its seed service and that service's own
-    volume.
-  - If the seed has no volume, the text has no number and still keeps its
-    label.
+  also ask" text gets the longest usable topic whose core words it contains,
+  and that topic's number. If it contains no topic's core words, it has no
+  topic and no number; it may still be used only if it contains the core words
+  of some phrase (R-08 relevance).
 - **R-07: Server-owned pool.**
   - The pool is saved on the order, like the prepared reading. It records each
     item's origin, exact text, topic, volume, data month and the place used.
   - Labels, topics and numbers are re-checked against the saved pool when the
-    customer approves. The browser never supplies them.
+    customer approves. The browser never supplies them; a label or number
+    changed in the browser is rejected.
   - When the questions are rewritten, the saved pool is reused.
   - If the customer changes services or place, discovery runs again, at most
-    once more per order. After that, the latest pool is reused.
+    once more per order, within the R-09 budget. After that the field and the
+    services are locked for discovery, and the latest pool is reused.
 - **R-08: Fallback.** If discovery fails or the pool is thin, Cheaper
   Inference writes ten questions from the business facts, as today.
-  - Thin means fewer than 6 usable topics *and* fewer than 5 real wordings
-    across autocomplete and "People also ask".
+  - A **real wording** counts toward the pool only if it is brand-free (R-02),
+    contains the core words of a confirmed phrase, is at most 120 characters,
+    and passes the R-11 checks that code can run without a model (no brand, no
+    competitor name from the pool's own topics list, place rule).
+  - Thin means fewer than 6 usable topics *and* fewer than 5 counted real
+    wordings.
   - The fallback questions are labelled "Disusun dari profil bisnis" and have
     no number.
   - The report says once that search data was not available.
@@ -344,13 +400,19 @@ Reports saved before this change keep rendering exactly as today (R-29).
 
 - **R-10: Selection rules.** Cheaper Inference receives the business facts and
   the pool. It returns ten questions that:
-  - give each confirmed service with usable topics at least two questions,
+  - give each confirmed phrase with usable topics at least two questions,
     then fill the rest by highest demand;
-  - are mostly "choosing a provider" questions (which, where, how much, best,
-    nearest). At most two may be "how to" questions, meaning they contain
-    "cara", "bagaimana", "gimana" or "tips";
+  - include at least 7 **provider-choice** questions. A question is
+    provider-choice when it contains one of "rekomendasi", "terbaik",
+    "terdekat", "bagus", "mana", "dimana", "di mana", "harga", "biaya",
+    "berapa", "murah", "tempat", "klinik", or the search city's name;
+  - include at most 2 **advice** questions, meaning not provider-choice
+    (for example "cara…", "bolehkah…", "setelah facial tidak boleh apa?");
   - reuse a pool text word for word whenever one fits. Otherwise they phrase a
-    short, everyday question that contains the topic's core words; and
+    short, everyday question that contains the topic's core words;
+  - name the search city in any question that depends on place ("terdekat",
+    "dekat sini", "di sekitar", "near me"). With "Seluruh Indonesia", such
+    questions are not used; and
   - contain no business name, under the existing rule.
 - **R-11: Validator.** These checks are added to `validateDirectTenQuestions`,
   which already rejects competitor names, false premises, private data and
@@ -360,19 +422,26 @@ Reports saved before this change keep rendering exactly as today (R-29).
     origin must match too.
   - A question labelled "Disusun dari topik yang dicari" must contain its
     topic's core words.
-  - At most two "how to" questions are allowed.
+  - At least 7 provider-choice and at most 2 advice questions (R-10 word
+    lists).
+  - A place-dependent question must contain the search city's name.
+  - A question carries a number only if it contains its topic's core words.
 
   A failing pack is retried once; then R-08 applies.
 
 ### Asking ChatGPT and Google
 
-- **R-12: Sources.** Both sources are asked through DataForSEO. Details are to
-  be confirmed by AC-00.
+- **R-12: Sources.** Both sources are asked through DataForSEO. The ChatGPT
+  details are gated by the scraper rule in AC-00.
   - **ChatGPT:** the ChatGPT LLM Scraper, live advanced.
-    - Request: `keyword` = the question, `location_code` from R-03,
+    - Request: `keyword` = the question, `location_code` 2360,
       `language_code` `id`, `force_web_search: true`.
-    - Saved: the answer markdown, `sources`, `brand_entities`, `model`,
-      `datetime` and the location used.
+    - The call timeout is 150 seconds (DataForSEO allows live scraper calls
+      up to 120 seconds).
+    - Saved: the answer markdown, the text of local-business cards and tables
+      (name, rating, address; **phone numbers removed**), `sources`,
+      `brand_entities`, `model`, `datetime`, the item types returned and the
+      call time.
   - **Google:** Google Organic SERP, live advanced.
     - Request: device mobile, `load_async_ai_overview: true`, language `id`,
       location from R-03.
@@ -381,20 +450,32 @@ Reports saved before this change keep rendering exactly as today (R-29).
     used for the business reading and report writing.
 - **R-13: Same text, recorded place.** Both sources receive byte-identical
   question text. Each observation records the text sent, the location code,
-  the location name used and the time. The report shows that location name,
-  and shows "Indonesia" when 2360 was used.
+  the location name used and the time. The report shows the place each source
+  used ("Indonesia" for ChatGPT).
 - **R-14: Retries per source.**
   - Each source has up to 3 attempts per question, with today's back-off.
-  - Retry on DataForSEO status 40202, 40209, 50000 and 50401, on timeouts, and
-    on network errors.
-  - Do not retry 40100, 40200 or 40210 (credentials or balance). These raise
-    the founder notice in R-21.
+  - A retry asks **only the source that failed**, with the same text. A
+    completed answer is never asked again.
+  - Retry on DataForSEO status 40202, 40209, 50000, 50301, 50303 and 50401,
+    on timeouts, and on network errors.
+  - Do not retry 40100, 40104, 40200, 40201, 40203 or 40210 (credentials,
+    access, balance or cost limit). These fail the check and raise the
+    `dataforseo_unavailable` notice (R-21).
+  - Status 40102 (no results): for Google, the outcome is "not shown"; for
+    ChatGPT, one failed attempt.
+  - Any other code is one failed attempt and is not retried.
   - A source that uses up its attempts is "failed" for that question only.
 - **R-15: One step per question.**
-  - One runner step asks both sources for one question, in parallel.
+  - On the first attempt, one runner step asks both sources for one question,
+    in parallel. Retries follow R-14 in later steps.
   - `RUN_COST.question` and `OBSERVATION_STEP_MS` are raised to cover two
-    calls, and `runner-worst-case.test.ts` covers them.
-  - Ten questions stay ten steps, so delivery stays within the promise.
+    calls of up to 150 seconds each, in parallel.
+  - Two orders running at the same time must each still take one step per
+    run. If `RUN_UNIT_LIMIT` (40) does not allow it, the limit is raised
+    within Workers Paid limits; `runner-worst-case.test.ts` shows this
+    (AC-15).
+  - Ten questions without retries stay ten steps, so delivery stays within
+    the promise.
 
 ### Outcomes and counting
 
@@ -402,9 +483,11 @@ Reports saved before this change keep rendering exactly as today (R-29).
   a confirmed alias appears in the answer text.
   - It is checked case-insensitively, at word boundaries, against the brand
     name and any aliases confirmed in intake.
-  - The answer text excludes link URLs and the sources list.
-  - A name that appears only in links or sources is stored as "dipakai sebagai
-    sumber" and is not counted as named.
+  - The answer text includes the visible text of links, and for ChatGPT the
+    names in local-business cards and tables. It excludes link addresses
+    (URLs) and the sources list.
+  - A name that appears only in link addresses or the sources list is stored
+    as "dipakai sebagai sumber" and is not counted as named.
   - Code decides this when the observation is saved. The report-writing model
     receives it as a fact and cannot change it.
 - **R-17: Outcomes per source.**
@@ -414,49 +497,56 @@ Reports saved before this change keep rendering exactly as today (R-29).
     - **"summary with text":** the AI-summary element has text;
     - **"empty element":** present but without text; it is retried once inside
       R-14's attempts and, if still empty, counted as not shown;
-    - **"not shown":** no AI-summary element; a completed result, shown as
-      "Google tidak menampilkan ringkasan AI";
+    - **"not shown":** no AI-summary element (or status 40102); a completed
+      result, shown as "Google tidak menampilkan ringkasan AI";
     - **"failed":** R-14 attempts used up.
 
     Google has no "recommended" count.
 - **R-18: "Topik yang belum menyebut Anda".** Code builds this block from the
-  evidence, with no model-written text. It lists up to 5 questions where the
-  business was not named in any completed answer, ordered by demand. Each row
-  shows the topic, its number and up to 3 domains that the answers cited.
+  evidence, with no model-written text. It lists up to 5 questions that have
+  at least one completed answer and where the business was not named in any
+  completed answer, ordered by demand. Each row shows the topic, its number
+  (if any) and up to 3 domains that the answers cited.
 
 ### Report gate and failures
 
-- **R-19: Report gate.** This replaces the ten-evaluable rule for Spec 018
-  orders.
+- **R-19: Report gate** (pending Q-2; this is the recommended rule). It
+  replaces the ten-evaluable rule for Spec 018 orders.
   - The report is generated when every question has a final outcome for both
-    sources, and at least 10 of the 20 checks completed.
-  - If fewer than 10 completed, no report is generated. The customer gets an
-    email directing them to "Minta bantuan", and the founder gets a notice.
+    sources, and **each source completed at least 5 of its 10 checks**.
+  - Otherwise no report is generated, and the order fails as it does today:
+    its state becomes `failed`, the customer gets the existing failure email
+    ("Kami akan menghubungi Anda dalam 1 hari kerja"), and the founder gets
+    the existing `paid_order_failed` notice. S0's rule D3 applies: a refund
+    within three business days, unless the founder fixes the order first.
   - Denominators:
-    - ChatGPT counts use N = completed ChatGPT answers;
-    - Google "muncul" uses M = completed Google checks, and "disebut" uses Z =
-      summaries with text;
-    - failed checks are counted separately.
+    - ChatGPT: N = completed ChatGPT answers;
+    - Google: M = completed Google checks; Z = summaries with text;
+    - failed checks are counted separately (K).
+    - A denominator of 0 shows "Tidak diuji".
 
   This amends Spec 012's ten-of-ten assumption for Spec 018 reports only.
-- **R-20: Failed slot.** A failed check shows "Tidak dapat diperiksa" and
-  "Minta bantuan". There is no button to re-run it.
+- **R-20: Failed slot.** A failed check shows "Tidak dapat diuji" and "Minta
+  bantuan". There is no button to re-run it.
 - **R-21: Founder notices.** There are two new notice kinds, following Spec
   017 R-21:
-  - `checks_failed`: once per delivered order with at least one failed check.
-    It names the order number and the failed checks.
-  - `dataforseo_unavailable`: credentials or balance errors, at most once a
-    day.
-
-  The founder resolves orders by hand. A refund is given only when support
-  cannot fix the order.
+  - `checks_failed`: once per **delivered** order with at least one failed
+    check. It names the order number and the failed checks. (An order that
+    fails the gate uses the existing `paid_order_failed` notice instead.)
+  - `dataforseo_unavailable`: credentials, access, balance or cost-limit
+    errors (R-14), at most once a day.
+- **R-21a: "Resolved by hand".** The saved report never changes (S0). The
+  founder replies to the support email within 2 working days. The founder may
+  run the failed checks again by hand and email the missing results to the
+  order email. A refund is given only when the missing results cannot be
+  provided.
 - **R-22: Taking orders needs DataForSEO.**
   - Payment start (Spec 017 R-05) refuses a new payment when DataForSEO is
     unavailable. The check reads `/v3/appendix/user_data`, which is free,
     cached for 10 minutes.
   - It refuses when the credentials are missing or rejected, or the balance is
     below USD 2.00.
-  - The customer sees the existing "audit belum tersedia" message.
+  - The customer sees the existing message "Audit tidak tersedia saat ini."
   - Orders already paid continue. Their failed checks follow R-20 and R-21.
   - New orders are accepted again as soon as the check passes.
 
@@ -472,7 +562,9 @@ Reports saved before this change keep rendering exactly as today (R-29).
     setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika ada bagian
     yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat
     diselesaikan, kami kembalikan uang Anda." The founder approves the exact
-    words (AC-17).
+    words (Q-1, AC-17).
+  - These changes go live only together with the checks (see the build
+    order).
 - **R-24: Price cutover.** The paid check compares the payment with the
   constant `ORDER_GROSS_AMOUNT_TEXT`. Deploy the price change only when no
   payment attempt is open. The founder checks the Midtrans sandbox list.
@@ -490,13 +582,15 @@ Reports saved before this change keep rendering exactly as today (R-29).
 
   - Each call then settles to the `cost` the API returns, under the existing
     daily cap and per-order hold.
-  - The worst case per order:
-    - discovery: 2 runs × USD 0.12;
-    - checks: 10 questions × 2 sources × 3 attempts × USD 0.006;
+  - The worst case per order in dollars:
+    - discovery: 2 runs × USD 0.12 = USD 0.24;
+    - checks: 10 questions × 2 sources × 3 attempts × USD 0.006 = USD 0.36;
     - plus today's reading, questions and report.
 
-    It must stay at or under USD 2.00 in `runner-worst-case.test.ts`. If not,
-    stop and ask the founder.
+    A new unit test, `spend-worst-case.test.ts`, sums these maxima and shows
+    the total stays at or under USD 2.00. If not, stop and ask the founder.
+    (`runner-worst-case.test.ts` stays about database queries and outbound
+    requests per run.)
 - **R-26: Secrets.** `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` are Worker
   secrets, deployed by `ci.yml` like the others.
 - **R-27: Synthetic mode.** It provides labelled synthetic discovery, ChatGPT
@@ -508,15 +602,15 @@ Reports saved before this change keep rendering exactly as today (R-29).
 - **R-28: Privacy.**
   - Raw DataForSEO responses stay in restricted server evidence under the
     existing retention policy. They contain third-party data, such as
-    businesses' phone numbers.
-  - Raw responses never go into the customer JSON export or the report-writing
-    prompt. The prompt receives only:
+    businesses' phone numbers. They never reach the browser.
+  - The report data sent to the browser, and so the JSON export built from it,
+    holds only: the questions, labels, topics, numbers, data month, places,
+    answer texts (phone numbers removed), cited URLs and outcomes.
+  - The report-writing prompt receives only:
     - the question, its label and topic;
-    - each answer's text;
+    - each answer's text (phone numbers removed);
     - the cited domains;
     - the named and source facts (R-16) and the outcomes (R-17).
-  - The export includes the questions, labels, topics, numbers, data month,
-    place, answer texts, cited URLs and outcomes.
   - S5's privacy page must name DataForSEO as a recipient of the questions
     and the place before G1.
 - **R-29: Old reports.**
@@ -530,9 +624,9 @@ Reports saved before this change keep rendering exactly as today (R-29).
 | Failure | What happens | Customer sees |
 |---|---|---|
 | Discovery fails or the pool is thin | R-08 fallback; no extra charge | Questions labelled "Disusun dari profil bisnis"; one sentence in the report |
-| A check fails after its attempts | The slot shows "failed"; the report is delivered if R-19 passes; `checks_failed` notice | "Tidak dapat diperiksa" and "Minta bantuan" |
-| Fewer than 10 of 20 checks completed | No report; `checks_failed` notice | An email directing them to "Minta bantuan" (support@nuave.ai) |
-| DataForSEO credentials or balance problem | `dataforseo_unavailable` notice; new payments refused (R-22) | New customers: "audit belum tersedia". Paid orders: as above |
+| A check fails after its attempts | The slot shows "failed"; the report is delivered if R-19 passes; `checks_failed` notice | "Tidak dapat diuji" and "Minta bantuan"; resolved per R-21a |
+| A source completed fewer than 5 of 10 checks | No report; the order fails as today; `paid_order_failed` notice; refund within 3 business days unless fixed first | The existing failure email |
+| DataForSEO credentials, access, balance or cost-limit problem | `dataforseo_unavailable` notice; new payments refused (R-22) | New customers: "Audit tidak tersedia saat ini." Paid orders: as above |
 | Business reading, question writing or report writing fails | Unchanged from today | Unchanged |
 
 Never fabricate. A missing summary, a failed check or a missing number is
@@ -554,61 +648,96 @@ shown as missing, never estimated or filled in.
 
   That is about Rp4.000, against Rp249.000. AC-00 and AC-14 confirm it.
 - **Report wording:** the report says ChatGPT answers come from the ChatGPT
-  app and Google answers from Google's results page, both for the stated place
-  and date. Each is one sample, and answers may change.
+  app, asked from Indonesia, and Google answers from Google's results page for
+  the stated place, both on the stated date. Each is one sample, and answers
+  may change.
 
 ## Acceptance criteria
 
-- **AC-00 (gate before PR 2): the probe.** The founder approved about USD 0.20,
-  with a hard stop at USD 0.30. The `probe` stage of
-  `experiments/dataforseo-sozo/run.mjs` runs on three clinics: dental in
-  Surabaya, beauty in Bandung and physiotherapy in Medan. Its summary is
-  committed. It records, per clinic:
-  - the usable topics (R-05);
-  - the autocomplete and "People also ask" counts;
-  - city support for the SERP and the scraper;
-  - Indonesian language support for the scraper;
-  - scraper and Google outcomes on two real questions;
-  - the cost.
+- **AC-00 (gate): the probe.** The founder approved about USD 0.20, with a
+  hard stop at USD 0.30. The `probe` stage of
+  `experiments/dataforseo-sozo/run.mjs` implements R-04a, R-04, R-05, R-08 and
+  R-12 exactly as written, and runs on three real clinics. Their services are
+  taken as an intake would hold them, from public listings on 2026-10-24:
 
-  PR 2 starts only if at least two of the three clinics would pass R-08 (not
-  thin). Otherwise R-04 comes back for review.
+  | Clinic | Category | Kota | Brand and alias words | Services (as confirmed) |
+  |---|---|---|---|---|
+  | MS Glow Aesthetic Clinic (msglowclinic.id) | klinik kecantikan | Bandung | MS Glow, MS Glow Clinic | Laser · Meso · Skin rejuvenation · V shape |
+  | CS Dental Aesthetic Clinic (Surabaya) | klinik gigi | Surabaya | CS Dental | Veneer porselen · Behel (orthodonti) · Clear aligner · Implan gigi |
+  | NK Health (Jakarta Barat) | klinik fisioterapi | Jakarta | NK Health | Fisioterapi saraf kejepit · Fisioterapi stroke · Cedera olahraga pasca operasi · Nyeri lutut |
+
+  Its committed summary records, per clinic: the phrases from R-04a, usable
+  topics, counted real wordings, whether the pool is thin, the Google city
+  location found, and the cost. For two questions per clinic (six in total),
+  it records the ChatGPT scraper's answer length, language check, sources
+  count, item types and call time, and Google's outcome.
+  - **Discovery rule (gates PR 1):** at least two of the three clinics are not
+    thin under R-08. Otherwise R-04a/R-04 come back for review.
+  - **Scraper rule (gates PR 2 and the "ChatGPT" label):** at least 5 of the 6
+    scraper calls return answer text in Indonesian (at least 3 of "yang",
+    "dan", "di", "untuk", "dengan", "bisa", "ini"), with at least one web
+    source, each within 120 seconds. Otherwise R-12's ChatGPT source comes
+    back to the founder.
+  - If GitHub Actions stays blocked, the founder may run it locally:
+    `DATAFORSEO_LOGIN=… DATAFORSEO_PASSWORD=… node experiments/dataforseo-sozo/run.mjs probe`
+    and commit `results/probe/SUMMARY.md`.
 - **AC-01:** Given a confirmed intake, the review screen shows "Kota untuk
-  pencarian", pre-filled per Experience 2. It cannot be confirmed empty, and
-  the saved value is a list entry or "Seluruh Indonesia".
-- **AC-02:** Given a city the scraper list lacks, the ChatGPT checks use 2360,
-  and that answer block shows "Indonesia", not the city.
+  pencarian", pre-filled per Experience 2 with Indonesian names, and the
+  helper text from Experience 2. It cannot be confirmed empty, and the saved
+  value is a list entry or "Seluruh Indonesia".
+- **AC-02:** Given any order, every ChatGPT observation used 2360. Given the
+  search city differs from Indonesia, the header and limit note show "Google:
+  <kota> · ChatGPT: Indonesia".
 - **AC-03:** Given discovery, no DataForSEO request contains the brand name,
-  an alias or the domain (checked on recorded request bodies).
+  an alias or the domain (checked on recorded request bodies). A unit test of
+  R-04a covers its six steps, including: brand "Kopi Sudut", category "kedai
+  kopi": "Kopi Susu Sudut" → "susu kopi" and "Non-kopi (matcha, cokelat)" →
+  "non kopi"; brand "CS Dental", category "klinik gigi": "Behel (orthodonti)"
+  → "behel gigi" and "Veneer porselen" → "veneer porselen"; brand "MS Glow",
+  category "klinik kecantikan": "Laser" → "laser kecantikan".
 - **AC-04:** Given a pack, every "Dicari di Google" or "Orang lain juga
   bertanya" question exactly matches a saved pool item of that origin. Every
-  "Disusun dari topik" question contains its topic's core words. At most two
-  are "how to", and no brand appears.
+  "Disusun dari topik" question contains its topic's core words. At least 7
+  are provider-choice and at most 2 advice, and no brand appears. Given a
+  label or number changed in the browser, approval is rejected.
+- **AC-04a:** Given a place-dependent question ("terdekat") and the city
+  Surabaya, the question contains "Surabaya". Given "Seluruh Indonesia", no
+  place-dependent question is used.
 - **AC-05:** Given a simulated discovery failure or a thin pool, the R-08 pack
   is used and labelled, and the report says so once.
 - **AC-06:** Given an approved pack, each question has one ChatGPT and one
-  Google observation. Both were asked with byte-identical text in the same
-  runner step, and the place used is recorded.
+  Google observation asked with byte-identical text. On the first attempt
+  both were asked in the same runner step. Given one source fails and is
+  retried, only that source is asked again.
 - **AC-07:** Given Google returns an empty element twice, the outcome is "not
   shown", with no summary text displayed.
-- **AC-08:** Given the business appears only as a link or source, the outcome
-  is "dipakai sebagai sumber" and it is not counted as named. Given its alias
-  appears in the answer text, it is counted as named.
+- **AC-08:** Given the business appears only in link addresses or the sources
+  list, the outcome is "dipakai sebagai sumber" and it is not counted as
+  named. Given its name appears as visible link text, in a ChatGPT
+  local-business card, or its alias appears in the answer text, it is counted
+  as named.
 - **AC-09:** Given 2 failed Google checks and 1 failed ChatGPT check, the
   report is delivered. The cards use N=9 and M=8, three slots show "Tidak dapat
-  diperiksa" and "Minta bantuan", and one `checks_failed` notice is sent.
-- **AC-10:** Given 11 failed checks, no report is generated. The customer
-  email directs them to support, and the founder is notified.
+  diuji" and "Minta bantuan", and one `checks_failed` notice is sent.
+- **AC-10:** Given 6 failed ChatGPT checks, no report is generated. The order
+  is `failed`, the existing failure email is sent, and one
+  `paid_order_failed` notice is sent.
 - **AC-11:** Given the report:
-  - the counts are per source, with the denominators in R-19;
+  - the counts are per source, with the denominators in R-19, and a
+    denominator of 0 shows "Tidak diuji";
+  - the D-05 sentences appear word for word with the per-source denominator;
   - the demand line says "seluruh Indonesia" with the data month;
   - no AI-assistant estimate appears;
-  - the "Topik yang belum menyebut Anda" rows match the evidence.
-- **AC-12:** Given the JSON export and the report-writing prompt input, neither
-  contains raw DataForSEO responses or third-party phone numbers.
+  - the "Topik yang belum menyebut Anda" rows match the evidence and include
+    only questions with at least one completed answer.
+- **AC-12:** Given the report data sent to the browser, the JSON export and
+  the report-writing prompt input, none contains raw DataForSEO responses or
+  third-party phone numbers.
 - **AC-13:** Given the daily cap is reached, no DataForSEO call is sent. Given
-  credentials or balance are bad, payment start is refused and one
-  `dataforseo_unavailable` notice is sent per day.
+  credentials, access, balance or cost-limit errors, payment start is refused
+  with "Audit tidak tersedia saat ini." and one `dataforseo_unavailable`
+  notice is sent per day. Given status 50301, the call is retried; given an
+  unknown code, it is not.
 - **AC-14 (live, founder-run, USD 2.00 order hold, approved by Yasir):** one
   live order on a real business is delivered with both sources. It records:
   - the total cost;
@@ -616,13 +745,15 @@ shown as missing, never estimated or filled in.
   - founder review of report screenshots (layout judgment);
   - the founder's judgment that the questions read as real human questions.
 - **AC-15:** Given `runner-worst-case.test.ts`, one question step with both
-  sources and all retries fits the run budget, and the per-order worst case is
-  USD 2.00 or less.
+  sources fits the run budget, and two orders running at the same time each
+  take one step per run. Given `spend-worst-case.test.ts`, the per-order worst
+  case is USD 2.00 or less.
 - **AC-16:** Given synthetic mode, `verify-nuave drive all` passes, including an
   empty summary and a failed check, with no external calls.
 - **AC-17:** Given the order preview and checkout, both say "ChatGPT dan
   Google", Rp249.000 and the founder-approved R-23 promise. Midtrans receives
-  249000, and no customer page, email or PDF shows Rp99.000.
+  249000, and no customer page, email or PDF shows Rp99.000. None of this is
+  live before the checks are live.
 - **AC-18:** Given a report saved before this change, it renders exactly as
   before.
 - **AC-19:** Given the customer edits a question, it shows "Diubah oleh Anda"
@@ -632,7 +763,15 @@ shown as missing, never estimated or filled in.
 ## Open questions
 
 - **Q-1 (founder):** The exact Indonesian wording of the R-23 delivery promise.
-  The proposal is in R-23, and the founder approves it in PR 1.
+  The proposal is in R-23; the founder approves it in PR 2.
+- **Q-2 (founder):** When is a report still delivered? Your answer of
+  2026-10-24 says a failed check still gets a report. Two cases are not
+  covered by it: many checks failing, and one whole source failing (for
+  example all ten ChatGPT checks), which would deliver a "ChatGPT dan Google"
+  report without ChatGPT. **Recommended (used in R-19 until answered):**
+  deliver when each source completed at least 5 of its 10 checks; otherwise
+  the order fails as today and you resolve it (refund within 3 business days
+  unless fixed first).
 
 Answered on 2026-10-24:
 
@@ -641,7 +780,9 @@ Answered on 2026-10-24:
 - **Failed checks:** send them to support. The founder resolves them by hand,
   and a refund is given only if they cannot be fixed.
 - **No re-run button** in this spec.
-- **"Kota untuk pencarian":** added.
+- **"Kota untuk pencarian":** added. Clarification (2026-10-24): it sets the
+  place for Google; ChatGPT can only be asked as "Indonesia", so the question
+  text carries the city where place matters.
 - **The probe:** approved.
 
 Answered on 2026-10-23: one package, Rp249.000, the existing report design, and
@@ -649,22 +790,28 @@ naming "ChatGPT dan Google".
 
 ## Implementation notes
 
-- **Build order, each a separate PR:**
-  1. Price, promise, "ChatGPT dan Google" wording and the document updates.
-  2. The place field, discovery, question choice and fallback. This waits for
-     AC-00 and goes synthetic first.
-  3. Both checks, the report and the failure handling.
-  4. The live run, AC-14.
+- **Build order.** A merge to `main` deploys, so nothing customer-visible may
+  go live before the behaviour it describes.
+  1. **PR 1:** the place field, discovery, question choice and fallback. It
+     waits for the AC-00 discovery rule and goes synthetic first.
+  2. **PR 2:** both checks, the report, the failure handling, the price, the
+     promise, "ChatGPT dan Google" and all document updates. It waits for the
+     AC-00 scraper rule. PR 2 is stacked on PR 1, and the two merge to `main`
+     together.
+  3. The live run, AC-14, right after that merge.
 - **The probe is blocked.** As of 2026-10-24, GitHub Actions is not starting
   any job on this repository (runner never assigned). AC-00 runs once the
-  founder restores Actions.
+  founder restores Actions, or locally (AC-00).
 - **DataForSEO basics:** it uses HTTP Basic auth, with one task per live
   request. The working calls and response shapes are in
   `experiments/dataforseo-sozo/run.mjs`.
-- **Before merging this spec's PR:** the raw JSON in
-  `experiments/dataforseo-sozo/results/` (it holds third-party phone numbers)
-  and `.github/workflows/dataforseo-test.yml` are removed. Only the summaries
-  and `run.mjs` are kept.
+- **Before merging this spec's PR (#151), founder action:** the raw JSON in
+  `experiments/dataforseo-sozo/results/` holds third-party phone numbers, and
+  this repository uses merge commits, so deleting it in a later commit would
+  still put it in `main`'s history. Either **squash-merge PR 151** after
+  removing the raw JSON and `.github/workflows/dataforseo-test.yml`, or
+  rebuild the branch without those commits. Only the summaries and `run.mjs`
+  are kept.
 
 ## Verification record
 

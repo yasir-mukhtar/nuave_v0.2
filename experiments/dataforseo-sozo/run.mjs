@@ -201,96 +201,142 @@ async function answers() {
 }
 
 
-// Probe: does unbranded discovery give usable questions for different
-// clinics, and does the real ChatGPT app (LLM Scraper) work for Indonesia?
-// Saves only extracted summaries (no raw responses: they hold other
-// businesses' phone numbers).
+// Probe (Spec 018 AC-00): runs R-04a, R-04, R-05, R-08 and R-12 exactly as the
+// spec writes them, on three real clinics. Saves only extracted summaries (no
+// raw responses: they hold other businesses' phone numbers).
 const PROFILES = [
-  { name: "Klinik gigi, Surabaya", city: "Surabaya", category: "klinik gigi",
-    services: ["scaling gigi", "behel gigi", "tambal gigi", "implan gigi"] },
-  { name: "Klinik kecantikan, Bandung", city: "Bandung", category: "klinik kecantikan",
-    services: ["facial jerawat", "laser flek hitam", "botox", "skin booster"] },
-  { name: "Klinik fisioterapi, Medan", city: "Medan", category: "klinik fisioterapi",
-    services: ["fisioterapi saraf kejepit", "fisioterapi stroke", "fisioterapi cedera olahraga"] },
+  { name: "MS Glow Aesthetic Clinic", category: "klinik kecantikan", city: "Bandung",
+    brandWords: ["MS Glow", "MS Glow Clinic"], services: ["Laser", "Meso", "Skin rejuvenation", "V shape"] },
+  { name: "CS Dental Aesthetic Clinic", category: "klinik gigi", city: "Surabaya",
+    brandWords: ["CS Dental"], services: ["Veneer porselen", "Behel (orthodonti)", "Clear aligner", "Implan gigi"] },
+  { name: "NK Health", category: "klinik fisioterapi", city: "Jakarta",
+    brandWords: ["NK Health"], services: ["Fisioterapi saraf kejepit", "Fisioterapi stroke", "Cedera olahraga pasca operasi", "Nyeri lutut"] },
 ];
+const FILLER = new Set(["layanan", "paket", "promo", "dan", "untuk", "di"]);
+const UNITS = new Set(["ml", "cc", "unit", "sesi", "x"]);
+const PROVIDER = ["rekomendasi", "terbaik", "terdekat", "bagus", "mana", "dimana", "di mana", "harga", "biaya", "berapa", "murah", "tempat", "klinik"];
+const PLACE_DEP = ["terdekat", "dekat sini", "di sekitar", "near me"];
+const ID_WORDS = ["yang", "dan", "di", "untuk", "dengan", "bisa", "ini"];
 
-async function findLocation(path, city) {
-  const json = await call(path);
-  const rows = json?.tasks?.[0]?.result ?? [];
-  const hit = rows.find((l) => l.country_iso_code === "ID" && new RegExp(`^${city}\\b`, "i").test(l.location_name ?? ""));
-  return { total: rows.length, idRows: rows.filter((l) => l.country_iso_code === "ID").length, hit: hit ? { code: hit.location_code, name: hit.location_name, type: hit.location_type } : null };
+const words = (t) => t.toLowerCase().split(/\s+/).filter(Boolean);
+const subjectWord = (category) => words(category).filter((w) => w !== "klinik").at(-1) ?? null;
+
+// R-04a: service -> search phrase.
+function searchPhrase(service, p) {
+  const brand = new Set(p.brandWords.flatMap(words));
+  let t = service.toLowerCase().replace(/\([^)]*\)|\[[^\]]*\]/g, " ").replace(/-/g, " ").replace(/[0-9]/g, " ").replace(/[^\p{L}\s]/gu, " ");
+  let w = words(t).filter((x) => !UNITS.has(x) && !brand.has(x) && !FILLER.has(x)).slice(0, 4);
+  if (!w.length) return null;
+  const subj = subjectWord(p.category);
+  if (w.length === 1 && subj && !w.includes(subj)) w = [...w, subj];
+  return w.join(" ");
+}
+function coreWordsOf(phrase, p) {
+  const subj = subjectWord(p.category);
+  const core = words(phrase).filter((x) => x !== "klinik" && x !== subj);
+  return core.length ? core : words(phrase);
+}
+const containsAll = (text, core) => core.every((c) => new RegExp(`\\b${c}\\b`, "i").test(text));
+const hasBrand = (text, p) => p.brandWords.some((b) => text.toLowerCase().includes(b.toLowerCase()));
+const isProvider = (q, city) => PROVIDER.some((x) => q.toLowerCase().includes(x)) || (city && q.toLowerCase().includes(city.toLowerCase()));
+const placeOk = (q, city) => !PLACE_DEP.some((x) => q.toLowerCase().includes(x)) || (city && q.toLowerCase().includes(city.toLowerCase()));
+
+async function cityLocation(city) {
+  const json = await call("/serp/google/locations/id");
+  const hit = (json?.tasks?.[0]?.result ?? []).find((l) => l.country_iso_code === "ID" && l.location_type === "City" && new RegExp(`^${city}\\b`, "i").test(l.location_name ?? ""));
+  return hit ? { code: hit.location_code, name: hit.location_name } : null;
 }
 
-const coreWords = (seed) => seed.split(" ").filter((w) => !["gigi", "klinik"].includes(w) || seed.split(" ").length === 1);
-
 async function probe() {
-  const md = ["# Probe: discovery on three clinics + real ChatGPT app", ""];
-  const serpLoc = {};
-  const gptLoc = {};
-  for (const p of PROFILES) {
-    serpLoc[p.city] = await findLocation("/serp/google/locations/id", p.city);
-    gptLoc[p.city] = await findLocation("/ai_optimization/chat_gpt/llm_scraper/locations/id", p.city);
-  }
-  const gptLangs = await call("/ai_optimization/chat_gpt/llm_scraper/languages");
-  const hasId = (gptLangs?.tasks?.[0]?.result ?? []).some((l) => l.language_code === "id");
-  md.push("## Locations", "", `ChatGPT scraper supports Indonesian language: ${hasId ? "yes" : "no / unknown"}`, "");
-  for (const p of PROFILES) {
-    md.push(`- ${p.city}: Google SERP city location ${serpLoc[p.city].hit ? `${serpLoc[p.city].hit.name} (${serpLoc[p.city].hit.code})` : "NOT FOUND"}; ChatGPT scraper city location ${gptLoc[p.city].hit ? `${gptLoc[p.city].hit.name} (${gptLoc[p.city].hit.code})` : `not found (Indonesia rows: ${gptLoc[p.city].idRows})`}`);
-  }
+  const md = ["# Probe (Spec 018 AC-00): discovery on three clinics + real ChatGPT app", ""];
+  const langs = await call("/ai_optimization/chat_gpt/llm_scraper/languages");
+  const hasId = (langs?.tasks?.[0]?.result ?? []).some((l) => l.language_code === "id");
+  md.push(`ChatGPT scraper lists Indonesian ('id'): ${hasId ? "yes" : "no / unknown"}`, "");
+  let notThin = 0;
+  const scraperRows = [];
 
   for (const [bi, p] of PROFILES.entries()) {
     const n = bi + 1;
-    md.push("", `## ${n}. ${p.name}`, "");
-    const googleLoc = serpLoc[p.city].hit?.code ?? INDONESIA;
-    const chatLoc = gptLoc[p.city].hit?.code ?? INDONESIA;
+    const loc = await cityLocation(p.city);
+    const googleLoc = loc?.code ?? INDONESIA;
+    const phrases = p.services.map((s) => searchPhrase(s, p)).filter(Boolean).slice(0, 4);
+    if (phrases.length < 2) phrases.push(p.category);
+    md.push(`## ${n}. ${p.name} (${p.category}, ${p.city})`, "",
+      `Google city location: ${loc ? `${loc.name} (${loc.code})` : "NOT FOUND, used Indonesia"}`, "",
+      "Phrases (R-04a): " + p.services.map((s) => `"${s}" → "${searchPhrase(s, p) ?? "(skipped)"}"`).join("; "), "");
 
-    // Topics: keyword suggestions that contain the service phrase (national volumes).
-    md.push("### Topics (keyword suggestions containing the service, Indonesia, monthly searches)", "");
-    let usable = 0;
-    for (const [si, seed] of p.services.entries()) {
+    // Topics (R-04, R-05).
+    const topics = [];
+    md.push("### Usable topics (R-05)", "");
+    for (const [si, phrase] of phrases.entries()) {
       const r = await paid(`p${n}-suggest-${si + 1}`, "/dataforseo_labs/google/keyword_suggestions/live", {
-        keyword: seed, location_code: INDONESIA, language_code: LANG, limit: 15,
-        order_by: ["keyword_info.search_volume,desc"], include_seed_keyword: true,
+        keyword: phrase, location_code: INDONESIA, language_code: LANG, limit: 20,
+        include_seed_keyword: true, order_by: ["keyword_info.search_volume,desc"],
       }, { raw: false });
-      const rows = [...(r?.seed_keyword_data ? [{ keyword: seed, keyword_info: r.seed_keyword_data.keyword_info }] : []), ...(r?.items ?? [])];
-      const words = coreWords(seed);
-      const good = rows.filter((k) => words.every((w) => k.keyword?.includes(w)) && (k.keyword_info?.search_volume ?? 0) >= 10);
-      usable += good.length;
-      md.push(`- **${seed}**: ${good.length} usable of ${rows.length} — ${good.slice(0, 6).map((k) => `${k.keyword} (${k.keyword_info.search_volume})`).join("; ") || "none"}`);
+      const rows = [...(r?.seed_keyword_data ? [{ keyword: phrase, keyword_info: r.seed_keyword_data.keyword_info }] : []), ...(r?.items ?? [])];
+      const core = coreWordsOf(phrase, p);
+      const good = rows.filter((k) => k.keyword && containsAll(k.keyword, core) && (k.keyword_info?.search_volume ?? 0) >= 10 && !hasBrand(k.keyword, p));
+      for (const k of good) topics.push({ topic: k.keyword, volume: k.keyword_info.search_volume, core: coreWordsOf(k.keyword, p) });
+      md.push(`- **${phrase}** (core: ${core.join(" ")}): ${good.length} of ${rows.length} — ${good.slice(0, 6).map((k) => `${k.keyword} (${k.keyword_info.search_volume})`).join("; ") || "none"}`);
     }
-    md.push("", `Usable topics: ${usable}`, "");
 
-    // Autocomplete for the category + city, then real questions from People also ask.
-    const ac = await paid(`p${n}-autocomplete`, "/serp/google/autocomplete/live/advanced", {
-      keyword: `${p.category} ${p.city.toLowerCase()}`, location_code: googleLoc, language_code: LANG,
-    }, { raw: false });
-    const suggestions = (ac?.items ?? []).map((i) => i.suggestion).filter(Boolean);
-    md.push(`### Google autocomplete for "${p.category} ${p.city.toLowerCase()}"`, "", ...(suggestions.length ? suggestions.slice(0, 10).map((s) => `- ${s}`) : ["- none"]), "");
-
-    const paaSeeds = [`${p.category} terbaik di ${p.city.toLowerCase()}`, `biaya ${p.services[0]}`];
-    const paa = [];
-    for (const [qi, seed] of paaSeeds.entries()) {
+    // Real wordings: autocomplete per phrase + People also ask (R-04).
+    const wordings = [];
+    for (const [si, phrase] of phrases.entries()) {
+      const ac = await paid(`p${n}-autocomplete-${si + 1}`, "/serp/google/autocomplete/live/advanced", {
+        keyword: `${phrase} ${p.city.toLowerCase()}`, location_code: googleLoc, language_code: LANG,
+      }, { raw: false });
+      for (const i of ac?.items ?? []) if (i.suggestion) wordings.push({ origin: "Dicari di Google", text: i.suggestion });
+    }
+    for (const [qi, seed] of [`${p.category} terbaik di ${p.city.toLowerCase()}`, `biaya ${phrases[0]}`].entries()) {
       const serp = await paid(`p${n}-paa-${qi + 1}`, "/serp/google/organic/live/advanced", { ...serpBody(seed), location_code: googleLoc }, { raw: false });
-      paa.push(...peopleAlsoAsk(serp));
+      for (const q of peopleAlsoAsk(serp)) wordings.push({ origin: "Orang lain juga bertanya", text: q });
     }
-    md.push(`### People also ask (seeds: ${paaSeeds.join(" | ")})`, "", ...(paa.length ? [...new Set(paa)].map((q) => `- ${q}`) : ["- none"]), "");
+    // R-08 counting: brand-free, relevant to a phrase, <= 120 chars, place rule.
+    const seen = new Set();
+    const counted = wordings.filter((w) => {
+      const k = w.text.toLowerCase().trim();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return !hasBrand(w.text, p) && w.text.length <= 120 && placeOk(w.text, p.city) && phrases.some((ph) => containsAll(w.text, coreWordsOf(ph, p)));
+    });
+    const thin = topics.length < 6 && counted.length < 5;
+    if (!thin) notThin += 1;
+    md.push("", `Usable topics: ${topics.length} · real wordings found: ${wordings.length} · counted (R-08): ${counted.length} · **${thin ? "THIN" : "not thin"}**`, "",
+      "### Counted real wordings", "", ...(counted.length ? counted.slice(0, 15).map((w) => {
+        const t = topics.filter((x) => containsAll(w.text, x.core)).sort((a, b) => b.topic.length - a.topic.length)[0];
+        return `- [${w.origin}] ${w.text}${t ? ` — topic: ${t.topic} (±${t.volume}/bulan)` : " — no number"}${isProvider(w.text, p.city) ? "" : " (advice)"}`;
+      }) : ["- none"]), "");
 
-    // Two real questions to the real ChatGPT app and to Google.
-    const asks = [...new Set(paa)].slice(0, 2);
-    if (asks.length < 2) asks.push(`${p.category} terbaik di ${p.city} yang mana?`);
-    for (const [qi, q] of asks.slice(0, 2).entries()) {
-      const g = await paid(`p${n}-chatgpt-app-${qi + 1}`, "/ai_optimization/chat_gpt/llm_scraper/live/advanced", {
-        keyword: q, location_code: chatLoc, language_code: LANG, force_web_search: true,
+    // Two questions to the ChatGPT scraper and Google (R-12).
+    const asks = counted.filter((w) => isProvider(w.text, p.city)).map((w) => w.text).slice(0, 2);
+    while (asks.length < 2) asks.push(asks.length ? `harga ${phrases[0]} di ${p.city}` : `${p.category} terbaik di ${p.city}`);
+    for (const [qi, q] of asks.entries()) {
+      const t0 = Date.now();
+      const g = await paid(`p${n}-chatgpt-${qi + 1}`, "/ai_optimization/chat_gpt/llm_scraper/live/advanced", {
+        keyword: q, location_code: INDONESIA, language_code: LANG, force_web_search: true,
       }, { raw: false });
-      const brands = [...new Set((JSON.stringify(g?.brand_entities ?? []).match(/"title":"[^"]+"/g) ?? []).map((t) => t.slice(9, -1)))];
+      const secs = (Date.now() - t0) / 1000;
+      const text = g?.markdown ?? "";
+      const idHits = ID_WORDS.filter((x) => new RegExp(`\\b${x}\\b`, "i").test(text)).length;
+      const sources = (g?.sources ?? []).length;
+      const types = [...new Set((g?.items ?? []).map((i) => i.type))];
+      const pass = text.length > 0 && idHits >= 3 && sources >= 1 && secs <= 120;
+      scraperRows.push(pass);
       const serp = await paid(`p${n}-google-${qi + 1}`, "/serp/google/organic/live/advanced", { ...serpBody(q), location_code: googleLoc, people_also_ask_click_depth: undefined }, { raw: false });
       const ai = aiOverviewText(serp);
       md.push(`### Q${qi + 1}: ${q}`, "",
-        `- ChatGPT app: ${g ? `answered (model ${g.model ?? "?"}, ${(g.markdown ?? "").length} chars, ${(g.sources ?? []).length} sources)` : "FAILED"}; businesses named: ${brands.slice(0, 8).join(", ") || "none listed"}`,
-        `- Google: AI summary ${ai ? (ai.text ? `with text (${ai.text.length} chars, ${ai.sources.length} sources)` : "element present but EMPTY") : "not shown"}`,
-        "", "<details><summary>ChatGPT app answer (first 600 chars)</summary>", "", (g?.markdown ?? "").slice(0, 600), "", "</details>", "");
+        `- ChatGPT scraper: ${g ? `${text.length} chars, Indonesian words ${idHits}/7, ${sources} sources, ${secs.toFixed(1)} s, model ${g.model ?? "?"}, item types: ${types.join(", ") || "none"}` : `FAILED after ${secs.toFixed(1)} s`} → **${pass ? "pass" : "fail"}**`,
+        `- Google (${loc ? p.city : "Indonesia"}): ${ai ? (ai.text ? `summary with text (${ai.text.length} chars, ${ai.sources.length} sources)` : "empty element") : "not shown"}`,
+        "", "<details><summary>ChatGPT answer (first 600 chars)</summary>", "", text.slice(0, 600).replace(/\+?\d[\d\s().-]{7,}\d/g, "[phone removed]"), "", "</details>", "");
     }
   }
+
+  const scraperPass = scraperRows.filter(Boolean).length;
+  md.splice(2, 0,
+    "## AC-00 result", "",
+    `- Discovery rule (≥ 2 of 3 clinics not thin): ${notThin} of 3 → **${notThin >= 2 ? "PASS" : "FAIL"}**`,
+    `- Scraper rule (≥ 5 of 6 calls: Indonesian text, ≥ 1 source, ≤ 120 s): ${scraperPass} of ${scraperRows.length} → **${scraperPass >= 5 ? "PASS" : "FAIL"}**`, "");
   return md;
 }
 
