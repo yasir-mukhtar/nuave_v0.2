@@ -1,6 +1,7 @@
 # Verification: Spec 018 — Real-search questions, answered by ChatGPT and Google (Rp249.000)
 
-> Result: **Fail** (build verification, round 1)
+> Result: **Fail** (build verification, round 1); **Fail** (round 2, at `1b50615`: see
+> [Round 2](#round-2-build-verification-at-1b50615))
 > Reviewer: independent verifier agent (Claude Code, fresh context; did not build the change)
 > Date: 2026-10-24
 > Spec version or commit: `SPEC.md` revision 8 at `65eb165`, plus the PR 2 worker notes added in `16ced38`
@@ -312,3 +313,244 @@ Bounded fix list before re-verification:
 
 The notes are recommended in the same pass where cheap: N-1, N-2 and N-5 are small. N-3 needs a
 founder decision.
+
+---
+
+## Round 2 (build verification at `1b50615`)
+
+> Result: **Fail**
+> Reviewer: independent verifier agent (Claude Code, fresh context; did not build the change or
+> the fixes)
+> Date: 2026-10-24
+> Spec version: `SPEC.md` revision 8, with the worker notes as corrected in `7174e58`
+> Implementation: `1b50615` on `claude/laughing-fermi-prsgqf`. The fixes are `1b93a3f` (B-1),
+> `7174e58` (B-2, B-3 and notes) and `1b50615` (notes): `git diff bcc84e7..1b50615`, 28 files.
+
+### Scope reviewed
+
+- The full fix diff, read against the spec, `AGENTS.md`, `docs/WORKFLOW.md` and the round-1
+  record above.
+- The new and changed tests: `spend-worst-case.test.ts`, `order-discovery-routes.test.ts`,
+  `two-source.test.ts`, `two-source-writing.test.ts`, `checks.test.ts`, `discovery.test.ts`.
+- The places a fix could break something else: the question-writing ceiling against
+  Spec 011/013/016 and the question screen's messages; the report's revision call against the
+  report-call ceiling; `phoneSafeUrl`; the brand-word rule; the place lock.
+- Environments: this sandbox (Node 22.22.0, Chromium from `/opt/pw-browsers`), synthetic mode,
+  plus offline live-mode tests with faked provider answers. No DataForSEO, OpenAI or Cheaper
+  Inference call was made.
+
+### Round-1 findings: status
+
+| Finding | Status | Evidence |
+|---|---|---|
+| B-1: spend and request worst cases | **Fixed**, with a design change the founder must decide (N-17) | Every attempt now counts against the discovery hard stop, and one discovery request makes at most 2 retries (`discover.ts:32-35, 157-169`). Measured, with D1 statements, outbound requests and rate-limiter calls counted: 33 subrequests when every call answers, 39 when every call asks to retry (12 calls), 27 when every call times out. Round 1 measured 62 and USD 0.176 held; now at most USD 0.10 is held for the run. The ledger enforces two per-order stage ceilings, discovery USD 0.12 and question writing USD 0.25 (`spend-ledger.ts:100-103`, checked inside the reservation insert). `spend-worst-case.test.ts` counts question writing and puts the order at about USD 1.96: reading 0.82, report 0.41, checks 0.36, questions 0.25, discovery 0.12. The report part is conservative, because an order can make only 3 report calls in all, revisions included (`store.ts:38`, `runner.ts:1254, 1338`). The SPEC note now says USD 1.96. Its "27 subrequests" is the timeout case, not the worst case (N-22). |
+| B-2: findings name their source | **Partly fixed**: new blocking finding B-4 | The writer now gets code-built Google facts (outcome, named or not, cited domains; no Google text) and both sources' counts (`runner.ts:1305-1315`, `openai.ts:719-726, 762-767`). The conclusion and every key finding must name ChatGPT or Google. The synthetic conclusion and "Tentang audit ini" now agree with the cards. verify-nuave report: "Di ChatGPT, jawaban sintetis menyebut Kedai Fiksi di 0 dari 9 pertanyaan; di Google AI Overview, di 3 dari 8 ringkasan." and "9 dari 10 pemeriksaan ChatGPT dan 10 dari 10 pemeriksaan Google selesai; 1 pemeriksaan tidak dapat diuji." The round-1 AC-09 test now shows "…di 2 dari 6 ringkasan" and "8 dari 10 pemeriksaan Google". But the new contradiction check also rejects true sentences, and can fail a paid order (B-4). |
+| B-3: false search-data claim | **Fixed** | Approval saves `question_mode` from the saved pack (`approve/route.ts:116, 263`), and `searchDataAvailable` reads it (`two-source.ts:97`). Checked end to end through the real routes: a fallback pack with one edited question, then approval, the runner and the report. The saved mode is `fallback`, `search_data_available` is false, and the method list has no "Pertanyaan diambil dari data pencarian Google…" line. The round-1 repro now returns false too. Repo test: `two-source.test.ts` "AC-05: an edited question in a fallback pack…". |
+| N-1 place lock | Fixed | `SmartIntakeJourney.tsx:1715-1726, 2475`. In the browser, against the synthetic server: the second discovery run answered `locked: true`. The review screen then disables "Ubah" for Kota untuk pencarian and shows "Kota sudah terkunci untuk pesanan ini.", also after a reload. 8 of the 10 new questions named Surabaya. No repo test covers it (N-24). |
+| N-2 demand rows | Fixed | "±1.900 pencarian/bulan di Google, seluruh Indonesia (data September 2026)" on the page and in the PDF. |
+| N-3 brand words | Fixed (the narrow rule round 1 suggested) | Only the search place's words stop being brand words (`phrase.ts:81`). "Batu Dental" from Surabaya keeps "batu". "Kedai Fiksi Bandung" from Bandung loses "bandung". All call sites pass the place through `brandInputFor`. R-05b still drops every place word from other businesses' names (`pool.ts:176`). The worker note records the rule. |
+| N-4 R-11a in the report pipeline | Not addressed | Still a note. |
+| N-5 phone numbers in links | Partly fixed | Messaging links (`wa.me`, `api.whatsapp.com`) and `tel:` are dropped. A query or fragment holding a number is removed. A path holding a number drops the link. New side effect: N-20. Numbers written without 0, 62 or + are still not caught. |
+| N-6 Google's business list | Partly fixed | Names now come from Google's own page (local pack titles, organic site names) when the AI Overview text names them. It can still print "Tidak ada." while the text names businesses (N-19), and it can list the business's own branch (N-21). |
+| N-7 discovery refusals | Fixed | `order-discovery.ts:100-106`; test: one `dataforseo_unavailable` notice, one call. |
+| N-8 pre-fill | Fixed for Jakarta | "…, Jakarta Selatan, DKI Jakarta 12110" and "…, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12110" pre-fill Jakarta Selatan. "…, Jakarta 10220" pre-fills Jakarta. The Depok label is unchanged ("Depok (Jawa Barat)"). |
+| N-9 bare domain | Not addressed | Still a note. |
+| N-10 internal label | Fixed | `twoSourceMethodSentence` (`two-source-report.ts:284-290`). The internal label stays only in the export's provenance fields. |
+| N-11 driver race | Fixed | `features.ts:743-750`. `drive all` passed 6 of 6 the first time. |
+| N-12 FAQ a7 | Not addressed | Out of scope (S6). |
+| N-13, N-14 | Open | For AC-14 and the founder's layout review. |
+| N-15 SPEC worker notes | Mostly fixed | Cost and the report writer's input are now accurate. The subrequest figure is not (N-22). |
+| N-16 "seluruh Indonesia" | Fixed | "Pertanyaan diambil dari data pencarian Google melalui DataForSEO. Jumlah pencarian berlaku untuk seluruh Indonesia (data September 2026)." |
+
+### Acceptance results: changes from round 1
+
+| Criterion | Round 1 | Round 2 | Evidence |
+|---|---|---|---|
+| AC-05 | Fail | **Pass** | See B-3 above. The R-08 sentence shows once (`DirectTenReportBody.tsx:162`, `two-source-report.test.tsx`). |
+| AC-15 | Fail | **Pass** | Runner part unchanged: a two-source step measures 23 units, `RUN_UNIT_LIMIT` is 80. Discovery request: at most 39 subrequests measured (< 50), and the repo test asserts it. Spend: about USD 1.96 (≤ 2.00), with the ledger ceilings tested by reserving until refused. See N-17 for the design change. |
+| AC-11 | Pass, with notes | Pass, with notes | N-2 fixed. N-19 (the Google list) remains. |
+| AC-16 | Pass, with note | **Pass** | Run `20261024T071816Z-5rkp`: 6 of 6 the first time, 0 external requests. The report holds an empty AI Overview (question 3), no AI Overview (question 5) and a failed ChatGPT check (question 7). |
+| AC-14 | Not verified | Not verified | The founder's live run. |
+| AC-17 | Partial (founder) | Partial (founder) | Unchanged: "Diperiksa di ChatGPT dan Google AI Overview", "Total Rp249.000", "Bayar Rp249.000" and the R-23 proposal on checkout. No Rp99.000 in `src/` or the skill. Q-1 still waits for the founder. |
+
+All other criteria that passed in round 1 still pass:
+
+- AC-00: the recorded probe.
+- AC-01 to AC-04c, AC-06 to AC-10, AC-12, AC-13, AC-18 and AC-19: the unit and browser suites
+  are green.
+- AC-01 in the browser: "Kota: Bandung", pre-filled with the exact helper text.
+- AC-09: the round-1 end-to-end test, re-run.
+- AC-12: the downloaded export holds no phone-like number, no email and no raw DataForSEO key.
+  The writer's Google facts hold no answer text.
+- AC-18: the files that render old reports are unchanged since round 1. The snapshot file is
+  unchanged (sha256 `648eeffa…`).
+
+### Requirements trace: changes
+
+- **Now met:**
+  - R-09: every attempt counts, under a per-order ceiling (N-17).
+  - R-25.
+  - R-28: the Google facts reach the writer without text.
+  - R-07 / Experience 2: the place lock.
+  - R-21: discovery notices.
+  - R-02 / R-04a: the narrowed brand-word rule.
+- **Partly met:**
+  - Report layout, "Findings name the source they come from": the naming is met. The
+    contradiction check behind it is wrong (B-4).
+  - Report layout, "one list per source, taken from the answer text" (N-19).
+- **Still not met:** R-11a in `report-pipeline.ts` (N-4).
+- **Deviation from approved text:** R-09's per-run hard stop and R-25's "2 runs × USD 0.12" are now
+  one USD 0.12 per order. Only the worker note says so (N-17).
+
+### Checks run (round 2)
+
+| Check | Result |
+|---|---|
+| `npm run check` | Exit 0. Typecheck, lint (0 errors, 24 warnings, as in round 1), format and typography pass. |
+| `npm run test:unit` | Exit 0. 138 files, 2,487 tests passed. |
+| `npm run build` | Exit 0. The route list includes `/api/audit/discovery`. |
+| `CI=true npm run test:e2e` (as `ci.yml`; Chromium from `/opt/pw-browsers`, no browser install) | Exit 0. 67 passed (11.7 min); the switched-off suite: 3 passed. |
+| `npx tsc --noEmit -p .agents/skills/verify-nuave` | Exit 0. |
+| verify-nuave `launch`, `doctor`, `drive all`, `capture`, `cleanup` (synthetic) | Run `20261024T071816Z-5rkp`. `doctor` all PASS (clean tree at `1b50615`). `drive all`: 6 of 6 passed the first time. `capture`: 6 passed, 0 unexpected external requests, 114 files. `cleanup`: group stopped, port 3100 free. Evidence is in `.local-evidence/verify-nuave/20261024T071816Z-5rkp/` (git-ignored). |
+| Report evidence read | `question-review/06-report-by-link.png` (cropped and read), the `.aria.yml` snapshots, `report-link/report-a4.headless.pdf` (15 pages, same text as the page) and `report-link/download-evidence.json`. |
+| GitHub CI on `1b50615` | `validate` success ([run 40072393643](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/40072393643)). `Deploy PR preview` success. |
+| Scratch tests, outside the repo (Vitest on the repo's code; live mode with faked provider answers) | (1) The discovery request: 33 / 39 / 27 subrequests; a second run after a normal first run at the probe's real costs sends 5 of 10 calls. (2) The source check on true and false sentences. (3) Through the real runner: a writer that keeps a true sentence fails the order. (4) A finding from the real 2026-10-23 Sozo report against the check. (5) AC-05 through the real routes. (6) The question-writing ceiling with billed and with unknown-cost answers. (7) `phoneSafeUrl`, Google's list, the Jakarta pre-fill, brand words, the Depok labels. (8) Round 1's scratch suite re-run: AC-09 and the discovery counts. |
+| Browser check (Playwright against the verify-nuave server, shared journey driver) | The place locks after the second discovery run and stays locked after a reload. |
+
+No paid provider call was made.
+
+### Findings (round 2)
+
+#### Blocking (fix before the live run, AC-14)
+
+**B-4. The new source check treats true sentences as contradictions, and can fail a paid order.**
+It affects the B-2 fix: the Report layout ("Findings name the source they come from") and R-19's
+intent to deliver.
+
+- **The rule.** `twoSourceWritingViolations` (`two-source-report.ts:216-275`) rejects any sentence
+  about one source that contains "tidak (pernah) disebut / disebutkan / muncul / menyebut /
+  ditemukan / direkomendasikan" when that source's named count is above zero. It does this even
+  when the sentence is limited to some questions or carries a count.
+- **True sentences rejected** (ChatGPT named the business 3 times, Google 3 times):
+  - "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak direkomendasikan."
+  - "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5
+    ringkasan lainnya."
+  - "Di ChatGPT, bisnis Anda tidak muncul untuk pertanyaan tentang harga."
+  - "Di ChatGPT, Sozo tidak muncul pada kebutuhan lain". This is the title of a finding in the
+    real 2026-10-23 Sozo report, with the "Di ChatGPT" the prompt now requires.
+- **The prompt invites it.** It still says "Make the conclusion answer whether the business was
+  discovered and recommended in this tested sample" (`openai.ts:716`). "Recommended" is not part
+  of the named counts, so "…disebut, tetapi tidak direkomendasikan" is both likely and true.
+- **The consequence.** The one revision is told the true sentence "contradicts the counts". If
+  the writer keeps it, the attempt fails (`report-pipeline.ts:547-556`). An order has only 3 report
+  calls, revisions included: draft and revision, then one more draft with no revision left. After
+  that the paid order fails with no report.
+- **Reproduced through the real runner** (synthetic answers; Google named the business in 3 of 8
+  summaries). The writer kept the true complement sentence: 3 report calls, state `failed`, no
+  report, and the failure email "Audit Nuave Anda belum bisa diselesaikan". When the revision
+  dropped the clause, the order was delivered.
+- **Fix:**
+  - flag only absolute claims (for example with "sama sekali", "tidak pernah", "mana pun",
+    "satu pun", "semua", "seluruh" or "kedua"), and drop "direkomendasikan" from the list;
+  - add tests with the true sentences above;
+  - safer: never fail a paid order on this check. When the revision still trips it, replace that
+    conclusion or finding with a code-built per-source sentence, as the synthetic report does.
+
+#### Notes (should fix or decide; not blocking)
+
+- **N-17. Founder decision: discovery's USD 0.12 is now per order, not per run.**
+  - R-09 ("hard stop at USD 0.12", per run) and R-25 ("2 runs × USD 0.12 = USD 0.24") are
+    unchanged. Only the worker note says "shared by both runs". R-25 says to ask the founder when
+    the total passes USD 2.00. With two full runs it would be about USD 2.08.
+  - Measured with the probe's real costs: the first run settles at about USD 0.07. The second run
+    (R-07: the customer changed the place or a service) then sends 5 of its 10 calls: 2 "People
+    also ask" searches and 3 of 4 keyword calls. The ceiling refuses the 4th keyword call, and all
+    4 autocomplete calls are skipped.
+  - Autocomplete gave most of the counted real wordings in the probe. For CS Dental, 14 of the 15
+    listed are "Dicari di Google" texts that name Surabaya and have no volume of their own, which
+    is what the "<service> surabaya" autocomplete calls return. A customer who changes the place
+    therefore gets few "Dicari di Google" questions for the new place.
+  - Options:
+    - accept it, and amend R-09 and R-25;
+    - raise the order hold to about USD 2.10;
+    - make the second run cheaper: reuse the place-independent keyword calls when only the place
+      changed, or ask autocomplete before the keyword calls.
+- **N-18. The question-writing ceiling (USD 0.25 per order) can leave a paid order stuck.**
+  - Normal use is unaffected. Billed answers settle at about USD 0.0005, so 12 requests in a row
+    were accepted (USD 0.006 held).
+  - It binds only on calls whose cost stays unknown. After 5 timeouts or 5xx answers, every later
+    request for that paid order is refused with "Pembuatan pertanyaan sedang tidak tersedia. Coba
+    lagi nanti." The order never recovers, so "Coba lagi nanti" misleads, and the screen offers no
+    support address. Before this change only the USD 2.00 hold stopped it, after roughly 20 or
+    more such failures, depending on what the reading had used.
+  - No conflict with Spec 011/013/016: the retry button, its live-cost notice and the existing
+    message are unchanged. A "third write again refused" does not happen while calls are billed.
+  - Suggest: on a `spend_cap` refusal for a paid order, show the support address, or send the
+    founder a notice.
+- **N-19. Google's "Bisnis lain yang disebut" can say "Tidak ada." while the AI Overview names
+  businesses.**
+  - The list keeps only names from the same results page (local-pack titles, organic site
+    names) that appear in the AI Overview text in exactly that form (`google.ts:135-160`). An empty
+    list prints "Tidak ada." (`TwoSourceSections.tsx:409`).
+  - The verify-nuave synthetic report shows it. Google's summaries say "Kedai Fiksi dan Klinik
+    Sintesa Contoh sering disebut", and the Google list says "Tidak ada." Round 1 showed the name.
+  - A live AI Overview can name many businesses: the 2026-10-23 Sozo test named six clinic
+    chains. Only those on the same page, in the same form, are kept.
+  - Suggest: match the union of Google's page names, ChatGPT's names and discovery's seen names
+    against the AI Overview text, and never print "Tidak ada." for Google when it showed summaries.
+- **N-20. `phoneSafeUrl` drops some real article links.** A path holding 8 to 15 digits that
+  start with 0 or 62 counts as a phone number (`phones.ts:60`). So kompas.com articles published
+  before 10:00 disappear from the source lists and cited domains, for example
+  `…/read/2023/05/12/080000565/…`. A detik, CNN Indonesia or Facebook ID link is kept.
+- **N-21. The business's own branch can appear as "another business".** Own names are excluded
+  only on an exact match (`two-source.ts:263, 271`). So "CS Dental Surabaya" is listed for a
+  business named "CS Dental", and R-16 counts it as named at the same time. The ChatGPT list
+  already did this in round 1; the new Google list does it too.
+- **N-22.** The SPEC worker note says the discovery request's worst case "measured 27
+  subrequests". 27 is the timeout case. The case where every call asks to retry measures 39. Both
+  are under 50.
+- **N-23.** The new method sentence says "ke Google (AI Overview)" (`two-source-report.ts:289`).
+  VOICE §2 settles "Google AI Overview". "menanyakan … ditanyakan" repeats itself.
+- **N-24.** The place lock (N-1) has no automated test. I checked it in the browser only.
+- Still open from round 1:
+  - N-4;
+  - N-8's Depok label;
+  - N-9;
+  - N-12;
+  - N-13 and N-14 (AC-14 and the founder's review);
+  - N-5's numbers written without 0, 62 or +.
+
+#### Founder actions (unchanged from round 1, plus N-17)
+
+- Decide N-17.
+- Approve the R-23 wording (Q-1).
+- Before merging:
+  - confirm the DataForSEO repository secrets;
+  - squash-merge or rebuild the branch, because `050bf9d` and `e986e24` with the raw probe JSON
+    are still in its history;
+  - keep production on Workers Paid.
+- Run AC-14.
+
+### Verdict (round 2)
+
+**Fail.** B-1 and B-3 are fixed, and AC-05 and AC-15 now pass. B-2's fix brought one blocking
+problem: the source check can fail a paid order when the report states something true (B-4).
+Every other criterion that passed in round 1 still passes. AC-17 waits for Q-1, and AC-14 is the
+founder's live run.
+
+Bounded fix list before re-verification:
+
+1. B-4:
+   - limit the contradiction check to absolute claims, and drop "direkomendasikan";
+   - or never fail a paid order on it: after the revision, fall back to a code-built per-source
+     sentence;
+   - add tests with the true sentences listed above.
+
+Cheap and recommended in the same pass:
+
+- N-19: Google's list, and no false "Tidak ada.";
+- N-23: "Google AI Overview" in the method sentence;
+- N-18: a support address on a refused question request for a paid order;
+- N-20: keep links whose digit run is not a phone number.
+
+N-17 needs the founder.
