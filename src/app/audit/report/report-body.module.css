@@ -547,3 +547,57 @@
     color: black;
   }
 }
+
+/* Spec 018: the two-source report (ChatGPT and Google AI Overview). */
+.resultCard + .resultCard {
+  margin-top: var(--space-md);
+}
+.sourceTitle {
+  margin: 0 0 var(--space-xs);
+  color: var(--text-heading);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: var(--type-label-sm-leading);
+}
+.originLabel {
+  display: inline-block;
+  margin: 0 0 var(--space-xs);
+  padding: 2px 10px;
+  border: 1px solid var(--line-300);
+  border-radius: 999px;
+  font-size: var(--type-label-sm-size);
+  line-height: var(--type-label-sm-leading);
+}
+.sourceAnswer {
+  margin-top: var(--space-lg);
+  padding-left: var(--space-md);
+  border-left: 2px solid var(--line-200);
+  break-inside: avoid-page;
+}
+.sourceHeading {
+  margin: 0 0 var(--space-sm);
+  color: var(--text-heading);
+  font-size: var(--type-label-size, 1rem);
+  font-weight: var(--type-heading-sm-weight);
+}
+.sourceHeading > span {
+  color: var(--ink-500);
+  font-weight: 400;
+}
+.failedSlot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+}
+.failedSlot > p {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-600);
+}
+.failedSlot > a {
+  color: var(--text-accent);
+  font-weight: var(--type-heading-sm-weight);
+}

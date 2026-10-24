@@ -22,9 +22,9 @@ lalu jalankan audit" (J24) opens the review "Ini profil yang akan Nuave pakai"
   website, the address, `Ubah nama`, `Ganti tautan bisnis`, `Kembali` and
   `Ya, ini bisnis saya`. Nothing is ordered yet.
 - `steps-and-checkout`: "Tinggal 3 langkah" names the price
-  (Rp99.000 untuk satu audit); `Lanjut ke pembayaran` opens checkout, where
+  (Rp249.000 untuk satu audit); `Lanjut ke pembayaran` opens checkout, where
   the shared `confirmBrand` step types the test email and presses
-  `Bayar Rp99.000`.
+  `Bayar Rp249.000`.
 - `paid-reading`: after payment, "Nuave sedang membaca website Anda" runs once
   by itself (no button), with "Pembayaran diterima · NV-…", then the Step 2
   cover shows.
@@ -70,7 +70,7 @@ lalu jalankan audit" (J24) opens the review "Ini profil yang akan Nuave pakai"
 
 - From the audit entry, type the website and press `Cek bisnis saya di AI`;
   press `Ya, ini bisnis saya`, `Lanjut ke pembayaran`, type an email and press
-  `Bayar Rp99.000`; after the paid reading press `Mulai` and walk the Step 2
+  `Bayar Rp249.000`; after the paid reading press `Mulai` and walk the Step 2
   screens with `Lanjut`.
 - From the business found, `Kembali` returns to the entry with the website
   kept.
@@ -95,7 +95,7 @@ Run `$V drive smart-intake-summary`. Steps, in order:
   keeps the free check visible; the answer is the real route answer.
   Evidence: `02-free-check-to-business-found`.
 - **Steps, payment, paid reading, focus.** `Ya, ini bisnis saya` → "Tinggal 3
-  langkah" → `Lanjut ke pembayaran` → checkout → email and `Bayar Rp99.000`.
+  langkah" → `Lanjut ke pembayaran` → checkout → email and `Bayar Rp249.000`.
   The paid reading runs by itself, the cover "Ceritakan bisnis Anda" shows,
   and `Mulai` opens the focus screen: `Saran Nuave` on whole brand, and a
   `Satu cabang` card that names no example (the synthetic reading publishes

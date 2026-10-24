@@ -10,6 +10,12 @@
 > [S4 answers, 2026-10-13](../../docs/DECISION_LOG.md#2026-10-13--s4-answers-for-spec-017-draft);
 > cap alerts (2026-10-12, plan §5 S4); Spec 016 (Verified)
 
+> **Changed by Spec 018 (2026-10-24):** the price is Rp249.000
+> (`gross_amount` 249000); the delivery promise and refund wording follow
+> Spec 018 R-23 (proposed text, founder approval Q-1 pending); payment start
+> also refuses when DataForSEO is unavailable or its balance is under USD 2.00
+> (R-22). See [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md).
+
 ## Required context
 
 Read in order:

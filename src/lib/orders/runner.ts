@@ -29,10 +29,12 @@ import {
   AuditCallExecutionError,
   serverOwnedAuditBudget,
 } from "../audit/telemetry";
+import { twoSourceMethodSentence } from "../audit/two-source-report";
 import type {
   AuditCallTelemetry,
   AuditObservation,
   AuditPrompt,
+  AuditReport,
 } from "../audit/types";
 import { SpendCapError, withOrderSpend } from "../spending/provider-spend";
 import {
@@ -49,6 +51,32 @@ import {
   type NoticeRow,
 } from "../payments/founder-notices";
 import type { MidtransConfig } from "../payments/midtrans";
+import { recordFounderNotice, utcDayOf } from "../payments/notices";
+import {
+  chatgptCheckBody,
+  failedChatGptObservation,
+  readChatGptAttempt,
+} from "../checks/chatgpt";
+import {
+  googleCheckBody,
+  notShownAfterEmpty,
+  readGoogleAttempt,
+} from "../checks/google";
+import {
+  CHATGPT_CHECK_TIMEOUT_MS,
+  GOOGLE_CHECK_TIMEOUT_MS,
+  type CheckSend,
+  type CheckSource,
+} from "../checks/send";
+import {
+  buildTwoSourceReport,
+  twoSourceGate,
+  twoSourceObservations,
+  twoSourceSetup,
+  type TwoSourceSetup,
+  twoSourceReportFacts,
+} from "./two-source";
+import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "../audit/types";
 import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
 import { orderFailedNoticeStatement } from "../payments/notices";
 import {
@@ -67,6 +95,14 @@ import {
   activeOrders,
   claimOrderLease,
   claimQuestion,
+  claimQuestionSources,
+  dueSources,
+  exhaustSpentSources,
+  moveTwoSourceToReporting,
+  saveSourceResults,
+  type ChatGptSave,
+  type GoogleSave,
+  type OrderQuestionRow,
   claimReportAttempt,
   emailBackingOff,
   emailHistory,
@@ -104,6 +140,10 @@ import {
  * report and its language fix). The margin covers D1 writes around the call. */
 const STEP_MARGIN_MS = 15_000;
 export const OBSERVATION_STEP_MS = OBSERVATION_CALL_TIMEOUT_MS + STEP_MARGIN_MS;
+/** Spec 018 R-15: on the first attempt one step asks both sources, in
+ * parallel; the longer timeout decides the step. */
+export const TWO_SOURCE_STEP_MS =
+  Math.max(CHATGPT_CHECK_TIMEOUT_MS, GOOGLE_CHECK_TIMEOUT_MS) + STEP_MARGIN_MS;
 export const REPORT_STEP_MS = 2 * REPORT_CALL_TIMEOUT_MS + STEP_MARGIN_MS;
 /** The lease and the question claim last longer than the call timeout (R-18). */
 const LEASE_SLACK_MS = 30_000;
@@ -120,6 +160,11 @@ export type RunnerDeps = {
   now: () => Date;
   /** One observation call. Throws or returns a failed observation on failure. */
   execute: (input: QuestionExecuteInput) => Promise<AuditObservation>;
+  /** Spec 018: one ChatGPT or Google check call for a two-source order (live:
+   * DataForSEO; synthetic: labelled answers). Absent: two-source orders wait. */
+  checks?: {
+    send: (input: CheckCallInput) => Promise<CheckSend>;
+  };
   generateReport: ReportGenerator;
   /** Pause between email tries (tests pass a no-op). */
   sleep?: (ms: number) => Promise<void>;
@@ -142,6 +187,16 @@ export type RunnerDeps = {
     /** Null: no founder notice can be sent. */
     founderEmail: string | null;
   };
+};
+
+export type CheckCallInput = {
+  source: CheckSource;
+  body: Record<string, unknown>;
+  /** The question's position (1–10); synthetic answers use it. */
+  ordinal: number;
+  attempt: number;
+  /** The business name and confirmed aliases. */
+  names: readonly string[];
 };
 
 export type StepOutcome =
@@ -173,7 +228,16 @@ export type RunSummary = {
 type Intake = {
   context: AuditSubject;
   prompts: AuditPrompt[];
+  /** Spec 018: "chatgpt-google-v1" when the order asks both sources. */
+  checks?: unknown;
+  question_origins?: unknown;
 };
+
+function setupOf(intake: Intake | null): TwoSourceSetup | null {
+  return intake
+    ? twoSourceSetup(intake as Parameters<typeof twoSourceSetup>[0])
+    : null;
+}
 
 function parseIntake(order: OrderRow): Intake | null {
   try {
@@ -197,27 +261,34 @@ export { orderSafetyIdentifier, sha256Hex };
  * invocation shared with outbound requests (paid provider calls and Resend
  * sends). A run therefore keeps a meter of D1 queries plus outbound requests
  * and starts a piece of work only if its measured worst typical cost still
- * fits under RUN_UNIT_LIMIT (40, a margin under 50). Measured in
+ * fits under RUN_UNIT_LIMIT (first 40, a margin under 50). Measured in
  * runner-worst-case.test.ts.
  *
  * Spec 017 R-23: Cloudflare's limits pages (read 2026-10-14) list "Subrequests per
  * invocation" (Free 50, Paid 10,000) and "Subrequests to internal services"
  * (Free 1,000, Paid default 10,000) but do not say which one D1 queries count
- * toward, so separate counting is not confirmed and the 40-unit meter stays. */
+ * toward, so separate counting is not confirmed and the 40-unit meter stayed.
+ *
+ * Spec 018 R-15: production now runs on Workers Paid (founder, 2026-10-24),
+ * where an invocation may make 10,000 subrequests and 1,000 D1 queries. A
+ * two-source question step (two paid calls in parallel, each with its ledger
+ * writes) measures 23 units, so two orders' steps no longer fit in 40. The
+ * meter is raised to 80, still far under the Paid limits, and stays as the
+ * check that one run cannot grow without bound. */
 export const MAX_ORDERS_PER_RUN = 2;
 export const MAX_EXPIRED_PER_RUN = 3;
 export const MAX_FAILURE_EMAILS_PER_RUN = 1;
 export const MAX_DEADLINE_FAILURES_PER_RUN = 1;
-export const RUN_UNIT_LIMIT = 40;
+export const RUN_UNIT_LIMIT = 80;
 /** Each piece of work, in D1 queries + outbound requests (with a small margin):
  * an expiry; a deadline failure with its failure email (three tries); a
- * question step with its paid call; an email-only retry of a ready email; a
+ * question step with its paid calls (spec 018: both sources, measured 23); an email-only retry of a ready email; a
  * report step with up to two paid calls and the ready email; one failure-email
  * retry (three tries). */
 export const RUN_COST = {
   expiry: 2,
   deadline: 12,
-  question: 18,
+  question: 24,
   light: 9,
   heavy: 27,
   retry: 7,
@@ -229,8 +300,11 @@ export const RUN_COST = {
 /** R-23: reconciliation may spend the meter up to here. The rest is kept for the
  * queries that follow it and cannot be skipped: the expiry, 7-day, deadline,
  * cap-alert (a select and a batch), payment-email, notice, active-order and
- * failure-email lists, and the two order reads of the audit loop (11). */
-export const RECONCILE_UNIT_LIMIT = RUN_UNIT_LIMIT - 11;
+ * failure-email lists, and the two order reads of the audit loop (11).
+ * Spec 018 kept it at the size measured for the 40-unit meter: the larger
+ * meter is room for the two-source question steps, not for more Midtrans
+ * checks in one run. */
+export const RECONCILE_UNIT_LIMIT = 40 - 11;
 /** R-23: a payment email or notice that is due and has existed this long has
  * already waited a run (runs are a minute apart): it goes before audit steps. */
 export const RUN_INTERVAL_MS = 60_000;
@@ -278,6 +352,12 @@ function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
     execute: (input) => {
       meter.n += 1;
       return deps.execute(input);
+    },
+    checks: deps.checks && {
+      send: (input) => {
+        meter.n += 1;
+        return deps.checks!.send(input);
+      },
     },
     generateReport: ((...args: Parameters<RunnerDeps["generateReport"]>) => {
       meter.n += 1;
@@ -436,7 +516,7 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
 
   // The room kept for one payment email and one refund notice that are due but
   // have not waited yet. The first audit step needs only to fit on its own (a
-  // report step is 27 of 40); later ones must leave this room (R-23).
+  // report step is 27 of RUN_UNIT_LIMIT); later ones must leave this room (R-23).
   let reserve = 0;
   if (email) reserve += RUN_COST.paymentEmail;
   if (refundNotice()) reserve += RUN_COST.notice;
@@ -470,7 +550,11 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
       continue;
     }
     const stepMs =
-      order.state === "reporting" ? REPORT_STEP_MS : OBSERVATION_STEP_MS;
+      order.state === "reporting"
+        ? REPORT_STEP_MS
+        : setupOf(parseIntake(order))
+          ? TWO_SOURCE_STEP_MS
+          : OBSERVATION_STEP_MS;
     if (deps.now().getTime() - startedAt + stepMs > budgetMs) {
       outcomes.push("waiting");
       continue;
@@ -615,6 +699,8 @@ async function questionStep(
     await failOrder(deps, order.id, "intake_invalid");
     return "failed";
   }
+  const setup = setupOf(intake);
+  if (setup) return twoSourceStep(deps, order, intake, setup, owner, stepMs);
   await exhaustSpentQuestions(deps.db, { orderId: order.id, now: deps.now() });
   const questions = await listQuestions(deps.db, order.id);
   // R-23: an order that cannot finish (attempts used) becomes `failed`.
@@ -779,6 +865,351 @@ async function questionStep(
   return "question_retry";
 }
 
+/* ------------------------- Spec 018: two sources ------------------------- */
+
+type Settled<T> = { ok: true; value: T } | { ok: false; error: unknown };
+const settle = <T>(promise: Promise<T>): Promise<Settled<T>> =>
+  promise.then(
+    (value) => ({ ok: true as const, value }),
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+
+/** R-12..R-15, R-19: one step of a two-source order. On the first attempt
+ * both sources are asked in parallel; a retry asks only the source that
+ * failed (R-14). Once every check is final, the R-19 gate decides between the
+ * report and the order failing as today. */
+/** R-27: synthetic checks cost nothing and answer at once, so a synthetic
+ * retry waits for no backoff; the journey reaches its report in one sitting. */
+function checkBackoff(mode: OrderMode) {
+  return (...args: Parameters<typeof retryBackoffMs>) =>
+    mode === "synthetic" ? 0 : retryBackoffMs(...args);
+}
+
+async function twoSourceStep(
+  deps: RunnerDeps,
+  order: OrderRow,
+  intake: Intake,
+  setup: TwoSourceSetup,
+  owner: string,
+  stepMs: number,
+): Promise<StepOutcome> {
+  if (!deps.checks) return "waiting";
+  const backoff = checkBackoff(deps.mode);
+  await exhaustSpentSources(deps.db, { orderId: order.id, now: deps.now() });
+  const rows = await listQuestions(deps.db, order.id);
+  const settled = await settleTwoSourceGate(deps, order.id, rows);
+  if (settled) return settled;
+  const nowIso = iso(deps.now());
+  let next: OrderQuestionRow | null = null;
+  let due = { chatgpt: false, google: false };
+  for (const row of rows) {
+    if (row.claim_until && row.claim_until > nowIso) continue;
+    const sources = dueSources(row, nowIso);
+    if (sources.chatgpt || sources.google) {
+      next = row;
+      due = sources;
+      break;
+    }
+  }
+  if (!next) return "waiting";
+  const prompt = intake.prompts.find(
+    (item) => item.prompt_id === next.prompt_id,
+  );
+  if (!prompt) {
+    await failOrder(deps, order.id, "intake_invalid");
+    return "failed";
+  }
+  const leaseMs = stepMs + LEASE_SLACK_MS;
+  const renew = () =>
+    renewOrderLease(deps.db, {
+      orderId: order.id,
+      owner,
+      now: deps.now(),
+      leaseMs,
+    });
+  if (!(await renew())) return "skipped";
+  const claimed = await claimQuestionSources(deps.db, {
+    orderId: order.id,
+    promptId: next.prompt_id,
+    owner,
+    now: deps.now(),
+    claimMs: leaseMs,
+    ...due,
+  });
+  if (!claimed) return "skipped";
+  if (!(await renew())) return "skipped";
+
+  const ordinal = intake.prompts.indexOf(prompt) + 1;
+  const scope = { db: deps.db, orderId: order.id, now: deps.now };
+  const ask = (source: CheckSource, attempt: number) =>
+    settle(
+      withOrderSpend(scope, () =>
+        deps.checks!.send({
+          source,
+          // R-13: both sources receive the approved text, byte for byte.
+          body:
+            source === "chatgpt"
+              ? chatgptCheckBody(prompt.question)
+              : googleCheckBody(prompt.question, setup.google.code),
+          ordinal,
+          attempt,
+          names: setup.names,
+        }),
+      ),
+    );
+  const [chatgptCall, googleCall] = await Promise.all([
+    due.chatgpt ? ask("chatgpt", claimed.attempts) : null,
+    due.google ? ask("google", claimed.g_attempts) : null,
+  ]);
+
+  // The order's own hold would be passed: nothing more is sent (R-09).
+  const spendError = (call: Settled<CheckSend> | null) =>
+    call && !call.ok && call.error instanceof SpendCapError
+      ? call.error.reason
+      : null;
+  const reasons = [spendError(chatgptCall), spendError(googleCall)];
+  if (reasons.includes("order_limit")) {
+    await saveSourceResults(deps.db, {
+      orderId: order.id,
+      promptId: next.prompt_id,
+      owner,
+      chatgpt: due.chatgpt
+        ? {
+            status: "exhausted",
+            nextAttemptAt: null,
+            failure: "order_limit",
+            attemptsJson: next.attempts_json,
+            observationJson: null,
+            factsJson: null,
+          }
+        : null,
+      google: due.google
+        ? {
+            status: "exhausted",
+            nextAttemptAt: null,
+            failure: "order_limit",
+            empty: next.g_empty,
+            resultJson: null,
+          }
+        : null,
+    });
+    await failOrder(deps, order.id, "order_limit");
+    return "failed";
+  }
+  if (reasons.includes("order_refused")) return "skipped";
+
+  const now = deps.now();
+  let unavailable = false;
+  const chatgpt: ChatGptSave | null = chatgptCall
+    ? (() => {
+        const earlier = JSON.parse(next.attempts_json) as AuditCallTelemetry[];
+        if (!chatgptCall.ok) {
+          if (chatgptCall.error instanceof SpendCapError)
+            // The ledger refused or was unavailable: nothing was sent, so the
+            // attempt is given back and tried again on a later run.
+            return {
+              status: "pending",
+              nextAttemptAt: null,
+              failure: "ledger_unavailable",
+              attemptsJson: next.attempts_json,
+              observationJson: null,
+              factsJson: null,
+              refund: true,
+            };
+        }
+        const read = chatgptCall.ok
+          ? readChatGptAttempt({
+              send: chatgptCall.value,
+              prompt,
+              attempt: claimed.attempts,
+              names: setup.names,
+            })
+          : null;
+        if (read?.kind === "answered") {
+          const observation =
+            deps.mode === "synthetic"
+              ? {
+                  ...read.observation,
+                  system: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+                  requested_model: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+                  returned_model: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+                }
+              : read.observation;
+          return {
+            status: "done",
+            nextAttemptAt: null,
+            failure: null,
+            attemptsJson: next.attempts_json,
+            observationJson: JSON.stringify({
+              ...observation,
+              telemetry: [...earlier, ...observation.telemetry],
+            }),
+            factsJson: JSON.stringify(read.facts),
+          };
+        }
+        const reason =
+          read?.kind === "failed"
+            ? read.reason
+            : "The ChatGPT check could not be sent.";
+        const telemetry =
+          read?.kind === "failed" ? [...earlier, read.telemetry] : earlier;
+        if (read?.kind === "failed" && read.unavailable) unavailable = true;
+        const exhausted =
+          (read?.kind === "failed" && !read.retry) ||
+          claimed.attempts >= MAX_ATTEMPTS_PER_QUESTION;
+        return {
+          status: exhausted ? "exhausted" : "pending",
+          nextAttemptAt: exhausted
+            ? null
+            : new Date(now.getTime() + backoff("temporary", claimed.attempts)),
+          failure: reason,
+          attemptsJson: JSON.stringify(telemetry),
+          // R-20: the honest failed record the report shows.
+          observationJson: exhausted
+            ? JSON.stringify(
+                failedChatGptObservation({
+                  prompt,
+                  reason,
+                  telemetry,
+                  at: now,
+                }),
+              )
+            : null,
+          factsJson: null,
+        };
+      })()
+    : null;
+
+  const google: GoogleSave | null = googleCall
+    ? (() => {
+        if (!googleCall.ok && googleCall.error instanceof SpendCapError)
+          return {
+            status: "pending",
+            nextAttemptAt: null,
+            failure: "ledger_unavailable",
+            empty: next.g_empty,
+            resultJson: null,
+            refund: true,
+          };
+        const where = {
+          promptId: prompt.prompt_id,
+          question: prompt.question,
+          locationCode: setup.google.code,
+          locationName: setup.google.name,
+        };
+        const read = googleCall.ok
+          ? readGoogleAttempt({
+              send: googleCall.value,
+              ...where,
+              names: setup.names,
+            })
+          : null;
+        if (read?.kind === "done")
+          return {
+            status: "done",
+            nextAttemptAt: null,
+            failure: null,
+            empty: next.g_empty,
+            resultJson: JSON.stringify(read.check),
+          };
+        if (read?.kind === "empty") {
+          // R-17: an empty element is retried once, then counted as not shown.
+          if (
+            next.g_empty >= 1 ||
+            claimed.g_attempts >= MAX_ATTEMPTS_PER_QUESTION
+          )
+            return {
+              status: "done",
+              nextAttemptAt: null,
+              failure: null,
+              empty: next.g_empty + 1,
+              resultJson: JSON.stringify(
+                notShownAfterEmpty({
+                  send: (googleCall as { value: CheckSend }).value,
+                  ...where,
+                }),
+              ),
+            };
+          return {
+            status: "pending",
+            nextAttemptAt: new Date(
+              now.getTime() + backoff("empty_or_unusable", claimed.g_attempts),
+            ),
+            failure: "empty_overview",
+            empty: next.g_empty + 1,
+            resultJson: null,
+          };
+        }
+        if (read?.kind === "failed" && read.unavailable) unavailable = true;
+        const exhausted =
+          (read?.kind === "failed" && !read.retry) ||
+          claimed.g_attempts >= MAX_ATTEMPTS_PER_QUESTION;
+        return {
+          status: exhausted ? "exhausted" : "pending",
+          nextAttemptAt: exhausted
+            ? null
+            : new Date(
+                now.getTime() + backoff("temporary", claimed.g_attempts),
+              ),
+          failure:
+            read?.kind === "failed"
+              ? read.reason
+              : "The Google check could not be sent.",
+          empty: next.g_empty,
+          resultJson: null,
+        };
+      })()
+    : null;
+
+  const saved = await saveSourceResults(deps.db, {
+    orderId: order.id,
+    promptId: next.prompt_id,
+    owner,
+    chatgpt,
+    google,
+  });
+  if (!saved) return "skipped";
+  if (unavailable) {
+    // R-21: credentials, access, balance or cost limit; at most once a day.
+    await recordFounderNotice(deps.db, {
+      kind: "dataforseo_unavailable",
+      subject: utcDayOf(now),
+      now,
+    }).catch(() => false);
+  }
+  const final = (status: string | null | undefined) =>
+    status === "done" || status === "exhausted";
+  const questionFinal =
+    final(chatgpt?.status ?? next.status) &&
+    final(google?.status ?? next.g_status);
+  if (!questionFinal) return "question_retry";
+  const after = await listQuestions(deps.db, order.id);
+  // As the one-source step: the step that finishes a question is
+  // "question_done", also when it moves the order on to its report.
+  const ended = await settleTwoSourceGate(deps, order.id, after);
+  return ended === null || ended === "to_reporting" ? "question_done" : ended;
+}
+
+/** R-19: once every check is final, the gate decides. Returns the step's
+ * outcome, or null while checks are still open. */
+async function settleTwoSourceGate(
+  deps: RunnerDeps,
+  orderId: string,
+  rows: OrderQuestionRow[],
+): Promise<StepOutcome | null> {
+  const gate = twoSourceGate(rows);
+  if (!gate.allFinal) return null;
+  if (!gate.passes) {
+    // Fewer than 5 of 10 checks for a source: no report, the order fails as
+    // today (failure email, paid_order_failed notice).
+    await failOrder(deps, orderId, "checks_below_gate");
+    return "question_failed";
+  }
+  return (await moveTwoSourceToReporting(deps.db, orderId))
+    ? "to_reporting"
+    : "skipped";
+}
+
 function failedObservation(
   prompt: AuditPrompt,
   error: unknown,
@@ -847,11 +1278,19 @@ async function reportStep(
   }
 
   const rows = await listQuestions(deps.db, order.id);
-  const observations = rows.flatMap((row) =>
-    row.observation_json
-      ? [JSON.parse(row.observation_json) as AuditObservation]
-      : [],
-  );
+  const setup = setupOf(intake);
+  const observations = setup
+    ? twoSourceObservations({
+        rows,
+        prompts: intake.prompts,
+        synthetic: deps.mode === "synthetic",
+        now: deps.now(),
+      })
+    : rows.flatMap((row) =>
+        row.observation_json
+          ? [JSON.parse(row.observation_json) as AuditObservation]
+          : [],
+      );
   const input = {
     brief: intake.context,
     prompts: intake.prompts,
@@ -863,6 +1302,19 @@ async function reportStep(
     // Server-internal: the labeled synthetic substitute's evidence is admitted
     // only in synthetic mode, never by request.
     ...(deps.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
+    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
+    // the model reads code-built Google facts and both sources' counts.
+    ...(setup
+      ? {
+          two_source: true,
+          two_source_facts: twoSourceReportFacts({
+            rows,
+            prompts: intake.prompts,
+            subject: setup.subject,
+            names: setup.names,
+          }),
+        }
+      : {}),
   };
 
   let code: ReportFailureCode;
@@ -896,10 +1348,27 @@ async function reportStep(
           return deps.generateReport(...args);
         }),
     );
+    // Spec 018: the code-built block, saved with the report; the method
+    // sentence counts both sources and names no internal system (N-10).
+    const withTwoSourceBlock = (written: AuditReport) => {
+      const two = buildTwoSourceReport({
+        report: written,
+        rows,
+        prompts: intake.prompts,
+        observations,
+        setup: setup!,
+        orderNumber: order.order_number,
+      });
+      return {
+        ...written,
+        method_summary: twoSourceMethodSentence(two),
+        two_source: two,
+      };
+    };
     const saved = await saveReport(deps.db, {
       orderId: order.id,
       owner,
-      reportJson: JSON.stringify(report),
+      reportJson: JSON.stringify(setup ? withTwoSourceBlock(report) : report),
       now: deps.now(),
     });
     if (!saved) return "skipped";
@@ -970,6 +1439,8 @@ async function readyEmailStep(
       to: "delivered",
       now: deps.now,
     });
+    if (finished && order.order_number)
+      await recordChecksFailed(deps, order, order.order_number);
     return finished ? "delivered" : "skipped";
   }
   if (emailBackingOff(history, deps.now())) return "email_pending";
@@ -1015,5 +1486,44 @@ async function readyEmailStep(
     to: "delivered",
     now: deps.now,
   });
+  if (delivered) await recordChecksFailed(deps, order, orderNumber);
   return delivered ? "delivered" : "skipped";
+}
+
+/** Spec 018 R-21: one `checks_failed` notice per delivered order with at
+ * least one failed check, naming the order number and the failed checks. */
+async function recordChecksFailed(
+  deps: RunnerDeps,
+  order: OrderRow,
+  orderNumber: string,
+): Promise<void> {
+  let failed: string[] = [];
+  try {
+    const report = JSON.parse(order.report_json ?? "null") as {
+      two_source?: {
+        questions: {
+          ordinal: number;
+          chatgpt: { outcome: string };
+          google: { outcome: string };
+        }[];
+      };
+    } | null;
+    failed = (report?.two_source?.questions ?? []).flatMap((question) => [
+      ...(question.chatgpt.outcome === "failed"
+        ? [`pertanyaan ${question.ordinal} ChatGPT`]
+        : []),
+      ...(question.google.outcome === "failed"
+        ? [`pertanyaan ${question.ordinal} Google`]
+        : []),
+    ]);
+  } catch {
+    return;
+  }
+  if (!failed.length) return;
+  await recordFounderNotice(deps.db, {
+    kind: "checks_failed",
+    subject: orderNumber,
+    detail: { order_number: orderNumber, failed: failed.join(", ") },
+    now: deps.now(),
+  }).catch(() => false);
 }

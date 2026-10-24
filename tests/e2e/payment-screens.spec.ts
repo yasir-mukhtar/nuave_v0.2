@@ -123,7 +123,7 @@ test("the order summary shows the price, the promise, the Terms and Privacy link
   // J06 sits between the business check and checkout and says the price.
   await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
   await expectStepsScreen(page);
-  await expect(stepsScreen(page)).toContainText("Rp99.000 untuk satu audit");
+  await expect(stepsScreen(page)).toContainText("Rp249.000 untuk satu audit");
   // Its back button returns to the business check.
   await backButton(page).click();
   await expectBrandConfirm(page);
@@ -421,7 +421,7 @@ test.describe("/uji, the founder test pass", () => {
     ).not.toContain(E2E_TEST_PASS_CODE);
     await toOrderScreen(page);
     // No price and no pay button on a test pass.
-    await expect(orderScreen(page)).not.toContainText("Rp99.000");
+    await expect(orderScreen(page)).not.toContainText("Rp249.000");
     await expect(payButton(page)).toHaveCount(0);
     await submitOrder(page);
     await pressMulai(page);

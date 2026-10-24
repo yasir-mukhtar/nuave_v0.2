@@ -42,11 +42,11 @@ describe("Snap create transaction (R-05, AC-01)", () => {
       "https://v2.nuave.test/api/payments/midtrans/notification",
     );
     expect(JSON.parse(sent!.body!)).toEqual({
-      transaction_details: { order_id: "NV-7K3Q9P-1", gross_amount: 99000 },
+      transaction_details: { order_id: "NV-7K3Q9P-1", gross_amount: 249000 },
       item_details: [
         {
           id: "audit-visibilitas-ai",
-          price: 99000,
+          price: 249000,
           quantity: 1,
           name: "Audit visibilitas AI",
         },
@@ -133,7 +133,7 @@ describe("Get Status (R-09, R-14)", () => {
         transaction_id: "tx-1",
         order_id: "NV-AAAAAA-1",
         transaction_status: "settlement",
-        gross_amount: "99000.00",
+        gross_amount: "249000.00",
         currency: "IDR",
       },
     });
@@ -226,7 +226,7 @@ describe("notification signature (R-08)", () => {
       ),
     ).toBe(false);
     expect(
-      await notificationSignatureValid(KEY, { ...body, gross_amount: 99000 }),
+      await notificationSignatureValid(KEY, { ...body, gross_amount: 249000 }),
     ).toBe(false);
     expect(await notificationSignatureValid(KEY, {})).toBe(false);
   });

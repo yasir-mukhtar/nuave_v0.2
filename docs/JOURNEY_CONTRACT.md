@@ -81,7 +81,7 @@ receives targeted recovery or the approved remedy.
 | Module | Entry and owned work | Successful handoff | Side effect and idempotency | Failure owner | Customer email |
 |---|---|---|---|---|---|
 | **00 — Landing, later** | Explains the offer and accepts one supported public business source | Supported source to 01 | No personalized model, payment, or audit call | Landing navigation and source-entry errors | None |
-| **01 — Order Preview** | Best-effort identity preview, recipient email, one-audit scope, limitations, policy links, and Rp99.000 total valid for 30 days | `checkout_intent`: normalized source, preview identity, recipient, current quote and expiry | Cache by normalized source; repeated submission restores the current unexpired preview; expiry requires refresh before payment | Unsupported source, inaccessible metadata, ambiguous preview identity, expired quote | None |
+| **01 — Order Preview** | Best-effort identity preview, recipient email, one-audit scope, limitations, policy links, and Rp249.000 total valid for 30 days | `checkout_intent`: normalized source, preview identity, recipient, current quote and expiry | Cache by normalized source; repeated submission restores the current unexpired preview; expiry requires refresh before payment | Unsupported source, inaccessible metadata, ambiguous preview identity, expired quote | None |
 | **02 — Payment** | Creates one order and reconciles Midtrans QRIS, bank transfer, GoPay, or DANA attempts under that order | Verified `order_id`, one unused entitlement, and paid event to 03 | Repeated checkout action creates one order; provider events are authenticated and idempotent; a replacement attempt cannot create a second entitlement | Payment status, duplicate payment, reversal, refund, and pre-audit payment remedy | Midtrans may own method instructions; no report-ready email |
 | **03 — Business Facts** | One prepared draft per paid order and draft version; source-labelled correction and confirmation for the same intended business | Immutable `business_fact_version_id` to 04 | Reload resumes the same preparation job; a same-business correction creates a new version and supersedes its question pack; customer edits are never overwritten | Extraction, source conflict, ambiguous business, wrong-business escalation, manual fallback, sensitive-text stop | None initially |
 | **04 — Questions** | One suggested pack per confirmed fact version; free editing, coverage advice, narrow blockers, and approval | Immutable `question_pack_version_id` with exact ten strings, order, classification, edits, warnings, and approval | One bounded generation call per fact version; deterministic Indonesian fallback; reload does not regenerate; fact change supersedes the pack | Generation failure, invalid customer question, fallback, fact/pack mismatch | None initially |
@@ -107,7 +107,7 @@ smaller without weakening ownership.
 
 | Handoff | Minimum server-owned fields |
 |---|---|
-| 01 → 02 | Preview/reference ID, normalized public source, previewed identity, recipient version, Rp99.000 quote reference, `quote_expires_at`, policy versions |
+| 01 → 02 | Preview/reference ID, normalized public source, previewed identity, recipient version, Rp249.000 quote reference, `quote_expires_at`, policy versions |
 | 02 → 03 | Order ID, verified Midtrans payment state, one unused entitlement, private order access, submitted source, recipient version, optional original-order/remedy link |
 | 03 → 04 | Confirmed fact version, exact business and scope, source/provenance status, customer confirmation, warnings |
 | 04 → 05 | Approved question-pack version, exact ordered ten strings, final name/no-name classification, edit record, approval timestamp |
@@ -163,7 +163,7 @@ the same sequence.
 | **2 — Indonesian contract** | Align the protected fixture to the current 01 → 02 simulated → 03 → 04 sequence; finalize 03, 04, and 06 language and data contracts | Real payment, durable jobs, public customer delivery |
 | **3 — Live report quality gate** | Connect protected live behavior for 03 → 04 → 05 → 06 and judge one real report | Requiring real checkout, durable customer delivery, or a dashboard before the report proves value |
 | **4 — Durable delivery** | Make 05 durable; implement 06 Resend email, separate web/PDF artifact states, and delivery recovery; specify and implement 07 private access | Real customer charge |
-| **5 — Real checkout** | Implement and verify Rp99.000 Midtrans checkout, the 30-day quote, QRIS, bank transfer, GoPay, DANA, and approved remedies | Manual transfer outside Midtrans, subscriptions, credits |
+| **5 — Real checkout** | Implement and verify Rp249.000 Midtrans checkout, the 30-day quote, QRIS, bank transfer, GoPay, DANA, and approved remedies | Manual transfer outside Midtrans, subscriptions, credits |
 | **6 — Cohesion pass** | Complete 00 and harmonize web, report, PDF, email, failure, and support presentation | New dashboard, monitoring, account, or agency scope without a proven need |
 
 **September 19 amendment:** the founder prioritized completing the continuous

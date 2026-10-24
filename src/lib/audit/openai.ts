@@ -658,6 +658,8 @@ export async function generateReportContent(
     language?: "en" | "id";
     historical_fixture_id?: HistoricalPromptPackId;
     question_method?: AuditQuestionMethod;
+    /** Spec 018 R-28: code-built Google facts and both sources' counts. */
+    two_source_facts?: import("./two-source-report").TwoSourceReportFacts;
   },
   revision?: {
     draft: ReportContent;
@@ -711,9 +713,25 @@ export async function generateReportContent(
             input.question_method,
             "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",
           ),
-          "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
+          input.two_source_facts
+            ? 'Make the conclusion say, for each source, how often the business was named in this tested sample ("Di ChatGPT …; di Google AI Overview …"). Do not imply a wider or permanent result.'
+            : "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
           "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
           "Return exactly one assessment for each of the ten prompt IDs.",
+          ...(input.two_source_facts
+            ? [
+                "The observations are answers from the ChatGPT app. google_ai_overview gives, for the same prompt IDs, code-checked facts from Google AI Overview (shown or not, whether the business was named in its text, the cited domains); source_counts gives the code counts for both sources.",
+                'Name the source in the conclusion and in every key finding: write "Di ChatGPT" or "Di Google AI Overview". Never state a result for both sources unless the counts support it for each.',
+                'Do not contradict source_counts: when a source named the business at least once, never write that it did not name, mention or show the business ("tidak disebut", "tidak muncul", "tidak menyebut") unless the sentence is limited to some questions ("pada pertanyaan lain", "di 5 ringkasan lainnya") or gives that source\'s exact count from source_counts ("disebut di 3 dari 8 ringkasan").',
+                'Copy every "X dari Y" exactly from source_counts for the source it is about: for ChatGPT, named of completed answers; for Google AI Overview, named of summaries. Never write a count for one source with the other source\'s numbers, and never write that a source named the business when its count is 0.',
+                "Findings, priorities and evidence_prompt_ids still cite only what the ChatGPT answers or the supplied Google facts show.",
+                ...(input.two_source_facts.subject === "klinik"
+                  ? [
+                      'The audited business is a clinic: call it "klinik Anda" ("Klinik Anda" at the start of a sentence), never "bisnis Anda".',
+                    ]
+                  : []),
+              ]
+            : []),
           ...(revision
             ? [
                 "This is a language-only revision. Fix only the listed writing violations.",
@@ -749,6 +767,12 @@ export async function generateReportContent(
               return observation;
             },
           ),
+          ...(input.two_source_facts
+            ? {
+                source_counts: input.two_source_facts.counts,
+                google_ai_overview: input.two_source_facts.google,
+              }
+            : {}),
           ...(revision
             ? {
                 report_draft: {

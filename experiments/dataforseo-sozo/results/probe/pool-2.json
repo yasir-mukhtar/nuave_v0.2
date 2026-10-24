@@ -1,0 +1,896 @@
+{
+  "clinic": "CS Dental Aesthetic Clinic",
+  "place": {
+    "display": "Surabaya",
+    "code": 1007715
+  },
+  "phrases": [
+    "veneer porselen",
+    "behel gigi",
+    "clear aligner",
+    "implan gigi"
+  ],
+  "businessNamesSeen": [
+    "m budi a jagiran",
+    "dentaland kayoon",
+    "yes drg yona simon sp kga",
+    "alodokter",
+    "9c orthodontics",
+    "audy",
+    "indental",
+    "fdc",
+    "instagram mba dentalcare",
+    "satu",
+    "iggi",
+    "national hospital",
+    "medicelle",
+    "hdmall indonesia",
+    "detikhealth",
+    "id",
+    "youtube sonora fm"
+  ],
+  "topics": [
+    {
+      "topic": "veneer porselen",
+      "volume": 110,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "veneer",
+        "porselen"
+      ]
+    },
+    {
+      "topic": "harga veneer porselen gigi",
+      "volume": 40,
+      "intent": "commercial",
+      "month": "2026-08",
+      "core": [
+        "harga",
+        "veneer",
+        "porselen"
+      ]
+    },
+    {
+      "topic": "veneer porselen harga",
+      "volume": 10,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "veneer",
+        "porselen",
+        "harga"
+      ]
+    },
+    {
+      "topic": "harga pemasangan behel di dokter gigi",
+      "volume": 1300,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "pemasangan",
+        "behel",
+        "di",
+        "dokter"
+      ]
+    },
+    {
+      "topic": "harga behel gigi atas",
+      "volume": 590,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "behel",
+        "atas"
+      ]
+    },
+    {
+      "topic": "harga behel gigi 500 ribu",
+      "volume": 590,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "behel",
+        "500",
+        "ribu"
+      ]
+    },
+    {
+      "topic": "berapa harga behel gigi",
+      "volume": 590,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "berapa",
+        "harga",
+        "behel"
+      ]
+    },
+    {
+      "topic": "pasang behel gigi atas berapa",
+      "volume": 480,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "pasang",
+        "behel",
+        "atas",
+        "berapa"
+      ]
+    },
+    {
+      "topic": "berapa harga behel gigi atas bawah",
+      "volume": 480,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "berapa",
+        "harga",
+        "behel",
+        "atas",
+        "bawah"
+      ]
+    },
+    {
+      "topic": "harga behel gigi 200 ribu",
+      "volume": 480,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "behel",
+        "200",
+        "ribu"
+      ]
+    },
+    {
+      "topic": "bahasa inggris behel gigi",
+      "volume": 480,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "bahasa",
+        "inggris",
+        "behel"
+      ]
+    },
+    {
+      "topic": "bahasa inggrisnya behel gigi",
+      "volume": 480,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "bahasa",
+        "inggrisnya",
+        "behel"
+      ]
+    },
+    {
+      "topic": "harga behel untuk merapikan gigi",
+      "volume": 390,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "behel",
+        "untuk",
+        "merapikan"
+      ]
+    },
+    {
+      "topic": "manfaat behel gigi",
+      "volume": 390,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "manfaat",
+        "behel"
+      ]
+    },
+    {
+      "topic": "biaya behel gigi atas bawah",
+      "volume": 390,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "biaya",
+        "behel",
+        "atas",
+        "bawah"
+      ]
+    },
+    {
+      "topic": "harga pemasangan behel gigi tonggos",
+      "volume": 390,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "pemasangan",
+        "behel",
+        "tonggos"
+      ]
+    },
+    {
+      "topic": "behel gigi harga 300 ribuan",
+      "volume": 320,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "behel",
+        "harga",
+        "300",
+        "ribuan"
+      ]
+    },
+    {
+      "topic": "clear aligner",
+      "volume": 3600,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "clear",
+        "aligner"
+      ]
+    },
+    {
+      "topic": "harga clear aligner",
+      "volume": 320,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "clear",
+        "aligner"
+      ]
+    },
+    {
+      "topic": "harga pemasangan clear aligner",
+      "volume": 50,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "pemasangan",
+        "clear",
+        "aligner"
+      ]
+    },
+    {
+      "topic": "biaya clear aligner",
+      "volume": 50,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "biaya",
+        "clear",
+        "aligner"
+      ]
+    },
+    {
+      "topic": "harga clear aligner rata",
+      "volume": 40,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "clear",
+        "aligner",
+        "rata"
+      ]
+    },
+    {
+      "topic": "harga behel clear aligner",
+      "volume": 30,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "behel",
+        "clear",
+        "aligner"
+      ]
+    },
+    {
+      "topic": "clear aligner harga murah",
+      "volume": 20,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "clear",
+        "aligner",
+        "harga",
+        "murah"
+      ]
+    },
+    {
+      "topic": "behel clear aligner harga",
+      "volume": 10,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "behel",
+        "clear",
+        "aligner",
+        "harga"
+      ]
+    },
+    {
+      "topic": "harga rata clear aligner",
+      "volume": 10,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "rata",
+        "clear",
+        "aligner"
+      ]
+    },
+    {
+      "topic": "harga implan gigi",
+      "volume": 4400,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "implan"
+      ]
+    },
+    {
+      "topic": "biaya implan gigi",
+      "volume": 2400,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "biaya",
+        "implan"
+      ]
+    },
+    {
+      "topic": "tanam gigi menteng implan gigi termurah",
+      "volume": 590,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "tanam",
+        "menteng",
+        "implan",
+        "termurah"
+      ]
+    },
+    {
+      "topic": "implan gigi bpjs",
+      "volume": 480,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "implan",
+        "bpjs"
+      ]
+    },
+    {
+      "topic": "wonder dental spesialis implan gigi surabaya",
+      "volume": 390,
+      "intent": "commercial",
+      "month": "2026-08",
+      "core": [
+        "wonder",
+        "dental",
+        "spesialis",
+        "implan",
+        "surabaya"
+      ]
+    },
+    {
+      "topic": "harga implan gigi di tanam",
+      "volume": 320,
+      "intent": "transactional",
+      "month": "2026-08",
+      "core": [
+        "harga",
+        "implan",
+        "di",
+        "tanam"
+      ]
+    },
+    {
+      "topic": "harga implan gigi di tanam gigi",
+      "volume": 260,
+      "intent": "commercial",
+      "month": "2026-08",
+      "core": [
+        "harga",
+        "implan",
+        "di",
+        "tanam"
+      ]
+    },
+    {
+      "topic": "apakah implan gigi sakit",
+      "volume": 260,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "apakah",
+        "implan",
+        "sakit"
+      ]
+    },
+    {
+      "topic": "biaya implan gigi geraham",
+      "volume": 210,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "biaya",
+        "implan",
+        "geraham"
+      ]
+    },
+    {
+      "topic": "hukum implan gigi dalam islam",
+      "volume": 210,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "hukum",
+        "implan",
+        "dalam",
+        "islam"
+      ]
+    },
+    {
+      "topic": "tanam gigi pik implan gigi termurah",
+      "volume": 210,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "tanam",
+        "pik",
+        "implan",
+        "termurah"
+      ]
+    },
+    {
+      "topic": "tanam gigi surabaya implan gigi termurah",
+      "volume": 210,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "tanam",
+        "surabaya",
+        "implan",
+        "termurah"
+      ]
+    },
+    {
+      "topic": "implan gigi meninggal",
+      "volume": 170,
+      "intent": "informational",
+      "month": "2026-08",
+      "core": [
+        "implan",
+        "meninggal"
+      ]
+    },
+    {
+      "topic": "implan gigi apakah ditanggung bpjs",
+      "volume": 170,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "implan",
+        "apakah",
+        "ditanggung",
+        "bpjs"
+      ]
+    },
+    {
+      "topic": "klinik tanam gigi surabaya implan gigi termurah",
+      "volume": 170,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "tanam",
+        "surabaya",
+        "implan",
+        "termurah"
+      ]
+    },
+    {
+      "topic": "implan gigi dalam islam",
+      "volume": 140,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "implan",
+        "dalam",
+        "islam"
+      ]
+    },
+    {
+      "topic": "implan gigi permanen",
+      "volume": 110,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "implan",
+        "permanen"
+      ]
+    },
+    {
+      "topic": "harga implan gigi bpjs",
+      "volume": 110,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "harga",
+        "implan",
+        "bpjs"
+      ]
+    },
+    {
+      "topic": "implan gigi apakah sakit",
+      "volume": 110,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "implan",
+        "apakah",
+        "sakit"
+      ]
+    },
+    {
+      "topic": "biaya implan gigi di tanam",
+      "volume": 90,
+      "intent": "commercial",
+      "month": "2026-09",
+      "core": [
+        "biaya",
+        "implan",
+        "di",
+        "tanam"
+      ]
+    }
+  ],
+  "counted": [
+    {
+      "origin": "Dicari di Google",
+      "text": "behel gigi surabaya harga",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "behel gigi surabaya murah",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "behel gigi surabaya barat",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "pasang behel gigi surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "rekomendasi behel gigi surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "dokter gigi behel surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "behel gigi terbaik di surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "harga pasang behel gigi surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "behel surabaya barat",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "behel surabaya murah",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "clear aligner terdekat",
+      "topic": "clear aligner",
+      "volume": 3600,
+      "provider": true,
+      "keepsLabel": false
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "implan gigi surabaya harga",
+      "topic": "harga implan gigi",
+      "volume": 4400,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "implan gigi center surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "implan gigi murah surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "klinik implan gigi surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "implan gigi termurah surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "implan gigi terbaik surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "pasang implan gigi surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "implan gigi jemursari surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "dokter gigi implan surabaya",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    }
+  ],
+  "dropped": [
+    {
+      "text": "veneer porselen",
+      "why": "duplicate"
+    },
+    {
+      "text": "porselen veneer",
+      "why": "volume < 10"
+    },
+    {
+      "text": "perbedaan veneer porselen dan komposit",
+      "why": "volume < 10"
+    },
+    {
+      "text": "behel gigi",
+      "why": "volume < 10"
+    },
+    {
+      "text": "cara merapikan gigi tanpa behel",
+      "why": "not relevant"
+    },
+    {
+      "text": "sikat gigi untuk behel",
+      "why": "not relevant"
+    },
+    {
+      "text": "merapikan gigi tanpa behel",
+      "why": "not relevant"
+    },
+    {
+      "text": "behel gigi tanpa kawat",
+      "why": "not relevant"
+    },
+    {
+      "text": "sikat gigi khusus behel",
+      "why": "not relevant"
+    },
+    {
+      "text": "sikat gigi behel di indomaret",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner",
+      "why": "duplicate"
+    },
+    {
+      "text": "clear aligner invisalign",
+      "why": "not relevant"
+    },
+    {
+      "text": "behel transparan clear aligner",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner berapa harganya",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner vs behel",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner company",
+      "why": "navigational"
+    },
+    {
+      "text": "clear aligner textbook",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner before and after",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner removal tool",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner cost",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner price",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner brands",
+      "why": "not relevant"
+    },
+    {
+      "text": "implan gigi",
+      "why": "volume < 10"
+    },
+    {
+      "text": "Siapa dokter gigi yang bagus di Surabaya?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa bedanya dokter gigi dan klinik gigi?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Klinik gigi mana di Surabaya yang bisa menggunakan BPJS kesehatan?",
+      "why": "not relevant"
+    },
+    {
+      "text": "FKG terbaik di Indonesia dimana?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa biaya masuk FKG?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa bedanya fkg dan fk?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa lama proses veneer gigi?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa harga veneer gigi?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa itu indirect veneer?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Harga pasang gigi palsu 1 biji di puskesmas berapa?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Yang mana bagus gigi palsu permanen atau lepasan?",
+      "why": "not relevant"
+    },
+    {
+      "text": "1 gigi palsu permanen berapa?",
+      "why": "not relevant"
+    },
+    {
+      "text": "veneer surabaya",
+      "why": "not relevant"
+    },
+    {
+      "text": "veneer kayu surabaya",
+      "why": "not relevant"
+    },
+    {
+      "text": "veneer sidoarjo",
+      "why": "other place (Sidoarjo)"
+    },
+    {
+      "text": "veneer jawa timur",
+      "why": "not relevant"
+    },
+    {
+      "text": "wood veneer surabaya",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligners indonesia",
+      "why": "not relevant"
+    },
+    {
+      "text": "clear aligner indonesia",
+      "why": "not relevant"
+    },
+    {
+      "text": "aligner di surabaya",
+      "why": "not relevant"
+    }
+  ]
+}

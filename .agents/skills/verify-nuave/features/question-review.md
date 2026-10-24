@@ -36,7 +36,7 @@ Run `$V drive question-review`. Steps, in order:
   `toQuestions` step (free check, payment, paid reading, intake, review).
   Evidence: `01-question-review`.
 - **Edit.** Presses `Ubah pertanyaan 1`, fills `Pertanyaan 1` with
-  `Kedai kopi apa yang cocok untuk pekerja di Indonesia?`, and presses
+  `Rekomendasi kedai kopi yang cocok untuk pekerja kantoran?`, and presses
   `Simpan`. Slot 1 shows the new wording. Evidence: `02-question-1-edited`.
 - **Reload.** Reloads the page. Ten slots show, and slot 1 still has the new
   wording. Evidence: `03-edit-survives-reload`.

@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-21
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: S5 (terms, price and promise wording)
+> Updated: 2026-10-23
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: Spec 018 (real-search questions, ChatGPT + Google AI Overview, Rp249.000; Approved 2026-10-24; probe re-run, then build), then S5 (terms, price and promise wording)
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -43,6 +43,14 @@
   adopted 2026-09-26; its §B.3 guards merged through PR #91 on 2026-09-27.
 
 ## Next action
+
+- **Spec 018 first (decided 2026-10-23):** [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+  is **Approved** (2026-10-24, revision 7): questions from real Google search
+  data, each answered by the real ChatGPT app and Google AI Overview, one
+  package at Rp249.000 ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)).
+  Next: the three-clinic probe re-run (AC-00, Q-5), then PR 1 (place field,
+  discovery, questions) and PR 2 (checks, report, price, promise), merged
+  together. S5, S6 and G1 follow it.
 
 - **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
   one immutable private report per order, stored on the server, reached through

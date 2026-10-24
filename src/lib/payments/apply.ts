@@ -76,7 +76,7 @@ function settledWord(status: MidtransStatus): boolean {
 const currencyIsIdr = (status: MidtransStatus): boolean =>
   (status.currency ?? ORDER_CURRENCY) === ORDER_CURRENCY;
 
-/** R-09: settled, a `fraud_status` (when present) of `accept`, `99000.00`, IDR. */
+/** R-09: settled, a `fraud_status` (when present) of `accept`, `249000.00`, IDR. */
 export function meetsPaidRule(status: MidtransStatus): boolean {
   return (
     settledWord(status) &&
