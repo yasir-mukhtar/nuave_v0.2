@@ -89,19 +89,6 @@ export function ReportAnswer({
   /** The business's name and other names, marked inside the answer. */
   names?: readonly string[];
 }) {
-  const [rawOpen, setRawOpen] = useState<string[]>([]);
-  const [copyStatus, setCopyStatus] = useState("");
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(answerCopyText(answer));
-      setCopyStatus("Pertanyaan, jawaban, dan informasi pengamatan tersalin.");
-    } catch {
-      setRawOpen(["raw"]);
-      setCopyStatus(
-        "Tidak dapat menyalin otomatis. Pilih dan salin teks asli di bawah.",
-      );
-    }
-  }
   return (
     <section
       className={styles.answer}
@@ -215,34 +202,55 @@ export function ReportAnswer({
           </div>
         </dl>
       </div>
-      <div className={styles.controls}>
-        <Button
-          type="button"
-          variant="inkOutline"
-          size="touch"
-          onClick={copy}
-          aria-label={`Salin pertanyaan dan jawaban ${answer.ordinal}`}
-        >
-          <IconCopy aria-hidden="true" />
-          Salin pertanyaan dan jawaban
-        </Button>
-        <p role="status">{copyStatus}</p>
-        <Accordion value={rawOpen} onValueChange={setRawOpen}>
-          <AccordionItem value="raw" className={styles.raw}>
-            <AccordionTrigger
-              aria-label={`Teks asli pertanyaan ${answer.ordinal}`}
-            >
-              Teks asli
-              <span className="sr-only"> pertanyaan {answer.ordinal}</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <pre className={styles.rawText} data-raw-answer>
-                {answer.rawAnswer}
-              </pre>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+      <AnswerControls answer={answer} />
     </section>
+  );
+}
+
+/** Copy the question and answer, and the exact retained text. Spec 018 reuses
+ * these under the ChatGPT answer of a two-source report. */
+export function AnswerControls({ answer }: { answer: AnswerPresentation }) {
+  const [rawOpen, setRawOpen] = useState<string[]>([]);
+  const [copyStatus, setCopyStatus] = useState("");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(answerCopyText(answer));
+      setCopyStatus("Pertanyaan, jawaban, dan informasi pengamatan tersalin.");
+    } catch {
+      setRawOpen(["raw"]);
+      setCopyStatus(
+        "Tidak dapat menyalin otomatis. Pilih dan salin teks asli di bawah.",
+      );
+    }
+  }
+  return (
+    <div className={styles.controls}>
+      <Button
+        type="button"
+        variant="inkOutline"
+        size="touch"
+        onClick={copy}
+        aria-label={`Salin pertanyaan dan jawaban ${answer.ordinal}`}
+      >
+        <IconCopy aria-hidden="true" />
+        Salin pertanyaan dan jawaban
+      </Button>
+      <p role="status">{copyStatus}</p>
+      <Accordion value={rawOpen} onValueChange={setRawOpen}>
+        <AccordionItem value="raw" className={styles.raw}>
+          <AccordionTrigger
+            aria-label={`Teks asli pertanyaan ${answer.ordinal}`}
+          >
+            Teks asli
+            <span className="sr-only"> pertanyaan {answer.ordinal}</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <pre className={styles.rawText} data-raw-answer>
+              {answer.rawAnswer}
+            </pre>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
   );
 }

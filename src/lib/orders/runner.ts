@@ -875,6 +875,13 @@ const settle = <T>(promise: Promise<T>): Promise<Settled<T>> =>
  * both sources are asked in parallel; a retry asks only the source that
  * failed (R-14). Once every check is final, the R-19 gate decides between the
  * report and the order failing as today. */
+/** R-27: synthetic checks cost nothing and answer at once, so a synthetic
+ * retry waits for no backoff; the journey reaches its report in one sitting. */
+function checkBackoff(mode: OrderMode) {
+  return (...args: Parameters<typeof retryBackoffMs>) =>
+    mode === "synthetic" ? 0 : retryBackoffMs(...args);
+}
+
 async function twoSourceStep(
   deps: RunnerDeps,
   order: OrderRow,
@@ -884,6 +891,7 @@ async function twoSourceStep(
   stepMs: number,
 ): Promise<StepOutcome> {
   if (!deps.checks) return "waiting";
+  const backoff = checkBackoff(deps.mode);
   await exhaustSpentSources(deps.db, { orderId: order.id, now: deps.now() });
   const rows = await listQuestions(deps.db, order.id);
   const settled = await settleTwoSourceGate(deps, order.id, rows);
@@ -1050,9 +1058,7 @@ async function twoSourceStep(
           status: exhausted ? "exhausted" : "pending",
           nextAttemptAt: exhausted
             ? null
-            : new Date(
-                now.getTime() + retryBackoffMs("temporary", claimed.attempts),
-              ),
+            : new Date(now.getTime() + backoff("temporary", claimed.attempts)),
           failure: reason,
           attemptsJson: JSON.stringify(telemetry),
           // R-20: the honest failed record the report shows.
@@ -1124,8 +1130,7 @@ async function twoSourceStep(
           return {
             status: "pending",
             nextAttemptAt: new Date(
-              now.getTime() +
-                retryBackoffMs("empty_or_unusable", claimed.g_attempts),
+              now.getTime() + backoff("empty_or_unusable", claimed.g_attempts),
             ),
             failure: "empty_overview",
             empty: next.g_empty + 1,
@@ -1141,7 +1146,7 @@ async function twoSourceStep(
           nextAttemptAt: exhausted
             ? null
             : new Date(
-                now.getTime() + retryBackoffMs("temporary", claimed.g_attempts),
+                now.getTime() + backoff("temporary", claimed.g_attempts),
               ),
           failure:
             read?.kind === "failed"
@@ -1176,7 +1181,10 @@ async function twoSourceStep(
     final(google?.status ?? next.g_status);
   if (!questionFinal) return "question_retry";
   const after = await listQuestions(deps.db, order.id);
-  return (await settleTwoSourceGate(deps, order.id, after)) ?? "question_done";
+  // As the one-source step: the step that finishes a question is
+  // "question_done", also when it moves the order on to its report.
+  const ended = await settleTwoSourceGate(deps, order.id, after);
+  return ended === null || ended === "to_reporting" ? "question_done" : ended;
 }
 
 /** R-19: once every check is final, the gate decides. Returns the step's

@@ -1503,17 +1503,29 @@ export async function readyLinkFromMail(
 }
 
 /** Local tests only: runs the cron through the development trigger until the
- * ready email has gone out (ten questions, then the report). */
+ * page's order is delivered: ten questions (with the synthetic retries of
+ * Spec 018), then the report and its ready email. Spec 018 R-15 lets two
+ * orders step in one run, so the order is followed by the id the page holds,
+ * not by the first saved report of any order. */
 export async function runServerAuditToDelivery(
   page: Page,
-  maxRuns = 16,
+  maxRuns = 20,
 ): Promise<string[]> {
+  const stored = await page.evaluate(() =>
+    localStorage.getItem("nuave.activeOrder.v1"),
+  );
+  const orderId = (JSON.parse(stored ?? "{}") as { orderId?: string }).orderId;
+  expect(orderId).toMatch(/^[0-9a-f]{32}$/);
   const outcomes: string[] = [];
   for (let run = 0; run < maxRuns; run += 1) {
     const result = await runRunnerOnce(page);
     expect(result.ran).toBe(true);
     outcomes.push(...(result.outcomes ?? []));
-    if (outcomes.includes("report_saved")) return outcomes;
+    const status = await page.request.post("/api/orders/status", {
+      data: { order_id: orderId },
+    });
+    if (((await status.json()) as { state?: string }).state === "delivered")
+      return outcomes;
   }
   throw new Error(`the audit did not reach a saved report in ${maxRuns} runs`);
 }

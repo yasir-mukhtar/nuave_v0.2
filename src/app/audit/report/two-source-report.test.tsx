@@ -163,6 +163,12 @@ function twoSourceFixture(overrides: Partial<TwoSourceReport> = {}): {
   };
   const report: AuditReport = {
     ...base.report,
+    // As the report pipeline saves it: recommendation assessed on the nine
+    // completed ChatGPT answers.
+    measures: {
+      ...base.report.measures,
+      recommendation: { recommended: 0, assessed: 9 },
+    },
     details: base.report.details.map((d, i) =>
       i === failedChatGpt
         ? {

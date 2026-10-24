@@ -11,6 +11,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 import { generateSyntheticLocalReport } from "../audit/local-direct-ten-audit";
 import type { AuditReport } from "../audit/types";
 import { makeSmartCustomerEvidenceExport } from "../audit/customer-evidence-export";
+import { buildReportPresentation } from "../audit/report-presentation";
 import { containsPhoneNumber } from "../checks/phones";
 import type { CheckSend } from "../checks/send";
 import { syntheticCheckSend } from "../checks/synthetic";
@@ -248,6 +249,14 @@ describe("a two-source order, synthetic, whole path (R-12..R-20, AC-02, AC-06, A
     }
     expect(hasPhone(orderRow(id).report_json!)).toBe(false);
     expect(hasPhone(JSON.stringify(t.reportInputs))).toBe(false);
+    // The page can show it: the observations the report link returns (one
+    // per question, the failed ChatGPT record included) bind to the report.
+    expect(
+      buildReportPresentation(
+        report,
+        saved.map((row) => JSON.parse(row.observation_json!)),
+      ).status,
+    ).toBe("ready");
     // The JSON export built from the same data (R-28, R-29): its own version,
     // no phone number and nothing of the raw DataForSEO response.
     const intake = JSON.parse(orderRow(id).intake_json!) as {

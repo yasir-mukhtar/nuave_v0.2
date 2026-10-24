@@ -19,7 +19,7 @@ import {
   type BeadMark,
 } from "@/components/product/report/TenBeads";
 import { AnswerMarkdown } from "./AnswerMarkdown";
-import { observationTime } from "./ReportAnswer";
+import { AnswerControls, observationTime } from "./ReportAnswer";
 import styles from "./report-body.module.css";
 
 /**
@@ -342,6 +342,7 @@ export function TwoSourceAnswers({
                       </time>
                     </p>
                   </div>
+                  <AnswerControls answer={answer} />
                 </>
               ) : (
                 <FailedSlot two={two} question={question} />
