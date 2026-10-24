@@ -1,6 +1,6 @@
 # Clinic landing page: content strategy v2 (light)
 
-> Status: proposal for Yasir's review (24 October 2026). It replaces the direction of [`STRATEGY.md`](./STRATEGY.md) v1, which is kept as history. The lofi is not updated yet.
+> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page "Lofi v2 · Light".
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
 ## 1. What went wrong in v1, in plain words
@@ -51,21 +51,23 @@ A clinic owner needs only six ideas to say yes. Everything else is cut, moved to
 |---|---|---|---|---|---|
 | 0 | Menu | Logo · Cara kerja · Laporan · Harga · FAQ · **Cek klinik saya** | | | S0 |
 | 1 | Hero | **Pasien sekarang tanya AI dulu, baru pilih klinik.** | Nuave menunjukkan apakah AI merekomendasikan klinik Anda, dan apa yang perlu dibenahi. | AI chat demo with clinic tabs; an empty "Klinik Anda?" slot; a small "3/10" report card | S1, S3, S4, S5 |
-| 2 | Why now | **AI sekarang jadi rujukan pasien.** | Jawaban AI kini ikut menentukan dokter dan klinik yang mereka pilih. | Three big-number cards | S2, S4 stat, S5 |
-| 3 | The blind spot | **AI cuma menyebut beberapa klinik.** | Klinik Anda disebut atau tidak, Anda tidak bisa melihatnya. | Side by side: "Yang dilihat pasien" (an AI answer with three names) and "Yang dilihat klinik" (dashboards with no AI data) | S7, S8, S9 |
+| 2 | Why now | **AI kini jadi rujukan pasien.** | Di AS, AI sudah lebih berpengaruh daripada Google saat pasien memilih dokter. | Three big-number cards | S2, S4 stat, S5 |
+| 3 | The blind spot | **AI cuma menyebut beberapa klinik.** | Masuk daftar atau tidak, tidak ada dashboard yang memberi tahu. | Side by side: "Yang dilihat pasien" (an AI answer with three names) and "Yang dilihat klinik" (dashboards with no AI data) | S7, S8, S9 |
 | 4 | How it works | **Kami bertanya ke AI seperti pasien Anda.** | | Three steps with small screens | S10 |
-| 5 | Report | **Lihat posisi klinik Anda. Tahu apa yang dibenahi.** | | The report in four tabs | S11 |
+| 5 | Report | **Lihat apa kata AI tentang klinik Anda.** | Dan tahu apa yang dibenahi duluan. | The report in four tabs | S11 |
 | 6 | Why Nuave | **Bukti, bukan janji.** | | Four small cards | S13, trust lines |
 | 7 | Price | **Rp99.000. Sekali bayar.** | Bandingkan dengan harga satu tindakan di klinik Anda. | Price card with the form inside | S12 |
 | 8 | FAQ | **Yang sering ditanyakan** | | Accordion with 9 questions | S14, S6 |
-| 9 | Final CTA | **Tahu jawabannya sebelum pasien bertanya.** | Mulai dari website atau Instagram klinik Anda. | The form | S15 |
+| 9 | Final CTA | **Cek klinik Anda sebelum pasien berikutnya bertanya.** | Mulai dari website atau Instagram klinik Anda. | The form and the founder's contact line | S15, S16 |
 | | Footer | Links | | | S17 |
 
-On phones, a slim bottom bar appears after the hero: **Rp99.000** and **Cek klinik saya**.
+On phones, a slim bottom bar appears after the hero: **Gratis dulu · Audit Rp99.000** and **Cek klinik saya**.
 
 The founder's letter (v1 S16) is dropped from the page. If Yasir wants a human touch, one line in the final section does it: *"Ada pertanyaan? Tulis ke Yasir, pendiri Nuave: support@nuave.ai."*
 
 ## 5. Draft copy (Indonesian)
+
+> This is the draft Yasir approved in direction. The final wording is in [`COPY-v2.md`](./COPY-v2.md): the copywriter polished it and folded in the growth marketer's eight must-fixes. The hero microcopy now says the first step is free; step 2 shows the owner's own checking; each number card names its scope; the report headline no longer implies a ranking; the final headline no longer promises what one snapshot can't; and there's a new FAQ on changing answers. The draft below is kept for the record.
 
 This is about 400 words a visitor reads, counting the menu, the demo and every repeat of the button, plus FAQ answers they open on demand. v1 had about 2,200 before its mock screens. The copywriter polishes it when the lofi is updated.
 
@@ -199,7 +201,9 @@ The rater8 press release (3 June 2026) also says 60% trusted an AI summary witho
 - **Objections answered:** in nine FAQ answers instead of across the page.
 - **First test:** v2 (light, about 9 screens) against v1 (long, about 22), read by channel. This is the existing long-versus-short test with a clear short version.
 
-## 9. Decisions for Yasir
+## 9. Decisions (made by Yasir on 24 October 2026: "go with your recommendations")
+
+The hero headline as recommended, the rater8 figure labelled as a US survey, the button "Cek klinik saya di AI", and one founder contact line. The list below is kept for the record.
 
 1. **Hero headline.** Recommended: *Pasien sekarang tanya AI dulu, baru pilih klinik.* Or the product-first *Lihat apa kata AI tentang klinik Anda.*
 2. **The rater8 numbers.** Use them (US data, vendor source, clearly labelled), or keep only OpenAI and Google.
