@@ -224,6 +224,14 @@ describe("a two-source order, synthetic, whole path (R-12..R-20, AC-02, AC-06, A
     });
 
     // AC-12: no phone number anywhere the browser or the report model sees.
+    // The synthetic answers hold "0812-3456-7890" and "+62 812 3456 7890".
+    // The whole stored JSON is checked for those exact numbers (its random
+    // ids and hashes can look like a phone number to the general detector,
+    // which is used on the answer texts).
+    const hasPhone = (text: string) =>
+      /3456[\s-]?7890/.test(text) ||
+      (JSON.parse(text || "null")?.raw_answer !== undefined &&
+        containsPhoneNumber(String(JSON.parse(text).raw_answer)));
     const saved = rows<{
       observation_json: string | null;
       g_result_json: string | null;
@@ -231,11 +239,15 @@ describe("a two-source order, synthetic, whole path (R-12..R-20, AC-02, AC-06, A
       `SELECT observation_json, g_result_json FROM order_questions WHERE order_id = '${id}'`,
     );
     for (const row of saved) {
-      expect(containsPhoneNumber(row.observation_json ?? "")).toBe(false);
-      expect(containsPhoneNumber(row.g_result_json ?? "")).toBe(false);
+      expect(hasPhone(row.observation_json ?? "")).toBe(false);
+      expect(hasPhone(row.g_result_json ?? "")).toBe(false);
+      const google = JSON.parse(row.g_result_json ?? "null") as {
+        text?: string;
+      } | null;
+      expect(containsPhoneNumber(google?.text ?? "")).toBe(false);
     }
-    expect(containsPhoneNumber(orderRow(id).report_json!)).toBe(false);
-    expect(containsPhoneNumber(JSON.stringify(t.reportInputs))).toBe(false);
+    expect(hasPhone(orderRow(id).report_json!)).toBe(false);
+    expect(hasPhone(JSON.stringify(t.reportInputs))).toBe(false);
     // The JSON export built from the same data (R-28, R-29): its own version,
     // no phone number and nothing of the raw DataForSEO response.
     const intake = JSON.parse(orderRow(id).intake_json!) as {
@@ -253,7 +265,7 @@ describe("a two-source order, synthetic, whole path (R-12..R-20, AC-02, AC-06, A
     expect(JSON.parse(exported).export_version).toBe(
       "nuave-evidence-two-source-v1",
     );
-    expect(containsPhoneNumber(exported)).toBe(false);
+    expect(hasPhone(exported)).toBe(false);
     for (const seen of [
       exported,
       orderRow(id).report_json!,
