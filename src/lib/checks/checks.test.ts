@@ -438,6 +438,23 @@ describe("phone numbers in cited links (N-5)", () => {
     );
     expect(phoneSafeUrl("https://klinik.example/wa/6281234567890")).toBeNull();
   });
+
+  it("N-25: drops a link whose path holds a mobile number written with separators", () => {
+    expect(
+      phoneSafeUrl(
+        "https://klinik.example/promo-hubungi-0812-3456-7890-sekarang",
+      ),
+    ).toBeNull();
+    expect(
+      phoneSafeUrl("https://klinik.example/kontak/0812.3456.7890"),
+    ).toBeNull();
+    const dated =
+      "https://www.kompas.com/read/2023/05/12/080000565/tips-memilih-klinik";
+    expect(phoneSafeUrl(dated)).toBe(dated);
+    expect(
+      phoneSafeUrl("https://berita.example/2024-10-24-0800-klinik-baru"),
+    ).toBe("https://berita.example/2024-10-24-0800-klinik-baru");
+  });
 });
 
 describe("Google's own business list (N-6)", () => {

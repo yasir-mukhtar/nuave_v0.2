@@ -36,6 +36,16 @@ export function containsPhoneNumber(text: string): boolean {
 /** N-20: in a link's path only an Indonesian mobile number counts (08… or
  * 628…, 10 to 13 digits): article IDs such as kompas.com's "080000565" stay. */
 const MOBILE_IN_PATH = /(?:^|\D)(?:\+?62|0)8\d{8,11}(?!\d)/;
+/** N-25: the same number written with separators ("0812-3456-7890"). */
+const MOBILE_SPACED_IN_PATH =
+  /(?:^|[^\d])((?:\+?62|0)8\d{1,4}(?:[-.\s]\d{2,5}){1,4})(?!\d)/g;
+
+function mobileInPath(path: string): boolean {
+  if (MOBILE_IN_PATH.test(path)) return true;
+  return [...path.matchAll(MOBILE_SPACED_IN_PATH)].some((match) =>
+    /^(?:62|0)8\d{8,11}$/.test(match[1]!.replace(/\D/g, "")),
+  );
+}
 
 const MESSAGING_HOSTS = /(^|\.)(wa\.me|whatsapp\.com|wa\.link)$/i;
 
@@ -61,7 +71,7 @@ export function phoneSafeUrl(url: string): string | null {
       return value;
     }
   };
-  if (MOBILE_IN_PATH.test(decoded(parsed.pathname))) return null;
+  if (mobileInPath(decoded(parsed.pathname))) return null;
   if (
     containsPhoneNumber(decoded(parsed.search)) ||
     containsPhoneNumber(decoded(parsed.hash))
