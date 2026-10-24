@@ -210,7 +210,9 @@ describe("the order summary (Experience 2, 3)", () => {
     expect(
       screen.getByRole("textbox", { name: "Email penerima laporan" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Bayar Rp249.000" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Bayar Rp249.000" }),
+    ).toBeTruthy();
     // A real payment screen has no simulation label.
     expect(document.body.textContent).not.toContain("Pembayaran simulasi");
   });
@@ -392,7 +394,9 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
         .getByRole("link", { name: "Lihat cara bayar" })
         .getAttribute("href"),
     ).toBe(MIDTRANS_PAGE);
-    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Bayar Rp249.000" }),
+    ).toBeNull();
   });
 
   it.each([
@@ -420,7 +424,9 @@ describe("coming back from Midtrans (Experience 5-8)", () => {
     const { stub, set } = await returnWith({ state: "checking" });
     await heading("Kami sedang memeriksa pembayaran Anda");
     expect(screen.queryByRole("link", { name: "Lihat cara bayar" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Bayar Rp249.000" }),
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: "Lanjut" })).toBeNull();
     // Cek lagi asks the status again, and the answer is shown.
     const before = stub.calls.filter(
@@ -660,7 +666,9 @@ describe("a replacement refused because the payment is unknown (Q14)", () => {
       1,
     );
     expect(readSmartSession()?.order?.id).toBe(ORDER_ID);
-    expect(screen.queryByRole("button", { name: "Bayar Rp249.000" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Bayar Rp249.000" }),
+    ).toBeNull();
   });
 });
 
