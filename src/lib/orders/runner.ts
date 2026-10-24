@@ -1311,6 +1311,7 @@ async function reportStep(
             rows,
             prompts: intake.prompts,
             subject: setup.subject,
+            names: setup.names,
           }),
         }
       : {}),

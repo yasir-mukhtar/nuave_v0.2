@@ -181,6 +181,8 @@ export function twoSourceReportFacts(input: {
   rows: readonly OrderQuestionRow[];
   prompts: readonly AuditPrompt[];
   subject?: ReportSubject;
+  /** The business name and confirmed aliases (N-33). */
+  names?: readonly string[];
 }): TwoSourceReportFacts {
   let chatgptCompleted = 0;
   let chatgptNamed = 0;
@@ -219,6 +221,7 @@ export function twoSourceReportFacts(input: {
   });
   return {
     ...(input.subject ? { subject: input.subject } : {}),
+    ...(input.names?.length ? { names: [...input.names] } : {}),
     counts: {
       chatgpt: { completed: chatgptCompleted, named: chatgptNamed },
       google: {

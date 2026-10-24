@@ -229,6 +229,9 @@ export function topicsMissing(
 export type TwoSourceReportFacts = {
   /** AC-20: how the writer and the code-built sentences name the business. */
   subject?: ReportSubject;
+  /** The business name and confirmed aliases, so a sentence that names the
+   * business by name is checked like "bisnis Anda" (N-33). */
+  names?: string[];
   counts: {
     chatgpt: { completed: number; named: number };
     google: { completed: number; summaries: number; named: number };
@@ -245,80 +248,252 @@ export type TwoSourceReportFacts = {
 export const SOURCE_CHATGPT = "ChatGPT";
 export const SOURCE_GOOGLE = "Google AI Overview";
 
-const NEGATIVE =
-  /\b(?:tidak|belum|bukan)\s+(?:pernah\s+|sama\s+sekali\s+)?(?:disebut|disebutkan|muncul|menyebut|menyebutkan|ditemukan)\b/i;
-
-/** A negation limited to some questions is true even when the source named
- * the business elsewhere ("tidak muncul pada kebutuhan lain", "tidak disebut
- * di 5 ringkasan lainnya"). */
+const NAMING_VERB =
+  "(?:disebut(?:kan)?|muncul|menyebut(?:kan)?(?:nya)?|ditemukan|terlihat|tampil|menyinggung|disinggung)";
+/** "tidak/tak/belum/bukan (pernah/sama sekali) disebut…", "tidak ada jawaban
+ * yang menyebut…", "tidak satu pun ringkasan menyebut…", "absen". */
+const NEGATIVE = new RegExp(
+  `\\b(?:tidak|tak|belum|bukan)\\s+(?:(?:pernah|lagi)\\s+)?(?:(?:sama\\s+sekali|sekali\\s+pun)\\s+)?${NAMING_VERB}\\b|\\btidak\\s+(?:ada|satu\\s+pun)\\b.*\\b(?:menyebut(?:kan)?|memuat|mencantumkan)\\b|\\babsen\\b`,
+  "i",
+);
+const POSITIVE = new RegExp(`\\b${NAMING_VERB}\\b`, "i");
+const RECOMMEND = /\bdirekomendasikan|merekomendasikan\b/i;
+/** N-31: a negation is limited only when the limit is about questions,
+ * needs or searches ("pada kebutuhan lain", "untuk pertanyaan tentang
+ * harga", "di 5 ringkasan lainnya"), never "klinik lain". */
 const LIMITED =
-  /\b(?:lain(?:nya)?|sebagian|beberapa|kecuali|tentang|untuk\s+pertanyaan|pada\s+pertanyaan|pada\s+kebutuhan)\b/i;
+  /\b(?:pertanyaan|kebutuhan|jawaban|ringkasan|topik|pencarian|layanan)\s+(?:lain(?:nya)?|tentang|soal|mengenai|untuk)\b|\b(?:sebagian|beberapa)\s+(?:pertanyaan|jawaban|ringkasan|topik|kebutuhan|pencarian)\b|\bkecuali\b|\b(?:untuk|pada|dalam|di)\s+(?:pertanyaan|kebutuhan|topik|pencarian)\b|\bketika\b|\bsebagai\b|\bsaat\s+(?:pelanggan|orang|pasien|calon)\b|\bpertanyaan\s+(?:ke-?\s*)?\d/i;
+const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 const COUNT = /\b(\d+)\s+dari\s+(\d+)\b/g;
+/** "di 6 jawaban", "pada 5 ringkasan": a count with no "dari". */
+const BARE_COUNT =
+  /\b(?:di|dalam|pada|untuk)\s+(\d+)\s+(?:jawaban|ringkasan|pertanyaan)\b/g;
+const NUMBER_WORDS: Record<string, string> = {
+  nol: "0",
+  satu: "1",
+  dua: "2",
+  tiga: "3",
+  empat: "4",
+  lima: "5",
+  enam: "6",
+  tujuh: "7",
+  delapan: "8",
+  sembilan: "9",
+  sepuluh: "10",
+};
+/** "enam dari sembilan jawaban" reads as "6 dari 9 jawaban". */
+function digitsForWords(text: string): string {
+  return text.replace(
+    /\b(nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)\b(?=\s+(?:dari|jawaban|ringkasan|pertanyaan)\b)|(?<=\bdari\s+)(nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)\b/gi,
+    (word) => NUMBER_WORDS[word.toLowerCase()] ?? word,
+  );
+}
+/** Clauses: a contrast or a comma changes what the clause is about. */
+const CLAUSE_SPLIT =
+  /\s*[,;]\s*|\s+(?:tetapi|namun|sedangkan|sementara|padahal|melainkan)\s+|\s+(?:dan|serta)\s+(?=(?:tidak|tak|belum|bukan)\b)/i;
+/** Nouns that make a clause about a detail of the business, not about the
+ * business being named ("harga layanan Anda tidak disebut"). */
+const DETAIL_NOUN =
+  "(?:harga|alamat|layanan|lokasi|jam|nomor|cabang|produk|menu|promo|ulasan|website|situs|informasi|data|foto|tarif|biaya|paket|perawatan|treatment|akun|profil|halaman|artikel|konten|kontak|dokter|jadwal)";
+const DETAIL = new RegExp(`\\b${DETAIL_NOUN}\\b`, "i");
+const OTHER_BUSINESS =
+  /\b(?:bisnis|klinik|usaha|tempat|merek)\s+(?:lain(?:nya)?|pesaing|kompetitor|serupa)\b|\bpesaing\b|\bkompetitor\b/i;
+const COVERAGE =
+  /\b(?:AI Overview|ringkasan(?:\s+AI)?)\s+(?:tidak\s+|tak\s+|belum\s+)?(?:muncul|tampil|ditampilkan)\b|\bmenampilkan\s+(?:AI Overview|ringkasan)\b/i;
 
 const namesChatGpt = (text: string) => text.includes(SOURCE_CHATGPT);
 /** "AI Overview" alone names Google too (N-26). */
 const namesGoogle = (text: string) => /Google|AI Overview/.test(text);
 const namesSource = (text: string) => namesChatGpt(text) || namesGoogle(text);
 
-/** The "X dari Y" pairs that are true for a source: named or not named, out
- * of its completed answers (ChatGPT) or its summaries or checks (Google). */
-function validCounts(
-  facts: TwoSourceReportFacts,
-  source: "chatgpt" | "google",
-): Set<string> {
-  const { chatgpt, google } = facts.counts;
-  const pairs = new Set<string>();
-  const add = (named: number, of: number) => {
-    pairs.add(`${named}/${of}`);
-    pairs.add(`${of - named}/${of}`);
-  };
-  if (source === "chatgpt") add(chatgpt.named, chatgpt.completed);
-  else {
-    add(google.named, google.summaries);
-    add(google.named, google.completed);
+type Source = "chatgpt" | "google";
+type ClauseSources = { sources: Source[]; explicit: boolean };
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** The clause names the business: "bisnis/klinik/usaha Anda", a bare "Anda"
+ * that is not a detail's owner, "menyebutnya", the business name or an
+ * alias, or "bisnis"/"klinik" that is not "klinik lain". */
+function namesBusiness(clause: string, facts: TwoSourceReportFacts): boolean {
+  if (/\b(?:bisnis|klinik|usaha|nama|merek)\s+Anda\b/i.test(clause))
+    return true;
+  if (/\bmenyebut(?:kan)?nya\b/i.test(clause)) return true;
+  for (const name of facts.names ?? []) {
+    const trimmed = name.trim();
+    if (
+      trimmed.length > 1 &&
+      new RegExp(
+        `(?:^|[^\\p{L}\\p{N}])${escapeRegExp(trimmed)}(?![\\p{L}\\p{N}])`,
+        "iu",
+      ).test(clause)
+    )
+      return true;
   }
+  const bareAnda = [...clause.matchAll(/(\S+)\s+Anda\b|^Anda\b/gi)].some(
+    (m) => !m[1] || !new RegExp(`^${DETAIL_NOUN}$`, "i").test(m[1]),
+  );
+  if (bareAnda) return true;
+  return (
+    /\b(?:bisnis|klinik|usaha)\b/i.test(clause) && !OTHER_BUSINESS.test(clause)
+  );
+}
+
+type ClauseKind = "business" | "coverage" | "other";
+
+function clauseKind(clause: string, facts: TwoSourceReportFacts): ClauseKind {
+  if (namesBusiness(clause, facts)) return "business";
+  if (OTHER_BUSINESS.test(clause) || DETAIL.test(clause)) return "other";
+  if (COVERAGE.test(clause)) return "coverage";
+  // No explicit subject: the business, as in a finding title "Belum muncul
+  // di ChatGPT".
+  return "business";
+}
+
+function sourcesOf(text: string): Source[] {
+  return [
+    ...(namesChatGpt(text) ? (["chatgpt"] as const) : []),
+    ...(namesGoogle(text) ? (["google"] as const) : []),
+  ];
+}
+
+/** The denominators a source's naming counts may use. */
+function denominators(facts: TwoSourceReportFacts, source: Source): number[] {
+  const { chatgpt, google } = facts.counts;
+  return source === "chatgpt"
+    ? [chatgpt.completed]
+    : [google.summaries, google.completed];
+}
+
+function namedOf(facts: TwoSourceReportFacts, source: Source): number {
+  return source === "chatgpt"
+    ? facts.counts.chatgpt.named
+    : facts.counts.google.named;
+}
+
+/** The "X dari Y" pairs that are true for a clause of this kind and polarity
+ * about one source (N-31, N-32): named counts for a positive clause, not-named
+ * counts for a negative one, AI Overview coverage for a coverage clause. */
+function truePairs(
+  facts: TwoSourceReportFacts,
+  source: Source,
+  kind: ClauseKind,
+  negative: boolean,
+): Set<string> {
+  const pairs = new Set<string>();
+  const { google } = facts.counts;
+  if (kind === "coverage") {
+    if (source === "google") {
+      pairs.add(`${google.summaries}/${google.completed}`);
+      pairs.add(`${google.completed - google.summaries}/${google.completed}`);
+    }
+    return pairs;
+  }
+  const named = namedOf(facts, source);
+  for (const of of denominators(facts, source))
+    pairs.add(negative ? `${of - named}/${of}` : `${named}/${of}`);
   return pairs;
 }
 
 /**
- * B-5: a sentence that says a source did not name the business contradicts
- * the counts when that source named it at least once, unless the sentence is
- * limited to some questions or carries that source's correct count. A wrong
- * count is itself a contradiction. "direkomendasikan" is not checked.
+ * B-5, N-31, N-32: the sources a sentence contradicts. Each clause is read on
+ * its own, with the source named in it (or carried from the clause before):
+ * - a "X dari Y" about the business must be that source's named count (or
+ *   not-named count in a negative clause); a coverage count must be Google's
+ *   AI Overview count; a swapped or wrong count is a contradiction;
+ * - a negation about the business, with no count and no limit to some
+ *   questions, contradicts a source that named it;
+ * - a plain positive claim contradicts a source that named it 0 times, and
+ *   "di semua jawaban/ringkasan" one that did not name it every time.
+ * Clauses about a detail ("harga layanan Anda"), other businesses or
+ * recommendations are not checked.
  */
+function contradictedSources(
+  sentence: string,
+  facts: TwoSourceReportFacts,
+): Set<Source> {
+  const out = new Set<Source>();
+  const whole = sourcesOf(sentence);
+  let carried: ClauseSources | null = null;
+  // A clause with a count but no verb ("…; di Google AI Overview, di 3 dari
+  // 8 ringkasan") takes the polarity of the clause before it.
+  let carriedPolarity: "negative" | "positive" | null = null;
+  for (const clause of digitsForWords(sentence).split(CLAUSE_SPLIT)) {
+    if (!clause.trim()) continue;
+    const own = sourcesOf(clause);
+    const at: ClauseSources = own.length
+      ? { sources: own, explicit: true }
+      : (carried ?? {
+          sources: whole.length ? whole : ["chatgpt", "google"],
+          explicit: whole.length > 0,
+        });
+    if (own.length) carried = at;
+    let negative = NEGATIVE.test(clause);
+    let positive = !negative && POSITIVE.test(clause);
+    if (negative || positive)
+      carriedPolarity = negative ? "negative" : "positive";
+    else if (
+      carriedPolarity &&
+      (/\b\d+\s+dari\s+\d+\b/.test(clause) ||
+        new RegExp(BARE_COUNT.source).test(clause))
+    ) {
+      negative = carriedPolarity === "negative";
+      positive = !negative;
+    }
+    const counts = [
+      ...[...clause.matchAll(COUNT)].map((m) => `${m[1]}/${m[2]}`),
+      ...[...clause.matchAll(BARE_COUNT)].map((m) => `${m[1]}/*`),
+    ];
+    const kind = clauseKind(clause, facts);
+    if (kind === "other") continue;
+    if (RECOMMEND.test(clause) && !negative && counts.length) continue;
+    if (counts.length && (negative || positive || kind === "coverage")) {
+      const ok = (source: Source) => {
+        const pairs = [...truePairs(facts, source, kind, negative)];
+        return counts.every((pair) =>
+          pair.endsWith("/*")
+            ? pairs.some((p) => p.split("/")[0] === pair.split("/")[0])
+            : pairs.includes(pair),
+        );
+      };
+      if (at.explicit && at.sources.length === 1) {
+        if (!ok(at.sources[0]!)) out.add(at.sources[0]!);
+      } else if (!at.sources.some(ok)) at.sources.forEach((s) => out.add(s));
+      continue;
+    }
+    if (kind !== "business") continue;
+    if (negative && !LIMITED.test(clause)) {
+      // "tidak disebut di ChatGPT maupun Google" is false when either named
+      // it; with no source in the sentence, when any did.
+      for (const source of at.sources)
+        if (namedOf(facts, source) > 0) out.add(source);
+    } else if (positive && !RECOMMEND.test(clause)) {
+      for (const source of at.sources) {
+        const named = namedOf(facts, source);
+        const zero = named === 0;
+        const notAll =
+          ALL.test(clause) &&
+          !denominators(facts, source).some((of) => of === named);
+        if ((at.explicit && zero) || notAll) out.add(source);
+      }
+      if (!at.explicit && at.sources.every((s) => namedOf(facts, s) === 0))
+        at.sources.forEach((s) => out.add(s));
+    }
+  }
+  return out;
+}
+
 function contradictedSource(
   sentence: string,
   facts: TwoSourceReportFacts,
 ): "chatgpt" | "google" | "both" | null {
-  if (!NEGATIVE.test(sentence)) return null;
-  const aboutChatGpt = namesChatGpt(sentence);
-  const aboutGoogle = namesGoogle(sentence);
-  const { chatgpt, google } = facts.counts;
-  const source: "chatgpt" | "google" | "both" =
-    aboutChatGpt && !aboutGoogle
-      ? "chatgpt"
-      : aboutGoogle && !aboutChatGpt
-        ? "google"
-        : "both";
-  const named =
-    source === "chatgpt"
-      ? chatgpt.named
-      : source === "google"
-        ? google.named
-        : chatgpt.named + google.named;
-  if (named === 0) return null;
-  const counts = [...sentence.matchAll(COUNT)].map((m) => `${m[1]}/${m[2]}`);
-  if (counts.length) {
-    const valid =
-      source === "both"
-        ? new Set([
-            ...validCounts(facts, "chatgpt"),
-            ...validCounts(facts, "google"),
-          ])
-        : validCounts(facts, source);
-    return counts.every((pair) => valid.has(pair)) ? null : source;
-  }
-  return LIMITED.test(sentence) ? null : source;
+  const sources = contradictedSources(sentence, facts);
+  if (sources.size === 0) return null;
+  // A sentence about both sources is replaced by both count sentences, so its
+  // true half is not lost.
+  if (sources.size === 2 || sourcesOf(sentence).length === 2) return "both";
+  return [...sources][0]!;
 }
 
 /** The code-built per-source sentence used when the writer's sentence cannot
@@ -344,11 +519,24 @@ export function twoSourceCountSentence(
   return `${gpt}; ${ggl.charAt(0).toLowerCase()}${ggl.slice(1)}.`;
 }
 
+/** Abbreviations a sentence does not end at (N-33): "drg. Linda", "Jl.
+ * Sudirman", "Sp.KK.", "M.Biomed.", single initials. */
+const ABBREVIATION =
+  /(?:^|[\s(])(?:dr|drg|dra|drs|jl|jln|no|dll|dsb|dst|sp|pt|cv|hj|h|prof|st|tbk|ir|apt|bpk|sdr|tn|ny|kec|kab|kel|rt|rw|biomed|kes|ked|psi|gz|ft|gg|m|s|kk|ve|mm|tel|telp|hlm|vol|yth)\.$|(?:^|[\s(.])\p{Lu}\.$/iu;
+
 function sentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?;])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
+  const out: string[] = [];
+  let start = 0;
+  for (const m of text.matchAll(/[.!?;](?=\s+)/g)) {
+    const end = m.index! + 1;
+    if (m[0] === "." && ABBREVIATION.test(text.slice(start, end))) continue;
+    const sentence = text.slice(start, end).trim();
+    if (sentence) out.push(sentence);
+    start = end;
+  }
+  const rest = text.slice(start).trim();
+  if (rest) out.push(rest);
+  return out;
 }
 
 /**
@@ -382,8 +570,7 @@ export function repairTwoSourceWriting<
         );
         if (sentence.endsWith(";"))
           replacement = `${replacement.slice(0, -1)};`;
-        else if (title && !/[.!?]$/.test(sentence))
-          replacement = replacement.slice(0, -1);
+        else if (title) replacement = replacement.slice(0, -1);
         if (index > 0 && parts[index - 1].endsWith(";"))
           replacement = `${replacement.charAt(0).toLowerCase()}${replacement.slice(1)}`;
         return replacement;

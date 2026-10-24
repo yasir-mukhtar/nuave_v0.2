@@ -250,6 +250,123 @@ describe("two-source writing checks", () => {
   });
 });
 
+describe("round-4 notes: counts, limits, abbreviations and details", () => {
+  const sentenceFlagged = (sentence: string, f: TwoSourceReportFacts) =>
+    twoSourceWritingViolations(
+      { conclusion: sentence, key_findings: [] },
+      f,
+    ).some((v) => v.includes("contradicts the counts"));
+
+  it("N-32: checks every count against its own source, in positive sentences too", () => {
+    // ChatGPT named the business 0 of 9; Google 3 of 8.
+    const f = facts(0, 3);
+    for (const sentence of [
+      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban; di Google AI Overview, di 3 dari 8 ringkasan.",
+      "Di ChatGPT, bisnis Anda disebut di 3 dari 8 jawaban.",
+      "Di Google AI Overview, bisnis Anda disebut di 0 dari 9 ringkasan.",
+      "Di ChatGPT dan Google AI Overview, bisnis Anda disebut.",
+      "Di Google AI Overview, bisnis Anda disebut di semua ringkasan.",
+      "Di Google AI Overview, bisnis Anda tidak disebut di 3 dari 8 ringkasan.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(true);
+    for (const sentence of [
+      "Di ChatGPT, bisnis Anda tidak disebut di 9 dari 9 jawaban; di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan.",
+      "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5 ringkasan lainnya.",
+      "Di Google AI Overview, AI Overview tidak muncul untuk 2 dari 10 pertanyaan.",
+      "Google menampilkan AI Overview di 8 dari 10 pertanyaan.",
+      "Di ChatGPT, bisnis Anda tidak disebut, tetapi Google AI Overview menyebutnya di 3 ringkasan.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
+  });
+
+  it("N-31: only a limit about questions exempts a negation; one source's count never exempts the other", () => {
+    const f = facts(3, 3);
+    for (const sentence of [
+      "Di Google AI Overview, bisnis Anda tidak disebut, sementara klinik lain lebih sering muncul.",
+      "Di ChatGPT, bisnis Anda tidak muncul, klinik lain yang dipilih.",
+      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak muncul di Google AI Overview.",
+      "Di ChatGPT, bisnis Anda tak pernah disebut.",
+      "Di ChatGPT, nama bisnis Anda tidak pernah sekali pun disebut.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(true);
+    for (const sentence of [
+      "Di ChatGPT, enam dari sembilan jawaban tidak menyebut bisnis Anda.",
+      "Di ChatGPT, bisnis Anda tidak disebut di 6 jawaban.",
+      "Di ChatGPT, bisnis Anda tidak disebut sebagai pilihan utama.",
+      "Di ChatGPT, bisnis Anda tidak disebut dalam jawaban pertanyaan 5, 6 dan 7.",
+      "Di ChatGPT, bisnis Anda tidak muncul untuk kebutuhan implan gigi.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
+  });
+
+  it("N-34: a sentence about a detail or other businesses is not about the business being named", () => {
+    const f = facts(3, 3);
+    for (const sentence of [
+      "Di ChatGPT, harga layanan Anda tidak disebut.",
+      "Di ChatGPT, jawaban tidak menyebut alamat cabang Anda.",
+      "Di ChatGPT, tiga klinik lain disebut.",
+    ])
+      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
+    // A replaced title keeps its finding's body, and never ends in "." or "?".
+    const { content } = repairTwoSourceWriting(
+      {
+        conclusion: "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban.",
+        key_findings: [
+          finding(
+            "Di ChatGPT, bisnis Anda tidak muncul?",
+            "Di ChatGPT, informasi harga belum lengkap. Pelanggan perlu menghubungi klinik.",
+          ),
+        ],
+      },
+      f,
+    );
+    expect(content.key_findings[0]!.title).toBe(
+      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban",
+    );
+    expect(content.key_findings[0]!.explanation).toBe(
+      "Di ChatGPT, informasi harga belum lengkap. Pelanggan perlu menghubungi klinik.",
+    );
+  });
+
+  it("N-33: a sentence is not split after drg., dr., Jl. or an initial, and a repair replaces it whole", () => {
+    // ChatGPT named the business 0 times: a true sentence with "drg." passes.
+    expect(
+      twoSourceWritingViolations(
+        {
+          conclusion:
+            "Di ChatGPT, drg. Linda Dental tidak disebut. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan.",
+          key_findings: [],
+        },
+        facts(0, 3),
+      ),
+    ).toEqual([]);
+    // Google named it 3 times: the false sentence is replaced whole.
+    const clinic = { ...facts(0, 3), names: ["Linda Dental"] };
+    const { content } = repairTwoSourceWriting(
+      {
+        conclusion:
+          "Di Google AI Overview, drg. Linda Dental di Jl. Sudirman No. 5 tidak disebut. Di ChatGPT, klinik lain dipilih.",
+        key_findings: [],
+      },
+      clinic,
+    );
+    expect(content.conclusion).toBe(
+      "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan. Di ChatGPT, klinik lain dipilih.",
+    );
+    expect(content.conclusion).not.toMatch(/drg\. Di/);
+  });
+
+  it("N-33: the business name or an alias counts as the business", () => {
+    const f = { ...facts(3, 0), names: ["Linda Dental", "Klinik Linda"] };
+    expect(sentenceFlagged("Di ChatGPT, Linda Dental tidak disebut.", f)).toBe(
+      true,
+    );
+    expect(
+      sentenceFlagged("Di Google AI Overview, Linda Dental tidak disebut.", f),
+    ).toBe(false);
+  });
+});
+
 describe("AC-20: Klinik Anda for a clinic", () => {
   it("decides a clinic from the confirmed category", () => {
     expect(reportSubjectForCategory("Klinik kecantikan")).toBe("klinik");
