@@ -4,7 +4,8 @@
 > [Round 2](#round-2-build-verification-at-1b50615)); **Fail** (round 3, at `727843a`: see
 > [Round 3](#round-3-build-verification-at-727843a)); **Pass with notes** (round 4, at `7e9c0f5`:
 > see [Round 4](#round-4-build-verification-at-7e9c0f5)); **Pass with notes** (round 5, at
-> `c36f330`: see [Round 5](#round-5-build-verification-at-c36f330))
+> `c36f330`: see [Round 5](#round-5-build-verification-at-c36f330)); **Pass with notes** (round 6,
+> at `d43fbe2`: see [Round 6](#round-6-build-verification-at-d43fbe2))
 > Reviewer: independent verifier agent (Claude Code, fresh context; did not build the change)
 > Date: 2026-10-24
 > Spec version or commit: `SPEC.md` revision 8 at `65eb165`, plus the PR 2 worker notes added in `16ced38`
@@ -1300,3 +1301,160 @@ and are cheap to fix:
    useful findings; otherwise read the findings as above.
 
 N-28 and the AC-12 link exceptions (N-40) need the founder.
+
+---
+
+## Round 6 (build verification at `d43fbe2`)
+
+> Result: **Pass with notes**
+> Reviewer: independent verifier agent (Claude Code, fresh context; did not build the change)
+> Date: 2026-10-24
+> Implementation: `d43fbe2` on `claude/laughing-fermi-prsgqf`, the PR head. Since round 5: one
+> commit, the N-37 fix (`git diff 559945f..d43fbe2`: five lines in `two-source-report.ts` and one
+> new test in `two-source-writing.test.ts`). `559945f` only added the round-5 record, so its code
+> is round 5's `c36f330`.
+
+### Scope reviewed
+
+- The change: a new `ABSOLUTE` pattern ("mana pun"/"manapun", "satu pun", "sama sekali", "yang
+  diuji", `two-source-report.ts:269`). A negation about the business is now excused by a limit
+  only when the clause holds none of these words (`two-source-report.ts:470`). The pattern is read
+  only for negative clauses about the business with no count, so it can only add flags.
+- The source check on 235 sentences, each at `559945f` (a copy of the file) and at `d43fbe2`, in the
+  slot it would sit in, with the repair output for every flagged sentence: round 4's 48 false and
+  43 true, round 5's 34 false, 32 true and 15 extra true, and 63 new ones (31 false N-37 wordings,
+  32 true sentences the new rule could touch).
+- The real order runner (synthetic mode, sqlite D1), nine scenarios.
+- Rounds 1 to 5's scratch suites, re-run at the head and compared with round 5's outputs.
+- No DataForSEO, OpenAI or Cheaper Inference call was made.
+
+### N-37: status
+
+**Fixed for the reproduced wording and most variants; a few wordings still pass.**
+
+- **Through the runner** (cards: ChatGPT 3 of 9, Google AI Overview 3 of 8). Round 5's repro, "Di
+  ChatGPT, bisnis Anda tidak disebut di pertanyaan mana pun. Di Google AI Overview, bisnis Anda
+  disebut di 3 dari 8 ringkasan.", kept by the writer through its revision, now gets the revision
+  request for that sentence and is delivered as "Di ChatGPT, bisnis Anda disebut di 3 dari 9
+  jawaban. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan."
+  (`source_sentence_replaced`). In round 5 it was delivered unchanged after one report call. The
+  same holds for:
+  - round 5's title "Di ChatGPT, bisnis Anda tidak muncul untuk pertanyaan yang diuji";
+  - the clinic draft on the N-35 path: the revision is discarded and "klinik Anda tidak disebut di
+    pertanyaan mana pun" is repaired to "klinik Anda disebut di 3 dari 9 jawaban";
+  - a revision call that fails;
+  - the commit's Google wording "…tidak disebut untuk topik mana pun", repaired to Google's 3 of 8.
+
+  A writer that fixes the sentence in its revision keeps its own text. A true absolute negation
+  (ChatGPT at 0 of 9) is delivered as written after one report call. Every order was delivered,
+  and re-checking the delivered text finds nothing.
+- **Sentences:** of round 5's 34 false sentences, 28 are caught (`559945f`: 21). That is six of the
+  seven round-5 regressions, plus "…tidak disebut untuk pertanyaan yang diuji", which round 4 also
+  missed. Of 31 new false wordings, 28 are caught (`559945f`: 4). They cover "manapun", "dalam/untuk
+  … mana pun", "tidak pernah/belum …", "pada satu pun pertanyaan", "yang diuji" after a question or
+  search word, both sources, titles and findings, and the clinic's name and "klinik Anda". Every
+  repair is a true count sentence that passes the check.
+- **Still missed**, so delivered if the writer keeps it:
+  - "Di Google AI Overview, bisnis Anda tidak muncul dalam pencarian yang kami uji." (round 5's
+    list) and "Di ChatGPT, bisnis Anda tidak disebut dalam pertanyaan yang kami uji.". Round 4
+    caught both, so these are what is left of the round-5 regression.
+  - "…tidak muncul pada pertanyaan apa pun", "…apapun" and "…untuk pertanyaan yang diajukan".
+    Round 4 missed these too.
+
+  Cheap fix: add "apa pun"/"apapun", "yang kami uji" and "yang diajukan" to the absolute words,
+  with tests.
+
+### New false flags
+
+| Sentence set | Correct at `559945f` | Correct at `d43fbe2` |
+|---|---|---|
+| Round 4, false (48) | 46 | 46 |
+| Round 4, true (43) | 42 | 42 |
+| Round 5, false (34) | 21 | 28 |
+| Round 5, true (32) | 17 | 17 |
+| Round 5, extra true (15) | 5 | 5 |
+| Round 6, false (31) | 4 | 28 |
+| Round 6, true (32) | 32 | 20 |
+
+- No sentence in round 4's or round 5's sets is newly flagged. The true sentences still flagged
+  are the same as in round 5: N-38's, and round 4's sentence whose limit sits in the sentence
+  before.
+- **N-41 (new, not blocking): a true limited sentence with an absolute word is now flagged.**
+  All 12 of my sentences that pair "sama sekali", "satu pun", "mana pun" or "yang diuji" with a
+  real limit are flagged when the source named the business. Examples (ChatGPT 3 of 9):
+  - "Di ChatGPT, bisnis Anda sama sekali tidak disebut untuk kebutuhan implan gigi."
+  - "Di ChatGPT, tidak satu pun jawaban tentang implan gigi menyebut bisnis Anda."
+  - "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak muncul di pertanyaan lain
+    mana pun."
+  - "Di ChatGPT, bisnis Anda sama sekali tidak disebut kecuali untuk pertanyaan tentang harga."
+
+  Like N-38, each costs the one revision, and the request ("Limit the sentence to some
+  questions…") does not fit a sentence that is already limited. If the writer keeps the sentence,
+  code replaces it with the count sentence. Through the runner, a finding's "…sama sekali tidak
+  disebut untuk kebutuhan implan gigi." became "Di ChatGPT, bisnis Anda disebut di 3 dari 9
+  jawaban."; the order was delivered and nothing false was said.
+
+  The other 20 true sentences pass: absolute words about a detail, other clinics, a
+  recommendation or a count; true absolute negations for a source at 0; and the code-built
+  sentences ("…untuk pertanyaan yang diuji", "…yang dapat diuji"). Cheap fix: let an absolute word
+  undo only a limit that names no topic ("di pertanyaan mana pun"), not "tentang …", a named need,
+  "lain", "kecuali" or "ketika".
+
+### Checks run (round 6)
+
+| Check | Result |
+|---|---|
+| `npm run check`, with lint run as `npx eslint . --ignore-pattern '.claude/worktrees/**'` | Exit 0. Typecheck, lint (0 errors, 24 warnings, as in rounds 1 to 5), format and typography pass. |
+| `npm run test:unit` | Exit 0. 139 files, 2,520 tests passed (round 5: 2,519; the new one is the N-37 test). |
+| `npm run build` | Exit 0. The route list includes `/api/audit/discovery`. |
+| `CI=true npm run test:e2e` (as `ci.yml`; Chromium from `/opt/pw-browsers`, no browser install) | Exit 0 on the first full run: 67 passed (12.3 min), including the test that stalled once in round 5 (N-39); the switched-off suite: 3 passed. Nothing heavy ran beside it, and the tree stayed clean. |
+| GitHub CI | `validate` success on `d43fbe2` ([run 40094709522](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/40094709522)), including `build:cf` and the browser tests. `PR Preview` success. |
+| Scratch tests, outside the repo (Vitest on the repo's code) | (1) The 235 sentences above at both commits; the missed wordings and "tidak disebut di semua jawaban/pertanyaan" (flagged throughout) also at round 4's code (`2a93ebf`). (2) Nine runner scenarios, above. (3) Rounds 1 to 5's suites at the head (13, 22, 45, 109 and 188 tests, plus the phone and writer-instruction tests): all pass. Compared with round 5's outputs, the only differences are the seven N-37 sentences now caught, the three N-37 runner scenarios now repaired, and random order numbers. |
+| verify-nuave | Not run (optional for this change; no page, export or journey code changed). |
+
+No paid provider call was made.
+
+### Findings (round 6)
+
+#### Blocking
+
+None.
+
+#### Notes (should fix or decide; not blocking)
+
+- **N-37 (rest):** "apa pun"/"apapun", "yang kami uji" and "yang diajukan" (above). Fix before the
+  first paying customer.
+- **N-41:** true limited sentences with an absolute word (above). Same cost as N-38; fix with it.
+- **N-40:** the `SPEC.md` worker note still lists the limits as "pada kebutuhan lain", "untuk
+  pertanyaan tentang …" and "sebagai …". It could add that "mana pun", "satu pun", "sama sekali" and
+  "yang diuji" undo a limit. The AC-12 "accepted" wording is unchanged.
+- Unchanged from round 5: N-38, N-39 (it did not recur in this run), N-25's four rare forms, N-28 (the founder), N-4, N-8's
+  Depok label, N-9, N-12, N-14, N-5's numbers written without 0, 62 or +, two flagged titles
+  becoming the same sentence, and a flagged sentence ending in "dll." or an initial taking the next
+  sentence with it.
+
+#### Founder actions
+
+Unchanged from round 5:
+
+- Consider N-28 before AC-14, and accept or reject the AC-12 link exceptions (N-40).
+- Before merging: squash-merge or rebuild the branch, because `050bf9d` and `e986e24` with the raw
+  probe JSON are still in its history; keep production on Workers Paid.
+- Before AC-14, top up the DataForSEO balance above USD 2.00 (R-22).
+- In AC-14: read the conclusion and every finding against the cards. Look for a negation with "apa
+  pun", "yang kami uji" or "yang diajukan" under a card above 0 (N-37 rest), and for a finding
+  replaced by a count sentence (`source_sentence_replaced` in the saved report's telemetry; N-38,
+  N-41). If the question screen keeps loading after a change at review, reload (N-39). Record the
+  time from approval to the email.
+
+### Verdict (round 6)
+
+**Pass with notes. The PR is ready to merge for the founder's live run (AC-14)**, once the founder
+has done the pre-merge actions above (squash-merge or rebuild; Workers Paid).
+
+- N-37 is fixed for the wording round 5 reproduced and for most variants. Through the runner the
+  order is delivered and the false sentence is repaired.
+- The change flags no sentence in round 4's or round 5's true sets. The repo's checks, the browser
+  tests and the earlier rounds' tests show no other change.
+- Before the first paying customer: N-37's remaining wordings, then N-41 with N-38. All three sit
+  in the source check in `two-source-report.ts` and are cheap to fix.
