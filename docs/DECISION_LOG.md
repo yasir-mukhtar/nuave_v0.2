@@ -1,10 +1,29 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-23
+> Updated: 2026-10-24
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-24 — Delivery promise wording and the clinic report label
+
+Yasir decided, reviewing the clinic landing page (PR #152, lofi v2.2):
+
+- **Delivery promise (Spec 018 Q-1, R-23):** "Laporan siap dalam 15 menit
+  setelah audit dimulai." replaces "Laporan biasanya siap dalam 15 menit
+  setelah Anda menyetujui pertanyaan, paling lama 24 jam." The refund
+  sentence after it is unchanged. The order preview, checkout and payment
+  email all use `DELIVERY_PROMISE` (`src/lib/orders/promise.ts`), so they now
+  say the same as the landing page.
+- **Clinic report label:** for a clinic, the report says "Klinik Anda" where
+  it says "Bisnis Anda" ("Klinik Anda muncul di X dari N pertanyaan", and so
+  on). Other businesses keep "Bisnis Anda". Not built yet: Spec 018 or a
+  follow-up builds it and updates the settled labels in `docs/VOICE.md` at
+  the same time.
+- **Clinic landing page:** keep "Google AI Overview" (not "Ringkasan AI"),
+  contact by email only (support@nuave.ai, no WhatsApp), no "coba sendiri"
+  line, and keep the H1 "Pasien sekarang tanya AI dulu, baru pilih klinik."
 
 ## 2026-10-24 — Approve Spec 018
 

@@ -2,7 +2,7 @@
 
 > Status: **Approved** by Yasir on 2026-10-24 (revision 7; revision 8 change approved the same day), after plan review
 > round 4 PASS+NOTES (notes applied in revision 6). Q-2..Q-5 answered as
-> recommended; Q-1 stays open until PR 2. Building may start once the Q-5
+> recommended; Q-1 answered on 2026-10-24 (see R-23). Building may start once the Q-5
 > probe re-run passes (AC-00).
 > Owner: orchestrator
 > Updated: 2026-10-24. Revision 8 (founder-approved change): DataForSEO's
@@ -354,6 +354,14 @@ type. The section names below are the current ones.
 | Tentang audit ini | Method | Adds:<br>- where the questions came from (Google data through DataForSEO, data month, place);<br>- that ChatGPT answers come from the ChatGPT app, asked from Indonesia, and Google answers from Google's results page for the stated place, both through DataForSEO;<br>- that answers vary by time, account and place. |
 
 Reports saved before this change keep rendering exactly as today (R-29).
+
+**Founder decision, 2026-10-24 (not built yet):** for a clinic, the report
+says "Klinik Anda" wherever it says "Bisnis Anda", for example "Klinik Anda
+muncul di X dari N pertanyaan", in both source cards, on screen, in the PDF
+and in the JSON export. Other businesses keep "Bisnis Anda". It matches the
+clinic landing page, whose report pictures show "Klinik Anda". When it is
+built, the settled labels in `docs/VOICE.md` change with it (see the decision
+log).
 
 ## Requirements
 
@@ -757,11 +765,13 @@ Reports saved before this change keep rendering exactly as today (R-29).
     `founder-notices.ts`, `mail.ts`, the fake Midtrans default and the
     verify-nuave skill files.
   - The order preview and checkout say "ChatGPT dan Google AI Overview".
-  - The delivery promise becomes: "Laporan biasanya siap dalam 15 menit
-    setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika ada bagian
-    yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat
-    diselesaikan, kami kembalikan uang Anda." The founder approves the exact
-    words (Q-1, AC-17).
+  - The delivery promise becomes: "Laporan siap dalam 15 menit setelah audit
+    dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu
+    menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang
+    Anda." Yasir approved these words on 2026-10-24 (Q-1, AC-17), so the
+    order preview, checkout and payment email match the clinic landing page.
+    It replaces the earlier proposal "Laporan biasanya siap dalam 15 menit
+    setelah Anda menyetujui pertanyaan, paling lama 24 jam."
   - These changes go live only together with the checks (see the build
     order).
 - **R-24: Price cutover.** The paid check compares the payment with the
@@ -1011,7 +1021,8 @@ shown as missing, never estimated or filled in.
 ## Open questions
 
 - **Q-1 (founder):** The exact Indonesian wording of the R-23 delivery promise.
-  The proposal is in R-23; the founder approves it in PR 2.
+  **Answered 2026-10-24:** "Laporan siap dalam 15 menit setelah audit dimulai."
+  followed by the unchanged refund sentence (R-23).
 Answered on 2026-10-24 (approval):
 
 - **Q-2:** deliver when each source completed at least 5 of its 10 checks;
