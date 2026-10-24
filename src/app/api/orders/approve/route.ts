@@ -39,6 +39,7 @@ import {
   type QuestionOrigin,
 } from "@/lib/discovery/question-rules";
 import type { DirectTenAuditContext } from "@/lib/audit/direct-ten-context-v2";
+import { TWO_SOURCE_CHECKS } from "@/lib/orders/two-source";
 
 export const runtime = "nodejs";
 
@@ -252,8 +253,12 @@ export async function POST(request: Request) {
         context: input.context,
         prompts: locked.prompts,
         originals: input.originals,
-        ...(search ? { question_origins: search.origins } : {}),
+        // Spec 018: an intake with a search place asks ChatGPT and Google.
+        ...(search
+          ? { question_origins: search.origins, checks: TWO_SOURCE_CHECKS }
+          : {}),
       }),
+      twoSource: Boolean(search),
       now,
     });
     if (!approved) {

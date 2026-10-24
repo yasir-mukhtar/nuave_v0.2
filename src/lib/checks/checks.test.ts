@@ -331,9 +331,23 @@ describe("synthetic checks (R-27)", () => {
       attempt: 1,
       names,
     });
+    // Synthetic ChatGPT answers never name the business; AI Overviews do in
+    // odd-numbered questions.
     expect(chat1).toMatchObject({
       kind: "answered",
-      facts: { named: "named" },
+      facts: { named: "absent" },
+    });
+    const google1 = readGoogleAttempt({
+      send: at("google", 1),
+      promptId: "x",
+      question: "Q1",
+      locationCode: 1,
+      locationName: "S",
+      names,
+    });
+    expect(google1).toMatchObject({
+      kind: "done",
+      check: { outcome: "summary", named: "named" },
     });
     if (chat1.kind === "answered")
       expect(containsPhoneNumber(chat1.observation.raw_answer)).toBe(false);

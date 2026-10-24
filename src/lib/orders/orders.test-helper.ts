@@ -197,6 +197,77 @@ export async function approve(
   if (!approved) throw new Error("test order was not approved");
 }
 
+/** Spec 018: a context confirmed with a search place (Surabaya). */
+export const TWO_SOURCE_CONTEXT: DirectTenAuditContext = {
+  ...CONTEXT,
+  identity: { ...CONTEXT.identity, aliases: ["Nuave Coffee"] },
+  searchPlace: {
+    value: { kind: "place", code: 1007715, display: "Surabaya" },
+    origin: "owner",
+  },
+};
+
+export const TWO_SOURCE_PROMPTS = Array.from({ length: 10 }, (_, index) => ({
+  prompt_id: `NUAVE-DT-${String(index + 1).padStart(2, "0")}`,
+  question: `Coffee shop terbaik di Surabaya untuk kebutuhan ${index + 1}?`,
+  review_status: "needs_human_review" as const,
+}));
+
+/** The server-owned origins saved at approval (R-07): a real search for the
+ * first question, a phrased topic for the rest. */
+export const TWO_SOURCE_ORIGINS = TWO_SOURCE_PROMPTS.map((_, index) =>
+  index === 0
+    ? {
+        label: "dicari_di_google" as const,
+        topic: "coffee shop surabaya",
+        volume: 2_400,
+        dataMonth: "2026-09",
+        core: ["coffee", "shop"],
+      }
+    : {
+        label: "disusun_dari_topik" as const,
+        topic: "coffee shop",
+        volume: 12_100 - index * 100,
+        dataMonth: "2026-09",
+        core: ["coffee", "shop"],
+      },
+);
+
+export function twoSourceIntakeJson(
+  options: { origins?: unknown[] } = {},
+): string {
+  return JSON.stringify({
+    context: TWO_SOURCE_CONTEXT,
+    prompts: lockedQuestionPackForMethod({
+      prompts: TWO_SOURCE_PROMPTS,
+      brief: TWO_SOURCE_CONTEXT,
+      questionMethod: "direct-ten",
+    }).prompts,
+    originals: TWO_SOURCE_PROMPTS.map((prompt) => prompt.question),
+    question_origins: options.origins ?? TWO_SOURCE_ORIGINS,
+    checks: "chatgpt-google-v1",
+  });
+}
+
+/** Approve a Spec 018 order: both sources, Google from Surabaya. */
+export async function approveTwoSource(
+  db: SpendDb,
+  orderId: string,
+  options: { mode?: OrderMode; now?: Date; origins?: unknown[] } = {},
+) {
+  const approved = await approveOrder(db, {
+    orderId,
+    environment: "production",
+    mode: options.mode ?? "synthetic",
+    intakeJson: twoSourceIntakeJson({ origins: options.origins }),
+    businessName: TWO_SOURCE_CONTEXT.identity.name,
+    promptIds: TWO_SOURCE_PROMPTS.map((prompt) => prompt.prompt_id),
+    now: options.now ?? T0,
+    twoSource: true,
+  });
+  if (!approved) throw new Error("test order was not approved");
+}
+
 export function mailbox(
   behaviour: (message: MailMessage, call: number) => boolean = () => true,
 ) {

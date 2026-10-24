@@ -19,7 +19,10 @@ import {
   type HistoricalPromptPackId,
 } from "./measurement-matrix";
 import { assertSafeComparisonBusinessUrls } from "./similar-businesses";
-import { productionObservationMethodErrors } from "./production-observation-method";
+import {
+  chatgptScraperObservationErrors,
+  productionObservationMethodErrors,
+} from "./production-observation-method";
 import {
   exactReportExcerptErrors,
   repairExactReportExcerpts,
@@ -87,7 +90,15 @@ export type ReportPipelineInput = {
    * synthetic-local-fixture, so the flag proves labeling rather than
    * laundering unlabeled evidence past the production-method check. */
   allow_synthetic_evidence?: boolean;
+  /** Server-internal, never on the wire (Spec 018 R-19): the ChatGPT app
+   * answers of a two-source order. Failed checks are allowed as honest failed
+   * records; at least MIN_COMPLETED_CHATGPT_ANSWERS must be completed. */
+  two_source?: boolean;
 };
+
+/** Spec 018 R-19 (founder Q-2): the ChatGPT source needs at least 5 of its 10
+ * checks completed for a report. */
+export const MIN_COMPLETED_CHATGPT_ANSWERS = 5;
 
 function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
   if (!isDirectTenAuditContext(input.brief)) {
@@ -199,16 +210,28 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
     );
   }
 
-  const notEvaluable = observations.filter(
-    (observation) =>
-      observation.run_status !== "completed" ||
-      !observation.raw_answer.trim() ||
-      observation.telemetry.length === 0,
+  // Spec 018 R-20: a two-source report may hold honest failed records; every
+  // completed answer must still be usable and keep its telemetry.
+  const twoSource = canonical.two_source === true;
+  const notEvaluable = observations.filter((observation) =>
+    observation.run_status === "completed"
+      ? !observation.raw_answer.trim() || observation.telemetry.length === 0
+      : !twoSource,
   );
   if (notEvaluable.length) {
     errors.push(
       `${notEvaluable.length} observation(s) are not evaluable: each must be completed, carry a usable answer, and retain attempt telemetry.`,
     );
+  }
+  if (twoSource) {
+    const completed = observations.filter(
+      (observation) => observation.run_status === "completed",
+    ).length;
+    if (completed < MIN_COMPLETED_CHATGPT_ANSWERS) {
+      errors.push(
+        `Only ${completed} of 10 ChatGPT checks completed; a report needs at least ${MIN_COMPLETED_CHATGPT_ANSWERS}.`,
+      );
+    }
   }
 
   if (canonical.allow_synthetic_evidence === true) {
@@ -220,6 +243,8 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
         `Synthetic-evidence mode requires every observation to be labeled ${SYNTHETIC_LOCAL_FIXTURE_SYSTEM}; ${unlabeled.length} observation(s) claim another system.`,
       );
     }
+  } else if (twoSource) {
+    errors.push(...chatgptScraperObservationErrors(observations));
   } else {
     errors.push(...productionObservationMethodErrors(observations));
   }

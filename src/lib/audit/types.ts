@@ -5,6 +5,7 @@ import {
 } from "./approved-live-providers";
 import { parseSourceInput } from "./source-input";
 import type { AuditQuestionMethod } from "./locked-question-pack";
+import type { TwoSourceReport } from "./two-source-report";
 
 /** Preparation metadata only: never part of confirmed, audit or export context. */
 export const sourceExcerptStatusSchema = z.enum([
@@ -621,6 +622,9 @@ export type AuditReport = ReportContent & {
       assessed: number;
     };
   };
+  /** Spec 018: the code-built two-source block (R-13, R-16..R-19). Absent on
+   * reports saved before Spec 018, which keep today's renderer (R-29). */
+  two_source?: TwoSourceReport;
   operational_telemetry: {
     pricing_version: string;
     cost_limit_usd: number;

@@ -34,6 +34,7 @@ import {
   runOrders,
   OBSERVATION_STEP_MS,
   REPORT_STEP_MS,
+  RUN_UNIT_LIMIT,
   sha256Hex,
   type RunnerDeps,
 } from "./runner";
@@ -748,7 +749,7 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     return { counted, count };
   }
 
-  it("one live run with every cap reached: 3 expired, 1 deadline failure, 2 audit steps with ledger reserve and settle, and failure emails due, at most 40 queries", async () => {
+  it("one live run with every cap reached: 3 expired, 1 deadline failure, 2 audit steps with ledger reserve and settle, and failure emails due, inside the meter", async () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     const rejecting = mailbox(() => false);
     const order = async () => {
@@ -809,14 +810,15 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
       result.outcomes.filter((entry) => entry === outcome).length;
     expect(tally("expired")).toBe(3);
     expect(tally("failed_deadline")).toBe(1);
-    // The run's meter (queries + outbound requests, at most 40) leaves room for
-    // one question step after the housekeeping; the other waits for the next run.
-    expect(tally("question_done")).toBe(1);
-    expect(tally("waiting")).toBe(1);
+    // Spec 018 R-15: the run's meter (queries + outbound requests, now 80 on
+    // Workers Paid) leaves room for both orders' question steps after the
+    // housekeeping.
+    expect(tally("question_done")).toBe(2);
+    expect(tally("waiting")).toBe(0);
     // The new failure's email was tried (one attempt of three tries).
     expect(rejecting.sent.length - emailsBefore).toBeGreaterThanOrEqual(3);
-    const outbound = rejecting.sent.length - emailsBefore + 1; // + the paid call
-    expect(count.queries + outbound).toBeLessThanOrEqual(40);
+    const outbound = rejecting.sent.length - emailsBefore + 2; // + the paid calls
+    expect(count.queries + outbound).toBeLessThanOrEqual(RUN_UNIT_LIMIT);
     // Left for the next run: two open orders, nothing lost.
     expect(d1.query("SELECT id FROM orders WHERE state = 'open'")).toHaveLength(
       2,
@@ -825,10 +827,10 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
     expect(
       rows("SELECT id FROM provider_spend WHERE kind = 'order_call'").length -
         callsBefore,
-    ).toBe(1);
+    ).toBe(2);
   });
 
-  it("one run with emails in it: 3 expired, 1 deadline failure with its email, 1 report saved, emailed and delivered (one report step per run), and a failure email retry, at most 40 queries", async () => {
+  it("one run with emails in it: 3 expired, 1 deadline failure with its email, 2 reports saved, emailed and delivered, and a failure email retry, inside the meter", async () => {
     // Synthetic mode (a live report needs real evidence): no ledger rows, so
     // the paid-call ledger statements are measured separately, below.
     const accepting = mailbox();
@@ -877,21 +879,18 @@ describe("limits per run (Free plan: 50 D1 queries)", () => {
       result.outcomes.filter((entry) => entry === outcome).length;
     expect(tally("expired")).toBe(3);
     expect(tally("failed_deadline")).toBe(1);
-    // Spec 017 R-23: the new fixed queries (the 7-day sweep and the payment
-    // email check) leave this housekeeping-heavy run too little room for the
-    // report step (27 of 40); it waits and the next run makes the report.
-    expect(tally("report_saved")).toBe(0);
-    expect(tally("waiting")).toBe(2);
+    // Spec 018 R-15: with the 80-unit meter both report steps fit beside the
+    // housekeeping (the run's time budget still decides, REPORT_STEP_MS).
+    expect(tally("report_saved")).toBe(2);
+    expect(tally("waiting")).toBe(0);
     expect(tally("failure_email")).toBe(1);
-    expect(count.queries).toBeLessThanOrEqual(40);
-    const next = await runOrders(deps({ sender: accepting.sender }));
-    expect(next.outcomes).toContain("report_saved");
+    expect(count.queries).toBeLessThanOrEqual(RUN_UNIT_LIMIT);
     expect(
       reporting.filter((id) => orderRow(id).state === "delivered"),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
     expect(
       accepting.sent.filter((m) => m.subject.includes("siap")),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
     // The worst live mix (a report step with both paid calls) is measured in
     // runner-worst-case.test.ts.
   });
@@ -1358,12 +1357,11 @@ describe("the ready email never harms a saved report", () => {
       )
       .bind()
       .run();
-    // The email-only step (9) and the report step (27) no longer fit one run
-    // with the fixed queries of spec 017 (R-23); the report step is next.
+    // Spec 018 R-15: with the 80-unit meter the email-only step (9) and the
+    // report step (27) fit one run; the report step still runs.
     const result = await runOrders(d);
-    expect(result.outcomes).toEqual(["delivered", "waiting"]);
+    expect(result.outcomes).toEqual(["delivered", "report_saved"]);
     expect(orderRow(waiting).state).toBe("delivered");
-    expect((await runOrders(d)).outcomes).toEqual(["report_saved"]);
     expect(orderRow(needs).report_json).toBeTruthy();
   });
 

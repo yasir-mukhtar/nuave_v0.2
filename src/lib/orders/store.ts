@@ -352,6 +352,15 @@ export type OrderQuestionRow = {
   last_failure: string | null;
   attempts_json: string;
   observation_json: string | null;
+  /** Spec 018 (migration 10): the Google check. NULL g_status = an order
+   * approved before Spec 018 (one source). */
+  g_status: "pending" | "done" | "exhausted" | null;
+  g_attempts: number;
+  g_next_attempt_at: string | null;
+  g_last_failure: string | null;
+  g_empty: number;
+  g_result_json: string | null;
+  c_facts_json: string | null;
 };
 
 /**
@@ -371,6 +380,8 @@ export async function approveOrder(
     businessName: string;
     promptIds: readonly string[];
     now: Date;
+    /** Spec 018: each question is also asked to Google (migration 10). */
+    twoSource?: boolean;
   },
 ): Promise<boolean> {
   const startedAt = iso(input.now);
@@ -396,12 +407,18 @@ export async function approveOrder(
     ...input.promptIds.map((promptId, position) =>
       db
         .prepare(
-          `INSERT INTO order_questions (order_id, prompt_id, position)
-           SELECT ?1, ?2, ?3
+          `INSERT INTO order_questions (order_id, prompt_id, position, g_status)
+           SELECT ?1, ?2, ?3, ?5
            WHERE EXISTS (SELECT 1 FROM orders
                          WHERE id = ?1 AND state = 'running' AND started_at = ?4)`,
         )
-        .bind(input.orderId, promptId, position, startedAt),
+        .bind(
+          input.orderId,
+          promptId,
+          position,
+          startedAt,
+          input.twoSource ? "pending" : null,
+        ),
     ),
   ]);
   return results[0]?.meta?.changes === 1;
@@ -443,15 +460,17 @@ export async function orderStatus(
   const now = iso(input.now);
   const mapped = questions.map((question) => ({
     prompt_id: question.prompt_id,
-    status: (question.status === "done"
-      ? "completed"
-      : question.status === "exhausted"
-        ? "failed"
-        : question.claim_until && question.claim_until > now
-          ? "running"
-          : question.attempts > 0
-            ? "retrying"
-            : "pending") as QuestionProgress,
+    status: (question.g_status !== null
+      ? twoSourceProgress(question, now)
+      : question.status === "done"
+        ? "completed"
+        : question.status === "exhausted"
+          ? "failed"
+          : question.claim_until && question.claim_until > now
+            ? "running"
+            : question.attempts > 0
+              ? "retrying"
+              : "pending") as QuestionProgress,
   }));
   return {
     // An open order past its end time reads as expired even before the cron
@@ -463,6 +482,25 @@ export async function orderStatus(
     total: 10,
     questions: mapped,
   };
+}
+
+/** Spec 018: a question counts as completed once both checks have their
+ * final outcome (a failed check is shown in the report, R-20); "failed" only
+ * when neither source answered. */
+function twoSourceProgress(
+  question: OrderQuestionRow,
+  now: string,
+): QuestionProgress {
+  const final = (status: string | null) =>
+    status === "done" || status === "exhausted";
+  if (final(question.status) && final(question.g_status))
+    return question.status === "exhausted" && question.g_status === "exhausted"
+      ? "failed"
+      : "completed";
+  if (question.claim_until && question.claim_until > now) return "running";
+  return question.attempts > 0 || question.g_attempts > 0
+    ? "retrying"
+    : "pending";
 }
 
 /* ---------------------------- runner statements --------------------------- */
@@ -800,6 +838,193 @@ export async function exhaustSpentQuestions(
     .bind(input.orderId, iso(input.now))
     .run();
   return result.meta?.changes ?? 0;
+}
+
+/* ------------------------- Spec 018: two sources ------------------------- */
+
+/** Which checks of a question are due now: pending, attempts left, its
+ * back-off passed (R-14). */
+export function dueSources(
+  question: OrderQuestionRow,
+  now: string,
+): { chatgpt: boolean; google: boolean } {
+  const due = (status: string | null, attempts: number, next: string | null) =>
+    status === "pending" &&
+    attempts < MAX_ATTEMPTS_PER_QUESTION &&
+    (!next || next <= now);
+  return {
+    chatgpt: due(question.status, question.attempts, question.next_attempt_at),
+    google: due(
+      question.g_status,
+      question.g_attempts,
+      question.g_next_attempt_at,
+    ),
+  };
+}
+
+/** R-14/R-15: claim one question for the checks that are due. Each claimed
+ * source counts its attempt now, so a call cut off mid-flight still counts.
+ * Returns the new attempt numbers, or null. */
+export async function claimQuestionSources(
+  db: SpendDb,
+  input: {
+    orderId: string;
+    promptId: string;
+    owner: string;
+    now: Date;
+    claimMs: number;
+    chatgpt: boolean;
+    google: boolean;
+  },
+): Promise<{ attempts: number; g_attempts: number } | null> {
+  const c = input.chatgpt ? 1 : 0;
+  const g = input.google ? 1 : 0;
+  if (c + g === 0) return null;
+  return db
+    .prepare(
+      `UPDATE order_questions
+       SET claim_owner = ?3, claim_until = ?4,
+           attempts = attempts + ?6, g_attempts = g_attempts + ?7
+       WHERE order_id = ?1 AND prompt_id = ?2
+         AND (claim_owner IS NULL OR claim_until <= ?5)
+         AND (?6 = 0 OR (status = 'pending'
+              AND attempts < ${MAX_ATTEMPTS_PER_QUESTION}
+              AND (next_attempt_at IS NULL OR next_attempt_at <= ?5)))
+         AND (?7 = 0 OR (g_status = 'pending'
+              AND g_attempts < ${MAX_ATTEMPTS_PER_QUESTION}
+              AND (g_next_attempt_at IS NULL OR g_next_attempt_at <= ?5)))
+         AND EXISTS (SELECT 1 FROM orders
+                     WHERE id = ?1 AND state = 'running' AND lease_owner = ?3)
+       RETURNING attempts, g_attempts`,
+    )
+    .bind(
+      input.orderId,
+      input.promptId,
+      input.owner,
+      iso(new Date(input.now.getTime() + input.claimMs)),
+      iso(input.now),
+      c,
+      g,
+    )
+    .first<{ attempts: number; g_attempts: number }>();
+}
+
+/** What one step decided for one source. `refund` gives the attempt back
+ * (nothing was sent: the ledger refused or was unavailable). */
+export type ChatGptSave = {
+  status: "pending" | "done" | "exhausted";
+  nextAttemptAt: Date | null;
+  failure: string | null;
+  attemptsJson: string;
+  observationJson: string | null;
+  factsJson: string | null;
+  refund?: boolean;
+};
+export type GoogleSave = {
+  status: "pending" | "done" | "exhausted";
+  nextAttemptAt: Date | null;
+  failure: string | null;
+  empty: number;
+  resultJson: string | null;
+  refund?: boolean;
+};
+
+/** R-14/R-15: save the step's results for the sources it asked, and free the
+ * claim, in one write. A source not asked keeps its columns. */
+export async function saveSourceResults(
+  db: SpendDb,
+  input: {
+    orderId: string;
+    promptId: string;
+    owner: string;
+    chatgpt: ChatGptSave | null;
+    google: GoogleSave | null;
+  },
+): Promise<boolean> {
+  const c = input.chatgpt;
+  const g = input.google;
+  const result = await db
+    .prepare(
+      `UPDATE order_questions SET
+         status = CASE WHEN ?4 = 1 THEN ?5 ELSE status END,
+         next_attempt_at = CASE WHEN ?4 = 1 THEN ?6 ELSE next_attempt_at END,
+         last_failure = CASE WHEN ?4 = 1 THEN ?7 ELSE last_failure END,
+         attempts_json = CASE WHEN ?4 = 1 THEN ?8 ELSE attempts_json END,
+         observation_json = CASE WHEN ?4 = 1 THEN ?9 ELSE observation_json END,
+         c_facts_json = CASE WHEN ?4 = 1 THEN ?10 ELSE c_facts_json END,
+         attempts = attempts - CASE WHEN ?4 = 1 THEN ?11 ELSE 0 END,
+         g_status = CASE WHEN ?12 = 1 THEN ?13 ELSE g_status END,
+         g_next_attempt_at = CASE WHEN ?12 = 1 THEN ?14 ELSE g_next_attempt_at END,
+         g_last_failure = CASE WHEN ?12 = 1 THEN ?15 ELSE g_last_failure END,
+         g_empty = CASE WHEN ?12 = 1 THEN ?16 ELSE g_empty END,
+         g_result_json = CASE WHEN ?12 = 1 THEN ?17 ELSE g_result_json END,
+         g_attempts = g_attempts - CASE WHEN ?12 = 1 THEN ?18 ELSE 0 END,
+         claim_owner = NULL, claim_until = NULL
+       WHERE order_id = ?1 AND prompt_id = ?2 AND claim_owner = ?3`,
+    )
+    .bind(
+      input.orderId,
+      input.promptId,
+      input.owner,
+      c ? 1 : 0,
+      c?.status ?? null,
+      c?.nextAttemptAt ? iso(c.nextAttemptAt) : null,
+      c?.failure ?? null,
+      c?.attemptsJson ?? "[]",
+      c?.observationJson ?? null,
+      c?.factsJson ?? null,
+      c?.refund ? 1 : 0,
+      g ? 1 : 0,
+      g?.status ?? null,
+      g?.nextAttemptAt ? iso(g.nextAttemptAt) : null,
+      g?.failure ?? null,
+      g?.empty ?? 0,
+      g?.resultJson ?? null,
+      g?.refund ? 1 : 0,
+    )
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** A pending check whose attempts are all used (its last call was cut off)
+ * can never finish: it is failed (R-20). One write for both sources. */
+export async function exhaustSpentSources(
+  db: SpendDb,
+  input: { orderId: string; now: Date },
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `UPDATE order_questions SET
+         status = CASE WHEN status = 'pending'
+           AND attempts >= ${MAX_ATTEMPTS_PER_QUESTION} THEN 'exhausted' ELSE status END,
+         g_status = CASE WHEN g_status = 'pending'
+           AND g_attempts >= ${MAX_ATTEMPTS_PER_QUESTION} THEN 'exhausted' ELSE g_status END
+       WHERE order_id = ?1 AND (claim_owner IS NULL OR claim_until <= ?2)
+         AND ((status = 'pending' AND attempts >= ${MAX_ATTEMPTS_PER_QUESTION})
+           OR (g_status = 'pending' AND g_attempts >= ${MAX_ATTEMPTS_PER_QUESTION}))`,
+    )
+    .bind(input.orderId, iso(input.now))
+    .run();
+  return result.meta?.changes ?? 0;
+}
+
+/** Spec 018: once every check of all ten questions has its final outcome,
+ * the order moves to `reporting` (the R-19 gate is checked first). */
+export async function moveTwoSourceToReporting(
+  db: SpendDb,
+  orderId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE orders SET state = 'reporting'
+       WHERE id = ?1 AND state = 'running'
+         AND (SELECT COUNT(*) FROM order_questions
+              WHERE order_id = ?1 AND status IN ('done', 'exhausted')
+                AND g_status IN ('done', 'exhausted')) = 10`,
+    )
+    .bind(orderId)
+    .run();
+  return result.meta?.changes === 1;
 }
 
 /** R-20: after ten saved results the order moves to `reporting`. */

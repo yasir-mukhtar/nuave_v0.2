@@ -27,14 +27,22 @@ import { executeSyntheticLocalObservation } from "../audit/local-direct-ten-audi
 import { reserveProviderSpend } from "../spending/provider-spend";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { resendMailSender } from "./mail";
-import { MAX_EXPIRED_PER_RUN, runOrders, type RunnerDeps } from "./runner";
+import {
+  MAX_EXPIRED_PER_RUN,
+  RUN_COST,
+  RUN_UNIT_LIMIT,
+  runOrders,
+  type RunnerDeps,
+} from "./runner";
 import { EMAIL_RETRY_BASE_MS } from "./store";
 import { approve, makeOrder, T0 } from "./orders.test-helper";
 
 // Cloudflare Free counts D1 queries as subrequests, 50 per invocation shared
 // with outbound requests (paid provider calls plus Resend sends). So the worst
-// live cron run must keep D1 queries + outbound requests at or below 40, in every
-// mix of work and whatever order the orders come in.
+// live cron run had to keep D1 queries + outbound requests at or below 40, in
+// every mix of work and whatever order the orders come in. Spec 018 R-15:
+// production runs on Workers Paid and the meter is RUN_UNIT_LIMIT (80), so two
+// two-source question steps fit one run; every run here stays inside it.
 
 let dir: string;
 let d1: ReturnType<typeof openFileD1>;
@@ -86,13 +94,14 @@ function counting(db: RunnerDeps["db"]) {
   return { counted, count };
 }
 
-const COMBINED_LIMIT = 40;
+const COMBINED_LIMIT = RUN_UNIT_LIMIT;
 // Measured when written (D1 queries + outbound requests per run, the largest of
 // the 24 cases): with housekeeping 37 (32 queries + 5 outbound), for example a
 // question step and an email-only delivery after 3 expiries and a deadline
 // failure; without housekeeping 35 (a report step then an email-only delivery
-// is 35, two question steps 32). The run's meter (RUN_COST in runner.ts) starts
-// a piece of work only if it still fits under 40.
+// is 35, two question steps 32). With the spec 018 meter of 80 more work fits
+// in one run (largest measured 73). The run's meter (RUN_COST in runner.ts)
+// starts a piece of work only if it still fits under RUN_UNIT_LIMIT.
 
 type Kind = "L" | "H" | "Q"; // light (email only), heavy (report), question
 
@@ -236,7 +245,7 @@ describe("the worst live run (Free plan: D1 queries + outbound requests)", () =>
       [order.join(""), false] as const,
     ]),
   )(
-    "orders waiting as %s, with housekeeping %s (3 expiries, a deadline failure, a failure-email retry): whatever fits, at most 40 queries and outbound requests together",
+    "orders waiting as %s, with housekeeping %s (3 expiries, a deadline failure, a failure-email retry): whatever fits, inside the meter (queries and outbound requests together)",
     async (key, housekeeping) => {
       const result = await measure(key.split("") as Kind[], housekeeping);
       expect(result.queries + result.outbound).toBeLessThanOrEqual(
@@ -249,7 +258,8 @@ describe("the worst live run (Free plan: D1 queries + outbound requests)", () =>
 /* ------------------------- spec 017 S4c: the new tasks ------------------------ */
 
 // R-23, AC-21, AC-22. Every run below counts D1 queries and outbound requests
-// (Resend, Midtrans, paid provider calls) together; it must stay at or below 40.
+// (Resend, Midtrans, paid provider calls) together; it must stay inside the
+// meter (RUN_UNIT_LIMIT).
 // Measured when written (see each test for the number it asserts):
 //   idle live run with every S4 task on        9 queries, 0 outbound
 //   reconciliation: at most 2 Midtrans answers per attempt per run (the order_id
@@ -491,7 +501,7 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
     expect(outcomes.filter((entry) => entry === "reconciled")).toHaveLength(1);
   });
 
-  it("the worst mix never passes 40: two big attempts to reconcile, 3 expiries, a cap alert, a due notice and payment email, and two running orders", async () => {
+  it("the worst mix never passes the meter: two big attempts to reconcile, 3 expiries, a cap alert, a due notice and payment email, and two running orders", async () => {
     const { base, counted, attempt } = await setup();
     const { usdToUnits } = await import("../spending/spend-ledger");
     const { recordFounderNotice } = await import("../payments/notices");
@@ -614,11 +624,8 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
     expect(first.total).toBeLessThanOrEqual(COMBINED_LIMIT);
     // The report step ran (it is the audit step that always gets its run)...
     expect(first.outcomes).toContain("report_saved");
-    // ...and what no longer fit (here the notice) was left for the next run.
-    const sentFirst = ["payment_email", "notice"].filter((kind) =>
-      first.outcomes.includes(kind as never),
-    );
-    expect(sentFirst.length).toBeLessThan(2);
+    // ...and anything that no longer fit would be left for the next run. With
+    // the 80-unit meter (spec 018 R-15) both usually fit beside it.
     advance(MIN);
     const second = await counted({ sender: pickySender });
     expect(second.total).toBeLessThanOrEqual(COMBINED_LIMIT);
@@ -740,5 +747,84 @@ describe("the spec 017 tasks in the cron's run budget (R-23, AC-21, AC-22)", () 
         `SELECT order_number FROM orders WHERE id = '${id}'`,
       )[0]!.order_number,
     ).toMatch(/^NV-/);
+  });
+});
+
+/* ------------------- spec 018: two-source question steps ------------------- */
+
+// R-15, AC-15. A two-source question step asks ChatGPT and Google in parallel:
+// two paid DataForSEO calls with their ledger writes. Two orders running at
+// the same time must each still take one step per run, inside the meter.
+describe("spec 018 two-source steps in the run budget (R-15, AC-15)", () => {
+  async function twoSourceRun(orders: number) {
+    const { approveTwoSource } = await import("./orders.test-helper");
+    const { syntheticCheckSend } = await import("../checks/synthetic");
+    const outbound = { n: 0 };
+    const sender: RunnerDeps["sender"] = async () => {
+      outbound.n += 1;
+      return { accepted: true, messageId: `m${outbound.n}` };
+    };
+    const ids: string[] = [];
+    for (let i = 0; i < orders; i += 1) {
+      const id = await makeOrder(d1.db, {
+        mode: "live",
+        limitUsd: 2,
+        dailyLimitUsd: 1000,
+        now: clock,
+      });
+      await approveTwoSource(d1.db, id, { mode: "live", now: clock });
+      ids.push(id);
+    }
+    const { counted, count } = counting(d1.db);
+    const result = await runOrders({
+      db: counted,
+      environment: "production",
+      mode: "live",
+      siteOrigin: "https://v2.nuave.test",
+      now: () => clock,
+      execute: async () => {
+        throw new Error("not used");
+      },
+      generateReport:
+        (async () => ({})) as unknown as RunnerDeps["generateReport"],
+      checks: {
+        // The live sender reserves before each call (sendCheck).
+        send: async (input) => {
+          const spend = await reserveProviderSpend({
+            provider: "dataforseo",
+            stage: "observation",
+            usd: 0.006,
+          });
+          outbound.n += 1;
+          await spend.settle(0.004);
+          return {
+            ...syntheticCheckSend({ ...input, ordinal: 1, now: clock }),
+            taskId: `t-${input.source}-${input.ordinal}-${input.attempt}`,
+          };
+        },
+      },
+      sender,
+      sleep: async () => {},
+    });
+    return {
+      total: count.queries + outbound.n,
+      queries: count.queries,
+      outbound: outbound.n,
+      outcomes: result.outcomes,
+    };
+  }
+
+  it("one step asks both sources and fits; two orders running at once each take one step in the same run", async () => {
+    const one = await twoSourceRun(1);
+    expect(one.outcomes).toEqual(["question_done"]);
+    expect(one.outbound).toBe(2);
+    expect(one.total).toBeLessThanOrEqual(RUN_COST.question + 2);
+    d1.close();
+    dir = mkdtempSync(join(tmpdir(), "nuave-worst-"));
+    d1 = openFileD1(join(dir, "worst.sqlite"));
+    const two = await twoSourceRun(2);
+    expect(two.outcomes).toEqual(["question_done", "question_done"]);
+    expect(two.outbound).toBe(4);
+    expect(two.total).toBeLessThanOrEqual(RUN_UNIT_LIMIT);
   });
 });

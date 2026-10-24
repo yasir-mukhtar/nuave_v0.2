@@ -5,6 +5,10 @@
  * not shown after its retry), one question where Google shows no AI Overview,
  * and one ChatGPT check that fails on every attempt, so the report's
  * "Tidak dapat diuji" and coverage paths are exercised every time.
+ *
+ * Synthetic ChatGPT answers never name the business (the labelled synthetic
+ * report says so); synthetic AI Overviews name it in odd-numbered questions,
+ * so the code-built Google counts are exercised.
  */
 import type { CheckSend, CheckSource } from "./send";
 
@@ -37,7 +41,7 @@ function sent(input: {
 }
 
 /** One synthetic check call, shaped like DataForSEO's answer so the same
- * readers parse it. The business is named in odd-numbered questions. */
+ * readers parse it. */
 export function syntheticCheckSend(input: {
   source: CheckSource;
   body: Record<string, unknown>;
@@ -53,7 +57,7 @@ export function syntheticCheckSend(input: {
   if (input.source === "chatgpt") {
     if (input.ordinal === SYNTHETIC_FAILED_CHATGPT_ORDINAL)
       return sent({ statusCode: 50000, result: null, at: input.now, id });
-    const markdown = `${SYNTHETIC_CHECK_LABEL} Untuk pertanyaan "${question}", beberapa pilihan yang sering disebut adalah ${named ? `**${brand}** dan ` : ""}**${OTHER_BUSINESS}**. Hubungi 0812-3456-7890 untuk reservasi ([contoh.test](https://contoh.test/info)).`;
+    const markdown = `${SYNTHETIC_CHECK_LABEL} Untuk pertanyaan "${question}", pilihan yang sering disebut adalah **${OTHER_BUSINESS}**. Hubungi 0812-3456-7890 untuk reservasi ([contoh.test](https://contoh.test/info)).`;
     return sent({
       statusCode: 20000,
       at: input.now,
