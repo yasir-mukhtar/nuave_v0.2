@@ -4,7 +4,7 @@
 > Date: 24 October 2026
 > Made by: orchestrator, with a copywriter, a growth marketer and a designer (three AI agents)
 > Read with: [`COPY.md`](./COPY.md) (every word on the page), [`GROWTH.md`](./GROWTH.md) (funnel, metrics, tests), [`LOFI.md`](./LOFI.md) (layout and visuals), [`BRIEF.md`](./BRIEF.md) (the original brief)
-> Lofi in Figma: file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page")
+> Lofi in Figma: file `pE6HryXbVyJo24lxqy6JZE` ("Nuave Landing Page"), frames [00 · Strategy at a glance](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=7-2), [01 · Mobile 390](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=8-2), [02 · Desktop 1440](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=9-2)
 
 ## 1. The job of the page
 
@@ -68,6 +68,12 @@ Read only the headlines and the story still holds.
 
 On phones a slim bar stays at the bottom after the hero ("Cek gratis dulu ·
 Audit Rp99.000" + button).
+
+The page is long on purpose: about 22 phone screens to the final sign-up box
+(desktop about 17.5). Optional parts fold away on phones (the question tool,
+the source map, the method note in the report), but no chapter is cut. A short
+version of about 8 to 10 screens is the first thing to test against it
+([`GROWTH.md`](./GROWTH.md) Part 3 §h).
 
 ## 5. How the page persuades
 

@@ -8,6 +8,23 @@
 > Facts: F1, F2, F3, F4, F6, F7 only. Conventions: `H1/H2/H3`, `Body` (each line = one short mobile paragraph), `Small`, `Mock`, `[KONFIRMASI: ...]`.
 > After v3, only fit edits requested by the designer.
 
+## Fit edits after the copy was locked (lofi round)
+
+The layout round changed a few lines so the copy fits the page. These are the only changes after v3:
+
+| Where | Change | Why |
+|---|---|---|
+| S1 method strip | Order is now **Rp99.000 sekali bayar · 10 pertanyaan seperti pasien · AI buatan OpenAI** | Keeps the price above the fold inside WhatsApp and Instagram in-app browsers |
+| Outreach variant | The extra line above the field is dropped | The placeholder already asks for the website; the strip moves back above the fold |
+| S10 step 2 | One paragraph (text in S10 below) | Length |
+| S3 module (mobile) | Collapsed to its H3, one example bubble (Gigi + Depok) and a row **Ganti jenis klinik dan kota** | Length; desktop stays open |
+| S4 (mobile) | The body paragraph repeating the Pew numbers is hidden; the stat card carries them | Length; desktop keeps it |
+| S5 (mobile) | The ChatGPT door has text and source only, no chat mock | Length; desktop keeps the mock |
+| S7 (mobile) | The six-card source map is hidden; the mismatch pair and the checklist stay | Length; desktop keeps the map |
+| S11 | The button sits right after the open action. "Tentang audit ini" is collapsed to one line: **Tentang audit ini · 10 pertanyaan, masing-masing sekali, AI buatan OpenAI dengan pencarian web** | Puts the action at peak conviction; length |
+| S12 | The form sits inside the price card, under "Bayar setelah klinik Anda kami temukan." Payment methods are chips: **QRIS · Transfer bank · GoPay · DANA**, plus **diproses Midtrans** | The highest-intent screen gets its own form; familiar payment names reduce worry |
+| S13 (mobile) | The "Yang Nuave tunjukkan" card is hidden (it repeats S11); "Yang tidak kami janjikan" and the timeline stay | Length; desktop keeps both |
+
 ## Changelog (v2 to v3)
 
 | # | Brief item | What changed | Where |
@@ -86,10 +103,9 @@ Error: **Masukkan satu website atau akun Instagram klinik, ya.**
 
 ## Part C. Outreach hero variant (`?src=ob`, founder decision, growth §2 option B)
 
-Same H1, same form. Swaps only the subtitle and adds one line above the field.
+Same H1, same form. Swaps only the subtitle. (The extra line above the field was dropped in the lofi round: the placeholder already asks for the website, and without it the price stays above the fold.)
 
 Subtitle (variant): **Anda sudah melihat satu jawaban AI untuk pertanyaan pasien di area Anda. Nuave mengajukan 10 pertanyaan seperti itu, lalu menunjukkan semua jawabannya, dengan sumbernya.**
-Line above the field (variant): **Lanjutkan dengan website atau Instagram klinik Anda.**
 
 > **Why this works:** "Satu jawaban" from the outreach becomes "semua jawabannya". "Untuk pertanyaan pasien di area Anda" stays true whether or not the clinic was named. No clinic data in the parameter.
 
@@ -119,7 +135,7 @@ Form placeholder: **Website atau Instagram klinik**
 Button: **Cek klinik saya di AI**
 Microcopy: **Langkah pertama gratis: kami temukan klinik Anda dulu. Tanpa data pasien.**
 
-Method strip (3 facts, bold, scannable): **10 pertanyaan seperti pasien** · **AI buatan OpenAI** · **Rp99.000 sekali bayar**
+Method strip (3 facts, bold, scannable; price first so it stays above the fold in in-app browsers): **Rp99.000 sekali bayar** · **10 pertanyaan seperti pasien** · **AI buatan OpenAI**
 
 **Mock (V1, chat + report card):**
 - Patient bubble: **"Klinik gigi di Depok yang bisa cicil behel dan buka Sabtu sore, ada rekomendasi?"**
@@ -384,8 +400,7 @@ Masukkan website atau Instagram klinik. Kami cari nama, logo, dan deskripsinya, 
 Small: **Ini belum hasil AI.**
 
 Step 2 · tag **Rp99.000** · **Periksa detail dan 10 pertanyaan**
-Masukkan email penerima laporan, lalu bayar. Nuave membaca website Anda dan menyiapkan detail klinik: layanan, pasien yang dituju, keunggulan, pesaing, area. Sebagian besar sudah kami isikan. Anda tinggal periksa.
-Lalu pilih fokus audit (seluruh brand, satu cabang, atau satu layanan) dan periksa 10 pertanyaan usulan kami. Kata-katanya boleh diubah.
+Masukkan email penerima laporan, lalu bayar. Nuave menyiapkan detail klinik dari website Anda: layanan, pasien yang dituju, keunggulan, pesaing, area. Anda tinggal periksa, pilih fokus audit, lalu cek 10 pertanyaan usulan kami. Kata-katanya boleh diubah.
 
 Step 3 · tag **Tab boleh ditutup** · **Terima laporannya**
 Audit berjalan di server kami. Laporan dikirim lewat link pribadi ke email Anda, dari Tim Nuave. `[KONFIRMASI: perkiraan waktu kirim. Bukti internal: pesanan pertama sekitar 10,5 menit setelah pertanyaan disetujui, 13 Oktober 2026. Belum boleh dijanjikan.]`
