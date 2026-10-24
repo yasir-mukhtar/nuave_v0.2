@@ -1,10 +1,16 @@
 # Spec 018: Real-search questions, answered by ChatGPT and Google (Rp249.000)
 
-> Status: **In review** — plan review round 4 PASS+NOTES (notes applied in
-> revision 6); waiting for founder approval and answers to Q-2/Q-3. Not
-> approved; do not build.
+> Status: **Approved** by Yasir on 2026-10-24 (revision 7), after plan review
+> round 4 PASS+NOTES (notes applied in revision 6). Q-2..Q-5 answered as
+> recommended; Q-1 stays open until PR 2. Building may start once the Q-5
+> probe re-run passes (AC-00).
 > Owner: orchestrator
-> Updated: 2026-10-24. Revision 6 applies the round-4 notes: other-place
+> Updated: 2026-10-24. Revision 7 records the founder's approval and answers
+> (Q-2..Q-5), production on Workers Paid, and the customer name "ChatGPT dan
+> Google AI Overview" (Google's AI summary is called "Google AI Overview"
+> everywhere customers see it).
+>
+> Revision 6 applies the round-4 notes: other-place
 > matching is longest-name-first and never hits the customer's own place, with
 > an explicit Jakarta rule (R-10a); the new checks apply to every pack,
 > including the fallback and customer edits (R-11a); the probe's provider-choice
@@ -130,7 +136,7 @@ Evidence from Sozo Skin Clinic, 2026-10-23, and the founder's report review:
   test questions: 2 of 2 in Bandung, 1 of 2 in Surabaya, 0 of 2 for the
   Jakarta clinic (asked as "Indonesia" because the place list had no
   Jakarta). The Sozo test had 4 of 5, on national questions. So a report will
-  often say "Google tidak menampilkan ringkasan AI" for a question; that is a
+  often say "Google tidak menampilkan AI Overview" for a question; that is a
   finding in itself (Q-3).
 - **The probe passed its rules but showed quality gaps** (revision 4's rules):
   - ChatGPT, asked from Indonesia, answered "v shape klinik" (for a Bandung
@@ -242,9 +248,9 @@ want to know:
   - §4 and §7.1: Rp99.000 becomes Rp249.000, and "Bayar Rp99.000" becomes
     "Bayar Rp249.000".
   - §7.4: the renamed answers section (see Report layout), and the new
-    strings: "Google menampilkan ringkasan AI di Z dari M pertanyaan",
+    strings: "Google menampilkan AI Overview di Z dari M pertanyaan",
     "Bisnis Anda muncul di W dari Z pertanyaan", "Google tidak menampilkan
-    ringkasan AI", "Google tidak menampilkan ringkasan AI untuk X dari M
+    AI Overview", "Google tidak menampilkan AI Overview untuk X dari M
     pertanyaan ini.", "K pemeriksaan tidak dapat diuji", "Tidak diuji",
     "Tidak ada data jumlah pencarian", "dipakai sebagai sumber", and the
     helper text in Experience 2.
@@ -270,7 +276,7 @@ want to know:
 
 1. **Order and payment:** unchanged, except:
    - every price shows **Rp249.000**;
-   - the order preview and checkout say the audit checks "ChatGPT dan Google";
+   - the order preview and checkout say the audit checks "ChatGPT dan Google AI Overview";
    - the delivery promise uses the R-23 text;
    - Midtrans charges 249,000.
 2. **Intake review screen:** one new field, **"Kota untuk pencarian"**:
@@ -337,10 +343,10 @@ type. The section names below are the current ones.
 
 | Section | Today | Proposed |
 |---|---|---|
-| Header | Business name, date | Adds "Diperiksa di ChatGPT dan Google · <tanggal>" and the places actually used (R-13): one place when both are the same, otherwise "Google: <kota> · ChatGPT: Indonesia". |
-| Hasil singkat | One result card with ten beads | **Two cards, stacked**, each keeping the D-05 sentences with its own denominator:<br>**"ChatGPT":** "Bisnis Anda muncul di X dari N pertanyaan"; "Bisnis Anda direkomendasikan di Y dari N pertanyaan".<br>**"Google · Ringkasan AI":** "Google menampilkan ringkasan AI di Z dari M pertanyaan"; "Bisnis Anda muncul di W dari Z pertanyaan". Google has no "direkomendasikan" line.<br>A count whose denominator is 0 shows "Tidak diuji", never "0 dari 0". Beads show only completed checks. A line "K pemeriksaan tidak dapat diuji" appears when K > 0. The conclusion and the limit note stay; the limit note adds the places and date. |
-| Jawaban model AI → "Jawaban ChatGPT dan Google" | One answer block per question | **One block per question:** the number, the question, the origin label, the topic line, then **two stacked answers** in the existing answer style. Each answer has a source heading ("ChatGPT", "Google · Ringkasan AI"), the place used, the existing name highlight and references list, and the outcome text from R-16/R-17. There are no tabs, so the PDF shows everything. |
-| Analisis Nuave | Findings; "Bisnis lain yang disebut" | Findings name the source they come from. "Bisnis lain yang disebut" becomes one short list per source, taken from the answer text. When Google showed no AI summary for some completed checks, a **code-built** finding says so: "Google tidak menampilkan ringkasan AI untuk X dari M pertanyaan ini." (the Q-3 default). |
+| Header | Business name, date | Adds "Diperiksa di ChatGPT dan Google AI Overview · <tanggal>" and the places actually used (R-13): one place when both are the same, otherwise "Google: <kota> · ChatGPT: Indonesia". |
+| Hasil singkat | One result card with ten beads | **Two cards, stacked**, each keeping the D-05 sentences with its own denominator:<br>**"ChatGPT":** "Bisnis Anda muncul di X dari N pertanyaan"; "Bisnis Anda direkomendasikan di Y dari N pertanyaan".<br>**"Google AI Overview":** "Google menampilkan AI Overview di Z dari M pertanyaan"; "Bisnis Anda muncul di W dari Z pertanyaan". Google has no "direkomendasikan" line.<br>A count whose denominator is 0 shows "Tidak diuji", never "0 dari 0". Beads show only completed checks. A line "K pemeriksaan tidak dapat diuji" appears when K > 0. The conclusion and the limit note stay; the limit note adds the places and date. |
+| Jawaban model AI → "Jawaban ChatGPT dan Google AI Overview" | One answer block per question | **One block per question:** the number, the question, the origin label, the topic line, then **two stacked answers** in the existing answer style. Each answer has a source heading ("ChatGPT", "Google AI Overview"), the place used, the existing name highlight and references list, and the outcome text from R-16/R-17. There are no tabs, so the PDF shows everything. |
+| Analisis Nuave | Findings; "Bisnis lain yang disebut" | Findings name the source they come from. "Bisnis lain yang disebut" becomes one short list per source, taken from the answer text. When Google showed no AI summary for some completed checks, a **code-built** finding says so: "Google tidak menampilkan AI Overview untuk X dari M pertanyaan ini." (the Q-3 default). |
 | Yang dapat dilakukan | Priorities | Same, plus a **code-built** block "Topik yang belum menyebut Anda" (R-18). |
 | Tentang audit ini | Method | Adds:<br>- where the questions came from (Google data through DataForSEO, data month, place);<br>- that ChatGPT answers come from the ChatGPT app, asked from Indonesia, and Google answers from Google's results page for the stated place, both through DataForSEO;<br>- that answers vary by time, account and place. |
 
@@ -650,12 +656,11 @@ Reports saved before this change keep rendering exactly as today (R-29).
   - `RUN_COST.question` and `OBSERVATION_STEP_MS` are raised to cover two
     calls of up to 150 seconds each, in parallel.
   - Two orders running at the same time must each still take one step per
-    run. Production runs on **Workers Free** (50 subrequests per run:
-    outbound calls plus database queries) until the founder moves to Workers
-    Paid. So `RUN_UNIT_LIMIT` stays 40, and `runner-worst-case.test.ts`
+    run. Production runs on **Workers Paid** (founder, 2026-10-24). `RUN_UNIT_LIMIT`
+    stays 40 unless the builder shows a reason to raise it, and `runner-worst-case.test.ts`
     shows that two orders' question steps (two paid calls each, with their
-    ledger writes) fit in it (AC-15). If they do not fit, Q-4 must be
-    answered (move to Workers Paid) before merging.
+    ledger writes) fit in it (AC-15). If they do not fit, raise `RUN_UNIT_LIMIT` within Workers Paid limits
+    and update the test.
   - **Discovery runs in its own request,** separate from question writing:
     ten paid calls with two ledger writes each, about 30 subrequests, plus
     the pool save. It must stay under 50 subrequests and within the Worker
@@ -684,7 +689,7 @@ Reports saved before this change keep rendering exactly as today (R-29).
     - **"empty element":** present but without text; it is retried once inside
       R-14's attempts and, if still empty, counted as not shown;
     - **"not shown":** no AI-summary element (or status 40102); a completed
-      result, shown as "Google tidak menampilkan ringkasan AI";
+      result, shown as "Google tidak menampilkan AI Overview";
     - **"failed":** R-14 attempts used up.
 
     Google has no "recommended" count.
@@ -697,7 +702,7 @@ Reports saved before this change keep rendering exactly as today (R-29).
 
 ### Report gate and failures
 
-- **R-19: Report gate** (pending Q-2; this is the recommended rule). It
+- **R-19: Report gate** (founder-approved 2026-10-24, Q-2). It
   replaces the ten-evaluable rule for Spec 018 orders.
   - The report is generated when every question has a final outcome for both
     sources, and **each source completed at least 5 of its 10 checks**.
@@ -745,7 +750,7 @@ Reports saved before this change keep rendering exactly as today (R-29).
     screen, email, PDF and page that shows it. That includes
     `founder-notices.ts`, `mail.ts`, the fake Midtrans default and the
     verify-nuave skill files.
-  - The order preview and checkout say "ChatGPT dan Google".
+  - The order preview and checkout say "ChatGPT dan Google AI Overview".
   - The delivery promise becomes: "Laporan biasanya siap dalam 15 menit
     setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika ada bagian
     yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat
@@ -977,8 +982,7 @@ shown as missing, never estimated or filled in.
   - the founder's judgment that the questions read as real human questions.
 - **AC-15:** Given `runner-worst-case.test.ts`, one question step with both
   sources fits the run budget, and two orders running at the same time each
-  take one step per run, with `RUN_UNIT_LIMIT` 40 (Workers Free) unless Q-4 is
-  answered "Workers Paid". Given the discovery request's worst case, it stays
+  take one step per run, with `RUN_UNIT_LIMIT` 40 (or the raised value under R-15). Given the discovery request's worst case, it stays
   under 50 subrequests. Given `spend-worst-case.test.ts`, the per-order worst
   case is USD 2.00 or less.
 - **AC-16:** Given synthetic mode, `verify-nuave drive all` passes, including an
@@ -997,32 +1001,19 @@ shown as missing, never estimated or filled in.
 
 - **Q-1 (founder):** The exact Indonesian wording of the R-23 delivery promise.
   The proposal is in R-23; the founder approves it in PR 2.
-- **Q-2 (founder):** When is a report still delivered? Your answer of
-  2026-10-24 says a failed check still gets a report. Two cases are not
-  covered by it: many checks failing, and one whole source failing (for
-  example all ten ChatGPT checks), which would deliver a "ChatGPT dan Google"
-  report without ChatGPT. **Recommended (used in R-19 until answered):**
-  deliver when each source completed at least 5 of its 10 checks; otherwise
-  the order fails as today and you resolve it (refund within 3 business days
-  unless fixed first). **This must be answered when the spec is approved**,
-  and recorded in the decision log; approving the recommendation is enough.
-- **Q-3 (founder): Google's AI summary is often missing.** The probe showed a
-  summary with text for 3 of 6 questions (Sozo: 4 of 5). (a) Accept it: each
-  question shows whether Google used an AI summary, the Google card says
-  "Google menampilkan ringkasan AI di Z dari M pertanyaan", and a code-built
-  finding states how often it did not. (b) Lean the question choice toward
-  questions that tend to show a summary (prices, "berapa lama"), which makes
-  the questions less like real local searches. **Recommended, and the spec
-  default: (a).** The founder should know this before approving the "ChatGPT
-  dan Google" wording.
-- **Q-4 (founder): Workers Paid before the merge.** Recommended: move to
-  Workers Paid before merging PR 1+2 (already decided for before G1 on
-  2026-10-14). Until then the spec keeps `RUN_UNIT_LIMIT` 40 and discovery in
-  its own request (R-15), and AC-15 must show it fits.
-- **Q-5 (founder): re-run the probe on revision 5's rules** before PR 1,
-  about USD 0.25 (hard stop USD 0.30), after a balance top-up (AC-00).
+Answered on 2026-10-24 (approval):
 
-Answered on 2026-10-24:
+- **Q-2:** deliver when each source completed at least 5 of its 10 checks;
+  otherwise the order fails as today and the founder resolves it (R-19).
+- **Q-3:** (a), accept that Google often shows no AI Overview and report how
+  often it did as a finding.
+- **Q-4:** production is already on Workers Paid.
+- **Q-5:** re-run the probe on the current rules before PR 1 (about USD 0.25,
+  hard stop USD 0.30; the USD 0.59 balance covers it).
+- **Name:** customers see "ChatGPT dan Google AI Overview"; Google's AI
+  summary is called "Google AI Overview".
+
+Answered earlier on 2026-10-24:
 
 - **The ChatGPT label:** use the real ChatGPT app through DataForSEO, so the
   label is "ChatGPT".
@@ -1035,7 +1026,7 @@ Answered on 2026-10-24:
 - **The probe:** approved, and run (AC-00).
 
 Answered on 2026-10-23: one package, Rp249.000, the existing report design, and
-naming "ChatGPT dan Google".
+naming "ChatGPT dan Google AI Overview".
 
 ## Implementation notes
 
@@ -1044,7 +1035,7 @@ naming "ChatGPT dan Google".
   1. **PR 1:** the place field, discovery, question choice and fallback. It
      waits for the AC-00 discovery rule and goes synthetic first.
   2. **PR 2:** both checks, the report, the failure handling, the price, the
-     promise, "ChatGPT dan Google" and all document updates. It waits for the
+     promise, "ChatGPT dan Google AI Overview" and all document updates. It waits for the
      AC-00 scraper rule. PR 2 is stacked on PR 1, and the two merge to `main`
      together.
   3. The live run, AC-14, right after that merge.

@@ -6,6 +6,25 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-24 — Approve Spec 018
+
+Yasir approved [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+(revision 7) after four plan review rounds (the last PASS+NOTES, notes
+applied), with every recommendation:
+
+- **Report gate (Q-2):** a report is delivered when each source completed at
+  least 5 of its 10 checks; otherwise the order fails as today and the founder
+  resolves it.
+- **Google AI Overview coverage (Q-3):** accept that Google often shows no AI
+  Overview; the report says how often it did, as a finding.
+- **Workers (Q-4):** production is already on Cloudflare Workers Paid.
+- **Probe re-run (Q-5):** re-run the three-clinic probe on the current rules
+  before PR 1 (about USD 0.25).
+- **Name:** customers see "ChatGPT dan Google AI Overview" (not "ChatGPT dan
+  Google"); Google's AI summary is called "Google AI Overview" wherever
+  customers see it.
+- Q-1 (exact delivery-promise wording) is approved in PR 2.
+
 ## 2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000
 
 Yasir decided, after the DataForSEO test on Sozo Skin Clinic
