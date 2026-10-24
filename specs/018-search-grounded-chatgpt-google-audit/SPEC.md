@@ -849,7 +849,11 @@ shown as missing, never estimated or filled in.
 
 - **AC-00 (gate): the probe. Ran 2026-10-24 on revision 4's rules: discovery
   rule PASS (3 of 3 clinics not thin), scraper rule PASS (6 of 6; 15–35 s per
-  call; Indonesian; 2–9 sources); cost USD 0.244.** Its lists showed the
+  call; Indonesian; 2–9 sources); cost USD 0.244.** **Re-run 2026-10-24 on
+  revision 6/7's rules (Q-5): discovery rule PASS (3 of 3 not thin; counted
+  real wordings 3 / 20 / 9), scraper rule PASS (6 of 6; 25–70 s per call;
+  Indonesian; 4–10 sources); Google AI Overview with text for 4 of 6; cost
+  USD 0.244.** Its lists showed the
   quality gaps now handled by R-03, R-05a, R-05b and R-10a. The founder
   approved about USD 0.20, with a hard stop at USD 0.30. The `probe` stage of
   `experiments/dataforseo-sozo/run.mjs` implements, as revision 6 writes them,
@@ -1029,6 +1033,12 @@ Answered on 2026-10-23: one package, Rp249.000, the existing report design, and
 naming "ChatGPT dan Google AI Overview".
 
 ## Implementation notes
+
+- **Free testing first.** Development and automated tests use the DataForSEO
+  sandbox (`sandbox.dataforseo.com`, free, same request and response layout,
+  fixed sample data) or recorded fixtures. Paid calls are only for the AC-00
+  probe and the AC-14 live order. The sandbox cannot judge question or answer
+  quality, because it returns the same sample for every request.
 
 - **Build order.** A merge to `main` deploys, so nothing customer-visible may
   go live before the behaviour it describes.
