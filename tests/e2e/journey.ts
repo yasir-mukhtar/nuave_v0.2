@@ -1273,9 +1273,28 @@ export function reviewConfirmation(page: Page) {
   });
 }
 
+/** Spec 018 AC-01: when no place could be pre-filled, picks "Seluruh
+ * Indonesia" in the "Kota untuk pencarian" sheet. */
+export async function ensureSearchPlace(page: Page) {
+  const gap = reviewScreen(page).getByText(
+    /Perlu dipastikan:.*Kota untuk pencarian/,
+  );
+  if (!(await gap.count())) return;
+  await page
+    .getByRole("button", { name: "Ubah Kota untuk pencarian", exact: true })
+    .click();
+  const sheet = page.getByRole("dialog", { name: "Ubah Kota untuk pencarian" });
+  await sheet
+    .getByRole("button", { name: "Seluruh Indonesia", exact: true })
+    .click();
+  await sheet.getByRole("button", { name: "Simpan", exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+}
+
 /** Ticks the confirmation (the button stays disabled until then) and presses
  * `Buat pertanyaan audit`. */
 export async function confirmSummary(page: Page) {
+  await ensureSearchPlace(page);
   const box = reviewConfirmation(page);
   const create = page.getByRole("button", {
     name: CONFIRM_SUMMARY,

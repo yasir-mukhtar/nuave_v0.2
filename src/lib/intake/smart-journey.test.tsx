@@ -150,8 +150,19 @@ const fact = (label: string) =>
 const REVIEW_CONFIRMATION =
   "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.";
 
+/** Spec 018 AC-01: when no place could be pre-filled, the owner picks one
+ * ("Seluruh Indonesia" here) in the "Kota untuk pencarian" sheet. */
+function ensureSearchPlace() {
+  if (!screen.queryByText(/Perlu dipastikan:.*Kota untuk pencarian/)) return;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Ubah Kota untuk pencarian" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Seluruh Indonesia" }));
+  fireEvent.click(screen.getByRole("button", { name: "Simpan" }));
+}
 /** J25: the owner's tick, which unlocks "Buat pertanyaan audit". */
 const tickReview = () => {
+  ensureSearchPlace();
   const box = screen.getByRole("checkbox", { name: REVIEW_CONFIRMATION });
   if (box.getAttribute("aria-checked") !== "true") fireEvent.click(box);
 };
