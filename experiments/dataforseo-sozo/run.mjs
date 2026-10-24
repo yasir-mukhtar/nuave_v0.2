@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const API = "https://api.dataforseo.com/v3";
-const RUN_LIMIT_USD = 0.4;
+const RUN_LIMIT_USD = 0.3;
 const INDONESIA = 2360;
 const LANG = "id";
 const DOMAIN = "sozoskinclinic.com";
@@ -48,7 +48,7 @@ async function balance() {
 }
 
 // Paid call: refuses to start once the run limit is reached, records cost.
-async function paid(name, path, body) {
+async function paid(name, path, body, { raw = true } = {}) {
   if (spent >= RUN_LIMIT_USD) {
     log.push(`SKIPPED ${name}: run limit USD ${RUN_LIMIT_USD} reached`);
     return null;
@@ -60,7 +60,7 @@ async function paid(name, path, body) {
   log.push(
     `${name}: ${task?.status_code ?? json?.status_code} ${task?.status_message ?? json?.status_message ?? ""} (USD ${cost.toFixed(4)})`,
   );
-  await save(`${name}.json`, json);
+  if (raw) await save(`${name}.json`, json);
   return task?.status_code === 20000 ? task.result?.[0] ?? null : null;
 }
 
@@ -200,8 +200,102 @@ async function answers() {
   return md;
 }
 
+
+// Probe: does unbranded discovery give usable questions for different
+// clinics, and does the real ChatGPT app (LLM Scraper) work for Indonesia?
+// Saves only extracted summaries (no raw responses: they hold other
+// businesses' phone numbers).
+const PROFILES = [
+  { name: "Klinik gigi, Surabaya", city: "Surabaya", category: "klinik gigi",
+    services: ["scaling gigi", "behel gigi", "tambal gigi", "implan gigi"] },
+  { name: "Klinik kecantikan, Bandung", city: "Bandung", category: "klinik kecantikan",
+    services: ["facial jerawat", "laser flek hitam", "botox", "skin booster"] },
+  { name: "Klinik fisioterapi, Medan", city: "Medan", category: "klinik fisioterapi",
+    services: ["fisioterapi saraf kejepit", "fisioterapi stroke", "fisioterapi cedera olahraga"] },
+];
+
+async function findLocation(path, city) {
+  const json = await call(path);
+  const rows = json?.tasks?.[0]?.result ?? [];
+  const hit = rows.find((l) => l.country_iso_code === "ID" && new RegExp(`^${city}\\b`, "i").test(l.location_name ?? ""));
+  return { total: rows.length, idRows: rows.filter((l) => l.country_iso_code === "ID").length, hit: hit ? { code: hit.location_code, name: hit.location_name, type: hit.location_type } : null };
+}
+
+const coreWords = (seed) => seed.split(" ").filter((w) => !["gigi", "klinik"].includes(w) || seed.split(" ").length === 1);
+
+async function probe() {
+  const md = ["# Probe: discovery on three clinics + real ChatGPT app", ""];
+  const serpLoc = {};
+  const gptLoc = {};
+  for (const p of PROFILES) {
+    serpLoc[p.city] = await findLocation("/serp/google/locations/id", p.city);
+    gptLoc[p.city] = await findLocation("/ai_optimization/chat_gpt/llm_scraper/locations/id", p.city);
+  }
+  const gptLangs = await call("/ai_optimization/chat_gpt/llm_scraper/languages");
+  const hasId = (gptLangs?.tasks?.[0]?.result ?? []).some((l) => l.language_code === "id");
+  md.push("## Locations", "", `ChatGPT scraper supports Indonesian language: ${hasId ? "yes" : "no / unknown"}`, "");
+  for (const p of PROFILES) {
+    md.push(`- ${p.city}: Google SERP city location ${serpLoc[p.city].hit ? `${serpLoc[p.city].hit.name} (${serpLoc[p.city].hit.code})` : "NOT FOUND"}; ChatGPT scraper city location ${gptLoc[p.city].hit ? `${gptLoc[p.city].hit.name} (${gptLoc[p.city].hit.code})` : `not found (Indonesia rows: ${gptLoc[p.city].idRows})`}`);
+  }
+
+  for (const [bi, p] of PROFILES.entries()) {
+    const n = bi + 1;
+    md.push("", `## ${n}. ${p.name}`, "");
+    const googleLoc = serpLoc[p.city].hit?.code ?? INDONESIA;
+    const chatLoc = gptLoc[p.city].hit?.code ?? INDONESIA;
+
+    // Topics: keyword suggestions that contain the service phrase (national volumes).
+    md.push("### Topics (keyword suggestions containing the service, Indonesia, monthly searches)", "");
+    let usable = 0;
+    for (const [si, seed] of p.services.entries()) {
+      const r = await paid(`p${n}-suggest-${si + 1}`, "/dataforseo_labs/google/keyword_suggestions/live", {
+        keyword: seed, location_code: INDONESIA, language_code: LANG, limit: 15,
+        order_by: ["keyword_info.search_volume,desc"], include_seed_keyword: true,
+      }, { raw: false });
+      const rows = [...(r?.seed_keyword_data ? [{ keyword: seed, keyword_info: r.seed_keyword_data.keyword_info }] : []), ...(r?.items ?? [])];
+      const words = coreWords(seed);
+      const good = rows.filter((k) => words.every((w) => k.keyword?.includes(w)) && (k.keyword_info?.search_volume ?? 0) >= 10);
+      usable += good.length;
+      md.push(`- **${seed}**: ${good.length} usable of ${rows.length} — ${good.slice(0, 6).map((k) => `${k.keyword} (${k.keyword_info.search_volume})`).join("; ") || "none"}`);
+    }
+    md.push("", `Usable topics: ${usable}`, "");
+
+    // Autocomplete for the category + city, then real questions from People also ask.
+    const ac = await paid(`p${n}-autocomplete`, "/serp/google/autocomplete/live/advanced", {
+      keyword: `${p.category} ${p.city.toLowerCase()}`, location_code: googleLoc, language_code: LANG,
+    }, { raw: false });
+    const suggestions = (ac?.items ?? []).map((i) => i.suggestion).filter(Boolean);
+    md.push(`### Google autocomplete for "${p.category} ${p.city.toLowerCase()}"`, "", ...(suggestions.length ? suggestions.slice(0, 10).map((s) => `- ${s}`) : ["- none"]), "");
+
+    const paaSeeds = [`${p.category} terbaik di ${p.city.toLowerCase()}`, `biaya ${p.services[0]}`];
+    const paa = [];
+    for (const [qi, seed] of paaSeeds.entries()) {
+      const serp = await paid(`p${n}-paa-${qi + 1}`, "/serp/google/organic/live/advanced", { ...serpBody(seed), location_code: googleLoc }, { raw: false });
+      paa.push(...peopleAlsoAsk(serp));
+    }
+    md.push(`### People also ask (seeds: ${paaSeeds.join(" | ")})`, "", ...(paa.length ? [...new Set(paa)].map((q) => `- ${q}`) : ["- none"]), "");
+
+    // Two real questions to the real ChatGPT app and to Google.
+    const asks = [...new Set(paa)].slice(0, 2);
+    if (asks.length < 2) asks.push(`${p.category} terbaik di ${p.city} yang mana?`);
+    for (const [qi, q] of asks.slice(0, 2).entries()) {
+      const g = await paid(`p${n}-chatgpt-app-${qi + 1}`, "/ai_optimization/chat_gpt/llm_scraper/live/advanced", {
+        keyword: q, location_code: chatLoc, language_code: LANG, force_web_search: true,
+      }, { raw: false });
+      const brands = [...new Set((JSON.stringify(g?.brand_entities ?? []).match(/"title":"[^"]+"/g) ?? []).map((t) => t.slice(9, -1)))];
+      const serp = await paid(`p${n}-google-${qi + 1}`, "/serp/google/organic/live/advanced", { ...serpBody(q), location_code: googleLoc, people_also_ask_click_depth: undefined }, { raw: false });
+      const ai = aiOverviewText(serp);
+      md.push(`### Q${qi + 1}: ${q}`, "",
+        `- ChatGPT app: ${g ? `answered (model ${g.model ?? "?"}, ${(g.markdown ?? "").length} chars, ${(g.sources ?? []).length} sources)` : "FAILED"}; businesses named: ${brands.slice(0, 8).join(", ") || "none listed"}`,
+        `- Google: AI summary ${ai ? (ai.text ? `with text (${ai.text.length} chars, ${ai.sources.length} sources)` : "element present but EMPTY") : "not shown"}`,
+        "", "<details><summary>ChatGPT app answer (first 600 chars)</summary>", "", (g?.markdown ?? "").slice(0, 600), "", "</details>", "");
+    }
+  }
+  return md;
+}
+
 startBalance = await balance();
-const stages = { discover, answers };
+const stages = { discover, answers, probe };
 if (!stages[stage]) {
   console.error(`Unknown stage "${stage}". Use: ${Object.keys(stages).join(", ")}`);
   process.exit(1);

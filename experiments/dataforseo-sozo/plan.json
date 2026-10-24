@@ -1,1 +1,1 @@
-{ "stage": "answers", "note": "Changing this file on the test branch starts the DataForSEO test job." }
+{ "stage": "probe", "note": "Changing this file on the test branch starts the DataForSEO test job." }
