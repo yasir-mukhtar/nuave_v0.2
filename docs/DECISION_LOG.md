@@ -6,6 +6,24 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-24 — S5: Meta consent, privacy contact, operator, cancellation
+
+Yasir answered four questions before the S5 wording (terms, privacy, support
+and FAQ pages):
+
+- **Meta ads tracking:** keep the promise of a choice before tracking. The
+  Meta Pixel and Conversions API run only for visitors who tap **Setuju** on
+  a cookie notice. The tracking change (separate from S5) must add that
+  notice, a **Pengaturan cookie** footer link, and send server events only
+  for visitors who agreed. The privacy page already says this.
+- **Privacy contact:** support@nuave.ai handles privacy requests too, with
+  the S0 D4 reply time (1 business day).
+- **Operator:** the terms, privacy and support pages say Nuave is run by
+  **PT Nuave Arah Baru** in **Jakarta Selatan**.
+- **Cancellation:** a customer who cancels after paying but before the audit
+  starts (before approving the ten questions) gets a full refund, by hand,
+  within 3 business days like S0 D3.
+
 ## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
 
 Yasir set the target market:

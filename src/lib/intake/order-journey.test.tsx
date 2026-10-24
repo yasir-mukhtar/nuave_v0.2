@@ -930,10 +930,66 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        "Kami sudah mencatatnya dan akan menghubungi Anda lewat email.",
+        "Kami sudah mencatatnya dan akan menghubungi Anda lewat email dalam 1 hari kerja.",
       ),
     ).toBeTruthy();
+    // S5: the failed screen offers help by email.
+    const help = screen.getByRole("link", { name: "Minta bantuan" });
+    expect(help.getAttribute("href")).toMatch(
+      /^mailto:support@nuave\.ai\?subject=/,
+    );
     expect(readActiveOrder()).toBeNull();
+  });
+
+  it("past 15 minutes the running page says so and offers help (S5)", async () => {
+    writeActiveOrder(ORDER_ID);
+    stubServer({
+      status: () => ({
+        state: "running",
+        completed: 6,
+        total: 10,
+        questions: [],
+        payment: { order_number: "NV-TEST01" },
+      }),
+    });
+    render(
+      <SmartAuditStage
+        orderId={ORDER_ID}
+        pollMs={10}
+        onRestart={() => {}}
+        startedAt={Date.now() - 16 * 60_000}
+      />,
+    );
+    await screen.findByText(/Audit ini lebih lama dari biasanya/);
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole("link", { name: "Minta bantuan" })
+          .getAttribute("href"),
+      ).toContain(encodeURIComponent("NV-TEST01")),
+    );
+  });
+
+  it("within 15 minutes the running page shows no delay note", async () => {
+    writeActiveOrder(ORDER_ID);
+    stubServer({
+      status: () => ({
+        state: "running",
+        completed: 2,
+        total: 10,
+        questions: [],
+      }),
+    });
+    render(
+      <SmartAuditStage
+        orderId={ORDER_ID}
+        pollMs={10}
+        onRestart={() => {}}
+        startedAt={Date.now() - 5 * 60_000}
+      />,
+    );
+    await screen.findByText(/2 dari 10 pertanyaan selesai/);
+    expect(screen.queryByText(/lebih lama dari biasanya/)).toBeNull();
   });
 
   it("polls until the order ends, then stops", async () => {

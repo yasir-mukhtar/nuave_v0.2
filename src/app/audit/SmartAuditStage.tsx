@@ -45,6 +45,15 @@ type OrderStatusAnswer = {
 };
 
 const POLL_MS = 5_000;
+/** The delivery promise says 15 minutes after the audit starts (Spec 018
+ * R-23); past it, the running page offers help (S5). */
+const DELAY_NOTICE_MS = 15 * 60_000;
+
+/** A "Minta bantuan" email to support, naming the order when it is known. */
+function helpHref(subject: string, orderNumber: string | null): string {
+  const full = orderNumber ? `${subject} (${orderNumber})` : subject;
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(full)}`;
+}
 
 /** "2 menit 10 detik" */
 export function elapsedText(ms: number): string {
@@ -362,8 +371,16 @@ export default function SmartAuditStage({
             title="Audit belum bisa diselesaikan"
           >
             <p role="status" className="type-copy m-0 text-ink-600">
-              Kami sudah mencatatnya dan akan menghubungi Anda lewat email.
+              Kami sudah mencatatnya dan akan menghubungi Anda lewat email dalam
+              1 hari kerja.
             </p>
+            <a
+              href={helpHref("Minta bantuan: audit belum selesai", orderNumber)}
+              className="type-title-sm mt-4 inline-flex text-ink-900 underline underline-offset-[3px]"
+              data-order-help="failed"
+            >
+              Minta bantuan
+            </a>
             {orderNumber ? (
               <p className="type-mono-sm m-0 mt-2 text-ink-500">
                 No. pesanan {orderNumber}
@@ -503,6 +520,22 @@ export default function SmartAuditStage({
           </p>
         )}
       </section>
+      {startedAt !== null && now - startedAt > DELAY_NOTICE_MS ? (
+        <p
+          role="status"
+          className="type-copy-sm m-0 mt-3 text-ink-600"
+          data-order-note="delayed"
+        >
+          Audit ini lebih lama dari biasanya. Audit tetap berjalan, dan link
+          laporan tetap dikirim ke email Anda.{" "}
+          <a
+            href={helpHref("Minta bantuan: audit lebih lama", orderNumber)}
+            className="text-ink-900 underline underline-offset-[3px]"
+          >
+            Minta bantuan
+          </a>
+        </p>
+      ) : null}
       {unreachable ? (
         <p role="status" className="type-copy-sm m-0 mt-3 text-ink-600">
           Kemajuan belum dapat dimuat. Audit tetap berjalan di server; coba lagi

@@ -1,308 +1,179 @@
-# Syarat dan Ketentuan — agent handoff and implementation draft
+# Syarat dan Ketentuan
 
-> Route: `/terms`
-> Status: founder draft for an independently operated service
+> Route: `/terms` (`src/app/terms/page.tsx`)
+> Status: S5 wording, 2026-10-24. Waiting for the founder's approval of the
+> final Indonesian text. The page and this file say the same thing; change
+> both together.
 > Language: Indonesian
+> Shared facts: `src/lib/legal.ts` and `src/lib/orders/promise.ts`
+> (`DELIVERY_PROMISE`, `AUDIT_SOURCES_TEXT`).
 
-## Instructions for the implementation agent
+## Where each rule comes from
 
-Implement the text under **Public page copy** without adding legal boilerplate.
-Replace every bracketed field with a founder-confirmed fact. Omit an optional
-identity line that does not exist yet, such as NIB; never replace it with a fake
-number or “pending”. The public page must not show internal notes or unresolved
-placeholders. Show the effective date and version. Provide a print/save-as-PDF
-action or ensure normal browser printing works. The checkout must link to the
-exact published version and record the version accepted by the buyer.
+| Rule on the page | Source |
+|---|---|
+| Rp249.000 total, Midtrans with QRIS, bank transfer, GoPay, DANA | Spec 018 R-23; `docs/PRODUCT.md` |
+| Delivery promise sentence | Spec 018 R-23, approved 2026-10-24 |
+| The audit starts when the ten questions are approved | S0 D2 |
+| Full refund if no report 24 hours after the start | S0 D3 |
+| Report sent when each source completed at least 5 of 10 checks | Spec 018 R-19 (Q-2) |
+| Failed check: "Tidak dapat diuji", "Minta bantuan", re-run by hand, refund if the results cannot be provided | Spec 018 R-20, R-21a |
+| Refund within 3 business days of the decision, through Midtrans | S0 D3 |
+| Full refund for cancelling before the audit starts | Founder decision 2026-10-24 (S5) |
+| Report link valid 12 months | S0 D1; decision 2026-10-18 |
+| Wrong email or business handled by hand; order number is not proof | S0 D5, D7 |
+| Reply within 1 business day | S0 D4 |
 
-This draft intentionally does not call Nuave a PT, company, platform, SaaS,
-subscription, or certified/compliant service. Do not add those claims. Do not
-copy the V1 credit/account terms.
-
-Field-fill convention in this draft: fields already filled with plain text were
-taken from the live nuave.ai site; fields shown in **red** are not found on the
-site and must be confirmed by the founder before publication. Do not publish a
-page that still contains a red field. The status table at the end of this file
-is internal review material, not public copy.
-
-## Founder decisions before publishing
-
-- public operator name and city/correspondence identity;
-- delivery deadline and report-link access period;
-- when an audit is considered to have started;
-- correction response time;
-- the proposed cancellation and refund rules below; and
-- maximum delayed-delivery period and terminal remedy if targeted recovery and
-  founder support still cannot complete the audit.
-
-Settled commercial facts: Rp99.000 customer total with no added Nuave checkout
-tax or fee; a 30-day unpaid quote; Midtrans with QRIS, bank transfer, GoPay, and
-DANA; and `support@nuave.ai` as the monitored support address.
-
-## Proposed fair remedy policy
-
-The public copy below proposes this simple policy:
-
-1. Full refund for duplicate payment.
-2. Cancellation and full refund before the audit starts.
-3. Delayed delivery and targeted retry after a Nuave technical failure, with a
-   founder-support path. The maximum delay and terminal remedy remain open.
-4. Free correction when Nuave delivers something outside the agreed scope or
-   introduces a factual/formatting error.
-5. No refund merely because the observed AI answer is unfavourable or the buyer
-   changes their mind after processing starts.
-
-The founder must confirm that the product and payment operations can actually
-honour this policy.
+The earlier draft promised a free replacement audit, a 30-day quote, a fixed
+correction window and refunds in 7 to 14 business days. None of those is a
+founder decision or what the system does, so they are gone.
 
 ---
 
 ## Public page copy
 
-### Metadata
-
 **Page title:** Syarat dan Ketentuan | Nuave
 
-**Meta description:** Ketentuan pemesanan audit visibilitas AI Nuave, termasuk
-ruang lingkup, pembayaran, pengiriman, koreksi, pembatalan, dan pengembalian dana.
+**Meta description:** Ketentuan pemesanan audit Nuave: isi layanan, harga
+Rp249.000, waktu laporan, pengembalian dana, dan batasan audit.
 
-# Syarat dan Ketentuan
+# Syarat dan ketentuan
 
-**Berlaku sejak:** <span style="color:#d00">[TANGGAL]</span>  
-**Versi:** <span style="color:#d00">[VERSI]</span>
+Berlaku sejak 24 Oktober 2026 · Versi 1.0
 
-Syarat ini menjelaskan layanan yang Anda pesan dari Nuave dan apa yang dapat Anda
-harapkan dari kami. Kami menulisnya dalam bahasa sederhana agar ruang lingkup,
-batasan, dan penyelesaian masalah dapat dipahami sebelum Anda membayar.
+Halaman ini menjelaskan apa yang Anda beli dari Nuave, kapan laporan siap, dan
+kapan uang Anda kembali. Baca sebelum membayar.
 
 ## 1. Tentang Nuave
 
-Nuave adalah layanan audit visibilitas AI yang dioperasikan secara independen
-oleh <span style="color:#d00">[NAMA LENGKAP PENGELOLA]</span> di <span style="color:#d00">[KOTA]</span>, Indonesia.
+Nuave adalah layanan independen yang dijalankan oleh PT Nuave Arah Baru
+di Jakarta Selatan, Indonesia. Kontak: support@nuave.ai.
 
-Kontak layanan: `support@nuave.ai`
-Alamat korespondensi atau identitas usaha: <span style="color:#d00">[ALAMAT KORESPONDENSI/NIB JIKA ADA]</span>
+Di halaman ini, "Anda" adalah orang yang memesan audit. "Kami" adalah pengelola
+Nuave.
 
-Dalam syarat ini, “Anda” adalah orang atau bisnis yang memesan audit dan “kami”
-adalah pengelola Nuave.
+## 2. Yang Anda beli
 
-## 2. Layanan yang Anda pesan
+Satu pesanan adalah satu audit untuk satu bisnis. Nuave menanyakan sepuluh
+pertanyaan berbahasa Indonesia ke ChatGPT dan Google AI Overview. Anda memeriksa
+dan menyetujui pertanyaan itu sebelum audit dimulai.
 
-Satu pesanan mencakup satu audit untuk satu bisnis yang telah dipastikan
-identitasnya. Audit menggunakan 10 pertanyaan berbahasa Indonesia yang Anda
-periksa dan setujui sebelum pengujian dimulai.
+Laporan berisi jawaban dari kedua sumber, berapa kali bisnis Anda disebut di
+masing-masing, bisnis lain yang disebut, sumber yang dibaca AI, dan hal yang
+bisa Anda perbaiki.
 
-Laporan yang dikirim berisi hasil pengamatan pada layanan AI yang disebutkan
-dalam ringkasan pesanan, sumber yang tersedia, temuan tentang informasi publik,
-rekomendasi yang terkait dengan temuan, serta metode dan batasan pengujian.
+Pesanan tidak mencakup pemantauan rutin, dashboard, langganan, jasa SEO, atau
+pengerjaan saran di laporan. Cek ulang adalah pesanan terpisah.
 
-Pesanan tidak mencakup monitoring berkelanjutan, dashboard, langganan,
-implementasi rekomendasi, jasa SEO lengkap, atau jaminan hasil bisnis. Re-check
-adalah pesanan terpisah.
+## 3. Siapa yang boleh memesan
 
-## 3. Syarat pemesan
+Anda berusia 18 tahun ke atas dan berhak memesan audit untuk bisnis yang
+diperiksa. Informasi yang Anda berikan harus benar.
 
-Anda harus berusia setidaknya 18 tahun dan berwenang memesan audit untuk bisnis
-yang diuji. Anda bertanggung jawab memberikan informasi yang benar dan memastikan
-bahwa Anda berhak menggunakannya.
+Jangan kirim data pasien, data pelanggan, kata sandi, atau data sensitif lain.
+Audit tidak membutuhkannya.
 
-Jangan mengirim data pelanggan, kata sandi, rahasia dagang, data kesehatan, data
-keuangan pribadi, dokumen hukum privat, atau data sensitif lain yang tidak
-diperlukan. Jika kami menerimanya, kami dapat menghentikan proses dan meminta
-Anda mengirim ulang informasi yang aman.
+## 4. Harga dan pembayaran
 
-## 4. Konfirmasi bisnis dan pertanyaan
+Harga satu audit **Rp249.000**, sudah total. Nuave tidak menambah pajak atau
+biaya lain saat checkout. Pembayaran lewat Midtrans dengan QRIS, transfer bank,
+GoPay, atau DANA. Kami tidak menerima nomor kartu, PIN, atau kode OTP Anda.
 
-Sebelum pembayaran, Anda melihat pratinjau identitas bisnis dari sumber publik
-yang dikirim dan ruang lingkup satu pesanan. Setelah pembayaran berhasil, Nuave
-menyiapkan fakta bisnis untuk Anda periksa dan perbaiki, lalu menyiapkan 10
-pertanyaan yang dapat Anda ubah sebelum pengujian dimulai.
+Cek gratis di awal hanya memastikan bisnis Anda. Setelah membayar, Anda
+memeriksa data bisnis dan menyetujui sepuluh pertanyaan.
 
-Audit tidak dimulai sampai Anda menyetujuinya. Setelah disetujui, pertanyaan
-dikunci. Permintaan perubahan setelah audit dimulai ditangani melalui dukungan;
-hasil yang sudah dibuat tetap disimpan dan tidak ditulis ulang.
+## 5. Kapan laporan siap
 
-Anda bertanggung jawab memeriksa bisnis, cabang, dan pertanyaan sebelum memulai
-audit. Koreksi untuk bisnis yang sama sebelum audit dimulai tetap menggunakan
-pesanan tersebut dan memerlukan pemeriksaan ulang pertanyaan. Jika Anda baru
-menyadari setelah audit dimulai bahwa bisnis yang dipilih salah, hubungi
-`support@nuave.ai`. Pengelola dapat memberikan satu kesempatan audit pengganti
-melalui proses dukungan. Pesanan pengganti digunakan sebagai pilihan terakhir;
-hasil audit lama tidak diubah atau dihapus.
+Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal
+diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan,
+kami kembalikan uang Anda.
 
-Jika identitas bisnis atau cabang tidak dapat dipastikan, kami dapat meminta
-perbaikan atau menolak pesanan. Pembatalan sebelum audit dimulai mengikuti
-ketentuan pembatalan di bawah.
+Audit dimulai saat Anda menyetujui sepuluh pertanyaan, bukan saat membayar.
+Setelah itu pertanyaan dikunci. Audit tetap berjalan di server walaupun halaman
+ditutup. Link laporan dikirim ke email pesanan dan berlaku 12 bulan. Simpan
+PDF-nya jika Anda ingin menyimpan laporan lebih lama.
 
-## 5. Harga dan pembayaran
+Jika laporan belum siap 24 jam setelah audit dimulai, kami kembalikan uang Anda
+penuh.
 
-Harga total satu audit adalah **Rp99.000**. Nuave tidak menambahkan pajak atau
-biaya lain pada saat checkout. Ringkasan pesanan yang belum dibayar berlaku 30
-hari; setelah itu identitas bisnis, harga, dan versi ketentuan harus diperbarui
-sebelum pembayaran. Pembayaran dilakukan melalui Midtrans menggunakan QRIS,
-transfer bank, GoPay, atau DANA.
-Kami tidak menyimpan nomor kartu atau kredensial pembayaran Anda.
+## 6. Jika ada pemeriksaan yang gagal
 
-Audit hanya dimulai setelah pembayaran dinyatakan berhasil dan 10 pertanyaan
-telah disetujui. Anda akan menerima konfirmasi yang mencantumkan identitas bisnis,
-ruang lingkup, harga, status pembayaran, waktu pengiriman, dan versi ketentuan
-yang diterima.
+Kadang satu pertanyaan tidak berhasil diperiksa di ChatGPT atau Google karena
+gangguan teknis. Laporan tetap dikirim jika setiap sumber berhasil memeriksa
+sedikitnya 5 dari 10 pertanyaan. Pemeriksaan yang gagal ditandai **Tidak dapat
+diuji** dengan tombol **Minta bantuan**, dan tidak dihitung sebagai hasil buruk.
 
-## 6. Pelaksanaan dan pengiriman
+Jika Anda minta bantuan, kami balas dalam 1 hari kerja. Kami coba periksa ulang
+pertanyaan yang gagal dan mengirim hasilnya ke email pesanan. Jika hasilnya
+tetap tidak bisa didapat, kami kembalikan uang Anda.
 
-Laporan dikirim paling lambat <span style="color:#d00">[WAKTU PENGIRIMAN]</span> setelah pembayaran berhasil
-dan pertanyaan disetujui. Petunjuk akses privat dikirim ke email pemesan.
+Jika kurang dari 5 pertanyaan berhasil di salah satu sumber, laporan tidak
+dibuat. Kami kabari lewat email dan mengembalikan uang Anda penuh.
 
-Laporan lengkap dibuat hanya setelah seluruh 10 pertanyaan menghasilkan
-pengamatan yang dapat digunakan. Jika satu pertanyaan masih gagal karena masalah
-teknis, hasil lain tetap disimpan dan Nuave mengikuti proses pemulihan atau
-penyelesaian yang disetujui; Nuave tidak mengirim laporan sembilan pertanyaan
-seolah-olah pesanan telah lengkap.
+## 7. Pembatalan dan pengembalian dana
 
-Laporan web yang lengkap dan tervalidasi dapat dikirim meskipun pembuatan PDF
-masih gagal atau sedang dicoba kembali. PDF tetap dibuat dari versi laporan
-yang sama. Kegagalan PDF tidak mengubah hasil audit dan tidak menjalankan ulang
-10 pertanyaan.
+- **Sebelum audit dimulai** (sebelum Anda menyetujui sepuluh pertanyaan), Anda
+  bisa membatalkan pesanan dan menerima uang kembali penuh. Tulis ke
+  support@nuave.ai dengan nomor pesanan.
+- **Pembayaran ganda** untuk pesanan yang sama kami kembalikan penuh setelah
+  kami periksa.
+- **Setelah audit dimulai**, pesanan tidak bisa dibatalkan karena berubah
+  pikiran.
+- **Hasil yang tidak sesuai harapan**, misalnya bisnis Anda tidak disebut atau
+  pesaing lebih sering disebut, bukan alasan pengembalian dana. Yang Anda beli
+  adalah pemeriksaan dan laporannya, bukan hasil tertentu.
 
-Akses laporan tersedia selama <span style="color:#d00">[MASA AKSES]</span>. Anda bertanggung jawab mengunduh
-dan menyimpan salinan sebelum masa akses berakhir. Jika ada keterlambatan, kami
-akan memberi kabar melalui email dan menjelaskan pilihan yang tersedia.
+Uang dikembalikan lewat Midtrans ke cara bayar semula, paling lambat 3 hari
+kerja setelah kami memastikan pengembalian dana. Lama dana sampai ke rekening
+atau dompet digital Anda tergantung bank atau penyedia pembayaran.
 
-## 7. Koreksi, kegagalan, pembatalan, dan pengembalian dana
+## 8. Salah email atau salah bisnis
 
-### Koreksi
+Tulis ke support@nuave.ai. Kami bantu secara manual. Untuk mengirim link ke
+email lain, kami perlu konfirmasi dari email pesanan dan dari email baru. Nomor
+pesanan saja tidak cukup. Laporan yang sudah dibuat tidak diubah.
 
-Jika laporan tidak sesuai dengan bisnis atau pertanyaan yang disepakati, tidak
-lengkap karena kesalahan Nuave, atau memuat kesalahan yang kami masukkan, hubungi
-`support@nuave.ai` dalam <span style="color:#d00">[BATAS WAKTU KOREKSI]</span> setelah laporan dikirim. Kami
-akan memeriksa dan, jika benar, memperbaikinya tanpa biaya.
+## 9. Batasan audit
 
-### Kegagalan teknis
+Audit adalah contoh dari sepuluh pertanyaan pada waktu tertentu. Jawaban AI
+bisa berubah. Laporan bukan peringkat tetap dan tidak mewakili semua pertanyaan
+atau semua orang.
 
-Jika masalah teknis membuat salah satu dari 10 pengamatan belum dapat digunakan,
-pengiriman ditunda. Kami menyimpan pengamatan yang sudah selesai dan mencoba
-kembali hanya pekerjaan yang gagal dengan metode yang sama. Anda dapat meminta
-bantuan melalui `support@nuave.ai`. Dukungan tidak mengubah pertanyaan yang
-sudah dikunci atau hasil yang sah. Jika pesanan belum selesai setelah
-<span style="color:#d00">[BATAS PENUNDAAN]</span>, <span style="color:#d00">[PENYELESAIAN TERAKHIR]</span>.
+Nuave tidak menjamin bisnis Anda akan disebut setelah saran dijalankan. Nuave
+juga tidak menjanjikan kenaikan pengunjung, calon pelanggan, atau penjualan.
 
-### Pembatalan
+## 10. Penggunaan laporan
 
-Anda dapat membatalkan pesanan dan meminta pengembalian dana penuh sebelum audit
-mulai dijalankan. Setelah pemrosesan dimulai, pembatalan karena perubahan pikiran
-tidak tersedia, kecuali kami menyetujui lain secara tertulis.
+Anda boleh memakai dan membagikan laporan untuk keperluan bisnis Anda. Jangan
+mengubahnya sampai menyesatkan, dan jangan menjualnya kembali sebagai produk
+Nuave.
 
-### Pembayaran ganda
+Kami tidak menerbitkan nama bisnis, temuan, atau laporan Anda sebagai contoh
+atau promosi tanpa izin terpisah dari Anda.
 
-Pembayaran ganda untuk pesanan yang sama akan dikembalikan penuh setelah kami
-memverifikasinya.
+## 11. Penolakan pesanan
 
-### Hasil yang tidak menguntungkan
+Kami bisa menolak atau menghentikan pesanan jika bisnisnya tidak dapat
+dipastikan, informasinya tidak cukup, atau ada dugaan penyalahgunaan. Jika itu
+terjadi sebelum audit dimulai, uang Anda kembali penuh.
 
-Tidak munculnya bisnis Anda dalam jawaban AI, penyebutan kompetitor, atau
-ketidaksetujuan terhadap hasil pengamatan bukan kegagalan layanan dan tidak dengan
-sendirinya menjadi dasar pengembalian dana. Nilai layanan ini adalah pengujian dan
-laporannya, bukan hasil tertentu.
+## 12. Data dan privasi
 
-Pengembalian dana yang disetujui diproses dalam 7–14 hari kerja melalui metode
-pembayaran semula. Waktu dana masuk ke rekening Anda dapat bergantung pada
-penyedia pembayaran.
+Cara kami memakai data dijelaskan di
+[Kebijakan privasi dan data](/privacy). Menyetujui syarat ini tidak berarti
+Anda setuju menerima promosi.
 
-## 8. Batasan metode
+## 13. Tanggung jawab dan keluhan
 
-Audit adalah sampel dari 10 pertanyaan, pada layanan AI dan waktu yang disebutkan
-dalam laporan. Jawaban AI dapat berubah. Laporan bukan peringkat permanen dan
-tidak mewakili semua pertanyaan, pengguna, model, atau waktu.
+Kami menjalankan audit sesuai yang Anda setujui dan berusaha menjaga laporan
+tetap akurat. Kami tidak mengendalikan ChatGPT, Google, atau situs pihak lain.
 
-Nuave tidak menjamin bisnis Anda akan disebutkan setelah rekomendasi dijalankan
-dan tidak menjanjikan kenaikan traffic, calon pelanggan, penjualan, atau
-pendapatan. Temuan tentang informasi publik juga tidak membuktikan bahwa informasi
-tersebut menyebabkan jawaban AI tertentu.
+Syarat ini tidak menghapus hak Anda sebagai konsumen menurut hukum Indonesia.
+Jika ada masalah, hubungi kami dulu di support@nuave.ai dengan nomor pesanan.
+Kami balas dalam 1 hari kerja (Senin sampai Jumat, waktu Jakarta). Syarat ini
+tunduk pada hukum Republik Indonesia.
 
-## 9. Penggunaan laporan
+## 14. Perubahan syarat
 
-Anda dapat menggunakan dan membagikan laporan untuk kepentingan internal bisnis
-Anda. Kutipan dan tautan milik sumber asal tetap tunduk pada hak pemiliknya.
-
-Anda tidak boleh mengubah laporan dengan cara yang menyesatkan, menyatakan bahwa
-Nuave menjamin hasil tertentu, atau menjual kembali laporan sebagai produk Nuave
-tanpa izin tertulis.
-
-Laporan Anda bersifat privat. Kami tidak akan mempublikasikan nama bisnis, temuan,
-atau laporan Anda sebagai contoh atau materi promosi tanpa izin terpisah.
-
-## 10. Data dan privasi
-
-Kami memproses informasi yang diperlukan untuk menerima pesanan, menjalankan
-audit, mengirim laporan, menjaga keamanan layanan, dan membantu jika terjadi
-masalah. Penjelasan lengkap terdapat dalam [Kebijakan Privasi dan Data](/privacy).
-
-Persetujuan atas syarat layanan tidak otomatis berarti Anda setuju menerima
-promosi. Jika pemasaran ditawarkan, pilihannya harus terpisah dan dapat ditarik.
-
-## 11. Penolakan atau penghentian pesanan
-
-Kami dapat menolak atau menghentikan pesanan jika identitas bisnis tidak dapat
-dipastikan, informasi yang dibutuhkan tidak tersedia, pesanan berada di luar
-ruang lingkup layanan, terdapat dugaan penyalahgunaan, atau data yang dikirimkan
-melanggar hukum maupun membahayakan pihak lain.
-
-Jika penghentian terjadi sebelum audit dimulai, pembayaran dikembalikan penuh.
-Jika terjadi setelah audit dimulai karena pelanggaran atau informasi keliru dari
-pemesan, kami akan menjelaskan keputusan dan penyelesaian yang wajar berdasarkan
-pekerjaan yang sudah dilakukan.
-
-## 12. Tanggung jawab
-
-Kami akan menjalankan layanan sesuai dengan ruang lingkup yang dikonfirmasi dan
-melakukan upaya yang wajar untuk menjaga ketepatan laporan serta keamanan data.
-Namun, kami tidak mengendalikan layanan AI, situs pihak ketiga, atau perubahan
-informasi publik setelah waktu pengujian.
-
-Tidak ada bagian dalam syarat ini yang menghapus hak konsumen yang tidak dapat
-dikesampingkan menurut hukum Indonesia. Jika terjadi masalah, kami meminta Anda
-menghubungi kami lebih dahulu agar dapat diperiksa dan diselesaikan secara wajar.
-
-## 13. Perubahan ketentuan
-
-Kami dapat memperbarui ketentuan ini ketika layanan berubah. Versi yang berlaku
-untuk pesanan Anda adalah versi yang ditampilkan dan diterima saat pesanan dibuat.
-Perubahan setelah itu tidak mengubah pesanan yang sudah disepakati, kecuali Anda
-menyetujuinya.
-
-## 14. Keluhan dan penyelesaian masalah
-
-Kirim pertanyaan, permintaan koreksi, atau keluhan ke `support@nuave.ai` dengan
-nomor pesanan dan nama bisnis. Jangan mengirim kata sandi atau data sensitif.
-
-Kami akan mengonfirmasi penerimaan dalam <span style="color:#d00">[TARGET RESPONS]</span> dan berusaha
-menyelesaikan masalah melalui komunikasi langsung terlebih dahulu. Syarat ini
-tunduk pada hukum Republik Indonesia. Jika masalah tidak dapat diselesaikan,
-para pihak dapat menggunakan mekanisme penyelesaian sengketa yang tersedia dan
-berwenang di Indonesia.
-
----
-
-## Status pengisian placeholder (catatan internal, bukan konten publik)
-
-Teks **merah** pada salinan publik di atas berarti nilainya tidak ditemukan di
-situs nuave.ai yang sedang berjalan dan harus dipastikan oleh founder sebelum
-halaman dipublikasikan. Nilai yang sudah terisi berasal dari situs nuave.ai (V1)
-atau draft yang ada di repo, dan tetap perlu diverifikasi founder.
-
-| Placeholder | Status | Sumber / kandidat |
-|---|---|---|
-| `[TANGGAL]` | 🔴 Perlu diisi founder | Tanggal berlaku versi V2. Situs lama memakai 7 Maret 2026 untuk dokumen V1 (produk kredit lama, tidak dipakai). |
-| `[VERSI]` | 🔴 Perlu diisi founder | Misalnya "1.0" untuk versi pertama. |
-| `[NAMA LENGKAP PENGELOLA]` | 🔴 Perlu diisi founder | Situs lama hanya menyebut "Nuave"; tidak ada nama pengelola perorangan. |
-| `[KOTA]` | 🔴 Perlu diisi founder | Tidak disebut di situs. |
-| `[ALAMAT KORESPONDENSI/NIB JIKA ADA]` | 🔴 Perlu diisi founder | Situs lama tidak mencantumkan alamat atau NIB. Baris opsional ini bisa dihilangkan jika belum ada. |
-| Harga total | ✅ Ditetapkan founder | Rp99.000 untuk satu audit; Nuave tidak menambahkan pajak atau biaya lain pada checkout; quote belum dibayar berlaku 30 hari. Wording ini bukan klaim bahwa pengelola bebas pajak secara hukum. |
-| Penyedia/metode pembayaran | ✅ Ditetapkan founder | Midtrans: QRIS, transfer bank, GoPay, dan DANA. Konfigurasi produksi tetap harus diverifikasi. |
-| `[WAKTU PENGIRIMAN]` | 🔴 Perlu diisi founder | Situs lama menyebut "results come in minutes" untuk produk otomatis lama; tidak berlaku untuk layanan audit V2. |
-| `[BATAS PENUNDAAN]` | 🔴 Perlu diisi founder | Batas maksimum sebelum penyelesaian terakhir ditawarkan. |
-| `[PENYELESAIAN TERAKHIR]` | 🔴 Perlu diisi founder | Tindakan jika targeted retry dan bantuan founder tetap tidak dapat menyelesaikan 10/10. |
-| `[MASA AKSES]` | 🔴 Perlu diisi founder | Tidak ada pernyataan masa akses di situs. |
-| `[BATAS WAKTU KOREKSI]` | 🔴 Perlu diisi founder | Tidak ada di situs. |
-| Email dukungan | ✅ Ditetapkan founder | `support@nuave.ai`; email transaksional dikirim melalui Resend sebagai `Tim Nuave <support@nuave.ai>`. |
-| `[WAKTU REFUND]` | ✅ Diisi dari nuave.ai | Situs lama: "refund issued within 7–14 business days via the original payment method". Verifikasi ulang jika penyedia pembayaran V2 berbeda. |
-| `[TARGET RESPONS]` | 🔴 Perlu diisi founder | Situs lama menyebut 1–2 hari kerja, tetapi komitmen V2 belum disetujui. |
+Syarat ini bisa berubah jika layanan berubah. Pesanan Anda mengikuti versi yang
+berlaku saat Anda membayar.
