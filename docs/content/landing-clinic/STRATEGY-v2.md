@@ -1,7 +1,7 @@
 # Clinic landing page: content strategy v2 (light)
 
-> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
-> Reading note: §1 to §9 are the v2.0 strategy as approved (Rp99.000, the old S3 and price section). Where they differ from §10, §10 wins.
+> Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list), then to **v2.2** after his and Fable's review (see §11: one spoken register, his wording, mobile = desktop). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
+> Reading note: §1 to §9 are the v2.0 strategy as approved (Rp99.000, the old S3 and price section). Where they differ from §10 and §11, the later section wins.
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
 ## 1. What went wrong in v1, in plain words
@@ -256,3 +256,64 @@ The hero headline as recommended, the rater8 figure labelled as a US survey, the
 2. Keep or remove the one "Ringkasan AI" mention.
 3. At launch, let search engines in. `src/app/robots.ts` blocks the whole site today, on purpose, while the site is pre-release.
 4. Optional next touchpoint: one short article on "cara muncul di Google AI Overview" that links to this page. A "how to" search is usually won by an article, not a landing page.
+
+## 11. Update v2.2: review by Yasir and Fable (24 October 2026)
+
+**Why.** Yasir annotated lofi v2.1 in Figma and asked Fable for an Indonesian-voice review. Fable's verdict: "close, not yet". The structure, the short lines and the honesty are right. But three patterns give the copy away as AI-written:
+- the register flips between spoken and formal;
+- some English sentence shapes survived translation;
+- the steps bounce "Kami X. Anda Y." like a manual.
+
+Yasir also asked for mobile and desktop to have exactly the same content and structure.
+
+**Where the review lives.** Yasir's notes and Fable's priority notes are Dev Mode annotations on the mobile frame. Fable's per-section cards sit in the blue column of the mobile frame, and the cross-page summary is in frame "03 · Review summary · Indonesian voice". Fable marked each card [P1] fix before build, [P2] worth doing, [P3] optional, or [Yasir] founder decision.
+
+**Applied as written (Yasir).** The hero and final microcopy "Cek dulu apakah klinik Anda bisa ditemukan, gratis." keeps "Auditnya Rp249.000, sekali bayar." after it, so the first screen still shows the price. Also applied:
+- **More clinic types:** a "Lainnya" tab in the hero demo (Mata, Fisioterapi, Kandungan, THT, Klinik umum), so other clinic types see themselves;
+- **US card:** "warga AS" instead of "orang dewasa AS";
+- **Indonesia card:** the 2024 card now says what it means: "Google AI Overview mulai muncul di pencarian di Indonesia.";
+- **"Bahasa pasien" card:** "10 pertanyaan, seperti yang biasa diketik pasien.";
+- **Delivery line:** "Laporan siap dalam 15 menit setelah audit dimulai.".
+
+**Applied from Fable:**
+- **Every [P1]:**
+  - the hero line ("Cek apakah ... apa yang perlu dibenahi");
+  - the S2, S3 and S4 headlines;
+  - the S4 step lines;
+  - the S5 line ("Sekalian tahu ...");
+  - "Hasil cek hari ini, bukan peringkat tetap.";
+  - "Bayar setelah klinik Anda ketemu.";
+  - the FAQ answer shapes.
+- **The register sweep** across the whole page, desktop and the link-preview image included.
+- **Most [P2] cards:**
+  - colon-style clinic names in the chat mocks;
+  - the S2 line;
+  - the Indonesian card first in S2;
+  - "kalau" for "bila";
+  - "Batasnya jelas" instead of "Jujur";
+  - "Aman soal aturan iklan kesehatan?";
+  - the sharper "Bisa cek sendiri di ChatGPT?" answer;
+  - "Email Yasir".
+
+**Not applied, and why:**
+- "Bayarnya nanti" (it reads like PayLater in Indonesia).
+- "10 pertanyaan yang benar-benar dicari orang" (some questions are built from a topic or the clinic profile, so "berdasarkan pencarian Google" stays).
+- The example inside the form field (it crowds the field at 360 wide).
+- "siap ditunjukkan ke owner" (the page speaks to owners too).
+- "Topik yang belum menyebut Anda" as a card title (too long for the card).
+
+**Left as questions for Yasir:** Fable's [Yasir] cards:
+- a WhatsApp number next to the founder line;
+- "Ringkasan AI" as the label inside the Google mock;
+- "Bisnis Anda" vs "Klinik Anda" in the report;
+- an Indonesian "coba sendiri" proof;
+- the optional H1 "Pasien mulai tanya AI dulu, baru pilih klinik.".
+
+**Mobile = desktop.** A text comparison of the two boards found five gaps, now closed:
+- **Menu:** the four links (behind a menu icon on mobile, drawn open in its own frame).
+- **S3:** the ChatGPT input bar, and two source chips in the AI Overview box.
+- **"Cara kerja":** the pictures for steps 1 and 3, plus their caption.
+- **Value card:** its "AI Visibility Report" label and the row ticks.
+- **Sticky bar:** "Gratis dulu · Audit Rp249.000" now appears on desktop as well, in the sticky menu bar after the hero.
+
+**One thing to align before launch.** Yasir's delivery line drops "biasanya" and "paling lama 24 jam". Spec 018's promise text (R-23) on the order preview and checkout still has both. The page and the product should promise the same thing.

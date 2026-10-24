@@ -1,6 +1,6 @@
-# Clinic landing page: copy v2.1 (light, ChatGPT and Google AI Overview, Rp249.000)
+# Clinic landing page: copy v2.2 (light, ChatGPT and Google AI Overview, Rp249.000)
 
-> Status: final draft copy v2.1 for the light page (24 October 2026). Not live. It updates v2.0 (kept in git history) after Yasir's feedback on lofi v2: the new price, both sources, questions based on Google searches, and a list of what the clinic gets. It replaces [`COPY.md`](./COPY.md) (v1, kept as history).
+> Status: final draft copy v2.2 for the light page (24 October 2026). Not live. v2.2 applies Yasir's annotations and Fable's Indonesian-voice review of v2.1 (see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §11). v2.1 added the new price, both sources, questions based on Google searches, and a list of what the clinic gets; v2.0 and v2.1 are in git history. It replaces [`COPY.md`](./COPY.md) (v1, kept as history).
 > Strategy: [`STRATEGY-v2.md`](./STRATEGY-v2.md) (§10 covers v2.1). Layout: [`LOFI-v2.md`](./LOFI-v2.md). Growth check: [`GROWTH.md`](./GROWTH.md) Part 5; "growth N" below means item N there.
 > **Release gate:** this copy describes the Spec 018 audit: the ChatGPT app and Google AI Overview, questions based on Google search data, Rp249.000. Spec 018 is approved but not merged (branch `claude/laughing-fermi-prsgqf`). Publish this page only in the same release as Spec 018. Until then, the live page keeps Rp99.000.
 
@@ -10,9 +10,36 @@
 
 ## Word count
 
-**Visible words: 574** (budget about 600; v2 was 460, and the same script gives 461 on v2). Counted the same way as `COPY-v2.md`, by script: menu, headlines, lines, cards, steps, tab captions, value list, price card, buttons and microcopy at every repeat, sticky bar, picture labels and captions, source line, FAQ questions, final section, footer. Excluded, as in v2: FAQ answers, the hero demo chat, the report mock contents. New exclusions of the same kind: the S3 chat and Google answers and the S4 question card (both are mock content, like the hero demo). With those in-picture texts counted too, the page shows 667 words.
+**Visible words: about 585** (v2.1 counted 574 by script; v2.2 adds about 10 through the line-by-line changes in §11 of the strategy. Budget about 600; v2.0 was 460). Counted the same way as `COPY-v2.md`, by script: menu, headlines, lines, cards, steps, tab captions, value list, price card, buttons and microcopy at every repeat, sticky bar, picture labels and captions, source line, FAQ questions, final section, footer. Excluded, as in v2: FAQ answers, the hero demo chat, the report mock contents. New exclusions of the same kind: the S3 chat and Google answers and the S4 question card (both are mock content, like the hero demo). With those in-picture texts counted too, the page shows 667 words.
 
-## What changed, and why (one line each)
+## What changed in v2.2 (review by Yasir and Fable, 24 October 2026)
+
+Yasir annotated the Figma lofi, and Fable reviewed the Indonesian voice. Their notes and the decisions are in [`STRATEGY-v2.md`](./STRATEGY-v2.md) §11. In short:
+
+1. **Yasir's wording, applied as written:**
+   - the hero and final microcopy "Cek dulu apakah klinik Anda bisa ditemukan, gratis.", with "Auditnya Rp249.000, sekali bayar." kept so the first screen still shows the price;
+   - "warga AS" in the 47% card;
+   - "Google AI Overview mulai muncul di pencarian di Indonesia.";
+   - the "Bahasa pasien" line about how patients actually type;
+   - the delivery line;
+   - a "Lainnya" tab so other clinic types see themselves in the demo.
+2. **One register:** spoken, polite Indonesian with Anda, everywhere. Formal words a person would not say across a desk are gone: kini, bertanya, bila, dari sisi, menjaminnya, temukan, berpengaruh, "Langkah pertama adalah", "layak dicoba", potret, "Tulis ke".
+3. **No English sentence shapes:** no sentence starts with "Dan" or "Atau", no colon-joined clauses in the FAQ, no "satu potret".
+4. **Less "Kami X. Anda Y.":** the steps let Nuave and the clinic take turns ("Nuave cari kliniknya", "Anda tinggal cek").
+5. **New headlines:**
+   - S2 "Makin banyak pasien pilih dokter lewat AI." ("rujukan" means a referral letter to clinic people);
+   - S3 "Satu pertanyaan pasien, dua jawaban AI.", with the line ending "Klinik Anda termasuk?";
+   - S4 "Kami tanya AI persis seperti pasien Anda.".
+6. **Chat realism:** clinic names in the chat mocks are bold with a colon, as ChatGPT writes them.
+7. **Same content on mobile and desktop:**
+   - the menu links (behind a menu icon on mobile);
+   - the ChatGPT input bar;
+   - two source chips in the AI Overview box;
+   - the step pictures in "Cara kerja";
+   - the value card's label and ticks;
+   - the sticky "Gratis dulu · Audit Rp249.000" on both.
+
+## What changed in v2.1, and why (one line each)
 
 1. **Price:** Rp99.000 becomes Rp249.000 everywhere (hero, step 2 tag, S7, FAQ, final, sticky bar). Founder's ask.
 2. **Hero line:** "Lihat apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang dibenahi." Names both sources and says what the check finds (growth 6; carries the search phrase).
@@ -52,23 +79,29 @@
 ## 0. Menu
 
 Logo **Nuave** · **Cara kerja** · **Laporan** · **Harga** · **FAQ** · button **Cek klinik saya**
-Mobile: logo + **Cek klinik saya**.
+Mobile: logo + **Cek klinik saya** + a menu icon that opens the same four links (**Cara kerja** · **Laporan** · **Harga** · **FAQ**) and the button.
 
 ---
 
 ## 1. Hero
 
 H1: **Pasien sekarang tanya AI dulu, baru pilih klinik.**
-Line: **Lihat apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang dibenahi.**
+Line: **Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang perlu dibenahi.**
 
 Field: **Website atau Instagram klinik**
 Button: **Cek klinik saya di AI**
-Under the button: **Gratis: kami temukan klinik Anda dulu. Audit Rp249.000, sekali bayar.**
+Under the button: **Cek dulu apakah klinik Anda bisa ditemukan, gratis. Auditnya Rp249.000, sekali bayar.**
 Three facts: **10 pertanyaan berdasarkan pencarian Google** · **ChatGPT dan Google AI Overview** · **Tanpa data pasien**
 
 ### Hero demo (mock content, unchanged from v2)
 
-The ChatGPT chat with the tabs **Gigi** · **Kecantikan** · **Kulit** · **Anak**, the same questions and answers as `COPY-v2.md`, the dashed **Klinik Anda?** row, and the caption **Contoh. Nama klinik fiktif.**
+The ChatGPT chat with the tabs **Gigi** · **Kecantikan** · **Kulit** · **Anak** · **Lainnya**, the same four questions as v2.0, the dashed **Klinik Anda?** row, and the caption **Contoh. Nama klinik fiktif.** Answers name each clinic in bold followed by a colon, as ChatGPT writes it (**Klinik A:** behel bisa dicicil), not a middle dot.
+
+**Lainnya** (new, for clinic types not in the tabs) opens a chip row **Mata · Fisioterapi · Kandungan · THT · Klinik umum**. Mata is shown:
+- Question: **Klinik mata di Bekasi yang bisa periksa mata anak, buka hari Minggu?**
+- Intro: **Beberapa klinik mata yang bisa dipertimbangkan:**
+- **Klinik A:** dokter mata anak, antre tidak lama · **Klinik B:** buka Minggu pagi · **Klinik C:** bisa langsung buat kacamata
+- Dashed, empty: **Klinik Anda?**
 
 Small report card (overlapping the demo, new two-row version):
 - **AI Visibility Report**
@@ -81,24 +114,24 @@ Small report card (overlapping the demo, new two-row version):
 
 ## 2. Why now
 
-H2: **AI kini jadi rujukan pasien.**
-Line: **Di AS, AI sudah lebih berpengaruh daripada pencarian Google saat pasien memilih dokter.**
+H2: **Makin banyak pasien pilih dokter lewat AI.**
+Line: **Di AS, saran AI sekarang lebih diikuti pasien daripada hasil Google.**
 
 Cards:
-- **47%** · orang dewasa AS cari dokter lewat AI seperti ChatGPT atau Google AI Overview.
-- **40 juta** · orang di dunia bertanya soal kesehatan ke ChatGPT tiap hari.
-- **2024** · Google AI Overview hadir di Indonesia.
+- **2024** · Google AI Overview mulai muncul di pencarian di Indonesia.
+- **47%** · warga AS cari dokter lewat AI seperti ChatGPT atau Google AI Overview.
+- **40 juta** · orang di dunia tanya soal kesehatan ke ChatGPT tiap hari.
 
-Source line: **Sumber: rater8 Patient Choice Report 2026, survei 992 orang dewasa di AS, April 2026; OpenAI, Januari 2026; Google Indonesia, 2024.**
+Source line: **Sumber: Google Indonesia, 2024; rater8 Patient Choice Report 2026, survei 992 orang dewasa di AS, April 2026; OpenAI, Januari 2026.**
 
-> Note: rater8 says "a tool like ChatGPT or Google's AI Overviews"; "seperti" keeps that. The line compares AI with ordinary Google search, which is what rater8 measured.
+> Note: the Indonesian card comes first, so "itu kan di Amerika" is answered before it is thought. rater8 says "a tool like ChatGPT or Google's AI Overviews"; "seperti" keeps that. The line compares AI with ordinary Google results, which is what rater8 measured (AI shapes the choice more than Google search).
 
 ---
 
 ## 3. Two places, one question
 
-H2: **Pasien bertanya ke ChatGPT dan mencari di Google.**
-Line: **Jawaban ChatGPT dan Google AI Overview cuma menyebut beberapa klinik.**
+H2: **Satu pertanyaan pasien, dua jawaban AI.**
+Line: **ChatGPT dan Google AI Overview cuma menyebut beberapa klinik. Klinik Anda termasuk?**
 
 Picture, left panel label: **ChatGPT**
 Picture, right panel label: **Google AI Overview**
@@ -110,21 +143,21 @@ The same question in both panels, word for word (the product asks both sources t
 
 **"rekomendasi klinik behel di Depok yang bisa dicicil"**
 
-Left, a ChatGPT chat:
+Left, a ChatGPT chat (with the grey input bar **Tanyakan apa saja** at the bottom, on mobile and desktop):
 - Patient bubble: the question above.
 - Answer intro: **Beberapa klinik gigi di Depok yang bisa dipertimbangkan:**
-- **Klinik A** · behel bisa dicicil
-- **Klinik B** · buka Sabtu sampai sore
-- **Klinik C** · ada dokter spesialis ortodonti
+- **Klinik A:** behel bisa dicicil
+- **Klinik B:** buka Sabtu sampai sore
+- **Klinik C:** ada dokter spesialis ortodonti
 - Dashed, empty: **Klinik Anda?**
 
 Right, a Google results page on a phone:
 - Search bar: the question above.
-- Box on top, labelled **AI Overview**:
+- Box on top, labelled **AI Overview**, with two source chips (**klinik-a.contoh** · **direktori.contoh**) on mobile and desktop:
   - Intro: **Ada beberapa klinik gigi di Depok yang menawarkan cicilan behel, misalnya:**
-  - **Klinik A** · cicilan tanpa kartu kredit
-  - **Klinik D** · konsultasi awal sebelum pasang
-  - **Klinik E** · dekat stasiun, parkir luas
+  - **Klinik A:** cicilan tanpa kartu kredit
+  - **Klinik D:** konsultasi awal sebelum pasang
+  - **Klinik E:** dekat stasiun, parkir luas
   - Dashed, empty: **Klinik Anda?**
 - Under the box, two greyed ordinary results: **klinik-a.contoh** · **direktori.contoh**
 
@@ -134,12 +167,14 @@ Right, a Google results page on a phone:
 
 ## 4. Cara kerja
 
-H2: **Kami bertanya ke AI seperti pasien Anda.**
+H2: **Kami tanya AI persis seperti pasien Anda.**
 
 Steps:
-1. **Masukkan website** · Atau Instagram. Kami temukan klinik Anda. · tag **Gratis**
-2. **Bayar dan cek** · Kami siapkan 10 pertanyaan berdasarkan pencarian Google. Anda cek dulu. · tag **Rp249.000**
-3. **Terima laporan** · Kami tanyakan ke ChatGPT dan Google AI Overview. Biasanya 15 menit.
+1. **Masukkan website** · Bisa juga Instagram. Nuave cari kliniknya. · tag **Gratis**
+2. **Bayar dan cek** · Nuave siapkan 10 pertanyaan dari data pencarian Google. Anda tinggal cek. · tag **Rp249.000**
+3. **Terima laporan** · Kami tanyakan ke ChatGPT dan Google AI Overview. Laporan siap dalam 15 menit.
+
+Each step has its small picture on mobile and desktop alike: step 1 the website field and the found clinic (**klinikgigifiksi.contoh**, **Klinik Gigi Fiksi · Surabaya**), step 2 the question card below, step 3 the email (**Tim Nuave** · **AI Visibility Report untuk Klinik Gigi Fiksi sudah siap** · **Buka laporan**). Caption under the steps: **Contoh. Nama klinik fiktif.**
 
 ### S4 question card (mock content, step 2 picture)
 
@@ -158,7 +193,7 @@ A real probe question, its real label and its real topic line, word for word:
 ## 5. Laporan
 
 H2: **Lihat apa kata AI tentang klinik Anda.**
-Line: **Dan tahu apa yang dibenahi duluan.**
+Line: **Sekalian tahu apa yang perlu dibenahi duluan.**
 
 Tabs and their captions:
 - **Skor** · Muncul di berapa pertanyaan, di ChatGPT dan Google AI Overview.
@@ -227,11 +262,11 @@ Header in every tab:
 
 H2: **Bukti, bukan janji.**
 
-Cards (unchanged):
+Cards:
 - **Apa adanya** · Jawaban AI ditampilkan utuh, dengan sumbernya.
-- **Bahasa pasien** · 10 pertanyaan tanpa menyebut nama klinik Anda.
+- **Bahasa pasien** · 10 pertanyaan, seperti yang biasa diketik pasien.
 - **Data publik** · Cuma informasi publik klinik. Tanpa data pasien.
-- **Jujur** · Satu potret, bukan peringkat. Cek ulang setelah 6 sampai 8 minggu.
+- **Batasnya jelas** · Hasil cek hari ini, bukan peringkat tetap. Cek ulang setelah 6 sampai 8 minggu.
 
 ---
 
@@ -240,9 +275,9 @@ Cards (unchanged):
 H2: **Yang Anda dapat dari satu audit.**
 Line: **Rp249.000, sekali bayar. Bandingkan dengan harga satu tindakan di klinik Anda.**
 
-Value list (one card that looks like a report summary, growth 8):
+Value list (one card that looks like a report summary, growth 8; header **AI Visibility Report** · **Diperiksa di ChatGPT dan Google AI Overview**, and a tick on every row, on mobile and desktop):
 - **10 pertanyaan pasien** · Berdasarkan pencarian Google untuk jenis klinik dan kota Anda.
-- **Jumlah pencarian** · Berapa kali topiknya dicari per bulan, bila datanya ada.
+- **Jumlah pencarian** · Berapa kali topiknya dicari per bulan, kalau datanya ada.
 - **Jawaban ChatGPT** · Ditanyakan langsung ke ChatGPT, dijawab utuh dengan sumbernya.
 - **Google AI Overview** · Dicek dari kota Anda, plus seberapa sering Google menampilkannya.
 - **Skor** · Muncul di berapa pertanyaan, di masing-masing tempat.
@@ -254,11 +289,11 @@ Value list (one card that looks like a report summary, growth 8):
 Price card (joined to the foot of the list):
 - **Rp249.000**
 - **Sekali bayar. Tanpa langganan. Tanpa biaya tambahan.**
-- Above the form: **Bayar setelah klinik Anda kami temukan.**
+- Above the form: **Bayar setelah klinik Anda ketemu.**
 - Field: **Website atau Instagram klinik**
 - Button: **Cek klinik saya di AI**
 - Chips: **QRIS** · **Transfer bank** · **GoPay** · **DANA**
-- **Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan.**
+- **Laporan siap dalam 15 menit setelah audit dimulai.** (Yasir's wording)
 
 > Note: the value comes from nine concrete rows, read against a price the reader already saw in the line above them. The only anchor is the clinic's own price for one treatment. No "senilai", no struck price, no count of Google answers (Google may show few).
 
@@ -269,37 +304,37 @@ Price card (joined to the foot of the list):
 H2: **Yang sering ditanyakan**
 
 **Bagaimana cara klinik muncul di Google AI Overview?**
-Tidak ada yang bisa menjaminnya: Google memilih sendiri sumbernya, dan sering tidak menampilkan AI Overview untuk pencarian lokal. Langkah pertama adalah tahu kondisi sekarang: pertanyaan mana yang memunculkan AI Overview, klinik dan situs apa yang disebut, dan informasi apa yang perlu dibenahi.
+Tidak ada yang bisa menjamin, karena Google memilih sendiri sumbernya dan sering tidak menampilkan AI Overview untuk pencarian lokal. Yang pertama, tahu dulu posisi klinik Anda sekarang: pertanyaan mana yang memunculkan AI Overview, klinik dan situs apa yang disebut, dan informasi apa yang perlu dibenahi.
 
 **Bedanya dengan SEO?**
-Mirip semangatnya, beda tempatnya. SEO mengurus posisi website di Google, Nuave membaca apakah ChatGPT dan Google AI Overview menyebut klinik Anda, dan dari sumber apa.
+Tujuannya mirip, tempatnya beda. SEO mengurus posisi website di hasil Google, sedangkan Nuave melihat apakah ChatGPT dan Google AI Overview menyebut klinik Anda, dan dari sumber apa.
 
 **Bisa cek sendiri di ChatGPT?**
-Bisa, dan layak dicoba. Nuave menanyakan 10 pertanyaan berdasarkan pencarian Google ke ChatGPT dan ke Google AI Overview dari kota Anda, lalu mencatat jawaban, sumber, klinik lain yang disebut, dan apa yang dibenahi.
+Bisa, coba saja. Bedanya, Anda cuma lihat satu jawaban dari satu akun di satu waktu, sedangkan Nuave tanya 10 pertanyaan berdasarkan pencarian Google ke ChatGPT dan Google AI Overview dari kota Anda, lalu catat jawaban, sumber, klinik lain yang disebut, dan yang perlu dibenahi.
 
 **AI apa yang diuji?**
 ChatGPT dan Google AI Overview (di Google berbahasa Indonesia disebut Ringkasan AI), dengan pertanyaan yang sama persis. Google sering tidak menampilkan AI Overview untuk pencarian lokal, dan laporan mencatat seberapa sering.
 
 **Dari mana pertanyaannya?**
-Dari data pencarian Google untuk jenis klinik dan kota Anda; setiap pertanyaan diberi label asalnya. Bila datanya sedikit, sebagian kami susun dari profil klinik, dan labelnya menyebut itu.
+Dari data pencarian Google untuk jenis klinik dan kota Anda, dan tiap pertanyaan diberi label asalnya. Kalau datanya sedikit, sebagian kami susun dari profil klinik, dan labelnya menyebut itu.
 
 **Apa yang gratis?**
-Langkah pertama: kami temukan klinik Anda, lalu Anda cek benar atau tidak. Itu belum hasil AI; auditnya Rp249.000, dan harga di ringkasan pesanan berlaku 30 hari.
+Yang gratis cuma mencari klinik Anda, lalu Anda cek benar atau tidak. Hasil AI ada di audit Rp249.000, dan harganya berlaku 30 hari.
 
 **Jawaban AI kan berubah-ubah?**
-Benar, bisa berbeda menurut waktu, akun, dan tempat. Laporan mencatat jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya, karena itu kami sarankan cek ulang setelah 6 sampai 8 minggu.
+Benar, bisa beda-beda tergantung waktu, akun, dan lokasi. Laporan mencatat jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya, jadi kami sarankan cek ulang setelah 6 sampai 8 minggu.
 
 **Berapa lama?**
-Cek klinik biasanya kurang dari 10 detik. Laporan biasanya siap dalam 15 menit setelah Anda menyetujui pertanyaan, paling lama 24 jam.
+Cek klinik biasanya kurang dari 10 detik. Laporan siap dalam 15 menit setelah audit dimulai.
 
 **Klinik saya punya beberapa cabang.**
-Satu audit untuk satu kota: kota utama klinik Anda, atau cabang yang Anda pilih. Anda memilihnya setelah bayar.
+Satu audit untuk satu kota, yaitu kota utama klinik Anda atau cabang yang Anda pilih. Kotanya dipilih setelah bayar.
 
-**Aman dari sisi aturan iklan kesehatan?**
-Nuave bukan iklan: laporannya untuk internal klinik. Sarannya soal informasi faktual, seperti jadwal, layanan, dan lokasi.
+**Aman soal aturan iklan kesehatan?**
+Nuave bukan iklan, karena laporannya untuk internal klinik. Sarannya soal informasi faktual, seperti jadwal, layanan, dan lokasi.
 
 **Kalau ada masalah?**
-Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda. Untuk hal lain, balas email laporan Anda atau tulis ke support@nuave.ai.
+Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan. Untuk hal lain, balas email laporan Anda atau kirim email ke support@nuave.ai.
 
 ---
 
@@ -309,8 +344,8 @@ H2: **Cek klinik Anda sebelum pasien berikutnya bertanya.**
 Line: **Mulai dari website atau Instagram klinik Anda.**
 Field: **Website atau Instagram klinik**
 Button: **Cek klinik saya di AI**
-Under the button: **Gratis: kami temukan klinik Anda dulu. Audit Rp249.000, sekali bayar.**
-Founder line: **Ada pertanyaan? Tulis ke Yasir, pendiri Nuave: support@nuave.ai.**
+Under the button: **Cek dulu apakah klinik Anda bisa ditemukan, gratis. Auditnya Rp249.000, sekali bayar.**
+Founder line: **Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai.**
 
 ---
 
@@ -322,6 +357,7 @@ Founder line: **Ada pertanyaan? Tulis ke Yasir, pendiri Nuave: support@nuave.ai.
 ## Sticky bar (mobile, after the hero)
 
 Left: **Gratis dulu · Audit Rp249.000** · Button: **Cek klinik saya**
+Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** next to its **Cek klinik saya** button after the hero.
 
 ---
 
@@ -335,12 +371,16 @@ Left: **Gratis dulu · Audit Rp249.000** · Button: **Cek klinik saya**
 
 ## Notes for the founder (not on the page)
 
-- `[KONFIRMASI Q-1]` "Berapa lama?", "Kalau ada masalah?", step 3 and the price card use the R-23 words. Spec 018 says you approve the exact R-23 wording.
-- Google's Indonesian help page names the feature **"Ringkasan AI"** (checked by the orchestrator on 24 October 2026: support.google.com/websearch/answer/14901683?hl=id). The page keeps the settled name "Google AI Overview" and mentions "Ringkasan AI" once, in the FAQ "AI apa yang diuji?", so readers who use Google in Indonesian recognise it. Yasir approves or removes that mention. The S3 mock box keeps the label "AI Overview".
+- **Decided by Yasir (v2.2):** the delivery line "Laporan siap dalam 15 menit setelah audit dimulai." It is used in the price card, step 3 (short form) and "Berapa lama?". Spec 018's promise text (R-23, on the order preview and checkout) still says "biasanya ... paling lama 24 jam"; align the two before launch so the page and the product promise the same thing.
+- `[KONFIRMASI]` "Kalau ada masalah?" now says the R-23 refund rule in spoken words ("Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan."). Approve or adjust.
+- **WhatsApp next to the founder line** (Fable): clinic owners and admins live in WhatsApp, and an email-only contact reads foreign. It needs a number and a person answering.
+- **"Ringkasan AI" inside the Google mock and the link-preview image** (Fable's vote): Google's Indonesian help page names the feature "Ringkasan AI" (checked 24 October 2026: support.google.com/websearch/answer/14901683?hl=id). For now the mock keeps "AI Overview"; prose keeps "Google AI Overview"; the FAQ "AI apa yang diuji?" bridges the two.
+- **Report label "Bisnis Anda" vs "Klinik Anda"** (Fable): the S5 mock shows the settled label "Bisnis Anda muncul di ..." on a page that says "klinik" everywhere else. A Spec 018 product question; the mock stays honest until it changes.
+- **An Indonesian proof under S2** (Fable): "Coba sendiri: ketik 'klinik gigi [kota Anda] yang bagus' di Google ...", only if a quick test on about ten clinic searches shows the AI box most of the time.
+- **Optional H1 variant** (Fable): "Pasien mulai tanya AI dulu, baru pilih klinik." ("mulai" stays true without Indonesian data). The approved H1 stays until Yasir says otherwise.
 - Search capture needs the site to be indexable (`robots` is `disallow /` today) and, per growth, one short article on "cara muncul di Google AI Overview" that links here.
-- The S2 47% card is 13 words, three over the card rule, to keep rater8's "seperti". rater8 sells reputation services; the source line names the survey.
-- Hero H1 still presupposes a habit backed by US and global data, not Indonesian clinic data.
-- FAQ "Aman dari sisi aturan iklan kesehatan?": unchanged; not legal advice.
+- The S2 47% card is 12 words, two over the card rule, to keep rater8's "seperti". rater8 sells reputation services; the source line names the survey.
+- FAQ "Aman soal aturan iklan kesehatan?": not legal advice.
 
 ## Self-check
 
