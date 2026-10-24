@@ -1206,6 +1206,7 @@ function stubPreparation(
     holdIdentity?: Promise<void>;
     holdExtract?: Promise<void>;
     draft?: Record<string, unknown>;
+    discoveryLocked?: boolean;
   } = {},
 ) {
   const calls: string[] = [];
@@ -1239,6 +1240,12 @@ function stubPreparation(
       });
     }
     if (url === "/api/audit/glm-questions") return questionsResponse();
+    if (url === "/api/audit/discovery" && options.discoveryLocked !== undefined)
+      return Response.json({
+        status: "ready",
+        searchData: true,
+        locked: options.discoveryLocked,
+      });
     throw new Error(`Unexpected request ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -5318,5 +5325,42 @@ describe("independent review, round 1", () => {
       parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
         ?.frozen?.context.comparators,
     ).toMatchObject({ value: { mode: "category-alternatives" } });
+  });
+});
+
+describe("Spec 018 N-24: the place lock reaches the review screen", () => {
+  it("keeps the discovery route's locked answer on the order and shows it on the review", async () => {
+    stubPreparation({ discoveryLocked: true });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    expect(
+      screen.queryByText("Kota sudah terkunci untuk pesanan ini."),
+    ).toBeNull();
+    tickReview();
+    fireEvent.click(buatPertanyaan());
+    await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" });
+    const saved = parseSmartSession(
+      window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY),
+    );
+    expect(saved?.order?.searchPlaceLocked).toBe(true);
+    fireEvent.click(screen.getAllByRole("button", { name: "Kembali" })[0]!);
+    expect(
+      await screen.findByText("Kota sudah terkunci untuk pesanan ini."),
+    ).toBeTruthy();
+  });
+
+  it("leaves the place editable when discovery does not lock it", async () => {
+    stubPreparation({ discoveryLocked: false });
+    render(<SmartIntakeJourney live={false} />);
+    await fillAndPeriksa();
+    await throughBrand();
+    tickReview();
+    fireEvent.click(buatPertanyaan());
+    await screen.findByRole("heading", { name: "10 pertanyaan untuk AI" });
+    expect(
+      parseSmartSession(window.localStorage.getItem(SMART_INTAKE_STORAGE_KEY))
+        ?.order?.searchPlaceLocked,
+    ).not.toBe(true);
   });
 });
