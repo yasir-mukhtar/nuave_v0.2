@@ -89,7 +89,9 @@ describe("two-source writing checks", () => {
           conclusion:
             "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak direkomendasikan. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5 ringkasan lainnya.",
           key_findings: [
-            finding("Di ChatGPT, bisnis Anda tidak muncul untuk pertanyaan tentang harga."),
+            finding(
+              "Di ChatGPT, bisnis Anda tidak muncul untuk pertanyaan tentang harga.",
+            ),
             finding("Di ChatGPT, Sozo tidak muncul pada kebutuhan lain"),
           ],
         },

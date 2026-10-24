@@ -45,7 +45,11 @@ function review(searchPlaceLocked: boolean) {
   const bandung = matchPlace("Bandung")!;
   const selection = {
     ...initialSmartSelection(prepared),
-    searchPlace: { kind: "place" as const, code: bandung.code, display: bandung.display },
+    searchPlace: {
+      kind: "place" as const,
+      code: bandung.code,
+      display: bandung.display,
+    },
   };
   render(
     <SmartReview

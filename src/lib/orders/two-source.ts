@@ -266,10 +266,7 @@ export function buildTwoSourceReport(input: {
     if (answered && observation) times.push(observation.observed_at);
     if (answered && facts)
       for (const name of facts.businesses)
-        if (
-          !isOwn(name) &&
-          !chatgptBusinesses.includes(name)
-        )
+        if (!isOwn(name) && !chatgptBusinesses.includes(name))
           chatgptBusinesses.push(name);
     const googleDone = row?.g_status === "done" && google !== null;
     if (googleDone) times.push(google.observed_at);
