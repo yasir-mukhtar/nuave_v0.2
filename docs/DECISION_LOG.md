@@ -24,6 +24,10 @@ applied), with every recommendation:
   Google"); Google's AI summary is called "Google AI Overview" wherever
   customers see it.
 - Q-1 (exact delivery-promise wording) is approved in PR 2.
+- **Later the same day (revision 8):** DataForSEO's "navigational" label no
+  longer drops a search; only a search that names a business does. The probe
+  re-run showed the label removed good local searches such as "klinik
+  kecantikan laser terdekat".
 
 ## 2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000
 

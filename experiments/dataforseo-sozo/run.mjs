@@ -368,7 +368,6 @@ async function probe() {
           : seenTopic.has(key) ? "duplicate"
           : (k.keyword_info?.search_volume ?? 0) < 10 ? "volume < 10"
           : hasBrand(k.keyword, p) ? "brand"
-          : k.search_intent_info?.main_intent === "navigational" ? "navigational"
           : namesBusiness(k.keyword, distinct) ? `names a business (${namesBusiness(k.keyword, distinct)})`
           : otherPlace(k.keyword, entries, place) ? `other place (${otherPlace(k.keyword, entries, place)})`
           : !relevant(k.keyword, phrases, p, place) ? "not relevant"

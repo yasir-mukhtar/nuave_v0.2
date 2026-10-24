@@ -1,11 +1,14 @@
 # Spec 018: Real-search questions, answered by ChatGPT and Google (Rp249.000)
 
-> Status: **Approved** by Yasir on 2026-10-24 (revision 7), after plan review
+> Status: **Approved** by Yasir on 2026-10-24 (revision 7; revision 8 change approved the same day), after plan review
 > round 4 PASS+NOTES (notes applied in revision 6). Q-2..Q-5 answered as
 > recommended; Q-1 stays open until PR 2. Building may start once the Q-5
 > probe re-run passes (AC-00).
 > Owner: orchestrator
-> Updated: 2026-10-24. Revision 7 records the founder's approval and answers
+> Updated: 2026-10-24. Revision 8 (founder-approved change): DataForSEO's
+> "navigational" intent no longer drops a text (R-05b, AC-04b).
+>
+> Revision 7 records the founder's approval and answers
 > (Q-2..Q-5), production on Workers Paid, and the customer name "ChatGPT dan
 > Google AI Overview" (Google's AI summary is called "Google AI Overview"
 > everywhere customers see it).
@@ -473,9 +476,6 @@ Reports saved before this change keep rendering exactly as today (R-29).
   lutut" and "cara merapikan gigi tanpa behel" are dropped, and "harga behel
   gigi surabaya" is kept.)
 - **R-05b: No other business named.** A pool text is dropped when:
-  - DataForSEO Labs marks the keyword's `search_intent_info.main_intent` as
-    "navigational" (a search for one specific business or site), where that
-    field is returned;
   - it contains the **distinctive words** of a business name seen during
     discovery (R-04), as consecutive whole words. Distinctive words are the
     name's words minus generic words (R-04a), place names (R-03 list) and the
@@ -486,6 +486,12 @@ Reports saved before this change keep rendering exactly as today (R-29).
 
   The seen names are saved with the pool (names only) and used again by the
   validator (R-11).
+
+  DataForSEO's "navigational" search intent is **not** a reason to drop a
+  text (founder, 2026-10-24): the probe re-run showed it marks ordinary local
+  searches such as "klinik kecantikan laser terdekat" as navigational, which
+  left the Bandung clinic with 3 real wordings. The intent may be saved for
+  information only.
 - **R-06: Topic and number for real wordings.** An autocomplete or "People
   also ask" text gets the longest usable topic whose core words it contains,
   and that topic's number. If it contains no topic's core words, it has no
@@ -931,7 +937,8 @@ shown as missing, never estimated or filled in.
 - **AC-04b:** Given a pool with "wonder dental spesialis implan gigi
   surabaya" and a seen local-pack name "Wonder Dental", the text is not
   counted, and a question containing "wonder" is rejected by the validator.
-  Given a keyword marked navigational, it is not a usable topic. Given "v
+  Given "klinik kecantikan laser terdekat" marked navigational and naming
+  no seen business, it stays usable. Given "v
   shape bra", "obat nyeri lutut" or "icd 10 nyeri lutut", none is counted.
   Given the same topic returned twice, it counts once.
 - **AC-04c:** Given the market area "Jakarta Selatan", the field is pre-filled
