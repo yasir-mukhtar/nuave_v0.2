@@ -36,9 +36,10 @@ export function containsPhoneNumber(text: string): boolean {
 /** N-20: in a link's path only an Indonesian mobile number counts (08… or
  * 628…, 10 to 13 digits): article IDs such as kompas.com's "080000565" stay. */
 const MOBILE_IN_PATH = /(?:^|\D)(?:\+?62|0)8\d{8,11}(?!\d)/;
-/** N-25: the same number written with separators ("0812-3456-7890"). */
+/** N-25: the same number written with separators ("0812-3456-7890",
+ * "62-812-3456-7890", "+62 812 3456 7890"). */
 const MOBILE_SPACED_IN_PATH =
-  /(?:^|[^\d])((?:\+?62|0)8\d{1,4}(?:[-.\s]\d{2,5}){1,4})(?!\d)/g;
+  /(?:^|[^\d])((?:\+?62[-.\s]?|0)8\d{1,4}(?:[-.\s]\d{2,5}){1,4})(?!\d)/g;
 
 function mobileInPath(path: string): boolean {
   if (MOBILE_IN_PATH.test(path)) return true;

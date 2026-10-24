@@ -455,6 +455,15 @@ describe("phone numbers in cited links (N-5)", () => {
       phoneSafeUrl("https://berita.example/2024-10-24-0800-klinik-baru"),
     ).toBe("https://berita.example/2024-10-24-0800-klinik-baru");
   });
+
+  it("N-25: drops a link whose path holds a 62-prefixed mobile number with separators", () => {
+    expect(
+      phoneSafeUrl("https://klinik.example/hubungi-62-812-3456-7890"),
+    ).toBeNull();
+    expect(
+      phoneSafeUrl("https://klinik.example/kontak/+62%20812%203456%207890"),
+    ).toBeNull();
+  });
 });
 
 describe("Google's own business list (N-6)", () => {

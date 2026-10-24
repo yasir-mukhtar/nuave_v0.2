@@ -1100,15 +1100,43 @@ naming "ChatGPT dan Google AI Overview".
   - The report-writing model reads the ChatGPT answers (phone numbers
     removed) and code-built Google facts per question (AI Overview shown,
     not shown or failed; named or not in its text; cited domains) with both
-    sources' counts. The conclusion and every finding must name their source
-    and may not state an absolute negation ("sama sekali", "tidak pernah",
-    "mana pun"…) that contradicts a non-zero count; partial or counted
-    sentences are fine. A draft that breaks this gets one revision; if the
-    revision still does, code replaces the sentence with the per-source
-    count sentence (a finding with no source is marked "Di ChatGPT:"). A
-    paid order is never failed for it. The Google counts, the Google
-    finding, the per-source lists, "Topik yang belum menyebut Anda" and the
-    "Tentang audit ini" sentence are built by code.
+    sources' counts. The conclusion and every finding must name their source.
+    The source check (after build verification rounds 1–4) reads each
+    clause on its own, with the source named in it or carried from the
+    clause before:
+    - every "X dari Y", "di N jawaban/ringkasan" or count in words about the
+      business must be that source's named count (positive clause) or
+      not-named count (negative clause); an AI Overview coverage count must
+      be Google's shown/not-shown count; a wrong or swapped count is a
+      contradiction;
+    - a negation about the business ("tidak/tak/belum/bukan … disebut,
+      muncul, menyebut, ditemukan…", "tidak ada jawaban yang menyebut…")
+      contradicts a source that named it, unless the clause limits it to
+      some questions ("pada kebutuhan lain", "untuk pertanyaan tentang …",
+      "sebagai …"), never to other businesses ("klinik lain");
+    - a plain positive claim contradicts a source that named it 0 times, and
+      "di semua jawaban/ringkasan" one that did not name it every time;
+    - clauses about a detail ("harga layanan Anda"), other businesses or
+      recommendations are not checked; the business is "bisnis/klinik
+      Anda", a bare "Anda", "menyebutnya", or its name or an alias.
+    Sentences are not split after abbreviations (dr., drg., Jl., No.,
+    Sp., single initials). A draft that breaks the check gets one revision;
+    if the revision still does, code replaces the whole sentence with the
+    per-source count sentence (a finding with no source is marked "Di
+    ChatGPT:"), keeping the rest of the finding. A revision that breaks the
+    draft's protected shape (for example its evidence IDs) is discarded and
+    the first draft is repaired instead (`revision_discarded`). A paid order
+    is never failed for the writing check. Known residuals: a negation
+    carried into the next sentence ("…; begitu pula di ringkasan Google")
+    and a limit written in the sentence before are not read. The Google
+    counts, the Google finding, the per-source lists, "Topik yang belum
+    menyebut Anda" and the "Tentang audit ini" sentence are built by code.
+  - AC-12 accepted residuals (N-25): cited links are dropped when their path
+    holds an Indonesian mobile number (08…, 628…, or 62/+62 followed by 8,
+    with or without separators); landline numbers in a link's path, and
+    mobile numbers written without 0, 62 or +, are kept, because catching
+    them also drops ordinary article links. Phone numbers in a link's query
+    or fragment are always removed.
 - **Free testing first.** Development and automated tests use the DataForSEO
   sandbox (`sandbox.dataforseo.com`, free, same request and response layout,
   fixed sample data) or recorded fixtures. Paid calls are only for the AC-00
