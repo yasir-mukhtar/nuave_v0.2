@@ -13,6 +13,17 @@
 > founder can try them in the pull-request preview. The report wording (§7.1)
 > is not built yet. The prototype is a reference, not an approval: if a
 > decision changes, follow this plan, not the prototype.
+> Update 2026-10-24: the decisions are on hold while the founder reworks the
+> whole landing page in separate work, to explain the problem to customers
+> first. That work may adopt or discard this branch's landing changes. Worth a
+> look first: the patient-question example (`PatientQuestionExample` in
+> `src/components/landing/Landing.tsx`, tested in `Landing.test.tsx` and
+> `tests/e2e/audit-entry.spec.ts`) and the example-sheet blocks (§5.6). The
+> hero and the website form are shared with the `/audit` entry (J01,
+> `src/lib/intake/step-one-screens.tsx`), so a new hero changes J01 too. Any
+> landing copy still follows §4.3 (no search-data claim before G-DATA) and §4.4
+> (health advertising rules). The journey, FAQ and email changes do not depend
+> on the landing page.
 
 Nuave now sells to Indonesian clinics that already spend on digital marketing:
 beauty and aesthetic clinics, dental clinics, circumcision (khitan) clinics,
