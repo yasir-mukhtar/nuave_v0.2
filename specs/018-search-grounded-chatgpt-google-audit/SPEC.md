@@ -1041,6 +1041,19 @@ naming "ChatGPT dan Google AI Overview".
 
 ## Implementation notes
 
+- **Built in PR 2 (worker notes):**
+  - A city word in the business name (for example "Surabaya" in "Kopi
+    Surabaya") is not a brand word when the questions are checked for the
+    business's name (`brandTokens` skips place words); without this, no
+    question about the city could pass.
+  - Production runs on Workers Paid: a two-source question step measures 23
+    units, so `RUN_COST.question` is 24 and `RUN_UNIT_LIMIT` is 80 (R-15);
+    reconciliation keeps its 29-unit share. `spend-worst-case.test.ts`
+    measures about USD 1.82 per order at worst (R-25).
+  - The report-writing model still reads only the ChatGPT answers (with
+    phone numbers removed) and their code-decided facts; every Google count,
+    the Google finding, the per-source lists and "Topik yang belum menyebut
+    Anda" are built by code.
 - **Free testing first.** Development and automated tests use the DataForSEO
   sandbox (`sandbox.dataforseo.com`, free, same request and response layout,
   fixed sample data) or recorded fixtures. Paid calls are only for the AC-00
