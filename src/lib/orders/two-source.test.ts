@@ -468,6 +468,29 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
     expect(text).not.toMatch(/"text"|raw/);
   });
 
+  it("AC-20: a clinic order saves Klinik Anda and tells the writer to use it; a coffee shop keeps Bisnis Anda", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, {
+      now: clock,
+      category: "Klinik kecantikan",
+    });
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.two_source!.subject).toBe("klinik");
+    const input = t.reportInputs[0] as {
+      two_source_facts: { subject?: string };
+    };
+    expect(input.two_source_facts.subject).toBe("klinik");
+
+    const other = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, other, { now: clock });
+    await runUntilEnded(deps(), other);
+    const coffee = JSON.parse(orderRow(other).report_json!) as AuditReport;
+    expect(coffee.two_source!.subject).toBe("bisnis");
+  });
+
   it("AC-05: an edited question in a fallback pack does not claim Google search data", async () => {
     const id = await makeOrder(d1.db, { now: clock });
     const fallback = {

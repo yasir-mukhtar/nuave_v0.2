@@ -8,7 +8,9 @@ import {
   countSentence,
   googleNamedSentence,
   googleSummarySentence,
+  subjectNoun,
   urlDomain,
+  type ReportSubject,
   type NamedFact,
   type TwoSourceQuestion,
   type TwoSourceReport,
@@ -58,8 +60,10 @@ export function checkedLine(two: TwoSourceReport): string {
 }
 
 /** The R-08 sentence (AC-05), said once in the report. */
-export const PROFILE_QUESTIONS_NOTE =
-  "Data pencarian Google tidak tersedia untuk audit ini, jadi pertanyaan disusun dari profil bisnis Anda.";
+export function profileQuestionsNote(subject?: ReportSubject): string {
+  return `Data pencarian Google tidak tersedia untuk audit ini, jadi pertanyaan disusun dari profil ${subjectNoun(subject, false)}.`;
+}
+export const PROFILE_QUESTIONS_NOTE = profileQuestionsNote();
 
 const NAMED_TEXT: Record<NamedFact, string> = {
   named: "Disebut",
@@ -196,7 +200,7 @@ export function TwoSourceSummary({ two }: { two: TwoSourceReport }) {
           </p>
         ) : null}
         <p className={styles.count}>
-          {countSentence("muncul", counts.chatgpt.named, n)}
+          {countSentence("muncul", counts.chatgpt.named, n, two.subject)}
         </p>
         {n > 0 ? (
           <TenBeads
@@ -211,7 +215,12 @@ export function TwoSourceSummary({ two }: { two: TwoSourceReport }) {
         ) : null}
         <div className={styles.cardRule} />
         <p className={styles.count}>
-          {countSentence("direkomendasikan", counts.chatgpt.recommended, n)}
+          {countSentence(
+            "direkomendasikan",
+            counts.chatgpt.recommended,
+            n,
+            two.subject,
+          )}
         </p>
         {n > 0 ? (
           <TenBeads
@@ -247,7 +256,7 @@ export function TwoSourceSummary({ two }: { two: TwoSourceReport }) {
         ) : null}
         <div className={styles.cardRule} />
         <p className={styles.count}>
-          {googleNamedSentence(counts.google.named, z)}
+          {googleNamedSentence(counts.google.named, z, two.subject)}
         </p>
         {z > 0 ? (
           <TenBeads

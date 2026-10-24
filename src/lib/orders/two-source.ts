@@ -13,9 +13,11 @@ import {
 } from "../audit/direct-ten-context-v2";
 import {
   googleCoverageFinding,
+  reportSubjectForCategory,
   topicsMissing,
   TWO_SOURCE_REPORT_VERSION,
   urlDomain,
+  type ReportSubject,
   type TwoSourceQuestion,
   type TwoSourceReport,
   type TwoSourceReportFacts,
@@ -48,6 +50,8 @@ export const MIN_COMPLETED_PER_SOURCE = 5;
 
 export type TwoSourceSetup = {
   place: SearchPlace;
+  /** AC-20: "klinik" when the confirmed category names a clinic. */
+  subject: ReportSubject;
   google: { code: number; name: string };
   /** The business name and confirmed aliases (R-16). */
   names: string[];
@@ -72,6 +76,7 @@ export function twoSourceSetup(intake: Intake): TwoSourceSetup | null {
   const place = contextSearchPlace(intake.context) ?? INDONESIA_SEARCH_PLACE;
   return {
     place,
+    subject: reportSubjectForCategory(intake.context.category?.value ?? ""),
     google:
       place.kind === "place"
         ? { code: place.code, name: place.display }
@@ -175,6 +180,7 @@ export function twoSourceObservations(input: {
 export function twoSourceReportFacts(input: {
   rows: readonly OrderQuestionRow[];
   prompts: readonly AuditPrompt[];
+  subject?: ReportSubject;
 }): TwoSourceReportFacts {
   let chatgptCompleted = 0;
   let chatgptNamed = 0;
@@ -212,6 +218,7 @@ export function twoSourceReportFacts(input: {
     };
   });
   return {
+    ...(input.subject ? { subject: input.subject } : {}),
     counts: {
       chatgpt: { completed: chatgptCompleted, named: chatgptNamed },
       google: {
@@ -328,6 +335,7 @@ export function buildTwoSourceReport(input: {
   const sorted = [...times].sort();
   return {
     version: TWO_SOURCE_REPORT_VERSION,
+    subject: setup.subject,
     order_number: input.orderNumber,
     places: {
       google: setup.google,

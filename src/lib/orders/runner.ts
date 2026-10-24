@@ -1310,6 +1310,7 @@ async function reportStep(
           two_source_facts: twoSourceReportFacts({
             rows,
             prompts: intake.prompts,
+            subject: setup.subject,
           }),
         }
       : {}),

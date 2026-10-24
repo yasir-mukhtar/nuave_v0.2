@@ -15,7 +15,7 @@ import { ReportAnswer, observationTime } from "./ReportAnswer";
 import { ReportReferences } from "./ReportReferences";
 import {
   OtherBusinesses,
-  PROFILE_QUESTIONS_NOTE,
+  profileQuestionsNote,
   TWO_SOURCE_ANSWERS_TITLE,
   TopicsMissing,
   TwoSourceAnswers,
@@ -161,7 +161,7 @@ export function DirectTenReportBody({
         </p>
         {two && !two.search_data_available ? (
           <p className={styles.supporting} data-profile-questions>
-            {PROFILE_QUESTIONS_NOTE}
+            {profileQuestionsNote(two.subject)}
           </p>
         ) : null}
       </section>

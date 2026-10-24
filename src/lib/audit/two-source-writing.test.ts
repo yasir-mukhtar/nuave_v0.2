@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  countSentence,
+  googleNamedSentence,
   repairTwoSourceWriting,
+  reportSubjectForCategory,
+  twoSourceCountSentence,
   twoSourceMethodSentence,
   twoSourceWritingViolations,
   type TwoSourceReportFacts,
@@ -243,5 +247,54 @@ describe("two-source writing checks", () => {
       "Di ChatGPT, bisnis Anda disebut di 2 dari 9 jawaban; di Google AI Overview, Google tidak menampilkan AI Overview untuk pertanyaan yang diuji. Bisnis Anda jarang disebut.",
     );
     expect(content.conclusion).not.toMatch(/0 dari 0/);
+  });
+});
+
+describe("AC-20: Klinik Anda for a clinic", () => {
+  it("decides a clinic from the confirmed category", () => {
+    expect(reportSubjectForCategory("Klinik kecantikan")).toBe("klinik");
+    expect(reportSubjectForCategory("klinik gigi")).toBe("klinik");
+    expect(reportSubjectForCategory("Fisioterapi (klinik)")).toBe("klinik");
+    expect(reportSubjectForCategory("kedai kopi")).toBe("bisnis");
+    expect(reportSubjectForCategory("Poliklinik")).toBe("bisnis");
+    expect(reportSubjectForCategory("")).toBe("bisnis");
+  });
+
+  it("the count sentences and code repairs say klinik Anda", () => {
+    expect(countSentence("muncul", 3, 9, "klinik")).toBe(
+      "Klinik Anda muncul di 3 dari 9 pertanyaan",
+    );
+    expect(countSentence("muncul", 3, 9)).toBe(
+      "Bisnis Anda muncul di 3 dari 9 pertanyaan",
+    );
+    expect(googleNamedSentence(1, 7, "klinik")).toBe(
+      "Klinik Anda muncul di 1 dari 7 pertanyaan",
+    );
+    const clinic = { ...facts(2, 3), subject: "klinik" as const };
+    expect(twoSourceCountSentence(clinic)).toBe(
+      "Di ChatGPT, klinik Anda disebut di 2 dari 9 jawaban; di Google AI Overview, klinik Anda disebut di 3 dari 8 ringkasan.",
+    );
+    const { content } = repairTwoSourceWriting(
+      {
+        conclusion: "Di Google AI Overview, klinik Anda tidak disebut.",
+        key_findings: [],
+      },
+      clinic,
+    );
+    expect(content.conclusion).toBe(
+      "Di Google AI Overview, klinik Anda disebut di 3 dari 8 ringkasan.",
+    );
+  });
+
+  it("flags a false negation about klinik Anda like one about bisnis Anda", () => {
+    expect(
+      twoSourceWritingViolations(
+        {
+          conclusion: "Di ChatGPT, klinik Anda tidak muncul.",
+          key_findings: [],
+        },
+        { ...facts(2, 0), subject: "klinik" },
+      ),
+    ).toHaveLength(1);
   });
 });

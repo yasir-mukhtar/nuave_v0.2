@@ -225,6 +225,34 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     expect(container.textContent).not.toMatch(/0 dari 0/);
   });
 
+  it("AC-20: a clinic's report says Klinik Anda on both cards and in the profile note", () => {
+    const container = body({ subject: "klinik", search_data_available: false });
+    const chatgpt = container.querySelector<HTMLElement>(
+      '[data-source-card="chatgpt"]',
+    )!;
+    const google = container.querySelector<HTMLElement>(
+      '[data-source-card="google"]',
+    )!;
+    expect(chatgpt).toHaveTextContent(
+      "Klinik Anda muncul di 0 dari 9 pertanyaan",
+    );
+    expect(chatgpt).toHaveTextContent(
+      "Klinik Anda direkomendasikan di 0 dari 9 pertanyaan",
+    );
+    expect(google).toHaveTextContent(
+      "Klinik Anda muncul di 1 dari 7 pertanyaan",
+    );
+    expect(container.textContent).toContain("disusun dari profil klinik Anda.");
+    expect(container.textContent).not.toMatch(/Bisnis Anda|bisnis Anda/);
+  });
+
+  it("AC-20: a report saved without a subject keeps Bisnis Anda", () => {
+    const container = body({ subject: undefined });
+    expect(
+      container.querySelector('[data-source-card="chatgpt"]'),
+    ).toHaveTextContent("Bisnis Anda muncul di 0 dari 9 pertanyaan");
+  });
+
   it("a denominator of 0 shows Tidak diuji, never 0 dari 0 (R-19)", () => {
     const container = body({
       counts: {

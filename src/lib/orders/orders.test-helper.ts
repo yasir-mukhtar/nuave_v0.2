@@ -234,10 +234,19 @@ export const TWO_SOURCE_ORIGINS = TWO_SOURCE_PROMPTS.map((_, index) =>
 );
 
 export function twoSourceIntakeJson(
-  options: { origins?: unknown[]; questionMode?: "grounded" | "fallback" } = {},
+  options: {
+    origins?: unknown[];
+    questionMode?: "grounded" | "fallback";
+    category?: string;
+  } = {},
 ): string {
   return JSON.stringify({
-    context: TWO_SOURCE_CONTEXT,
+    context: options.category
+      ? {
+          ...TWO_SOURCE_CONTEXT,
+          category: { value: options.category, origin: "owner" },
+        }
+      : TWO_SOURCE_CONTEXT,
     prompts: lockedQuestionPackForMethod({
       prompts: TWO_SOURCE_PROMPTS,
       brief: TWO_SOURCE_CONTEXT,
@@ -259,6 +268,7 @@ export async function approveTwoSource(
     now?: Date;
     origins?: unknown[];
     questionMode?: "grounded" | "fallback";
+    category?: string;
   } = {},
 ) {
   const approved = await approveOrder(db, {
@@ -268,6 +278,7 @@ export async function approveTwoSource(
     intakeJson: twoSourceIntakeJson({
       origins: options.origins,
       questionMode: options.questionMode,
+      category: options.category,
     }),
     businessName: TWO_SOURCE_CONTEXT.identity.name,
     promptIds: TWO_SOURCE_PROMPTS.map((prompt) => prompt.prompt_id),

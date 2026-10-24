@@ -20,6 +20,28 @@ export const TWO_SOURCE_EXPORT_VERSION =
   "nuave-evidence-two-source-v1" as const;
 
 export type NamedFact = "named" | "source_only" | "absent";
+
+/** How the report names the customer's business: "Klinik Anda" for a clinic,
+ * "Bisnis Anda" otherwise (founder decision 2026-10-24, AC-20). */
+export type ReportSubject = "bisnis" | "klinik";
+
+/** AC-20: a business is a clinic when its confirmed category contains the
+ * word "klinik" (any case), e.g. "Klinik kecantikan", "klinik gigi". */
+export function reportSubjectForCategory(category: string): ReportSubject {
+  return /(^|[^\p{L}])klinik([^\p{L}]|$)/iu.test(category)
+    ? "klinik"
+    : "bisnis";
+}
+
+/** "Bisnis Anda" / "Klinik Anda", or lowercase inside a sentence. A report
+ * saved without a subject is a business report. */
+export function subjectNoun(
+  subject: ReportSubject | undefined,
+  capital = true,
+): string {
+  const word = subject === "klinik" ? "klinik" : "bisnis";
+  return `${capital ? word.charAt(0).toUpperCase() + word.slice(1) : word} Anda`;
+}
 export type QuestionLabelKey =
   | "dicari_di_google"
   | "orang_lain_juga_bertanya"
@@ -70,6 +92,8 @@ export type TopicRow = {
 
 export type TwoSourceReport = {
   version: typeof TWO_SOURCE_REPORT_VERSION;
+  /** AC-20: absent on reports saved before the label existed ("Bisnis Anda"). */
+  subject?: ReportSubject;
   /** For the "Minta bantuan" email (R-20); null when the order has none. */
   order_number: string | null;
   places: {
@@ -111,15 +135,17 @@ export type TwoSourceReport = {
   other_businesses: { chatgpt: string[]; google: string[] };
 };
 
-/** "Bisnis Anda muncul di X dari N pertanyaan", or "Tidak diuji" when N is 0. */
+/** "Bisnis Anda muncul di X dari N pertanyaan" ("Klinik Anda …" for a
+ * clinic), or "Tidak diuji" when N is 0. */
 export function countSentence(
   verb: "muncul" | "direkomendasikan",
   count: number,
   of: number,
+  subject?: ReportSubject,
 ): string {
   return of === 0
     ? "Tidak diuji"
-    : `Bisnis Anda ${verb} di ${count} dari ${of} pertanyaan`;
+    : `${subjectNoun(subject)} ${verb} di ${count} dari ${of} pertanyaan`;
 }
 
 export function googleSummarySentence(z: number, m: number): string {
@@ -128,8 +154,12 @@ export function googleSummarySentence(z: number, m: number): string {
     : `Google menampilkan AI Overview di ${z} dari ${m} pertanyaan`;
 }
 
-export function googleNamedSentence(w: number, z: number): string {
-  return z === 0 ? "Tidak diuji" : countSentence("muncul", w, z);
+export function googleNamedSentence(
+  w: number,
+  z: number,
+  subject?: ReportSubject,
+): string {
+  return z === 0 ? "Tidak diuji" : countSentence("muncul", w, z, subject);
 }
 
 export function googleCoverageFinding(z: number, m: number): string | null {
@@ -197,6 +227,8 @@ export function topicsMissing(
  * Never raw responses, answer text from Google, or phone numbers.
  */
 export type TwoSourceReportFacts = {
+  /** AC-20: how the writer and the code-built sentences name the business. */
+  subject?: ReportSubject;
   counts: {
     chatgpt: { completed: number; named: number };
     google: { completed: number; summaries: number; named: number };
@@ -299,11 +331,11 @@ export function twoSourceCountSentence(
   const { chatgpt, google } = facts.counts;
   const gpt =
     chatgpt.completed > 0
-      ? `Di ${SOURCE_CHATGPT}, bisnis Anda disebut di ${chatgpt.named} dari ${chatgpt.completed} jawaban`
+      ? `Di ${SOURCE_CHATGPT}, ${subjectNoun(facts.subject, false)} disebut di ${chatgpt.named} dari ${chatgpt.completed} jawaban`
       : `Di ${SOURCE_CHATGPT}, tidak ada jawaban yang dapat diuji`;
   const ggl =
     google.summaries > 0
-      ? `Di ${SOURCE_GOOGLE}, bisnis Anda disebut di ${google.named} dari ${google.summaries} ringkasan`
+      ? `Di ${SOURCE_GOOGLE}, ${subjectNoun(facts.subject, false)} disebut di ${google.named} dari ${google.summaries} ringkasan`
       : google.completed > 0
         ? `Di ${SOURCE_GOOGLE}, Google tidak menampilkan AI Overview untuk pertanyaan yang diuji`
         : `Di ${SOURCE_GOOGLE}, tidak ada pemeriksaan yang dapat diuji`;
