@@ -144,8 +144,8 @@ export default function PrivacyPage() {
             <li>
               <strong>Data pembayaran dari Midtrans:</strong> status, jumlah,
               waktu, cara bayar, dan nomor transaksi. Kami tidak menerima nomor
-              kartu, PIN, kata sandi bank, atau kode OTP. Jika uang perlu
-              dikembalikan untuk pembayaran transfer bank, kami menanyakan nomor
+              kartu, PIN, kata sandi bank, atau kode OTP. Jika kami perlu
+              mengembalikan uang lewat transfer bank, kami menanyakan nomor
               rekening Anda lewat email bantuan.
             </li>
             <li>

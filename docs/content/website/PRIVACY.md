@@ -74,8 +74,8 @@ dalam 1 hari kerja (Senin sampai Jumat, WIB).
   Meta dalam bentuk kode acak saat pembelian (bagian 9).
 - **Data pembayaran dari Midtrans:** status, jumlah, waktu, cara bayar, dan
   nomor transaksi. Kami tidak menerima nomor kartu, PIN, kata sandi bank, atau kode
-  OTP. Jika uang perlu dikembalikan untuk pembayaran transfer bank,
-  kami menanyakan nomor rekening Anda lewat email bantuan.
+  OTP. Jika kami perlu mengembalikan uang lewat transfer bank, kami
+  menanyakan nomor rekening Anda lewat email bantuan.
 - **Data bisnis yang Anda periksa:** kota untuk pencarian, kategori, layanan,
   calon pelanggan, pesaing, dan fakta publik lain yang Anda konfirmasi.
 - **Data audit:** sepuluh pertanyaan yang Anda setujui, jawaban ChatGPT dan

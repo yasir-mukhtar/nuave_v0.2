@@ -57,13 +57,11 @@
   [`content/website/PRIVACY.md`](./content/website/PRIVACY.md) (cookie notice,
   consent-only server events, no Pixel on `/r` or `/uji`, value 249000).
 
-- **Spec 018 first (decided 2026-10-23):** [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
-  is **Approved** (2026-10-24, revision 7): questions from real Google search
-  data, each answered by the real ChatGPT app and Google AI Overview, one
-  package at Rp249.000 ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)).
-  Next: the three-clinic probe re-run (AC-00, Q-5), then PR 1 (place field,
-  discovery, questions) and PR 2 (checks, report, price, promise), merged
-  together. S5, S6 and G1 follow it.
+- **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
+  questions from real Google search data, each answered by the ChatGPT app
+  and Google AI Overview, one package at Rp249.000
+  ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)). S6 and G1
+  follow S5.
 
 - **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
   one immutable private report per order, stored on the server, reached through

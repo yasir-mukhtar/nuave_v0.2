@@ -178,10 +178,11 @@ export default function TermsPage() {
           </ul>
           <p>
             Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim
-            pengembalian dana paling lambat 3 hari kerja setelah kegagalan
-            tercatat, setelah kami menerima pembatalan Anda, atau setelah
-            pemeriksaan ulang tidak berhasil. Untuk transfer bank, waktu itu
-            dihitung sejak kami menerima nomor rekening Anda.
+            pengembalian dana paling lambat 3 hari kerja setelah pesanan
+            dinyatakan gagal, setelah kami menerima pembatalan Anda, atau
+            setelah pemeriksaan ulang tidak berhasil. Jika kami perlu
+            mengembalikan uang lewat transfer bank, waktu itu dihitung sejak
+            kami menerima nomor rekening Anda.
           </p>
           <ul>
             <li>
