@@ -36,8 +36,8 @@
      alamat IP Anda" stays true.
   If any of these changes, section 10 below must change first.
   **Spec 019 (browser step)** meets items 1, 3, 4, 5 and 6: the notice, the
-  footer link and the Pixel exist but stay off until the repository variable
-  `META_PIXEL_ID` is set. The Pixel sends PageView, Lead (the free check found
+  footer link and the Pixel are on in production (Pixel ID set in
+  `.github/workflows/ci.yml`); with the ID blank, all three are off. The Pixel sends PageView, Lead (the free check found
   the business), InitiateCheckout and Purchase (249000 IDR), never the email,
   business, order number or report, and runs with automatic configuration
   off. Items 2 and 7 (server events) wait for the Conversions API step. The

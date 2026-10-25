@@ -60,10 +60,10 @@
   [`content/website/PRIVACY.md`](./content/website/PRIVACY.md) (cookie notice,
   consent-only server events, no Pixel on `/r` or `/uji`, value 249000).
   [Spec 019](../specs/019-cookie-notice-and-meta-pixel/SPEC.md) builds the
-  browser part (notice, footer link, Pixel), off until the founder creates the
-  Pixel, switches off "Automatic advanced matching" in Meta Events Manager,
-  and sets the GitHub repository variable `META_PIXEL_ID`. Server events
-  (Conversions API) are the next step.
+  browser part (notice, footer link, Pixel). The Pixel ID (890453577390181)
+  is set in the production build, so it goes live with that merge; before
+  merging, switch off "Automatic advanced matching" in Meta Events Manager.
+  Server events (Conversions API) are the next step.
 
 - **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
   questions from real Google search data, each answered by the ChatGPT app

@@ -9,8 +9,11 @@ old rows to make history cleaner; add a superseding row.
 ## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
 
 Yasir approved Spec 019: the cookie notice is built together with the Meta
-Pixel, both switched off until he creates the Pixel and its ID is set as the
-GitHub repository variable `META_PIXEL_ID`. Answers:
+Pixel, both switched off without a Pixel ID. He then created the Pixel
+(ID 890453577390181), which the production build sets in
+`.github/workflows/ci.yml`, so the notice goes live with the merge. Meta's own
+copy-paste snippet is not used: it tracks before consent, and its `noscript`
+image would send a PageView with no choice at all. Answers:
 
 - **Scope:** notice, "Pengaturan cookie" footer link and the browser Pixel
   now; the Conversions API (server events, hashed purchase email) is a later

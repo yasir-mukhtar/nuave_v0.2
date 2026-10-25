@@ -147,6 +147,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Spec 019: NEXT_PUBLIC_META_PIXEL_ID is Nuave's Meta Pixel (public: it
+      # appears in the page). It turns on the cookie notice; the Pixel itself
+      # loads only after a visitor taps Setuju. Blank it to switch both off.
       - name: Prepare production build env
         run: |
           cat > .env.production.local <<'EOF'
@@ -159,7 +162,7 @@ jobs:
           NUAVE_NEW_AUDIT_ENABLED=true
           NUAVE_AUDIT_MODE=live
           CHEAPERINFERENCE_API_KEY=${{ secrets.CHEAPERINFERENCE_API_KEY }}
-          NEXT_PUBLIC_META_PIXEL_ID=${{ vars.META_PIXEL_ID }}
+          NEXT_PUBLIC_META_PIXEL_ID=890453577390181
           EOF
 
       - name: Build validated OpenNext worker

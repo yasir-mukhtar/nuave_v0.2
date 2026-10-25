@@ -122,9 +122,9 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   the seven-point list this step meets (1, 3, 4, 5, 6) and that items 2 and 7
   wait for the server step. Version number and date move to 1.2 only if the
   public wording changes.
-- **R-13 Founder setup (manual, after merge).** Create the Pixel in Meta
-  Events Manager, switch off automatic advanced matching, give the ID to the
-  developer to add to CI as `NEXT_PUBLIC_META_PIXEL_ID`, and check the events
+- **R-13 Founder setup.** Create the Pixel in Meta Events Manager (done
+  2026-10-25, ID 890453577390181, set in `.github/workflows/ci.yml`), switch
+  off automatic advanced matching before merging, and after deploy check the events
   with Meta's Test Events screen.
 
 ## Failure and recovery
