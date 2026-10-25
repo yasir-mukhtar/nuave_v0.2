@@ -1,197 +1,131 @@
-# FAQ — agent handoff and implementation draft
+# Pertanyaan yang Sering Diajukan
 
-> Route: `/faq`
-> Status: founder draft
+> Route: `/faq` (`src/app/faq/page.tsx`)
+> Status: S5 wording, approved by the founder on 2026-10-25 (PR #159). The page and this file say the same thing; change
+> both together.
 > Language: Indonesian
+> Shared facts: `src/lib/legal.ts` and `src/lib/orders/promise.ts`.
 
-## Instructions for the implementation agent
-
-Implement the page using the copy under **Public page copy**. Do not rewrite the
-answers into sales claims. Replace every bracketed field with a founder-confirmed
-fact; if a fact is still unknown, keep the page out of production rather than
-guessing. Link `/terms`, `/privacy`, and `/support` where named. Use an accessible
-accordion or a simple heading-and-paragraph layout. Every answer must remain
-readable without JavaScript.
-
-Do not add subscriptions, general-purpose accounts or dashboards, monitoring,
-multiple AI systems, guaranteed visibility, or guaranteed business results. Do
-not name or exclude a bounded private-access mechanism until Module 07 is
-approved. The landing-page copy is being handled separately.
-
-## Fields to confirm before publishing
-
-- `[WAKTU PENGIRIMAN]`
-- `[LAYANAN AI YANG DIUJI]`
-- `[MASA AKSES LAPORAN]`
-- the maximum delayed-delivery period and terminal remedy;
-- the final correction, cancellation, and refund rules; and
-- the support response expectation.
-
-Settled: Rp99.000 total, no added Nuave checkout tax or fee, a 30-day unpaid
-quote, Midtrans with QRIS/bank transfer/GoPay/DANA, and `support@nuave.ai`.
+The questions follow the clinic landing page FAQ (lofi v2.2, PR #152), with
+three answers corrected to match the product: no 30-day price promise
+(founder, 2026-10-24); ChatGPT is asked from Indonesia and only the questions
+about choosing a clinic name the city, not "dari kota Anda" (Spec 018 R-10a); no measured "kurang dari 10
+detik" for the free check. The landing page FAQ should take the same words.
 
 ---
 
 ## Public page copy
 
-### Metadata
-
 **Page title:** Pertanyaan yang Sering Diajukan | Nuave
 
-**Meta description:** Jawaban singkat tentang audit visibilitas AI Nuave, proses
-pengujian, isi laporan, biaya, privasi, dan batasannya.
+**Meta description:** Jawaban singkat untuk klinik: cara muncul di Google AI
+Overview dan ChatGPT, yang diperiksa, harga, waktu laporan, dan pengembalian
+dana.
 
-# Pertanyaan yang sering diajukan
+# Yang sering ditanyakan
 
-Hal penting tentang cara kerja Nuave, apa yang Anda terima, dan apa yang tidak
-bisa dijanjikan oleh audit ini.
+## Bagaimana cara klinik muncul di Google AI Overview?
 
-## Apa itu Nuave?
+Tidak ada yang bisa menjamin. Google memilih sendiri sumbernya, dan sering
+tidak menampilkan AI Overview untuk pencarian lokal.
 
-Nuave adalah layanan audit visibilitas AI untuk bisnis. Kami menguji pertanyaan
-yang mungkin diajukan calon pelanggan kepada AI, lalu menunjukkan apakah bisnis
-Anda disebutkan, informasi apa yang muncul, dan bagian mana yang bisa diperbaiki.
+Langkah pertama adalah tahu posisi klinik Anda sekarang: pertanyaan mana yang
+memunculkan AI Overview, klinik dan situs apa yang disebut, dan informasi apa
+yang perlu dibenahi.
 
-Nuave memberikan satu laporan untuk satu bisnis. Nuave bukan layanan monitoring,
-dashboard, atau langganan.
+## Bedanya dengan SEO?
 
-## Apa yang diuji oleh Nuave?
+Tujuannya mirip, tempatnya beda. SEO mengurus posisi website di hasil Google.
+Nuave melihat apakah ChatGPT dan Google AI Overview menyebut klinik Anda, dan
+dari sumber apa.
 
-Kami menguji 10 pertanyaan berbahasa Indonesia pada `[LAYANAN AI YANG DIUJI]`.
-Saran awal mengikuti 10 slot tetap: enam pertanyaan tanpa nama bisnis Anda dan
-empat pertanyaan yang menyebut nama bisnis Anda. Slot kesembilan juga memuat
-target pembanding dan hubungan perbandingan. Anda dapat mengubah teks dalam
-setiap slot sebelum audit dimulai, tetapi tidak dapat mengubah tujuan, kebijakan
-identitas, atau komposisi slot tersebut.
+## Bisa cek sendiri di ChatGPT?
 
-Anda dapat memeriksa dan mengubah pertanyaan tersebut sebelum audit dimulai.
-Pemeriksaan otomatis memblokir perubahan yang melanggar kebijakan slot. Jika
-teks tetap valid secara mekanis tetapi mungkin bergeser dari tujuan slot,
-Nuave memberi peringatan dan Anda tetap dapat melanjutkan pada V1. Setelah Anda
-menyetujuinya, pertanyaan dikunci agar laporan sesuai dengan ruang lingkup yang
-Anda pesan.
+Bisa. Bedanya, Anda hanya melihat satu jawaban, dari satu akun, pada satu
+waktu. Nuave menanyakan sepuluh pertanyaan dari pencarian Google ke ChatGPT dan Google AI Overview. Pertanyaan tentang memilih klinik menyebut kota Anda. Lalu kami catat
+jawaban, sumber, klinik lain yang disebut, dan yang perlu dibenahi.
+
+## AI apa yang diuji?
+
+ChatGPT dan Google AI Overview, dengan sepuluh pertanyaan yang sama persis.
+Google sering tidak menampilkan AI Overview untuk pencarian lokal. Laporan
+mencatat seberapa sering, sebagai temuan, bukan sebagai pemeriksaan yang gagal.
+
+## Dari mana pertanyaannya?
+
+Dari data pencarian Google untuk jenis klinik dan kota Anda. Tiap pertanyaan
+diberi label asalnya. Jika datanya tidak cukup, pertanyaan disusun dari profil klinik Anda,
+dan labelnya menyebut itu.
+
+Anda membaca dan boleh mengubah sepuluh pertanyaan itu sebelum audit dimulai.
+Setelah Anda setuju, pertanyaan dikunci.
 
 ## Apa yang saya terima?
 
-Anda menerima laporan privat yang dapat dibaca di web. PDF dapat diunduh dari
-versi laporan yang sama ketika selesai dibuat. Isinya
-mencakup:
+- berapa kali klinik Anda disebut di ChatGPT dan di Google AI Overview;
+- jawaban dari kedua sumber untuk tiap pertanyaan;
+- klinik lain yang disebut dan sumber yang dibaca AI;
+- hal yang bisa Anda benahi; dan
+- laporan di web, dengan Download PDF.
 
-- berapa kali bisnis Anda disebutkan, lengkap dengan jumlah pertanyaan yang diuji;
-- jawaban AI yang diamati dan sumber yang tersedia;
-- bisnis lain yang disebutkan dalam pertanyaan yang sama;
-- informasi publik tentang bisnis Anda yang keliru, tidak konsisten, atau tidak ditemukan;
-- satu sampai lima temuan material dan satu sampai lima tindakan yang terkait
-  langsung dengan bukti; dan
-- metode, batasan, serta waktu pengujian.
+## Apa yang gratis?
 
-## Apakah hasil Nuave merupakan peringkat?
+Yang gratis hanya mencari klinik Anda, lalu Anda memastikan itu benar klinik
+Anda. Di langkah ini belum ada hasil AI.
 
-Tidak. Laporan menunjukkan hasil dari 10 pertanyaan pada satu layanan AI dan pada
-waktu tertentu. Hasil tersebut bukan peringkat permanen dan tidak mewakili semua
-pertanyaan atau semua jawaban AI yang mungkin diterima orang lain.
+Hasil AI ada di audit Rp249.000, sekali bayar. Tidak ada langganan dan tidak ada
+biaya tambahan saat checkout. Bayar lewat QRIS, transfer bank, GoPay, atau DANA.
 
-Jawaban AI dapat berubah meskipun pertanyaannya sama. Karena itu, laporan selalu
-menyebutkan metode dan waktu pengujian.
+## Berapa lama?
 
-## Apakah Nuave menjamin bisnis saya akan lebih sering muncul?
+Cek gratis biasanya hanya beberapa detik. Laporan siap dalam 15 menit setelah
+audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu
+menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana
+sebagian, sesuai jumlah pemeriksaan yang gagal.
 
-Tidak. Nuave menunjukkan apa yang diamati dan apa yang layak diperbaiki, tetapi
-tidak dapat mengendalikan jawaban AI.
+Audit dimulai saat Anda menyetujui sepuluh pertanyaan. Anda boleh menutup
+halaman. Link laporan dikirim ke email pesanan dan berlaku 12 bulan.
 
-Kami tidak menjamin kenaikan visibilitas, traffic, calon pelanggan, penjualan,
-atau pendapatan setelah rekomendasi dijalankan.
+Setelah membayar, lanjutkan isian di browser yang sama. Jika pertanyaan belum
+Anda setujui dalam 7 hari, pesanan berakhir dan uang Anda kembali penuh.
 
-## Berapa harga audit Nuave?
+## Jawaban AI kan berubah-ubah?
 
-Satu audit berharga **Rp99.000 total**. Nuave tidak menambahkan pajak atau biaya
-lain saat checkout. Pembayaran dilakukan melalui Midtrans menggunakan QRIS,
-transfer bank, GoPay, atau DANA. Tidak ada langganan atau perpanjangan otomatis.
+Benar. Jawaban bisa berbeda menurut waktu, akun, dan lokasi. Laporan mencatat
+jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya. Karena itu kami sarankan cek ulang, sebagai pesanan baru, setelah 6
+sampai 8 minggu.
 
-Sebelum membayar, Anda akan melihat pratinjau bisnis, isi laporan, total harga,
-dan ketentuan yang berlaku. Ringkasan pesanan yang belum dibayar berlaku 30
-hari. Setelah pembayaran, Anda memeriksa informasi bisnis dan 10 pertanyaan
-sebelum memilih untuk memulai audit.
+Laporan bukan peringkat atau jaminan. Nuave tidak menjamin klinik Anda akan
+disebut, atau pasien dan penjualan akan naik.
 
-## Kapan laporan saya selesai?
+## Klinik saya punya beberapa cabang.
 
-Laporan dikirim paling lambat `[WAKTU PENGIRIMAN]` setelah pembayaran berhasil
-dan 10 pertanyaan disetujui. Jika kami memperkirakan keterlambatan, kami akan
-menghubungi Anda melalui email yang digunakan saat memesan.
+Satu audit untuk satu kota, yaitu kota utama klinik Anda atau kota
+cabang yang Anda pilih, atau untuk seluruh Indonesia. Pilihannya Anda tentukan setelah membayar. Untuk kota lain, pesan audit
+terpisah.
 
-## Bagaimana jika audit gagal atau laporan tidak lengkap?
+## Aman soal aturan iklan kesehatan?
 
-Nuave hanya mengirim laporan setelah 10 dari 10 pertanyaan menghasilkan
-pengamatan yang dapat digunakan. Jika satu pekerjaan gagal secara teknis,
-pengiriman ditunda, hasil lain tetap disimpan, dan Nuave mencoba kembali hanya
-pekerjaan yang gagal. Anda dapat meminta bantuan melalui `support@nuave.ai`.
+Laporan Nuave untuk internal klinik, bukan iklan. Sarannya biasanya tentang informasi seperti jadwal, layanan, dan
+lokasi. Sebelum memakainya untuk promosi, pastikan sesuai aturan iklan
+kesehatan yang berlaku.
 
-Jika laporan web sudah lengkap tetapi PDF belum berhasil dibuat, laporan web
-tetap dikirim. Nuave akan mencoba atau memeriksa kembali pembuatan PDF dari
-versi laporan yang sama.
+## Data apa yang perlu saya isi?
 
-Jika laporan tidak sesuai dengan ruang lingkup pesanan atau memuat kesalahan yang
-dibuat Nuave, hubungi `support@nuave.ai`. Kami akan memeriksa dan memperbaikinya
-tanpa biaya. Rincian lengkap terdapat dalam [Syarat dan Ketentuan](/terms).
+Cukup website atau Instagram klinik, data klinik yang sudah publik, dan email
+untuk menerima laporan. Jangan isi data pasien, rekam medis, atau kata sandi.
+Baca [Kebijakan privasi dan data](/privacy).
 
-## Apakah saya bisa membatalkan pesanan?
+## Kalau ada masalah?
 
-Anda dapat meminta pembatalan sebelum audit mulai dijalankan. Setelah audit
-dimulai, pembatalan karena perubahan pikiran tidak selalu dapat dilakukan karena
-biaya pemrosesan sudah digunakan.
+Pemeriksaan yang gagal ditandai Tidak dapat diuji, dengan tautan Minta bantuan.
+Itu bukan hasil buruk. Tim kami membantu memeriksa ulang. Jika tetap tidak bisa,
+Anda mendapat pengembalian dana sebagian: Rp12.450 untuk setiap pemeriksaan yang gagal. Jika audit tidak bisa
+selesai, atau laporan belum siap 24 jam setelah audit dimulai, uang
+Anda kembali penuh.
 
-Periksa bisnis, cabang, dan pertanyaan dengan teliti sebelum memulai. Jika Anda
-baru menyadari setelah mulai bahwa bisnis yang dipilih salah, hubungi
-`support@nuave.ai`. Pengelola dapat memberi satu kesempatan audit pengganti;
-pesanan pengganti digunakan sebagai pilihan terakhir.
+Salah ketik email saat memesan? Kirim bukti pembayaran atau nomor transaksi
+Midtrans ke support@nuave.ai, dan kami bantu.
 
-Kegagalan layanan, pembayaran ganda, dan laporan yang tidak sesuai dengan pesanan
-ditangani secara terpisah dalam [Syarat dan Ketentuan](/terms).
-
-## Data apa yang dikumpulkan Nuave?
-
-Kami meminta informasi yang diperlukan untuk memastikan bisnis yang tepat,
-menyusun pertanyaan, menerima pembayaran, dan mengirimkan laporan. Informasi ini
-umumnya meliputi nama dan email pemesan, identitas bisnis, situs atau profil
-publik bisnis, pertanyaan yang disetujui, serta status pembayaran.
-
-Jangan mengirim data pelanggan, kata sandi, data kesehatan, data keuangan pribadi,
-atau informasi sensitif lainnya. Penjelasan lengkap tersedia di
-[Kebijakan Privasi dan Data](/privacy).
-
-## Apakah laporan saya dipublikasikan?
-
-Tidak. Laporan diberikan melalui akses privat dan tidak dipublikasikan sebagai
-contoh, studi kasus, atau materi promosi tanpa izin terpisah dari Anda.
-
-Akses laporan tersedia selama `[MASA AKSES LAPORAN]`. Unduh dan simpan salinan
-laporan Anda sebelum masa akses berakhir.
-
-## Apakah saya harus mempunyai website?
-
-Tidak selalu. Nuave saat ini menerima satu sumber publik yang didukung: situs
-resmi atau profil Instagram resmi. Google Maps belum didukung untuk V1. Sumber
-tersebut harus cukup untuk memastikan identitas bisnis dan menilai informasi yang
-tersedia.
-
-Jika bisnis atau cabang yang dimaksud tidak dapat dipastikan, kami akan meminta
-perbaikan sebelum audit dimulai atau menolak pesanan dan mengembalikan pembayaran.
-
-## Apa itu re-check?
-
-Re-check adalah audit baru yang menggunakan pertanyaan yang sama untuk melihat
-apa yang berubah. Re-check dibeli terpisah dan bukan langganan atau monitoring.
-
-Kami biasanya menyarankan re-check setelah enam sampai delapan minggu agar bisnis
-memiliki waktu untuk memperbaiki informasi publiknya. Jangka waktu tersebut adalah
-saran praktis, bukan jaminan bahwa hasil akan berubah.
-
-## Siapa yang menjalankan Nuave?
-
-Nuave adalah layanan independen yang dioperasikan oleh `[NAMA PENGELOLA]` di
-`[KOTA]`, Indonesia. Sebelum membayar, Anda dapat melihat ruang lingkup audit,
-harga, pertanyaan yang diuji, ketentuan layanan, dan kanal bantuan yang dapat
-dihubungi.
-
-Masih punya pertanyaan? Hubungi [Kontak dan Bantuan](/support) atau email
-`support@nuave.ai`.
+Untuk hal lain, balas email laporan Anda atau tulis ke support@nuave.ai. Kami
+balas dalam 1 hari kerja. Rinciannya ada di [Syarat dan ketentuan](/terms).

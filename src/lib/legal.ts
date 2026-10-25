@@ -1,0 +1,15 @@
+/** Facts the terms, privacy, support and FAQ pages share (S5). One place, so
+ * the four pages never disagree. The founder approves every customer-facing
+ * word on those pages. */
+
+/** The company that runs Nuave and its city, shown on /terms, /privacy and
+ * /support (founder, 2026-10-24). */
+export const OPERATOR_NAME = "PT Nuave Arah Baru";
+export const OPERATOR_CITY = "Jakarta Selatan";
+
+export const LEGAL_VERSION = "1.0";
+export const LEGAL_EFFECTIVE_DATE = "24 Oktober 2026";
+
+/** Support and privacy requests share one inbox (S0 D4; founder 2026-10-24). */
+export const SUPPORT_EMAIL = "support@nuave.ai";
+export const SUPPORT_REPLY = "1 hari kerja";

@@ -15,7 +15,8 @@ describe("Wave 2 public truth", () => {
   ];
 
   it("does not publish unresolved placeholder tokens", () => {
-    for (const file of publicPages) {
+    // src/lib/legal.ts holds the operator, city and date the pages show.
+    for (const file of [...publicPages, "src/lib/legal.ts"]) {
       expect(source(file)).not.toMatch(
         /\[(?:HARGA|TANGGAL|VERSI|NAMA|KOTA|PENYEDIA|METODE|WAKTU|MASA|ALAMAT|BATAS|PAJAK)/i,
       );
@@ -27,16 +28,30 @@ describe("Wave 2 public truth", () => {
       expect(source(file)).not.toContain("GPT-4o");
   });
 
-  it("describes unimplemented payment and email delivery as unavailable", () => {
-    expect(source("src/app/faq/page.tsx")).toContain(
-      "Alur pembayaran belum aktif",
+  // S5: payment, saved reports and email delivery are live, so the pages
+  // state the price, the promise and the support inbox instead of saying
+  // they are unavailable.
+  it("states the live price, promise and support inbox", () => {
+    for (const file of ["src/app/faq/page.tsx", "src/app/terms/page.tsx"]) {
+      expect(source(file)).toContain("Rp249.000");
+      expect(source(file)).toContain("{DELIVERY_PROMISE}");
+    }
+    expect(source("src/lib/legal.ts")).toContain(
+      'SUPPORT_EMAIL = "support@nuave.ai"',
     );
-    expect(source("src/app/faq/page.tsx")).toContain(
-      "Belum. State audit saat ini bersifat browser/session-based",
-    );
-    expect(source("src/app/terms/page.tsx")).toContain(
-      "Checkout, pemrosesan pembayaran",
-    );
+    for (const file of publicPages) {
+      expect(source(file)).not.toMatch(/pengujian privat|belum aktif/i);
+      expect(source(file)).not.toContain("hello@nuave.ai");
+      expect(source(file)).not.toContain("Rp99.000");
+    }
+  });
+
+  it("only describes Meta tracking as running after the visitor agrees", () => {
+    const privacy = source("src/app/privacy/page.tsx");
+    expect(privacy).toContain("Meta Pixel");
+    expect(privacy).toContain("hanya aktif jika Anda memilih");
+    expect(privacy).toContain("https://www.facebook.com/privacy/policy");
+    expect(privacy).toContain("https://www.facebook.com/adpreferences");
   });
 });
 

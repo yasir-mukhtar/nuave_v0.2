@@ -474,7 +474,7 @@ describe("the payment-received email (R-22, AC-19)", () => {
     expect(message.text).toContain(`Nomor pesanan: ${number}`);
     expect(message.text).toContain("Rp249.000");
     expect(message.text).toContain(
-      "Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan, kami kembalikan uang Anda.",
+      "Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.",
     );
     expect(message.text).toContain(
       "Lanjutkan di browser yang sama untuk mengisi data bisnis Anda",

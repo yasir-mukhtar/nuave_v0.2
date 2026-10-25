@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-23
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); next: Spec 018 (real-search questions, ChatGPT + Google AI Overview, Rp249.000; Approved 2026-10-24; probe re-run, then build), then S5 (terms, price and promise wording)
+> Updated: 2026-10-25
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); next: S6, then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -44,13 +44,25 @@
 
 ## Next action
 
-- **Spec 018 first (decided 2026-10-23):** [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
-  is **Approved** (2026-10-24, revision 7): questions from real Google search
-  data, each answered by the real ChatGPT app and Google AI Overview, one
-  package at Rp249.000 ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)).
-  Next: the three-clinic probe re-run (AC-00, Q-5), then PR 1 (place field,
-  discovery, questions) and PR 2 (checks, report, price, promise), merged
-  together. S5, S6 and G1 follow it.
+- **S5 is done** ([#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159)):
+  the terms, privacy, support and FAQ pages state the paid product
+  (Rp249.000, the delivery promise, refunds, record lifetimes, Meta ad
+  tracking only after consent). Independent review PASS; the founder
+  approved the wording on 2026-10-25
+  ([decisions](./DECISION_LOG.md#2026-10-24--s5-meta-consent-operator-refunds-and-record-deletion)).
+- **Cleanup job due by 12 November 2026:** the privacy page promises the
+  Spec 016 Q3 record lifetimes; nothing deletes records yet. The first
+  failed orders reach 30 days around 12 November (founder decision
+  2026-10-24: build an automatic cleanup job).
+- **Before Meta ads go live:** the tracking change must meet the list in
+  [`content/website/PRIVACY.md`](./content/website/PRIVACY.md) (cookie notice,
+  consent-only server events, no Pixel on `/r` or `/uji`, value 249000).
+
+- **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
+  questions from real Google search data, each answered by the ChatGPT app
+  and Google AI Overview, one package at Rp249.000
+  ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)). S6 and G1
+  follow S5.
 
 - **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
   one immutable private report per order, stored on the server, reached through

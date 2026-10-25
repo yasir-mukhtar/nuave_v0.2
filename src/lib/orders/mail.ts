@@ -9,6 +9,7 @@
  * serves the message over HTTP.
  */
 
+import { SUPPORT_EMAIL } from "@/lib/legal";
 import { DELIVERY_PROMISE } from "./promise";
 
 export { DELIVERY_PROMISE };
@@ -30,8 +31,6 @@ export type MailResult = {
 };
 
 export type MailSender = (message: MailMessage) => Promise<MailResult>;
-
-const SUPPORT_EMAIL = "support@nuave.ai";
 
 export function escapeHtml(value: string): string {
   return value

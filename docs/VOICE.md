@@ -128,8 +128,9 @@ alarmist or all-knowing.** Apply these invariants to every surface:
 - **Money:** `Rp249.000` — no space after `Rp`; thousands separated by a full
   stop. One audit is **Rp249.000** (Spec 018), with no tax or fee added at
   checkout.
-- **Quote validity:** the unpaid Order Preview keeps the `Rp249.000` total for
-  **30 days**; after expiry the customer must refresh the preview before paying.
+- **Quote validity:** none is promised. The checkout no longer says the
+  summary holds for 30 days (founder, 2026-10-24, S5): an unpaid order ends
+  after 2 hours (Spec 016 Q2).
 - **Dates:** `17 Agustus 2026` — day, spelled month, year; no leading zero, no
   slash form (`17/08/26`).
 - **Time:** `10.00` and `08.00–21.00` (24-hour, period separator). In prose,
@@ -198,8 +199,8 @@ The voice is constant; the register and vocabulary shift per surface.
 - The settled primary CTA is **Cek bisnis saya di AI**; the priced action is
   **Bayar Rp249.000**; an upper non-charging action is **Lanjut ke pembayaran**.
 - State the one-audit nature, the `Rp249.000` total, that the audit checks
-  **ChatGPT dan Google AI Overview**, no extra tax/fee, and the
-  30-day quote validity.
+  **ChatGPT dan Google AI Overview**, and no extra tax/fee. Do not promise
+  how long the quote holds (S5).
 - Distinguish the free identity preview from the paid audit; never imply the
   business has appeared in AI before observations run.
 

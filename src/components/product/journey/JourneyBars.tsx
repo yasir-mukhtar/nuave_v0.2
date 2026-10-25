@@ -9,9 +9,10 @@ import { BottomSheet } from "@/components/motion/BottomSheet";
 import { SPRING_SETTLE } from "@/components/motion/presets";
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { cn } from "@/lib/utils";
+import { SUPPORT_EMAIL } from "@/lib/legal";
 import { NuaveLogo } from "./NuaveLogo";
 
-export const SUPPORT_EMAIL = "support@nuave.ai";
+export { SUPPORT_EMAIL };
 
 /** A 36px pill with a 44px touch area (Simpan & keluar, Bantuan). */
 export function PillButton({
