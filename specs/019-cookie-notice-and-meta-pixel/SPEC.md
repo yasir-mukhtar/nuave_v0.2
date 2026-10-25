@@ -51,8 +51,10 @@ the site looks and behaves exactly as today.
 ## Experience
 
 The notice sits at the bottom of the screen, over the content. On a phone it
-covers the bottom of the page, including the main button on `/audit`, until
-the visitor taps either choice; both are one tap. Until they choose, nothing
+covers the bottom of the page until the visitor taps either choice; both are
+one tap. On `/audit` it sits just above the journey's bottom bar, so the main
+button stays in view and tappable (founder, 2026-10-25; it used to cover it).
+Until they choose, nothing
 from Meta loads. Draft wording (Indonesian, for Yasir to
 approve):
 
@@ -140,6 +142,14 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   2026-10-25, ID 890453577390181, set in `.github/workflows/ci.yml`), switch
   off automatic advanced matching before merging, and after deploy check the events
   with Meta's Test Events screen.
+- **R-14 Focus stays in view.** While the notice is open, a control reached
+  with the keyboard is never hidden behind it (WCAG 2.2 AA, 2.4.11): the page
+  keeps the notice's height clear at the bottom when it scrolls to a focused
+  control, and has that much room at its end. On `/audit` the notice sits
+  just above the journey's bottom bar, so the bar's buttons stay in view and
+  tappable, and on a touch screen the keyboard bar that floats over a field
+  while typing sits above the notice. All of this goes when the notice
+  closes.
 
 ## Failure and recovery
 
@@ -170,6 +180,10 @@ cookie), all listed in section 10. Nuave stores nothing new on its server.
   event carries the email, business name, website or order number, and a
   reload sends no second Purchase.
 - **AC-07** Notice text follows `docs/VOICE.md` and is approved by Yasir.
+- **AC-08** With a test ID on a phone (390×844) and the notice open: tabbing
+  through `/faq` and `/` never leaves a focused control behind the notice,
+  and on `/audit` the journey's buttons, the pay button included, stay
+  uncovered and tappable, as does the keyboard bar's Bayar on a touch screen.
 
 ## Open questions
 
@@ -193,3 +207,4 @@ cookie), all listed in section 10. Nuave stores nothing new on its server.
 Implementing (2026-10-25): unit tests `src/components/consent/cookie-consent.test.tsx`;
 browser suite `tests/e2e/meta-pixel.spec.ts` (`npm run test:e2e:pixel`, a
 server built with a fake Pixel ID); AC-01 in `tests/e2e/offline-network.spec.ts`.
+R-14 and AC-08: the tests named "R-14" in both files.

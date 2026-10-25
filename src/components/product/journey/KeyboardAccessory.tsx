@@ -12,8 +12,8 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { SPRING_SETTLE } from "@/components/motion/presets";
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
+import { BOTTOM_BAR_HEIGHT_VAR, NOTICE_CLEAR_VAR } from "@/lib/bottom-bars";
 import { cn } from "@/lib/utils";
-import { BOTTOM_BAR_HEIGHT_VAR } from "./JourneyBars";
 
 const COARSE_QUERY = "(pointer: coarse)";
 
@@ -139,14 +139,13 @@ export function KeyboardAccessory({
             "fixed inset-x-0 z-40 mx-auto flex min-h-16 w-full max-w-[480px] items-center gap-2 border-t border-line-200 bg-white px-4 py-2.5",
             className,
           )}
-          // Above the keyboard; with no on-screen keyboard (a tablet with a
-          // keyboard case) it floats just above the bottom bar, whatever
-          // that bar's height, so it never covers the bar's action.
+          // Above the keyboard, and never over the bottom bar's action: with
+          // no on-screen keyboard (a tablet with a keyboard case) it floats
+          // just above that bar, whatever its height. While the cookie notice
+          // is open (Spec 019 R-14) it floats above the notice too, also
+          // where the notice rises above a short keyboard.
           style={{
-            bottom:
-              inset > 0
-                ? inset
-                : `var(${BOTTOM_BAR_HEIGHT_VAR}, calc(84px + env(safe-area-inset-bottom, 0px)))`,
+            bottom: `max(${inset}px, calc(var(${BOTTOM_BAR_HEIGHT_VAR}, calc(84px + env(safe-area-inset-bottom, 0px))) + var(${NOTICE_CLEAR_VAR}, 0px)))`,
           }}
           initial={animate ? { opacity: 0, y: 12 } : false}
           animate={{ opacity: 1, y: 0 }}

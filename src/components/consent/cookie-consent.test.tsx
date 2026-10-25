@@ -91,6 +91,58 @@ describe("without a Pixel ID (R-01)", () => {
 describe("with a Pixel ID", () => {
   beforeEach(() => setUp());
 
+  describe("keeps focused controls clear of the open notice (R-14)", () => {
+    const root = document.documentElement;
+    const clear = () => root.style.getPropertyValue("--cookie-notice-clear");
+    const room = () =>
+      document.querySelector('div[aria-hidden="true"][style*="notice-clear"]');
+
+    afterEach(() => {
+      root.style.scrollPaddingBottom = "";
+    });
+
+    it("pads the page above the notice and the /audit bar, then puts it back", () => {
+      root.style.scrollPaddingBottom = "3px";
+      app();
+      expect(notice()).not.toBeNull();
+      // jsdom lays nothing out: the notice measures 0, so only the 8px margin.
+      expect(clear()).toBe("8px");
+      expect(root.style.scrollPaddingBottom).toBe(
+        "calc(var(--cookie-notice-clear) + var(--journey-bottom-bar, 0px))",
+      );
+      expect(room()).not.toBeNull();
+      act(() => screen.getByRole("button", { name: "Tolak" }).click());
+      expect(notice()).toBeNull();
+      expect(clear()).toBe("");
+      expect(root.style.scrollPaddingBottom).toBe("3px");
+      expect(room()).toBeNull();
+    });
+
+    it("lets go on a page without the notice and pads again on the way back", () => {
+      const view = app();
+      expect(clear()).toBe("8px");
+      pathname = "/uji";
+      view.rerender(
+        <>
+          <CookieSettingsLink />
+          <CookieConsent />
+        </>,
+      );
+      expect(notice()).toBeNull();
+      expect(clear()).toBe("");
+      expect(root.style.scrollPaddingBottom).toBe("");
+      pathname = "/faq";
+      view.rerender(
+        <>
+          <CookieSettingsLink />
+          <CookieConsent />
+        </>,
+      );
+      expect(notice()).not.toBeNull();
+      expect(clear()).toBe("8px");
+    });
+  });
+
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();

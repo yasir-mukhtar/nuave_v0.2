@@ -9,6 +9,7 @@ import { BottomSheet } from "@/components/motion/BottomSheet";
 import { SPRING_SETTLE } from "@/components/motion/presets";
 import { useMotionAllowed } from "@/components/motion/useMotionAllowed";
 import { cn } from "@/lib/utils";
+import { BOTTOM_BAR_HEIGHT_VAR } from "@/lib/bottom-bars";
 import { SUPPORT_EMAIL } from "@/lib/legal";
 import { NuaveLogo } from "./NuaveLogo";
 
@@ -257,9 +258,6 @@ type BarAction = {
   tone?: "ink" | "commit" | "outline";
   ariaDescribedBy?: string;
 };
-
-/** The CSS variable a floating keyboard bar uses to sit above this bar. */
-export const BOTTOM_BAR_HEIGHT_VAR = "--journey-bottom-bar";
 
 /**
  * The fixed bottom bar: step progress on its top edge, `Kembali` on the left
