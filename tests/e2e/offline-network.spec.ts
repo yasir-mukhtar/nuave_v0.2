@@ -17,9 +17,7 @@ for (const path of ["/", "/audit", "/faq"] as const) {
     // Spec 019 R-01: without a Pixel ID there is no cookie notice or link,
     // also once the page is running in the browser.
     await page.waitForLoadState("networkidle");
-    await expect(
-      page.getByRole("region", { name: "Cookie untuk iklan" }),
-    ).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Cookie?" })).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Pengaturan cookie" }),
     ).toHaveCount(0);

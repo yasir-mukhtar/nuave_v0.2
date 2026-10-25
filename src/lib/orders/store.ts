@@ -101,6 +101,8 @@ export type OrderRow = {
   purged_at?: string | null;
   /** A support hold keeps the order past its lifetime until then. */
   hold_until?: string | null;
+  /** When `support email` last replaced a mistyped email. */
+  email_changed_at?: string | null;
 };
 
 /** R-18: SQL for "this order may run paid work": paid through Midtrans, a
@@ -1263,11 +1265,14 @@ export async function replaceLinkHashForSupport(
   const result = await db
     .prepare(
       `UPDATE orders SET link_hash = ?2, link_off = 0
-       WHERE id = ?1 AND report_json IS NOT NULL AND link_expires_at > ?3`,
+       WHERE id = ?1 AND report_json IS NOT NULL AND link_expires_at > ?3
+       RETURNING id`,
     )
     .bind(input.orderId, input.linkHash, iso(input.now))
-    .run();
-  return result.meta?.changes === 1;
+    .first<{ id: string }>();
+  // RETURNING, not meta.changes: `wrangler d1 execute --local` reports no
+  // change count.
+  return result !== null;
 }
 
 /** Spec 016 R-08: the prepared website reading is saved on the order the first
