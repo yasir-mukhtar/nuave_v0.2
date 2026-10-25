@@ -1,10 +1,16 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-24
+> Updated: 2026-10-25
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-25 — S5 wording approved
+
+Yasir approved the final Indonesian wording of the terms, privacy, support
+and FAQ pages (PR #159) and asked for it to be merged. The pages take
+effect on 24 Oktober 2026, version 1.0, as written in `src/lib/legal.ts`.
 
 ## 2026-10-24 — S5 follow-up: promise clause, mistyped email, provider names, FAQ
 

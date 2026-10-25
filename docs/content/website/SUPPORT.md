@@ -1,8 +1,7 @@
 # Kontak dan Bantuan
 
 > Route: `/support` (`src/app/support/page.tsx`)
-> Status: S5 wording, 2026-10-24. Waiting for the founder's approval of the
-> final Indonesian text. The page and this file say the same thing; change
+> Status: S5 wording, approved by the founder on 2026-10-25 (PR #159). The page and this file say the same thing; change
 > both together.
 > Language: Indonesian
 > Shared facts: `src/lib/legal.ts` (support email, reply time, operator).

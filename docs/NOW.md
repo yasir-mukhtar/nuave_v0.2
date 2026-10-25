@@ -1,7 +1,7 @@
 # Nuave now
 
-> Updated: 2026-10-24
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151); S5 (terms, privacy, support, FAQ wording) built and reviewed, waiting for the founder's wording approval; next: S6, then G1
+> Updated: 2026-10-25
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); next: S6, then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -44,10 +44,11 @@
 
 ## Next action
 
-- **S5 is built** (2026-10-24): the terms, privacy, support and FAQ pages
-  state the paid product (Rp249.000, the Spec 018 promise, refunds, record
-  lifetimes, Meta ad tracking only after consent). Independent review
-  PASS+NOTES; the founder approves the final Indonesian wording before merge
+- **S5 is done** ([#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159)):
+  the terms, privacy, support and FAQ pages state the paid product
+  (Rp249.000, the delivery promise, refunds, record lifetimes, Meta ad
+  tracking only after consent). Independent review PASS; the founder
+  approved the wording on 2026-10-25
   ([decisions](./DECISION_LOG.md#2026-10-24--s5-meta-consent-operator-refunds-and-record-deletion)).
 - **Cleanup job due by 12 November 2026:** the privacy page promises the
   Spec 016 Q3 record lifetimes; nothing deletes records yet. The first
