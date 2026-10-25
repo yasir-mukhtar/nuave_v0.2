@@ -33,10 +33,17 @@
      without storing them, so section 2's "Nuave sendiri tidak menyimpan
      alamat IP Anda" stays true.
   If any of these changes, section 10 below must change first.
-- **Deletion:** nothing deletes expired records yet. Founder decision
-  2026-10-24: build an automatic cleanup job before the first failed orders
-  reach 30 days (mid-November 2026). Until it exists, section 9 is a promise
-  the system does not yet keep.
+- **Deletion (section 9):** an hourly cleanup in the order cron
+  (`src/lib/orders/retention.ts`, minute 17) makes an order anonymous 12 months
+  after its report was saved, or 30 days after it failed or expired. It empties
+  the email, business details, intake, questions, answers, report and link, and
+  deletes the question, email and payment-email rows; a bare order row stays
+  (order number, dates, state, payment links) so payment records still add up.
+  It skips an order with an open refund case (the same cases as `support
+  refunds`), a running order, and one under a support hold (`npm run support
+  -- hold <order> <days>`). Settled cost rows go after 24 months. Payment
+  records are never removed. Not covered in code: the support inbox (12 months,
+  by hand) and the email provider's own copies.
 - **Version 1.1 (2026-10-25):** adds the legal basis for each use (section
   5), providers bound by their service agreements (section 7), and a written
   breach notice within 3 x 24 hours (section 11). Before publishing,

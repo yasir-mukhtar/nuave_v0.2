@@ -59,6 +59,7 @@ export function isOrderId(value: unknown): value is string {
 
 export type OrderRow = {
   id: string;
+  /** Emptied when the order is made anonymous (retention.ts). */
   email: string;
   business_name: string;
   website: string;
@@ -96,6 +97,10 @@ export type OrderRow = {
   discovery_key: string | null;
   discovery_runs: number;
   questions_json: string | null;
+  /** Set when the hourly cleanup made the order anonymous (migration 0011). */
+  purged_at?: string | null;
+  /** A support hold keeps the order past its lifetime until then. */
+  hold_until?: string | null;
 };
 
 /** R-18: SQL for "this order may run paid work": paid through Midtrans, a

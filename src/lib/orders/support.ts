@@ -1,3 +1,4 @@
+import { MAX_HOLD_DAYS, holdOrder } from "./retention";
 import { applyRefund } from "../payments/apply";
 import type { SpendDb, SpendStatement } from "../spending/spend-ledger";
 import { newLinkSecret, sha256Hex } from "./link-secret";
@@ -55,7 +56,8 @@ export const SUPPORT_USAGE =
   "Usage: npm run support -- <resend|off|show> <order-id|order-number|midtrans-order-id> [--email] [--local]\n" +
   "       npm run support -- refunds [--local]\n" +
   "       npm run support -- refunded <transaction-id> [--local]\n" +
-  "       npm run support -- close <midtrans-order-id> <unknown|unpaid> [--local]";
+  "       npm run support -- close <midtrans-order-id> <unknown|unpaid> [--local]\n" +
+  "       npm run support -- hold <order-id|order-number|midtrans-order-id> <days, 0 releases> [--local]";
 
 const MIDTRANS_ORDER_ID = /^NV-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}-\d{1,3}$/;
 const TRANSACTION_ID = /^[A-Za-z0-9_.-]{6,100}$/;
@@ -76,6 +78,7 @@ export async function runSupport(
     refunds: 0,
     refunded: 1,
     close: 2,
+    hold: 2,
   };
   const given = [reference, second].filter((word) => word !== undefined).length;
   if (
@@ -108,6 +111,7 @@ export async function runSupport(
     return 1;
   }
   if (command === "off") return off(deps, order);
+  if (command === "hold") return hold(deps, order, second!);
   if (command === "show") {
     return show(deps, order, flags.includes("--email"));
   }
@@ -130,6 +134,35 @@ async function findOrder(db: SpendDb, reference: string) {
         .bind(reference)
         .first<{ id: string }>();
   return row ? getOrder(db, row.id) : null;
+}
+
+/** Privacy page section 9: keeps the order past its lifetime while a support
+ * case is open. The hourly cleanup skips it until the hold ends. */
+async function hold(
+  deps: SupportDeps,
+  order: OrderRow,
+  daysText: string,
+): Promise<number> {
+  const days = /^\d{1,3}$/.test(daysText) ? Number(daysText) : NaN;
+  if (!(days >= 0 && days <= MAX_HOLD_DAYS)) {
+    deps.out(`Give the hold in days, 0 to ${MAX_HOLD_DAYS} (0 releases it).`);
+    return 2;
+  }
+  const until = await holdOrder(deps.db, {
+    orderId: order.id,
+    days,
+    now: deps.now(),
+  });
+  if (until === null) {
+    deps.out("This order was already made anonymous. Nothing to hold.");
+    return 1;
+  }
+  deps.out(
+    until === "released"
+      ? "The hold is released. The order follows its normal lifetime again."
+      : `The order is kept until ${until}. The hourly cleanup skips it until then.`,
+  );
+  return 0;
 }
 
 async function off(deps: SupportDeps, order: OrderRow): Promise<number> {
@@ -240,6 +273,8 @@ async function show(
         ? "expired"
         : `active until ${order.link_expires_at}`;
   line("Link", linkState);
+  if (order.purged_at) line("Made anonymous", order.purged_at);
+  if (order.hold_until) line("Kept until (support hold)", order.hold_until);
   await showPayments(deps, order);
 
   const ledger = await deps.db
