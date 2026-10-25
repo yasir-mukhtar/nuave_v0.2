@@ -17,7 +17,7 @@ import {
 const META_SCRIPT = "https://connect.facebook.net/en_US/fbevents.js";
 
 function notice(page: Page) {
-  return page.getByRole("region", { name: "Cookie untuk iklan" });
+  return page.getByRole("region", { name: "Cookie?" });
 }
 
 async function setUp(page: Page, baseURL: string) {
@@ -62,7 +62,9 @@ test("before a choice nothing loads from Meta; Setuju loads the Pixel and sends 
   const meta = await setUp(page, baseURL!);
   await page.goto("/");
   await expect(notice(page)).toBeVisible();
-  await expect(notice(page)).toContainText("sebagai kode acak (hash)");
+  await expect(notice(page)).toContainText(
+    "Your report and answers are never shared",
+  );
   await expect(
     page.getByRole("button", { name: "Pengaturan cookie" }),
   ).toBeVisible();
@@ -99,7 +101,7 @@ test("Tolak loads nothing, now or after a reload; Pengaturan cookie reopens the 
 
   await page.getByRole("button", { name: "Pengaturan cookie" }).click();
   await expect(notice(page)).toBeVisible();
-  await expect(notice(page)).toContainText("Pilihan Anda sekarang: Tolak");
+  await expect(notice(page)).toContainText("Your choice now: Tolak");
 });
 
 for (const path of ["/r", "/uji"]) {

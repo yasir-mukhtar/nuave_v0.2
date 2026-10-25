@@ -6,6 +6,19 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice in English, shorter
+
+After the notice went live, Yasir found the approved Indonesian text
+intimidating. The notice now reads, in English: "🍪 Cookie? Meta cookies
+help us measure our ads. Your report and answers are never shared. Privacy
+policy", in smaller type, with the buttons still **Tolak** and **Setuju** so
+the privacy page (which names them) stays as it is. This supersedes the
+Spec 019 Q-1/Q-2 answers: the notice no longer names the hashed order email,
+which is true while only the browser Pixel runs (it sends no email). The
+server step (Conversions API) must bring the email back into the notice
+before it ships. A deliberate exception to `docs/VOICE.md` (Indonesian
+customer copy) for this notice only.
+
 ## 2026-10-25 — Support commands: fix an order email, close a refund case without a refund
 
 Yasir chose how the two founder commands work:

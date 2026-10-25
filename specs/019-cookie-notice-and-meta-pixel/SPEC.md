@@ -175,6 +175,11 @@ cookie), all listed in section 10. Nuave stores nothing new on its server.
 
 - **Q-1** Notice wording: approved as drafted (2026-10-25).
 - **Q-2** The notice names the hashed email now: approved (2026-10-25).
+- **Later the same day:** the notice moved to English and shorter ("🍪
+  Cookie? Meta cookies help us measure our ads. Your report and answers are
+  never shared."), buttons still Tolak and Setuju; it no longer names the
+  hashed email until the server step sends one (decision log, "Cookie notice
+  in English, shorter").
 
 ## Implementation notes
 

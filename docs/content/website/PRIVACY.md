@@ -21,8 +21,10 @@
 - **Before the Meta Pixel or Conversions API goes live** (founder decision
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
-  1. show a cookie notice with **Setuju** and **Tolak** that names the hashed
-     order email, and load nothing from Meta until the visitor taps Setuju;
+  1. show a cookie notice with **Setuju** and **Tolak**, and load nothing
+     from Meta until the visitor taps Setuju; once server events send the
+     hashed order email, the notice names it (founder, 2026-10-25: the
+     browser step sends no email, so the notice does not mention one yet);
   2. send server events (Conversions API) only for visitors who agreed, and
      send no fields beyond those section 10 lists (event, value, IP address,
      browser type, Meta cookie codes, hashed email for purchases);
