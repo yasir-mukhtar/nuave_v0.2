@@ -183,7 +183,11 @@ describe("which orders are due", () => {
 
   it("never an order still reporting", async () => {
     const id = await endedOrder("failed", T0);
-    await sql(`UPDATE orders SET state = 'reporting' WHERE id = ?1`, id);
+    await sql(
+      `UPDATE orders SET state = 'reporting', completed_at = ?2 WHERE id = ?1`,
+      id,
+      T0.toISOString(),
+    );
     const later = new Date(T0.getTime() + 800 * DAY);
     expect(await due(later)).toEqual([]);
     expect(await purgeOrder(d1.db, { orderId: id, now: later })).toBe(false);

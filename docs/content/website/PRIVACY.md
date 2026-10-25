@@ -56,6 +56,8 @@
     `needs_refund` transaction): `support refunds` keeps listing it and the
     job never reaches it;
   - a delivered order with a chargeback near its 12 months: set a `hold`.
+  - a failed order whose report link support resent by hand: the link stops
+    working at 30 days, so set a `hold` when resending it.
   For a paid order, the bare row and the payment records still carry Midtrans
   IDs that Midtrans can link to the customer, so paid orders are pseudonymous
   rather than anonymous; unpaid orders become effectively anonymous.
