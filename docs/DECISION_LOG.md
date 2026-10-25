@@ -6,6 +6,23 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Approve Spec 019 (clinic landing page)
+
+The founder approved [Spec 019](../specs/019-clinic-landing-page/SPEC.md):
+the clinic landing page from Figma page 244:2 replaces the page at `/`, with
+the words of its `COPY.md`. Answers to its four questions:
+
+- **D-1:** big display headlines may go down to 36px on phones
+  (`--type-display-size: clamp(2.25rem, 5vw, 4rem)`, was 48px). The `/audit`
+  headline also gets smaller on small phones.
+- **D-2:** the hero keeps "10 pertanyaan berdasarkan volume pencarian
+  tertinggi Google".
+- **D-3:** the newest wording goes everywhere: "Rp249.000 untuk mulai audit
+  lengkap." under every form, "Nama klinik hanya ilustrasi." on every
+  example.
+- **D-4:** the proposed examples for the Gigi, Kulit, Anak and Lainnya hero
+  tabs are approved.
+
 ## 2026-10-25 — S5 wording approved
 
 Yasir approved the final Indonesian wording of the terms, privacy, support

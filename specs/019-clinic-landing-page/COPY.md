@@ -1,6 +1,6 @@
 # Spec 019 copy: every word on the clinic landing page
 
-> Status: **In review** with [`SPEC.md`](./SPEC.md)
+> Status: **Approved** with [`SPEC.md`](./SPEC.md) on 2026-10-25
 > Language: Indonesian
 > Updated: 2026-10-25
 
@@ -11,11 +11,11 @@ Where the words come from:
 - **FAQ.md.** The approved answers in `docs/content/website/FAQ.md`
   (S5 wording, approved 2026-10-25).
 - **Today.** Kept from today's landing (`src/components/landing/Landing.tsx`).
-- **Proposal.** New words for things the design does not draw yet. They need
-  the founder's approval with the spec.
+- **Proposal.** New words for things the design does not draw yet. The
+  founder approved them with the spec.
 - **Fix.** A small change to the design's words, listed with its reason in
   [Small fixes](#small-fixes).
-- **D-n.** Waits on a decision in SPEC.md.
+- **D-n.** Settled by that decision in SPEC.md.
 
 A `/` inside a heading marks the line break drawn in the design on a laptop.
 On a phone, text wraps where it fits unless a break is noted.
@@ -59,7 +59,7 @@ Shown above the headline only when this browser has a saved journey:
 - **Line under the form:** "Cek apakah klinik Anda bisa ditemukan, gratis. /
   Rp249.000 untuk mulai audit lengkap."
 - **Ticks:**
-  1. "10 pertanyaan berdasarkan volume pencarian tertinggi Google" (D-2)
+  1. "10 pertanyaan berdasarkan volume pencarian tertinggi Google" (D-2: kept)
   2. "ChatGPT dan Google AI Overview"
   3. "Laporan siap dalam 15 menit"
 - **Clinic-type tabs:** "Kecantikan" (selected on load), "Gigi", "Kulit",
@@ -81,7 +81,7 @@ Shown above the headline only when this browser has a saved journey:
 
 - **Report card** (the same for every tab): "AI Visibility Report";
   "ChatGPT" "muncul di 3 dari 10"; "Google AI Overview" "muncul di 1 dari 6".
-- **Caption:** "Contoh. Nama klinik fiktif." (D-3)
+- **Caption:** "Nama klinik hanya ilustrasi." (D-3)
 
 ## Sticky bar (Proposal, from the lofi notes)
 
@@ -135,7 +135,7 @@ Shown above the headline only when this browser has a saved journey:
     - "Klinik E: dekat stasiun, parkir luas"
     - "Klinik Anda?"
   - Sources: "klinik-a.contoh", "direktori.contoh".
-- **Caption:** "Contoh. Nama klinik fiktif. Google tidak selalu menampilkan AI
+- **Caption:** "Nama klinik hanya ilustrasi. Google tidak selalu menampilkan AI
   Overview." (D-3)
 
 ## S4 · Cara kerja (`#cara-kerja`)
@@ -402,7 +402,7 @@ label and topic line.
 - **Line:** "Mulai dari website atau Instagram klinik Anda."
 - **Form:** see S1.
 - **Line under the form:** "Cek apakah klinik Anda bisa ditemukan, gratis. /
-  Audit sekali bayar Rp249.000." (D-3)
+  Rp249.000 untuk mulai audit lengkap." (D-3: the hero's line)
 - **Street picture:** the empty shop sign "Klinik Anda?" with "?".
 - **Contact:** "Ada pertanyaan lain? Hubungi kami di support@nuave.ai."
   The address is a `mailto:` link.

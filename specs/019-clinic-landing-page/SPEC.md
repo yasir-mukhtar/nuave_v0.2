@@ -1,6 +1,7 @@
 # Spec 019: Clinic landing page (S6)
 
-> Status: **In review**
+> Status: **Approved** by the founder on 2026-10-25, with D-1 to D-4 answered
+> (see Decisions)
 > Owner: founder (S6); built by Claude Code on `claude/practical-brahmagupta-8y4ces`
 > Updated: 2026-10-25
 > Implements: [`PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md) S6, "Landing page"
@@ -121,7 +122,8 @@ hear about their clinic, what the audit costs, and how to start.
     - 17px to 16 or 18.
   - Big numbers use `type-number` (64px). The design's 96px figures
     therefore show at 64px.
-  - The hero headline uses `type-display`. Its phone size is decision D-1.
+  - The hero headline uses `type-display`, which now starts at 36px on a
+    phone (D-1).
 - **R-03 Words.** Every visible string comes from COPY.md. No new claims,
   numbers, names or testimonials. Clinic names are illustrative and
   labelled.
@@ -189,28 +191,22 @@ the existing `noindex`.
   - The founder approves the PR preview on a phone and a laptop before
     merging.
 
-## Decisions (founder, before approval)
+## Decisions (founder, 2026-10-25)
 
-- **D-1 Phone headline.**
+- **D-1 Phone headline: allow 36px.**
   - The design's phone headlines are 38px (hero) and 36px (closing
-    section). The type rules start big headlines at 48px, which would wrap
-    the hero headline to four or five lines on a phone.
-  - Recommended: lower the display role's minimum to 36px. The `/audit`
-    headline also shows at 36px on small phones.
-- **D-2 "Volume pencarian tertinggi".**
-  - The hero tick says the ten questions come from the highest Google
-    search volume. S4 and S7 only say "berdasarkan volume pencarian di
-    Google".
-  - The approved FAQ says that when data is thin, a question is built from
-    the clinic's profile instead, and the report can show "Tidak ada data
-    jumlah pencarian".
-  - Recommended: soften the tick to "10 pertanyaan berdasarkan data
-    pencarian Google".
-- **D-3 Two wording differences between sections.**
-  - The hero's new price line ("Rp249.000 untuk mulai audit lengkap.") is
-    not yet in the closing section.
-  - The new caption ("Nama klinik hanya ilustrasi.") is not yet in the hero
-    and S3.
-  - Recommended: use the newest wording in both places.
-- **D-4 Hero tab examples.** The examples for Gigi, Kulit, Anak and Lainnya
-  in COPY.md are lead proposals (the Kecantikan one is the founder's).
+    section). The type rules started big headlines at 48px, which would
+    wrap the hero headline to four or five lines on a phone.
+  - Decision: the display role's minimum drops from 48px to 36px
+    (`--type-display-size: clamp(2.25rem, 5vw, 4rem)`). The `/audit`
+    headline also shows at 36px on small phones; the founder accepted that.
+- **D-2 "Volume pencarian tertinggi": keep as designed.**
+  - The hero tick keeps "10 pertanyaan berdasarkan volume pencarian
+    tertinggi Google", although the approved FAQ says a question is built
+    from the clinic's profile when search data is thin.
+- **D-3 Two wording differences: use the newest wording everywhere.**
+  - The closing section's line takes the hero's "Rp249.000 untuk mulai
+    audit lengkap."
+  - The hero and S3 captions take "Nama klinik hanya ilustrasi."
+- **D-4 Hero tab examples: approved** as written in COPY.md, with the other
+  proposals there (page title, menu labels, sticky bar).

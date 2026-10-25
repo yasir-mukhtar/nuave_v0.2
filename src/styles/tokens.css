@@ -110,7 +110,7 @@
   --type-size-5xl: 4rem; /* 64px */
 
   /* ── Productive and expressive semantic roles ── */
-  --type-display-size: clamp(3rem, 5vw, 4rem);
+  --type-display-size: clamp(2.25rem, 5vw, 4rem);
   --type-display-weight: 600;
   --type-display-leading: 1.08;
   --type-display-tracking: -0.03em;
