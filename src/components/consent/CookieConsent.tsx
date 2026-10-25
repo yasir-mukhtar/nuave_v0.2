@@ -124,7 +124,7 @@ export function CookieConsent() {
           {reopened && choice ? (
             <p className="type-caption m-0 text-ink-600">
               Your choice now:{" "}
-              <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
+              <strong>{choice === "yes" ? "Accept" : "Decline"}</strong>.{" "}
               {choice === "yes"
                 ? "Meta cookies already set can be removed in your browser settings."
                 : null}
@@ -137,14 +137,15 @@ export function CookieConsent() {
             className="h-10"
             onClick={() => choose("no")}
           >
-            Tolak
+            Decline
           </Button>
+          {/* Founder decision 2026-10-25: Accept is the main (purple) button. */}
           <Button
-            variant="inkOutline"
+            variant="commit"
             className="h-10"
             onClick={() => choose("yes")}
           >
-            Setuju
+            Accept
           </Button>
         </div>
       </div>

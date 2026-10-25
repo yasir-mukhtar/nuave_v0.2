@@ -65,10 +65,9 @@ approve):
 >
 > [Tolak] [Setuju]
 
-The two buttons have the same size and weight, so refusing is as easy as
-agreeing. The notice names the hashed email now, as the privacy page's list
-requires, even though this step does not send it yet, so the wording does not
-have to change when the server step ships.
+The two buttons have the same size. Since 2026-10-25 they read Decline and
+Accept, with Accept as the main (purple) button (decision log, "Cookie notice
+buttons in English"); Decline stays one tap and in plain view.
 
 **Pengaturan cookie** in the footer reopens the same notice, showing the
 current choice. Choosing **Tolak** after **Setuju** stops new events at once;

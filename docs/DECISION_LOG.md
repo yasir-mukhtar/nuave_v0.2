@@ -6,6 +6,17 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice buttons in English, Accept as the main button
+
+Yasir changed the buttons to **Decline** and **Accept**, with Accept as the
+main (purple) button to lessen the effort of choosing. This supersedes Spec
+019's "two buttons of the same size and weight": they keep the same size,
+but Accept now stands out. Decline stays one tap and in plain view.
+Indonesian law asks for clear, freely given consent, not equal button
+styles; EU-style regulators treat a highlighted Accept as nudging, which
+does not apply to Nuave's market today. The privacy page names Accept
+(version 1.3), so everyone is asked again.
+
 ## 2026-10-25 — Cookie notice in English, shorter
 
 After the notice went live, Yasir found the approved Indonesian text
