@@ -114,3 +114,22 @@
     line-height: 20px;
   }
 }
+
+/* 768–1023px: with "Pengaturan cookie" the five links can be wider than the
+   room between the logo and the ©, so they wrap there instead of running
+   into either. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 24px;
+    height: auto;
+    min-height: 96px;
+    padding: 20px 0;
+  }
+
+  .links {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+}
