@@ -346,7 +346,7 @@ export default function PrivacyPage() {
           <p>
             Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai
             Meta Pixel di browser dan Meta Conversions API dari server kami.
-            Keduanya hanya aktif jika Anda memilih <strong>Setuju</strong> pada
+            Keduanya hanya aktif jika Anda memilih <strong>Allow</strong> pada
             pemberitahuan cookie. Jika Anda menolak atau belum memilih, Nuave
             tidak memasang cookie Meta dan tidak mengirim data Anda ke Meta.
           </p>

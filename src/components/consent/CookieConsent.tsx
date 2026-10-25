@@ -52,7 +52,7 @@ export function CookieConsent() {
     if (enabled && choice === "yes") trackPageView();
   }, [enabled, choice, pathname]);
 
-  // A choice made in another tab applies here at once: Tolak there stops
+  // A choice made in another tab applies here at once: Don't allow there stops
   // this tab before it sends anything more (privacy page section 10).
   useEffect(() => {
     if (!enabled) return;
@@ -151,11 +151,11 @@ export function CookieConsent() {
               tabIndex={-1}
               className="type-label-strong m-0 text-ink-900"
             >
-              <span aria-hidden="true">🍪 </span>Cookie?
+              <span aria-hidden="true">🍪 </span>Allow cookies?
             </h2>
             <p className="type-caption m-0 text-ink-600">
-              Meta cookies help us measure our ads. Your report and answers are
-              never shared.{" "}
+              Cookies help us measure our ads. Your report and answers are never
+              shared.{" "}
               <Link href="/privacy#cookie" className="text-ink-900 underline">
                 Privacy policy
               </Link>
@@ -163,7 +163,7 @@ export function CookieConsent() {
             {reopened && choice ? (
               <p className="type-caption m-0 text-ink-600">
                 Your choice now:{" "}
-                <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
+                <strong>{choice === "yes" ? "Allow" : "Don't allow"}</strong>.{" "}
                 {choice === "yes"
                   ? "Meta cookies already set can be removed in your browser settings."
                   : null}
@@ -176,14 +176,15 @@ export function CookieConsent() {
               className="h-10"
               onClick={() => choose("no")}
             >
-              Tolak
+              Don&apos;t allow
             </Button>
+            {/* Founder decision 2026-10-25: Allow is the main (purple) button. */}
             <Button
-              variant="inkOutline"
+              variant="commit"
               className="h-10"
               onClick={() => choose("yes")}
             >
-              Setuju
+              Allow
             </Button>
           </div>
         </div>

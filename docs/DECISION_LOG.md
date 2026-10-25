@@ -6,6 +6,23 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice: "🍪 Allow cookies?", Allow as the main button
+
+Yasir settled the notice's words: title "🍪 Allow cookies?", text "Cookies
+help us measure our ads. Your report and answers are never shared." with the
+Privacy policy link, and the buttons **Don't allow** and **Allow**, with
+Allow as the main (purple) button to lessen the effort of choosing. "Allow /
+Don't allow" matches the permission prompts phone users know. The text names
+the purpose (ads) and the linked privacy page names Meta, which is what
+informed consent under UU PDP and Meta's Business Tools terms need; the word
+"Meta" need not be in the notice itself. This supersedes Spec 019's "two
+buttons of the same size and weight": they keep the same size, but Allow
+stands out; Don't allow stays one tap and in plain view. Indonesian law asks
+for clear, freely given consent, not equal button styles; EU-style
+regulators treat a highlighted Allow as nudging, which does not apply to
+Nuave's market today. The privacy page names Allow (version 1.3), so
+everyone is asked again.
+
 ## 2026-10-25 — Cookie notice above the audit's button bar
 
 The founder chose to lift the cookie notice above the `/audit` journey's

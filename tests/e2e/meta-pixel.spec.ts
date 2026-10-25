@@ -19,7 +19,7 @@ import {
 const META_SCRIPT = "https://connect.facebook.net/en_US/fbevents.js";
 
 function notice(page: Page) {
-  return page.getByRole("region", { name: "Cookie?" });
+  return page.getByRole("region", { name: "Allow cookies?" });
 }
 
 async function setUp(page: Page, baseURL: string) {
@@ -57,7 +57,7 @@ async function tracked(page: Page) {
   return (await pixelCalls(page)).filter((call) => call[0] === "track");
 }
 
-test("before a choice nothing loads from Meta; Setuju loads the Pixel and sends PageView, also after a reload", async ({
+test("before a choice nothing loads from Meta; Allow loads the Pixel and sends PageView, also after a reload", async ({
   page,
   baseURL,
 }) => {
@@ -73,7 +73,9 @@ test("before a choice nothing loads from Meta; Setuju loads the Pixel and sends 
   await page.waitForTimeout(300);
   expect(meta).toEqual([]);
 
-  await notice(page).getByRole("button", { name: "Setuju" }).click();
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
   await expect(notice(page)).toHaveCount(0);
   await expect.poll(() => meta).toEqual([META_SCRIPT]);
   expect(await pixelCalls(page)).toEqual([
@@ -87,13 +89,13 @@ test("before a choice nothing loads from Meta; Setuju loads the Pixel and sends 
   await expect.poll(() => tracked(page)).toEqual([["track", "PageView"]]);
 });
 
-test("Tolak loads nothing, now or after a reload; Pengaturan cookie reopens the choice", async ({
+test("Don't allow loads nothing, now or after a reload; Pengaturan cookie reopens the choice", async ({
   page,
   baseURL,
 }) => {
   const meta = await setUp(page, baseURL!);
   await page.goto("/faq");
-  await notice(page).getByRole("button", { name: "Tolak" }).click();
+  await notice(page).getByRole("button", { name: "Don't allow" }).click();
   await expect(notice(page)).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -103,17 +105,19 @@ test("Tolak loads nothing, now or after a reload; Pengaturan cookie reopens the 
 
   await page.getByRole("button", { name: "Pengaturan cookie" }).click();
   await expect(notice(page)).toBeVisible();
-  await expect(notice(page)).toContainText("Your choice now: Tolak");
+  await expect(notice(page)).toContainText("Your choice now: Don't allow");
 });
 
 for (const path of ["/r", "/uji"]) {
-  test(`${path} never shows the notice or loads the Pixel, even after Setuju`, async ({
+  test(`${path} never shows the notice or loads the Pixel, even after Allow`, async ({
     page,
     baseURL,
   }) => {
     const meta = await setUp(page, baseURL!);
     await page.goto("/");
-    await notice(page).getByRole("button", { name: "Setuju" }).click();
+    await notice(page)
+      .getByRole("button", { name: "Allow", exact: true })
+      .click();
     await expect.poll(() => meta).toEqual([META_SCRIPT]);
     meta.length = 0;
 
@@ -131,7 +135,9 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
 }) => {
   await setUp(page, baseURL!);
   await page.goto("/");
-  await notice(page).getByRole("button", { name: "Setuju" }).click();
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
 
   await fillEntry(page);
   await pressPeriksa(page);
@@ -172,7 +178,9 @@ test("back from Midtrans, the order number leaves the address before the Pixel s
 }) => {
   const meta = await setUp(page, baseURL!);
   await page.goto("/");
-  await notice(page).getByRole("button", { name: "Setuju" }).click();
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
   await expect.poll(() => meta).toEqual([META_SCRIPT]);
 
   await page.goto(
