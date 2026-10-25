@@ -26,6 +26,11 @@ image would send a PageView with no choice at all. Answers:
 - **Next after this:** the two support commands (change an order's email;
   close a refund case without a refund).
 
+Before merge (2026-10-25), Yasir confirmed "Automatic advanced matching" is
+off in Meta Events Manager, and chose to tap **Tolak** in the browsers he
+tests with, so his sandbox payments before G1 do not reach Meta as purchases
+(no code holds Purchase back).
+
 Worker choice in the same change, for approval with the pull request: the
 privacy page gets its own version (`PRIVACY_VERSION` 1.2, for the sentence
 that the cookie choice is kept 12 months); the terms stay at 1.1.
