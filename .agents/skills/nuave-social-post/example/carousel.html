@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Nuave carousel</title>
+<!-- Approved 2026-10-25. Copy this folder for a new post; see ../SKILL.md.
+     Slide types: photo-overlay (s1, s4), photo-split (s2), illustration on cream (s3),
+     explainer + sample result (s5), violet CTA (s6). Photos live in img/ next to this file. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink-900: #16161d; --ink-700: #3b3a4a; --ink-600: #52516a; --ink-500: #6b6a85;
+    --line-200: #e7e6ee; --stone-50: #f8f8fb; --cream: #f5f3ff;
+    --ember-100: #e5e0ff; --ember-200: #ccc3ff; --ember-500: #533afd; --ember-600: #4129e0; --ember-700: #3620b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #ddd; font-family: Geist, "Inter Display", Inter, sans-serif; color: var(--ink-900);
+         display: flex; flex-wrap: wrap; gap: 40px; padding: 40px; }
+  .slide { width: 1080px; height: 1350px; position: relative; overflow: hidden; background: #fff; flex: none; }
+  .photo { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .shade-bottom { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(22,22,29,0) 35%, rgba(22,22,29,.55) 60%, rgba(22,22,29,.92) 100%); }
+  .brand { position: absolute; top: 72px; left: 80px; display: flex; align-items: center; gap: 14px;
+           font-weight: 600; font-size: 36px; letter-spacing: -0.02em; }
+  .mark { display: block; width: 48px; height: 48px; background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2264%22%20height%3D%2264%22%20fill%3D%22none%22%3E%3Cg%20clip-path%3D%22url%28%23a%29%22%3E%3Cpath%20fill%3D%22%23533AFD%22%20d%3D%22M42.063%2049.507%2032%2032.005%2021.785%2050.32H1.955l19.981-35.827L32%2031.994%2042.215%2013.68h19.83z%22/%3E%3C/g%3E%3Cdefs%3E%3CclipPath%20id%3D%22a%22%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M0%200h64v64H0z%22/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E") center / contain no-repeat; }
+  .brand.light { color: #fff; }
+  .brand.light .mark { filter: brightness(0) invert(1); }
+  .count { position: absolute; top: 80px; right: 80px; font-size: 26px; font-weight: 500; color: var(--ink-500); }
+  .count.light { color: rgba(255,255,255,.75); }
+  .bottom { position: absolute; left: 80px; right: 80px; bottom: 96px; }
+  h1 { font-size: 92px; line-height: 1.02; font-weight: 600; letter-spacing: -0.035em; }
+  h2 { font-size: 72px; line-height: 1.06; font-weight: 600; letter-spacing: -0.03em; }
+  .sub { margin-top: 32px; font-size: 36px; line-height: 1.35; font-weight: 400; }
+  .light { color: #fff; }
+  .light .sub { color: rgba(255,255,255,.85); }
+  .accent { color: var(--ember-500); }
+  .accent-light { color: var(--ember-200); }
+  .swipe { margin-top: 56px; display: inline-flex; align-items: center; gap: 14px; font-size: 28px; font-weight: 500;
+           color: #fff; border: 2px solid rgba(255,255,255,.5); border-radius: 999px; padding: 16px 30px; }
+
+  /* slide 2: photo top, text below */
+  .split-photo { position: absolute; left: 0; right: 0; top: 0; height: 800px; background-size: cover; background-position: center 45%; }
+  .split-text { position: absolute; left: 80px; right: 80px; top: 880px; }
+  .brand.foot { top: auto; bottom: 80px; font-size: 30px; }
+  .brand.foot .mark { width: 40px; height: 40px; }
+  .split-text h2 { color: var(--ink-900); }
+  .split-text .sub { color: var(--ink-600); }
+
+  /* slide 3: chat illustration */
+  .s3 { background: var(--cream); }
+  .s3 .top { position: absolute; left: 80px; right: 80px; top: 200px; }
+  .chat { position: absolute; left: 80px; right: 80px; top: 470px; display: flex; flex-direction: column; gap: 28px; }
+  .bubble { font-size: 36px; line-height: 1.4; border-radius: 32px; padding: 30px 36px; max-width: 800px; }
+  .q { align-self: flex-end; background: var(--ink-900); color: #fff; border-bottom-right-radius: 10px; }
+  .a { align-self: flex-start; background: #fff; color: var(--ink-700); border: 2px solid var(--line-200);
+       border-bottom-left-radius: 10px; box-shadow: 0 12px 40px rgba(54,32,184,.08); width: 840px; }
+  .a .who { font-size: 24px; font-weight: 600; color: var(--ink-500); margin-bottom: 16px; }
+  .a ol { padding-left: 40px; margin-top: 12px; }
+  .a li { margin: 6px 0; font-weight: 500; color: var(--ink-900); }
+  .a li.you { color: var(--ink-500); font-weight: 400; font-style: italic; list-style: none; margin-left: -40px; margin-top: 22px; }
+  .note { position: absolute; left: 80px; bottom: 80px; font-size: 24px; color: var(--ink-600); }
+
+  /* slide 5: what Nuave does */
+  .s5 .top { position: absolute; left: 80px; right: 80px; top: 200px; }
+  .list { margin-top: 52px; display: flex; flex-direction: column; gap: 26px; }
+  .row { display: flex; gap: 24px; align-items: flex-start; font-size: 34px; line-height: 1.35; color: var(--ink-700); }
+  .tick { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--ink-900); color: #fff;
+          display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; margin-top: 2px; }
+  .card { position: absolute; left: 80px; right: 80px; bottom: 96px; background: var(--stone-50); border: 2px solid var(--line-200);
+          border-radius: 32px; padding: 44px 48px; }
+  .card .label { font-size: 24px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-500); }
+  .card .result { margin-top: 16px; font-size: 44px; font-weight: 600; letter-spacing: -0.02em; }
+  .beads { margin-top: 30px; display: flex; gap: 18px; }
+  .bead { width: 64px; height: 64px; border-radius: 50%; background: #fff; border: 2px solid var(--line-200); }
+  .bead.on { border: none; background: radial-gradient(circle at 35% 30%, #8f7fff 0%, var(--ember-500) 45%, var(--ember-700) 100%);
+             box-shadow: 0 8px 18px rgba(83,58,253,.35); }
+
+  /* slide 6: CTA on violet */
+  .s6 { background: linear-gradient(180deg, #6650fd 0%, #533afd 55%, #3a22cc 100%); color: #fff; }
+  .s6 .center { position: absolute; left: 80px; right: 80px; top: 330px; }
+  .s6 h2 { font-size: 84px; }
+  .cta { margin-top: 64px; display: inline-flex; align-items: center; gap: 18px; background: #fff; color: var(--ember-700);
+         font-size: 40px; font-weight: 600; padding: 30px 48px; border-radius: 22px; box-shadow: 0 20px 50px rgba(27,20,100,.35); }
+  .facts { margin-top: 56px; display: flex; flex-direction: column; gap: 18px; font-size: 32px; color: rgba(255,255,255,.9); }
+  .facts span { display: flex; gap: 18px; align-items: center; }
+  .facts span::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--ember-200); flex: none; }
+  .s6 .foot { position: absolute; left: 80px; right: 80px; bottom: 90px; font-size: 30px; font-weight: 500; color: rgba(255,255,255,.85);
+              display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<!-- 1. Cover -->
+<section class="slide" id="s1">
+  <div class="photo" style="background-image:url(img/pexels-16052366.jpg); background-position: center 30%"></div>
+  <div class="shade-bottom"></div>
+  <div class="brand light"><i class="mark"></i>Nuave</div>
+  <div class="bottom light">
+    <h1>Sebelum datang, pelanggan <span class="accent-light">tanya AI</span> dulu.</h1>
+    <p class="sub">Apa artinya bagi bisnis Anda?</p>
+    <div class="swipe">Geser &rarr;</div>
+  </div>
+</section>
+
+<!-- 2. The shift -->
+<section class="slide" id="s2">
+  <div class="split-photo" style="background-image:url(img/pexels-13502903.jpg); background-position: center 38%"></div>
+  <div class="split-text">
+    <h2>Pelanggan tidak lagi cek website satu per satu.</h2>
+    <p class="sub">Mereka tanya ke AI, lalu memilih dari jawabannya.</p>
+  </div>
+  <div class="brand foot"><i class="mark"></i>Nuave</div>
+</section>
+
+<!-- 3. Chat illustration -->
+<section class="slide s3" id="s3">
+  <div class="brand"><i class="mark"></i>Nuave</div>
+  <div class="top">
+    <h2>ChatGPT biasanya cuma menyebut <span class="accent">beberapa nama.</span></h2>
+  </div>
+  <div class="chat">
+    <div class="bubble q">Klinik kecantikan yang bagus di Bandung apa ya?</div>
+    <div class="bubble a">
+      <div class="who">Jawaban AI</div>
+      Beberapa pilihan yang sering disebut:
+      <ol><li>Klinik A</li><li>Klinik B</li><li>Klinik C</li><li class="you">Bisnis Anda ada di sini?</li></ol>
+    </div>
+  </div>
+  <p class="note">Ilustrasi. Nama klinik bukan contoh nyata.</p>
+</section>
+
+<!-- 4. The question -->
+<section class="slide" id="s4">
+  <div class="photo" style="background-image:url(img/pexels-5414331.jpg); background-position: 58% center"></div>
+  <div class="shade-bottom"></div>
+  <div class="bottom light">
+    <h1>Bisnis Anda yang disebut, atau <span class="accent-light">bisnis sebelah?</span></h1>
+    <p class="sub">Anda baru tahu setelah cek.</p>
+  </div>
+</section>
+
+<!-- 5. What Nuave does -->
+<section class="slide s5" id="s5">
+  <div class="brand"><i class="mark"></i>Nuave</div>
+  <div class="top">
+    <h2>Nuave cek bisnis Anda di ChatGPT dan Google AI Overview.</h2>
+    <div class="list">
+      <div class="row"><span class="tick">1</span>10 pertanyaan seperti yang ditanyakan calon pelanggan. Anda bisa periksa dan ubah dulu.</div>
+      <div class="row"><span class="tick">2</span>Jawaban AI apa adanya, plus bisnis lain yang disebut.</div>
+      <div class="row"><span class="tick">3</span>Saran perbaikan sesuai temuan.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Contoh hasil</div>
+    <div class="result">Bisnis Anda muncul di 4 dari 10 pertanyaan</div>
+    <div class="beads">
+      <i class="bead on"></i><i class="bead on"></i><i class="bead on"></i><i class="bead on"></i>
+      <i class="bead"></i><i class="bead"></i><i class="bead"></i><i class="bead"></i><i class="bead"></i><i class="bead"></i>
+    </div>
+  </div>
+</section>
+
+<!-- 6. CTA -->
+<section class="slide s6" id="s6">
+  <div class="brand light"><i class="mark"></i>Nuave</div>
+  <div class="center">
+    <h2>Lihat sendiri apa kata AI tentang bisnis Anda.</h2>
+    <div class="cta">Cek bisnis saya di AI &rarr;</div>
+    <div class="facts">
+      <span>Rp249.000, sekali bayar</span>
+      <span>Tanpa langganan, tanpa biaya tambahan</span>
+      <span>Laporan dikirim ke email Anda</span>
+    </div>
+  </div>
+  <div class="foot"><span>Link di bio</span><span>AI Visibility Report</span></div>
+</section>
+
+</body>
+</html>

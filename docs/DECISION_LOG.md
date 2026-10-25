@@ -6,6 +6,23 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Social carousel format and photo source
+
+The first Instagram carousel ("Sebelum datang, pelanggan tanya AI dulu") was
+accepted as the format to repeat, and the steps were written down as the
+[`nuave-social-post`](../.agents/skills/nuave-social-post/SKILL.md) skill:
+
+- **Shape:** six 1080×1350 slides: hook photo, the change, an illustration,
+  the question, what Nuave does with a sample result, and a violet call to
+  action. The words follow `VOICE.md`.
+- **Photos:** Pexels, because its people and places fit Indonesian owners
+  better than Unsplash or Openverse. Pexels paused new API keys, so photos
+  are found by web search and downloaded by their ID. They are free for
+  commercial use, and credit is not required.
+- **Boundaries:** made-up chat answers are labelled as illustrations, sample
+  results say "Contoh hasil", and a post stays a draft until the founder
+  approves posting it.
+
 ## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
 
 Yasir approved Spec 019: the cookie notice is built together with the Meta
