@@ -53,7 +53,8 @@ the site looks and behaves exactly as today.
 The notice sits at the bottom of the screen, over the content. On a phone it
 covers the bottom of the page until the visitor taps either choice; both are
 one tap. On `/audit` it sits just above the journey's bottom bar, so the main
-button stays in view and tappable (founder, 2026-10-25; it used to cover it). Until they choose, nothing
+button stays in view and tappable (founder, 2026-10-25; it used to cover it).
+Until they choose, nothing
 from Meta loads. Draft wording (Indonesian, for Yasir to
 approve):
 
@@ -146,7 +147,9 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   keeps the notice's height clear at the bottom when it scrolls to a focused
   control, and has that much room at its end. On `/audit` the notice sits
   just above the journey's bottom bar, so the bar's buttons stay in view and
-  tappable. All of this goes when the notice closes.
+  tappable, and on a touch screen the keyboard bar that floats over a field
+  while typing sits above the notice. All of this goes when the notice
+  closes.
 
 ## Failure and recovery
 
@@ -180,7 +183,7 @@ cookie), all listed in section 10. Nuave stores nothing new on its server.
 - **AC-08** With a test ID on a phone (390×844) and the notice open: tabbing
   through `/faq` and `/` never leaves a focused control behind the notice,
   and on `/audit` the journey's buttons, the pay button included, stay
-  uncovered and tappable.
+  uncovered and tappable, as does the keyboard bar's Bayar on a touch screen.
 
 ## Open questions
 

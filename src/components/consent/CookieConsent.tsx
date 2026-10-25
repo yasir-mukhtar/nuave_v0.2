@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { BOTTOM_BAR_HEIGHT_VAR, NOTICE_CLEAR_VAR } from "@/lib/bottom-bars";
 import {
   COOKIE_CHOICE_KEY,
   COOKIE_SETTINGS_EVENT,
@@ -17,12 +18,6 @@ import {
   trackingExcludedPath,
   type CookieChoice,
 } from "@/lib/consent/meta-pixel";
-
-/** R-14: the room the open notice needs below a focused control. */
-const NOTICE_CLEAR_VAR = "--cookie-notice-clear";
-/** The /audit journey's bottom bar height while it shows (JourneyBars'
- * BOTTOM_BAR_HEIGHT_VAR); the notice sits just above that bar. */
-const BOTTOM_BAR_VAR = "--journey-bottom-bar";
 
 /**
  * Spec 019: the cookie notice. Shown on every page except `/r` and `/uji`
@@ -105,7 +100,7 @@ export function CookieConsent() {
     const measure = () =>
       root.style.setProperty(NOTICE_CLEAR_VAR, `${notice.offsetHeight + 8}px`);
     measure();
-    root.style.scrollPaddingBottom = `calc(var(${NOTICE_CLEAR_VAR}) + var(${BOTTOM_BAR_VAR}, 0px))`;
+    root.style.scrollPaddingBottom = `calc(var(${NOTICE_CLEAR_VAR}) + var(${BOTTOM_BAR_HEIGHT_VAR}, 0px))`;
     const resize =
       typeof ResizeObserver === "undefined"
         ? null
@@ -144,8 +139,8 @@ export function CookieConsent() {
           // On /audit it sits just above the journey's bottom bar, whose
           // buttons stay in view and tappable (R-14). The bar already clears
           // the home-bar inset, so the notice adds it only without a bar.
-          bottom: `var(${BOTTOM_BAR_VAR}, 0px)`,
-          paddingBottom: `calc(16px + max(env(safe-area-inset-bottom, 0px) - var(${BOTTOM_BAR_VAR}, 0px), 0px))`,
+          bottom: `var(${BOTTOM_BAR_HEIGHT_VAR}, 0px)`,
+          paddingBottom: `calc(16px + max(env(safe-area-inset-bottom, 0px) - var(${BOTTOM_BAR_HEIGHT_VAR}, 0px), 0px))`,
         }}
       >
         <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">

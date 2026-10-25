@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { grantAccess } from "./helpers";
 import {
   continueToOrder,
+  emailInput,
   expectBrandConfirm,
   fillEntry,
   FICTIONAL_BUSINESS,
@@ -242,4 +243,44 @@ test("on /audit the notice sits above the journey's bottom bar, so its buttons s
       .getBoundingClientRect().bottom,
   }));
   expect(payTop).toBeGreaterThanOrEqual(cardBottom);
+});
+
+// A touch screen with no on-screen keyboard (a tablet with a keyboard case):
+// the keyboard bar floats over the page instead of riding on a keyboard.
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test("on /audit the keyboard bar floats above the open notice, so its buttons stay usable (R-14)", async ({
+    page,
+    baseURL,
+  }) => {
+    await setUp(page, baseURL!);
+    await fillEntry(page);
+    await expect(notice(page)).toBeVisible();
+    await pressPeriksa(page);
+    await expectBrandConfirm(page);
+    await continueToOrder(page);
+    await emailInput(page).tap();
+    const bar = page.getByRole("group", { name: "Bantuan mengetik email" });
+    const bayar = bar.getByRole("button", { name: "Bayar", exact: true });
+    await expect(bayar).toBeVisible();
+    // Once its entrance has settled, the bar sits wholly above the notice,
+    // and a tap on its Bayar reaches Bayar.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document
+              .querySelector(
+                '[role="group"][aria-label="Bantuan mengetik email"]',
+              )!
+              .getBoundingClientRect().bottom <=
+            document
+              .querySelector("[data-cookie-notice] > div")!
+              .getBoundingClientRect().top,
+        ),
+      )
+      .toBe(true);
+    await bayar.tap({ trial: true, timeout: 2_000 });
+  });
 });
