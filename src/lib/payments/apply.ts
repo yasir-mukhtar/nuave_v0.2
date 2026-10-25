@@ -230,7 +230,9 @@ async function applySettled(
   const order = await getOrder(db, attempt.order_id);
   if (order && meetsPaidRule(status)) {
     // R-11: ONE write marks the order paid. It needs an unpaid, unreplaced,
-    // live order that is open or has expired (a late payment revives it). The
+    // live order that is open or has expired (a late payment revives it), and
+    // not yet made anonymous (retention.ts): a payment for an anonymised order
+    // becomes a refund case instead. The
     // hold goes on the UTC day of payment even if the cap is now full, and is
     // written only if this write changed the order.
     const paidEnd = new Date(now.getTime() + ORDER_PAID_MS).toISOString();
@@ -243,7 +245,7 @@ async function applySettled(
                ended_at = NULL, failure_code = NULL
            WHERE id = ?1 AND payment_kind = 'unpaid' AND replaced_by IS NULL
              AND paid_at IS NULL AND mode = 'live'
-             AND state IN ('open', 'expired')`,
+             AND state IN ('open', 'expired') AND purged_at IS NULL`,
         )
         .bind(order.id, stamp, attempt.id, status.transaction_id, paidEnd),
       orderHoldStatement(db, {

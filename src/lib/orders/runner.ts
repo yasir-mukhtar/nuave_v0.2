@@ -44,6 +44,14 @@ import {
 } from "../spending/spend-ledger";
 import { reconcileDueAttempts } from "../payments/check";
 import {
+  MAX_PURGED_PER_RUN,
+  MAX_SPEND_ROWS_PER_RUN,
+  RETENTION_MINUTE,
+  ordersDueForPurge,
+  purgeOldSpendRows,
+  purgeOrder,
+} from "./retention";
+import {
   dueFounderNotices,
   isRefundNotice,
   recordCapAlerts,
@@ -218,7 +226,9 @@ export type StepOutcome =
   | "reconciled"
   | "paid_not_started"
   | "payment_email"
-  | "notice";
+  | "notice"
+  | "purged"
+  | "spend_rows_removed";
 
 export type RunSummary = {
   /** One entry per thing done. No ids, emails or secrets. */
@@ -441,6 +451,36 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     if (await failOrder(deps, id, "deadline")) {
       failedNow.add(id);
       outcomes.push("failed_deadline");
+    }
+  }
+
+  // Record lifetimes (privacy page section 9): once an hour, in the run that
+  // started at the retention minute, orders past their lifetime are made
+  // anonymous and old cost records removed. It runs with the emergency switch
+  // off too, only when the meter has room for more than its first query, and
+  // never stops the rest of the run.
+  if (new Date(startedAt).getUTCMinutes() === RETENTION_MINUTE && fits(2)) {
+    try {
+      const due = await ordersDueForPurge(deps.db, {
+        ...scope,
+        now: deps.now(),
+        limit: MAX_PURGED_PER_RUN,
+      });
+      for (const id of due) {
+        if (!fits(1)) break; // it comes back next hour
+        if (await purgeOrder(deps.db, { orderId: id, now: deps.now() })) {
+          outcomes.push("purged");
+        }
+      }
+      if (fits(1)) {
+        const removed = await purgeOldSpendRows(deps.db, {
+          now: deps.now(),
+          limit: MAX_SPEND_ROWS_PER_RUN,
+        });
+        if (removed > 0) outcomes.push("spend_rows_removed");
+      }
+    } catch {
+      // A failing cleanup is tried again next hour.
     }
   }
 
