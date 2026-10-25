@@ -3,8 +3,8 @@ import Link from "next/link";
 import LandingNav from "@/components/LandingNav";
 import Footer from "@/components/Footer";
 import {
-  LEGAL_EFFECTIVE_DATE,
-  LEGAL_VERSION,
+  PRIVACY_EFFECTIVE_DATE,
+  PRIVACY_VERSION,
   OPERATOR_CITY,
   OPERATOR_NAME,
   SUPPORT_EMAIL,
@@ -19,13 +19,15 @@ export const metadata: Metadata = {
 
 function Section({
   title,
+  id,
   children,
 }: {
   title: string;
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-10">
+    <section id={id} className="mb-10">
       <h2 className="type-heading-sm m-0 mb-3 text-[#111827]">{title}</h2>
       {children}
     </section>
@@ -69,7 +71,7 @@ const PROVIDERS: Array<[string, string, string]> = [
   [
     "Meta Platforms",
     "Iklan dan pengukuran iklan, hanya jika Anda setuju",
-    "Lihat bagian 9",
+    "Lihat bagian 10",
   ],
 ];
 
@@ -105,7 +107,7 @@ export default function PrivacyPage() {
           Kebijakan privasi dan data
         </h1>
         <p className="type-copy-sm text-[#6B7280]">
-          Berlaku sejak {LEGAL_EFFECTIVE_DATE} · Versi {LEGAL_VERSION}
+          Berlaku sejak {PRIVACY_EFFECTIVE_DATE} · Versi {PRIVACY_VERSION}
         </p>
         <p>
           Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang
@@ -137,7 +139,7 @@ export default function PrivacyPage() {
               <strong>Email pesanan.</strong> Kami pakai untuk konfirmasi
               pembayaran, link laporan, dan jawaban bantuan. Jika Anda
               menyetujui cookie Meta, email ini juga dikirim ke Meta dalam
-              bentuk kode acak saat pembelian (bagian 9).
+              bentuk kode acak saat pembelian (bagian 10).
             </li>
             <li>
               <strong>Data pembayaran dari Midtrans:</strong> status, jumlah,
@@ -191,7 +193,7 @@ export default function PrivacyPage() {
             <li>
               mengukur iklan Nuave di Facebook dan Instagram, dan menampilkan
               iklan kepada orang yang mirip dengan pembeli Nuave, hanya jika
-              Anda setuju (bagian 9); dan
+              Anda setuju (bagian 10); dan
             </li>
             <li>memenuhi kewajiban pembukuan dan hukum.</li>
           </ul>
@@ -202,7 +204,34 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="5. Layanan AI dan pencarian">
+        <Section title="5. Dasar pemrosesan data">
+          <p>Kami memproses data Anda berdasarkan:</p>
+          <ul>
+            <li>
+              <strong>pesanan Anda</strong>: untuk menjalankan pesanan, atau
+              atas permintaan Anda sebelum memesan, seperti cek gratis;
+            </li>
+            <li>
+              <strong>persetujuan Anda</strong>: untuk cookie dan pengukuran
+              iklan Meta;
+            </li>
+            <li>
+              <strong>kewajiban hukum</strong>: untuk catatan pembayaran dan
+              pajak; dan
+            </li>
+            <li>
+              <strong>kepentingan yang sah</strong>: untuk menjaga keamanan
+              layanan dan mencegah penyalahgunaan.
+            </li>
+          </ul>
+          <p>
+            Anda bisa menarik persetujuan kapan saja, lewat tautan Pengaturan
+            cookie (bagian 10) atau email ke {SUPPORT_EMAIL}. Penarikan tidak
+            mengubah pemrosesan yang sudah terjadi sebelumnya.
+          </p>
+        </Section>
+
+        <Section title="6. Layanan AI dan pencarian">
           <p>
             Untuk membuat audit, sebagian data bisnis dan pertanyaan Anda
             dikirim ke penyedia layanan AI dan penyedia data pencarian. Penyedia
@@ -217,7 +246,7 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="6. Pihak yang membantu kami">
+        <Section title="7. Pihak yang membantu kami">
           <div className="mb-4 overflow-x-auto">
             <table className="type-copy-sm w-full border-collapse text-left">
               <thead>
@@ -250,13 +279,20 @@ export default function PrivacyPage() {
             tanyakan ke <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
           </p>
           <p>
+            Penyedia yang kami sebut menurut jenisnya hanya memproses data untuk
+            menjalankan layanan Nuave, sesuai perjanjian layanan mereka dengan
+            kami. Midtrans dan Meta memproses data sesuai kebijakan mereka
+            sendiri. Pertanyaan audit juga sampai ke ChatGPT dan Google, yang
+            memprosesnya sesuai kebijakan mereka.
+          </p>
+          <p>
             Kami juga dapat memberikan data jika diminta secara sah oleh
             pemerintah atau penegak hukum, atau jika perlu untuk melindungi
             keamanan orang yang memakai Nuave dan layanan kami.
           </p>
         </Section>
 
-        <Section title="7. Pemrosesan di luar Indonesia">
+        <Section title="8. Pemrosesan di luar Indonesia">
           <p>
             Sebagian besar penyedia di atas menyimpan atau memproses data di
             luar Indonesia. Kami memilih pengaturan yang membatasi penggunaan
@@ -266,7 +302,7 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="8. Berapa lama data disimpan">
+        <Section title="9. Berapa lama data disimpan">
           <div className="mb-4 overflow-x-auto">
             <table className="type-copy-sm w-full border-collapse text-left">
               <thead>
@@ -295,7 +331,10 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="9. Cookie, penyimpanan di browser, dan iklan Meta">
+        <Section
+          id="cookie"
+          title="10. Cookie, penyimpanan di browser, dan iklan Meta"
+        >
           <p>
             Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa
             melanjutkan setelah halaman dimuat ulang. Data ini tetap di
@@ -351,7 +390,8 @@ export default function PrivacyPage() {
             >
               Kebijakan Privasi Meta
             </a>
-            . Anda bisa mengubah pilihan cookie kapan saja lewat tautan{" "}
+            . Pilihan cookie Anda sendiri disimpan di browser Anda selama 12
+            bulan. Anda bisa mengubahnya kapan saja lewat tautan{" "}
             <strong>Pengaturan cookie</strong> di bagian bawah halaman. Anda
             juga bisa mengatur iklan di{" "}
             <a
@@ -365,17 +405,18 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="10. Cara kami melindungi data">
+        <Section title="11. Cara kami melindungi data">
           <p>
             Kami memakai koneksi HTTPS, membatasi siapa yang bisa membuka data,
             menyimpan kunci akses hanya di server, dan memperbarui perangkat
             lunak. Tidak ada sistem yang bebas risiko. Jika terjadi kebocoran
             yang menyangkut data Anda, kami akan memeriksanya, membatasi
-            dampaknya, dan memberi tahu Anda.
+            dampaknya, dan memberi tahu Anda secara tertulis paling lambat 3 x
+            24 jam setelah kami mengetahuinya.
           </p>
         </Section>
 
-        <Section title="11. Hak Anda">
+        <Section title="12. Hak Anda">
           <p>Anda bisa meminta kami untuk:</p>
           <ul>
             <li>menjelaskan data tentang Anda yang kami simpan;</li>
@@ -396,7 +437,7 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="12. Link laporan bersifat pribadi">
+        <Section title="13. Link laporan bersifat pribadi">
           <p>
             Siapa pun yang memegang link laporan bisa membukanya. Jangan
             teruskan link itu ke orang yang tidak berhak. Jika link terlanjur
@@ -407,21 +448,21 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="13. Usia">
+        <Section title="14. Usia">
           <p>
             Nuave untuk pemesan berusia 18 tahun ke atas. Jangan kirim data anak
             melalui isian, pertanyaan, atau email bantuan.
           </p>
         </Section>
 
-        <Section title="14. Perubahan kebijakan">
+        <Section title="15. Perubahan kebijakan">
           <p>
             Kebijakan ini bisa berubah jika layanan atau penyedia kami berubah.
             Tanggal dan versi terbaru ada di bagian atas halaman ini.
           </p>
         </Section>
 
-        <Section title="15. Hubungi kami">
+        <Section title="16. Hubungi kami">
           <p>
             Pengelola: {OPERATOR_NAME}, {OPERATOR_CITY}
             <br />

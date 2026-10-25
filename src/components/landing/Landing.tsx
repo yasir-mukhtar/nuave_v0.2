@@ -15,6 +15,8 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { CookieSettingsLink } from "@/components/consent/CookieConsent";
+import { metaPixelId } from "@/lib/consent/meta-pixel";
 import { BottomSheet } from "@/components/motion/BottomSheet";
 import { SPRING_SETTLE } from "@/components/motion/presets";
 import {
@@ -227,6 +229,16 @@ const FOOTER_LINKS = [
   { href: "/privacy", label: "Kebijakan Privasi" },
   { href: "/support", label: "Kontak" },
 ];
+
+/** Spec 019: the cookie settings link, only when the Meta Pixel is set up. */
+function CookieSettingsItem() {
+  if (!metaPixelId()) return null;
+  return (
+    <li>
+      <CookieSettingsLink className="type-copy-sm cursor-pointer border-0 bg-transparent p-0 text-ink-600 hover:text-ink-900" />
+    </li>
+  );
+}
 
 const SOCIAL = [
   {
@@ -453,6 +465,7 @@ export default function Landing() {
                   </Link>
                 </li>
               ))}
+              <CookieSettingsItem />
             </ul>
           </nav>
           <div className="flex items-center justify-between gap-3">

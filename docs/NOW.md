@@ -50,13 +50,20 @@
   tracking only after consent). Independent review PASS; the founder
   approved the wording on 2026-10-25
   ([decisions](./DECISION_LOG.md#2026-10-24--s5-meta-consent-operator-refunds-and-record-deletion)).
-- **Cleanup job due by 12 November 2026:** the privacy page promises the
-  Spec 016 Q3 record lifetimes; nothing deletes records yet. The first
-  failed orders reach 30 days around 12 November (founder decision
-  2026-10-24: build an automatic cleanup job).
+- **Cleanup job live** (#161, deployed 2026-10-25): an hourly cleanup
+  makes orders anonymous at the end of the lifetimes the privacy page promises
+  (12 months after the report is saved, 30 days after failure or expiry), with
+  a support hold for open cases. The first failed orders reach 30 days around
+  12 November. From then, check one failed order older than 30 days with
+  `npm run support -- show <order>`: it should print "Made anonymous".
 - **Before Meta ads go live:** the tracking change must meet the list in
   [`content/website/PRIVACY.md`](./content/website/PRIVACY.md) (cookie notice,
   consent-only server events, no Pixel on `/r` or `/uji`, value 249000).
+  [Spec 019](../specs/019-cookie-notice-and-meta-pixel/SPEC.md) builds the
+  browser part (notice, footer link, Pixel). The Pixel ID (890453577390181)
+  is set in the production build, so it goes live with that merge; before
+  merging, switch off "Automatic advanced matching" in Meta Events Manager.
+  Server events (Conversions API) are the next step.
 
 - **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
   questions from real Google search data, each answered by the ChatGPT app

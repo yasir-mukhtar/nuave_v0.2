@@ -12,6 +12,10 @@
 //   npm run support -- refunded <transaction-id>  a refund made outside Midtrans
 //   npm run support -- close <midtrans-order-id> <unknown|unpaid>
 //
+// and, for the record cleanup (orders/retention.ts):
+//
+//   npm run support -- hold <order> <days>      keep it past its lifetime (0 releases)
+//
 // It reads and writes the production D1 database through `wrangler d1 execute
 // --remote` (add `--local` to use the local development database instead), and
 // sends mail with the founder's Resend key, read from the git-ignored file

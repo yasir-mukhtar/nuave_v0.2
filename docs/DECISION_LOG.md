@@ -6,6 +6,69 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
+
+Yasir approved Spec 019: the cookie notice is built together with the Meta
+Pixel, both switched off without a Pixel ID. He then created the Pixel
+(ID 890453577390181), which the production build sets in
+`.github/workflows/ci.yml`, so the notice goes live with the merge. Meta's own
+copy-paste snippet is not used: it tracks before consent, and its `noscript`
+image would send a PageView with no choice at all. Answers:
+
+- **Scope:** notice, "Pengaturan cookie" footer link and the browser Pixel
+  now; the Conversions API (server events, hashed purchase email) is a later
+  step.
+- **Notice wording:** approved as drafted, naming the hashed order email now
+  so the text stays true when the server step ships.
+- **Events:** PageView, Lead (free check found the business),
+  InitiateCheckout and Purchase (both 249000 IDR); never the email, business,
+  website, order number or report.
+- **Next after this:** the two support commands (change an order's email;
+  close a refund case without a refund).
+
+Before merge (2026-10-25), Yasir confirmed "Automatic advanced matching" is
+off in Meta Events Manager, and chose to tap **Tolak** in the browsers he
+tests with, so his sandbox payments before G1 do not reach Meta as purchases
+(no code holds Purchase back).
+
+Worker choice in the same change, for approval with the pull request: the
+privacy page gets its own version (`PRIVACY_VERSION` 1.2, for the sentence
+that the cookie choice is kept 12 months); the terms stay at 1.1.
+
+## 2026-10-25 — Record cleanup job
+
+Yasir asked for the cleanup job decided on 2026-10-24. How it works, for his
+approval with the pull request:
+
+- **Anonymise, not delete:** an order past its lifetime keeps a bare row
+  (order number, dates, state, payment links) so payment and cost records
+  still add up; the email, business details, intake, questions, answers,
+  report, link and email records go. This is the privacy page's "dibuat tidak
+  lagi menunjuk ke Anda".
+- **When:** 12 months after the report was saved; 30 days after an order
+  failed or expired. Settled cost rows after 24 months. Payment records are
+  never removed by the job.
+- **Kept anyway:** an order with an open refund case, a running order, and one
+  under a support hold. The founder sets a hold with `npm run support -- hold
+  <order> <days>` (up to 365 days; 0 releases it) while a support case is open.
+- **Runs:** once an hour inside the existing order cron, up to 5 orders and
+  200 cost rows per run.
+
+## 2026-10-25 — Legal pages stay Indonesian; clauses adopted from HaloAI
+
+Yasir compared Nuave's terms and privacy pages with HaloAI's and decided:
+
+- **Language:** the terms and privacy pages stay in Indonesian, the binding
+  language for contracts with Indonesian consumers. An English translation is
+  left for later.
+- **Clauses to adopt** (terms and privacy version 1.1, wording for his
+  approval): definitions, prohibited uses, cancelling an order shown at a
+  mistaken price, AI answers quoted as is, report ownership, a liability cap at the amount paid, a dispute route (support, 30 days, then
+  the competent court or BPSK), severability and entire agreement; in
+  privacy, the legal basis for each use, providers bound by their service
+  agreements, and a written breach notice within 3 x 24 hours. The liability cap and the breach deadline get a lawyer's check. Yasir approved the
+  version 1.1 wording on 2026-10-25 (PR #160).
+
 ## 2026-10-25 — S5 wording approved
 
 Yasir approved the final Indonesian wording of the terms, privacy, support
