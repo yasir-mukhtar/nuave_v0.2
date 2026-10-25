@@ -1,8 +1,10 @@
 # Kebijakan Privasi dan Data
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
-> Status: version 1.1 (2026-10-25) adds the clauses adopted from the HaloAI
-> comparison; approved by the founder on 2026-10-25 (PR #160). The lawyer
+> Status: version 1.2 (2026-10-25) adds that the cookie choice is kept in the
+> browser for 12 months (Spec 019). Version 1.1 (2026-10-25) added the clauses
+> adopted from the HaloAI comparison; approved by the founder on 2026-10-25
+> (PR #160). The lawyer
 > checks listed below are still open. The page and this file say the same thing; change
 > both together.
 > Language: Indonesian
@@ -33,6 +35,14 @@
      without storing them, so section 2's "Nuave sendiri tidak menyimpan
      alamat IP Anda" stays true.
   If any of these changes, section 10 below must change first.
+  **Spec 019 (browser step)** meets items 1, 3, 4, 5 and 6: the notice, the
+  footer link and the Pixel exist but stay off until the repository variable
+  `META_PIXEL_ID` is set. The Pixel sends PageView, Lead (the free check found
+  the business), InitiateCheckout and Purchase (249000 IDR), never the email,
+  business, order number or report, and runs with automatic configuration
+  off. Items 2 and 7 (server events) wait for the Conversions API step. The
+  page's "seberapa jauh Anda membacanya" is not sent yet; sending less than the
+  page lists keeps it true.
 - **Deletion (section 9):** an hourly cleanup in the order cron
   (`src/lib/orders/retention.ts`, minute 17) makes an order anonymous 12 months
   after its report was saved, or 30 days after it failed or expired. It empties
@@ -61,6 +71,10 @@
   For a paid order, the bare row and the payment records still carry Midtrans
   IDs that Midtrans can link to the customer, so paid orders are pseudonymous
   rather than anonymous; unpaid orders become effectively anonymous.
+- **Version 1.2 (2026-10-25):** section 10 adds "Pilihan cookie Anda sendiri
+  disimpan di browser Anda selama 12 bulan." The privacy page now has its own
+  version (`PRIVACY_VERSION` in `src/lib/legal.ts`); the terms stay at 1.1. A
+  new privacy version asks every visitor for their cookie choice again.
 - **Version 1.1 (2026-10-25):** adds the legal basis for each use (section
   5), providers bound by their service agreements (section 7), and a written
   breach notice within 3 x 24 hours (section 11). Before publishing,
@@ -95,7 +109,7 @@ memprosesnya, berapa lama disimpan, dan pilihan Anda.
 
 # Kebijakan privasi dan data
 
-Berlaku sejak 25 Oktober 2026 · Versi 1.1
+Berlaku sejak 25 Oktober 2026 · Versi 1.2
 
 Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang ikut
 memprosesnya, berapa lama disimpan, dan pilihan Anda. Prinsip kami sederhana.
@@ -260,9 +274,10 @@ Yang tidak pernah kami kirim ke Meta: laporan Anda, sepuluh pertanyaan audit,
 jawaban AI, dan data bisnis yang Anda isi.
 
 Meta memproses data ini sesuai
-[Kebijakan Privasi Meta](https://www.facebook.com/privacy/policy). Anda bisa
-mengubah pilihan cookie kapan saja lewat tautan **Pengaturan cookie** di bagian
-bawah halaman. Anda juga bisa mengatur iklan di
+[Kebijakan Privasi Meta](https://www.facebook.com/privacy/policy). Pilihan
+cookie Anda sendiri disimpan di browser Anda selama 12 bulan. Anda bisa
+mengubahnya kapan saja lewat tautan **Pengaturan cookie** di bagian bawah
+halaman. Anda juga bisa mengatur iklan di
 [pengaturan iklan Meta](https://www.facebook.com/adpreferences), atau memblokir
 cookie di pengaturan browser Anda.
 

@@ -14,6 +14,13 @@ for (const path of ["/", "/audit"] as const) {
     await page.goto(path, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(300);
     await assertNoUnexpectedExternalRequests(page, requests);
+    // Spec 019 R-01: without a Pixel ID there is no cookie notice or link.
+    await expect(
+      page.getByRole("region", { name: "Cookie untuk iklan" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Pengaturan cookie" }),
+    ).toHaveCount(0);
   });
 }
 

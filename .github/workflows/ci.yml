@@ -159,6 +159,7 @@ jobs:
           NUAVE_NEW_AUDIT_ENABLED=true
           NUAVE_AUDIT_MODE=live
           CHEAPERINFERENCE_API_KEY=${{ secrets.CHEAPERINFERENCE_API_KEY }}
+          NEXT_PUBLIC_META_PIXEL_ID=${{ vars.META_PIXEL_ID }}
           EOF
 
       - name: Build validated OpenNext worker

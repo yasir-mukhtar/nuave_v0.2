@@ -6,6 +6,27 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
+
+Yasir approved Spec 019: the cookie notice is built together with the Meta
+Pixel, both switched off until he creates the Pixel and its ID is set as the
+GitHub repository variable `META_PIXEL_ID`. Answers:
+
+- **Scope:** notice, "Pengaturan cookie" footer link and the browser Pixel
+  now; the Conversions API (server events, hashed purchase email) is a later
+  step.
+- **Notice wording:** approved as drafted, naming the hashed order email now
+  so the text stays true when the server step ships.
+- **Events:** PageView, Lead (free check found the business),
+  InitiateCheckout and Purchase (both 249000 IDR); never the email, business,
+  website, order number or report.
+- **Next after this:** the two support commands (change an order's email;
+  close a refund case without a refund).
+
+Worker choice in the same change, for approval with the pull request: the
+privacy page gets its own version (`PRIVACY_VERSION` 1.2, for the sentence
+that the cookie choice is kept 12 months); the terms stay at 1.1.
+
 ## 2026-10-25 — Record cleanup job
 
 Yasir asked for the cleanup job decided on 2026-10-24. How it works, for his

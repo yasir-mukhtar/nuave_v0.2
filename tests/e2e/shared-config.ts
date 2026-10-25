@@ -21,6 +21,8 @@ const ALLOWED_SERVER_OVERRIDES = new Set([
   "NUAVE_AUDIT_MODE",
   // Spec 017: a fixed fake code, so the test pass can be driven offline.
   "NUAVE_TEST_PASS_CODE",
+  // Spec 019: a fake Pixel ID for the Meta Pixel suite.
+  "NEXT_PUBLIC_META_PIXEL_ID",
 ]);
 
 /**
@@ -84,6 +86,8 @@ export function offlineE2EServerEnv(
     // e2e may run — "live" requires real credentials, all blanked above.
     NUAVE_NEW_AUDIT_ENABLED: overrides.NUAVE_NEW_AUDIT_ENABLED ?? "false",
     NUAVE_AUDIT_MODE: overrides.NUAVE_AUDIT_MODE ?? "synthetic",
+    // Spec 019 R-01: no Pixel ID unless the Pixel suite sets its fake one.
+    NEXT_PUBLIC_META_PIXEL_ID: overrides.NEXT_PUBLIC_META_PIXEL_ID ?? "",
   };
 }
 
