@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
+  COOKIE_CHOICE_KEY,
   COOKIE_SETTINGS_EVENT,
   grantTracking,
   metaPixelId,
+  pruneSentCodes,
   readCookieChoice,
   revokeTracking,
   saveCookieChoice,
@@ -30,9 +32,12 @@ export function CookieConsent() {
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  // The "Pengaturan cookie" link that reopened the notice gets focus back.
+  const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
+    pruneSentCodes();
     const stored = readCookieChoice();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only read
     setChoice(stored);
@@ -45,9 +50,29 @@ export function CookieConsent() {
     if (enabled && choice === "yes") trackPageView();
   }, [enabled, choice, pathname]);
 
+  // A choice made in another tab applies here at once: Tolak there stops
+  // this tab before it sends anything more (privacy page section 10).
+  useEffect(() => {
+    if (!enabled) return;
+    const sync = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== COOKIE_CHOICE_KEY) return;
+      const stored = readCookieChoice();
+      if (stored === "yes") grantTracking(window.location.pathname);
+      else revokeTracking();
+      setChoice(stored);
+      if (stored !== null) setOpen(false);
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, [enabled]);
+
   useEffect(() => {
     if (!enabled) return;
     const reopen = () => {
+      openerRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
       setReopened(true);
       setOpen(true);
     };
@@ -69,6 +94,7 @@ export function CookieConsent() {
     else revokeTracking();
     setChoice(next);
     setOpen(false);
+    if (reopened) openerRef.current?.focus();
     setReopened(false);
   }
 
@@ -84,7 +110,7 @@ export function CookieConsent() {
             id="cookie-notice-title"
             ref={headingRef}
             tabIndex={-1}
-            className="type-heading-sm m-0 text-ink-900 outline-none"
+            className="type-heading-sm m-0 text-ink-900"
           >
             Cookie untuk iklan
           </h2>

@@ -33,7 +33,9 @@ async function setUp(page: Page, baseURL: string) {
       return route.fulfill({
         status: 200,
         contentType: "application/javascript",
-        body: "/* Meta Pixel stub */",
+        // Records the page address each later call sees, as Meta's script
+        // sends it with every event.
+        body: "window.__pixelHrefs = []; window.fbq.callMethod = function () { window.__pixelHrefs.push(location.href); window.fbq.queue.push(Array.prototype.slice.call(arguments)); };",
       });
     return route.abort();
   });
@@ -149,10 +151,42 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
   expect(everything).not.toContain("kedai-fiksi");
   expect(everything).not.toMatch(/NV-[A-Z0-9]{6}/);
 
-  // A reload of the paid order sends no second Purchase.
+  // A reload of the paid order sends no second Purchase: once the page has
+  // asked the server for the order again, nothing more was sent.
+  const statusAsked = page.waitForResponse("**/api/orders/status");
   await page.reload();
-  await page.waitForTimeout(1_000);
+  await statusAsked;
+  await page.waitForTimeout(500);
   expect(
     (await tracked(page)).filter((call) => call[1] !== "PageView"),
   ).toEqual([]);
+});
+
+test("back from Midtrans, the order number leaves the address before the Pixel sees it", async ({
+  page,
+  baseURL,
+}) => {
+  const meta = await setUp(page, baseURL!);
+  await page.goto("/");
+  await notice(page).getByRole("button", { name: "Setuju" }).click();
+  await expect.poll(() => meta).toEqual([META_SCRIPT]);
+
+  await page.goto(
+    "/audit?order_id=NV-ABC123-1&status_code=200&transaction_status=settlement&utm_source=meta",
+  );
+  await expect.poll(() => tracked(page)).toEqual([["track", "PageView"]]);
+  expect(new URL(page.url()).search).toBe("?utm_source=meta");
+  // The queued PageView was made after the address was cleaned, and every
+  // call since sees the clean address.
+  await page.evaluate(() =>
+    (window as unknown as { fbq: (...args: unknown[]) => void }).fbq(
+      "track",
+      "Probe",
+    ),
+  );
+  const hrefs = await page.evaluate(
+    () => (window as unknown as { __pixelHrefs: string[] }).__pixelHrefs,
+  );
+  expect(hrefs.length).toBeGreaterThan(0);
+  expect(hrefs.join(" ")).not.toContain("NV-");
 });

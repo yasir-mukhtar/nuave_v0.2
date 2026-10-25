@@ -93,9 +93,11 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   there.
 - **R-05 No automatic collection.** The Pixel is set up with automatic
   configuration off (`autoConfig` false) and without advanced matching, so it
-  never reads form fields, button text or the email the visitor types. The
-  founder also switches off "Automatic advanced matching" in Meta Events
-  Manager (setup step, see R-13).
+  never reads form fields, button text or the email the visitor types.
+  `autoConfig` covers Meta's automatic events and page reading; Meta's
+  "Automatic advanced matching" is a setting in Events Manager that code
+  cannot switch off, so the founder keeps it off (R-13). It must be off
+  before this ships.
 - **R-06 PageView.** One PageView per page shown, including moves inside the
   site, never for `/r` or `/uji`. The Pixel's own history tracking is off;
   Nuave sends PageView itself.
@@ -115,8 +117,17 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   intake, questions, answers, report, order ID or report link. Only the event
   name, value and currency, plus what the Pixel sends by itself (page address,
   Meta cookie, browser details).
+- **R-10a The page address.** Meta's script sends the page address with
+  every event. Midtrans returns the buyer to `/audit?order_id=NV-…
+  &status_code=…&transaction_status=…`, so those parameters leave the address
+  before the Pixel loads or sends anything. Other parameters (an ad's
+  `fbclid`, `utm_*`) stay.
 - **R-11 Tolak stops it.** After **Tolak**, including after an earlier
-  **Setuju**, no further events are sent in this page or later visits.
+  **Setuju**, no further events are sent in this page, in other open tabs
+  (the stored choice is read again before every event), or later visits.
+  Tolak also removes the codes kept for R-09a.
+- **R-11a Founder test runs.** A tab holding the test-pass code sends no
+  journey events.
 - **R-12 Privacy page.** Section 10 adds that the cookie choice itself is
   kept in the browser for 12 months. The change notes record which items of
   the seven-point list this step meets (1, 3, 4, 5, 6) and that items 2 and 7

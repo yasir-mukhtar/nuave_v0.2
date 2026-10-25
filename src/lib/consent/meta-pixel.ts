@@ -1,5 +1,6 @@
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { ORDER_GROSS_AMOUNT } from "@/lib/payments/midtrans";
+import { readTestPassCode } from "@/lib/intake/test-pass";
 
 /**
  * Spec 019: the Meta Pixel, loaded only after the visitor taps Setuju on the
@@ -48,8 +49,11 @@ export function readCookieChoice(now = Date.now()): CookieChoice | null {
       saved.version !== PRIVACY_VERSION ||
       !Number.isFinite(at) ||
       now - at > CHOICE_DAYS * DAY
-    )
+    ) {
+      // An old or unreadable choice is not kept past its 12 months.
+      window.localStorage.removeItem(COOKIE_CHOICE_KEY);
       return null;
+    }
     return saved.choice;
   } catch {
     return null;
@@ -93,9 +97,38 @@ declare global {
  * excluded page. Set by the notice. */
 let granted = false;
 
+/** Midtrans sends the buyer back to `/audit?order_id=NV-…&status_code=…
+ * &transaction_status=…`. The page never reads these, and the Pixel reports
+ * the page address with every event, so they leave the address before the
+ * Pixel loads or sends anything (R-10). Other parameters (an ad's `fbclid`
+ * or `utm_*`) stay. */
+const PAYMENT_RETURN_PARAMS = [
+  "order_id",
+  "status_code",
+  "transaction_status",
+  "result",
+];
+
+function removePaymentReturnParams() {
+  const url = new URL(window.location.href);
+  const found = PAYMENT_RETURN_PARAMS.filter((name) =>
+    url.searchParams.has(name),
+  );
+  if (found.length === 0) return;
+  for (const name of found) url.searchParams.delete(name);
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
 /** Meta's standard snippet, inserted only after Setuju (R-02), with automatic
- * configuration off so it never reads form fields or button text (R-05), and
- * its own history tracking off, since Nuave sends PageView itself (R-06). */
+ * configuration off (Meta's automatic events, page metadata and scroll depth)
+ * and its own history tracking off, since Nuave sends PageView itself (R-06).
+ * Meta's "Automatic advanced matching", which reads typed emails, is a setting
+ * in Events Manager that the code cannot switch off: it must stay off there
+ * (R-05, R-13). */
 function loadPixel(id: string) {
   if (window.fbq) return;
   const fbq = function (...args: unknown[]) {
@@ -122,24 +155,37 @@ function loadPixel(id: string) {
 export function grantTracking(pathname: string): boolean {
   const id = metaPixelId();
   if (!id || trackingExcludedPath(pathname)) return false;
+  removePaymentReturnParams();
   if (window.fbq) window.fbq("consent", "grant");
   else loadPixel(id);
   granted = true;
   return true;
 }
 
-/** R-11: Tolak stops every further event in this page. */
+/** R-11: Tolak stops every further event in this page, and the codes kept
+ * for sending each event once go too. */
 export function revokeTracking() {
   granted = false;
   window.fbq?.("consent", "revoke");
+  try {
+    window.localStorage.removeItem(SENT_KEY);
+  } catch {
+    // Nothing kept.
+  }
 }
 
+/** The stored choice is read again on every send, so Tolak chosen in another
+ * tab (the privacy page opens in one from checkout) stops this tab too. */
 function canSend(): boolean {
-  return (
-    granted &&
-    Boolean(window.fbq) &&
-    !trackingExcludedPath(window.location.pathname)
-  );
+  if (
+    !granted ||
+    !window.fbq ||
+    trackingExcludedPath(window.location.pathname) ||
+    readCookieChoice() !== "yes"
+  )
+    return false;
+  removePaymentReturnParams();
+  return true;
 }
 
 /** R-06: one PageView per page shown. */
@@ -158,27 +204,48 @@ function shortCode(text: string): string {
   return (hash >>> 0).toString(36);
 }
 
-/** Records `key` as sent; false when it was already sent in the last 7 days. */
-function firstTime(key: string, now: number): boolean {
-  const code = shortCode(key);
+/** The codes sent in the last 7 days; older ones are dropped from storage. */
+function sentCodes(now: number): Record<string, number> {
   let sent: Record<string, number> = {};
   try {
     sent = JSON.parse(window.localStorage.getItem(SENT_KEY) ?? "{}");
   } catch {
     sent = {};
   }
-  const kept = Object.fromEntries(
+  return Object.fromEntries(
     Object.entries(sent)
       .filter(([, at]) => typeof at === "number" && now - at < SENT_DAYS * DAY)
       .slice(-50),
   );
+}
+
+function keepSentCodes(codes: Record<string, number>) {
+  try {
+    if (Object.keys(codes).length === 0)
+      window.localStorage.removeItem(SENT_KEY);
+    else window.localStorage.setItem(SENT_KEY, JSON.stringify(codes));
+  } catch {
+    // Storage blocked: the Pixel never loads then (R-03).
+  }
+}
+
+/** On each page load: codes past 7 days leave the browser (R-09a). */
+export function pruneSentCodes(now = Date.now()) {
+  try {
+    if (window.localStorage.getItem(SENT_KEY) === null) return;
+  } catch {
+    return;
+  }
+  keepSentCodes(sentCodes(now));
+}
+
+/** Records `key` as sent; false when it was already sent in the last 7 days. */
+function firstTime(key: string, now: number): boolean {
+  const code = shortCode(key);
+  const kept = sentCodes(now);
   if (code in kept) return false;
   kept[code] = now;
-  try {
-    window.localStorage.setItem(SENT_KEY, JSON.stringify(kept));
-  } catch {
-    // Storage blocked: the Pixel never loads then (R-03), so this is unreachable.
-  }
+  keepSentCodes(kept);
   return true;
 }
 
@@ -191,6 +258,8 @@ export function trackJourneyEvent(
   key: string,
   now = Date.now(),
 ) {
+  // The founder's test runs (a test-pass code in this tab) are not ad results.
+  if (readTestPassCode()) return;
   if (!canSend() || !firstTime(`${event}:${key}`, now)) return;
   if (event === "Lead") window.fbq!("track", "Lead");
   else

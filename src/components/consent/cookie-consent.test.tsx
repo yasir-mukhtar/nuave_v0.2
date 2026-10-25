@@ -50,7 +50,9 @@ function app() {
 
 beforeEach(() => {
   pathname = "/";
+  window.history.replaceState(null, "", "/");
   window.localStorage.clear();
+  window.sessionStorage.clear();
   delete window.fbq;
   delete window._fbq;
   for (const script of metaScripts()) script.remove();
@@ -237,5 +239,109 @@ describe("with a Pixel ID", () => {
     trackJourneyEvent("Lead", "https://klinik.example/", now);
     trackJourneyEvent("Lead", "https://klinik.example/", now + 8 * 86_400_000);
     expect(tracked().filter((call) => call[1] === "Lead")).toHaveLength(2);
+  });
+
+  it("never sends the Midtrans return address: the order number leaves the address first (R-10)", () => {
+    const hrefs: string[] = [];
+    window.history.replaceState(
+      null,
+      "",
+      "/audit?order_id=NV-ABC123-1&status_code=200&transaction_status=settlement&utm_source=meta",
+    );
+    pathname = "/audit";
+    storeChoice("yes");
+    app();
+    // Every call the Pixel made saw the cleaned address.
+    window.fbq!.callMethod = () => hrefs.push(window.location.href);
+    trackJourneyEvent("Purchase", "order-1");
+    expect(window.location.search).toBe("?utm_source=meta");
+    expect(tracked()).toEqual([["track", "PageView"]]);
+    expect(hrefs).toHaveLength(1);
+    expect(hrefs.join(" ")).not.toContain("NV-");
+    expect(hrefs.join(" ")).not.toContain("settlement");
+
+    // An address that gains them later is cleaned before the next event.
+    window.history.replaceState(null, "", "/audit?order_id=NV-XYZ999-1");
+    trackJourneyEvent("Purchase", "order-2");
+    expect(window.location.search).toBe("");
+    expect(hrefs.at(-1)).not.toContain("NV-");
+  });
+
+  it("Tolak chosen in another tab stops this tab at once (privacy page section 10)", () => {
+    storeChoice("yes");
+    app();
+    // The other tab writes the choice; this tab may not have heard yet.
+    storeChoice("no");
+    trackJourneyEvent("Purchase", "order-1");
+    expect(tracked()).toEqual([["track", "PageView"]]);
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: COOKIE_CHOICE_KEY }),
+      );
+    });
+    expect(calls()).toContainEqual(["consent", "revoke"]);
+    storeChoice("yes");
+    trackJourneyEvent("Purchase", "order-1");
+    expect(tracked()).toEqual([["track", "PageView"]]);
+  });
+
+  it.each(["/r", "/uji"])(
+    "a first visit to %s shows no notice (R-04)",
+    (path) => {
+      pathname = path;
+      window.history.replaceState(null, "", path);
+      app();
+      expect(notice()).toBeNull();
+      expect(window.fbq).toBeUndefined();
+    },
+  );
+
+  it("the founder's test runs send no journey events", () => {
+    storeChoice("yes");
+    app();
+    window.sessionStorage.setItem("nuave.testPass.v1", "a-test-pass-code");
+    trackJourneyEvent("Lead", "https://klinik.example/");
+    trackJourneyEvent("Purchase", "order-1");
+    expect(tracked()).toEqual([["track", "PageView"]]);
+  });
+
+  it("keeps a choice for up to 12 months and an event code for up to 7 days", () => {
+    storeChoice("yes", new Date(Date.now() - 364 * 86_400_000));
+    app();
+    expect(notice()).toBeNull();
+    const now = Date.now();
+    trackJourneyEvent("Lead", "https://klinik.example/", now);
+    trackJourneyEvent("Lead", "https://klinik.example/", now + 6 * 86_400_000);
+    expect(tracked().filter((call) => call[1] === "Lead")).toHaveLength(1);
+  });
+
+  it("removes what it no longer needs: an expired choice, old codes, and all codes on Tolak", () => {
+    storeChoice("yes", new Date(Date.now() - 400 * 86_400_000));
+    window.localStorage.setItem(
+      "nuave-pixel-sent",
+      JSON.stringify({ abc: Date.now() - 30 * 86_400_000 }),
+    );
+    app();
+    expect(window.localStorage.getItem(COOKIE_CHOICE_KEY)).toBeNull();
+    expect(window.localStorage.getItem("nuave-pixel-sent")).toBeNull();
+    act(() => screen.getByRole("button", { name: "Setuju" }).click());
+    trackJourneyEvent("Lead", "https://klinik.example/");
+    expect(window.localStorage.getItem("nuave-pixel-sent")).not.toBeNull();
+    act(() =>
+      screen.getByRole("button", { name: "Pengaturan cookie" }).click(),
+    );
+    act(() => screen.getByRole("button", { name: "Tolak" }).click());
+    expect(window.localStorage.getItem("nuave-pixel-sent")).toBeNull();
+  });
+
+  it("gives focus back to Pengaturan cookie after a choice", () => {
+    storeChoice("no");
+    app();
+    const link = screen.getByRole("button", { name: "Pengaturan cookie" });
+    link.focus();
+    act(() => link.click());
+    expect(document.activeElement?.id).toBe("cookie-notice-title");
+    act(() => screen.getByRole("button", { name: "Tolak" }).click());
+    expect(document.activeElement).toBe(link);
   });
 });
