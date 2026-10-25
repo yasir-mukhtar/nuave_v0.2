@@ -21,8 +21,10 @@
 - **Before the Meta Pixel or Conversions API goes live** (founder decision
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
-  1. show a cookie notice with **Setuju** and **Tolak** that names the hashed
-     order email, and load nothing from Meta until the visitor taps Setuju;
+  1. show a cookie notice with **Setuju** and **Tolak**, and load nothing
+     from Meta until the visitor taps Setuju; once server events send the
+     hashed order email, the notice names it (founder, 2026-10-25: the
+     browser step sends no email, so the notice does not mention one yet);
   2. send server events (Conversions API) only for visitors who agreed, and
      send no fields beyond those section 10 lists (event, value, IP address,
      browser type, Meta cookie codes, hashed email for purchases);
@@ -61,10 +63,10 @@
     (synthetic orders in the production database, and the preview database);
   - cost rows that never settled (a call whose cost is unknown);
   - Midtrans `snap_token` and `redirect_url` on payment attempts;
-  - an order whose refund case stays open because it was settled without a
-    recorded refund (for example fixed by hand, or a chargeback on a
-    `needs_refund` transaction): `support refunds` keeps listing it and the
-    job never reaches it;
+  - an order whose refund case was settled without a recorded refund (fixed
+    by hand, declined, or a chargeback on a `needs_refund` transaction) stays
+    on `support refunds` until `npm run support -- norefund <order>
+    <declined|delivered|settled>` closes it; then the job reaches it;
   - a delivered order with a chargeback near its 12 months: set a `hold`.
   - a failed order whose report link support resent by hand: the link stops
     working at 30 days, so set a `hold` when resending it.

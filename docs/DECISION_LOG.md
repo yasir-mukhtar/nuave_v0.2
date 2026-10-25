@@ -6,6 +6,51 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice in English, shorter
+
+After the notice went live, Yasir found the approved Indonesian text
+intimidating. The notice now reads, in English: "🍪 Cookie? Meta cookies
+help us measure our ads. Your report and answers are never shared. Privacy
+policy", in smaller type, with the buttons still **Tolak** and **Setuju** so
+the privacy page (which names them) stays as it is. This supersedes the
+Spec 019 Q-1/Q-2 answers: the notice no longer names the hashed order email,
+which is true while only the browser Pixel runs (it sends no email). The
+server step (Conversions API) must bring the email back into the notice
+before it ships. A deliberate exception to `docs/VOICE.md` (Indonesian
+customer copy) for this notice only.
+
+## 2026-10-25 — Support commands: fix an order email, close a refund case without a refund
+
+Yasir chose how the two founder commands work:
+
+- **`npm run support -- email <order> <new-email>`:** after the founder has
+  checked the payment receipt or Midtrans transaction number (FAQ, terms
+  section 10), the command replaces the order email. When the report is
+  saved, the old link stops in the same write and a new link goes to the new
+  address only; nothing is sent to the old address. An order still running
+  sends its ready email to the new address (the command refuses, "try again
+  in a minute", while the runner holds the order, and reads the order again
+  after the change, so a report finished meanwhile also gets a new link).
+  One narrow gap stays: a payment or failure email already picked up by a
+  cron run in progress may still reach the old address; those carry no
+  report link. Only paid orders: an
+  unpaid order has no receipt, and the customer can simply order again.
+  Running it again with the same address finishes a run that stopped before
+  the new link went out. This changes Spec 016 R-32 ("the script never
+  sends to another email"): it still never sends to an address that is not
+  the order's, but the founder can now correct that address. The new address
+  reaches the database as a hex literal, so it never appears as readable text
+  in the SQL the script runs.
+- **`npm run support -- norefund <order> <declined|delivered|settled>`:**
+  closes a money refund case (a settled payment that could not be applied, or
+  a paid order that failed) without a refund, when the customer declined it
+  in writing, got the full report another way, or the money already went
+  back outside Nuave's records. Each case open at that moment is closed on
+  its own, with the reason (`refund_closures`); a payment that arrives later
+  is a new case and is listed again. Closed cases leave `support refunds`,
+  and the hourly cleanup can reach the order.
+  A payment with no final answer is still closed with `close`.
+
 ## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
 
 Yasir approved Spec 019: the cookie notice is built together with the Meta

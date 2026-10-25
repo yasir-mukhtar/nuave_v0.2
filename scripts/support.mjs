@@ -16,6 +16,14 @@
 //
 //   npm run support -- hold <order> <days>      keep it past its lifetime (0 releases)
 //
+// and (founder decision 2026-10-25):
+//
+//   npm run support -- email <order> <new-email>   fix a mistyped email (after
+//                                                  checking the receipt); a new
+//                                                  link goes to the new address
+//   npm run support -- norefund <order> <declined|delivered|settled>
+//                                                  close a refund case, no refund
+//
 // It reads and writes the production D1 database through `wrangler d1 execute
 // --remote` (add `--local` to use the local development database instead), and
 // sends mail with the founder's Resend key, read from the git-ignored file

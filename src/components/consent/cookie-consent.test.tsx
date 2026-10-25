@@ -66,8 +66,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const notice = () =>
-  screen.queryByRole("region", { name: "Cookie untuk iklan" });
+const notice = () => screen.queryByRole("region", { name: "Cookie?" });
 
 describe("without a Pixel ID (R-01)", () => {
   it("shows no notice and no link, and loads nothing from Meta", () => {
@@ -95,11 +94,11 @@ describe("with a Pixel ID", () => {
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();
-    expect(screen.getByText(/sebagai kode acak \(hash\)/)).toBeTruthy();
     expect(
-      screen
-        .getByRole("link", { name: "Kebijakan Privasi" })
-        .getAttribute("href"),
+      screen.getByText(/Your report and answers are never shared/),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Privacy policy" }).getAttribute("href"),
     ).toBe("/privacy#cookie");
     expect(metaScripts()).toHaveLength(0);
     expect(window.fbq).toBeUndefined();
@@ -162,11 +161,11 @@ describe("with a Pixel ID", () => {
       screen.getByRole("button", { name: "Pengaturan cookie" }).click(),
     );
     expect(notice()).not.toBeNull();
-    expect(screen.getByText(/Pilihan Anda sekarang:/).textContent).toContain(
+    expect(screen.getByText(/Your choice now:/).textContent).toContain(
       "Setuju",
     );
     expect(
-      screen.getByText(/bisa Anda hapus lewat pengaturan browser/),
+      screen.getByText(/can be removed in your browser settings/),
     ).toBeTruthy();
     expect(document.activeElement?.id).toBe("cookie-notice-title");
     act(() => screen.getByRole("button", { name: "Tolak" }).click());

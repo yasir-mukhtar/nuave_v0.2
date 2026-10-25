@@ -56,6 +56,12 @@
   a support hold for open cases. The first failed orders reach 30 days around
   12 November. From then, check one failed order older than 30 days with
   `npm run support -- show <order>`: it should print "Made anonymous".
+- **Support commands (2026-10-25):** `npm run support -- email <order>
+  <new-email>` fixes a mistyped order email after the founder checks the
+  receipt, and sends a new report link to the new address;
+  `npm run support -- norefund <order> <declined|delivered|settled>` closes a
+  refund case without a refund
+  ([decision](./DECISION_LOG.md#2026-10-25--support-commands-fix-an-order-email-close-a-refund-case-without-a-refund)).
 - **Before Meta ads go live:** the tracking change must meet the list in
   [`content/website/PRIVACY.md`](./content/website/PRIVACY.md) (cookie notice,
   consent-only server events, no Pixel on `/r` or `/uji`, value 249000).

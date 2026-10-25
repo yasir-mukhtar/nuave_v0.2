@@ -104,46 +104,44 @@ export function CookieConsent() {
       data-cookie-notice=""
       className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
     >
-      <div className="mx-auto grid max-w-[480px] gap-4 rounded-2xl border border-line-200 bg-white p-5 shadow-lg">
-        <div className="grid gap-2">
+      <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">
+        <div className="grid gap-1">
           <h2
             id="cookie-notice-title"
             ref={headingRef}
             tabIndex={-1}
-            className="type-heading-sm m-0 text-ink-900"
+            className="type-label-strong m-0 text-ink-900"
           >
-            Cookie untuk iklan
+            <span aria-hidden="true">🍪 </span>Cookie?
           </h2>
-          <p className="type-copy-sm m-0 text-ink-600">
-            Kami ingin memakai cookie Meta untuk mengukur iklan Nuave di
-            Facebook dan Instagram. Jika Anda setuju dan membeli, email pesanan
-            Anda dikirim ke Meta sebagai kode acak (hash). Laporan dan jawaban
-            Anda tidak pernah dikirim.{" "}
+          <p className="type-caption m-0 text-ink-600">
+            Meta cookies help us measure our ads. Your report and answers are
+            never shared.{" "}
             <Link href="/privacy#cookie" className="text-ink-900 underline">
-              Kebijakan Privasi
+              Privacy policy
             </Link>
           </p>
           {reopened && choice ? (
-            <p className="type-copy-sm m-0 text-ink-600">
-              Pilihan Anda sekarang:{" "}
+            <p className="type-caption m-0 text-ink-600">
+              Your choice now:{" "}
               <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
               {choice === "yes"
-                ? "Cookie Meta yang sudah terpasang bisa Anda hapus lewat pengaturan browser."
+                ? "Meta cookies already set can be removed in your browser settings."
                 : null}
             </p>
           ) : null}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             variant="inkOutline"
-            size="touch"
+            className="h-10"
             onClick={() => choose("no")}
           >
             Tolak
           </Button>
           <Button
             variant="inkOutline"
-            size="touch"
+            className="h-10"
             onClick={() => choose("yes")}
           >
             Setuju

@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { dailySpendLimitUsd } from "../spending/provider-spend";
 import { sha256Hex } from "./link-secret";
+import { parseOrderEmail } from "./order-email";
 
 export { newLinkSecret, sha256Hex } from "./link-secret";
 
@@ -177,15 +178,7 @@ export async function testPassCodeMatches(code: unknown): Promise<boolean> {
   );
 }
 
-const EMAIL_PATTERN =
-  /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;
-
-/** The address, trimmed, or null when it is not one valid email. */
-export function parseOrderEmail(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const email = value.trim();
-  return email.length <= 254 && EMAIL_PATTERN.test(email) ? email : null;
-}
+export { parseOrderEmail };
 
 /** R-06 (Q6): in live mode only addresses on NUAVE_ORDER_EMAIL_ALLOWLIST
  * (comma, semicolon or whitespace separated) may order. Matched without case
