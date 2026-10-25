@@ -86,8 +86,9 @@
   background: var(--ember-600);
 }
 
-/* The two halves need 324px; the smallest phones get smaller dots. */
-@media (max-width: 359px) {
+/* The two halves need 324px, plus the 48px of gutters: below 372px the
+   dots get smaller. */
+@media (max-width: 371px) {
   .dots {
     gap: 12px;
   }
@@ -189,5 +190,12 @@
   .mark {
     width: 10px;
     margin-left: -10px;
+  }
+}
+
+/* At 768–775px a column is under 324px: the halves sit a little closer. */
+@media (min-width: 768px) and (max-width: 775px) {
+  .dots {
+    gap: 12px;
   }
 }

@@ -424,3 +424,11 @@
     margin-top: 32px;
   }
 }
+
+/* 1024–1149px: the card is narrower than the question's longest line, so
+   the bubble wraps instead of reaching the card's edge. */
+@media (min-width: 1024px) and (max-width: 1149px) {
+  .bubble {
+    white-space: normal;
+  }
+}

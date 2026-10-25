@@ -122,7 +122,7 @@ Shown above the headline only when this browser has a saved journey:
     - "Klinik B: buka Sabtu sampai sore"
     - "Klinik C: ada dokter spesialis kulit"
     - "Klinik Anda?"
-  - Sources: "klinik-a.contoh", "direktori.contoh".
+  - No sources (as in the design).
   - Input: "Tanyakan apa saja".
 - **Google card:**
   - Label "Google AI Overview"; logo text "Google".
@@ -244,8 +244,8 @@ label and topic line.
   | Topic | Search line | Cited |
   | --- | --- | --- |
   | v shape | ±1.600 pencarian/bulan di Google, seluruh Indonesia · Pertanyaan 3 | Dikutip: klinik-a.contoh, direktori.contoh |
-  | skin rejuvenation | ±320 pencarian/bulan di Google, seluruh Indonesia · Pertanyaan 6 | Dikutip: klinik-d.contoh |
-  | biaya laser wajah di klinik kecantikan | ±260 pencarian/bulan di Google, seluruh Indonesia · Pertanyaan 8 | Dikutip: direktori.contoh |
+  | skin rejuvenation | ±320 pencarian/bulan di Google, seluruh Indonesia · Pertanyaan 5 | Dikutip: klinik-d.contoh |
+  | biaya laser wajah di klinik kecantikan | ±260 pencarian/bulan di Google, seluruh Indonesia · Pertanyaan 9 | Dikutip: direktori.contoh |
 
 ## S6 · Bisa dipercaya, bisa ditindaklanjuti
 
@@ -440,7 +440,9 @@ review.
    Klinik E's row now says "Pertanyaan 2, 6" instead of "Pertanyaan 6".
 4. **S5 Perbaikan.** The topic lines take the real report's wording
    ("di Google", "· Pertanyaan n", "Dikutip:"). The question numbers point
-   only at questions that don't name the clinic.
+   only at questions that don't name the clinic: 3, 5 and 9 (the Skor tab
+   names it in 2, 6 and 8; 5 and 9 replace 6 and 8 after the review of
+   2026-10-25).
 5. **S5 source.** "klinikcantikfiksi.contoh" becomes "klinikcantikfiksi.com",
    the website the reader types in S4.
 6. **S5 tabs Jawaban AI, Klinik lain and Perbaikan.** They take the

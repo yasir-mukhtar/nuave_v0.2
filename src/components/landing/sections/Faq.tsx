@@ -208,9 +208,11 @@ export function Faq() {
           </h2>
         </header>
         {/* Without JavaScript every answer shows (Spec 019, failure and
-            recovery). Tailwind's base hides [hidden] with !important. */}
+            recovery). Tailwind's base layer hides [hidden] with !important,
+            and a layered !important beats an unlayered one, so this rule
+            joins that layer and wins on specificity. */}
         <noscript>
-          <style>{`[data-landing-faq] [hidden] { display: block !important; }`}</style>
+          <style>{`@layer base { [data-landing-faq] [hidden] { display: block !important; } }`}</style>
         </noscript>
         <Accordion
           className={styles.list}

@@ -198,6 +198,7 @@
   color: var(--ink-600);
   font-size: var(--type-copy-sm-size);
   line-height: 19px;
+  text-wrap: pretty;
 }
 
 .tick {
@@ -272,6 +273,19 @@
   font-size: var(--type-caption-size);
   line-height: 18px;
   text-align: center;
+}
+
+/* Narrow phones: slimmer receipt sides give its field more room. */
+@media (max-width: 389px) {
+  .paper {
+    --pad-x: 12px;
+  }
+}
+
+@media (max-width: 359px) {
+  .paper {
+    --pad-x: 10px;
+  }
 }
 
 @media (min-width: 768px) {

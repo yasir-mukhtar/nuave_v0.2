@@ -1,8 +1,11 @@
 /* The landing's footer (Figma S9 > Footer). Phone: logo, links in two
    columns of 44px rows, ©. From 768px: one 96px row. */
 
+/* Phone: room at the end for the sticky bar (69px plus the home-bar inset),
+   so the footer's last lines never stay under it. */
 .footer {
-  padding: 32px var(--gutter) 40px;
+  padding: 32px var(--gutter)
+    calc(40px + 72px + env(safe-area-inset-bottom, 0px));
   background: #ffffff;
 }
 
@@ -55,6 +58,17 @@
   font-size: var(--type-copy-sm-size);
   line-height: 18px;
   white-space: nowrap;
+}
+
+/* Below 360px "Syarat dan Ketentuan" may wrap, and the columns keep a gap. */
+@media (max-width: 359px) {
+  .links {
+    column-gap: 16px;
+  }
+
+  .link {
+    white-space: normal;
+  }
 }
 
 @media (min-width: 768px) {

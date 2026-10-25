@@ -235,10 +235,12 @@ function OtherClinics() {
   );
 }
 
+// The question numbers point only at questions that don't name the clinic
+// (the Skor tab's dots name it in 2, 6 and 8).
 const TOPICS = [
   ["v shape", "±1.600", "3", "klinik-a.contoh, direktori.contoh"],
-  ["skin rejuvenation", "±320", "6", "klinik-d.contoh"],
-  ["biaya laser wajah di klinik kecantikan", "±260", "8", "direktori.contoh"],
+  ["skin rejuvenation", "±320", "5", "klinik-d.contoh"],
+  ["biaya laser wajah di klinik kecantikan", "±260", "9", "direktori.contoh"],
 ] as const;
 
 function Fixes() {

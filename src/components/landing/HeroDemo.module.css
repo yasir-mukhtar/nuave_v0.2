@@ -21,6 +21,14 @@
   min-width: 0;
 }
 
+/* Below 352px the phone and card shrink a little more, so the card's right
+   edge stays on screen. */
+@media (max-width: 351px) {
+  .demo {
+    --z: 0.8;
+  }
+}
+
 /* ── Clinic-type tabs (Figma "Components · Clinic tab") ── */
 
 .tabsScroller {
@@ -478,8 +486,9 @@
 /* Laptops: tabs above the phone, card off its right edge. */
 @media (min-width: 1100px) {
   .demo {
-    --phone-h: 720px;
-    --card-x: clamp(220px, calc(45vw - 275px), 328px);
+    --z: 0.8;
+    --phone-h: calc(720px / var(--z));
+    --card-x: 328px;
     --card-y: 390px;
     align-items: flex-start;
   }
@@ -487,7 +496,7 @@
   .tabsScroller {
     position: absolute;
     top: -64px;
-    left: 176px;
+    left: calc(176px * var(--z));
     margin: 0;
     transform: translateX(-50%);
   }
@@ -504,7 +513,28 @@
   }
 
   .caption {
-    top: calc(var(--card-y) + 171px + 16px);
-    left: calc(var(--card-x) + 38px);
+    top: calc((var(--card-y) + 171px) * var(--z) + 16px);
+    left: calc((var(--card-x) + 38px) * var(--z));
+  }
+}
+
+/* Up to 1340px the 1440 picture does not fit beside the copy: it is drawn
+   smaller, in steps, instead of the card covering the answer. The phone
+   keeps its 720px height, so the hero's bottom edge still cuts it. */
+@media (min-width: 1180px) {
+  .demo {
+    --z: 0.87;
+  }
+}
+
+@media (min-width: 1260px) {
+  .demo {
+    --z: 0.93;
+  }
+}
+
+@media (min-width: 1340px) {
+  .demo {
+    --z: 1;
   }
 }

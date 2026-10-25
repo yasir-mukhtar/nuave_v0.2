@@ -142,9 +142,10 @@
 
 .cardTop {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 12px;
 }
 
 .reportLabel {
@@ -672,6 +673,7 @@
     font-size: var(--type-copy-sm-size);
     font-weight: 400;
     line-height: 22px;
+    text-wrap: pretty;
   }
 
   .tab:hover .tabLabel,

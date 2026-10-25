@@ -154,6 +154,24 @@ test.describe("on a laptop", () => {
     await expect(landingInput(page)).toBeFocused();
   });
 
+  test("keyboard focus stays clear of the top sticky bar (R-05)", async ({
+    page,
+  }) => {
+    const previous = page.getByRole("button", { name: "Bedanya dengan SEO?" });
+    const next = page.getByRole("button", {
+      name: "Bisa cek sendiri di ChatGPT?",
+    });
+    // Leave the previous question just above the screen's top edge.
+    await next.evaluate((question) =>
+      window.scrollBy(0, question.getBoundingClientRect().top - 4),
+    );
+    await next.focus();
+    await page.keyboard.press("Shift+Tab");
+    await expect(previous).toBeFocused();
+    // From 768px the bar is 65px tall at the top.
+    expect((await previous.boundingBox())?.y).toBeGreaterThanOrEqual(65);
+  });
+
   test("an invalid entry shows the error, refocuses the field and stays (AC-03)", async ({
     page,
   }) => {
@@ -218,6 +236,43 @@ test.describe("on a phone", () => {
     });
     const box = await stickyBar(page).boundingBox();
     expect(box && box.y + box.height).toBeCloseTo(844, -1);
+  });
+
+  test("keyboard focus stays clear of the bottom sticky bar (R-05)", async ({
+    page,
+  }) => {
+    const previous = page.getByRole("button", { name: "Bedanya dengan SEO?" });
+    const next = page.getByRole("button", {
+      name: "Bisa cek sendiri di ChatGPT?",
+    });
+    // Leave the next question just below the screen's bottom edge.
+    await previous.evaluate((question) =>
+      window.scrollBy(
+        0,
+        question.getBoundingClientRect().bottom - window.innerHeight + 4,
+      ),
+    );
+    await previous.focus();
+    await page.keyboard.press("Tab");
+    await expect(next).toBeFocused();
+    // On a phone the bar is 69px tall at the bottom.
+    const box = await next.boundingBox();
+    expect(box && box.y + box.height).toBeLessThanOrEqual(844 - 69);
+  });
+});
+
+test.describe("with JavaScript off", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("every FAQ answer shows", async ({ page }) => {
+    await page.goto("/");
+    const questions = page.locator("[data-landing-faq] h3");
+    const answers = page.locator("[data-landing-faq] [role='region']");
+    await expect(questions).not.toHaveCount(0);
+    await expect(answers).toHaveCount(await questions.count());
+    for (const answer of await answers.all()) {
+      await expect(answer).toBeVisible();
+    }
   });
 });
 
