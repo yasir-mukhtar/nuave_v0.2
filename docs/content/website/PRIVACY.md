@@ -2,8 +2,8 @@
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
 > Status: version 1.1 (2026-10-25) adds the clauses adopted from the HaloAI
-> comparison; waiting for the founder's wording approval. Version 1.0 was
-> approved on 2026-10-25 (PR #159). The page and this file say the same thing; change
+> comparison; approved by the founder on 2026-10-25 (PR #160). The lawyer
+> checks listed below are still open. The page and this file say the same thing; change
 > both together.
 > Language: Indonesian
 > Shared facts: `src/lib/legal.ts` (operator, city, version, date, support
