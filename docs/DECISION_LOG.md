@@ -6,6 +6,21 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Legal pages stay Indonesian; clauses adopted from HaloAI
+
+Yasir compared Nuave's terms and privacy pages with HaloAI's and decided:
+
+- **Language:** the terms and privacy pages stay in Indonesian, the binding
+  language for contracts with Indonesian consumers. An English translation is
+  left for later.
+- **Clauses to adopt** (terms and privacy version 1.1, wording for his
+  approval): definitions, prohibited uses, cancelling an order shown at a
+  mistaken price, AI answers quoted as is, report ownership, a liability cap at the amount paid, a dispute route (support, 30 days, then
+  the competent court or BPSK), severability and entire agreement; in
+  privacy, the legal basis for each use, providers bound by their service
+  agreements, and a written breach notice within 3 x 24 hours. The liability cap and the breach deadline get a lawyer's check. Yasir approved the
+  version 1.1 wording on 2026-10-25 (PR #160).
+
 ## 2026-10-25 — S5 wording approved
 
 Yasir approved the final Indonesian wording of the terms, privacy, support
