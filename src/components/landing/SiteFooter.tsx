@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { CookieSettingsLink } from "@/components/consent/CookieConsent";
+import { metaPixelId } from "@/lib/consent/meta-pixel";
+import { cn } from "@/lib/utils";
 import { Brand } from "./Brand";
 import styles from "./SiteFooter.module.css";
 
@@ -9,7 +12,18 @@ const LINKS = [
   { href: "/support", label: "Kontak" },
 ];
 
-/** The landing's footer: logo, four links, ©. */
+/** Spec 019 (cookie notice): "Pengaturan cookie" reopens the notice, only
+ * when the Meta Pixel is set up. */
+function CookieSettingsItem() {
+  if (!metaPixelId()) return null;
+  return (
+    <li>
+      <CookieSettingsLink className={cn(styles.link, styles.linkButton)} />
+    </li>
+  );
+}
+
+/** The landing's footer: logo, four links (and the cookie settings), ©. */
 export function SiteFooter() {
   return (
     <footer className={styles.footer}>
@@ -26,6 +40,7 @@ export function SiteFooter() {
                 </Link>
               </li>
             ))}
+            <CookieSettingsItem />
           </ul>
         </nav>
         <p className={styles.copy}>© {new Date().getFullYear()} Nuave</p>

@@ -94,6 +94,15 @@
   }
 }
 
+/* On a phone the cookie notice (Spec 019, cookie notice) holds the bottom of
+   the screen while it is open: the bar stays out of its way, and out of the
+   tab order. */
+@media (max-width: 767px) {
+  :global(body:has([data-cookie-notice])) .bar {
+    visibility: hidden;
+  }
+}
+
 @media (min-width: 768px) {
   .bar {
     top: 0;

@@ -6,6 +6,7 @@ import {
   IconBrandLinkedin,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
+import { CookieSettingsLink } from "@/components/consent/CookieConsent";
 
 const LOGO_SVG = "/logo-nuave.svg";
 
@@ -46,6 +47,7 @@ export default function Footer() {
                 {t(link.key)}
               </Link>
             ))}
+            <CookieSettingsLink className="type-copy-sm cursor-pointer border-0 bg-transparent p-0 text-[#6B7280] hover:text-brand transition-colors duration-150" />
           </div>
 
           <div className="lp-footer-social flex items-center gap-3">

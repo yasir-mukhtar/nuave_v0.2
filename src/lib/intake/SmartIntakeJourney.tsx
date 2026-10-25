@@ -17,6 +17,7 @@ import { AUDIT_SOURCE_HANDOFF_STORAGE_KEY } from "../audit/source-handoff";
 import { AUDIT_CLIENT_CONTRACT_VERSION } from "../audit/client-contract";
 import { canonicalLockedDirectTenPack } from "../audit/locked-question-pack";
 import { dedupeCalls } from "./local-audit-session";
+import { trackJourneyEvent } from "../consent/meta-pixel";
 import { readHistoricalAudit } from "./historical-audit";
 import {
   confirmSmartSelection,
@@ -891,6 +892,19 @@ export default function SmartIntakeJourney({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, session.stage, session.order?.id, paymentState]);
 
+  // Spec 019 R-08/R-09: checkout opened, and a confirmed payment. Each is sent
+  // once (per website, per order), only after Setuju; a test-pass order is
+  // "not_required", never "paid", so it sends no Purchase.
+  const checkoutSite = session.identity?.canonicalUrl;
+  useEffect(() => {
+    if (ready && session.stage === "order" && checkoutSite)
+      trackJourneyEvent("InitiateCheckout", checkoutSite);
+  }, [ready, session.stage, checkoutSite]);
+  useEffect(() => {
+    if (ready && session.order?.paid && paymentState === "paid")
+      trackJourneyEvent("Purchase", session.order.id);
+  }, [ready, session.order?.paid, session.order?.id, paymentState]);
+
   // An unpaid order made for another website or name is replaced on Lanjut,
   // which needs the email typed again (R-01), so it never starts by itself.
   const orderStillFits = Boolean(
@@ -1179,6 +1193,8 @@ export default function SmartIntakeJourney({
       setLookupFinished(true);
       await pauseForMotion(450);
       if (!stillMine()) return;
+      // Spec 019 R-07: the free check found the business.
+      trackJourneyEvent("Lead", identity.canonicalUrl);
       goStage({
         ...working,
         stage: "brand",

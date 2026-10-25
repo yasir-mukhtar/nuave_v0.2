@@ -45,6 +45,16 @@
   color: var(--ink-900);
 }
 
+/* "Pengaturan cookie" is a button that reads as a link. */
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .brand:focus-visible,
 .link:focus-visible {
   outline: 2px solid var(--ink-900);

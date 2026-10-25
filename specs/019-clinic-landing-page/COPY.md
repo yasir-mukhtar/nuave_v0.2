@@ -412,6 +412,8 @@ label and topic line.
 - "Nuave"
 - Links: "FAQ" → `/faq`; "Syarat dan Ketentuan" → `/terms` (Fix);
   "Kebijakan Privasi" → `/privacy`; "Kontak" → `/support`.
+- "Pengaturan cookie", only while the Meta Pixel is set up: it reopens the
+  cookie notice (Spec 019, cookie notice and Meta Pixel).
 - "© {tahun ini} Nuave", which shows "© 2026 Nuave" now.
 
 ## Names for screen readers (Proposal)

@@ -3,8 +3,8 @@ import Link from "next/link";
 import LandingNav from "@/components/LandingNav";
 import Footer from "@/components/Footer";
 import {
-  LEGAL_EFFECTIVE_DATE,
-  LEGAL_VERSION,
+  PRIVACY_EFFECTIVE_DATE,
+  PRIVACY_VERSION,
   OPERATOR_CITY,
   OPERATOR_NAME,
   SUPPORT_EMAIL,
@@ -19,13 +19,15 @@ export const metadata: Metadata = {
 
 function Section({
   title,
+  id,
   children,
 }: {
   title: string;
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-10">
+    <section id={id} className="mb-10">
       <h2 className="type-heading-sm m-0 mb-3 text-[#111827]">{title}</h2>
       {children}
     </section>
@@ -105,7 +107,7 @@ export default function PrivacyPage() {
           Kebijakan privasi dan data
         </h1>
         <p className="type-copy-sm text-[#6B7280]">
-          Berlaku sejak {LEGAL_EFFECTIVE_DATE} · Versi {LEGAL_VERSION}
+          Berlaku sejak {PRIVACY_EFFECTIVE_DATE} · Versi {PRIVACY_VERSION}
         </p>
         <p>
           Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang
@@ -329,7 +331,10 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="10. Cookie, penyimpanan di browser, dan iklan Meta">
+        <Section
+          id="cookie"
+          title="10. Cookie, penyimpanan di browser, dan iklan Meta"
+        >
           <p>
             Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa
             melanjutkan setelah halaman dimuat ulang. Data ini tetap di
@@ -385,7 +390,8 @@ export default function PrivacyPage() {
             >
               Kebijakan Privasi Meta
             </a>
-            . Anda bisa mengubah pilihan cookie kapan saja lewat tautan{" "}
+            . Pilihan cookie Anda sendiri disimpan di browser Anda selama 12
+            bulan. Anda bisa mengubahnya kapan saja lewat tautan{" "}
             <strong>Pengaturan cookie</strong> di bagian bawah halaman. Anda
             juga bisa mengatur iklan di{" "}
             <a
