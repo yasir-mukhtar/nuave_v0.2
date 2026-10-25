@@ -19,7 +19,7 @@ report itself.
 - `report-pdf`: the report has two `Download PDF` buttons, in the top bar and
   under the report. Each calls `window.print()` once. In print media, all ten
   answers are visible.
-- `report-json`: `Unduh bukti JSON` downloads `nuave-evidence-v5` with ten
+- `report-json`: `Unduh bukti JSON` downloads `nuave-evidence-two-source-v1` with ten
   observations and a report, and no email.
 - `link-not-available`: a wrong secret shows `[data-saved-report="unavailable"]`
   with the one sentence "Laporan ini tidak tersedia." and nothing else.
@@ -55,7 +55,7 @@ Run `$V drive report-link`. Steps, in order:
   backgrounds on). `result.json.artifacts` labels it
   "headless, not native print" and records `pdfPages`.
 - **JSON.** Presses `Unduh bukti JSON`. The download is saved as
-  `download-evidence.json`. It has `export_version` `nuave-evidence-v5`, ten
+  `download-evidence.json`. It has `export_version` `nuave-evidence-two-source-v1`, ten
   `observations` and a `report`, and not the owner's email.
 - **Wrong link.** A second new browser context opens `/r#WWWW…`. The page is
   only "Laporan ini tidak tersedia." Evidence: `13-wrong-link-not-available`.

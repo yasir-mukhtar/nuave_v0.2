@@ -26,6 +26,7 @@ import {
 } from "@/lib/payments/attempts";
 import { createSnapTransaction } from "@/lib/payments/midtrans";
 import { recordFounderNotice, utcDayOf } from "@/lib/payments/notices";
+import { dataForSeoAvailability } from "@/lib/checks/balance";
 import { dailySpendLimitUsd } from "@/lib/spending/provider-spend";
 import { usdToUnits, type SpendDb } from "@/lib/spending/spend-ledger";
 
@@ -123,6 +124,26 @@ export async function POST(request: Request) {
   }
   // R-16: the founder's list always applies in S4.
   if (!emailOnAllowlist(order.email)) return orderUnavailableResponse();
+
+  // Spec 018 R-22: the audit asks ChatGPT and Google through DataForSEO, so a
+  // new payment needs it working (credentials accepted, balance at least
+  // USD 2.00). Orders already paid continue. One notice per UTC day.
+  const dataForSeo = await dataForSeoAvailability({ now: new Date() });
+  if (!dataForSeo.ok) {
+    if (dataForSeo.reason !== "unreachable") {
+      await recordFounderNotice(server.db, {
+        kind: "dataforseo_unavailable",
+        subject: utcDayOf(new Date()),
+        detail: {
+          status_code: dataForSeo.statusCode,
+          balance_usd: dataForSeo.balanceUsd,
+          reason: dataForSeo.reason,
+        },
+        now: new Date(),
+      }).catch(() => false);
+    }
+    return orderUnavailableResponse();
+  }
 
   let limitUsd: number;
   let dailyLimitUsd: number;

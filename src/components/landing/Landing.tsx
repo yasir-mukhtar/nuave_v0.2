@@ -107,7 +107,7 @@ const STEPS: { title: string; body: string; art: ArtName; artWidth: number }[] =
     },
     {
       title: "Ceritakan bisnis Anda",
-      body: "Setelah bayar Rp99.000, periksa informasi yang sudah kami isi.",
+      body: "Setelah bayar Rp249.000, periksa informasi yang sudah kami isi.",
       art: "form",
       artWidth: 48,
     },
@@ -223,7 +223,7 @@ function ExampleReportSheet({
 
 const FOOTER_LINKS = [
   { href: "/faq", label: "FAQ" },
-  { href: "/terms", label: "Syarat Penggunaan" },
+  { href: "/terms", label: "Syarat dan Ketentuan" },
   { href: "/privacy", label: "Kebijakan Privasi" },
   { href: "/support", label: "Kontak" },
 ];

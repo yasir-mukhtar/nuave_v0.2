@@ -42,9 +42,20 @@ type OrderStatusAnswer = {
   total: number;
   questions: Array<{ prompt_id: string; status: QuestionStatus }>;
   payment?: { order_number?: string };
+  /** When the server started the audit (S5); absent from older answers. */
+  started_at?: string | null;
 };
 
 const POLL_MS = 5_000;
+/** The delivery promise says 15 minutes after the audit starts (Spec 018
+ * R-23); past it, the running page offers help (S5). */
+const DELAY_NOTICE_MS = 15 * 60_000;
+
+/** A "Minta bantuan" email to support, naming the order when it is known. */
+function helpHref(subject: string, orderNumber: string | null): string {
+  const full = orderNumber ? `${subject} (${orderNumber})` : subject;
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(full)}`;
+}
 
 /** "2 menit 10 detik" */
 export function elapsedText(ms: number): string {
@@ -216,15 +227,20 @@ export default function SmartAuditStage({
     };
   }, [orderId, pollMs]);
 
+  // The server's start time covers a reloaded page, which no longer holds
+  // the time this tab started the audit.
+  const serverStart = status?.started_at ? Date.parse(status.started_at) : NaN;
+  const since =
+    startedAt ?? (Number.isFinite(serverStart) ? serverStart : null);
   const running =
     !ended &&
     (!status || ["open", "running", "reporting"].includes(status.state));
   // The elapsed time ticks once a second while the audit runs.
   useEffect(() => {
-    if (!running || startedAt === null) return;
+    if (!running || since === null) return;
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
-  }, [running, startedAt]);
+  }, [running, since]);
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
@@ -362,8 +378,16 @@ export default function SmartAuditStage({
             title="Audit belum bisa diselesaikan"
           >
             <p role="status" className="type-copy m-0 text-ink-600">
-              Kami sudah mencatatnya dan akan menghubungi Anda lewat email.
+              Kami sudah mencatatnya dan akan menghubungi Anda lewat email dalam
+              1 hari kerja.
             </p>
+            <a
+              href={helpHref("Minta bantuan: audit belum selesai", orderNumber)}
+              className="type-title mt-6 inline-flex h-14 w-full items-center justify-center rounded-button border-[1.5px] border-ink-900 bg-white px-6 text-ink-900 no-underline transition-[background-color,transform] duration-150 hover:bg-stone-50 active:scale-[0.97]"
+              data-order-help="failed"
+            >
+              Minta bantuan
+            </a>
             {orderNumber ? (
               <p className="type-mono-sm m-0 mt-2 text-ink-500">
                 No. pesanan {orderNumber}
@@ -421,10 +445,10 @@ export default function SmartAuditStage({
           <p className="type-title m-0 text-ink-900">
             {completed} dari 10 pertanyaan selesai
           </p>
-          {startedAt !== null ? (
+          {since !== null ? (
             <p className="type-caption m-0 flex items-center gap-1.5 text-ink-500">
               <IconClock size={14} stroke={1.75} aria-hidden="true" />
-              Waktu berjalan: {elapsedText(now - startedAt)}
+              Waktu berjalan: {elapsedText(now - since)}
             </p>
           ) : null}
         </div>
@@ -503,6 +527,22 @@ export default function SmartAuditStage({
           </p>
         )}
       </section>
+      {since !== null && now - since > DELAY_NOTICE_MS ? (
+        <p
+          role="status"
+          className="type-copy-sm m-0 mt-3 text-ink-600"
+          data-order-note="delayed"
+        >
+          Audit ini berjalan lebih lama dari biasanya. Prosesnya belum selesai,
+          dan kami kabari hasilnya lewat email.{" "}
+          <a
+            href={helpHref("Minta bantuan: audit lebih lama", orderNumber)}
+            className="text-ink-900 underline underline-offset-[3px]"
+          >
+            Minta bantuan
+          </a>
+        </p>
+      ) : null}
       {unreachable ? (
         <p role="status" className="type-copy-sm m-0 mt-3 text-ink-600">
           Kemajuan belum dapat dimuat. Audit tetap berjalan di server; coba lagi

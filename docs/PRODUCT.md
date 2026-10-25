@@ -34,6 +34,10 @@ The initial focus is one category and location where customers research and
 compare options before choosing, and where accurate representation could
 materially affect consideration.
 
+**Target market (2026-10-24, [decision](./DECISION_LOG.md#2026-10-24--target-market-beauty-clinics-in-jabodetabek-and-bandung)):**
+beauty clinics in Jabodetabek and Bandung first, bought by the clinic owner or
+the person who runs its marketing. Other clinic types are secondary.
+
 Their practical question is:
 
 > When someone asks AI about my kind of business in my area, do I come up, and
@@ -69,14 +73,27 @@ A re-check of the same business after six to eight weeks, showing what changed,
 is the recurring offer. The interval is a recommended cadence, not a
 scientifically derived one.
 
-The current price is **Rp99.000 total for one audit**, with no additional tax or
-fee charged to the customer at checkout. An unpaid Order Preview keeps that
-quoted total for 30 days; after expiry the customer refreshes the preview before
-paying. There are no public tiers, subscriptions, bundles, credits, or volume
+The current price is **Rp249.000 total for one audit** (Spec 018; it was
+Rp99.000), with no additional tax or
+fee charged to the customer at checkout. No quote validity is promised: an
+unpaid order ends after 2 hours (Spec 016 Q2), and the checkout no longer says
+"Ringkasan ini berlaku 30 hari" (founder, 2026-10-24, S5). There are no public tiers, subscriptions, bundles, credits, or volume
 plans before real purchasing behaviour supports them. The price remains
 provisional until strangers respond to it.
 
 ## How results are reported
+
+**Two-source amendment (2026-10-24, [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)):**
+each approved question is asked to **ChatGPT** and **Google AI Overview**, and
+results are reported **per source**. ChatGPT keeps **Bisnis Anda muncul di X
+dari N pertanyaan** and **Bisnis Anda direkomendasikan di Y dari N
+pertanyaan**, where N is the completed ChatGPT answers; Google shows **Google
+menampilkan AI Overview di Z dari M pertanyaan** and **Bisnis Anda muncul di W
+dari Z pertanyaan**. Failed checks are shown, never hidden: each says **Tidak
+dapat diuji** with **Minta bantuan**, and the summary says **K pemeriksaan
+tidak dapat diuji**. A report is made when each source completed at least 5
+of its 10 checks (R-19). The answers section becomes **Jawaban ChatGPT dan
+Google AI Overview**. Reports saved before this keep their old layout.
 
 **Direct-ten report amendment (2026-09-22, founder-settled):** show the exact
 labels **Bisnis Anda muncul di X dari 10 pertanyaan** and **Bisnis Anda
@@ -146,7 +163,7 @@ is enough; no account is required to buy. Verified payment unlocks personalized
 business-fact and question preparation, but does not start or consume the
 audit.
 
-The order total is Rp99.000 with no additional checkout tax or fee. Use
+The order total is Rp249.000 with no additional checkout tax or fee. Use
 Midtrans hosted checkout with QRIS, bank transfer, GoPay, and DANA. The
 implementation specification still has to verify the merchant configuration,
 webhooks, reconciliation, and remedies before accepting a real payment.
@@ -180,6 +197,11 @@ need.
 
 ### 5. Question review
 
+Spec 018: each question shows its origin label (**Dicari di Google**, **Orang
+lain juga bertanya**, **Disusun dari topik yang dicari**, **Disusun dari
+profil bisnis**, **Diubah oleh Anda**) and its topic line with the monthly
+Google searches across Indonesia, or **Tidak ada data jumlah pencarian**.
+
 Suggest ten natural Indonesian questions from the confirmed facts using the
 canonical matrix: six fixed unnamed slots followed by four fixed named slots.
 Slot 9 also requires a comparison target and a comparison relation. The
@@ -202,8 +224,10 @@ facts or question pack during execution.
 Deliver a short, downloadable, Indonesian report through private access the
 named recipient can return to, containing:
 
-- results only after 10/10 observations are evaluable;
-- the overall appearance count out of ten and its direct score;
+- results only after 10/10 observations are evaluable (Spec 018 orders: each
+  source completed at least 5 of 10; failed checks shown);
+- the overall appearance count out of ten and its direct score (Spec 018:
+  per-source counts with their own denominators);
 - a separate recommendation count out of ten for direct-ten; historical
   name/no-name and other assessed dimensions keep their recorded denominators;
 - what was tested;
@@ -308,8 +332,7 @@ These are questions to test, not claims that Nuave has proven them.
 
 ## Open terms before a paid offer
 
-Before accepting a paid audit, state the Rp99.000 total and 30-day quote
-validity, a realistic delivery promise, the exact report scope, privacy and
+Before accepting a paid audit, state the Rp249.000 total (no quote validity is promised; S5), a realistic delivery promise, the exact report scope, privacy and
 retention treatment, and the approved correction and remedy path. Legal or
 regulatory requirements remain subject to qualified review; do not present an
 internal checklist as legal advice or a completed compliance review.

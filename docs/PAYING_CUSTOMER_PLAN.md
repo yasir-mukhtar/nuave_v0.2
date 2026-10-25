@@ -45,7 +45,7 @@ done.
 | S2 | Spending cap on the server | Worker | Done; merged `2d2c4ec` | [#127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127) (supersedes #123) | [PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127#issuecomment-6118211608) (`8c9d6a6`; notes fixed) |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Done; merged `d641701`, deployed; AC-21 live run passed 2026-10-13 | [#129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129) | [Verified](../specs/016-order-and-saved-report/VERIFICATION.md) (PASS+NOTES on `ae2b711`; AC-20 evidence exception; AC-21 USD 0.1372) |
 | S4 | Real payment + founder test pass | Worker | Done; merged and deployed (#137, #138, #139); AC-25 live run passed 2026-10-18 | [#136](https://github.com/yasir-mukhtar/nuave_v0.2/pull/136) (spec), [#137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137), [#138](https://github.com/yasir-mukhtar/nuave_v0.2/pull/138), [#139](https://github.com/yasir-mukhtar/nuave_v0.2/pull/139) | [Verified](../specs/017-payment-and-test-pass/VERIFICATION.md) (AC-25 USD 0.4048; refund checks moved to G1) |
-| S5 | Terms, price and promise wording | Worker | Not started | — | — |
+| S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
 | **Stage 3** | **Go live** | | | | |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
@@ -60,7 +60,7 @@ the founder stepping in:
 1. Open `v2.nuave.ai` and enter their business website. Nuave reads the
    site's public name and details to show "is this your business?" This step
    is free and uses no AI.
-2. See the price (Rp99.000) and what they get, and pay through Midtrans.
+2. See the price (Rp249.000) and what they get, and pay through Midtrans.
 3. Go through the Airbnb-style intake: Nuave shows what it understood, and the
    owner confirms, corrects, or answers a few quiz-like choices.
 4. Review and approve the ten questions.
@@ -521,7 +521,7 @@ These come from the original plan's Phase 4 exit gate
 
 - Add payment to the order summary that S3 built (it already collects the
   email, which delivery and support D3, D5, D7, D8 depend on). The summary now
-  also shows the Rp99.000 total, the delivery promise, and links to Terms and
+  also shows the Rp249.000 total, the delivery promise, and links to Terms and
   Privacy. It sits right after the free "is this your business?" result.
   Payment comes **before** the intake asks for or prepares any business
   details.
@@ -587,7 +587,7 @@ only if asked.
    evidence in the PR.
 2. Founder switches Midtrans to production keys.
 3. Founder buys one real audit for a business they own or have permission for
-   (Rp99.000), reaches the report on a phone, and refunds it from the Midtrans
+   (Rp249.000), reaches the report on a phone, and refunds it from the Midtrans
    dashboard.
 4. Founder records "open for paying customers" in `DECISION_LOG.md`.
 
@@ -599,7 +599,7 @@ three questions. **Approved by the founder on 2026-09-27** (recorded in
 
 1. Did this report tell you something you didn't know about your business?
 2. Would you do anything differently because of it? What?
-3. Would you pay Rp99.000 for a report like this about your own business?
+3. Would you pay Rp249.000 for a report like this about your own business?
 
 Record each owner's answers in one short note. Findings go to the parking lot
 unless they show the report is unsellable. In that case, stop and re-plan.
@@ -632,7 +632,7 @@ founder moves it into a milestone.
 **Open questions** (from the former `NOW.md`; Track V starts on the first
 three)
 - Will Indonesian small-business owners pay for one audit at all, and at
-  Rp99.000?
+  Rp249.000?
 - Does an owner act on the report, or read it, agree, and do nothing?
 - Will owners buy a re-check, and at what interval?
 - How much does ordinary run-to-run variation move the count out of ten?

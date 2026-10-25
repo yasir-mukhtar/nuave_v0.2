@@ -40,6 +40,9 @@ import {
   websiteInput,
 } from "./journey";
 
+/** The ChatGPT answers of a two-source report (Spec 018). */
+const CHATGPT_BODIES = '[data-source-answer="chatgpt"] [data-answer-body]';
+
 // Spec 016 S3a: the order flow in synthetic mode against the local D1 database,
 // with the real routes, the real runner (started through the development
 // trigger) and the fake mail sender; the private link opens the saved report
@@ -99,8 +102,9 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   expect(calls["POST /api/orders"]).toBe(1);
   expect(calls["POST /api/audit/extract"]).toBe(1);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
-  const wording =
-    "Pilihan kedai kopi apa yang cocok untuk pekerja di Indonesia?";
+  // Spec 018 R-11a: an edit keeps the rules (at least 7 questions about
+  // choosing a place, at most 2 advice), so the edited question stays one.
+  const wording = "Rekomendasi kedai kopi yang cocok untuk pekerja kantoran?";
   await editQuestion(page, 1, wording);
   // AC-19: progress is kept in this browser, so a reload loses nothing.
   await page.reload();
@@ -148,19 +152,30 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   await reopened.goto("/audit");
   await expectAuditRunning(reopened);
 
-  // The cron runs one audit step per order per run: ten questions, then the
-  // report, then the email.
+  // The cron runs one audit step per order per run: ten questions (Spec 018:
+  // plus the synthetic retries of question 3's Google check and question 7's
+  // ChatGPT check), then the report, then the email. Spec 018 R-15 lets two
+  // orders step in one run, so an order left running by an earlier test in
+  // the same local database may also step; this order is followed by its id.
+  const orderId = (JSON.parse(stored.order!) as { orderId: string }).orderId;
+  const orderStatus = async () =>
+    (await (
+      await reopened.request.post("/api/orders/status", {
+        data: { order_id: orderId },
+      })
+    ).json()) as { state: string; completed: number; total: number };
   const outcomes: string[] = [];
-  for (let run = 0; run < 14; run += 1) {
+  for (let run = 0; run < 18; run += 1) {
     const result = await runRunnerOnce(reopened);
     expect(result.ran).toBe(true);
     outcomes.push(...(result.outcomes ?? []));
-    if (outcomes.includes("delivered") || outcomes.includes("report_saved"))
-      break;
+    if ((await orderStatus()).state === "delivered") break;
   }
+  const final = await orderStatus();
+  expect(final).toMatchObject({ state: "delivered", completed: 10, total: 10 });
   expect(
-    outcomes.filter((outcome) => outcome === "question_done"),
-  ).toHaveLength(10);
+    outcomes.filter((outcome) => outcome === "question_done").length,
+  ).toBeGreaterThanOrEqual(10);
   expect(outcomes).toContain("report_saved");
 
   await reopened.reload();
@@ -396,8 +411,14 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
 
   await expect(savedReport(fresh)).toBeVisible({ timeout: 30_000 });
   const report = reportLocator(fresh);
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  // Spec 018: nine ChatGPT answers (question 7's check failed in the
+  // synthetic run) and both sources named in the header.
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
+  await expect(report.locator("[data-failed-slot]")).toHaveCount(1);
   await expect(fresh.locator("header#stage-5")).toContainText("Kedai Fiksi");
+  await expect(fresh.locator("[data-report-checked]")).toContainText(
+    "Diperiksa di ChatGPT dan Google AI Overview",
+  );
   // Nothing but the report-data call; no cookie and nothing saved in the browser.
   // (`next dev` runs an effect twice, so the count is not fixed here.)
   expect(Object.keys(calls)).toEqual(["POST /api/report"]);
@@ -441,7 +462,7 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   });
   await fresh.emulateMedia({ media: "screen" });
   const { json: evidence } = await downloadEvidenceJson(fresh);
-  expect(evidence.export_version).toBe("nuave-evidence-v5");
+  expect(evidence.export_version).toBe("nuave-evidence-two-source-v1");
   expect(evidence.context).toMatchObject({
     version: "nuave-direct-ten-context-v2",
     identity: { name: "Kedai Fiksi" },
@@ -551,6 +572,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       provenance: unknown;
       key_findings: Array<{ evidence_prompt_ids: string[] }>;
       priorities: Array<{ evidence_prompt_ids: string[] }>;
+      two_source: { checked_from: string };
     };
   };
   let retained: Saved | null = null;
@@ -597,14 +619,29 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     }, state);
     await expect(report).toBeVisible();
   }
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  // Spec 018: each question shows its ChatGPT answer and Google AI Overview.
+  // The synthetic run's question 7 ChatGPT check failed every attempt, so its
+  // slot says "Tidak dapat diuji" with "Minta bantuan" instead of an answer.
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   for (let i = 1; i <= 10; i++) {
     expect(await fresh.locator(`#report-question-${i}`).textContent()).toBe(
       raw[i - 1]!.question,
     );
-    await expect(
-      report.locator(`[data-report-answer="${i}"] [data-answer-body]`),
-    ).toContainText(`AKHIR-JAWABAN-${i}.`);
+    const chatgpt = report.locator(
+      `[data-report-answer="${i}"] [data-source-answer="chatgpt"]`,
+    );
+    if (i === 7) {
+      await expect(chatgpt.locator("[data-failed-slot]")).toContainText(
+        "Tidak dapat diuji",
+      );
+      await expect(
+        chatgpt.getByRole("link", { name: "Minta bantuan" }),
+      ).toHaveAttribute("href", /^mailto:support@nuave\.ai\?subject=/);
+      continue;
+    }
+    await expect(chatgpt.locator("[data-answer-body]")).toContainText(
+      `AKHIR-JAWABAN-${i}.`,
+    );
   }
   await expect(
     report.locator(
@@ -678,7 +715,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   // Spec 012 B1: final header and contents match the direct-ten body.
   await expect(contents.getByRole("link")).toHaveText([
     "Hasil singkat",
-    "Jawaban model AI",
+    "Jawaban ChatGPT dan Google AI Overview",
     "Analisis Nuave",
     "Yang dapat dilakukan",
     "Tentang audit ini",
@@ -686,7 +723,8 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   const hero = fresh.locator("header#stage-5");
   await expect(hero).toContainText("AI Visibility Report");
   await expect(hero).not.toContainText("Dibuat oleh");
-  const earliest = patched!.observations.map((o) => o.observed_at).sort()[0];
+  // Spec 018: the window spans the checks of both sources.
+  const earliest = patched!.report.two_source.checked_from;
   await expect(hero.locator("[data-report-header-facts] time")).toHaveAttribute(
     "datetime",
     earliest!,
@@ -767,7 +805,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   ).toBe(1);
   await fresh.emulateMedia({ media: "print" });
   await expect(fresh.locator("[data-raw-answer]")).toBeHidden();
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   for (const answer of await report.locator("[data-answer-body]").all())
     await expect(answer).toBeVisible();
   await fresh.pdf({
@@ -780,7 +818,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   expect(
     exported.observations.map((o: { raw_answer: string }) => o.raw_answer),
   ).toEqual(raw.map((o) => o.answer));
-  expect(exported.export_version).toBe("nuave-evidence-v5");
+  expect(exported.export_version).toBe("nuave-evidence-two-source-v1");
   expect(exported.context).toEqual(patched!.context);
   expect(exported.context).not.toHaveProperty("targetCustomer");
   expect(exported).not.toHaveProperty("brief");
@@ -788,7 +826,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   expect(exported.report).not.toHaveProperty("operational_telemetry");
   expect(exported.observations[0]).not.toHaveProperty("telemetry");
   await fresh.reload();
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   await checkContentsNavigation();
   expect(external).toEqual([]);
   // Opening the report asked only the report-data route, every time.

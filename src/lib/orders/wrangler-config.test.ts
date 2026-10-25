@@ -60,6 +60,9 @@ describe("wrangler.jsonc environments", () => {
       "MIDTRANS_IS_PRODUCTION",
       "NUAVE_TEST_PASS_CODE",
       "NUAVE_FOUNDER_ALERT_EMAIL",
+      // Spec 018 R-26.
+      "DATAFORSEO_LOGIN",
+      "DATAFORSEO_PASSWORD",
     ]) {
       expect(text).not.toContain(name);
     }
@@ -98,6 +101,16 @@ describe("workflows and the payment settings", () => {
     }
     expect(ci).toContain('MIDTRANS_IS_PRODUCTION: "false"');
     expect(ci).toMatch(/^\s+MIDTRANS_IS_PRODUCTION$/m);
+  });
+
+  it("the deploy job writes the DataForSEO login as Worker secrets; previews get none (Spec 018 R-26)", () => {
+    const ci = read("ci.yml");
+    const preview = read("pr-preview.yml");
+    for (const name of ["DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD"]) {
+      expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+      expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+      expect(preview).not.toContain(name);
+    }
   });
 
   it("preview workers get no payment key, test code or alert address", () => {

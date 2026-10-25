@@ -18,7 +18,7 @@ export default function PaymentPreview() {
       <div className="flex-1 min-h-0 px-4 py-3 flex flex-col gap-3 overflow-hidden">
         {/* Price */}
         <div>
-          <p className="type-heading-md text-gray-900 m-0">Rp99.000</p>
+          <p className="type-heading-md text-gray-900 m-0">Rp249.000</p>
           <p className="type-label-sm text-gray-500 m-0 mt-1">
             Tanpa langganan, tanpa biaya tersembunyi
           </p>

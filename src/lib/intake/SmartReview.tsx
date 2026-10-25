@@ -5,6 +5,7 @@ import { Checkbox } from "@base-ui/react";
 import {
   IconBuildingStore,
   IconCheck,
+  IconMapPin,
   IconSwords,
   IconUsers,
 } from "@tabler/icons-react";
@@ -21,6 +22,7 @@ import {
   type SourceExcerptStatus,
 } from "../audit/types";
 import {
+  effectiveSearchPlace,
   requiredSmartGaps,
   smartAliasesReady,
   smartCategoryReady,
@@ -32,6 +34,11 @@ import {
   type SmartSelection,
 } from "./smart-intake-contract";
 import { ChipAdder } from "./ChipAdder";
+import {
+  SEARCH_PLACE_HELPER,
+  SearchPlaceFields,
+  searchPlaceText,
+} from "./search-place-fields";
 import {
   flushPendingAdds,
   PendingAddsContext,
@@ -74,14 +81,17 @@ type Props = {
   sourceExcerptStatus?: SourceExcerptStatus;
   /** The intake frame focuses this heading on screen arrival (R-27). */
   headingRef?: RefObject<HTMLHeadingElement | null>;
+  /** Spec 018 R-07: the place is locked after discovery ran twice. */
+  searchPlaceLocked?: boolean;
 };
 
-type Section = "business" | "customers" | "comparison";
+type Section = "business" | "customers" | "comparison" | "place";
 
 const SECTION_TITLES: Record<Section, string> = {
   business: "Bisnis",
   customers: "Calon pelanggan",
   comparison: "Pembanding",
+  place: "Kota untuk pencarian",
 };
 
 const CHANNEL_WORDS: Record<string, string> = {
@@ -308,6 +318,7 @@ function sectionReady(section: Section, draft: SmartSelection): boolean {
       smartServiceReady(draft) &&
       (draft.focus === "cabang" || smartMarketReady(draft))
     );
+  if (section === "place") return effectiveSearchPlace(draft) !== null;
   return smartComparatorsReady(draft);
 }
 
@@ -333,6 +344,7 @@ export default function SmartReview({
   error,
   sourceExcerptStatus,
   headingRef,
+  searchPlaceLocked = false,
 }: Props) {
   // The section stays set while the sheet slides away, so its content does
   // not change during the exit.
@@ -490,6 +502,28 @@ export default function SmartReview({
             value={selection.publicFact}
             empty="Tidak ada"
           />
+        </ReviewSection>
+
+        <ReviewSection
+          icon={<IconMapPin size={20} stroke={1.75} />}
+          title={SECTION_TITLES.place}
+          onEdit={() => open("place")}
+          disabled={busy || searchPlaceLocked}
+        >
+          <Fact
+            label="Kota"
+            value={searchPlaceText(effectiveSearchPlace(selection))}
+            required
+          >
+            <span className="type-copy-sm mt-0.5 block text-ink-600">
+              {SEARCH_PLACE_HELPER}
+            </span>
+            {searchPlaceLocked ? (
+              <span className="type-copy-sm mt-0.5 block text-ink-600">
+                Kota sudah terkunci untuk pesanan ini.
+              </span>
+            ) : null}
+          </Fact>
         </ReviewSection>
       </div>
 
@@ -656,6 +690,10 @@ export default function SmartReview({
                   />
                 </SheetBlock>
               ) : null}
+            </div>
+          ) : section === "place" ? (
+            <div className="grid gap-[26px] pt-2">
+              <SearchPlaceFields selection={draft} onChange={changeDraft} />
             </div>
           ) : (
             <div className="grid gap-[26px] pt-2">

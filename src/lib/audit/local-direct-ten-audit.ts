@@ -1,3 +1,4 @@
+import type { TwoSourceReportFacts } from "./two-source-report";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -394,16 +395,23 @@ export async function executeSyntheticLocalObservation(
 function syntheticDirectTenSynthesis(
   observations: AuditObservation[],
   brandName: string,
+  facts?: TwoSourceReportFacts,
 ): ReportSynthesis {
   const ids = observations.map((observation) => observation.prompt_id);
+  // Spec 018: a two-source synthetic report speaks per source and agrees with
+  // the code counts, as a live one must.
+  const conclusion = facts
+    ? `Ini adalah uji alur lokal dengan jawaban sintetis berlabel, bukan bukti visibilitas. Di ChatGPT, jawaban sintetis menyebut ${brandName} di ${facts.counts.chatgpt.named} dari ${facts.counts.chatgpt.completed} pertanyaan; di Google AI Overview, di ${facts.counts.google.named} dari ${facts.counts.google.summaries} ringkasan. Hasil ini tidak menunjukkan apa pun tentang visibilitas ${brandName} yang sebenarnya.`
+    : `Ini adalah uji alur lokal dengan jawaban sintetis berlabel, bukan bukti visibilitas. ${brandName} tidak disebut dalam jawaban sintetis mana pun, sebagaimana dirancang; hasil ini tidak menunjukkan apa pun tentang visibilitas ${brandName} yang sebenarnya.`;
   return {
-    conclusion: `Ini adalah uji alur lokal dengan jawaban sintetis berlabel, bukan bukti visibilitas. ${brandName} tidak disebut dalam jawaban sintetis mana pun, sebagaimana dirancang; hasil ini tidak menunjukkan apa pun tentang visibilitas ${brandName} yang sebenarnya.`,
+    conclusion,
     accuracy_status: "could_not_assess",
     key_findings: [
       {
         title: "Seluruh jawaban pada sesi ini sintetis",
-        explanation:
-          "Sepuluh pertanyaan dijalankan melalui jalur audit lokal dengan jawaban contoh berlabel. Tidak ada respons model atau penelusuran web, sehingga tidak ada temuan visibilitas yang dapat ditarik.",
+        explanation: facts
+          ? "Di ChatGPT dan Google AI Overview, sepuluh pertanyaan dijalankan melalui jalur audit lokal dengan jawaban contoh berlabel. Tidak ada respons nyata atau penelusuran web, sehingga tidak ada temuan visibilitas yang dapat ditarik."
+          : "Sepuluh pertanyaan dijalankan melalui jalur audit lokal dengan jawaban contoh berlabel. Tidak ada respons model atau penelusuran web, sehingga tidak ada temuan visibilitas yang dapat ditarik.",
         evidence_prompt_ids: ids,
       },
     ],
@@ -414,8 +422,9 @@ function syntheticDirectTenSynthesis(
         action:
           "Jalankan audit dengan jawaban nyata yang disetujui sebelum mengambil keputusan apa pun.",
         why: "Setiap pertanyaan dalam sesi ini menghasilkan jawaban sintetis tanpa penelusuran, jadi tidak ada celah visibilitas yang benar-benar teramati.",
-        basis:
-          "Sepuluh dari sepuluh jawaban berlabel sintetis dan tidak menyebut bisnis.",
+        basis: facts
+          ? "Sepuluh dari sepuluh jawaban berlabel sintetis."
+          : "Sepuluh dari sepuluh jawaban berlabel sintetis dan tidak menyebut bisnis.",
         owner: "business_owner",
         done_when:
           "Satu audit dengan jawaban provider nyata selesai dan lolos validasi.",
@@ -437,6 +446,7 @@ export const generateSyntheticLocalReport: ReportGenerator = async (input) => {
   const synthesis = syntheticDirectTenSynthesis(
     input.observations,
     subjectBrandName(input.brief),
+    input.two_source_facts,
   );
   const content = assembleReportContent(
     synthesis,

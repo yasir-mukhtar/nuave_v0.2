@@ -158,7 +158,7 @@ export function createFakeMidtrans(
         order_id: input.orderId,
         transaction_status: input.status ?? "settlement",
         ...(input.fraud ? { fraud_status: input.fraud } : {}),
-        gross_amount: input.amount ?? "99000.00",
+        gross_amount: input.amount ?? "249000.00",
         ...(input.currency === null
           ? {}
           : { currency: input.currency ?? "IDR" }),
@@ -195,7 +195,7 @@ export function createFakeMidtrans(
       );
       const orderId = overrides.orderId ?? found?.order_id ?? "NV-UNKNOWN-1";
       const statusCode = overrides.statusCode ?? "200";
-      const gross = overrides.grossAmount ?? found?.gross_amount ?? "99000.00";
+      const gross = overrides.grossAmount ?? found?.gross_amount ?? "249000.00";
       const signature = createHash("sha512")
         .update(`${orderId}${statusCode}${gross}${overrides.key ?? serverKey}`)
         .digest("hex");

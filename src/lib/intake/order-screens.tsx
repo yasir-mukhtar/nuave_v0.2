@@ -20,7 +20,8 @@ import {
   KeyboardAccessory,
   useCoarsePointer,
 } from "@/components/product/journey/KeyboardAccessory";
-import { DELIVERY_PROMISE } from "@/lib/orders/promise";
+import { SUPPORT_EMAIL } from "@/lib/legal";
+import { AUDIT_SOURCES_TEXT, DELIVERY_PROMISE } from "@/lib/orders/promise";
 import { cn } from "@/lib/utils";
 import { emailCompletions, emailTypoSuggestion } from "./email-assist";
 import { BusinessMark } from "./step-one-screens";
@@ -42,8 +43,6 @@ export type OrderPayment = {
   redirect_url?: string;
   last_try?: string;
 };
-
-const SUPPORT_EMAIL = "support@nuave.ai";
 
 const TRY_MESSAGE: Record<string, string> = {
   denied: "Pembayaran ditolak. Anda bisa mencoba lagi di halaman pembayaran.",
@@ -342,6 +341,9 @@ function OrderCard({
           <p className="type-copy-sm m-0 break-words text-ink-600">
             {businessName} · 10 pertanyaan
           </p>
+          <p className="type-copy-sm m-0 text-ink-600" data-order-sources>
+            Diperiksa di {AUDIT_SOURCES_TEXT}
+          </p>
         </div>
       </div>
       {priced ? (
@@ -351,11 +353,10 @@ function OrderCard({
         >
           <p className="type-title m-0 flex items-center justify-between text-ink-900">
             <span>Total</span>
-            <span>Rp99.000</span>
+            <span>Rp249.000</span>
           </p>
           <p className="type-copy-sm m-0 mt-1.5 text-ink-600">
-            Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan
-            ini berlaku 30 hari.
+            Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave.
           </p>
         </div>
       ) : null}
@@ -515,7 +516,7 @@ export function OrderScreen({
             ? "Memeriksa status pesanan Anda…"
             : free
               ? "Pesanan Anda sudah dibuat. Tekan Lanjut untuk meneruskan."
-              : "Pesanan Anda sudah dibuat. Tekan Bayar Rp99.000 untuk membayar."}
+              : "Pesanan Anda sudah dibuat. Tekan Bayar Rp249.000 untuk membayar."}
         </p>
       ) : null}
       {!hasOrder ? (
@@ -623,9 +624,9 @@ export function PayConsent() {
         target="_blank"
         rel="noopener noreferrer"
       >
-        Syarat Penggunaan
+        Syarat dan Ketentuan
       </a>{" "}
-      dan{" "}
+      serta{" "}
       <a
         className="underline decoration-1 underline-offset-2"
         href="/privacy"

@@ -5,6 +5,7 @@ import {
 } from "../audit/types";
 import { DIRECT_TEN_PROMPT_IDS } from "../audit/locked-question-pack";
 import type { GlmPackProvenance } from "./local-questions";
+import type { QuestionOrigin } from "../discovery/question-rules";
 import type { GenerationAttempt } from "./local-session";
 import {
   parseFrozenSmartIntake,
@@ -22,6 +23,8 @@ export type SmartQuestionPack = {
   revision: number;
   provenance: GlmPackProvenance;
   billedCostUsd: number | null;
+  /** Spec 018 R-07: the server's origin for each written question. */
+  origins?: QuestionOrigin[];
 };
 
 export type SmartStage = SmartSession["stage"];
@@ -119,6 +122,9 @@ export type SmartSession = {
      * then on the reading never starts by itself: a failed or interrupted
      * reading waits for the customer's own Lanjut (Spec 013 R-04). */
     readingStarted?: true;
+    /** Spec 018 R-07: set once the server said discovery ran twice for this
+     * order; "Kota untuk pencarian" can no longer change. */
+    searchPlaceLocked?: true;
   } | null;
   /** An order the customer left by changing the website or the brand. It may
    * still be open; the next order tells the server to expire it, so it stops
@@ -369,6 +375,8 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         (value.order.paid !== undefined && value.order.paid !== true) ||
         (value.order.readingStarted !== undefined &&
           value.order.readingStarted !== true) ||
+        (value.order.searchPlaceLocked !== undefined &&
+          value.order.searchPlaceLocked !== true) ||
         (value.order.number !== undefined &&
           (typeof value.order.number !== "string" ||
             !/^NV-[A-Z0-9]{6}$/.test(value.order.number))))
@@ -413,7 +421,9 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         !pack.originals.every((item) => typeof item === "string") ||
         !pack.approved.every((item) => typeof item === "string") ||
         !Number.isInteger(pack.revision) ||
-        !isRecord(pack.provenance)
+        !isRecord(pack.provenance) ||
+        (pack.origins !== undefined &&
+          (!Array.isArray(pack.origins) || pack.origins.length !== 10))
       )
         return null;
     }

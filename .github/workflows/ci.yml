@@ -210,6 +210,10 @@ jobs:
           OPENAI_AUDIT_MODEL: gpt-5.6-luna
           OPENAI_AUDIT_REASONING_EFFORT: low
           CHEAPERINFERENCE_API_KEY: ${{ secrets.CHEAPERINFERENCE_API_KEY }}
+          # Spec 018 R-26: DataForSEO (search discovery, and in PR 2 the ChatGPT
+          # and Google AI Overview checks). Preview workers get none.
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -234,3 +238,5 @@ jobs:
             OPENAI_AUDIT_MODEL
             OPENAI_AUDIT_REASONING_EFFORT
             CHEAPERINFERENCE_API_KEY
+            DATAFORSEO_LOGIN
+            DATAFORSEO_PASSWORD

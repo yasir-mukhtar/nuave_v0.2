@@ -150,7 +150,8 @@ let pageHtml: string,
 let failPage: number, pageReads: number, iconReads: number;
 let requests: SDKRequest[],
   clientRequests: string[],
-  clientBodies: Record<string, unknown>[];
+  clientBodies: Record<string, unknown>[],
+  discoveryBodies: Record<string, unknown>[];
 let destination: { limit: ReturnType<typeof vi.fn> };
 function sdkResponse() {
   return {
@@ -233,6 +234,7 @@ beforeEach(() => {
   requests = [];
   clientRequests = [];
   clientBodies = [];
+  discoveryBodies = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(
@@ -255,6 +257,16 @@ beforeEach(() => {
             total: 10,
             questions: [],
           });
+        // Spec 018: discovery is its own request before the questions; it is
+        // checked in its own tests, not counted with the reading's requests.
+        if (value === "/api/audit/discovery") {
+          discoveryBodies.push(JSON.parse(String(init?.body)));
+          return Response.json({
+            status: "ok",
+            searchData: false,
+            locked: false,
+          });
+        }
         if (value.startsWith("/api/audit/")) {
           clientRequests.push(value);
           if (init?.body) clientBodies.push(JSON.parse(String(init.body)));
@@ -442,8 +454,19 @@ async function throughBrand() {
   await throughBrandToMarket();
   await fromMarketToSummary();
 }
+/** Spec 018 AC-01: when no place could be pre-filled, the owner picks one
+ * ("Seluruh Indonesia" here) in the "Kota untuk pencarian" sheet. */
+function ensureSearchPlace() {
+  if (!screen.queryByText(/Perlu dipastikan:.*Kota untuk pencarian/)) return;
+  fireEvent.click(
+    screen.getByRole("button", { name: "Ubah Kota untuk pencarian" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Seluruh Indonesia" }));
+  fireEvent.click(screen.getByRole("button", { name: "Simpan" }));
+}
 /** J25: the owner's tick unlocks the one request that writes the questions. */
 async function makeQuestions() {
+  ensureSearchPlace();
   const make = screen.getByRole("button", {
     name: "Buat pertanyaan audit",
   }) as HTMLButtonElement;
@@ -856,6 +879,10 @@ describe("server excerpt through the active Smart preparation", () => {
         });
         expect(intake.context).not.toHaveProperty("targetCustomer");
         expect(clientRequests).toHaveLength(3);
+        // Spec 018: one discovery request with the same confirmed intake.
+        expect(discoveryBodies).toEqual([
+          { order_id: orderStub.id, intake: clientBodies.at(-1)!.intake },
+        ]);
       }
       expect(requests).toHaveLength(1);
       expect(pageReads).toBe(2);

@@ -101,7 +101,7 @@ describe("refused calls never reach the provider", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("GLM question route: the transport is never called and the unavailable copy shows", async () => {
+  it("GLM question route: the transport is never called and the order-limit copy shows", async () => {
     const id = await smallOrder();
     const base = {
       version: SMART_INTAKE_INPUT_VERSION,
@@ -115,8 +115,10 @@ describe("refused calls never reach the provider", () => {
         intake: { ...base, fingerprint: smartFingerprint(base) },
       }),
     );
+    // The order's own limit cannot recover with time, so the customer is sent
+    // to support rather than told to try later (Spec 018 N-18).
     expect(JSON.stringify(await response.json())).toContain(
-      "Pembuatan pertanyaan sedang tidak tersedia. Coba lagi nanti.",
+      "Pertanyaan untuk pesanan ini belum dapat dibuat lagi. Email support@nuave.ai, kami bantu menyelesaikannya.",
     );
     expect(fetchSpy).not.toHaveBeenCalled();
   });

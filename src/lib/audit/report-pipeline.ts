@@ -1,4 +1,9 @@
 import {
+  repairTwoSourceWriting,
+  twoSourceWritingViolations,
+  type TwoSourceReportFacts,
+} from "./two-source-report";
+import {
   buildAuditReport,
   normalizeReportEvidence,
   REPORT_SYNTHESIS_PROMPT_VERSION_V2,
@@ -19,7 +24,10 @@ import {
   type HistoricalPromptPackId,
 } from "./measurement-matrix";
 import { assertSafeComparisonBusinessUrls } from "./similar-businesses";
-import { productionObservationMethodErrors } from "./production-observation-method";
+import {
+  chatgptScraperObservationErrors,
+  productionObservationMethodErrors,
+} from "./production-observation-method";
 import {
   exactReportExcerptErrors,
   repairExactReportExcerpts,
@@ -87,7 +95,19 @@ export type ReportPipelineInput = {
    * synthetic-local-fixture, so the flag proves labeling rather than
    * laundering unlabeled evidence past the production-method check. */
   allow_synthetic_evidence?: boolean;
+  /** Server-internal, never on the wire (Spec 018 R-19): the ChatGPT app
+   * answers of a two-source order. Failed checks are allowed as honest failed
+   * records; at least MIN_COMPLETED_CHATGPT_ANSWERS must be completed. */
+  two_source?: boolean;
+  /** Server-internal (Spec 018 R-28): the code-built Google facts and counts
+   * for both sources. When present the conclusion and findings must name
+   * their source and agree with the counts. */
+  two_source_facts?: TwoSourceReportFacts;
 };
+
+/** Spec 018 R-19 (founder Q-2): the ChatGPT source needs at least 5 of its 10
+ * checks completed for a report. */
+export const MIN_COMPLETED_CHATGPT_ANSWERS = 5;
 
 function canonicalReportInput(input: ReportPipelineInput): ReportPipelineInput {
   if (!isDirectTenAuditContext(input.brief)) {
@@ -199,16 +219,28 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
     );
   }
 
-  const notEvaluable = observations.filter(
-    (observation) =>
-      observation.run_status !== "completed" ||
-      !observation.raw_answer.trim() ||
-      observation.telemetry.length === 0,
+  // Spec 018 R-20: a two-source report may hold honest failed records; every
+  // completed answer must still be usable and keep its telemetry.
+  const twoSource = canonical.two_source === true;
+  const notEvaluable = observations.filter((observation) =>
+    observation.run_status === "completed"
+      ? !observation.raw_answer.trim() || observation.telemetry.length === 0
+      : !twoSource,
   );
   if (notEvaluable.length) {
     errors.push(
       `${notEvaluable.length} observation(s) are not evaluable: each must be completed, carry a usable answer, and retain attempt telemetry.`,
     );
+  }
+  if (twoSource) {
+    const completed = observations.filter(
+      (observation) => observation.run_status === "completed",
+    ).length;
+    if (completed < MIN_COMPLETED_CHATGPT_ANSWERS) {
+      errors.push(
+        `Only ${completed} of 10 ChatGPT checks completed; a report needs at least ${MIN_COMPLETED_CHATGPT_ANSWERS}.`,
+      );
+    }
   }
 
   if (canonical.allow_synthetic_evidence === true) {
@@ -220,6 +252,8 @@ export function assertReportGenerationGate(input: ReportPipelineInput): void {
         `Synthetic-evidence mode requires every observation to be labeled ${SYNTHETIC_LOCAL_FIXTURE_SYSTEM}; ${unlabeled.length} observation(s) claim another system.`,
       );
     }
+  } else if (twoSource) {
+    errors.push(...chatgptScraperObservationErrors(observations));
   } else {
     errors.push(...productionObservationMethodErrors(observations));
   }
@@ -421,7 +455,13 @@ export async function createValidatedAuditReport(
   }
 
   const isIndonesian = lockedInput.language === "id";
-  const languageErrors = languageErrorsFor(lockedInput, content);
+  const sourceFacts = lockedInput.two_source_facts;
+  const sourceErrorsFor = (draft: typeof content) =>
+    sourceFacts ? twoSourceWritingViolations(draft, sourceFacts) : [];
+  const languageErrors = [
+    ...languageErrorsFor(lockedInput, content),
+    ...sourceErrorsFor(content),
+  ];
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
@@ -486,7 +526,16 @@ export async function createValidatedAuditReport(
           lockedInput.question_method,
         ),
       ];
-      if (retryIntegrityErrors.length) {
+      if (retryIntegrityErrors.length && sourceFacts) {
+        // Spec 018 N-35: the first draft already passed every evidence
+        // check, so a revision that breaks the protected shape is discarded
+        // instead of failing the paid order. The code repair below then fixes
+        // any source sentence the first draft still had.
+        content = original;
+        final = initial;
+        diagnostics.add("revision_discarded");
+        diagnostics.add("language_warning");
+      } else if (retryIntegrityErrors.length) {
         throw new ReportPipelineError(
           retryIntegrityErrors.join(" "),
           422,
@@ -494,10 +543,23 @@ export async function createValidatedAuditReport(
           "REPORT_INTEGRITY_FAILURE",
           [...diagnostics, "unrecoverable_report_failure"],
         );
+      } else {
+        const finalLanguageErrors = languageErrorsFor(lockedInput, content);
+        if (finalLanguageErrors.length) diagnostics.add("language_warning");
       }
+    }
+  }
 
-      const finalLanguageErrors = languageErrorsFor(lockedInput, content);
-      if (finalLanguageErrors.length) diagnostics.add("language_warning");
+  // Spec 018 (B-4): a two-source report never ships a conclusion or finding
+  // that speaks for no source or contradicts the code counts. The one revision
+  // call above was the writer's chance; past it, code replaces the offending
+  // sentence with the per-source count sentence. A paid order is never failed
+  // for this check.
+  if (sourceFacts && sourceErrorsFor(content).length) {
+    const repairedSources = repairTwoSourceWriting(content, sourceFacts);
+    if (repairedSources.changed) {
+      content = repairedSources.content;
+      diagnostics.add("source_sentence_replaced");
     }
   }
 

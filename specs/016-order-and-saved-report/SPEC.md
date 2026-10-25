@@ -11,6 +11,13 @@
 > Number: 015 is taken by the held, unadopted paid-report draft on
 > `docs/stage2-paid-report-spec`. This spec does not use or adopt it.
 
+> **Changed by Spec 018 (2026-10-24):** for Spec 018 two-source orders the
+> report gate is "each source completed at least 5 of its 10 checks" (R-19),
+> not ten evaluable observations. A delivered order with failed checks shows
+> them as "Tidak dapat diuji" with "Minta bantuan" and sends the founder one
+> `checks_failed` notice (R-20, R-21); an order that fails the gate follows
+> this spec's failure path. See [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md).
+
 ## Required context
 
 Read in order:
