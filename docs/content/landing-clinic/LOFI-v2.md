@@ -86,9 +86,9 @@ The five gaps found in v2.1, now closed:
 | S5 | Lihat apa kata AI tentang klinik Anda. | **The two-source report in 4 tabs** (Skor · Jawaban AI · Klinik lain · Perbaikan), with the Spec 018 labels in their clinic wording: "Klinik Anda muncul di ...", "Klinik lain yang disebut" (Yasir's decision, built in Spec 018; the live report still heads the other clinics "Bisnis lain yang disebut"). All four states are drawn beside the mobile board |
 | S6 | Bukti, bukan janji. | Four cards: Apa adanya · Bahasa pasien · Data publik · Batasnya jelas |
 | S7 | Yang Anda dapat dari satu audit. | One card: "AI Visibility Report · Diperiksa di ChatGPT dan Google AI Overview", nine rows with ticks, then the price block: Rp249.000, "Bayar setelah klinik Anda ketemu.", **the form**, payment chips, "Laporan siap dalam 15 menit setelah audit dimulai." Desktop: list left, price right; mobile: stacked |
-| S8 | FAQ | 11 rows, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq |
+| S8 | FAQ | 11 rows in this lofi, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq. The copy now has 13 rows with the approved /faq words (`COPY-v2.md` §8); the lofi catches up at the next update |
 | S9 | Final call to action | Rp249.000 in the microcopy; founder line "Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai." |
-| F | Footer | Logo, four links, © |
+| F | Footer | Logo, four links, ©. The copy now says "Syarat dan Ketentuan", as on the live site; the lofi still says "Syarat Penggunaan" |
 
 **Extra frames, mobile board:**
 - the fold check at 360×640;
@@ -149,9 +149,10 @@ Most of mobile's extra length is the step pictures in S4 (about +280px), now on 
 - **Report label:** "Klinik Anda" in the report, as the S5 mock shows. Spec 018 built it and is live, except the heading of the other clinics list (below).
 - **No "coba sendiri" line**, and the H1 stays as it is.
 - **rater8:** the figure stays, labelled as a US survey ("di AS").
+- **FAQ (S5, approved 25 October 2026):** the FAQ uses the /faq words, and refunds are partial ([`STRATEGY-v2.md`](./STRATEGY-v2.md) §14).
 
 **Still open:**
-- **Refund wording:** approve the spoken version in "Kalau ada masalah?".
+- **Lofi update:** the FAQ (13 rows, the approved words) and the footer label, together with the examples decision below.
 - **Search engines:** let them in at launch (`src/app/robots.ts` blocks the whole site while it is pre-release).
 - **Other clinics heading:** the live report says "Bisnis lain yang disebut"; the S5 mock says "Klinik lain yang disebut". Recommendation: the product says "Klinik lain yang disebut" for clinics.
 - **Which clinic leads the examples:** the target market is now beauty clinics in Jabodetabek and Bandung. Recommendation: "Kecantikan" becomes the first, selected tab, and S3 to S5 use a beauty example in Jabodetabek or Bandung ([`STRATEGY-v2.md`](./STRATEGY-v2.md) §13).

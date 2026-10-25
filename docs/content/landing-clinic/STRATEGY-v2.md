@@ -2,6 +2,7 @@
 
 > Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list), then to **v2.2** after his and Fable's review (see §11: one spoken register, his wording, mobile = desktop). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
 > **Update, later on 24 October 2026:** Spec 018 is merged and live: Rp249.000, the new delivery line, and "Klinik Anda" in clinic reports. Yasir also set the target market: beauty clinics in Jabodetabek and Bandung. See §13.
+> **Update, 25 October 2026:** Yasir approved the live site's terms, privacy, support and FAQ wording. The FAQ here now uses the same words, refunds are partial, and the footer says "Syarat dan Ketentuan". See §14.
 > Reading note: §1 to §9 are the v2.0 strategy as approved (Rp99.000, the old S3 and price section). Where they differ from §10 and §11, the later section wins.
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
@@ -337,7 +338,7 @@ v2.2 is on the page "Lofi v2.2 · Light". Fable marked each card [P1] fix before
 - **"Klinik Anda" in the report.** The S5 report pictures now say "Klinik Anda muncul di ..." and "Klinik lain yang disebut". The product still says "Bisnis Anda". The change is recorded in Spec 018 (a note under its report layout) and in the decision log, but it is not built yet. It must ship before this page does, or the picture would promise something the product doesn't do. Update: Spec 018 built it before going live; one heading still differs (§13).
 - **No "coba sendiri" line**, and **the H1 stays** "Pasien sekarang tanya AI dulu, baru pilih klinik.".
 
-Still open: the refund wording in the FAQ "Kalau ada masalah?", and letting search engines in at launch.
+Still open: the refund wording in the FAQ "Kalau ada masalah?", and letting search engines in at launch. Update: the S5 approval settled the refund wording (§14).
 
 ## 13. After Spec 018 went live (24 October 2026)
 
@@ -360,3 +361,25 @@ Still open: the refund wording in the FAQ "Kalau ada masalah?", and letting sear
   - Use beauty questions in S3, S4 and S5, set in Jabodetabek or Bandung.
 
   The Spec 018 probe has real beauty data for Bandung, for example "v shape klinik" (Dicari di Google; topic "v shape", ±1.600 pencarian/bulan, data September 2026). So S4 can still show a real question and a real number. The H1, the structure and the other tabs stay.
+
+## 14. S5 wording approved (25 October 2026)
+
+On 25 October 2026 Yasir approved the wording of the live site's terms, privacy, support and FAQ pages (S5, PR #159). Four things on this page follow from it:
+
+- **The FAQ takes the /faq words.** The /faq page was built from this page's FAQ, with the answers corrected to the product, and it asks that this page use the same words. `COPY-v2.md` §8 now does. That brings two more questions ("Apa yang saya terima?" and "Data apa yang perlu saya isi?") and longer answers; only the first answer is open on the page.
+- **Refunds are partial.** If a check fails and the team can't fix it, the customer gets Rp12.450 back for each failed check. The refund is in full if:
+  - the audit can't finish;
+  - the report isn't ready 24 hours after the audit starts;
+  - the questions aren't approved within 7 days of paying.
+
+  This settles the refund wording that was open in §12.
+- **No promise on how long the price holds.** The old "harganya berlaku 30 hari" is gone.
+- **Footer:** "Syarat dan Ketentuan", as on the live site.
+
+The lofi and the Figma boards still show the v2.2 FAQ (11 questions, the old first answer) and "Syarat Penggunaan". They will catch up at the next lofi update, together with the answer on which clinic leads the examples (§13).
+
+Still open:
+- which clinic leads the examples, and the other clinics heading (§13);
+- the optional shorter FAQ (`COPY-v2.md` notes);
+- letting search engines in at launch;
+- landing analytics.

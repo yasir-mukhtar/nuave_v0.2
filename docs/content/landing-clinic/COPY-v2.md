@@ -2,6 +2,7 @@
 
 > Status: final draft copy v2.2 for the light page (24 October 2026). Not live. v2.2 applies Yasir's annotations and Fable's Indonesian-voice review of v2.1 (see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §11). v2.1 added the new price, both sources, questions based on Google searches, and a list of what the clinic gets; v2.0 and v2.1 are in git history. It replaces [`COPY.md`](./COPY.md) (v1, kept as history).
 > Strategy: [`STRATEGY-v2.md`](./STRATEGY-v2.md) (§10 covers v2.1). Layout: [`LOFI-v2.md`](./LOFI-v2.md). Growth check: [`GROWTH.md`](./GROWTH.md) Part 5; "growth N" below means item N there.
+> **Update, 25 October 2026:** the FAQ (§8) now uses the approved /faq words (S5): the refund is partial, there is no 30-day price promise, ChatGPT is asked from Indonesia, and there are two more questions. The footer says "Syarat dan Ketentuan", as on the live site.
 > **Release gate:** this copy describes the Spec 018 audit: the ChatGPT app and Google AI Overview, questions based on Google search data, Rp249.000. Spec 018 went live on 24 October 2026 (PR #151), so the product now matches this copy, except one report heading (see the founder notes). What remains is building the page; the open items are in the founder notes.
 
 > Author: copywriter agent (round 5), with the growth marketer's must-fixes folded in and two orchestrator edits (the step 2 wording, and a "Ringkasan AI" mention in the FAQ that Yasir later removed).
@@ -10,7 +11,7 @@
 
 ## Word count
 
-**Visible words: about 585** (v2.1 counted 574 by script; v2.2 adds about 10 through the line-by-line changes in §11 of the strategy. Budget about 600; v2.0 was 460). Counted the same way as `COPY-v2.md`, by script: menu, headlines, lines, cards, steps, tab captions, value list, price card, buttons and microcopy at every repeat, sticky bar, picture labels and captions, source line, FAQ questions, final section, footer. Excluded, as in v2: FAQ answers, the hero demo chat, the report mock contents. New exclusions of the same kind: the S3 chat and Google answers and the S4 question card (both are mock content, like the hero demo). With those in-picture texts counted too, the page shows 667 words.
+**Visible words: about 595** (v2.1 counted 574 by script; v2.2 adds about 10 through the line-by-line changes in §11 of the strategy, and the two FAQ questions taken from /faq add about 10 more. Budget about 600; v2.0 was 460). Counted the same way as `COPY-v2.md`, by script: menu, headlines, lines, cards, steps, tab captions, value list, price card, buttons and microcopy at every repeat, sticky bar, picture labels and captions, source line, FAQ questions, final section, footer. Excluded, as in v2: FAQ answers, the hero demo chat, the report mock contents. New exclusions of the same kind: the S3 chat and Google answers and the S4 question card (both are mock content, like the hero demo). With those in-picture texts counted too, the page shows 667 words.
 
 ## What changed in v2.2 (review by Yasir and Fable, 24 October 2026)
 
@@ -305,38 +306,66 @@ Price card (joined to the foot of the list):
 
 H2: **Yang sering ditanyakan**
 
+> Note: the questions and answers below are the approved words of the /faq page (S5, approved by Yasir on 25 October 2026; source `docs/content/website/FAQ.md`), which asks that this page take the same words. They are longer than the old two-sentence rule; the approval wins. Only the first answer is open on the page.
+
 **Bagaimana cara klinik muncul di Google AI Overview?**
-Tidak ada yang bisa menjamin, karena Google memilih sendiri sumbernya dan sering tidak menampilkan AI Overview untuk pencarian lokal. Yang pertama, tahu dulu posisi klinik Anda sekarang: pertanyaan mana yang memunculkan AI Overview, klinik dan situs apa yang disebut, dan informasi apa yang perlu dibenahi.
+Tidak ada yang bisa menjamin. Google memilih sendiri sumbernya, dan sering tidak menampilkan AI Overview untuk pencarian lokal.
+
+Langkah pertama adalah tahu posisi klinik Anda sekarang: pertanyaan mana yang memunculkan AI Overview, klinik dan situs apa yang disebut, dan informasi apa yang perlu dibenahi.
 
 **Bedanya dengan SEO?**
-Tujuannya mirip, tempatnya beda. SEO mengurus posisi website di hasil Google, sedangkan Nuave melihat apakah ChatGPT dan Google AI Overview menyebut klinik Anda, dan dari sumber apa.
+Tujuannya mirip, tempatnya beda. SEO mengurus posisi website di hasil Google. Nuave melihat apakah ChatGPT dan Google AI Overview menyebut klinik Anda, dan dari sumber apa.
 
 **Bisa cek sendiri di ChatGPT?**
-Bisa, coba saja. Bedanya, Anda cuma lihat satu jawaban dari satu akun di satu waktu, sedangkan Nuave tanya 10 pertanyaan berdasarkan pencarian Google ke ChatGPT dan Google AI Overview dari kota Anda, lalu catat jawaban, sumber, klinik lain yang disebut, dan yang perlu dibenahi.
+Bisa. Bedanya, Anda hanya melihat satu jawaban, dari satu akun, pada satu waktu. Nuave menanyakan sepuluh pertanyaan dari pencarian Google ke ChatGPT dan Google AI Overview. Pertanyaan tentang memilih klinik menyebut kota Anda. Lalu kami catat jawaban, sumber, klinik lain yang disebut, dan yang perlu dibenahi.
 
 **AI apa yang diuji?**
-ChatGPT dan Google AI Overview, dengan pertanyaan yang sama persis. Google sering tidak menampilkan AI Overview untuk pencarian lokal, dan laporan mencatat seberapa sering.
+ChatGPT dan Google AI Overview, dengan sepuluh pertanyaan yang sama persis. Google sering tidak menampilkan AI Overview untuk pencarian lokal. Laporan mencatat seberapa sering, sebagai temuan, bukan sebagai pemeriksaan yang gagal.
 
 **Dari mana pertanyaannya?**
-Dari data pencarian Google untuk jenis klinik dan kota Anda, dan tiap pertanyaan diberi label asalnya. Kalau datanya sedikit, sebagian kami susun dari profil klinik, dan labelnya menyebut itu.
+Dari data pencarian Google untuk jenis klinik dan kota Anda. Tiap pertanyaan diberi label asalnya. Jika datanya tidak cukup, pertanyaan disusun dari profil klinik Anda, dan labelnya menyebut itu.
+
+Anda membaca dan boleh mengubah sepuluh pertanyaan itu sebelum audit dimulai. Setelah Anda setuju, pertanyaan dikunci.
+
+**Apa yang saya terima?**
+- berapa kali klinik Anda disebut di ChatGPT dan di Google AI Overview;
+- jawaban dari kedua sumber untuk tiap pertanyaan;
+- klinik lain yang disebut dan sumber yang dibaca AI;
+- hal yang bisa Anda benahi; dan
+- laporan di web, dengan Download PDF.
 
 **Apa yang gratis?**
-Yang gratis cuma mencari klinik Anda, lalu Anda cek benar atau tidak. Hasil AI ada di audit Rp249.000, dan harganya berlaku 30 hari.
+Yang gratis hanya mencari klinik Anda, lalu Anda memastikan itu benar klinik Anda. Di langkah ini belum ada hasil AI.
 
-**Jawaban AI kan berubah-ubah?**
-Benar, bisa beda-beda tergantung waktu, akun, dan lokasi. Laporan mencatat jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya, jadi kami sarankan cek ulang setelah 6 sampai 8 minggu.
+Hasil AI ada di audit Rp249.000, sekali bayar. Tidak ada langganan dan tidak ada biaya tambahan saat checkout. Bayar lewat QRIS, transfer bank, GoPay, atau DANA.
 
 **Berapa lama?**
-Cek klinik biasanya kurang dari 10 detik. Laporan siap dalam 15 menit setelah audit dimulai.
+Cek gratis biasanya hanya beberapa detik. Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.
+
+Audit dimulai saat Anda menyetujui sepuluh pertanyaan. Anda boleh menutup halaman. Link laporan dikirim ke email pesanan dan berlaku 12 bulan.
+
+Setelah membayar, lanjutkan isian di browser yang sama. Jika pertanyaan belum Anda setujui dalam 7 hari, pesanan berakhir dan uang Anda kembali penuh.
+
+**Jawaban AI kan berubah-ubah?**
+Benar. Jawaban bisa berbeda menurut waktu, akun, dan lokasi. Laporan mencatat jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya. Karena itu kami sarankan cek ulang, sebagai pesanan baru, setelah 6 sampai 8 minggu.
+
+Laporan bukan peringkat atau jaminan. Nuave tidak menjamin klinik Anda akan disebut, atau pasien dan penjualan akan naik.
 
 **Klinik saya punya beberapa cabang.**
-Satu audit untuk satu kota, yaitu kota utama klinik Anda atau cabang yang Anda pilih. Kotanya dipilih setelah bayar.
+Satu audit untuk satu kota, yaitu kota utama klinik Anda atau kota cabang yang Anda pilih, atau untuk seluruh Indonesia. Pilihannya Anda tentukan setelah membayar. Untuk kota lain, pesan audit terpisah.
 
 **Aman soal aturan iklan kesehatan?**
-Nuave bukan iklan, karena laporannya untuk internal klinik. Sarannya soal informasi faktual, seperti jadwal, layanan, dan lokasi.
+Laporan Nuave untuk internal klinik, bukan iklan. Sarannya biasanya tentang informasi seperti jadwal, layanan, dan lokasi. Sebelum memakainya untuk promosi, pastikan sesuai aturan iklan kesehatan yang berlaku.
+
+**Data apa yang perlu saya isi?**
+Cukup website atau Instagram klinik, data klinik yang sudah publik, dan email untuk menerima laporan. Jangan isi data pasien, rekam medis, atau kata sandi. Baca [Kebijakan privasi dan data](/privacy).
 
 **Kalau ada masalah?**
-Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan. Untuk hal lain, balas email laporan Anda atau kirim email ke support@nuave.ai.
+Pemeriksaan yang gagal ditandai Tidak dapat diuji, dengan tautan Minta bantuan. Itu bukan hasil buruk. Tim kami membantu memeriksa ulang. Jika tetap tidak bisa, Anda mendapat pengembalian dana sebagian: Rp12.450 untuk setiap pemeriksaan yang gagal. Jika audit tidak bisa selesai, atau laporan belum siap 24 jam setelah audit dimulai, uang Anda kembali penuh.
+
+Salah ketik email saat memesan? Kirim bukti pembayaran atau nomor transaksi Midtrans ke support@nuave.ai, dan kami bantu.
+
+Untuk hal lain, balas email laporan Anda atau tulis ke support@nuave.ai. Kami balas dalam 1 hari kerja. Rinciannya ada di [Syarat dan ketentuan](/terms).
 
 ---
 
@@ -353,7 +382,7 @@ Founder line: **Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai.**
 
 ## Footer
 
-**FAQ** (links to `#faq`) · **Syarat Penggunaan** · **Kebijakan Privasi** · **Kontak**
+**FAQ** (links to `#faq`) · **Syarat dan Ketentuan** · **Kebijakan Privasi** · **Kontak** (the live site's footer labels)
 **© 2026 Nuave**
 
 ## Sticky bar (mobile, after the hero)
@@ -379,10 +408,11 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 - **Contact:** email only, support@nuave.ai; no WhatsApp.
 - **Report label:** clinic reports say "Klinik Anda" (the S5 mock shows it). Spec 018 built it for the result lines and is live; one heading still differs (below).
 - **No "coba sendiri" line** under S2.
+- **FAQ and refunds (S5, approved 25 October 2026):** the FAQ takes the /faq words. A check that fails and can't be fixed is refunded in part, Rp12.450 per failed check. The refund is in full if the audit can't finish, if the report isn't ready 24 hours after the audit starts, or if the questions aren't approved within 7 days of paying.
 - **The H1 stays:** "Pasien sekarang tanya AI dulu, baru pilih klinik." (no variant).
 
 **Still open:**
-- `[KONFIRMASI]` "Kalau ada masalah?" says the R-23 refund rule in spoken words ("Kalau ada bagian yang gagal dicek, tim kami bantu selesaikan, dan kalau tidak bisa, uang Anda kami kembalikan."). Approve or adjust.
+- **FAQ length (optional):** to keep the page lighter, drop "Apa yang saya terima?" (S7 lists it) and "Data apa yang perlu saya isi?" (S6 and the hero facts cover it). Then this page and /faq differ by those two questions.
 - **Other clinics heading:** the live report heads the list "Bisnis lain yang disebut", clinics included; the S5 mock says "Klinik lain yang disebut". Recommendation: make clinic reports say "Klinik lain yang disebut" (a small product change). Otherwise the mock takes the product's words.
 - **Which clinic leads the examples:** the target market is now beauty clinics in Jabodetabek and Bandung (decision log, 24 October 2026). The examples lead with dental clinics: the "Gigi" tab, braces in Depok, implants in Surabaya. Recommendation: lead with beauty clinics; see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §13.
 - Search capture needs the site to be indexable (`robots` is `disallow /` today) and, per growth, one short article on "cara muncul di Google AI Overview" that links here.
@@ -398,7 +428,7 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 | Headlines ≤ 8 words | Pass (longest: 8, the H1 and the S3 H2) |
 | One line ≤ 15 words | Pass (longest: 15, the hero line) |
 | Card titles 1 to 3 words; card lines ≤ 10 words | Pass, except the S2 47% card (13 words, kept for "seperti") and the step title "Bayar dan cek" (3 words, as in v2) |
-| No eyebrows; no paragraphs outside the FAQ; FAQ ≤ 2 sentences | Pass |
+| No eyebrows; no paragraphs outside the FAQ; FAQ ≤ 2 sentences | Pass, except the FAQ answers: they are the approved /faq words (S5), longer than two sentences |
 | No em or en dashes in Indonesian text | Pass (checked by code point) |
 | "Anda" throughout | Pass |
 | "pertanyaan", never "prompt" | Pass |
@@ -406,7 +436,7 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 | "ChatGPT dan Google AI Overview", never "ChatGPT dan Google" alone, never "AI buatan OpenAI" | Pass |
 | No "asli" for questions or answers | Pass (answers are "langsung" and "utuh") |
 | Never implies Google always shows an AI Overview | Pass (S3 caption, S7 row 4, mock 6 of 10, FAQ 1 and 4) |
-| Only listed facts; no invented numbers | Pass (Rp249.000, 10, 15 menit, 24 jam, 30 hari, 10 detik, 6 sampai 8 minggu are product facts; 4.400, 3.600, 1.300 and September 2026 are real probe data, labelled "Contoh"; mock scores are fictional and captioned) |
+| Only listed facts; no invented numbers | Pass (Rp249.000, Rp12.450, 10, 15 menit, 24 jam, 7 hari, 12 bulan, 1 hari kerja, 6 sampai 8 minggu are product facts from the approved /faq; 4.400, 3.600, 1.300 and September 2026 are real probe data, labelled "Contoh"; mock scores are fictional and captioned) |
 | No fake value anchors | Pass (no "senilai", no struck price, no countdown) |
 | Free step never implies an AI result | Pass (hero and final microcopy; FAQ "Itu belum hasil AI") |
 | Exact report labels in the mock | Pass |
