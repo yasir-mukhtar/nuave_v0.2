@@ -212,6 +212,10 @@ test.describe("on a phone", () => {
   }) => {
     await page.locator("#cara-kerja").scrollIntoViewIfNeeded();
     await expect(stickyBar(page)).toHaveAttribute("data-shown");
+    // The bar slides up into place; measure it once the slide has finished.
+    await stickyBar(page).evaluate(async (bar) => {
+      await Promise.all(bar.getAnimations().map((slide) => slide.finished));
+    });
     const box = await stickyBar(page).boundingBox();
     expect(box && box.y + box.height).toBeCloseTo(844, -1);
   });
