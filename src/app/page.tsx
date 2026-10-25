@@ -1,6 +1,12 @@
-import Landing from "@/components/landing/Landing";
+import type { Metadata } from "next";
+import ClinicLanding from "@/components/landing/ClinicLanding";
 
-/** J01: the landing page, mobile first (the desktop design follows later). */
+export const metadata: Metadata = {
+  title: "Nuave · Cek klinik Anda di ChatGPT dan Google AI Overview",
+  description:
+    "Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview. Dapatkan rekomendasi perbaikan.",
+};
+
 export default function Home() {
-  return <Landing />;
+  return <ClinicLanding />;
 }

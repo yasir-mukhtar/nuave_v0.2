@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuave hero · Opus concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  /* Nuave v2 tokens (src/styles/tokens.css) */
+  --ink-900: #16161d; --ink-800: #26252f; --ink-700: #3b3a4a; --ink-600: #52516a; --ink-500: #6b6a85; --ink-400: #a2a1b6;
+  --line-300: #d3d2de; --line-200: #e7e6ee;
+  --stone-100: #f1f1f6; --stone-50: #f8f8fb; --cream: #f5f3ff;
+  --v-50: #f3f0ff; --v-100: #e5e0ff; --v-200: #ccc3ff; --v-300: #a99bff; --v-500: #533afd; --v-600: #4129e0; --v-700: #3620b8;
+  --e-card: 0 1px 2px rgb(22 22 29 / 0.05), 0 6px 18px rgb(22 22 29 / 0.07);
+  --e-float: 0 2px 6px rgb(22 22 29 / 0.06), 0 14px 36px rgb(22 22 29 / 0.12);
+  --e-search: 0 1px 2px rgb(22 22 29 / 0.04), 0 6px 20px rgb(22 22 29 / 0.08);
+  --commit-fill: var(--v-600); /* solid, per founder 2026-10-24 (Figma 66:2) */
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+body {
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink-900);
+  background: #ecebf1;
+  padding: 48px;
+  display: flex; gap: 96px; align-items: flex-start;
+  width: max-content;
+}
+ul { list-style: none; }
+img { display: block; }
+.artboard { position: relative; overflow: hidden; background: #ffffff; flex: none; }
+
+/* ---------- shared pieces ---------- */
+.brand { display: flex; align-items: center; gap: 8px; color: var(--ink-900); text-decoration: none; }
+.brand-name { font-weight: 600; letter-spacing: -0.03em; }
+.btn-outline {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-300); border-radius: 999px; background: #fff;
+  font-weight: 600; color: var(--ink-900); white-space: nowrap;
+}
+.btn-commit {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 999px; background: var(--commit-fill); color: #fff;
+  font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(27 20 100 / 0.25), 0 6px 16px rgb(65 41 224 / 0.22);
+}
+.search {
+  display: flex; align-items: center; background: #fff;
+  border: 1px solid var(--line-200); border-radius: 999px; box-shadow: var(--e-search);
+}
+.search-field { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.search-placeholder { color: var(--ink-500); white-space: nowrap; }
+.ticks li { display: flex; align-items: center; gap: 8px; color: var(--ink-700); font-weight: 500; white-space: nowrap; }
+.tick { width: 20px; height: 20px; border-radius: 999px; background: var(--stone-100); display: flex; align-items: center; justify-content: center; flex: none; }
+
+/* demo: category tabs with 3D icons (Airbnb's Homes / Experiences / Services bar) */
+.tabs { display: flex; }
+.tab { display: flex; flex-direction: column; align-items: center; flex: none; }
+.tab-label { color: var(--ink-500); font-weight: 500; white-space: nowrap; }
+.tab.is-active .tab-label { color: var(--ink-900); font-weight: 600; }
+.tab-bar { height: 2px; border-radius: 2px; background: transparent; align-self: stretch; }
+.tab.is-active .tab-bar { background: var(--ink-900); }
+
+/* demo: the patient's phone */
+.phone { position: absolute; border-radius: 60px; padding: 11px;
+  background: linear-gradient(150deg, #4a4a55 0%, #1d1d23 22%, #101014 60%, #2b2b33 100%);
+  box-shadow: 0 40px 80px -30px rgb(22 22 29 / 0.45), 0 20px 40px -24px rgb(22 22 29 / 0.35), inset 0 0 0 1.5px rgb(255 255 255 / 0.10); }
+.phone-key { position: absolute; width: 4px; border-radius: 2px; background: #26262d; }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 49px; background: #fff; overflow: hidden; }
+.island { position: absolute; left: 50%; transform: translateX(-50%); background: #0b0b0e; border-radius: 999px; }
+.status { display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: var(--ink-900); }
+.status-icons { display: flex; align-items: center; gap: 6px; }
+.appbar { display: flex; align-items: center; justify-content: space-between; }
+.appbar-mid { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink-900); }
+.ai-dot { border-radius: 999px; background: linear-gradient(140deg, #7f6cfe 0%, #4129e0 100%); display: flex; align-items: center; justify-content: center; }
+.thread { display: flex; flex-direction: column; }
+.bubble-user { align-self: flex-end; background: var(--stone-100); color: var(--ink-900); }
+.ai-lead { color: var(--ink-900); }
+.results { background: #fff; border: 1px solid var(--line-200); box-shadow: 0 1px 2px rgb(22 22 29 / 0.04); }
+.result { display: flex; align-items: center; }
+.result + .result { border-top: 1px solid var(--line-200); }
+.thumb { flex: none; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #fbf8f1 0%, #f1ede3 100%); overflow: hidden; }
+.result-name { font-weight: 600; color: var(--ink-900); }
+.result-why { color: var(--ink-600); }
+.slot { display: flex; align-items: center; border: 1.5px dashed var(--v-300); background: var(--v-50); }
+.slot-thumb { flex: none; border: 1.5px dashed var(--v-300); display: flex; align-items: center; justify-content: center; color: var(--v-600); font-weight: 600; background: #fff; }
+.slot-label { font-weight: 600; color: var(--v-700); }
+
+/* demo: floating report card */
+.report { position: absolute; background: #fff; box-shadow: var(--e-float); }
+.report-title { font-weight: 600; color: var(--ink-500); letter-spacing: 0; }
+.report-row { display: flex; align-items: baseline; justify-content: space-between; }
+.report-name { font-weight: 600; color: var(--ink-900); }
+.report-score { font-weight: 600; color: var(--ink-900); }
+.dots { display: flex; }
+.dot { border-radius: 999px; background: var(--line-200); flex: none; }
+.dot.on { background: var(--v-600); }
+.report-divider { height: 1px; background: var(--line-200); }
+.caption { position: absolute; color: var(--ink-500); }
+
+/* ==================== DESKTOP 1440 ==================== */
+.desktop { width: 1440px; height: 900px; }
+.desktop .wash { position: absolute; left: 520px; top: 60px; width: 860px; height: 940px;
+  background: radial-gradient(closest-side, rgb(243 240 255 / 0.95) 0%, rgb(243 240 255 / 0.55) 45%, rgb(255 255 255 / 0) 100%); }
+.desktop .nav { position: absolute; left: 0; top: 0; width: 1440px; height: 80px; padding: 0 120px; display: flex; align-items: center; justify-content: space-between; }
+.desktop .brand-name { font-size: 22px; }
+.desktop .links { position: absolute; left: 50%; transform: translateX(-50%); display: flex; gap: 36px; }
+.desktop .links a { font-size: 15px; font-weight: 500; color: var(--ink-700); text-decoration: none; }
+.desktop .nav .btn-outline { height: 42px; padding: 0 20px; font-size: 15px; }
+
+.desktop .copy { position: absolute; left: 120px; top: 232px; width: 560px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.desktop h1 { font-size: 60px; line-height: 64px; font-weight: 600; letter-spacing: -0.045em; color: var(--ink-900); }
+.desktop h1 span { display: block; }
+.desktop .lede { margin-top: 22px; max-width: 470px; font-size: 20px; line-height: 30px; color: var(--ink-600); letter-spacing: -0.005em; }
+.desktop .search { margin-top: 36px; width: 560px; height: 72px; padding: 8px 8px 8px 26px; gap: 12px; }
+.desktop .search-placeholder { font-size: 16px; }
+.desktop .search .btn-commit { height: 56px; padding: 0 26px; font-size: 16px; }
+.desktop .micro { margin-top: 18px; max-width: 440px; font-size: 14px; line-height: 21px; color: var(--ink-600); }
+.desktop .micro b { font-weight: 600; color: var(--ink-800); }
+.desktop .ticks { margin-top: 22px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; max-width: 520px; }
+.desktop .ticks li { font-size: 14px; line-height: 20px; }
+
+.desktop .demo { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; }
+.desktop .tabs { position: absolute; left: 706px; top: 108px; width: 420px; justify-content: center; gap: 26px; }
+.desktop .tab { gap: 8px; }
+.desktop .tab-icon { width: 54px; height: 54px; display: flex; align-items: flex-end; justify-content: center; }
+.desktop .tab-label { font-size: 14px; line-height: 18px; }
+.desktop .tab-bar { margin-top: 10px; }
+.desktop .phone { left: 740px; top: 232px; width: 352px; height: 720px; }
+.desktop .phone-key.k1 { left: -3px; top: 150px; height: 34px; }
+.desktop .phone-key.k2 { left: -3px; top: 200px; height: 58px; }
+.desktop .phone-key.k3 { left: -3px; top: 270px; height: 58px; }
+.desktop .phone-key.k4 { right: -3px; left: auto; top: 220px; height: 86px; }
+.desktop .island { top: 11px; width: 104px; height: 30px; }
+.desktop .status { height: 50px; padding: 15px 28px 0 32px; font-size: 16px; }
+.desktop .appbar { height: 42px; padding: 0 16px; }
+.desktop .appbar-mid { font-size: 15px; }
+.desktop .ai-dot { width: 24px; height: 24px; }
+.desktop .thread { padding: 6px 16px 0; gap: 13px; }
+.desktop .bubble-user { max-width: 268px; padding: 11px 15px; border-radius: 22px 22px 6px 22px; font-size: 15px; line-height: 21px; }
+.desktop .ai-lead { font-size: 15px; line-height: 21px; padding: 0 2px; }
+.desktop .results { border-radius: 18px; padding: 0 12px; }
+.desktop .result { gap: 12px; padding: 10px 0; }
+.desktop .thumb { width: 50px; height: 50px; border-radius: 13px; }
+.desktop .thumb img { width: 46px; height: 46px; }
+.desktop .result-name { font-size: 15px; line-height: 20px; }
+.desktop .result-why { font-size: 14px; line-height: 19px; }
+.desktop .slot { border-radius: 16px; padding: 10px 12px; gap: 12px; }
+.desktop .slot-thumb { width: 50px; height: 50px; border-radius: 13px; font-size: 20px; }
+.desktop .slot-label { font-size: 15px; }
+.desktop .fade { position: absolute; left: 0; top: 826px; width: 1440px; height: 74px; background: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.9) 60%, #fff 100%); }
+.desktop .report { left: 1068px; top: 622px; width: 300px; border-radius: 22px; padding: 18px 20px 20px; }
+.desktop .report-head { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+.desktop .report-title { font-size: 13px; line-height: 16px; }
+.desktop .report-name { font-size: 14px; }
+.desktop .report-score { font-size: 13px; }
+.desktop .dots { gap: 6px; margin-top: 9px; }
+.desktop .dot { width: 10px; height: 10px; }
+.desktop .report-divider { margin: 14px 0; }
+.desktop .caption { left: 1106px; top: 809px; font-size: 12px; line-height: 16px; }
+
+/* ==================== MOBILE 390 ==================== */
+.mobile { width: 390px; height: 1420px; }
+.mobile .wash { position: absolute; left: -160px; top: 660px; width: 710px; height: 760px;
+  background: radial-gradient(closest-side, rgb(243 240 255 / 0.95) 0%, rgb(243 240 255 / 0.5) 50%, rgb(255 255 255 / 0) 100%); }
+.mobile .nav { position: absolute; left: 0; top: 0; width: 390px; height: 56px; padding: 0 16px 0 20px; display: flex; align-items: center; justify-content: space-between; }
+.mobile .brand-name { font-size: 20px; }
+.mobile .nav-right { display: flex; align-items: center; gap: 8px; }
+.mobile .nav .btn-outline { height: 36px; padding: 0 14px; font-size: 14px; }
+.mobile .menu { width: 36px; height: 36px; border-radius: 999px; background: var(--stone-100); display: flex; align-items: center; justify-content: center; }
+
+.mobile .copy { position: absolute; left: 24px; top: 80px; width: 342px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.mobile h1 { font-size: 38px; line-height: 41px; font-weight: 600; letter-spacing: -0.045em; }
+.mobile h1 span { display: block; }
+.mobile .lede { margin-top: 14px; max-width: 300px; font-size: 16px; line-height: 24px; color: var(--ink-600); }
+.mobile .search { margin-top: 24px; width: 342px; height: 56px; padding: 0 20px; gap: 10px; }
+.mobile .search-placeholder { font-size: 16px; }
+.mobile .btn-commit.full { margin-top: 10px; width: 342px; height: 56px; font-size: 16px; }
+.mobile .micro { margin-top: 14px; max-width: 310px; font-size: 13px; line-height: 19px; color: var(--ink-600); }
+.mobile .micro b { font-weight: 600; color: var(--ink-800); }
+.mobile .ticks { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.mobile .ticks li { font-size: 14px; line-height: 20px; }
+
+.mobile .demo { position: absolute; left: 0; top: 0; width: 390px; height: 100%; }
+.mobile .tabs { position: absolute; left: 0; top: 628px; width: 390px; padding: 0 24px; justify-content: space-between; }
+.mobile .tab { gap: 6px; }
+.mobile .tab-icon { width: 46px; height: 46px; display: flex; align-items: flex-end; justify-content: center; }
+.mobile .tab-label { font-size: 13px; line-height: 16px; }
+.mobile .tab-bar { margin-top: 9px; }
+.mobile .tabs-rule { position: absolute; left: 0; top: 708px; width: 390px; height: 1px; background: var(--line-200); }
+.mobile .phone { left: 36px; top: 736px; width: 318px; height: 700px; border-radius: 52px; padding: 9px; }
+.mobile .phone-key.k1 { left: -3px; top: 120px; height: 28px; }
+.mobile .phone-key.k2 { left: -3px; top: 160px; height: 48px; }
+.mobile .phone-key.k4 { right: -3px; left: auto; top: 180px; height: 70px; }
+.mobile .screen { border-radius: 43px; }
+.mobile .island { top: 9px; width: 90px; height: 26px; }
+.mobile .status { height: 44px; padding: 13px 24px 0 28px; font-size: 14px; }
+.mobile .appbar { height: 38px; padding: 0 14px; }
+.mobile .appbar-mid { font-size: 14px; }
+.mobile .ai-dot { width: 22px; height: 22px; }
+.mobile .thread { padding: 4px 13px 0; gap: 11px; }
+.mobile .bubble-user { max-width: 238px; padding: 10px 13px; border-radius: 19px 19px 5px 19px; font-size: 13.5px; line-height: 19px; }
+.mobile .ai-lead { font-size: 13.5px; line-height: 19px; padding: 0 2px; }
+.mobile .results { border-radius: 16px; padding: 0 10px; }
+.mobile .result { gap: 10px; padding: 8px 0; }
+.mobile .thumb { width: 42px; height: 42px; border-radius: 11px; }
+.mobile .thumb img { width: 39px; height: 39px; }
+.mobile .result-name { font-size: 13.5px; line-height: 18px; }
+.mobile .result-why { font-size: 12.5px; line-height: 17px; }
+.mobile .slot { border-radius: 14px; padding: 8px 10px; gap: 10px; }
+.mobile .slot-thumb { width: 42px; height: 42px; border-radius: 11px; font-size: 18px; }
+.mobile .slot-label { font-size: 13.5px; }
+.mobile .fade { position: absolute; left: 0; top: 1250px; width: 390px; height: 170px; background: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.94) 50%, #fff 75%); }
+.mobile .report { left: 92px; top: 1226px; width: 276px; border-radius: 20px; padding: 16px 18px 18px; }
+.mobile .report-head { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.mobile .report-title { font-size: 12px; line-height: 15px; }
+.mobile .report-name { font-size: 13px; }
+.mobile .report-score { font-size: 12.5px; }
+.mobile .dots { gap: 6px; margin-top: 8px; }
+.mobile .dot { width: 9px; height: 9px; }
+.mobile .report-divider { margin: 12px 0; }
+.mobile .caption { left: 92px; width: 276px; text-align: left; top: 1384px; font-size: 12px; line-height: 16px; }
+</style>
+</head>
+<body>
+
+<!-- ============================== DESKTOP ============================== -->
+<section class="artboard desktop" id="desktop" data-name="Opus · Hero · Desktop 1440">
+  <div class="wash"></div>
+  <header class="nav" data-name="Nav">
+    <a class="brand" data-name="Logo"><svg width="28" height="28" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><span class="brand-name">Nuave</span></a>
+    <nav class="links" data-name="Links"><a>Cara kerja</a><a>Laporan</a><a>Harga</a><a>FAQ</a></nav>
+    <a class="btn-outline" data-name="Nav button">Cek klinik saya</a>
+  </header>
+  <div class="copy" data-name="Copy">
+    <h1 data-name="H1"><span>Pasien sekarang</span><span>tanya AI dulu,</span><span>baru pilih klinik.</span></h1>
+    <p class="lede" data-name="Line">Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang perlu dibenahi.</p>
+    <div class="search" data-name="Website form">
+      <div class="search-field"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="search-placeholder">Website atau Instagram klinik</span></div>
+      <a class="btn-commit" data-name="Primary button">Cek klinik saya di AI</a>
+    </div>
+    <p class="micro" data-name="Price line">Cek dulu apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br>Auditnya Rp249.000, sekali bayar.</p>
+    <ul class="ticks" data-name="Ticks">
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>10 pertanyaan berdasarkan pencarian Google</li>
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>ChatGPT dan Google AI Overview</li>
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>Tanpa data pasien</li>
+    </ul>
+  </div>
+  <div class="demo" data-name="Demo">
+    <div class="tabs" data-name="Clinic tabs">
+      <div class="tab is-active" data-name="Tab Gigi"><span class="tab-icon"><img src="assets/tab-gigi.png" alt="" style="width:50px;height:50px"></span><span class="tab-label">Gigi</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kecantikan"><span class="tab-icon"><img src="assets/tab-kecantikan.png" alt="" style="width:56px;height:56px"></span><span class="tab-label">Kecantikan</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kulit"><span class="tab-icon"><img src="assets/tab-kulit.png" alt="" style="width:54px;height:54px"></span><span class="tab-label">Kulit</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Anak"><span class="tab-icon"><img src="assets/tab-anak.png" alt="" style="width:50px;height:50px"></span><span class="tab-label">Anak</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Lainnya"><span class="tab-icon"><img src="assets/tab-lainnya.png" alt="" style="width:52px;height:52px"></span><span class="tab-label">Lainnya</span><span class="tab-bar"></span></div>
+    </div>
+    <div class="phone" data-name="Phone">
+      <span class="phone-key k1"></span><span class="phone-key k2"></span><span class="phone-key k3"></span><span class="phone-key k4"></span>
+      <div class="screen" data-name="Screen">
+        <div class="island"></div>
+        <div class="status"><span>9:41</span><span class="status-icons"><svg width="18" height="12" viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg" fill="#16161d"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 18l.01 0"/><path d="M9.172 15.172a4 4 0 0 1 5.656 0"/><path d="M6.343 12.343a8 8 0 0 1 11.314 0"/><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0"/></svg><svg width="26" height="12.5185" viewBox="0 0 27 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="23" height="12" rx="3.6" stroke="#16161d" stroke-opacity="0.38"/><rect x="2" y="2" width="20" height="9" rx="2.2" fill="#16161d"/><path d="M25 4.5C25.9 4.8 26.4 5.6 26.4 6.5C26.4 7.4 25.9 8.2 25 8.5V4.5Z" fill="#16161d" fill-opacity="0.45"/></svg></span></div>
+        <div class="appbar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M15 6l-6 6l6 6"/></svg><span class="appbar-mid"><span class="ai-dot"><svg width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#ffffff"/></svg></span>AI</span><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg></div>
+        <div class="thread" data-name="Chat">
+          <p class="bubble-user" data-name="Patient question">Klinik gigi di Depok yang bisa cicil behel dan buka Sabtu, ada rekomendasi?</p>
+          <p class="ai-lead" data-name="AI answer">Beberapa klinik yang bisa dipertimbangkan:</p>
+          <div class="results" data-name="Clinics named">
+            <div class="result"><span class="thumb"><img src="assets/clinic-a.png" alt=""></span><span><span class="result-name">Klinik A:</span><br><span class="result-why">behel bisa dicicil</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/clinic-b.png" alt=""></span><span><span class="result-name">Klinik B:</span><br><span class="result-why">buka Sabtu sampai sore</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/clinic-c.png" alt=""></span><span><span class="result-name">Klinik C:</span><br><span class="result-why">dokter sabar untuk pasien takut</span></span></div>
+          </div>
+          <div class="slot" data-name="Your clinic slot"><span class="slot-thumb">?</span><span class="slot-label">Klinik Anda?</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fade"></div>
+    <div class="report" data-name="Report card">
+      <div class="report-head"><svg width="15" height="15" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><p class="report-title">AI Visibility Report</p></div>
+      <div class="report-row"><span class="report-name">ChatGPT</span><span class="report-score">muncul di 3 dari 10</span></div>
+      <div class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></div>
+      <div class="report-divider"></div>
+      <div class="report-row"><span class="report-name">Google AI Overview</span><span class="report-score">muncul di 1 dari 6</span></div>
+      <div class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+    </div>
+    <p class="caption" data-name="Caption">Contoh. Nama klinik fiktif.</p>
+  </div>
+</section>
+
+<!-- ============================== MOBILE ============================== -->
+<section class="artboard mobile" id="mobile" data-name="Opus · Hero · Mobile 390">
+  <div class="wash"></div>
+  <header class="nav" data-name="Nav">
+    <a class="brand" data-name="Logo"><svg width="24" height="24" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><span class="brand-name">Nuave</span></a>
+    <div class="nav-right">
+      <a class="btn-outline" data-name="Nav button">Cek klinik saya</a>
+      <span class="menu" data-name="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></span>
+    </div>
+  </header>
+  <div class="copy" data-name="Copy">
+    <h1 data-name="H1"><span>Pasien sekarang</span><span>tanya AI dulu,</span><span>baru pilih klinik.</span></h1>
+    <p class="lede" data-name="Line">Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang perlu dibenahi.</p>
+    <div class="search" data-name="Website field"><div class="search-field"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="search-placeholder">Website atau Instagram klinik</span></div></div>
+    <a class="btn-commit full" data-name="Primary button">Cek klinik saya di AI</a>
+    <p class="micro" data-name="Price line">Cek dulu apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br>Auditnya Rp249.000, sekali bayar.</p>
+    <ul class="ticks" data-name="Ticks">
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>10 pertanyaan berdasarkan pencarian Google</li>
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>ChatGPT dan Google AI Overview</li>
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>Tanpa data pasien</li>
+    </ul>
+  </div>
+  <div class="demo" data-name="Demo">
+    <div class="tabs" data-name="Clinic tabs">
+      <div class="tab is-active" data-name="Tab Gigi"><span class="tab-icon"><img src="assets/tab-gigi.png" alt="" style="width:43px;height:43px"></span><span class="tab-label">Gigi</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kecantikan"><span class="tab-icon"><img src="assets/tab-kecantikan.png" alt="" style="width:47px;height:47px"></span><span class="tab-label">Kecantikan</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kulit"><span class="tab-icon"><img src="assets/tab-kulit.png" alt="" style="width:46px;height:46px"></span><span class="tab-label">Kulit</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Anak"><span class="tab-icon"><img src="assets/tab-anak.png" alt="" style="width:43px;height:43px"></span><span class="tab-label">Anak</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Lainnya"><span class="tab-icon"><img src="assets/tab-lainnya.png" alt="" style="width:44px;height:44px"></span><span class="tab-label">Lainnya</span><span class="tab-bar"></span></div>
+    </div>
+    <div class="tabs-rule"></div>
+    <div class="phone" data-name="Phone">
+      <span class="phone-key k1"></span><span class="phone-key k2"></span><span class="phone-key k4"></span>
+      <div class="screen" data-name="Screen">
+        <div class="island"></div>
+        <div class="status"><span>9:41</span><span class="status-icons"><svg width="16" height="10.6667" viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg" fill="#16161d"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 18l.01 0"/><path d="M9.172 15.172a4 4 0 0 1 5.656 0"/><path d="M6.343 12.343a8 8 0 0 1 11.314 0"/><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0"/></svg><svg width="23" height="11.0741" viewBox="0 0 27 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="23" height="12" rx="3.6" stroke="#16161d" stroke-opacity="0.38"/><rect x="2" y="2" width="20" height="9" rx="2.2" fill="#16161d"/><path d="M25 4.5C25.9 4.8 26.4 5.6 26.4 6.5C26.4 7.4 25.9 8.2 25 8.5V4.5Z" fill="#16161d" fill-opacity="0.45"/></svg></span></div>
+        <div class="appbar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M15 6l-6 6l6 6"/></svg><span class="appbar-mid"><span class="ai-dot"><svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#ffffff"/></svg></span>AI</span><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg></div>
+        <div class="thread" data-name="Chat">
+          <p class="bubble-user" data-name="Patient question">Klinik gigi di Depok yang bisa cicil behel dan buka Sabtu, ada rekomendasi?</p>
+          <p class="ai-lead" data-name="AI answer">Beberapa klinik yang bisa dipertimbangkan:</p>
+          <div class="results" data-name="Clinics named">
+            <div class="result"><span class="thumb"><img src="assets/clinic-a.png" alt=""></span><span><span class="result-name">Klinik A:</span><br><span class="result-why">behel bisa dicicil</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/clinic-b.png" alt=""></span><span><span class="result-name">Klinik B:</span><br><span class="result-why">buka Sabtu sampai sore</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/clinic-c.png" alt=""></span><span><span class="result-name">Klinik C:</span><br><span class="result-why">dokter sabar untuk pasien takut</span></span></div>
+          </div>
+          <div class="slot" data-name="Your clinic slot"><span class="slot-thumb">?</span><span class="slot-label">Klinik Anda?</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fade"></div>
+    <div class="report" data-name="Report card">
+      <div class="report-head"><svg width="14" height="14" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><p class="report-title">AI Visibility Report</p></div>
+      <div class="report-row"><span class="report-name">ChatGPT</span><span class="report-score">muncul di 3 dari 10</span></div>
+      <div class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></div>
+      <div class="report-divider"></div>
+      <div class="report-row"><span class="report-name">Google AI Overview</span><span class="report-score">muncul di 1 dari 6</span></div>
+      <div class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+    </div>
+    <p class="caption" data-name="Caption">Contoh. Nama klinik fiktif.</p>
+  </div>
+</section>
+
+</body>
+</html>

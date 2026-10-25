@@ -15,6 +15,25 @@ pembayaran", "Bayar Rp249.000") was hidden, and a tap where it sat could land
 on "Setuju". Now the bar's buttons stay in view and tappable while the notice
 is open, and keyboard focus stays clear of the notice on every page.
 
+## 2026-10-25 — Approve Spec 020 (clinic landing page)
+
+The founder approved [Spec 020](../specs/020-clinic-landing-page/SPEC.md):
+the clinic landing page from Figma page 244:2 replaces the page at `/`, with
+the words of its `COPY.md`. (Approved as Spec 019; renumbered 020 because the
+cookie notice and Meta Pixel spec reached main first as Spec 019.) Answers to
+its four questions:
+
+- **D-1:** big display headlines may go down to 36px on phones
+  (`--type-display-size: clamp(2.25rem, 5vw, 4rem)`, was 48px). The `/audit`
+  headline also gets smaller on small phones.
+- **D-2:** the hero keeps "10 pertanyaan berdasarkan volume pencarian
+  tertinggi Google".
+- **D-3:** the newest wording goes everywhere: "Rp249.000 untuk mulai audit
+  lengkap." under every form, "Nama klinik hanya ilustrasi." on every
+  example.
+- **D-4:** the proposed examples for the Gigi, Kulit, Anak and Lainnya hero
+  tabs are approved.
+
 ## 2026-10-25 — Cookie notice in English, shorter
 
 After the notice went live, Yasir found the approved Indonesian text

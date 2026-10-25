@@ -110,7 +110,7 @@
   --type-size-5xl: 4rem; /* 64px */
 
   /* ── Productive and expressive semantic roles ── */
-  --type-display-size: clamp(3rem, 5vw, 4rem);
+  --type-display-size: clamp(2.25rem, 5vw, 4rem);
   --type-display-weight: 600;
   --type-display-leading: 1.08;
   --type-display-tracking: -0.03em;
@@ -285,6 +285,12 @@
     0 1px 2px rgb(22 22 29 / 0.05), 0 6px 18px rgb(22 22 29 / 0.07);
   --elevation-float:
     0 2px 6px rgb(22 22 29 / 0.06), 0 14px 36px rgb(22 22 29 / 0.12);
+  /* Clinic landing (Spec 020): the website field's soft lift and the
+     violet commit pill's tinted shadow. */
+  --elevation-search:
+    0 1px 2px rgb(22 22 29 / 0.04), 0 6px 20px rgb(22 22 29 / 0.08);
+  --elevation-commit:
+    0 1px 2px rgb(27 20 100 / 0.25), 0 6px 16px rgb(65 41 224 / 0.22);
   /* The paid reading (J09) floats its pill and card on violet, so its two
      elevations are tinted deep violet instead of ink. */
   --elevation-ember-pill: 0 6px 16px rgb(27 20 100 / 0.12);
