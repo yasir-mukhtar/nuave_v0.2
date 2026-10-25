@@ -27,7 +27,7 @@ reviewed and revised before the next one started.
 | S6 Bukti, bukan janji | Four 3D objects, no boxes: candour instead of testimonials | [S6](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=174-2) |
 | S7 Yang Anda dapat + harga | One receipt: nine parts of the report, then Rp249.000 and the form | [S7](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=182-2) |
 | S8 FAQ | A quiet list; the first answer open and readable | [S8](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=193-2) |
-| S9 CTA akhir + footer | A rounded closing panel with the form; Yasir's line as a P.S. | [S9](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=204-2) |
+| S9 CTA akhir + footer | A rounded closing panel with the form; a contact line as a P.S. | [S9](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=204-2) |
 
 Each section page keeps its benchmark board, the synthesis, every concept and
 every revision, with the approved one tagged.
