@@ -304,6 +304,6 @@ test("on a phone the landing's sticky bar waits until the notice is answered (Sp
   // Past the hero form the bar is due, but the notice holds the bottom.
   await expect(bar).toHaveAttribute("data-shown");
   await expect(bar).toBeHidden();
-  await notice(page).getByRole("button", { name: "Tolak" }).click();
+  await notice(page).getByRole("button", { name: "Don't allow" }).click();
   await expect(bar).toBeVisible();
 });
