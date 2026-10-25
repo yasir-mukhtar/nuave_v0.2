@@ -15,11 +15,10 @@ Yasir compared Nuave's terms and privacy pages with HaloAI's and decided:
   left for later.
 - **Clauses to adopt** (terms and privacy version 1.1, wording for his
   approval): definitions, prohibited uses, cancelling an order shown at a
-  mistaken price, AI answers quoted as is, report ownership, a liability cap at
-  the amount paid, a dispute route, severability and entire agreement; in
+  mistaken price, AI answers quoted as is, report ownership, a liability cap at the amount paid, a dispute route (support, 30 days, then
+  the competent court or BPSK), severability and entire agreement; in
   privacy, the legal basis for each use, providers bound by their service
-  agreements, and a written breach notice within 3 x 24 hours. The liability
-  cap, the court and the breach deadline get a lawyer's check.
+  agreements, and a written breach notice within 3 x 24 hours. The liability cap and the breach deadline get a lawyer's check.
 
 ## 2026-10-25 — S5 wording approved
 

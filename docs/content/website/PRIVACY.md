@@ -138,7 +138,8 @@ Kami memproses data Anda berdasarkan:
 - **kepentingan yang sah**: untuk menjaga keamanan layanan dan mencegah
   penyalahgunaan.
 
-Anda bisa menarik persetujuan kapan saja. Penarikan tidak mengubah pemrosesan
+Anda bisa menarik persetujuan kapan saja, lewat tautan Pengaturan cookie
+(bagian 10) atau email ke support@nuave.ai. Penarikan tidak mengubah pemrosesan
 yang sudah terjadi sebelumnya.
 
 ## 6. Layanan AI dan pencarian
@@ -167,9 +168,10 @@ kebijakan masing-masing.
 Kami menyebut nama Midtrans dan Meta karena Anda berhubungan langsung dengan
 keduanya. Penyedia lain kami sebut menurut jenisnya. Jika Anda ingin tahu nama penyedia yang memproses data Anda, tanyakan ke support@nuave.ai.
 
-Penyedia ini terikat perjanjian layanan dengan kami. Mereka hanya boleh
-memproses data untuk menjalankan layanan Nuave, dan wajib menjaga
-kerahasiaannya.
+Penyedia yang kami sebut menurut jenisnya hanya memproses data untuk menjalankan
+layanan Nuave, sesuai perjanjian layanan mereka dengan kami. Midtrans dan Meta
+memproses data sesuai kebijakan mereka sendiri. Pertanyaan audit juga sampai ke
+ChatGPT dan Google, yang memprosesnya sesuai kebijakan mereka.
 
 Kami juga dapat memberikan data jika diminta secara sah oleh pemerintah atau
 penegak hukum, atau jika perlu untuk melindungi keamanan orang yang memakai Nuave dan layanan kami.

@@ -30,7 +30,7 @@
 | Reply within 1 business day | S0 D4 |
 | Definitions, prohibited uses, price-mistake cancellation, AI answers quoted as is, report ownership, severability and entire agreement, refund if the service stops | Adopted from the HaloAI comparison, founder 2026-10-25 (v1.1) |
 | Liability capped at the amount paid, no indirect losses | v1.1; **lawyer check**: UU 8/1999 Pasal 18 limits standard clauses that shift a seller's responsibility |
-| Disputes: support first, 30 days, then Pengadilan Negeri Jakarta Selatan or BPSK | v1.1; worker choice of court (the company's domicile), for founder and lawyer check |
+| Disputes: support first, 30 days, then the competent district court or BPSK | v1.1; no fixed court, because UU 8/1999 Pasal 23 lets a consumer sue where they live; lawyer check |
 
 The earlier draft promised a free replacement audit, a 30-day quote, a fixed
 correction window and refunds in 7 to 14 business days. None of those is a
@@ -64,9 +64,11 @@ di Jakarta Selatan, Indonesia. Kontak: support@nuave.ai.
 
 ## 2. Istilah di halaman ini
 
-- **Nuave** atau **kami**: PT Nuave Arah Baru, pengelola layanan Nuave.
-- **Anda**: orang yang memesan audit, termasuk bisnis yang Anda wakili.
-- **Layanan**: cek gratis dan audit yang dijelaskan di halaman ini.
+- **Kami**: PT Nuave Arah Baru, pengelola Nuave.
+- **Anda**: orang yang memakai layanan atau memesan audit, termasuk bisnis yang
+  Anda wakili.
+- **Nuave** atau **layanan**: cek gratis dan audit yang dijelaskan di halaman
+  ini.
 - **Pesanan**: satu pembelian audit untuk satu bisnis, dengan nomor pesanan
   sendiri.
 - **Audit**: sepuluh pertanyaan yang Anda setujui, ditanyakan ke ChatGPT dan
@@ -105,11 +107,10 @@ Audit tidak membutuhkannya.
 Saat memakai layanan, Anda tidak boleh:
 
 - memesan audit untuk bisnis yang tidak berhak Anda wakili;
-- mengisi data palsu, data orang lain, atau data pasien;
+- mengisi data palsu, data pribadi orang lain, atau data pasien;
 - mengganggu atau membebani layanan, mencoba membobolnya, atau mengambil
   isinya secara otomatis;
-- menjual kembali laporan atau layanan sebagai produk Anda tanpa izin tertulis
-  dari kami; atau
+- menjual kembali laporan atau layanan tanpa izin tertulis dari kami; atau
 - memakai laporan untuk menyesatkan orang lain, misalnya dengan mengubah
   angkanya.
 
@@ -125,8 +126,7 @@ GoPay, atau DANA. Kami tidak menerima nomor kartu, PIN, atau kode OTP Anda.
 Cek gratis di awal hanya memastikan bisnis Anda. Setelah membayar, Anda
 memeriksa data bisnis dan menyetujui sepuluh pertanyaan.
 
-Jika harga atau keterangan layanan tampil salah karena kekeliruan kami, kami
-boleh membatalkan pesanan dan mengembalikan uang Anda penuh.
+Jika harga atau keterangan layanan tampil salah karena kekeliruan kami, kami boleh membatalkan pesanan sebelum audit dimulai dan mengembalikan uang Anda penuh.
 
 Lanjutkan isian di browser yang sama dengan tempat Anda membayar, karena isian
 hanya tersimpan di browser itu. Jika sepuluh pertanyaan belum Anda setujui dalam
@@ -171,8 +171,7 @@ dibuat. Kami kabari lewat email dan mengembalikan uang Anda penuh.
 - **Setelah audit dimulai**, pesanan tidak bisa dibatalkan karena berubah
   pikiran.
 - **Hasil yang tidak sesuai harapan**, misalnya bisnis Anda tidak disebut atau
-  pesaing lebih sering disebut, bukan alasan pengembalian dana. Yang Anda beli
-  adalah pemeriksaan dan laporannya, bukan hasil tertentu.
+  pesaing lebih sering disebut, bukan alasan pengembalian dana. Yang Anda beli adalah audit dan laporannya, bukan hasil tertentu.
 
 Untuk pembatalan, kirim permintaan dari email pesanan. Kami kirim
 pengembalian dana paling lambat 3 hari kerja setelah pesanan dinyatakan gagal, setelah
@@ -204,8 +203,7 @@ Audit adalah contoh dari sepuluh pertanyaan pada waktu tertentu. Jawaban AI
 bisa berubah. Laporan bukan peringkat tetap dan tidak mewakili semua pertanyaan
 atau semua orang.
 
-Jawaban ChatGPT dan Google AI Overview di laporan adalah jawaban pihak lain
-yang kami kutip apa adanya. Kami tidak menjamin isi jawaban itu benar,
+Jawaban ChatGPT dan Google AI Overview di laporan adalah jawaban pihak lain yang kami kutip apa adanya, kecuali nomor telepon yang kami hapus. Kami tidak menjamin isi jawaban itu benar,
 termasuk tentang bisnis Anda atau bisnis lain.
 
 Nuave tidak menjamin bisnis Anda akan disebut setelah saran dijalankan. Nuave
@@ -214,8 +212,7 @@ juga tidak menjanjikan kenaikan pengunjung, calon pelanggan, atau penjualan.
 ## 12. Penggunaan dan hak atas laporan
 
 Anda boleh memakai dan membagikan laporan untuk keperluan bisnis Anda. Jangan
-mengubahnya sampai menyesatkan, dan jangan menjualnya kembali sebagai produk
-Nuave.
+mengubahnya sampai menyesatkan, dan jangan menjualnya kembali tanpa izin tertulis dari kami.
 
 Format, metode, dan tampilan laporan tetap milik Nuave. Jawaban AI, kutipan, dan
 sumber di dalam laporan tetap milik pemiliknya masing-masing.
@@ -254,8 +251,8 @@ Jika ada masalah, hubungi kami dulu di support@nuave.ai dengan nomor pesanan.
 Kami balas dalam 1 hari kerja (Senin sampai Jumat, WIB), dan kami berusaha
 menyelesaikannya bersama Anda dalam 30 hari.
 
-Jika belum selesai, masalah dapat dibawa ke Pengadilan Negeri Jakarta Selatan,
-atau ke Badan Penyelesaian Sengketa Konsumen sesuai hak Anda. Syarat ini tunduk
+Jika belum selesai, Anda dapat membawa masalah ke pengadilan negeri yang
+berwenang atau ke Badan Penyelesaian Sengketa Konsumen, sesuai hak Anda. Syarat ini tunduk
 pada hukum Republik Indonesia.
 
 ## 17. Ketentuan lain

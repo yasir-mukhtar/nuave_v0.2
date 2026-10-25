@@ -223,8 +223,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            Anda bisa menarik persetujuan kapan saja. Penarikan tidak mengubah
-            pemrosesan yang sudah terjadi sebelumnya.
+            Anda bisa menarik persetujuan kapan saja, lewat tautan Pengaturan
+            cookie (bagian 10) atau email ke {SUPPORT_EMAIL}. Penarikan tidak
+            mengubah pemrosesan yang sudah terjadi sebelumnya.
           </p>
         </Section>
 
@@ -276,9 +277,11 @@ export default function PrivacyPage() {
             tanyakan ke <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
           </p>
           <p>
-            Penyedia ini terikat perjanjian layanan dengan kami. Mereka hanya
-            boleh memproses data untuk menjalankan layanan Nuave, dan wajib
-            menjaga kerahasiaannya.
+            Penyedia yang kami sebut menurut jenisnya hanya memproses data untuk
+            menjalankan layanan Nuave, sesuai perjanjian layanan mereka dengan
+            kami. Midtrans dan Meta memproses data sesuai kebijakan mereka
+            sendiri. Pertanyaan audit juga sampai ke ChatGPT dan Google, yang
+            memprosesnya sesuai kebijakan mereka.
           </p>
           <p>
             Kami juga dapat memberikan data jika diminta secara sah oleh

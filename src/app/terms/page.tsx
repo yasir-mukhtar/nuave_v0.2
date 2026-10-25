@@ -60,16 +60,15 @@ export default function TermsPage() {
         <Section title="2. Istilah di halaman ini">
           <ul>
             <li>
-              <strong>Nuave</strong> atau <strong>kami</strong>: {OPERATOR_NAME}
-              , pengelola layanan Nuave.
+              <strong>Kami</strong>: {OPERATOR_NAME}, pengelola Nuave.
             </li>
             <li>
-              <strong>Anda</strong>: orang yang memesan audit, termasuk bisnis
-              yang Anda wakili.
+              <strong>Anda</strong>: orang yang memakai layanan atau memesan
+              audit, termasuk bisnis yang Anda wakili.
             </li>
             <li>
-              <strong>Layanan</strong>: cek gratis dan audit yang dijelaskan di
-              halaman ini.
+              <strong>Nuave</strong> atau <strong>layanan</strong>: cek gratis
+              dan audit yang dijelaskan di halaman ini.
             </li>
             <li>
               <strong>Pesanan</strong>: satu pembelian audit untuk satu bisnis,
@@ -128,14 +127,16 @@ export default function TermsPage() {
           <p>Saat memakai layanan, Anda tidak boleh:</p>
           <ul>
             <li>memesan audit untuk bisnis yang tidak berhak Anda wakili;</li>
-            <li>mengisi data palsu, data orang lain, atau data pasien;</li>
+            <li>
+              mengisi data palsu, data pribadi orang lain, atau data pasien;
+            </li>
             <li>
               mengganggu atau membebani layanan, mencoba membobolnya, atau
               mengambil isinya secara otomatis;
             </li>
             <li>
-              menjual kembali laporan atau layanan sebagai produk Anda tanpa
-              izin tertulis dari kami; atau
+              menjual kembali laporan atau layanan tanpa izin tertulis dari
+              kami; atau
             </li>
             <li>
               memakai laporan untuk menyesatkan orang lain, misalnya dengan
@@ -161,8 +162,8 @@ export default function TermsPage() {
           </p>
           <p>
             Jika harga atau keterangan layanan tampil salah karena kekeliruan
-            kami, kami boleh membatalkan pesanan dan mengembalikan uang Anda
-            penuh.
+            kami, kami boleh membatalkan pesanan sebelum audit dimulai dan
+            mengembalikan uang Anda penuh.
           </p>
           <p>
             Lanjutkan isian di browser yang sama dengan tempat Anda membayar,
@@ -230,8 +231,8 @@ export default function TermsPage() {
             <li>
               <strong>Hasil yang tidak sesuai harapan</strong>, misalnya bisnis
               Anda tidak disebut atau pesaing lebih sering disebut, bukan alasan
-              pengembalian dana. Yang Anda beli adalah pemeriksaan dan
-              laporannya, bukan hasil tertentu.
+              pengembalian dana. Yang Anda beli adalah audit dan laporannya,
+              bukan hasil tertentu.
             </li>
           </ul>
           <p>
@@ -281,8 +282,9 @@ export default function TermsPage() {
           </p>
           <p>
             Jawaban ChatGPT dan Google AI Overview di laporan adalah jawaban
-            pihak lain yang kami kutip apa adanya. Kami tidak menjamin isi
-            jawaban itu benar, termasuk tentang bisnis Anda atau bisnis lain.
+            pihak lain yang kami kutip apa adanya, kecuali nomor telepon yang
+            kami hapus. Kami tidak menjamin isi jawaban itu benar, termasuk
+            tentang bisnis Anda atau bisnis lain.
           </p>
           <p>
             Nuave tidak menjamin bisnis Anda akan disebut setelah saran
@@ -295,7 +297,7 @@ export default function TermsPage() {
           <p>
             Anda boleh memakai dan membagikan laporan untuk keperluan bisnis
             Anda. Jangan mengubahnya sampai menyesatkan, dan jangan menjualnya
-            kembali sebagai produk Nuave.
+            kembali tanpa izin tertulis dari kami.
           </p>
           <p>
             Format, metode, dan tampilan laporan tetap milik Nuave. Jawaban AI,
@@ -353,8 +355,8 @@ export default function TermsPage() {
             dan kami berusaha menyelesaikannya bersama Anda dalam 30 hari.
           </p>
           <p>
-            Jika belum selesai, masalah dapat dibawa ke Pengadilan Negeri
-            Jakarta Selatan, atau ke Badan Penyelesaian Sengketa Konsumen sesuai
+            Jika belum selesai, Anda dapat membawa masalah ke pengadilan negeri
+            yang berwenang atau ke Badan Penyelesaian Sengketa Konsumen, sesuai
             hak Anda. Syarat ini tunduk pada hukum Republik Indonesia.
           </p>
         </Section>
