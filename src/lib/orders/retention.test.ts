@@ -6,6 +6,8 @@ import {
   executeSyntheticLocalObservation,
   generateSyntheticLocalReport,
 } from "../audit/local-direct-ten-audit";
+import { applyStatus } from "../payments/apply";
+import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { makeOrder, mailbox, markPaidForTest, T0 } from "./orders.test-helper";
 import {
@@ -80,6 +82,24 @@ async function endedOrder(
   return id;
 }
 
+/** A Midtrans payment attempt for the order, in `status`. */
+async function attempt(
+  orderId: string,
+  status: string,
+  number = "NV-ABCDEF-1",
+) {
+  await sql(
+    `INSERT INTO payment_attempts (id, order_id, attempt_number,
+       midtrans_order_id, window_start, window_end, status, created_at,
+       updated_at)
+     VALUES (?3, ?1, 1, ?3, ?2, ?2, ?4, ?2, ?2)`,
+    orderId,
+    T0.toISOString(),
+    number,
+    status,
+  );
+}
+
 const due = (now: Date) =>
   ordersDueForPurge(d1.db, {
     environment: "production",
@@ -136,16 +156,37 @@ describe("which orders are due", () => {
 
   it("keeps an order with a payment that has no final answer", async () => {
     const id = await endedOrder("expired", T0);
+    await attempt(id, "closed_unknown");
+    expect(await due(new Date(T0.getTime() + 60 * DAY))).toEqual([]);
+  });
+
+  it("keeps an order with a payment attempt still open", async () => {
+    const id = await endedOrder("expired", T0);
+    await attempt(id, "open");
+    expect(await due(new Date(T0.getTime() + 60 * DAY))).toEqual([]);
+  });
+
+  it("keeps an order with a settled payment not yet refunded", async () => {
+    const id = await endedOrder("expired", T0);
+    await attempt(id, "needs_refund");
     await sql(
-      `INSERT INTO payment_attempts (id, order_id, attempt_number,
-         midtrans_order_id, window_start, window_end, status, created_at,
-         updated_at)
-       VALUES ('attempt-1', ?1, 1, 'NV-ABCDEF-1', ?2, ?2, 'closed_unknown',
-         ?2, ?2)`,
-      id,
+      `INSERT INTO payment_transactions (transaction_id, attempt_id,
+         midtrans_status, outcome, refund_state, first_seen_at, updated_at)
+       VALUES ('tx-late', 'NV-ABCDEF-1', 'settlement', 'needs_refund',
+         'none', ?1, ?1)`,
       T0.toISOString(),
     );
-    expect(await due(new Date(T0.getTime() + 60 * DAY))).toEqual([]);
+    const later = new Date(T0.getTime() + 60 * DAY);
+    expect(await due(later)).toEqual([]);
+    expect(await purgeOrder(d1.db, { orderId: id, now: later })).toBe(false);
+  });
+
+  it("never an order still reporting", async () => {
+    const id = await endedOrder("failed", T0);
+    await sql(`UPDATE orders SET state = 'reporting' WHERE id = ?1`, id);
+    const later = new Date(T0.getTime() + 800 * DAY);
+    expect(await due(later)).toEqual([]);
+    expect(await purgeOrder(d1.db, { orderId: id, now: later })).toBe(false);
   });
 
   it("skips a held or leased order, and other environments or modes", async () => {
@@ -174,6 +215,21 @@ describe("which orders are due", () => {
 describe("making an order anonymous", () => {
   it("removes personal data and keeps the bare order and payment link", async () => {
     const id = await endedOrder("delivered", T0, { payment: "paid" });
+    await sql(
+      `INSERT INTO payment_emails (id, order_id, attempt, idempotency_key,
+         result, created_at)
+       VALUES ('pay-mail', ?1, 1, 'key', 'accepted', ?2)`,
+      id,
+      T0.toISOString(),
+    );
+    await attempt(id, "paid");
+    await sql(
+      `INSERT INTO payment_transactions (transaction_id, attempt_id,
+         midtrans_status, outcome, refund_state, first_seen_at, updated_at)
+       VALUES ('tx-paid', 'NV-ABCDEF-1', 'settlement', 'paid', 'none', ?1, ?1)`,
+      T0.toISOString(),
+    );
+    const spendRows = d1.query("SELECT id FROM provider_spend").length;
     const before = orderRow(id);
     const now = new Date(T0.getTime() + 400 * DAY);
     expect(await purgeOrder(d1.db, { orderId: id, now })).toBe(true);
@@ -202,6 +258,15 @@ describe("making an order anonymous", () => {
     expect(
       d1.query("SELECT * FROM order_emails WHERE order_id = ?", id),
     ).toEqual([]);
+    expect(
+      d1.query("SELECT * FROM payment_emails WHERE order_id = ?", id),
+    ).toEqual([]);
+    // Payment and cost records stay.
+    expect(
+      d1.query("SELECT * FROM payment_attempts WHERE order_id = ?", id),
+    ).toHaveLength(1);
+    expect(d1.query("SELECT * FROM payment_transactions")).toHaveLength(1);
+    expect(d1.query("SELECT id FROM provider_spend")).toHaveLength(spendRows);
     expect(JSON.stringify(row)).not.toContain("owner@example.com");
     expect(JSON.stringify(row)).not.toContain("Kopi Nuave");
     // A second purge does nothing.
@@ -221,6 +286,55 @@ describe("making an order anonymous", () => {
     expect(
       d1.query("SELECT * FROM order_questions WHERE order_id = ?", id),
     ).toHaveLength(1);
+
+    await sql(`UPDATE orders SET hold_until = NULL WHERE id = ?1`, id);
+    await sql(
+      `UPDATE orders SET lease_until = ?2 WHERE id = ?1`,
+      id,
+      new Date(now.getTime() + 60_000).toISOString(),
+    );
+    expect(await purgeOrder(d1.db, { orderId: id, now })).toBe(false);
+    expect(orderRow(id).email).toBe("owner@example.com");
+  });
+
+  it("a late payment never revives an anonymised order", async () => {
+    const id = await endedOrder("expired", T0, {
+      mode: "live",
+      payment: "unpaid",
+    });
+    await attempt(id, "finally_unpaid");
+    const later = new Date(T0.getTime() + 60 * DAY);
+    const due = await ordersDueForPurge(d1.db, {
+      environment: "production",
+      mode: "live",
+      now: later,
+      limit: 10,
+    });
+    expect(due).toEqual([id]);
+    expect(await purgeOrder(d1.db, { orderId: id, now: later })).toBe(true);
+    const result = await applyStatus(
+      {
+        db: d1.db,
+        now: later,
+        limitUnits: 200_000_000,
+        dailyLimitUnits: 500_000_000,
+      },
+      {
+        transaction_id: "tx-after-purge",
+        order_id: "NV-ABCDEF-1",
+        transaction_status: "settlement",
+        fraud_status: "accept",
+        gross_amount: ORDER_GROSS_AMOUNT_TEXT,
+        currency: "IDR",
+        payment_type: "qris",
+      },
+    );
+    expect(result).toBe("needs_refund");
+    expect(orderRow(id)).toMatchObject({
+      state: "expired",
+      paid_at: null,
+      email: "",
+    });
   });
 });
 

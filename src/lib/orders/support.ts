@@ -31,6 +31,10 @@ import {
  *   npm run support -- refunded <transaction-id>
  *   npm run support -- close <midtrans-order-id> <unknown|unpaid>
  *
+ * and, for the record cleanup (retention.ts):
+ *
+ *   npm run support -- hold <order> <days>   (0 releases the hold)
+ *
  * The logic lives here so tests can run it on a test database with a fake
  * sender (AC-17). `scripts/support.mjs` supplies the real database (through
  * `wrangler d1 execute`) and the real sender (the founder's Resend key from a

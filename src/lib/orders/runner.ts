@@ -454,10 +454,12 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     }
   }
 
-  // Record lifetimes (privacy page section 9): once an hour, orders past
-  // their lifetime are made anonymous and old cost records removed. It runs
-  // with the emergency switch off too, and never stops the rest of the run.
-  if (deps.now().getUTCMinutes() === RETENTION_MINUTE) {
+  // Record lifetimes (privacy page section 9): once an hour, in the run that
+  // started at the retention minute, orders past their lifetime are made
+  // anonymous and old cost records removed. It runs with the emergency switch
+  // off too, only when the meter has room for more than its first query, and
+  // never stops the rest of the run.
+  if (new Date(startedAt).getUTCMinutes() === RETENTION_MINUTE && fits(2)) {
     try {
       const due = await ordersDueForPurge(deps.db, {
         ...scope,

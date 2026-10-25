@@ -52,9 +52,11 @@
   ([decisions](./DECISION_LOG.md#2026-10-24--s5-meta-consent-operator-refunds-and-record-deletion)).
 - **Cleanup job built, must be live by 12 November 2026:** an hourly cleanup
   makes orders anonymous at the end of the lifetimes the privacy page promises
-  (12 months after delivery, 30 days after failure or expiry), with a support
-  hold for open cases. The first failed orders reach 30 days around
-  12 November, so it must be merged and deployed before then.
+  (12 months after the report is saved, 30 days after failure or expiry), with
+  a support hold for open cases. The first failed orders reach 30 days around
+  12 November, so it must be merged and deployed before then. After deploy,
+  check one old failed order with `npm run support -- show <order>`: it should
+  print "Made anonymous".
 - **Before Meta ads go live:** the tracking change must meet the list in
   [`content/website/PRIVACY.md`](./content/website/PRIVACY.md) (cookie notice,
   consent-only server events, no Pixel on `/r` or `/uji`, value 249000).

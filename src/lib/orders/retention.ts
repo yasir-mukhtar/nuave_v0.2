@@ -29,10 +29,10 @@ function monthsBefore(now: Date, months: number): Date {
 }
 
 /**
- * An open refund case keeps the order: the same three cases the founder's
- * `support refunds` lists (a settled payment Nuave could not apply, a paid
- * order that failed and is not yet refunded, and a payment with no final
- * answer). Takes the order row's alias `o`.
+ * An open refund case keeps the order: the cases the founder's `support
+ * refunds` lists (a settled payment Nuave could not apply, a paid order that
+ * failed and is not yet refunded, a payment closed with no final answer),
+ * plus any payment attempt still open. Takes the order row's alias `o`.
  */
 const OPEN_REFUND_CASE = `(
   EXISTS (SELECT 1 FROM payment_transactions t
@@ -47,6 +47,31 @@ const OPEN_REFUND_CASE = `(
              WHERE a.order_id = o.id AND a.status IN ('open', 'closed_unknown'))
 )`;
 
+/**
+ * The whole rule for "may be made anonymous now", on the order row `o`:
+ * ?1 now, ?2 delivered-before, ?3 ended-before. The selection and the
+ * anonymising write both use it, so an order that changed in between (a late
+ * payment, a hold, a new lease) is left alone.
+ */
+const PURGE_ELIGIBLE = `o.purged_at IS NULL
+  AND (o.lease_until IS NULL OR o.lease_until < ?1)
+  AND (o.hold_until IS NULL OR o.hold_until < ?1)
+  AND (
+    (o.state = 'delivered' AND o.completed_at IS NOT NULL
+       AND o.completed_at < ?2)
+    OR (o.state IN ('failed', 'expired')
+       AND COALESCE(o.ended_at, o.expires_at) < ?3)
+  )
+  AND NOT ${OPEN_REFUND_CASE}`;
+
+function cutoffs(now: Date): [string, string, string] {
+  return [
+    iso(now),
+    iso(monthsBefore(now, COMPLETED_KEEP_MONTHS)),
+    iso(new Date(now.getTime() - ENDED_KEEP_DAYS * 86_400_000)),
+  ];
+}
+
 /** Orders past their lifetime, not held, not leased, with no open refund. */
 export async function ordersDueForPurge(
   db: SpendDb,
@@ -57,63 +82,41 @@ export async function ordersDueForPurge(
     limit: number;
   },
 ): Promise<string[]> {
-  const now = iso(input.now);
-  const completedBefore = iso(monthsBefore(input.now, COMPLETED_KEEP_MONTHS));
-  const endedBefore = iso(
-    new Date(input.now.getTime() - ENDED_KEEP_DAYS * 86_400_000),
-  );
   const { results } = await db
     .prepare(
       `SELECT o.id FROM orders o
-       WHERE o.environment = ?1 AND o.mode = ?2 AND o.purged_at IS NULL
-         AND (o.lease_until IS NULL OR o.lease_until < ?3)
-         AND (o.hold_until IS NULL OR o.hold_until < ?3)
-         AND (
-           (o.state = 'delivered' AND o.completed_at IS NOT NULL
-              AND o.completed_at < ?4)
-           OR (o.state IN ('failed', 'expired')
-              AND COALESCE(o.ended_at, o.expires_at) < ?5)
-         )
-         AND NOT ${OPEN_REFUND_CASE}
+       WHERE ${PURGE_ELIGIBLE}
+         AND o.environment = ?4 AND o.mode = ?5
        ORDER BY COALESCE(o.completed_at, o.ended_at, o.expires_at)
        LIMIT ?6`,
     )
-    .bind(
-      input.environment,
-      input.mode,
-      now,
-      completedBefore,
-      endedBefore,
-      input.limit,
-    )
+    .bind(...cutoffs(input.now), input.environment, input.mode, input.limit)
     .all<{ id: string }>();
   return results.map((row) => row.id);
 }
 
 /**
- * Makes one order anonymous in a single batch. The update re-checks the hold,
- * the lease and that it was not purged already, so a support hold or a run
- * that claimed the order in between wins; the deletes only remove rows of an
- * order this batch purged. Returns whether it purged.
+ * Makes one order anonymous in a single batch. The update repeats the whole
+ * eligibility rule, so an order that changed since it was selected is left
+ * alone; the deletes only remove rows of an order this batch purged. Returns
+ * whether it purged.
  */
 export async function purgeOrder(
   db: SpendDb,
   input: { orderId: string; now: Date },
 ): Promise<boolean> {
-  const now = iso(input.now);
+  const [now, completedBefore, endedBefore] = cutoffs(input.now);
   const [update] = await db.batch([
     db
       .prepare(
-        `UPDATE orders SET
+        `UPDATE orders AS o SET
            email = '', business_name = '', website = '',
            intake_json = NULL, prepared_json = NULL, discovery_json = NULL,
            discovery_key = NULL, questions_json = NULL, report_json = NULL,
-           link_hash = NULL, link_off = 1, purged_at = ?2
-         WHERE id = ?1 AND purged_at IS NULL
-           AND (lease_until IS NULL OR lease_until < ?2)
-           AND (hold_until IS NULL OR hold_until < ?2)`,
+           link_hash = NULL, link_off = 1, purged_at = ?1
+         WHERE o.id = ?4 AND ${PURGE_ELIGIBLE}`,
       )
-      .bind(input.orderId, now),
+      .bind(now, completedBefore, endedBefore, input.orderId),
     ...["order_questions", "order_emails", "payment_emails"].map((table) =>
       db
         .prepare(
