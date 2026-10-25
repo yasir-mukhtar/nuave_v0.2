@@ -6,6 +6,15 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Cookie notice above the audit's button bar
+
+The founder chose to lift the cookie notice above the `/audit` journey's
+bottom bar (Spec 019 R-14, PR #166). Until a choice, the notice covered that
+bar: on a phone the main button ("Ya, ini bisnis saya", "Lanjut ke
+pembayaran", "Bayar Rp249.000") was hidden, and a tap where it sat could land
+on "Setuju". Now the bar's buttons stay in view and tappable while the notice
+is open, and keyboard focus stays clear of the notice on every page.
+
 ## 2026-10-25 — Approve Spec 020 (clinic landing page)
 
 The founder approved [Spec 020](../specs/020-clinic-landing-page/SPEC.md):

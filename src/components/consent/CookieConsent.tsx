@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { BOTTOM_BAR_HEIGHT_VAR, NOTICE_CLEAR_VAR } from "@/lib/bottom-bars";
 import {
   COOKIE_CHOICE_KEY,
   COOKIE_SETTINGS_EVENT,
@@ -32,6 +33,7 @@ export function CookieConsent() {
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const noticeRef = useRef<HTMLElement>(null);
   // The "Pengaturan cookie" link that reopened the notice gets focus back.
   const openerRef = useRef<HTMLElement | null>(null);
 
@@ -84,7 +86,34 @@ export function CookieConsent() {
     if (open && reopened) headingRef.current?.focus();
   }, [open, reopened]);
 
-  if (!enabled || !open) return null;
+  // R-14: while the notice shows, the browser keeps a focused control, and
+  // any scroll to one, clear of it (and on /audit of the journey's bottom bar
+  // it sits on). Set inline so it wins over a page's own scroll padding, and
+  // put back when the notice goes. The room at the page's end lets its last
+  // controls scroll that far.
+  const shown = enabled && open;
+  useEffect(() => {
+    const notice = noticeRef.current;
+    if (!shown || !notice) return;
+    const root = document.documentElement;
+    const before = root.style.scrollPaddingBottom;
+    const measure = () =>
+      root.style.setProperty(NOTICE_CLEAR_VAR, `${notice.offsetHeight + 8}px`);
+    measure();
+    root.style.scrollPaddingBottom = `calc(var(${NOTICE_CLEAR_VAR}) + var(${BOTTOM_BAR_HEIGHT_VAR}, 0px))`;
+    const resize =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(measure);
+    resize?.observe(notice);
+    return () => {
+      resize?.disconnect();
+      root.style.removeProperty(NOTICE_CLEAR_VAR);
+      root.style.scrollPaddingBottom = before;
+    };
+  }, [shown]);
+
+  if (!shown) return null;
 
   function choose(next: CookieChoice) {
     // R-03: with storage blocked the choice cannot be kept, so the Pixel
@@ -99,56 +128,67 @@ export function CookieConsent() {
   }
 
   return (
-    <section
-      aria-labelledby="cookie-notice-title"
-      data-cookie-notice=""
-      className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
-    >
-      <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">
-        <div className="grid gap-1">
-          <h2
-            id="cookie-notice-title"
-            ref={headingRef}
-            tabIndex={-1}
-            className="type-label-strong m-0 text-ink-900"
-          >
-            <span aria-hidden="true">🍪 </span>Cookie?
-          </h2>
-          <p className="type-caption m-0 text-ink-600">
-            Meta cookies help us measure our ads. Your report and answers are
-            never shared.{" "}
-            <Link href="/privacy#cookie" className="text-ink-900 underline">
-              Privacy policy
-            </Link>
-          </p>
-          {reopened && choice ? (
+    <>
+      <div aria-hidden="true" style={{ height: `var(${NOTICE_CLEAR_VAR})` }} />
+      <section
+        ref={noticeRef}
+        aria-labelledby="cookie-notice-title"
+        data-cookie-notice=""
+        className="fixed inset-x-0 z-50 px-4"
+        style={{
+          // On /audit it sits just above the journey's bottom bar, whose
+          // buttons stay in view and tappable (R-14). The bar already clears
+          // the home-bar inset, so the notice adds it only without a bar.
+          bottom: `var(${BOTTOM_BAR_HEIGHT_VAR}, 0px)`,
+          paddingBottom: `calc(16px + max(env(safe-area-inset-bottom, 0px) - var(${BOTTOM_BAR_HEIGHT_VAR}, 0px), 0px))`,
+        }}
+      >
+        <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">
+          <div className="grid gap-1">
+            <h2
+              id="cookie-notice-title"
+              ref={headingRef}
+              tabIndex={-1}
+              className="type-label-strong m-0 text-ink-900"
+            >
+              <span aria-hidden="true">🍪 </span>Cookie?
+            </h2>
             <p className="type-caption m-0 text-ink-600">
-              Your choice now:{" "}
-              <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
-              {choice === "yes"
-                ? "Meta cookies already set can be removed in your browser settings."
-                : null}
+              Meta cookies help us measure our ads. Your report and answers are
+              never shared.{" "}
+              <Link href="/privacy#cookie" className="text-ink-900 underline">
+                Privacy policy
+              </Link>
             </p>
-          ) : null}
+            {reopened && choice ? (
+              <p className="type-caption m-0 text-ink-600">
+                Your choice now:{" "}
+                <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
+                {choice === "yes"
+                  ? "Meta cookies already set can be removed in your browser settings."
+                  : null}
+              </p>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="inkOutline"
+              className="h-10"
+              onClick={() => choose("no")}
+            >
+              Tolak
+            </Button>
+            <Button
+              variant="inkOutline"
+              className="h-10"
+              onClick={() => choose("yes")}
+            >
+              Setuju
+            </Button>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="inkOutline"
-            className="h-10"
-            onClick={() => choose("no")}
-          >
-            Tolak
-          </Button>
-          <Button
-            variant="inkOutline"
-            className="h-10"
-            onClick={() => choose("yes")}
-          >
-            Setuju
-          </Button>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 
