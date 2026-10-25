@@ -330,6 +330,10 @@ is made.
 
   The founder first confirms through the order email (D7). The script never
   sends to another email. Its database and sender can be replaced in tests.
+  (Changed 2026-10-25, see `docs/DECISION_LOG.md`: `email` replaces a
+  mistyped order email after the founder checks the receipt, and the address
+  reaches the SQL only as a hex literal; `norefund` closes a refund case
+  without a refund.)
 
 ### Tests and local development
 

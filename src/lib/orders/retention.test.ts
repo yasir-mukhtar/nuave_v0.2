@@ -195,13 +195,26 @@ describe("which orders are due", () => {
     );
     const later = new Date(T0.getTime() + 60 * DAY);
     expect(await due(later)).toEqual([]);
-    for (const id of [failed, late])
-      await sql(
-        `INSERT INTO refund_closures (order_id, reason, closed_at)
-         VALUES (?1, 'declined', ?2)`,
-        id,
-        T0.toISOString(),
-      );
+    await sql(
+      `INSERT INTO refund_closures (order_id, kind, transaction_id, reason, closed_at)
+       VALUES (?1, 'paid_order', '', 'declined', ?2)`,
+      failed,
+      T0.toISOString(),
+    );
+    // Closing the order's other kind of case does not close this one.
+    await sql(
+      `INSERT INTO refund_closures (order_id, kind, transaction_id, reason, closed_at)
+       VALUES (?1, 'paid_order', '', 'declined', ?2)`,
+      late,
+      T0.toISOString(),
+    );
+    expect(await due(later)).toEqual([failed]);
+    await sql(
+      `INSERT INTO refund_closures (order_id, kind, transaction_id, reason, closed_at)
+       VALUES (?1, 'payment', 'tx-late', 'declined', ?2)`,
+      late,
+      T0.toISOString(),
+    );
     expect((await due(later)).sort()).toEqual([failed, late].sort());
   });
 
@@ -209,8 +222,8 @@ describe("which orders are due", () => {
     const id = await endedOrder("expired", T0);
     await attempt(id, "closed_unknown");
     await sql(
-      `INSERT INTO refund_closures (order_id, reason, closed_at)
-       VALUES (?1, 'settled', ?2)`,
+      `INSERT INTO refund_closures (order_id, kind, transaction_id, reason, closed_at)
+       VALUES (?1, 'paid_order', '', 'settled', ?2)`,
       id,
       T0.toISOString(),
     );

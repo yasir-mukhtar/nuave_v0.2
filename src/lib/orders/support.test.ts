@@ -419,7 +419,7 @@ describe("the database through wrangler", () => {
     const execute = async (sql: string) => {
       sqlSeen.push(sql);
       const statement = d1.db.prepare(sql).bind();
-      if (/^\s*select/i.test(sql)) {
+      if (/^\s*select|\breturning\b/i.test(sql)) {
         const { results } = await statement.all();
         return [{ results }];
       }
@@ -816,10 +816,22 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
       ),
     ).toBe(0);
     expect(
-      q(`SELECT order_id, reason FROM refund_closures ORDER BY reason`),
+      q(
+        `SELECT order_id, kind, transaction_id, reason FROM refund_closures ORDER BY reason`,
+      ),
     ).toEqual([
-      { order_id: paid.id, reason: "declined" },
-      { order_id: ended.id, reason: "delivered" },
+      {
+        order_id: paid.id,
+        kind: "payment",
+        transaction_id: "tx-two",
+        reason: "declined",
+      },
+      {
+        order_id: ended.id,
+        kind: "paid_order",
+        transaction_id: "",
+        reason: "delivered",
+      },
     ]);
     output.length = 0;
     await support().run("refunds");
@@ -832,10 +844,33 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
     ).toBe("none");
     output.length = 0;
     await support().run("show", ended.id);
-    expect(text()).toContain("Refund case closed without refund: delivered,");
+    expect(text()).toContain(
+      "Refund case closed without refund: paid order, delivered,",
+    );
     // Closed once: a second close finds no open case.
     expect(await support().run("norefund", paid.id, "settled")).toBe(1);
     expect(q(`SELECT COUNT(*) AS n FROM refund_closures`)[0]!.n).toBe(2);
+  });
+
+  it("norefund closes only the cases open now: a later payment on the same order, and other orders, stay listed", async () => {
+    const one = await orderWithAttempt();
+    await pay(one.attempt, { transactionId: "tx-a1" });
+    await pay(one.attempt, { transactionId: "tx-a2" });
+    const other = await orderWithAttempt();
+    await pay(other.attempt, { transactionId: "tx-b1" });
+    await pay(other.attempt, { transactionId: "tx-b2" });
+    expect(await support().run("norefund", one.id, "declined")).toBe(0);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 1");
+    expect(text()).toContain("tx-b2");
+    // A third payment on the closed order is a new case.
+    await pay(one.attempt, { transactionId: "tx-a3" });
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 2");
+    expect(text()).toContain("tx-a3");
+    expect(text()).not.toContain("tx-a2");
   });
 
   it("norefund refuses a bad reason, an order with no money case, and a payment with no final answer", async () => {
@@ -912,7 +947,6 @@ describe("email (founder decision 2026-10-25)", () => {
     const s = support();
     expect(await s.run("email", id, "not-an-email")).toBe(2);
     expect(await s.run("email", id, "a@b")).toBe(2);
-    expect(await s.run("email", id, EMAIL.toUpperCase())).toBe(1);
     expect(await s.run("email", id)).toBe(2);
     const failing = support({
       makeSender: async () => {
@@ -941,7 +975,7 @@ describe("email (founder decision 2026-10-25)", () => {
     const execute = async (sql: string) => {
       sqlSeen.push(sql);
       const statement = d1.db.prepare(sql).bind();
-      if (/^\s*select/i.test(sql)) {
+      if (/^\s*select|\breturning\b/i.test(sql)) {
         const { results } = await statement.all();
         return [{ results }];
       }
@@ -959,5 +993,69 @@ describe("email (founder decision 2026-10-25)", () => {
       "X'6140622e636f'",
     );
     expect(s.sender.sent[0]!.to).toBe(NEW_EMAIL);
+  });
+
+  it("a report saved while the command runs gets a new link at the new address; the old one stops", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    const saved = order(id).report_json;
+    await d1.db
+      .prepare(
+        `UPDATE orders SET report_json = NULL, state = 'reporting' WHERE id = ?1`,
+      )
+      .bind(id)
+      .run();
+    // The runner finishes between the command's read and its write.
+    const racing = {
+      ...d1.db,
+      prepare: (sql: string) => {
+        if (/^\s*UPDATE orders SET email/.test(sql))
+          d1.query(
+            `UPDATE orders SET report_json = '${String(saved).replace(/'/g, "''")}', state = 'delivered' WHERE id = '${id}' RETURNING 1`,
+          );
+        return d1.db.prepare(sql);
+      },
+    };
+    const s = support({ db: racing as typeof d1.db });
+    expect(await s.run("email", id, NEW_EMAIL)).toBe(0);
+    expect(s.sender.sent.map((message) => message.to)).toEqual([NEW_EMAIL]);
+    expect((await openLink(firstSecret)).status).not.toBe(200);
+    expect((await openLink(secretIn(s.sender.sent[0]!))).status).toBe(200);
+  });
+
+  it("waits while the runner holds the order, and refuses an unpaid order", async () => {
+    const { id } = await deliveredOrder();
+    await d1.db
+      .prepare(
+        `UPDATE orders SET lease_owner = 'runner', lease_until = ?2 WHERE id = ?1`,
+      )
+      .bind(id, new Date(clock.getTime() + 60_000).toISOString())
+      .run();
+    const s = support();
+    expect(await s.run("email", id, NEW_EMAIL)).toBe(1);
+    expect(output.join("\n")).toContain("being worked on right now");
+    expect(order(id).email).toBe(EMAIL);
+    expect(s.sender.sent).toEqual([]);
+    const unpaid = await makeOrder(d1.db, {
+      email: EMAIL,
+      mode: "live",
+      payment: "unpaid",
+      now: clock,
+    });
+    expect(await s.run("email", unpaid, NEW_EMAIL)).toBe(1);
+    expect(order(unpaid).email).toBe(EMAIL);
+  });
+
+  it("a send that fails after the change has already stopped the old link; running it again finishes", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    const refusing = support({ sender: mailbox(() => false) });
+    expect(await refusing.run("email", id, NEW_EMAIL)).toBe(1);
+    expect(order(id).email).toBe(NEW_EMAIL);
+    expect((await openLink(firstSecret)).status).not.toBe(200);
+    const s = support();
+    output.length = 0;
+    expect(await s.run("email", id, NEW_EMAIL)).toBe(0);
+    expect(output.join("\n")).toContain("already the email on the order");
+    expect(s.sender.sent.map((message) => message.to)).toEqual([NEW_EMAIL]);
+    expect((await openLink(secretIn(s.sender.sent[0]!))).status).toBe(200);
   });
 });

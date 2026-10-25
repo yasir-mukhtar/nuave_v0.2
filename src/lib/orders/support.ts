@@ -1,4 +1,9 @@
-import { MAX_HOLD_DAYS, MONEY_REFUND_CASE, holdOrder } from "./retention";
+import {
+  MAX_HOLD_DAYS,
+  OPEN_NEEDS_REFUND,
+  OPEN_PAID_ORDER_FAILED,
+  holdOrder,
+} from "./retention";
 import { applyRefund } from "../payments/apply";
 import type { SpendDb, SpendStatement } from "../spending/spend-ledger";
 import { newLinkSecret, sha256Hex } from "./link-secret";
@@ -265,8 +270,9 @@ async function resend(
 
 /** A mistyped order email (FAQ; terms section 10). The founder first checks
  * the payment receipt or the Midtrans transaction number. The new address
- * replaces the old one; when the report is saved, the old link stops and a new
- * one goes to the new address only. Nothing is ever sent to the old address. */
+ * replaces the old one; when the report is saved, the old link stops in that
+ * same write and a new one goes to the new address only. Nothing is ever sent
+ * to the old address by this command. */
 async function changeEmail(
   deps: SupportDeps,
   order: OrderRow,
@@ -285,44 +291,79 @@ async function changeEmail(
     deps.out("Synthetic orders have no real email. Nothing changed.");
     return 1;
   }
-  if (email.toLowerCase() === order.email.toLowerCase()) {
+  if (order.state === "open" && !order.paid_at) {
+    deps.out(
+      "This order is not paid, so there is no receipt to check. The customer can start again with the right email. Nothing changed.",
+    );
+    return 1;
+  }
+  const now = deps.now().toISOString();
+  if (email.toLowerCase() !== order.email.toLowerCase()) {
+    // The sender comes first, as in resend: a missing key file changes nothing.
+    const sender = order.report_json ? await deps.makeSender() : undefined;
+    // One write: the new address, and the old link switched off when there
+    // is a report, so a failure after it never leaves the old link working.
+    // Not while the runner holds the order (it may be sending the ready
+    // email). The address goes in as bytes, so the wrangler path writes a
+    // hex literal, never readable text (R-32, changed 2026-10-25).
+    const changed = await deps.db
+      .prepare(
+        `UPDATE orders SET email = CAST(?2 AS TEXT), email_changed_at = ?3,
+           link_off = CASE WHEN report_json IS NOT NULL THEN 1 ELSE link_off END
+         WHERE id = ?1 AND purged_at IS NULL
+           AND (lease_owner IS NULL OR lease_until <= ?3)
+         RETURNING id`,
+      )
+      .bind(order.id, new TextEncoder().encode(email), now)
+      .first<{ id: string }>();
+    if (!changed) {
+      deps.out(
+        "The order is being worked on right now. Nothing changed; try again in a minute.",
+      );
+      return 1;
+    }
+    deps.out("The email on the order is changed.");
+    return sendAfterEmailChange(deps, order.id, sender);
+  }
+  if (!order.report_json) {
     deps.out("That is already the email on the order. Nothing changed.");
     return 1;
   }
-  // The sender comes first, as in resend: a missing key file changes nothing.
-  const sender = order.report_json ? await deps.makeSender() : undefined;
-  // The address goes in as bytes, so the wrangler path writes it as a hex
-  // literal and never as readable text (R-32).
-  const changed = await deps.db
-    .prepare(
-      `UPDATE orders SET email = CAST(?2 AS TEXT), email_changed_at = ?3
-       WHERE id = ?1 AND purged_at IS NULL`,
-    )
-    .bind(order.id, new TextEncoder().encode(email), deps.now().toISOString())
-    .run();
-  if (changed.meta?.changes !== 1) {
-    deps.out("The order could not be changed. Nothing changed.");
-    return 1;
-  }
-  deps.out("The email on the order is changed.");
-  if (!sender) {
+  // The same address again: finish an earlier run that stopped before the
+  // new link went out.
+  deps.out("That is already the email on the order. A new link goes to it.");
+  return sendAfterEmailChange(deps, order.id, undefined);
+}
+
+/** After the address changed: the order is read again, so a report saved
+ * while the command ran also gets a new link at the new address. */
+async function sendAfterEmailChange(
+  deps: SupportDeps,
+  orderId: string,
+  sender: MailSender | undefined,
+): Promise<number> {
+  const fresh = await getOrder(deps.db, orderId);
+  if (!fresh) return 1;
+  if (!fresh.report_json) {
     deps.out(
-      order.state === "failed" || order.state === "expired"
+      fresh.state === "failed" || fresh.state === "expired"
         ? "The order has no saved report, so no link was sent."
         : "The report is not ready yet. Its email will go to the new address.",
     );
     return 0;
   }
-  return resend(deps, { ...order, email }, sender);
+  return resend(deps, fresh, sender ?? (await deps.makeSender()));
 }
 
 const CLOSE_REASONS = ["declined", "delivered", "settled"] as const;
 
-/** An open refund case closed without a refund (founder decision 2026-10-25):
+/** Open refund cases closed without a refund (founder decision 2026-10-25):
  * the customer declined it in writing, got the full report another way, or
- * the money already went back outside these records. It leaves `refunds`, and
- * the hourly cleanup can reach the order. A case with no final payment answer
- * is closed with `close` instead. */
+ * the money already went back outside these records. Each case open now is
+ * closed on its own (a settled payment that could not be applied, by its
+ * transaction; a paid order that failed, by the order), so a payment that
+ * arrives later is a new case and is listed again. A case with no final
+ * payment answer is closed with `close` instead. */
 async function closeWithoutRefund(
   deps: SupportDeps,
   order: OrderRow,
@@ -332,27 +373,50 @@ async function closeWithoutRefund(
     deps.out(`Give the reason: ${CLOSE_REASONS.join(", ")}.`);
     return 2;
   }
-  const open = await deps.db
+  const at = deps.now().toISOString();
+  const { results: payments } = await deps.db
     .prepare(
-      `SELECT ${MONEY_REFUND_CASE} AS open FROM orders o WHERE o.id = ?1`,
+      `SELECT t.transaction_id FROM payment_transactions t
+       JOIN payment_attempts a ON a.id = t.attempt_id
+       WHERE a.order_id = ?1 AND ${OPEN_NEEDS_REFUND}`,
+    )
+    .bind(order.id)
+    .all<{ transaction_id: string }>();
+  const paidOrder = await deps.db
+    .prepare(
+      `SELECT 1 AS open FROM orders o WHERE o.id = ?1 AND ${OPEN_PAID_ORDER_FAILED}`,
     )
     .bind(order.id)
     .first<{ open: number }>();
-  if (!open?.open) {
+  const writes = [
+    ...payments.map((row) =>
+      deps.db
+        .prepare(
+          `INSERT INTO refund_closures (order_id, kind, transaction_id, reason, closed_at)
+           VALUES (?1, 'payment', ?2, ?3, ?4)`,
+        )
+        .bind(order.id, row.transaction_id, reason, at),
+    ),
+    ...(paidOrder
+      ? [
+          deps.db
+            .prepare(
+              `INSERT INTO refund_closures (order_id, kind, transaction_id, reason, closed_at)
+               VALUES (?1, 'paid_order', '', ?2, ?3)`,
+            )
+            .bind(order.id, reason, at),
+        ]
+      : []),
+  ];
+  if (writes.length === 0) {
     deps.out(
       "This order has no open refund case for money taken (a payment with no final answer is closed with close). Nothing changed.",
     );
     return 1;
   }
-  await deps.db
-    .prepare(
-      `INSERT INTO refund_closures (order_id, reason, closed_at)
-       VALUES (?1, ?2, ?3)`,
-    )
-    .bind(order.id, reason, deps.now().toISOString())
-    .run();
+  await deps.db.batch(writes);
   deps.out(
-    `The refund case is closed without a refund (${reason}). It is off the refunds list; the order now follows its normal lifetime.`,
+    `${writes.length === 1 ? "The refund case is" : `${writes.length} refund cases are`} closed without a refund (${reason}). Off the refunds list; a payment that arrives later is listed again.`,
   );
   return 0;
 }
@@ -390,16 +454,22 @@ async function show(
   if (order.purged_at) line("Made anonymous", order.purged_at);
   if (order.hold_until) line("Kept until (support hold)", order.hold_until);
   if (order.email_changed_at) line("Email changed", order.email_changed_at);
-  const closure = await deps.db
+  const { results: closures } = await deps.db
     .prepare(
-      `SELECT reason, closed_at FROM refund_closures WHERE order_id = ?1`,
+      `SELECT kind, transaction_id, reason, closed_at FROM refund_closures
+       WHERE order_id = ?1 ORDER BY closed_at`,
     )
     .bind(order.id)
-    .first<{ reason: string; closed_at: string }>();
-  if (closure)
+    .all<{
+      kind: string;
+      transaction_id: string;
+      reason: string;
+      closed_at: string;
+    }>();
+  for (const closure of closures)
     line(
       "Refund case closed without refund",
-      `${closure.reason}, ${closure.closed_at}`,
+      `${closure.kind === "payment" ? `transaction ${closure.transaction_id}` : "paid order"}, ${closure.reason}, ${closure.closed_at}`,
     );
   await showPayments(deps, order);
 
@@ -535,8 +605,7 @@ async function refunds(deps: SupportDeps): Promise<number> {
        FROM payment_transactions t
        JOIN payment_attempts a ON a.id = t.attempt_id
        JOIN orders o ON o.id = a.order_id
-       WHERE t.outcome = 'needs_refund' AND t.refund_state != 'refunded'
-         AND NOT EXISTS (SELECT 1 FROM refund_closures c WHERE c.order_id = o.id)
+       WHERE ${OPEN_NEEDS_REFUND}
        ORDER BY t.first_seen_at`,
     )
     .bind()
@@ -552,11 +621,7 @@ async function refunds(deps: SupportDeps): Promise<number> {
               (SELECT t.amount FROM payment_transactions t
                WHERE t.transaction_id = o.paid_transaction_id) AS amount
        FROM orders o
-       WHERE o.state = 'failed' AND o.payment_kind = 'midtrans'
-         AND COALESCE((SELECT t.refund_state FROM payment_transactions t
-                       WHERE t.transaction_id = o.paid_transaction_id), 'none')
-             NOT IN ('refunded', 'chargeback')
-         AND NOT EXISTS (SELECT 1 FROM refund_closures c WHERE c.order_id = o.id)
+       WHERE ${OPEN_PAID_ORDER_FAILED}
        ORDER BY o.ended_at`,
     )
     .bind()
@@ -589,7 +654,10 @@ async function refunds(deps: SupportDeps): Promise<number> {
       `  NO FINAL ANSWER ${row.midtrans_order_id} (${row.status}): window ended ${row.window_end}, ${row.payment_method ?? "-"}. Check the Midtrans dashboard; if never paid: npm run support -- close ${row.midtrans_order_id} unpaid`,
     );
   }
-  if (total > 0) deps.out("Refund within three business days (D3).");
+  if (total > 0)
+    deps.out(
+      "Refund within three business days (D3). A case settled without a refund: npm run support -- norefund <order> <declined|delivered|settled>",
+    );
   return 0;
 }
 
@@ -682,8 +750,9 @@ async function closeAttempt(
 type WranglerResult = { results?: unknown[]; meta?: { changes?: number } };
 
 /** Only plain tokens go into SQL text: ids, hashes, ISO times and numbers. An
- * email address (it has an `@`) or any other free text cannot pass, so no
- * email can ever reach SQL text (R-32). */
+ * email address (it has an `@`) or any other free text cannot pass as text.
+ * The one email this script writes (`support email`) comes as bytes, written
+ * as a hex literal, so no email reaches SQL text readably (R-32). */
 const PLAIN_TOKEN = /^[A-Za-z0-9_.:+\- ]{0,200}$/;
 
 export function sqlLiteral(value: unknown): string {
@@ -704,7 +773,7 @@ export function sqlLiteral(value: unknown): string {
 /**
  * A D1-shaped database that sends each statement through `execute` (the CLI
  * runs `wrangler d1 execute`, which cannot bind values), with every value
- * written into the SQL as a plain token. `batch` sends its statements together
+ * written into the SQL as a plain token or, for bytes, a hex literal. `batch` sends its statements together
  * in one command, in order (the refund command needs it).
  */
 export function d1ThroughWrangler(

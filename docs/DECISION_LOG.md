@@ -13,9 +13,14 @@ Yasir chose how the two founder commands work:
 - **`npm run support -- email <order> <new-email>`:** after the founder has
   checked the payment receipt or Midtrans transaction number (FAQ, terms
   section 10), the command replaces the order email. When the report is
-  saved, the old link stops and a new link goes to the new address only;
-  nothing is sent to the old address. An order still running sends its ready
-  email to the new address. This changes Spec 016 R-32 ("the script never
+  saved, the old link stops in the same write and a new link goes to the new
+  address only; nothing is sent to the old address. An order still running
+  sends its ready email to the new address (the command waits while the
+  runner holds the order, and reads the order again after the change, so a
+  report finished meanwhile also gets a new link). Only paid orders: an
+  unpaid order has no receipt, and the customer can simply order again.
+  Running it again with the same address finishes a run that stopped before
+  the new link went out. This changes Spec 016 R-32 ("the script never
   sends to another email"): it still never sends to an address that is not
   the order's, but the founder can now correct that address. The new address
   reaches the database as a hex literal, so it never appears as readable text
@@ -24,8 +29,10 @@ Yasir chose how the two founder commands work:
   closes a money refund case (a settled payment that could not be applied, or
   a paid order that failed) without a refund, when the customer declined it
   in writing, got the full report another way, or the money already went
-  back outside Nuave's records. The reason is kept (`refund_closures`); the
-  case leaves `support refunds`, and the hourly cleanup can reach the order.
+  back outside Nuave's records. Each case open at that moment is closed on
+  its own, with the reason (`refund_closures`); a payment that arrives later
+  is a new case and is listed again. Closed cases leave `support refunds`,
+  and the hourly cleanup can reach the order.
   A payment with no final answer is still closed with `close`.
 
 ## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
