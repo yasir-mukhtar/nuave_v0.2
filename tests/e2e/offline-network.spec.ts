@@ -8,12 +8,21 @@ test.beforeEach(async ({ page }) => {
 
 // Spec 010 R-09: the archived /audit/fixture and /audit/spec004 preview
 // pages are gone — only the public surfaces remain under the network guard.
-for (const path of ["/", "/audit"] as const) {
+for (const path of ["/", "/audit", "/faq"] as const) {
   test(`${path} makes no unexpected third-party request`, async ({ page }) => {
     const requests = collectRequests(page);
     await page.goto(path, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(300);
     await assertNoUnexpectedExternalRequests(page, requests);
+    // Spec 019 R-01: without a Pixel ID there is no cookie notice or link,
+    // also once the page is running in the browser.
+    await page.waitForLoadState("networkidle");
+    await expect(
+      page.getByRole("region", { name: "Cookie untuk iklan" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Pengaturan cookie" }),
+    ).toHaveCount(0);
   });
 }
 
