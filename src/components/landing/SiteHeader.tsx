@@ -17,6 +17,7 @@ import {
   scrollToSection,
 } from "./landing-scroll";
 import { Brand } from "./Brand";
+import { useMinWidth } from "./use-min-width";
 import styles from "./SiteHeader.module.css";
 
 /**
@@ -30,6 +31,12 @@ export function SiteHeader() {
   // A link chosen in the sheet: scrolled to once the sheet has closed, so
   // the sheet's scroll lock cannot undo the jump.
   const pending = useRef<string | null>(null);
+  // From 1024px the menu button hides and the laptop links show. Widening
+  // the window (a tablet turned sideways) closes the sheet, and focus moves
+  // to the first of those links.
+  const wide = useMinWidth(1024);
+  const firstLink = useRef<HTMLAnchorElement>(null);
+  if (wide && open) setOpen(false);
 
   return (
     <header className={styles.header}>
@@ -39,9 +46,10 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Bagian halaman" className={styles.links}>
-          {SECTION_LINKS.map(({ id, label }) => (
+          {SECTION_LINKS.map(({ id, label }, index) => (
             <a
               key={id}
+              ref={index === 0 ? firstLink : undefined}
               href={`#${id}`}
               className={styles.link}
               onClick={(event) => {
@@ -87,7 +95,10 @@ export function SiteHeader() {
               side="top"
               showCloseButton={false}
               className={styles.sheet}
-              finalFocus={() => (pending.current ? false : true)}
+              finalFocus={() => {
+                if (pending.current) return false;
+                return wide ? firstLink.current : true;
+              }}
             >
               <div className={styles.sheetHead}>
                 <SheetTitle className="sr-only">Menu</SheetTitle>

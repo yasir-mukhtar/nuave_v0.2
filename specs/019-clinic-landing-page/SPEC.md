@@ -152,7 +152,9 @@ hear about their clinic, what the audit costs, and how to start.
 - **Storage blocked.** `/audit` asks for the website again, as today.
 - **Invalid input.** The error stays until the reader edits the field.
 - **JavaScript off.** The page still shows all its content and every FAQ
-  answer. The forms need JavaScript, as today.
+  answer; the example report shows its four views one after another, and the
+  hero's phone shows its first example (switching examples needs
+  JavaScript). The forms need JavaScript, as today.
 
 ## Evidence, data, privacy, and cost
 

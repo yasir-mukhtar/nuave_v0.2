@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { IconDownload, IconInfoCircle, IconSearch } from "@tabler/icons-react";
 import { NuaveMark } from "@/components/product/journey/NuaveLogo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -314,6 +314,9 @@ function PdfLine({ className }: { className?: string }) {
 export function ReportShowcase() {
   const [tab, setTab] = useState<TabValue>("skor");
   const wide = useMinWidth(1024);
+  // Each tab is named by its label alone; its description (shown beside it
+  // on a laptop) is its description at every width.
+  const tabId = useId();
   const active = TABS.find((item) => item.value === tab) ?? TABS[0];
 
   return (
@@ -353,10 +356,20 @@ export function ReportShowcase() {
                   key={item.value}
                   value={item.value}
                   className={styles.tab}
+                  aria-labelledby={`${tabId}-${item.value}-label`}
+                  aria-describedby={`${tabId}-${item.value}-description`}
                 >
                   <span className={styles.rail} aria-hidden="true" />
-                  <span className={styles.tabLabel}>{item.label}</span>
-                  <span className={styles.tabDescription}>
+                  <span
+                    id={`${tabId}-${item.value}-label`}
+                    className={styles.tabLabel}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    id={`${tabId}-${item.value}-description`}
+                    className={styles.tabDescription}
+                  >
                     {item.description}
                   </span>
                 </TabsTrigger>
@@ -368,9 +381,16 @@ export function ReportShowcase() {
 
           <div className={styles.right}>
             <span className={styles.pool} aria-hidden="true" />
+            {/* Without JavaScript the four views show one after another
+                (Spec 019, failure and recovery). Like the FAQ's rule, it sits
+                in Tailwind's base layer to beat its [hidden] rule. */}
+            <noscript>
+              <style>{`@layer base { [data-report-views] [role="tabpanel"][hidden] { display: block !important; } [data-report-views] [role="tabpanel"] + [role="tabpanel"] { margin-top: 32px; } }`}</style>
+            </noscript>
             <article
               className={styles.card}
               aria-label="Contoh laporan: Klinik Cantik Fiksi"
+              data-report-views
             >
               <div className={styles.cardTop}>
                 <p className={styles.reportLabel}>

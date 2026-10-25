@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  FICTIONAL_BUSINESS,
   LANDING_CHECK,
   LANDING_FIELD,
   LANDING_HEADING,
@@ -10,8 +11,8 @@ import {
 /**
  * Spec 019: the clinic landing page at `/`. Section order, no sideways
  * scrolling, the menu, the clinic-type and report tabs, the FAQ, the sticky
- * bar and the website forms' error. The forms' handoff to `/audit` is
- * covered by audit-entry.spec.ts.
+ * bar, the resume banner and the website forms. The hero form's handoff to
+ * `/audit` is covered in depth by audit-entry.spec.ts.
  */
 
 const SECTION_HEADINGS = [
@@ -55,6 +56,30 @@ test.describe("on a laptop", () => {
     await expect(
       page.getByRole("textbox", { name: LANDING_FIELD, exact: true }),
     ).toHaveCount(3);
+    // AC-10: nothing links to the founder's test pass.
+    await expect(page.locator('a[href*="/uji"]')).toHaveCount(0);
+  });
+
+  test("a saved audit is offered above the headline (AC-09)", async ({
+    page,
+  }) => {
+    await page.addInitScript(() =>
+      localStorage.setItem(
+        "nuave.activeOrder.v1",
+        JSON.stringify({ orderId: "0".repeat(32) }),
+      ),
+    );
+    await page.goto("/");
+    const banner = page.getByRole("link", {
+      name: "Audit Anda sedang berjalan",
+    });
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveAttribute("href", "/audit");
+    const bannerBox = await banner.boundingBox();
+    const titleBox = await page
+      .getByRole("heading", { level: 1, name: LANDING_HEADING })
+      .boundingBox();
+    expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(titleBox!.y);
   });
 
   test("the menu links scroll to their sections (AC-04)", async ({ page }) => {
@@ -124,6 +149,13 @@ test.describe("on a laptop", () => {
     await second.click();
     await expect(second).toHaveAttribute("aria-expanded", "true");
     await expect(first).toHaveAttribute("aria-expanded", "false");
+    // Keyboard focus leaves the plus/minus mark at the row's end.
+    const mark = second.locator('[aria-hidden="true"]').first();
+    const markX = (await mark.boundingBox())?.x;
+    await first.focus();
+    await page.keyboard.press("Tab");
+    await expect(second).toBeFocused();
+    expect((await mark.boundingBox())?.x).toBe(markX);
     // The server's HTML already holds the closed answers.
     const html = await (await request.get("/")).text();
     for (const words of [
@@ -187,6 +219,38 @@ test.describe("on a laptop", () => {
     await expect(field).toHaveAttribute("aria-invalid", "true");
     await expect(page).toHaveURL(/\/$/);
   });
+
+  for (const [index, form] of [
+    [1, "price receipt"],
+    [2, "closing"],
+  ] as const) {
+    test(`the ${form} form refuses an invalid entry and hands a valid one to /audit (AC-02, AC-03)`, async ({
+      page,
+    }) => {
+      const scope = page.locator("[data-source-form]").nth(index);
+      const field = scope.getByRole("textbox", {
+        name: LANDING_FIELD,
+        exact: true,
+      });
+      const check = scope.getByRole("button", {
+        name: LANDING_CHECK,
+        exact: true,
+      });
+      await field.fill("bukan alamat");
+      await check.click();
+      await expect(
+        scope.getByText(
+          "Masukkan satu website atau akun Instagram yang valid.",
+        ),
+      ).toBeVisible();
+      await expect(field).toBeFocused();
+      await expect(field).toHaveAttribute("aria-invalid", "true");
+      await expect(page).toHaveURL(/\/$/);
+      await field.fill(FICTIONAL_BUSINESS.url);
+      await check.click();
+      await expect(page).toHaveURL(/\/audit$/);
+    });
+  }
 });
 
 test.describe("on a phone", () => {
@@ -204,6 +268,23 @@ test.describe("on a phone", () => {
     await expect(sheet).toHaveCount(0);
     await expect(page.locator("#harga h2")).toBeInViewport();
     await expect(page.locator("#harga h2")).toBeFocused();
+  });
+
+  test("widening past 1024px closes the sheet and focuses the laptop menu (AC-04)", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 900, height: 800 });
+    await page.getByRole("button", { name: "Buka menu", exact: true }).click();
+    const sheet = page.getByRole("dialog", { name: "Menu" });
+    await expect(sheet).toBeVisible();
+    // A tablet turned sideways: the menu button hides from 1024px.
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await expect(sheet).toHaveCount(0);
+    await expect(
+      page
+        .getByRole("banner")
+        .getByRole("link", { name: "Cara kerja", exact: true }),
+    ).toBeFocused();
   });
 
   test("the report tabs are a segmented control with arrow keys (AC-06)", async ({
@@ -264,7 +345,9 @@ test.describe("on a phone", () => {
 test.describe("with JavaScript off", () => {
   test.use({ javaScriptEnabled: false });
 
-  test("every FAQ answer shows", async ({ page }) => {
+  test("every FAQ answer and every view of the example report shows", async ({
+    page,
+  }) => {
     await page.goto("/");
     const questions = page.locator("[data-landing-faq] h3");
     const answers = page.locator("[data-landing-faq] [role='region']");
@@ -272,6 +355,11 @@ test.describe("with JavaScript off", () => {
     await expect(answers).toHaveCount(await questions.count());
     for (const answer of await answers.all()) {
       await expect(answer).toBeVisible();
+    }
+    const views = page.locator("[data-report-views] [role='tabpanel']");
+    await expect(views).toHaveCount(4);
+    for (const view of await views.all()) {
+      await expect(view).toBeVisible();
     }
   });
 });

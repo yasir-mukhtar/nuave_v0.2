@@ -43,8 +43,9 @@ export function StickyBar() {
     return () => observer.disconnect();
   }, []);
 
+  // A complementary landmark, so its content is not outside every landmark.
   return (
-    <div
+    <aside
       className={cn(styles.bar, shown && styles.shown)}
       data-sticky-bar
       data-shown={shown || undefined}
@@ -71,6 +72,6 @@ export function StickyBar() {
           Cek klinik saya
         </a>
       </div>
-    </div>
+    </aside>
   );
 }

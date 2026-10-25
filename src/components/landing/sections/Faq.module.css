@@ -28,9 +28,17 @@
   text-decoration: none;
 }
 
+/* One focus ring: this outline, not also the shared trigger's ring. */
 .trigger:focus-visible {
   outline: 2px solid var(--ink-900);
   outline-offset: 4px;
+  box-shadow: none;
+}
+
+/* The shared trigger's focus classes add an empty ::after, which would be a
+   third flex item and push the mark toward the middle of the row. */
+.trigger::after {
+  content: none;
 }
 
 .trigger[data-panel-open] {
