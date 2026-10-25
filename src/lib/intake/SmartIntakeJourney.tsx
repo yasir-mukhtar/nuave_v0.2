@@ -893,7 +893,7 @@ export default function SmartIntakeJourney({
   }, [ready, session.stage, session.order?.id, paymentState]);
 
   // Spec 019 R-08/R-09: checkout opened, and a confirmed payment. Each is sent
-  // once (per website, per order), only after Setuju; a test-pass order is
+  // once (per website, per order), only after Allow; a test-pass order is
   // "not_required", never "paid", so it sends no Purchase.
   const checkoutSite = session.identity?.canonicalUrl;
   useEffect(() => {

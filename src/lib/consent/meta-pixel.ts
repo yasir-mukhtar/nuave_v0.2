@@ -3,7 +3,7 @@ import { ORDER_GROSS_AMOUNT } from "@/lib/payments/midtrans";
 import { readTestPassCode } from "@/lib/intake/test-pass";
 
 /**
- * Spec 019: the Meta Pixel, loaded only after the visitor taps Accept on the
+ * Spec 019: the Meta Pixel, loaded only after the visitor taps Allow on the
  * cookie notice (privacy page section 10). Without a Pixel ID nothing here
  * runs: no notice, no footer link, no request to Meta.
  */
@@ -93,7 +93,7 @@ declare global {
   }
 }
 
-/** Whether this page may send: an ID, Accept given in this page, and not an
+/** Whether this page may send: an ID, Allow given in this page, and not an
  * excluded page. Set by the notice. */
 let granted = false;
 
@@ -123,7 +123,7 @@ function removePaymentReturnParams() {
   );
 }
 
-/** Meta's standard snippet, inserted only after Accept (R-02), with automatic
+/** Meta's standard snippet, inserted only after Allow (R-02), with automatic
  * configuration off (Meta's automatic events, page metadata and scroll depth)
  * and its own history tracking off, since Nuave sends PageView itself (R-06).
  * Meta's "Automatic advanced matching", which reads typed emails, is a setting
@@ -150,8 +150,8 @@ function loadPixel(id: string) {
   fbq("init", id);
 }
 
-/** Accept (or a stored Accept): load the Pixel, or grant it again after an
- * earlier Decline in this page. */
+/** Allow (or a stored Allow): load the Pixel, or grant it again after an
+ * earlier Don't allow in this page. */
 export function grantTracking(pathname: string): boolean {
   const id = metaPixelId();
   if (!id || trackingExcludedPath(pathname)) return false;
@@ -162,7 +162,7 @@ export function grantTracking(pathname: string): boolean {
   return true;
 }
 
-/** R-11: Decline stops every further event in this page, and the codes kept
+/** R-11: Don't allow stops every further event in this page, and the codes kept
  * for sending each event once go too. */
 export function revokeTracking() {
   granted = false;
@@ -174,7 +174,7 @@ export function revokeTracking() {
   }
 }
 
-/** The stored choice is read again on every send, so Decline chosen in another
+/** The stored choice is read again on every send, so Don't allow chosen in another
  * tab (the privacy page opens in one from checkout) stops this tab too. */
 function canSend(): boolean {
   if (
@@ -269,7 +269,7 @@ export function trackJourneyEvent(
     });
 }
 
-/** For tests: forget this page's Accept. */
+/** For tests: forget this page's Allow. */
 export function resetTrackingForTests() {
   granted = false;
 }

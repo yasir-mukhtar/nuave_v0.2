@@ -2,10 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 import { grantAccess } from "./helpers";
 import {
   continueToOrder,
+  emailInput,
   expectBrandConfirm,
   fillEntry,
   FICTIONAL_BUSINESS,
   ORDER_EMAIL,
+  payButton,
   payOrder,
   pressPeriksa,
 } from "./journey";
@@ -17,7 +19,7 @@ import {
 const META_SCRIPT = "https://connect.facebook.net/en_US/fbevents.js";
 
 function notice(page: Page) {
-  return page.getByRole("region", { name: "Cookie?" });
+  return page.getByRole("region", { name: "Allow cookies?" });
 }
 
 async function setUp(page: Page, baseURL: string) {
@@ -55,7 +57,7 @@ async function tracked(page: Page) {
   return (await pixelCalls(page)).filter((call) => call[0] === "track");
 }
 
-test("before a choice nothing loads from Meta; Accept loads the Pixel and sends PageView, also after a reload", async ({
+test("before a choice nothing loads from Meta; Allow loads the Pixel and sends PageView, also after a reload", async ({
   page,
   baseURL,
 }) => {
@@ -71,7 +73,9 @@ test("before a choice nothing loads from Meta; Accept loads the Pixel and sends 
   await page.waitForTimeout(300);
   expect(meta).toEqual([]);
 
-  await notice(page).getByRole("button", { name: "Accept" }).click();
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
   await expect(notice(page)).toHaveCount(0);
   await expect.poll(() => meta).toEqual([META_SCRIPT]);
   expect(await pixelCalls(page)).toEqual([
@@ -85,13 +89,13 @@ test("before a choice nothing loads from Meta; Accept loads the Pixel and sends 
   await expect.poll(() => tracked(page)).toEqual([["track", "PageView"]]);
 });
 
-test("Decline loads nothing, now or after a reload; Pengaturan cookie reopens the choice", async ({
+test("Don't allow loads nothing, now or after a reload; Pengaturan cookie reopens the choice", async ({
   page,
   baseURL,
 }) => {
   const meta = await setUp(page, baseURL!);
   await page.goto("/faq");
-  await notice(page).getByRole("button", { name: "Decline" }).click();
+  await notice(page).getByRole("button", { name: "Don't allow" }).click();
   await expect(notice(page)).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -101,17 +105,19 @@ test("Decline loads nothing, now or after a reload; Pengaturan cookie reopens th
 
   await page.getByRole("button", { name: "Pengaturan cookie" }).click();
   await expect(notice(page)).toBeVisible();
-  await expect(notice(page)).toContainText("Your choice now: Decline");
+  await expect(notice(page)).toContainText("Your choice now: Don't allow");
 });
 
 for (const path of ["/r", "/uji"]) {
-  test(`${path} never shows the notice or loads the Pixel, even after Accept`, async ({
+  test(`${path} never shows the notice or loads the Pixel, even after Allow`, async ({
     page,
     baseURL,
   }) => {
     const meta = await setUp(page, baseURL!);
     await page.goto("/");
-    await notice(page).getByRole("button", { name: "Accept" }).click();
+    await notice(page)
+      .getByRole("button", { name: "Allow", exact: true })
+      .click();
     await expect.poll(() => meta).toEqual([META_SCRIPT]);
     meta.length = 0;
 
@@ -129,7 +135,9 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
 }) => {
   await setUp(page, baseURL!);
   await page.goto("/");
-  await notice(page).getByRole("button", { name: "Accept" }).click();
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
 
   await fillEntry(page);
   await pressPeriksa(page);
@@ -170,7 +178,9 @@ test("back from Midtrans, the order number leaves the address before the Pixel s
 }) => {
   const meta = await setUp(page, baseURL!);
   await page.goto("/");
-  await notice(page).getByRole("button", { name: "Accept" }).click();
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
   await expect.poll(() => meta).toEqual([META_SCRIPT]);
 
   await page.goto(
@@ -191,4 +201,94 @@ test("back from Midtrans, the order number leaves the address before the Pixel s
   );
   expect(hrefs.length).toBeGreaterThan(0);
   expect(hrefs.join(" ")).not.toContain("NV-");
+});
+
+// R-14 on a long page (/faq) and a short one (/), whose last controls need
+// the room at the page's end to scroll clear of the notice.
+for (const path of ["/faq", "/"]) {
+  test(`on a phone, Tab never leaves a focused control on ${path} behind the open notice (R-14)`, async ({
+    page,
+    baseURL,
+  }) => {
+    await setUp(page, baseURL!);
+    await page.goto(path);
+    await expect(notice(page)).toBeVisible();
+    for (let stop = 1; stop <= 30; stop += 1) {
+      await page.keyboard.press("Tab");
+      const hidden = await page.evaluate(() => {
+        const focused = document.activeElement;
+        const box = document.querySelector("[data-cookie-notice]");
+        if (!(focused instanceof HTMLElement) || !box || box.contains(focused))
+          return null;
+        return focused.getBoundingClientRect().top >=
+          box.getBoundingClientRect().top
+          ? (focused.textContent ?? "").trim() || focused.tagName
+          : null;
+      });
+      expect(hidden, `Tab stop ${stop}`).toBeNull();
+    }
+  });
+}
+
+test("on /audit the notice sits above the journey's bottom bar, so its buttons stay usable (R-14)", async ({
+  page,
+  baseURL,
+}) => {
+  await setUp(page, baseURL!);
+  await fillEntry(page);
+  await expect(notice(page)).toBeVisible();
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  // No choice made yet: the bar's buttons are still in view and tappable.
+  await continueToOrder(page);
+  await expect(payButton(page)).toBeVisible();
+  const { payTop, cardBottom } = await page.evaluate(() => ({
+    payTop: [...document.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Bayar Rp249.000"))!
+      .getBoundingClientRect().top,
+    cardBottom: document
+      .querySelector("[data-cookie-notice] > div")!
+      .getBoundingClientRect().bottom,
+  }));
+  expect(payTop).toBeGreaterThanOrEqual(cardBottom);
+});
+
+// A touch screen with no on-screen keyboard (a tablet with a keyboard case):
+// the keyboard bar floats over the page instead of riding on a keyboard.
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test("on /audit the keyboard bar floats above the open notice, so its buttons stay usable (R-14)", async ({
+    page,
+    baseURL,
+  }) => {
+    await setUp(page, baseURL!);
+    await fillEntry(page);
+    await expect(notice(page)).toBeVisible();
+    await pressPeriksa(page);
+    await expectBrandConfirm(page);
+    await continueToOrder(page);
+    await emailInput(page).tap();
+    const bar = page.getByRole("group", { name: "Bantuan mengetik email" });
+    const bayar = bar.getByRole("button", { name: "Bayar", exact: true });
+    await expect(bayar).toBeVisible();
+    // Once its entrance has settled, the bar sits wholly above the notice,
+    // and a tap on its Bayar reaches Bayar.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document
+              .querySelector(
+                '[role="group"][aria-label="Bantuan mengetik email"]',
+              )!
+              .getBoundingClientRect().bottom <=
+            document
+              .querySelector("[data-cookie-notice] > div")!
+              .getBoundingClientRect().top,
+        ),
+      )
+      .toBe(true);
+    await bayar.tap({ trial: true, timeout: 2_000 });
+  });
 });

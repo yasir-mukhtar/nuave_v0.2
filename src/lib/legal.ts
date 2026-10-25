@@ -12,7 +12,7 @@ export const LEGAL_VERSION = "1.1";
 export const LEGAL_EFFECTIVE_DATE = "25 Oktober 2026";
 /** The privacy page's own version and date: 1.2 adds that the cookie choice
  * is kept in the browser for 12 months (Spec 019); 1.3 names the notice's
- * English button, Accept. A new version asks every visitor for their cookie
+ * English button, Allow. A new version asks every visitor for their cookie
  * choice again. */
 export const PRIVACY_VERSION = "1.3";
 export const PRIVACY_EFFECTIVE_DATE = "25 Oktober 2026";

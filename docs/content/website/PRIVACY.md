@@ -2,7 +2,7 @@
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
 > Status: version 1.3 (2026-10-25) names the cookie notice's English
-> button, **Accept**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
+> button, **Allow**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
 > browser for 12 months (Spec 019). Version 1.1 (2026-10-25) added the clauses
 > adopted from the HaloAI comparison; approved by the founder on 2026-10-25
 > (PR #160). The lawyer
@@ -22,8 +22,8 @@
 - **Before the Meta Pixel or Conversions API goes live** (founder decision
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
-  1. show a cookie notice with **Accept** and **Decline** (English since
-     2026-10-25), and load nothing from Meta until the visitor taps Accept; once server events send the
+  1. show a cookie notice with **Allow** and **Don't allow** (English since
+     2026-10-25), and load nothing from Meta until the visitor taps Allow; once server events send the
      hashed order email, the notice names it (founder, 2026-10-25: the
      browser step sends no email, so the notice does not mention one yet);
   2. send server events (Conversions API) only for visitors who agreed, and
@@ -75,8 +75,8 @@
   IDs that Midtrans can link to the customer, so paid orders are pseudonymous
   rather than anonymous; unpaid orders become effectively anonymous.
 - **Version 1.3 (2026-10-25):** section 10 names the notice's button
-  **Accept** (was **Setuju**): the notice's buttons are now English, Accept
-  (the main, purple button) and Decline.
+  **Allow** (was **Setuju**): the notice's buttons are now English, Allow
+  (the main, purple button) and Don't allow, under the title "Allow cookies?".
 - **Version 1.2 (2026-10-25):** section 10 adds "Pilihan cookie Anda sendiri
   disimpan di browser Anda selama 12 bulan." The privacy page now has its own
   version (`PRIVACY_VERSION` in `src/lib/legal.ts`); the terms stay at 1.1. A
@@ -256,7 +256,7 @@ menahan lalu lintas berbahaya.
 
 Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai Meta Pixel
 di browser dan Meta Conversions API dari server kami. Keduanya hanya aktif jika
-Anda memilih **Accept** pada pemberitahuan cookie. Jika Anda menolak atau belum
+Anda memilih **Allow** pada pemberitahuan cookie. Jika Anda menolak atau belum
 memilih, Nuave tidak memasang cookie Meta dan tidak mengirim data Anda ke Meta.
 
 Jika Anda setuju, yang dikirim ke Meta Platforms adalah:

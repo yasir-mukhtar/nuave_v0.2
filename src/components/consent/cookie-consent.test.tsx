@@ -66,7 +66,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const notice = () => screen.queryByRole("region", { name: "Cookie?" });
+const notice = () => screen.queryByRole("region", { name: "Allow cookies?" });
 
 describe("without a Pixel ID (R-01)", () => {
   it("shows no notice and no link, and loads nothing from Meta", () => {
@@ -91,6 +91,58 @@ describe("without a Pixel ID (R-01)", () => {
 describe("with a Pixel ID", () => {
   beforeEach(() => setUp());
 
+  describe("keeps focused controls clear of the open notice (R-14)", () => {
+    const root = document.documentElement;
+    const clear = () => root.style.getPropertyValue("--cookie-notice-clear");
+    const room = () =>
+      document.querySelector('div[aria-hidden="true"][style*="notice-clear"]');
+
+    afterEach(() => {
+      root.style.scrollPaddingBottom = "";
+    });
+
+    it("pads the page above the notice and the /audit bar, then puts it back", () => {
+      root.style.scrollPaddingBottom = "3px";
+      app();
+      expect(notice()).not.toBeNull();
+      // jsdom lays nothing out: the notice measures 0, so only the 8px margin.
+      expect(clear()).toBe("8px");
+      expect(root.style.scrollPaddingBottom).toBe(
+        "calc(var(--cookie-notice-clear) + var(--journey-bottom-bar, 0px))",
+      );
+      expect(room()).not.toBeNull();
+      act(() => screen.getByRole("button", { name: "Don't allow" }).click());
+      expect(notice()).toBeNull();
+      expect(clear()).toBe("");
+      expect(root.style.scrollPaddingBottom).toBe("3px");
+      expect(room()).toBeNull();
+    });
+
+    it("lets go on a page without the notice and pads again on the way back", () => {
+      const view = app();
+      expect(clear()).toBe("8px");
+      pathname = "/uji";
+      view.rerender(
+        <>
+          <CookieSettingsLink />
+          <CookieConsent />
+        </>,
+      );
+      expect(notice()).toBeNull();
+      expect(clear()).toBe("");
+      expect(root.style.scrollPaddingBottom).toBe("");
+      pathname = "/faq";
+      view.rerender(
+        <>
+          <CookieSettingsLink />
+          <CookieConsent />
+        </>,
+      );
+      expect(notice()).not.toBeNull();
+      expect(clear()).toBe("8px");
+    });
+  });
+
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();
@@ -104,9 +156,9 @@ describe("with a Pixel ID", () => {
     expect(window.fbq).toBeUndefined();
   });
 
-  it("Accept loads the Pixel with automatic configuration off and sends PageView", () => {
+  it("Allow loads the Pixel with automatic configuration off and sends PageView", () => {
     app();
-    act(() => screen.getByRole("button", { name: "Accept" }).click());
+    act(() => screen.getByRole("button", { name: "Allow" }).click());
     expect(notice()).toBeNull();
     expect(metaScripts()).toHaveLength(1);
     expect(metaScripts()[0].src).toBe(
@@ -122,7 +174,7 @@ describe("with a Pixel ID", () => {
     expect(saved).toMatchObject({ choice: "yes", version: PRIVACY_VERSION });
   });
 
-  it("a stored Accept loads the Pixel without asking, one PageView per page", () => {
+  it("a stored Allow loads the Pixel without asking, one PageView per page", () => {
     storeChoice("yes");
     const view = app();
     expect(notice()).toBeNull();
@@ -140,9 +192,9 @@ describe("with a Pixel ID", () => {
     ]);
   });
 
-  it("Decline loads nothing, now or on the next visit (R-11)", () => {
+  it("Don't allow loads nothing, now or on the next visit (R-11)", () => {
     app();
-    act(() => screen.getByRole("button", { name: "Decline" }).click());
+    act(() => screen.getByRole("button", { name: "Don't allow" }).click());
     expect(notice()).toBeNull();
     expect(window.fbq).toBeUndefined();
     cleanup();
@@ -153,7 +205,7 @@ describe("with a Pixel ID", () => {
     expect(window.fbq).toBeUndefined();
   });
 
-  it("Pengaturan cookie reopens the notice; Decline then stops every event", () => {
+  it("Pengaturan cookie reopens the notice; Don't allow then stops every event", () => {
     storeChoice("yes");
     app();
     expect(notice()).toBeNull();
@@ -161,14 +213,12 @@ describe("with a Pixel ID", () => {
       screen.getByRole("button", { name: "Pengaturan cookie" }).click(),
     );
     expect(notice()).not.toBeNull();
-    expect(screen.getByText(/Your choice now:/).textContent).toContain(
-      "Accept",
-    );
+    expect(screen.getByText(/Your choice now:/).textContent).toContain("Allow");
     expect(
       screen.getByText(/can be removed in your browser settings/),
     ).toBeTruthy();
     expect(document.activeElement?.id).toBe("cookie-notice-title");
-    act(() => screen.getByRole("button", { name: "Decline" }).click());
+    act(() => screen.getByRole("button", { name: "Don't allow" }).click());
     expect(calls()).toContainEqual(["consent", "revoke"]);
     const before = tracked().length;
     trackJourneyEvent("Purchase", "order-1");
@@ -186,12 +236,12 @@ describe("with a Pixel ID", () => {
     expect(notice()).not.toBeNull();
   });
 
-  it("with storage blocked, Accept loads nothing and the notice comes back (R-03)", () => {
+  it("with storage blocked, Allow loads nothing and the notice comes back (R-03)", () => {
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("blocked");
     });
     app();
-    act(() => screen.getByRole("button", { name: "Accept" }).click());
+    act(() => screen.getByRole("button", { name: "Allow" }).click());
     expect(window.fbq).toBeUndefined();
     cleanup();
     app();
@@ -199,7 +249,7 @@ describe("with a Pixel ID", () => {
   });
 
   it.each(["/r", "/uji", "/uji/x"])(
-    "never on %s, even with a stored Accept (R-04)",
+    "never on %s, even with a stored Allow (R-04)",
     (path) => {
       pathname = path;
       window.history.replaceState(null, "", path);
@@ -267,7 +317,7 @@ describe("with a Pixel ID", () => {
     expect(hrefs.at(-1)).not.toContain("NV-");
   });
 
-  it("Decline chosen in another tab stops this tab at once (privacy page section 10)", () => {
+  it("Don't allow chosen in another tab stops this tab at once (privacy page section 10)", () => {
     storeChoice("yes");
     app();
     // The other tab writes the choice; this tab may not have heard yet.
@@ -315,7 +365,7 @@ describe("with a Pixel ID", () => {
     expect(tracked().filter((call) => call[1] === "Lead")).toHaveLength(1);
   });
 
-  it("removes what it no longer needs: an expired choice, old codes, and all codes on Decline", () => {
+  it("removes what it no longer needs: an expired choice, old codes, and all codes on Don't allow", () => {
     storeChoice("yes", new Date(Date.now() - 400 * 86_400_000));
     window.localStorage.setItem(
       "nuave-pixel-sent",
@@ -324,13 +374,13 @@ describe("with a Pixel ID", () => {
     app();
     expect(window.localStorage.getItem(COOKIE_CHOICE_KEY)).toBeNull();
     expect(window.localStorage.getItem("nuave-pixel-sent")).toBeNull();
-    act(() => screen.getByRole("button", { name: "Accept" }).click());
+    act(() => screen.getByRole("button", { name: "Allow" }).click());
     trackJourneyEvent("Lead", "https://klinik.example/");
     expect(window.localStorage.getItem("nuave-pixel-sent")).not.toBeNull();
     act(() =>
       screen.getByRole("button", { name: "Pengaturan cookie" }).click(),
     );
-    act(() => screen.getByRole("button", { name: "Decline" }).click());
+    act(() => screen.getByRole("button", { name: "Don't allow" }).click());
     expect(window.localStorage.getItem("nuave-pixel-sent")).toBeNull();
   });
 
@@ -341,7 +391,7 @@ describe("with a Pixel ID", () => {
     link.focus();
     act(() => link.click());
     expect(document.activeElement?.id).toBe("cookie-notice-title");
-    act(() => screen.getByRole("button", { name: "Decline" }).click());
+    act(() => screen.getByRole("button", { name: "Don't allow" }).click());
     expect(document.activeElement).toBe(link);
   });
 
