@@ -125,7 +125,7 @@ contoh atau bahan promosi tanpa izin terpisah dari Anda.
 
 ## 5. Layanan AI dan pencarian
 
-Untuk membuat audit, sebagian data klinik dan pertanyaan Anda dikirim ke
+Untuk membuat audit, sebagian data bisnis dan pertanyaan Anda dikirim ke
 penyedia layanan AI dan penyedia data pencarian. Penyedia data pencarian
 mengambil data pencarian Google. Penyedia itu juga menanyakan sepuluh pertanyaan
 Anda ke ChatGPT dan Google, lalu mengembalikan jawabannya kepada kami.
@@ -139,16 +139,15 @@ kebijakan masing-masing.
 | Penyedia | Untuk | Data yang terkait |
 |---|---|---|
 | Penyedia hosting dan penyimpanan cloud | Menjalankan situs, menjaga keamanannya, dan menyimpan data pesanan serta laporan | Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan |
-| Penyedia layanan AI | Membaca website klinik, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data klinik yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa |
+| Penyedia layanan AI | Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa |
 | Penyedia data pencarian | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
 | Midtrans | Pembayaran | Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans |
-| Penyedia pengiriman email | Mengirim email pesanan dan link laporan | Email pesanan, nama klinik, nomor pesanan, dan link laporan |
+| Penyedia pengiriman email | Mengirim email pesanan dan link laporan | Email pesanan, nama bisnis, nomor pesanan, dan link laporan |
 | Penyedia kotak masuk email | Menerima dan membalas email ke support@nuave.ai | Isi email yang Anda kirim ke kami |
 | Meta Platforms | Iklan dan pengukuran iklan, hanya jika Anda setuju | Lihat bagian 9 |
 
 Kami menyebut nama Midtrans dan Meta karena Anda berhubungan langsung dengan
-keduanya. Penyedia lain kami sebut menurut jenisnya. Jika Anda pelanggan Nuave
-dan ingin tahu nama penyedia yang memproses data Anda, tanyakan ke
+keduanya. Penyedia lain kami sebut menurut jenisnya. Jika Anda ingin tahu nama penyedia yang memproses data Anda, tanyakan ke
 support@nuave.ai.
 
 Kami juga dapat memberikan data jika diminta secara sah oleh pemerintah atau

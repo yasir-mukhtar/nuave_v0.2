@@ -9,8 +9,8 @@
 
 The questions follow the clinic landing page FAQ (lofi v2.2, PR #152), with
 three answers corrected to match the product: no 30-day price promise
-(founder, 2026-10-24); ChatGPT is asked from Indonesia with the city named in
-each question, not "dari kota Anda" (Spec 018); no measured "kurang dari 10
+(founder, 2026-10-24); ChatGPT is asked from Indonesia and only the questions
+about choosing a clinic name the city, not "dari kota Anda" (Spec 018 R-10a); no measured "kurang dari 10
 detik" for the free check. The landing page FAQ should take the same words.
 
 ---
@@ -43,9 +43,8 @@ dari sumber apa.
 ## Bisa cek sendiri di ChatGPT?
 
 Bisa. Bedanya, Anda hanya melihat satu jawaban, dari satu akun, pada satu
-waktu. Nuave menanyakan sepuluh pertanyaan dari pencarian Google, yang menyebut
-kota Anda, ke ChatGPT dan Google AI Overview. Lalu kami catat jawaban, sumber,
-klinik lain yang disebut, dan yang perlu dibenahi.
+waktu. Nuave menanyakan sepuluh pertanyaan dari pencarian Google ke ChatGPT dan Google AI Overview. Pertanyaan tentang memilih klinik menyebut kota Anda. Lalu kami catat
+jawaban, sumber, klinik lain yang disebut, dan yang perlu dibenahi.
 
 ## AI apa yang diuji?
 
@@ -56,8 +55,8 @@ mencatat seberapa sering, sebagai temuan, bukan sebagai pemeriksaan yang gagal.
 ## Dari mana pertanyaannya?
 
 Dari data pencarian Google untuk jenis klinik dan kota Anda. Tiap pertanyaan
-diberi label asalnya. Jika datanya sedikit, sebagian pertanyaan disusun dari
-profil klinik Anda, dan labelnya menyebut itu.
+diberi label asalnya. Jika datanya tidak cukup, pertanyaan disusun dari profil klinik Anda,
+dan labelnya menyebut itu.
 
 Anda membaca dan boleh mengubah sepuluh pertanyaan itu sebelum audit dimulai.
 Setelah Anda setuju, pertanyaan dikunci.
@@ -94,23 +93,23 @@ Anda setujui dalam 7 hari, pesanan berakhir dan uang Anda kembali penuh.
 ## Jawaban AI kan berubah-ubah?
 
 Benar. Jawaban bisa berbeda menurut waktu, akun, dan lokasi. Laporan mencatat
-jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya. Karena itu kami
-sarankan cek ulang setelah 6 sampai 8 minggu.
+jawaban pada satu waktu, lengkap dengan tanggal dan sumbernya. Karena itu kami sarankan cek ulang, sebagai pesanan baru, setelah 6
+sampai 8 minggu.
 
 Laporan bukan peringkat atau jaminan. Nuave tidak menjamin klinik Anda akan
 disebut, atau pasien dan penjualan akan naik.
 
 ## Klinik saya punya beberapa cabang.
 
-Satu audit untuk satu kota: kota utama klinik Anda, atau kota cabang yang Anda
-pilih. Kotanya Anda pilih setelah membayar. Untuk kota lain, pesan audit
+Satu audit untuk satu kota, yaitu kota utama klinik Anda atau kota
+cabang yang Anda pilih, atau untuk seluruh Indonesia. Pilihannya Anda tentukan setelah membayar. Untuk kota lain, pesan audit
 terpisah.
 
 ## Aman soal aturan iklan kesehatan?
 
-Laporan Nuave untuk internal klinik, bukan iklan. Sarannya menyangkut informasi
-faktual, seperti jadwal, layanan, dan lokasi. Untuk materi promosi klinik, tetap
-ikuti aturan iklan kesehatan yang berlaku.
+Laporan Nuave untuk internal klinik, bukan iklan. Sarannya biasanya tentang informasi seperti jadwal, layanan, dan
+lokasi. Sebelum memakainya untuk promosi, pastikan sesuai aturan iklan
+kesehatan yang berlaku.
 
 ## Data apa yang perlu saya isi?
 
@@ -122,8 +121,9 @@ Baca [Kebijakan privasi dan data](/privacy).
 
 Pemeriksaan yang gagal ditandai Tidak dapat diuji, dengan tautan Minta bantuan.
 Itu bukan hasil buruk. Tim kami membantu memeriksa ulang. Jika tetap tidak bisa,
-Anda mendapat pengembalian dana sebagian: Rp12.450 untuk setiap pemeriksaan yang
-gagal.
+Anda mendapat pengembalian dana sebagian: Rp12.450 untuk setiap pemeriksaan yang gagal. Jika audit tidak bisa
+selesai, atau laporan belum siap 24 jam setelah audit dimulai, uang
+Anda kembali penuh.
 
 Salah ketik email saat memesan? Kirim bukti pembayaran atau nomor transaksi
 Midtrans ke support@nuave.ai, dan kami bantu.

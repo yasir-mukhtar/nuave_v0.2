@@ -43,8 +43,8 @@ const PROVIDERS: Array<[string, string, string]> = [
   ],
   [
     "Penyedia layanan AI",
-    "Membaca website klinik, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan",
-    "Alamat dan isi website, data klinik yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa",
+    "Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan",
+    "Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa",
   ],
   [
     "Penyedia data pencarian",
@@ -59,7 +59,7 @@ const PROVIDERS: Array<[string, string, string]> = [
   [
     "Penyedia pengiriman email",
     "Mengirim email pesanan dan link laporan",
-    "Email pesanan, nama klinik, nomor pesanan, dan link laporan",
+    "Email pesanan, nama bisnis, nomor pesanan, dan link laporan",
   ],
   [
     "Penyedia kotak masuk email",
@@ -204,7 +204,7 @@ export default function PrivacyPage() {
 
         <Section title="5. Layanan AI dan pencarian">
           <p>
-            Untuk membuat audit, sebagian data klinik dan pertanyaan Anda
+            Untuk membuat audit, sebagian data bisnis dan pertanyaan Anda
             dikirim ke penyedia layanan AI dan penyedia data pencarian. Penyedia
             data pencarian mengambil data pencarian Google. Penyedia itu juga
             menanyakan sepuluh pertanyaan Anda ke ChatGPT dan Google, lalu
@@ -246,9 +246,8 @@ export default function PrivacyPage() {
           <p>
             Kami menyebut nama Midtrans dan Meta karena Anda berhubungan
             langsung dengan keduanya. Penyedia lain kami sebut menurut jenisnya.
-            Jika Anda pelanggan Nuave dan ingin tahu nama penyedia yang
-            memproses data Anda, tanyakan ke{" "}
-            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+            Jika Anda ingin tahu nama penyedia yang memproses data Anda,
+            tanyakan ke <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
           </p>
           <p>
             Kami juga dapat memberikan data jika diminta secara sah oleh

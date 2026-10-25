@@ -60,9 +60,9 @@ export default function FaqPage() {
           <p>
             Bisa. Bedanya, Anda hanya melihat satu jawaban, dari satu akun, pada
             satu waktu. Nuave menanyakan sepuluh pertanyaan dari pencarian
-            Google, yang menyebut kota Anda, ke {AUDIT_SOURCES_TEXT}. Lalu kami
-            catat jawaban, sumber, klinik lain yang disebut, dan yang perlu
-            dibenahi.
+            Google ke {AUDIT_SOURCES_TEXT}. Pertanyaan tentang memilih klinik
+            menyebut kota Anda. Lalu kami catat jawaban, sumber, klinik lain
+            yang disebut, dan yang perlu dibenahi.
           </p>
         </FaqSection>
 
@@ -78,7 +78,7 @@ export default function FaqPage() {
         <FaqSection question="Dari mana pertanyaannya?">
           <p>
             Dari data pencarian Google untuk jenis klinik dan kota Anda. Tiap
-            pertanyaan diberi label asalnya. Jika datanya sedikit, sebagian
+            pertanyaan diberi label asalnya. Jika datanya tidak cukup,
             pertanyaan disusun dari profil klinik Anda, dan labelnya menyebut
             itu.
           </p>
@@ -131,8 +131,8 @@ export default function FaqPage() {
           <p>
             Benar. Jawaban bisa berbeda menurut waktu, akun, dan lokasi. Laporan
             mencatat jawaban pada satu waktu, lengkap dengan tanggal dan
-            sumbernya. Karena itu kami sarankan cek ulang setelah 6 sampai 8
-            minggu.
+            sumbernya. Karena itu kami sarankan cek ulang, sebagai pesanan baru,
+            setelah 6 sampai 8 minggu.
           </p>
           <p>
             Laporan bukan peringkat atau jaminan. Nuave tidak menjamin klinik
@@ -142,18 +142,19 @@ export default function FaqPage() {
 
         <FaqSection question="Klinik saya punya beberapa cabang.">
           <p>
-            Satu audit untuk satu kota: kota utama klinik Anda, atau kota cabang
-            yang Anda pilih. Kotanya Anda pilih setelah membayar. Untuk kota
-            lain, pesan audit terpisah.
+            Satu audit untuk satu kota, yaitu kota utama klinik Anda atau kota
+            cabang yang Anda pilih, atau untuk seluruh Indonesia. Pilihannya
+            Anda tentukan setelah membayar. Untuk kota lain, pesan audit
+            terpisah.
           </p>
         </FaqSection>
 
         <FaqSection question="Aman soal aturan iklan kesehatan?">
           <p>
-            Laporan Nuave untuk internal klinik, bukan iklan. Sarannya
-            menyangkut informasi faktual, seperti jadwal, layanan, dan lokasi.
-            Untuk materi promosi klinik, tetap ikuti aturan iklan kesehatan yang
-            berlaku.
+            Laporan Nuave untuk internal klinik, bukan iklan. Sarannya biasanya
+            tentang informasi seperti jadwal, layanan, dan lokasi. Sebelum
+            memakainya untuk promosi, pastikan sesuai aturan iklan kesehatan
+            yang berlaku.
           </p>
         </FaqSection>
 
@@ -171,7 +172,9 @@ export default function FaqPage() {
             Pemeriksaan yang gagal ditandai Tidak dapat diuji, dengan tautan
             Minta bantuan. Itu bukan hasil buruk. Tim kami membantu memeriksa
             ulang. Jika tetap tidak bisa, Anda mendapat pengembalian dana
-            sebagian: Rp12.450 untuk setiap pemeriksaan yang gagal.
+            sebagian: Rp12.450 untuk setiap pemeriksaan yang gagal. Jika audit
+            tidak bisa selesai, atau laporan belum siap 24 jam setelah audit
+            dimulai, uang Anda kembali penuh.
           </p>
           <p>
             Salah ketik email saat memesan? Kirim bukti pembayaran atau nomor

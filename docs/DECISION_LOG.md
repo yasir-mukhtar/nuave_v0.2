@@ -20,7 +20,9 @@ Yasir decided, reviewing the S5 pages (PR #159):
   Midtrans transaction number as proof, then send the report link to the
   correct email and switch off the old link. This narrows S0 D5 and D7 for
   that one case. The support script has no command to change an order's
-  email yet, so for now it is done by hand.
+  email yet, so for now it is done by hand in the database; switch off the
+  old link (`npm run support -- off <order>`) before sending the new one. A
+  support command for this is parked.
 - **Provider names on the privacy page:** name only the companies a
   customer deals with directly (Midtrans, Meta) and describe the others by
   type; give the names to a customer who asks. The internal map lives in
