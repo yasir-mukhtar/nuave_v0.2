@@ -414,6 +414,17 @@ label and topic line.
   "Kebijakan Privasi" → `/privacy`; "Kontak" → `/support`.
 - "© {tahun ini} Nuave", which shows "© 2026 Nuave" now.
 
+## Names for screen readers (Proposal)
+
+Not visible; read aloud by screen readers.
+
+- Menu links (laptop and phone sheet): "Bagian halaman". Phone sheet: "Menu".
+- Footer links: "Tautan situs".
+- Hero clinic tabs: "Jenis klinik". S5 tabs: "Isi laporan".
+- S5 report card: "Contoh laporan: Klinik Cantik Fiksi".
+- The pictures, the icons and the phone's status bar are hidden from screen
+  readers; the words beside them say the same.
+
 ## Small fixes
 
 Each one keeps the design's meaning. The founder can reverse any of them in

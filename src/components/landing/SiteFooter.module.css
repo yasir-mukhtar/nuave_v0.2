@@ -1,0 +1,92 @@
+/* The landing's footer (Figma S9 > Footer). Phone: logo, links in two
+   columns of 44px rows, ©. From 768px: one 96px row. */
+
+.footer {
+  padding: 32px var(--gutter) 40px;
+  background: #ffffff;
+}
+
+.row {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 28px;
+  border-top: 1px solid var(--line-200);
+}
+
+.brand {
+  display: inline-flex;
+  border-radius: 6px;
+}
+
+.links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  color: var(--ink-700);
+  font-size: var(--type-copy-size);
+  line-height: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  color: var(--ink-900);
+}
+
+.brand:focus-visible,
+.link:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.copy {
+  margin: 12px 0 0;
+  color: var(--ink-500);
+  font-size: var(--type-copy-sm-size);
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .footer {
+    padding: 0 var(--gutter);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: 96px;
+    padding-top: 0;
+  }
+
+  .brand {
+    justify-self: start;
+  }
+
+  .links {
+    display: flex;
+    gap: 32px;
+    margin: 0;
+  }
+
+  .link {
+    height: auto;
+  }
+
+  .copy {
+    justify-self: end;
+    margin: 0;
+    line-height: 20px;
+  }
+}

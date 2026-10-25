@@ -17,10 +17,10 @@ for (const path of ["/", "/audit"] as const) {
   });
 }
 
-// J01: the mobile header no longer has a menu; its one popup control is
-// "Contoh laporan", which opens the example report as a sheet. It may name
-// the sheet in `aria-controls` only while the sheet exists.
-test("the mobile header's popup control never points at a missing sheet, and Escape returns focus", async ({
+// Spec 019: on a phone the landing menu is a button that opens a sheet with
+// the section links. It may name the sheet in `aria-controls` only while the
+// sheet exists, keeps focus inside while open, and Escape returns focus.
+test("the mobile menu button never points at a missing sheet, and Escape returns focus", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -28,8 +28,8 @@ test("the mobile header's popup control never points at a missing sheet, and Esc
 
   const trigger = page
     .getByRole("banner")
-    .getByRole("button", { name: "Contoh laporan", exact: true });
-  const sheet = page.getByRole("dialog", { name: "Contoh laporan" });
+    .getByRole("button", { name: "Buka menu", exact: true });
+  const sheet = page.getByRole("dialog", { name: "Menu" });
   await expect(trigger).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-haspopup", "dialog");
   expect(await trigger.getAttribute("aria-controls")).toBeNull();
@@ -37,11 +37,14 @@ test("the mobile header's popup control never points at a missing sheet, and Esc
 
   await trigger.click();
   await expect(sheet).toBeVisible();
+  for (const link of ["Cara kerja", "Laporan", "Harga", "FAQ"]) {
+    await expect(sheet.getByRole("link", { name: link })).toBeVisible();
+  }
   // The open modal sheet hides the page behind it from role queries.
   const controls = await page
     .getByRole("banner", { includeHidden: true })
     .getByRole("button", {
-      name: "Contoh laporan",
+      name: "Buka menu",
       exact: true,
       includeHidden: true,
     })

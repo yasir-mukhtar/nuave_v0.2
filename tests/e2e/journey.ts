@@ -30,10 +30,16 @@ export const FICTIONAL_BUSINESS = {
   url: "https://kedai-fiksi.example/",
 } as const;
 
-// J01: the landing hero and the `/audit` entry share the headline and form.
+// J01: the `/audit` entry's headline and form.
 export const ENTRY_HEADING = "Bisnis Anda disebut AI?";
 export const WEBSITE_FIELD = "Website atau akun Instagram bisnis";
 export const CHECK_BUSINESS = "Cek bisnis saya di AI";
+// Spec 019: the clinic landing page at `/`. Its three website forms (hero,
+// price receipt, closing) share these names; the hero's comes first.
+export const LANDING_HEADING =
+  "Pasien sekarang tanya AI dulu sebelum pilih klinik";
+export const LANDING_FIELD = "Website atau Instagram klinik";
+export const LANDING_CHECK = "Cek klinik saya di AI";
 export const ENTRY_INVALID_NOTICE =
   "Masukkan satu website atau akun Instagram yang valid.";
 /** Shown under the entry form while the server is not live. */
@@ -444,9 +450,22 @@ export function backButton(page: Page) {
 
 /* ───────────────────────── J01–J05: entry and free check ───────────────────────── */
 
-/** The one website field (landing hero and `/audit` entry). */
+/** The `/audit` entry's website field. */
 export function websiteInput(page: Page) {
   return page.getByRole("textbox", { name: WEBSITE_FIELD, exact: true });
+}
+
+/** The landing hero (its region is named by the page's headline). */
+export function landingHero(page: Page) {
+  return page.getByRole("region", { name: LANDING_HEADING });
+}
+
+/** The landing hero's website field (the first of the page's three). */
+export function landingInput(page: Page) {
+  return landingHero(page).getByRole("textbox", {
+    name: LANDING_FIELD,
+    exact: true,
+  });
 }
 
 /** Landing hero form → `/audit`. Expects to start on `/`. The website goes
@@ -457,13 +476,11 @@ export async function openAuditFromLanding(
   website = "example.com",
 ) {
   await expect(
-    page.getByRole("heading", { level: 1, name: ENTRY_HEADING }),
+    page.getByRole("heading", { level: 1, name: LANDING_HEADING }),
   ).toBeVisible();
-  await websiteInput(page).fill(website);
-  await page
-    .locator("form")
-    .filter({ has: websiteInput(page) })
-    .getByRole("button", { name: CHECK_BUSINESS, exact: true })
+  await landingInput(page).fill(website);
+  await landingHero(page)
+    .getByRole("button", { name: LANDING_CHECK, exact: true })
     .click();
   // The dev server compiles /audit on its first visit; on a cold CI runner
   // that can take longer than the default 10 s expect timeout.

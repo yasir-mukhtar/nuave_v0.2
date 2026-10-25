@@ -1,0 +1,228 @@
+/* S1 · Hero (Figma 288:3 desktop, 289:3 mobile).
+   Phone: copy, then the clinic tabs and the phone, cut by the hero's
+   bottom edge under a white fade. From 1100px: copy left, phone right. */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding-top: 24px;
+}
+
+.wash {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 710px;
+  height: 760px;
+  background: radial-gradient(
+    closest-side,
+    rgb(243 240 255 / 0.95) 0%,
+    rgb(243 240 255 / 0.5) 50%,
+    rgb(255 255 255 / 0) 100%
+  );
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: calc(1200px + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+}
+
+.resume {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink-900);
+}
+
+.title span {
+  display: block;
+}
+
+.lede {
+  max-width: 470px;
+  margin: 14px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-lg-size);
+  font-weight: var(--type-copy-lg-weight);
+  line-height: var(--type-copy-lg-leading);
+}
+
+.form {
+  margin-top: 24px;
+}
+
+.micro {
+  max-width: 310px;
+  margin: 14px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.micro b {
+  color: var(--ink-800);
+  font-weight: 600;
+}
+
+.ticks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 258px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.ticks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--ink-700);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 20px;
+}
+
+.tick {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--stone-100);
+  color: var(--ink-900);
+}
+
+.demo {
+  width: 100%;
+  margin-top: 21px;
+}
+
+.fade {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 170px;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0) 0%,
+    rgb(255 255 255 / 0.94) 50%,
+    #ffffff 75%
+  );
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding-top: 56px;
+  }
+
+  .lede {
+    margin-top: 22px;
+  }
+
+  .form {
+    margin-top: 36px;
+  }
+
+  .micro {
+    max-width: 440px;
+    margin-top: 18px;
+  }
+
+  .ticks {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 22px;
+    max-width: 520px;
+    margin-top: 22px;
+  }
+
+  .ticks li {
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .demo {
+    margin-top: 40px;
+  }
+
+  .fade {
+    height: 120px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .hero {
+    --copy-w: clamp(500px, calc(33.33vw + 133px), 560px);
+    --col-gap: clamp(32px, calc(11.67vw - 96px), 60px);
+    height: 820px;
+    padding-top: 152px;
+  }
+
+  .wash {
+    top: -20px;
+    bottom: auto;
+    left: calc(
+      max(var(--gutter), (100% - 1200px) / 2) + var(--copy-w) + var(--col-gap) -
+        220px
+    );
+    width: 860px;
+    height: 940px;
+    background: radial-gradient(
+      closest-side,
+      rgb(243 240 255 / 0.95) 0%,
+      rgb(243 240 255 / 0.55) 45%,
+      rgb(255 255 255 / 0) 100%
+    );
+    transform: none;
+  }
+
+  .inner {
+    display: grid;
+    grid-template-columns: var(--copy-w) minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--col-gap);
+  }
+
+  .demo {
+    margin-top: 0;
+  }
+
+  .fade {
+    height: 74px;
+    background: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0) 0%,
+      rgb(255 255 255 / 0.9) 60%,
+      #ffffff 100%
+    );
+  }
+}

@@ -1,0 +1,201 @@
+/* The landing's menu (Figma S1 · Hero > Nav). Phone and tablet: 56px with
+   a menu button; from 1024px: 80px with the four section links centred. */
+
+.header {
+  position: relative;
+  z-index: 10;
+  background: #ffffff;
+}
+
+.inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: calc(1200px + 2 * var(--gutter));
+  height: 56px;
+  margin: 0 auto;
+  padding: 0 16px 0 20px;
+}
+
+.brand {
+  display: flex;
+  border-radius: 6px;
+}
+
+.brand:focus-visible,
+.link:focus-visible,
+.cta:focus-visible,
+.menuButton:focus-visible,
+.sheetLink:focus-visible,
+.sheetCta:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
+
+.links {
+  display: none;
+}
+
+.link {
+  color: var(--ink-700);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 20px;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  color: var(--ink-900);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 36px to the eye, 44px to a thumb. */
+.cta,
+.menuButton {
+  position: relative;
+}
+
+.cta::after,
+.menuButton::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line-300);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+}
+
+.cta:hover {
+  background: var(--stone-50);
+}
+
+.menuButton {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--stone-100);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.menuButton:hover {
+  background: var(--line-200);
+}
+
+/* ── The phone menu sheet ── */
+
+.sheet {
+  gap: 0;
+  padding: 0 0 24px;
+  border: 0;
+  border-radius: 0 0 28px 28px;
+  background: #ffffff;
+  color: var(--ink-900);
+  box-shadow: var(--elevation-float);
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px 0 20px;
+}
+
+.sheetLinks {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 24px 0;
+}
+
+.sheetLink {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  border-bottom: 1px solid var(--line-200);
+  color: var(--ink-900);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-leading);
+  text-decoration: none;
+}
+
+.sheetCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  margin: 24px 24px 0;
+  border-radius: 999px;
+  background: var(--commit);
+  color: #ffffff;
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  text-decoration: none;
+  box-shadow: var(--elevation-commit);
+}
+
+@media (min-width: 768px) {
+  .inner {
+    padding: 0 var(--gutter);
+  }
+}
+
+@media (min-width: 1024px) {
+  .inner {
+    height: 80px;
+  }
+
+  .links {
+    position: absolute;
+    left: 50%;
+    display: flex;
+    gap: 36px;
+    transform: translateX(-50%);
+  }
+
+  .cta {
+    height: 42px;
+    padding: 0 20px;
+  }
+
+  .cta::after {
+    display: none;
+  }
+
+  .menuButton {
+    display: none;
+  }
+}

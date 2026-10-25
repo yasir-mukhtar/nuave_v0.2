@@ -1,0 +1,346 @@
+/* S7 · Yang Anda dapat + harga (Figma 291:239, 291:538). A paper receipt:
+   the nine items, the price, then a perforated stub with the form. The
+   side notches and the torn foot are masks, so the paper fits any text. */
+
+.section {
+  background:
+    linear-gradient(180deg, #ffffff 0%, rgb(255 255 255 / 0) 420px),
+    radial-gradient(
+      900px 820px at 50% 520px,
+      rgb(255 255 255 / 0.9) 0%,
+      rgb(255 255 255 / 0) 100%
+    ),
+    var(--stone-100);
+}
+
+.narrowBreak {
+  display: inline;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.paper {
+  --notch: 9px;
+  --pad-x: 20px;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 600px;
+  filter: drop-shadow(0 1px 1.5px rgb(22 22 29 / 0.1))
+    drop-shadow(0 6px 12px rgb(22 22 29 / 0.06))
+    drop-shadow(0 22px 40px rgb(22 22 29 / 0.07));
+}
+
+/* Two soft curls of shadow under the paper's lower corners. */
+.paper::before,
+.paper::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: -14px;
+  width: 46%;
+  height: 34px;
+  background: radial-gradient(
+    closest-side,
+    rgb(22 22 29 / 0.16) 0%,
+    rgb(22 22 29 / 0.06) 55%,
+    rgb(22 22 29 / 0) 100%
+  );
+}
+
+.paper::before {
+  left: -6px;
+}
+
+.paper::after {
+  right: -6px;
+}
+
+.receipt,
+.stub {
+  position: relative;
+  padding-inline: var(--pad-x);
+  color: var(--ink-900);
+}
+
+/* Half of each side notch at the receipt's foot. */
+.receipt {
+  padding-top: 30px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #fffffd 0%, #fdfcf8 100%);
+  mask:
+    radial-gradient(
+      circle var(--notch) at 0 100%,
+      #0000 calc(var(--notch) - 0.5px),
+      #000 var(--notch)
+    ),
+    radial-gradient(
+      circle var(--notch) at 100% 100%,
+      #0000 calc(var(--notch) - 0.5px),
+      #000 var(--notch)
+    );
+  mask-composite: intersect;
+}
+
+/* The other half of the notches, the dashed tear line and the torn foot:
+   12px teeth, 6px deep. */
+.stub {
+  padding-top: 28px;
+  padding-bottom: 42px;
+  background: linear-gradient(180deg, #fdfcf8 0%, #fcfaf5 100%);
+  mask:
+    radial-gradient(
+      circle var(--notch) at 0 0,
+      #0000 calc(var(--notch) - 0.5px),
+      #000 var(--notch)
+    ),
+    radial-gradient(
+      circle var(--notch) at 100% 0,
+      #0000 calc(var(--notch) - 0.5px),
+      #000 var(--notch)
+    ),
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg)
+      50% / 12px 100%;
+  mask-composite: intersect;
+}
+
+.stub::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: calc(var(--notch) + 10px);
+  left: calc(var(--notch) + 10px);
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #c9c8d6 0 5px,
+    transparent 5px 10px
+  );
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.mark {
+  width: 28px;
+  height: auto;
+}
+
+.title {
+  margin: 10px 0 0;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: 22px;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  margin: 2px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 18px;
+}
+
+.rule {
+  height: 0;
+  margin: 20px 0 4px;
+  border: 0;
+  border-top: 1px dashed var(--line-300);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 16px;
+  align-items: start;
+  column-gap: 10px;
+  padding: 10px 0;
+}
+
+.no {
+  color: var(--ink-500);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: 21px;
+  font-variant-numeric: tabular-nums;
+}
+
+.itemText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: 21px;
+  letter-spacing: -0.005em;
+}
+
+.itemLine {
+  margin-top: 2px;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 19px;
+}
+
+.tick {
+  width: 16px;
+  height: 21px;
+  color: var(--ink-400);
+}
+
+.double {
+  height: 4px;
+  margin: 12px 0 0;
+  border: 0;
+  border-top: 1px solid var(--ink-900);
+  border-bottom: 1px solid var(--ink-900);
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 26px 0 30px;
+  text-align: center;
+}
+
+/* The big number (type-number, 64px) needs 334px; a phone's receipt has
+   about 300, so phones get the next canonical step down, 48px. */
+.price {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: var(--type-size-4xl);
+  font-weight: var(--type-number-weight);
+  line-height: var(--type-number-leading);
+  letter-spacing: var(--type-number-tracking);
+  white-space: nowrap;
+}
+
+.terms {
+  margin: 12px 0 0;
+  color: var(--ink-700);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 21px;
+}
+
+.pay {
+  margin: 0;
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: 24px;
+  text-align: center;
+}
+
+.methods {
+  margin: 4px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 20px;
+  text-align: center;
+}
+
+.sep {
+  color: var(--ink-400);
+}
+
+.form {
+  margin-top: 22px;
+}
+
+.ready {
+  margin: 12px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-caption-size);
+  line-height: 18px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .narrowBreak {
+    display: none;
+  }
+
+  .stage {
+    margin-top: 56px;
+  }
+
+  .paper {
+    --notch: 11px;
+    --pad-x: 56px;
+  }
+
+  .receipt {
+    padding-top: 44px;
+  }
+
+  .stub {
+    padding-top: 34px;
+    padding-bottom: 52px;
+  }
+
+  .title {
+    line-height: 24px;
+  }
+
+  .sub {
+    line-height: 20px;
+  }
+
+  .rule {
+    margin: 26px 0 6px;
+  }
+
+  .item {
+    grid-template-columns: 24px minmax(0, 1fr) 18px;
+    column-gap: 14px;
+    padding: 11px 0;
+  }
+
+  .no {
+    line-height: 22px;
+  }
+
+  .itemTitle {
+    line-height: 22px;
+  }
+
+  .itemLine {
+    line-height: 20px;
+  }
+
+  .tick {
+    width: 18px;
+    height: 22px;
+  }
+
+  .total {
+    padding: 30px 0 34px;
+  }
+
+  .price {
+    font-size: var(--type-number-size);
+  }
+
+  .terms {
+    margin-top: 16px;
+  }
+}

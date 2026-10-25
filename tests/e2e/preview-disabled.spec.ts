@@ -62,12 +62,14 @@ test.describe("preview disabled", () => {
   }) => {
     const requests = collectRequests(page);
     await page.goto("/");
-    // J01: the hero is the website field and its button.
+    // Spec 019: the hero is the website field and its button.
     await expect(
-      page.getByRole("textbox", { name: "Website atau akun Instagram bisnis" }),
+      page
+        .getByRole("textbox", { name: "Website atau Instagram klinik" })
+        .first(),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Cek bisnis saya di AI" }).first(),
+      page.getByRole("button", { name: "Cek klinik saya di AI" }).first(),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Audit bisnis saya" }),
@@ -78,10 +80,11 @@ test.describe("preview disabled", () => {
     // The website handed to /audit cannot start the switched-off journey:
     // the entry is unavailable and no check runs.
     await page
-      .getByRole("textbox", { name: "Website atau akun Instagram bisnis" })
+      .getByRole("textbox", { name: "Website atau Instagram klinik" })
+      .first()
       .fill("example.com");
     await page
-      .getByRole("button", { name: "Cek bisnis saya di AI" })
+      .getByRole("button", { name: "Cek klinik saya di AI" })
       .first()
       .click();
     await expect(page).toHaveURL(/\/audit$/, { timeout: 30_000 });

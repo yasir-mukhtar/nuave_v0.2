@@ -96,7 +96,8 @@ hear about their clinic, what the audit costs, and how to start.
 - **Sticky bar** (from the lofi notes).
   - It says "Gratis dulu · Audit Rp249.000" with a "Cek klinik saya" button.
   - It appears once the hero form has scrolled out of view and hides while
-    the hero, the price receipt or the closing form is on screen.
+    any of the three website forms (hero, price receipt, closing) is on
+    screen.
   - Phone: bottom bar. Desktop: top bar.
 - **S5 report tabs.** Skor, Jawaban AI, Klinik lain and Perbaikan switch the
   report card. Desktop shows them as a contents list beside the card, phone
@@ -121,7 +122,8 @@ hear about their clinic, what the audit costs, and how to start.
     - 15px to 14 or 16;
     - 17px to 16 or 18.
   - Big numbers use `type-number` (64px). The design's 96px figures
-    therefore show at 64px.
+    therefore show at 64px. On a phone the receipt's price takes the next
+    step down, 48px, because 64px is wider than the receipt.
   - The hero headline uses `type-display`, which now starts at 36px on a
     phone (D-1).
 - **R-03 Words.** Every visible string comes from COPY.md. No new claims,
