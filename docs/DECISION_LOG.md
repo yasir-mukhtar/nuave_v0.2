@@ -6,6 +6,28 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-24 — S5 follow-up: promise clause, mistyped email, provider names, FAQ
+
+Yasir decided, reviewing the S5 pages (PR #159):
+
+- **Delivery promise:** the refund clause now says the refund is partial,
+  by the failed checks: "Laporan siap dalam 15 menit setelah audit dimulai.
+  Jika ada bagian yang gagal diperiksa, tim kami membantu
+  menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana
+  sebagian, sesuai jumlah pemeriksaan yang gagal." (`DELIVERY_PROMISE`, so
+  the order preview, checkout, payment email and terms all change.)
+- **Mistyped order email:** support may accept a payment receipt or a
+  Midtrans transaction number as proof, then send the report link to the
+  correct email and switch off the old link. This narrows S0 D5 and D7 for
+  that one case. The support script has no command to change an order's
+  email yet, so for now it is done by hand.
+- **Provider names on the privacy page:** name only the companies a
+  customer deals with directly (Midtrans, Meta) and describe the others by
+  type; give the names to a customer who asks. The internal map lives in
+  `docs/content/website/PRIVACY.md`.
+- **FAQ:** the /faq page takes the clinic landing FAQ questions (lofi v2.2),
+  with answers corrected to the product.
+
 ## 2026-10-24 — S5: Meta consent, operator, refunds and record deletion
 
 Yasir answered eight questions while the S5 wording (terms, privacy,

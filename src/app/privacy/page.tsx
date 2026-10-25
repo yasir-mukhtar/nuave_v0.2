@@ -32,24 +32,22 @@ function Section({
   );
 }
 
+/** S5 (founder, 2026-10-24): name the companies a customer deals with
+ * directly (Midtrans, Meta); describe the rest by type, and give the names to
+ * a customer who asks. The internal list is in docs/content/website/PRIVACY.md. */
 const PROVIDERS: Array<[string, string, string]> = [
   [
-    "Cloudflare",
-    "Hosting, keamanan situs, dan penyimpanan data pesanan serta laporan",
+    "Penyedia hosting dan penyimpanan cloud",
+    "Menjalankan situs, menjaga keamanannya, dan menyimpan data pesanan serta laporan",
     "Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan",
   ],
   [
-    "OpenAI",
-    "Membaca website bisnis, menyiapkan ringkasan bisnis, dan menyusun laporan",
-    "Alamat dan isi website bisnis, data bisnis yang Anda konfirmasi, pertanyaan, dan jawaban yang diperiksa",
+    "Penyedia layanan AI",
+    "Membaca website klinik, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan",
+    "Alamat dan isi website, data klinik yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa",
   ],
   [
-    "Cheaper Inference",
-    "Menyusun draf sepuluh pertanyaan",
-    "Data bisnis yang Anda konfirmasi dan data pencarian Google",
-  ],
-  [
-    "DataForSEO",
+    "Penyedia data pencarian",
     "Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google",
     "Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan",
   ],
@@ -59,12 +57,12 @@ const PROVIDERS: Array<[string, string, string]> = [
     "Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans",
   ],
   [
-    "Resend",
+    "Penyedia pengiriman email",
     "Mengirim email pesanan dan link laporan",
-    "Email pesanan, nama bisnis, nomor pesanan, dan link laporan",
+    "Email pesanan, nama klinik, nomor pesanan, dan link laporan",
   ],
   [
-    "Penyedia kotak masuk email kami",
+    "Penyedia kotak masuk email",
     "Menerima dan membalas email ke support@nuave.ai",
     "Isi email yang Anda kirim ke kami",
   ],
@@ -93,8 +91,8 @@ const RETENTION: Array<[string, string]> = [
     "Paling sedikit 24 bulan, atau lebih lama jika diwajibkan untuk pajak atau hukum",
   ],
   [
-    "Salinan email di Resend",
-    "Sesuai masa simpan Resend, kami atur sesingkat yang tersedia",
+    "Salinan email di penyedia pengiriman email",
+    "Sesuai masa simpan penyedia itu, kami atur sesingkat yang tersedia",
   ],
 ];
 
@@ -159,10 +157,9 @@ export default function PrivacyPage() {
               laporan.
             </li>
             <li>
-              <strong>Data teknis:</strong> Cloudflare, penyedia hosting kami,
-              memproses alamat IP dan informasi browser untuk menjalankan situs
-              dan menahan serangan. Nuave sendiri tidak menyimpan alamat IP
-              Anda.
+              <strong>Data teknis:</strong> penyedia hosting kami memproses
+              alamat IP dan informasi browser untuk menjalankan situs dan
+              menahan serangan. Nuave sendiri tidak menyimpan alamat IP Anda.
             </li>
           </ul>
         </Section>
@@ -207,11 +204,11 @@ export default function PrivacyPage() {
 
         <Section title="5. Layanan AI dan pencarian">
           <p>
-            Untuk membuat audit, sebagian data bisnis dan pertanyaan Anda
-            dikirim ke OpenAI, Cheaper Inference, dan DataForSEO. DataForSEO
-            mengambil data pencarian Google. DataForSEO juga menanyakan sepuluh
-            pertanyaan Anda ke ChatGPT dan Google, lalu mengembalikan jawabannya
-            kepada kami.
+            Untuk membuat audit, sebagian data klinik dan pertanyaan Anda
+            dikirim ke penyedia layanan AI dan penyedia data pencarian. Penyedia
+            data pencarian mengambil data pencarian Google. Penyedia itu juga
+            menanyakan sepuluh pertanyaan Anda ke ChatGPT dan Google, lalu
+            mengembalikan jawabannya kepada kami.
           </p>
           <p>
             Kami tidak memasukkan email, data pembayaran, atau data pribadi lain
@@ -246,6 +243,13 @@ export default function PrivacyPage() {
               </tbody>
             </table>
           </div>
+          <p>
+            Kami menyebut nama Midtrans dan Meta karena Anda berhubungan
+            langsung dengan keduanya. Penyedia lain kami sebut menurut jenisnya.
+            Jika Anda pelanggan Nuave dan ingin tahu nama penyedia yang
+            memproses data Anda, tanyakan ke{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+          </p>
           <p>
             Kami juga dapat memberikan data jika diminta secara sah oleh
             pemerintah atau penegak hukum, atau jika perlu untuk melindungi
@@ -297,8 +301,9 @@ export default function PrivacyPage() {
             Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa
             melanjutkan setelah halaman dimuat ulang. Data ini tetap di
             perangkat Anda. Setelah 7 hari data itu tidak dipakai lagi, dan
-            dihapus saat Anda membuka Nuave berikutnya. Cloudflare juga dapat
-            memasang cookie keamanan untuk menahan lalu lintas berbahaya.
+            dihapus saat Anda membuka Nuave berikutnya. Penyedia hosting kami
+            juga dapat memasang cookie keamanan untuk menahan lalu lintas
+            berbahaya.
           </p>
           <p>
             Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai

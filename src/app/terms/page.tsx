@@ -205,10 +205,13 @@ export default function TermsPage() {
         <Section title="8. Salah email atau salah bisnis">
           <p>
             Tulis ke <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
-            Kami bantu secara manual. Link laporan hanya kami kirim ulang ke
-            email pesanan, dan permintaannya harus datang dari email itu. Nomor
-            pesanan saja tidak cukup untuk membuktikan pesanan itu milik Anda.
-            Laporan yang sudah dibuat tidak diubah.
+            Kami bantu secara manual. Jika Anda salah ketik email saat memesan,
+            kirim bukti pembayaran atau nomor transaksi Midtrans. Setelah kami
+            periksa, kami bantu mengirim link laporan ke email yang benar dan
+            mematikan link lama. Permintaan lain, seperti mengirim ulang link,
+            harus datang dari email pesanan. Nomor pesanan saja tidak cukup
+            untuk membuktikan pesanan itu milik Anda. Laporan yang sudah dibuat
+            tidak diubah.
           </p>
         </Section>
 

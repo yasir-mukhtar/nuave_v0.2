@@ -36,8 +36,20 @@
   2026-10-24: build an automatic cleanup job before the first failed orders
   reach 30 days (mid-November 2026). Until it exists, section 8 is a promise
   the system does not yet keep.
-- **Support inbox provider:** section 6 names it generically. Add the
-  company's name once it is confirmed.
+- **Provider names (founder, 2026-10-24):** the public page names only the
+  companies a customer deals with directly (Midtrans, Meta) and describes the
+  rest by type. Give a customer the names on request. Keep this map current:
+
+  | Type on the page | Company today |
+  |---|---|
+  | Penyedia hosting dan penyimpanan cloud | Cloudflare (Workers, D1) |
+  | Penyedia layanan AI | OpenAI; Cheaper Inference (draft questions) |
+  | Penyedia data pencarian | DataForSEO |
+  | Penyedia pengiriman email | Resend |
+  | Penyedia kotak masuk email | not yet recorded |
+
+  The report's method section still names DataForSEO, so paying customers
+  see that one anyway.
 
 ---
 
@@ -80,7 +92,7 @@ dalam 1 hari kerja (Senin sampai Jumat, WIB).
   calon pelanggan, pesaing, dan fakta publik lain yang Anda konfirmasi.
 - **Data audit:** sepuluh pertanyaan yang Anda setujui, jawaban ChatGPT dan
   Google AI Overview, sumber yang disebut, dan laporan.
-- **Data teknis:** Cloudflare, penyedia hosting kami, memproses alamat IP dan
+- **Data teknis:** penyedia hosting kami memproses alamat IP dan
   informasi browser untuk menjalankan situs dan menahan serangan. Nuave sendiri
   tidak menyimpan alamat IP Anda.
 
@@ -113,10 +125,10 @@ contoh atau bahan promosi tanpa izin terpisah dari Anda.
 
 ## 5. Layanan AI dan pencarian
 
-Untuk membuat audit, sebagian data bisnis dan pertanyaan Anda dikirim ke
-OpenAI, Cheaper Inference, dan DataForSEO. DataForSEO mengambil data pencarian
-Google. DataForSEO juga menanyakan sepuluh pertanyaan Anda ke ChatGPT dan
-Google, lalu mengembalikan jawabannya kepada kami.
+Untuk membuat audit, sebagian data klinik dan pertanyaan Anda dikirim ke
+penyedia layanan AI dan penyedia data pencarian. Penyedia data pencarian
+mengambil data pencarian Google. Penyedia itu juga menanyakan sepuluh pertanyaan
+Anda ke ChatGPT dan Google, lalu mengembalikan jawabannya kepada kami.
 
 Kami tidak memasukkan email, data pembayaran, atau data pribadi lain ke
 permintaan ini. Penyedia tersebut dapat memproses data di luar Indonesia sesuai
@@ -126,14 +138,18 @@ kebijakan masing-masing.
 
 | Penyedia | Untuk | Data yang terkait |
 |---|---|---|
-| Cloudflare | Hosting, keamanan situs, dan penyimpanan data pesanan serta laporan | Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan |
-| OpenAI | Membaca website bisnis, menyiapkan ringkasan bisnis, dan menyusun laporan | Alamat dan isi website bisnis, data bisnis yang Anda konfirmasi, pertanyaan, dan jawaban yang diperiksa |
-| Cheaper Inference | Menyusun draf sepuluh pertanyaan | Data bisnis yang Anda konfirmasi dan data pencarian Google |
-| DataForSEO | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
+| Penyedia hosting dan penyimpanan cloud | Menjalankan situs, menjaga keamanannya, dan menyimpan data pesanan serta laporan | Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan |
+| Penyedia layanan AI | Membaca website klinik, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data klinik yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa |
+| Penyedia data pencarian | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
 | Midtrans | Pembayaran | Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans |
-| Resend | Mengirim email pesanan dan link laporan | Email pesanan, nama bisnis, nomor pesanan, dan link laporan |
-| Penyedia kotak masuk email kami | Menerima dan membalas email ke support@nuave.ai | Isi email yang Anda kirim ke kami |
+| Penyedia pengiriman email | Mengirim email pesanan dan link laporan | Email pesanan, nama klinik, nomor pesanan, dan link laporan |
+| Penyedia kotak masuk email | Menerima dan membalas email ke support@nuave.ai | Isi email yang Anda kirim ke kami |
 | Meta Platforms | Iklan dan pengukuran iklan, hanya jika Anda setuju | Lihat bagian 9 |
+
+Kami menyebut nama Midtrans dan Meta karena Anda berhubungan langsung dengan
+keduanya. Penyedia lain kami sebut menurut jenisnya. Jika Anda pelanggan Nuave
+dan ingin tahu nama penyedia yang memproses data Anda, tanyakan ke
+support@nuave.ai.
 
 Kami juga dapat memberikan data jika diminta secara sah oleh pemerintah atau
 penegak hukum, atau jika perlu untuk melindungi keamanan orang yang memakai Nuave dan layanan kami.
@@ -155,7 +171,7 @@ menyediakannya. Tanyakan ke support@nuave.ai jika Anda ingin tahu lebih lanjut.
 | Kemajuan pesanan di browser Anda | Paling lama 7 hari, di perangkat Anda |
 | Email bantuan dan keluhan | 12 bulan setelah masalahnya selesai |
 | Catatan pembayaran | Paling sedikit 24 bulan, atau lebih lama jika diwajibkan untuk pajak atau hukum |
-| Salinan email di Resend | Sesuai masa simpan Resend, kami atur sesingkat yang tersedia |
+| Salinan email di penyedia pengiriman email | Sesuai masa simpan penyedia itu, kami atur sesingkat yang tersedia |
 
 Setelah masa itu, data dihapus atau dibuat tidak lagi menunjuk ke Anda.
 Pengecualiannya data yang masih diperlukan untuk permintaan, sengketa, atau
@@ -165,7 +181,7 @@ kewajiban hukum yang belum selesai.
 
 Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa melanjutkan
 setelah halaman dimuat ulang. Data ini tetap di perangkat Anda. Setelah 7 hari data itu tidak dipakai lagi, dan
-dihapus saat Anda membuka Nuave berikutnya. Cloudflare juga dapat memasang cookie keamanan untuk
+dihapus saat Anda membuka Nuave berikutnya. Penyedia hosting kami juga dapat memasang cookie keamanan untuk
 menahan lalu lintas berbahaya.
 
 Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai Meta Pixel

@@ -20,12 +20,12 @@
 | Failed check: "Tidak dapat diuji", "Minta bantuan", re-run by hand, refund if the results cannot be provided | Spec 018 R-20, R-21a |
 | Refund within 3 business days of the recorded failure or the cancellation | S0 D3 |
 | Refund route: Midtrans for QRIS, GoPay, DANA; transfer from the founder's bank for bank transfer | Decision 2026-10-14 Q9 |
-| Rp12.450 per failed check that cannot be re-run | Founder decision 2026-10-24 (S5) |
+| Rp12.450 per failed check that cannot be re-run; the promise says "pengembalian dana sebagian" | Founder decisions 2026-10-24 (S5 and follow-up) |
 | Continue in the same browser; questions not approved in 7 days end the order with a full refund | Spec 016 Q4; Spec 017 R-13 |
 | Google showing no AI Overview is a finding, not a failure | Spec 018 Q-3 |
 | Full refund for cancelling before the audit starts | Founder decision 2026-10-24 (S5) |
 | Report link valid 12 months | S0 D1; decision 2026-10-18 |
-| Wrong email or business handled by hand; the link is reissued only to the order email; order number is not proof | S0 D5, D7, D8 |
+| Wrong email or business handled by hand; a mistyped email is fixed with a payment receipt or Midtrans transaction number; other reissues only to the order email; order number alone is not proof | S0 D5, D7, D8; founder 2026-10-24 (S5 follow-up) |
 | Reply within 1 business day | S0 D4 |
 
 The earlier draft promised a free replacement audit, a 30-day quote, a fixed
@@ -101,8 +101,8 @@ hanya tersimpan di browser itu. Jika sepuluh pertanyaan belum Anda setujui dalam
 ## 5. Kapan laporan siap
 
 Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal
-diperiksa, tim kami membantu menyelesaikannya; jika tidak dapat diselesaikan,
-kami kembalikan uang Anda.
+diperiksa, tim kami membantu menyelesaikannya. Jika tetap tidak bisa, Anda
+mendapat pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.
 
 Audit dimulai saat Anda menyetujui sepuluh pertanyaan, bukan saat membayar.
 Setelah itu pertanyaan dikunci. Audit tetap berjalan di server walaupun halaman
@@ -156,9 +156,13 @@ penyedia pembayaran.
 
 ## 8. Salah email atau salah bisnis
 
-Tulis ke support@nuave.ai. Kami bantu secara manual. Link laporan hanya kami kirim ulang ke email pesanan,
-dan permintaannya harus datang dari email itu. Nomor pesanan saja tidak cukup
-untuk membuktikan pesanan itu milik Anda. Laporan yang sudah dibuat tidak diubah.
+Tulis ke support@nuave.ai. Kami bantu secara manual. Jika Anda salah ketik email saat memesan,
+kirim bukti pembayaran atau nomor transaksi Midtrans. Setelah kami
+periksa, kami bantu mengirim link laporan ke email yang benar dan
+mematikan link lama. Permintaan lain, seperti mengirim ulang link,
+harus datang dari email pesanan. Nomor pesanan saja tidak cukup untuk
+membuktikan pesanan itu milik Anda. Laporan yang sudah dibuat tidak
+diubah.
 
 ## 9. Batasan audit
 
