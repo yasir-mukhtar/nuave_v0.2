@@ -55,13 +55,42 @@ export default function TermsPage() {
             di {OPERATOR_CITY}, Indonesia. Kontak:{" "}
             <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
           </p>
-          <p>
-            Di halaman ini, &ldquo;Anda&rdquo; adalah orang yang memesan audit.
-            &ldquo;Kami&rdquo; adalah pengelola Nuave.
-          </p>
         </Section>
 
-        <Section title="2. Yang Anda beli">
+        <Section title="2. Istilah di halaman ini">
+          <ul>
+            <li>
+              <strong>Nuave</strong> atau <strong>kami</strong>: {OPERATOR_NAME}
+              , pengelola layanan Nuave.
+            </li>
+            <li>
+              <strong>Anda</strong>: orang yang memesan audit, termasuk bisnis
+              yang Anda wakili.
+            </li>
+            <li>
+              <strong>Layanan</strong>: cek gratis dan audit yang dijelaskan di
+              halaman ini.
+            </li>
+            <li>
+              <strong>Pesanan</strong>: satu pembelian audit untuk satu bisnis,
+              dengan nomor pesanan sendiri.
+            </li>
+            <li>
+              <strong>Audit</strong>: sepuluh pertanyaan yang Anda setujui,
+              ditanyakan ke {AUDIT_SOURCES_TEXT}.
+            </li>
+            <li>
+              <strong>Pemeriksaan</strong>: satu pertanyaan yang ditanyakan ke
+              satu sumber. Satu audit berisi 20 pemeriksaan.
+            </li>
+            <li>
+              <strong>Laporan</strong>: hasil audit di halaman web, PDF, dan
+              file bukti, yang dibuka lewat link di email pesanan.
+            </li>
+          </ul>
+        </Section>
+
+        <Section title="3. Yang Anda beli">
           <p>
             Satu pesanan adalah satu audit untuk satu bisnis. Nuave menanyakan
             sepuluh pertanyaan berbahasa Indonesia ke {AUDIT_SOURCES_TEXT}. Anda
@@ -84,7 +113,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="3. Siapa yang boleh memesan">
+        <Section title="4. Siapa yang boleh memesan">
           <p>
             Anda berusia 18 tahun ke atas dan berhak memesan audit untuk bisnis
             yang diperiksa. Informasi yang Anda berikan harus benar.
@@ -95,7 +124,31 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="4. Harga dan pembayaran">
+        <Section title="5. Yang tidak boleh dilakukan">
+          <p>Saat memakai layanan, Anda tidak boleh:</p>
+          <ul>
+            <li>memesan audit untuk bisnis yang tidak berhak Anda wakili;</li>
+            <li>mengisi data palsu, data orang lain, atau data pasien;</li>
+            <li>
+              mengganggu atau membebani layanan, mencoba membobolnya, atau
+              mengambil isinya secara otomatis;
+            </li>
+            <li>
+              menjual kembali laporan atau layanan sebagai produk Anda tanpa
+              izin tertulis dari kami; atau
+            </li>
+            <li>
+              memakai laporan untuk menyesatkan orang lain, misalnya dengan
+              mengubah angkanya.
+            </li>
+          </ul>
+          <p>
+            Jika ini terjadi, kami bisa menghentikan pesanan seperti dijelaskan
+            di bagian Penolakan pesanan.
+          </p>
+        </Section>
+
+        <Section title="6. Harga dan pembayaran">
           <p>
             Harga satu audit <strong>Rp249.000</strong>. Itu harga total: Nuave
             tidak menambah pajak atau biaya lain saat checkout. Pembayaran lewat
@@ -107,6 +160,11 @@ export default function TermsPage() {
             Anda memeriksa data bisnis dan menyetujui sepuluh pertanyaan.
           </p>
           <p>
+            Jika harga atau keterangan layanan tampil salah karena kekeliruan
+            kami, kami boleh membatalkan pesanan dan mengembalikan uang Anda
+            penuh.
+          </p>
+          <p>
             Lanjutkan isian di browser yang sama dengan tempat Anda membayar,
             karena isian hanya tersimpan di browser itu. Jika sepuluh pertanyaan
             belum Anda setujui dalam 7 hari setelah membayar, pesanan berakhir
@@ -114,7 +172,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="5. Kapan laporan siap">
+        <Section title="7. Kapan laporan siap">
           <p>{DELIVERY_PROMISE}</p>
           <p>
             Audit dimulai saat Anda menyetujui sepuluh pertanyaan, bukan saat
@@ -129,7 +187,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="6. Jika ada pemeriksaan yang gagal">
+        <Section title="8. Jika ada pemeriksaan yang gagal">
           <p>
             Kadang satu pertanyaan tidak berhasil diperiksa di ChatGPT atau
             Google karena gangguan teknis. Laporan tetap dikirim jika setiap
@@ -152,7 +210,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="7. Pembatalan dan pengembalian dana">
+        <Section title="9. Pembatalan dan pengembalian dana">
           <ul>
             <li>
               <strong>Sebelum audit dimulai</strong> (sebelum Anda menyetujui
@@ -202,7 +260,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="8. Salah email atau salah bisnis">
+        <Section title="10. Salah email atau salah bisnis">
           <p>
             Tulis ke <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
             Kami bantu secara manual. Jika Anda salah ketik email saat memesan,
@@ -215,11 +273,16 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="9. Batasan audit">
+        <Section title="11. Batasan audit">
           <p>
             Audit adalah contoh dari sepuluh pertanyaan pada waktu tertentu.
             Jawaban AI bisa berubah. Laporan bukan peringkat tetap dan tidak
             mewakili semua pertanyaan atau semua orang.
+          </p>
+          <p>
+            Jawaban ChatGPT dan Google AI Overview di laporan adalah jawaban
+            pihak lain yang kami kutip apa adanya. Kami tidak menjamin isi
+            jawaban itu benar, termasuk tentang bisnis Anda atau bisnis lain.
           </p>
           <p>
             Nuave tidak menjamin bisnis Anda akan disebut setelah saran
@@ -228,11 +291,16 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="10. Penggunaan laporan">
+        <Section title="12. Penggunaan dan hak atas laporan">
           <p>
             Anda boleh memakai dan membagikan laporan untuk keperluan bisnis
             Anda. Jangan mengubahnya sampai menyesatkan, dan jangan menjualnya
             kembali sebagai produk Nuave.
+          </p>
+          <p>
+            Format, metode, dan tampilan laporan tetap milik Nuave. Jawaban AI,
+            kutipan, dan sumber di dalam laporan tetap milik pemiliknya
+            masing-masing.
           </p>
           <p>
             Kami tidak menerbitkan nama bisnis, temuan, atau laporan Anda
@@ -240,7 +308,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="11. Penolakan pesanan">
+        <Section title="13. Penolakan pesanan">
           <p>
             Kami bisa menolak atau menghentikan pesanan jika bisnisnya tidak
             dapat dipastikan, informasinya tidak cukup, atau ada dugaan
@@ -249,7 +317,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="12. Data dan privasi">
+        <Section title="14. Data dan privasi">
           <p>
             Cara kami memakai data dijelaskan di{" "}
             <Link href="/privacy">Kebijakan privasi dan data</Link>. Menyetujui
@@ -257,7 +325,7 @@ export default function TermsPage() {
           </p>
         </Section>
 
-        <Section title="13. Tanggung jawab dan keluhan">
+        <Section title="15. Batas tanggung jawab">
           <p>
             Kami menjalankan audit sesuai yang Anda setujui dan berusaha menjaga
             laporan tetap akurat. Kami tidak mengendalikan ChatGPT, Google, atau
@@ -265,15 +333,55 @@ export default function TermsPage() {
             atau Meta.
           </p>
           <p>
+            Sejauh diizinkan hukum, tanggung jawab kami atas satu pesanan paling
+            banyak sebesar jumlah yang Anda bayar untuk pesanan itu. Kami tidak
+            bertanggung jawab atas kerugian tidak langsung, seperti kehilangan
+            pendapatan, pasien, atau peluang bisnis, yang timbul dari memakai
+            laporan.
+          </p>
+          <p>
             Syarat ini tidak menghapus hak Anda sebagai konsumen menurut hukum
-            Indonesia. Jika ada masalah, hubungi kami dulu di{" "}
-            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> dengan nomor
-            pesanan. Kami balas dalam {SUPPORT_REPLY} (Senin sampai Jumat, WIB).
-            Syarat ini tunduk pada hukum Republik Indonesia.
+            Indonesia.
           </p>
         </Section>
 
-        <Section title="14. Perubahan syarat">
+        <Section title="16. Penyelesaian masalah">
+          <p>
+            Jika ada masalah, hubungi kami dulu di{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> dengan nomor
+            pesanan. Kami balas dalam {SUPPORT_REPLY} (Senin sampai Jumat, WIB),
+            dan kami berusaha menyelesaikannya bersama Anda dalam 30 hari.
+          </p>
+          <p>
+            Jika belum selesai, masalah dapat dibawa ke Pengadilan Negeri
+            Jakarta Selatan, atau ke Badan Penyelesaian Sengketa Konsumen sesuai
+            hak Anda. Syarat ini tunduk pada hukum Republik Indonesia.
+          </p>
+        </Section>
+
+        <Section title="17. Ketentuan lain">
+          <ul>
+            <li>
+              Jika satu bagian syarat ini tidak berlaku menurut hukum, bagian
+              lain tetap berlaku.
+            </li>
+            <li>
+              Syarat ini, bersama{" "}
+              <Link href="/privacy">Kebijakan privasi dan data</Link>, adalah
+              seluruh kesepakatan antara Anda dan kami tentang pesanan Anda.
+            </li>
+            <li>
+              Jika kami tidak langsung memakai suatu hak dalam syarat ini, hak
+              itu tetap ada.
+            </li>
+            <li>
+              Jika kami menghentikan layanan sebelum audit pesanan Anda dimulai,
+              uang Anda kembali penuh.
+            </li>
+          </ul>
+        </Section>
+
+        <Section title="18. Perubahan syarat">
           <p>
             Syarat ini bisa berubah jika layanan berubah. Pesanan Anda mengikuti
             versi yang berlaku saat Anda membayar.
