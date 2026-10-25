@@ -23,6 +23,25 @@ the words of its `COPY.md`. Answers to its four questions:
 - **D-4:** the proposed examples for the Gigi, Kulit, Anak and Lainnya hero
   tabs are approved.
 
+## 2026-10-25 — Record cleanup job
+
+Yasir asked for the cleanup job decided on 2026-10-24. How it works, for his
+approval with the pull request:
+
+- **Anonymise, not delete:** an order past its lifetime keeps a bare row
+  (order number, dates, state, payment links) so payment and cost records
+  still add up; the email, business details, intake, questions, answers,
+  report, link and email records go. This is the privacy page's "dibuat tidak
+  lagi menunjuk ke Anda".
+- **When:** 12 months after the report was saved; 30 days after an order
+  failed or expired. Settled cost rows after 24 months. Payment records are
+  never removed by the job.
+- **Kept anyway:** an order with an open refund case, a running order, and one
+  under a support hold. The founder sets a hold with `npm run support -- hold
+  <order> <days>` (up to 365 days; 0 releases it) while a support case is open.
+- **Runs:** once an hour inside the existing order cron, up to 5 orders and
+  200 cost rows per run.
+
 ## 2026-10-25 — Legal pages stay Indonesian; clauses adopted from HaloAI
 
 Yasir compared Nuave's terms and privacy pages with HaloAI's and decided:

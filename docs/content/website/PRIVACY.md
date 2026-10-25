@@ -33,10 +33,34 @@
      without storing them, so section 2's "Nuave sendiri tidak menyimpan
      alamat IP Anda" stays true.
   If any of these changes, section 10 below must change first.
-- **Deletion:** nothing deletes expired records yet. Founder decision
-  2026-10-24: build an automatic cleanup job before the first failed orders
-  reach 30 days (mid-November 2026). Until it exists, section 9 is a promise
-  the system does not yet keep.
+- **Deletion (section 9):** an hourly cleanup in the order cron
+  (`src/lib/orders/retention.ts`, minute 17) makes an order anonymous 12 months
+  after its report was saved, or 30 days after it failed or expired. It empties
+  the email, business details, intake, questions, answers, report and link, and
+  deletes the question, email and payment-email rows; a bare order row stays
+  (order number, dates, state, payment links) so payment records still add up.
+  It skips an order with an open refund case (the cases `support refunds`
+  lists, plus any payment attempt still open), a running order, and one under
+  a support hold (`npm run support
+  -- hold <order> <days>`). Settled cost rows go after 24 months. Payment
+  records are never removed. A late payment for an anonymised order becomes a
+  refund case and never revives it.
+  Not covered by the job, to handle by hand or later:
+  - the support inbox (12 months) and the email provider's own copies;
+  - orders in a mode or environment the production cron does not run
+    (synthetic orders in the production database, and the preview database);
+  - cost rows that never settled (a call whose cost is unknown);
+  - Midtrans `snap_token` and `redirect_url` on payment attempts;
+  - an order whose refund case stays open because it was settled without a
+    recorded refund (for example fixed by hand, or a chargeback on a
+    `needs_refund` transaction): `support refunds` keeps listing it and the
+    job never reaches it;
+  - a delivered order with a chargeback near its 12 months: set a `hold`.
+  - a failed order whose report link support resent by hand: the link stops
+    working at 30 days, so set a `hold` when resending it.
+  For a paid order, the bare row and the payment records still carry Midtrans
+  IDs that Midtrans can link to the customer, so paid orders are pseudonymous
+  rather than anonymous; unpaid orders become effectively anonymous.
 - **Version 1.1 (2026-10-25):** adds the legal basis for each use (section
   5), providers bound by their service agreements (section 7), and a written
   breach notice within 3 x 24 hours (section 11). Before publishing,

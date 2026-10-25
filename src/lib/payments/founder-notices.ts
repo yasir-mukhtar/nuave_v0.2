@@ -320,7 +320,7 @@ export function noticeEmail(
           `Midtrans reported a ${row.kind.replace("_", " ")} for transaction ${row.subject}. ${result}`,
           order ? `Order number: ${order}.` : null,
           money,
-          "Check the Midtrans dashboard and decide what to do.",
+          "Check the Midtrans dashboard and decide what to do. If the case may run long, keep the order from the record cleanup with: npm run support -- hold <order> <days>.",
         ],
       };
       break;
