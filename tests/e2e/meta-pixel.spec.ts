@@ -190,3 +190,18 @@ test("back from Midtrans, the order number leaves the address before the Pixel s
   expect(hrefs.length).toBeGreaterThan(0);
   expect(hrefs.join(" ")).not.toContain("NV-");
 });
+
+test("on a phone the landing's sticky bar waits until the notice is answered (Spec 020)", async ({
+  page,
+  baseURL,
+}) => {
+  await setUp(page, baseURL!);
+  await page.goto("/");
+  await page.locator("#cara-kerja").scrollIntoViewIfNeeded();
+  const bar = page.locator("[data-sticky-bar]");
+  // Past the hero form the bar is due, but the notice holds the bottom.
+  await expect(bar).toHaveAttribute("data-shown");
+  await expect(bar).toBeHidden();
+  await notice(page).getByRole("button", { name: "Tolak" }).click();
+  await expect(bar).toBeVisible();
+});
