@@ -30,7 +30,7 @@
 | Reply within 1 business day | S0 D4 |
 | Definitions, prohibited uses, price-mistake cancellation, AI answers quoted as is, report ownership, severability and entire agreement, refund if the service stops | Adopted from the HaloAI comparison, founder 2026-10-25 (v1.1) |
 | Liability capped at the amount paid, no indirect losses | v1.1; **lawyer check**: UU 8/1999 Pasal 18 limits standard clauses that shift a seller's responsibility |
-| Disputes: support first, 30 days, then the competent district court or BPSK | v1.1; no fixed court, because UU 8/1999 Pasal 23 lets a consumer sue where they live; lawyer check |
+| Disputes: support first, 30 days, then the competent district court or BPSK | v1.1; no fixed court, because UU 8/1999 Pasal 23 lets a consumer sue where they live |
 
 The earlier draft promised a free replacement audit, a 30-day quote, a fixed
 correction window and refunds in 7 to 14 business days. None of those is a
@@ -206,15 +206,15 @@ atau semua orang.
 Jawaban ChatGPT dan Google AI Overview di laporan adalah jawaban pihak lain yang kami kutip apa adanya, kecuali nomor telepon yang kami hapus. Kami tidak menjamin isi jawaban itu benar,
 termasuk tentang bisnis Anda atau bisnis lain.
 
-Nuave tidak menjamin bisnis Anda akan disebut setelah saran dijalankan. Nuave
-juga tidak menjanjikan kenaikan pengunjung, calon pelanggan, atau penjualan.
+Kami tidak menjamin bisnis Anda akan disebut setelah saran dijalankan.
+Kami juga tidak menjanjikan kenaikan pengunjung, calon pelanggan, atau penjualan.
 
 ## 12. Penggunaan dan hak atas laporan
 
 Anda boleh memakai dan membagikan laporan untuk keperluan bisnis Anda. Jangan
 mengubahnya sampai menyesatkan, dan jangan menjualnya kembali tanpa izin tertulis dari kami.
 
-Format, metode, dan tampilan laporan tetap milik Nuave. Jawaban AI, kutipan, dan
+Format, metode, dan tampilan laporan tetap milik kami. Jawaban AI, kutipan, dan
 sumber di dalam laporan tetap milik pemiliknya masing-masing.
 
 Kami tidak menerbitkan nama bisnis, temuan, atau laporan Anda sebagai contoh

@@ -39,7 +39,11 @@
   the system does not yet keep.
 - **Version 1.1 (2026-10-25):** adds the legal basis for each use (section
   5), providers bound by their service agreements (section 7), and a written
-  breach notice within 3 x 24 hours (section 11). **Lawyer check:** the
+  breach notice within 3 x 24 hours (section 11). Before publishing,
+  check that the terms of DataForSEO, Cheaper Inference and the inbox provider
+  support "hanya memproses data untuk menjalankan layanan Nuave, sesuai
+  perjanjian layanan mereka" (Cloudflare, OpenAI's API terms and Resend do);
+  owner: the founder, with the lawyer check. **Lawyer check:** the
   3 x 24 hour notice follows UU 27/2022 Pasal 46 as we understand it.
 - **Provider names (founder, 2026-10-24):** the public page names only the
   companies a customer deals with directly (Midtrans, Meta) and describes the

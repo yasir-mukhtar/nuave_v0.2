@@ -287,8 +287,8 @@ export default function TermsPage() {
             tentang bisnis Anda atau bisnis lain.
           </p>
           <p>
-            Nuave tidak menjamin bisnis Anda akan disebut setelah saran
-            dijalankan. Nuave juga tidak menjanjikan kenaikan pengunjung, calon
+            Kami tidak menjamin bisnis Anda akan disebut setelah saran
+            dijalankan. Kami juga tidak menjanjikan kenaikan pengunjung, calon
             pelanggan, atau penjualan.
           </p>
         </Section>
@@ -300,7 +300,7 @@ export default function TermsPage() {
             kembali tanpa izin tertulis dari kami.
           </p>
           <p>
-            Format, metode, dan tampilan laporan tetap milik Nuave. Jawaban AI,
+            Format, metode, dan tampilan laporan tetap milik kami. Jawaban AI,
             kutipan, dan sumber di dalam laporan tetap milik pemiliknya
             masing-masing.
           </p>
