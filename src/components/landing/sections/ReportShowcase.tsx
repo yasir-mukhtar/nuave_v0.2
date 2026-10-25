@@ -382,7 +382,7 @@ export function ReportShowcase() {
           <div className={styles.right}>
             <span className={styles.pool} aria-hidden="true" />
             {/* Without JavaScript the four views show one after another
-                (Spec 019, failure and recovery). Like the FAQ's rule, it sits
+                (Spec 020, failure and recovery). Like the FAQ's rule, it sits
                 in Tailwind's base layer to beat its [hidden] rule. */}
             <noscript>
               <style>{`@layer base { [data-report-views] [role="tabpanel"][hidden] { display: block !important; } [data-report-views] [role="tabpanel"] + [role="tabpanel"] { margin-top: 32px; } }`}</style>

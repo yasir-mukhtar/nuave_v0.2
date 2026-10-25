@@ -207,7 +207,7 @@ export function Faq() {
             Yang sering ditanyakan
           </h2>
         </header>
-        {/* Without JavaScript every answer shows (Spec 019, failure and
+        {/* Without JavaScript every answer shows (Spec 020, failure and
             recovery). Tailwind's base layer hides [hidden] with !important,
             and a layered !important beats an unlayered one, so this rule
             joins that layer and wins on specificity. */}

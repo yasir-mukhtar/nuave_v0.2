@@ -26,7 +26,7 @@ for (const path of ["/", "/audit", "/faq"] as const) {
   });
 }
 
-// Spec 019: on a phone the landing menu is a button that opens a sheet with
+// Spec 020: on a phone the landing menu is a button that opens a sheet with
 // the section links. It may name the sheet in `aria-controls` only while the
 // sheet exists, keeps focus inside while open, and Escape returns focus.
 test("the mobile menu button never points at a missing sheet, and Escape returns focus", async ({

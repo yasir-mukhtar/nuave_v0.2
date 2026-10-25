@@ -36,7 +36,7 @@ function approvedFaq(): { question: string; answer: string }[] {
     });
 }
 
-describe("the landing FAQ (Spec 019 AC-07)", () => {
+describe("the landing FAQ (Spec 020 AC-07)", () => {
   const approved = approvedFaq().filter(
     ({ question }) => !FAQ_PAGE_ONLY.includes(question),
   );

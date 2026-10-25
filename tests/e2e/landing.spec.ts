@@ -9,7 +9,7 @@ import {
 } from "./journey";
 
 /**
- * Spec 019: the clinic landing page at `/`. Section order, no sideways
+ * Spec 020: the clinic landing page at `/`. Section order, no sideways
  * scrolling, the menu, the clinic-type and report tabs, the FAQ, the sticky
  * bar, the resume banner and the website forms. The hero form's handoff to
  * `/audit` is covered in depth by audit-entry.spec.ts.

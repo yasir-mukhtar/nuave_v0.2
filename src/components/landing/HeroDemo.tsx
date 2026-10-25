@@ -27,7 +27,7 @@ type ClinicExample = {
   clinics: [string, string, string];
 };
 
-/** Spec 019 COPY.md: Kecantikan is the founder's; the others were approved
+/** Spec 020 COPY.md: Kecantikan is the founder's; the others were approved
  * with the spec (D-4). The clinics are fictional. */
 const EXAMPLES: ClinicExample[] = [
   {

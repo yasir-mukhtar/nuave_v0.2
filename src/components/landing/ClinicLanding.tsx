@@ -13,7 +13,7 @@ import { TrustPoints } from "./sections/TrustPoints";
 import styles from "./landing.module.css";
 
 /**
- * The clinic landing page at `/` (Spec 019): the founder's Figma page
+ * The clinic landing page at `/` (Spec 020): the founder's Figma page
  * "Landing · Full page v2" with the words of the spec's COPY.md.
  */
 export default function ClinicLanding() {

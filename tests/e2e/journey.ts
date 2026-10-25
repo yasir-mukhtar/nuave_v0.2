@@ -34,7 +34,7 @@ export const FICTIONAL_BUSINESS = {
 export const ENTRY_HEADING = "Bisnis Anda disebut AI?";
 export const WEBSITE_FIELD = "Website atau akun Instagram bisnis";
 export const CHECK_BUSINESS = "Cek bisnis saya di AI";
-// Spec 019: the clinic landing page at `/`. Its three website forms (hero,
+// Spec 020: the clinic landing page at `/`. Its three website forms (hero,
 // price receipt, closing) share these names; the hero's comes first.
 export const LANDING_HEADING =
   "Pasien sekarang tanya AI dulu sebelum pilih klinik";

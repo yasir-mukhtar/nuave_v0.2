@@ -16,7 +16,7 @@ const INVALID_SOURCE = "Masukkan satu website atau akun Instagram yang valid.";
 /**
  * One website or Instagram address, handed to `/audit`, which starts the
  * free check at once. The hero, the price receipt and the closing section
- * each show one (Spec 019 R-04: the same code as the old landing form).
+ * each show one (Spec 020 R-04: the same code as the old landing form).
  *
  * `auto` is two lines on a phone and one joined pill from 768px; `stacked`
  * stays two lines (the price receipt).

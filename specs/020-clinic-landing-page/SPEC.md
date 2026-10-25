@@ -1,4 +1,4 @@
-# Spec 019: Clinic landing page (S6)
+# Spec 020: Clinic landing page (S6)
 
 > Status: **Approved** by the founder on 2026-10-25, with D-1 to D-4 answered
 > (see Decisions)

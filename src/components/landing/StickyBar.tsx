@@ -11,7 +11,7 @@ import {
 import styles from "./StickyBar.module.css";
 
 /**
- * Spec 019: "Gratis dulu · Audit Rp249.000" with a way back to the hero
+ * Spec 020: "Gratis dulu · Audit Rp249.000" with a way back to the hero
  * form. It appears once the hero form has scrolled out of view, and hides
  * while any website form (hero, price receipt, closing) is on screen.
  * Phone: a bottom bar; from 768px: a top bar.

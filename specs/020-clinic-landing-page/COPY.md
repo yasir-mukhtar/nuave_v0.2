@@ -1,4 +1,4 @@
-# Spec 019 copy: every word on the clinic landing page
+# Spec 020 copy: every word on the clinic landing page
 
 > Status: **Approved** with [`SPEC.md`](./SPEC.md) on 2026-10-25
 > Language: Indonesian

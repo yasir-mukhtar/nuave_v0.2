@@ -6,11 +6,13 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
-## 2026-10-25 — Approve Spec 019 (clinic landing page)
+## 2026-10-25 — Approve Spec 020 (clinic landing page)
 
-The founder approved [Spec 019](../specs/019-clinic-landing-page/SPEC.md):
+The founder approved [Spec 020](../specs/020-clinic-landing-page/SPEC.md):
 the clinic landing page from Figma page 244:2 replaces the page at `/`, with
-the words of its `COPY.md`. Answers to its four questions:
+the words of its `COPY.md`. (Approved as Spec 019; renumbered 020 because the
+cookie notice and Meta Pixel spec reached main first as Spec 019.) Answers to
+its four questions:
 
 - **D-1:** big display headlines may go down to 36px on phones
   (`--type-display-size: clamp(2.25rem, 5vw, 4rem)`, was 48px). The `/audit`

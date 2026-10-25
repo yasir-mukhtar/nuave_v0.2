@@ -62,7 +62,7 @@ test.describe("preview disabled", () => {
   }) => {
     const requests = collectRequests(page);
     await page.goto("/");
-    // Spec 019: the hero is the website field and its button.
+    // Spec 020: the hero is the website field and its button.
     await expect(
       page
         .getByRole("textbox", { name: "Website atau Instagram klinik" })

@@ -140,7 +140,7 @@ parallel mathematical scale or arbitrary one-off sizes for normal UI copy.
 Prefer semantic role classes for product and marketing copy:
 
 - `type-display` — major hero/display text; the only strongly fluid role;
-  fluid 36–64px (36px minimum since 2026-10-25, Spec 019 D-1).
+  fluid 36–64px (36px minimum since 2026-10-25, Spec 020 D-1).
 - `type-heading-xl` — expressive section/page heading; fluid 32–48px.
 - `type-heading-lg` — 32px heading.
 - `type-heading-md` — 24px heading.
