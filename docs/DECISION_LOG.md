@@ -6,6 +6,28 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-25 — Support commands: fix an order email, close a refund case without a refund
+
+Yasir chose how the two founder commands work:
+
+- **`npm run support -- email <order> <new-email>`:** after the founder has
+  checked the payment receipt or Midtrans transaction number (FAQ, terms
+  section 10), the command replaces the order email. When the report is
+  saved, the old link stops and a new link goes to the new address only;
+  nothing is sent to the old address. An order still running sends its ready
+  email to the new address. This changes Spec 016 R-32 ("the script never
+  sends to another email"): it still never sends to an address that is not
+  the order's, but the founder can now correct that address. The new address
+  reaches the database as a hex literal, so it never appears as readable text
+  in the SQL the script runs.
+- **`npm run support -- norefund <order> <declined|delivered|settled>`:**
+  closes a money refund case (a settled payment that could not be applied, or
+  a paid order that failed) without a refund, when the customer declined it
+  in writing, got the full report another way, or the money already went
+  back outside Nuave's records. The reason is kept (`refund_closures`); the
+  case leaves `support refunds`, and the hourly cleanup can reach the order.
+  A payment with no final answer is still closed with `close`.
+
 ## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
 
 Yasir approved Spec 019: the cookie notice is built together with the Meta

@@ -32,17 +32,24 @@ function monthsBefore(now: Date, months: number): Date {
  * An open refund case keeps the order: the cases the founder's `support
  * refunds` lists (a settled payment Nuave could not apply, a paid order that
  * failed and is not yet refunded, a payment closed with no final answer),
- * plus any payment attempt still open. Takes the order row's alias `o`.
+ * plus any payment attempt still open. The first two are the money cases,
+ * which `support norefund` can close without a refund. Takes the order row's
+ * alias `o`.
  */
+export const MONEY_REFUND_CASE = `(
+  (EXISTS (SELECT 1 FROM payment_transactions t
+           JOIN payment_attempts a ON a.id = t.attempt_id
+           WHERE a.order_id = o.id AND t.outcome = 'needs_refund'
+             AND t.refund_state != 'refunded')
+   OR (o.state = 'failed' AND o.payment_kind = 'midtrans'
+       AND COALESCE((SELECT t.refund_state FROM payment_transactions t
+                     WHERE t.transaction_id = o.paid_transaction_id), 'none')
+           NOT IN ('refunded', 'chargeback')))
+  AND NOT EXISTS (SELECT 1 FROM refund_closures c WHERE c.order_id = o.id)
+)`;
+
 const OPEN_REFUND_CASE = `(
-  EXISTS (SELECT 1 FROM payment_transactions t
-          JOIN payment_attempts a ON a.id = t.attempt_id
-          WHERE a.order_id = o.id AND t.outcome = 'needs_refund'
-            AND t.refund_state != 'refunded')
-  OR (o.state = 'failed' AND o.payment_kind = 'midtrans'
-      AND COALESCE((SELECT t.refund_state FROM payment_transactions t
-                    WHERE t.transaction_id = o.paid_transaction_id), 'none')
-          NOT IN ('refunded', 'chargeback'))
+  ${MONEY_REFUND_CASE}
   OR EXISTS (SELECT 1 FROM payment_attempts a
              WHERE a.order_id = o.id AND a.status IN ('open', 'closed_unknown'))
 )`;

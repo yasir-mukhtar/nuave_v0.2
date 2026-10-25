@@ -790,4 +790,174 @@ describe("payment support (spec 017 R-24, AC-05)", () => {
     expect(await support().run("refunds", "extra")).toBe(2);
     expect(output).toContain(SUPPORT_USAGE);
   });
+
+  it("norefund closes a money refund case without a refund, with its reason: it leaves refunds and show records it", async () => {
+    // A needs-refund transaction (a second payment).
+    const paid = await orderWithAttempt();
+    await pay(paid.attempt, { transactionId: "tx-one" });
+    await pay(paid.attempt, { transactionId: "tx-two" });
+    // A paid order that ended failed, not refunded.
+    const ended = await orderWithAttempt();
+    await pay(ended.attempt, { transactionId: "tx-ended-2" });
+    q(
+      `UPDATE orders SET state = 'failed', failure_code = 'paid_not_started', ended_at = '2026-10-19T10:00:00.000Z' WHERE id = '${ended.id}' RETURNING 1`,
+    );
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 2");
+
+    output.length = 0;
+    expect(await support().run("norefund", paid.id, "declined")).toBe(0);
+    expect(text()).toContain("closed without a refund (declined)");
+    expect(
+      await support().run(
+        "norefund",
+        ended.attempt.midtrans_order_id,
+        "delivered",
+      ),
+    ).toBe(0);
+    expect(
+      q(`SELECT order_id, reason FROM refund_closures ORDER BY reason`),
+    ).toEqual([
+      { order_id: paid.id, reason: "declined" },
+      { order_id: ended.id, reason: "delivered" },
+    ]);
+    output.length = 0;
+    await support().run("refunds");
+    expect(text()).toContain("Open refund cases: 0");
+    // The transaction itself is not marked refunded: no money moved.
+    expect(
+      q(
+        `SELECT refund_state FROM payment_transactions WHERE transaction_id = 'tx-two'`,
+      )[0]!.refund_state,
+    ).toBe("none");
+    output.length = 0;
+    await support().run("show", ended.id);
+    expect(text()).toContain("Refund case closed without refund: delivered,");
+    // Closed once: a second close finds no open case.
+    expect(await support().run("norefund", paid.id, "settled")).toBe(1);
+    expect(q(`SELECT COUNT(*) AS n FROM refund_closures`)[0]!.n).toBe(2);
+  });
+
+  it("norefund refuses a bad reason, an order with no money case, and a payment with no final answer", async () => {
+    const plain = await orderWithAttempt();
+    expect(await support().run("norefund", plain.id, "maybe")).toBe(2);
+    expect(await support().run("norefund", plain.id)).toBe(2);
+    expect(await support().run("norefund", plain.id, "declined")).toBe(1);
+    const unknownOne = await orderWithAttempt();
+    q(
+      `UPDATE payment_attempts SET status = 'closed_unknown' WHERE id = '${unknownOne.attempt.id}' RETURNING 1`,
+    );
+    output.length = 0;
+    expect(await support().run("norefund", unknownOne.id, "settled")).toBe(1);
+    expect(text()).toContain("closed with close");
+    expect(q(`SELECT COUNT(*) AS n FROM refund_closures`)[0]!.n).toBe(0);
+  });
+});
+
+describe("email (founder decision 2026-10-25)", () => {
+  const NEW_EMAIL = "pemilik.baru@example.com";
+
+  it("replaces the email, stops the old link and sends a new link to the new address only", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    const s = support();
+    expect(await s.run("email", id, `  ${NEW_EMAIL} `)).toBe(0);
+    expect(order(id).email).toBe(NEW_EMAIL);
+    expect(order(id).email_changed_at).toBe(clock.toISOString());
+    expect(s.sender.sent).toHaveLength(1);
+    expect(s.sender.sent[0]!.to).toBe(NEW_EMAIL);
+    const newSecret = secretIn(s.sender.sent[0]!);
+    expect((await openLink(firstSecret)).status).not.toBe(200);
+    expect((await openLink(newSecret)).status).toBe(200);
+    expect(output.join("\n")).toContain("The email on the order is changed.");
+    output.length = 0;
+    await s.run("show", id);
+    expect(output.join("\n")).toContain("Email changed:");
+  });
+
+  it("an order still running keeps going: its ready email goes to the new address", async () => {
+    const id = await makeOrder(d1.db, { email: EMAIL, now: clock });
+    await approve(d1.db, id, { now: clock });
+    await d1.db
+      .prepare(`UPDATE orders SET mode = 'live' WHERE id = '${id}'`)
+      .bind()
+      .run();
+    const s = support();
+    expect(await s.run("email", id, NEW_EMAIL)).toBe(0);
+    expect(s.makeSender).not.toHaveBeenCalled();
+    expect(output.join("\n")).toContain("Its email will go to the new address");
+    await d1.db
+      .prepare(`UPDATE orders SET mode = 'synthetic' WHERE id = '${id}'`)
+      .bind()
+      .run();
+    const mail = mailbox();
+    const deps: RunnerDeps = {
+      db: d1.db,
+      environment: "production",
+      mode: "synthetic",
+      siteOrigin: SITE,
+      now: () => clock,
+      execute: async (input) => executeSyntheticLocalObservation(input),
+      generateReport: async (...args) => generateSyntheticLocalReport(...args),
+      sender: mail.sender,
+    };
+    for (let i = 0; i < 12; i += 1) {
+      await runOrders(deps);
+      advance(60_000);
+    }
+    expect(mail.sent.map((message) => message.to)).toEqual([NEW_EMAIL]);
+  });
+
+  it("changes nothing for a bad address, the same address, a synthetic or anonymised order, or a missing key file", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    const s = support();
+    expect(await s.run("email", id, "not-an-email")).toBe(2);
+    expect(await s.run("email", id, "a@b")).toBe(2);
+    expect(await s.run("email", id, EMAIL.toUpperCase())).toBe(1);
+    expect(await s.run("email", id)).toBe(2);
+    const failing = support({
+      makeSender: async () => {
+        throw new Error("no key file");
+      },
+    });
+    await expect(failing.run("email", id, NEW_EMAIL)).rejects.toThrow();
+    expect(order(id).email).toBe(EMAIL);
+    expect((await openLink(firstSecret)).status).toBe(200);
+    const synthetic = await deliveredOrder("synthetic");
+    expect(await s.run("email", synthetic.id, NEW_EMAIL)).toBe(1);
+    await d1.db
+      .prepare(
+        `UPDATE orders SET purged_at = '2026-11-01T00:00:00.000Z' WHERE id = '${id}'`,
+      )
+      .bind()
+      .run();
+    expect(await s.run("email", id, NEW_EMAIL)).toBe(1);
+    expect(order(id).email).toBe(EMAIL);
+    expect(s.sender.sent).toEqual([]);
+    expect(s.makeSender).not.toHaveBeenCalled();
+  });
+
+  it("through wrangler the new address is written as bytes, never as readable text", async () => {
+    const { id } = await deliveredOrder();
+    const execute = async (sql: string) => {
+      sqlSeen.push(sql);
+      const statement = d1.db.prepare(sql).bind();
+      if (/^\s*select/i.test(sql)) {
+        const { results } = await statement.all();
+        return [{ results }];
+      }
+      return [{ meta: (await statement.run()).meta }];
+    };
+    const s = support({ db: d1ThroughWrangler(execute) });
+    expect(await s.run("email", id, NEW_EMAIL)).toBe(0);
+    expect(order(id).email).toBe(NEW_EMAIL);
+    expect(typeof order(id).email).toBe("string");
+    for (const sql of sqlSeen) {
+      expect(sql).not.toContain("@");
+      expect(sql).not.toContain("pemilik");
+    }
+    expect(sqlLiteral(new TextEncoder().encode("a@b.co"))).toBe(
+      "X'6140622e636f'",
+    );
+    expect(s.sender.sent[0]!.to).toBe(NEW_EMAIL);
+  });
 });

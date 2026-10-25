@@ -181,6 +181,42 @@ describe("which orders are due", () => {
     expect(await purgeOrder(d1.db, { orderId: id, now: later })).toBe(false);
   });
 
+  it("a refund case closed without a refund (support norefund) lets the cleanup reach the order", async () => {
+    const failed = await endedOrder("failed", T0);
+    await markPaidForTest(d1.db, failed, { kind: "midtrans", now: T0 });
+    const late = await endedOrder("expired", T0);
+    await attempt(late, "needs_refund");
+    await sql(
+      `INSERT INTO payment_transactions (transaction_id, attempt_id,
+         midtrans_status, outcome, refund_state, first_seen_at, updated_at)
+       VALUES ('tx-late', 'NV-ABCDEF-1', 'settlement', 'needs_refund',
+         'none', ?1, ?1)`,
+      T0.toISOString(),
+    );
+    const later = new Date(T0.getTime() + 60 * DAY);
+    expect(await due(later)).toEqual([]);
+    for (const id of [failed, late])
+      await sql(
+        `INSERT INTO refund_closures (order_id, reason, closed_at)
+         VALUES (?1, 'declined', ?2)`,
+        id,
+        T0.toISOString(),
+      );
+    expect((await due(later)).sort()).toEqual([failed, late].sort());
+  });
+
+  it("a closed refund case still waits for a payment with no final answer", async () => {
+    const id = await endedOrder("expired", T0);
+    await attempt(id, "closed_unknown");
+    await sql(
+      `INSERT INTO refund_closures (order_id, reason, closed_at)
+       VALUES (?1, 'settled', ?2)`,
+      id,
+      T0.toISOString(),
+    );
+    expect(await due(new Date(T0.getTime() + 60 * DAY))).toEqual([]);
+  });
+
   it("never an order still reporting", async () => {
     const id = await endedOrder("failed", T0);
     await sql(

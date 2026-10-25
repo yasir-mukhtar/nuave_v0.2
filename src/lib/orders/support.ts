@@ -1,8 +1,9 @@
-import { MAX_HOLD_DAYS, holdOrder } from "./retention";
+import { MAX_HOLD_DAYS, MONEY_REFUND_CASE, holdOrder } from "./retention";
 import { applyRefund } from "../payments/apply";
 import type { SpendDb, SpendStatement } from "../spending/spend-ledger";
 import { newLinkSecret, sha256Hex } from "./link-secret";
 import { isOrderNumber } from "./order-number";
+import { parseOrderEmail } from "./order-email";
 import { readyEmail, sendWithinAttempt, type MailSender } from "./mail";
 import { readyEmailDetails } from "./ready-email-details";
 import {
@@ -35,6 +36,11 @@ import {
  *
  *   npm run support -- hold <order> <days>   (0 releases the hold)
  *
+ * and (founder decision 2026-10-25):
+ *
+ *   npm run support -- email <order> <new-email>
+ *   npm run support -- norefund <order> <declined|delivered|settled>
+ *
  * The logic lives here so tests can run it on a test database with a fake
  * sender (AC-17). `scripts/support.mjs` supplies the real database (through
  * `wrangler d1 execute`) and the real sender (the founder's Resend key from a
@@ -61,7 +67,9 @@ export const SUPPORT_USAGE =
   "       npm run support -- refunds [--local]\n" +
   "       npm run support -- refunded <transaction-id> [--local]\n" +
   "       npm run support -- close <midtrans-order-id> <unknown|unpaid> [--local]\n" +
-  "       npm run support -- hold <order-id|order-number|midtrans-order-id> <days, 0 releases> [--local]";
+  "       npm run support -- hold <order-id|order-number|midtrans-order-id> <days, 0 releases> [--local]\n" +
+  "       npm run support -- email <order-id|order-number|midtrans-order-id> <new-email> [--local]\n" +
+  "       npm run support -- norefund <order-id|order-number|midtrans-order-id> <declined|delivered|settled> [--local]";
 
 const MIDTRANS_ORDER_ID = /^NV-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}-\d{1,3}$/;
 const TRANSACTION_ID = /^[A-Za-z0-9_.-]{6,100}$/;
@@ -83,6 +91,8 @@ export async function runSupport(
     refunded: 1,
     close: 2,
     hold: 2,
+    email: 2,
+    norefund: 2,
   };
   const given = [reference, second].filter((word) => word !== undefined).length;
   if (
@@ -116,6 +126,8 @@ export async function runSupport(
   }
   if (command === "off") return off(deps, order);
   if (command === "hold") return hold(deps, order, second!);
+  if (command === "email") return changeEmail(deps, order, second!);
+  if (command === "norefund") return closeWithoutRefund(deps, order, second!);
   if (command === "show") {
     return show(deps, order, flags.includes("--email"));
   }
@@ -177,7 +189,11 @@ async function off(deps: SupportDeps, order: OrderRow): Promise<number> {
   return 0;
 }
 
-async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
+async function resend(
+  deps: SupportDeps,
+  order: OrderRow,
+  readySender?: MailSender,
+): Promise<number> {
   if (order.mode !== "live") {
     deps.out("Synthetic orders never send real email. Nothing was sent.");
     return 1;
@@ -188,7 +204,7 @@ async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
   }
   // The sender comes first: a missing key file must not cost the customer the
   // working link.
-  const sender = await deps.makeSender();
+  const sender = readySender ?? (await deps.makeSender());
   const secret = newLinkSecret();
   const linkHash = await sha256Hex(secret);
   // A new secret replaces the stored hash in one write: the old link stops
@@ -247,6 +263,100 @@ async function resend(deps: SupportDeps, order: OrderRow): Promise<number> {
   return 0;
 }
 
+/** A mistyped order email (FAQ; terms section 10). The founder first checks
+ * the payment receipt or the Midtrans transaction number. The new address
+ * replaces the old one; when the report is saved, the old link stops and a new
+ * one goes to the new address only. Nothing is ever sent to the old address. */
+async function changeEmail(
+  deps: SupportDeps,
+  order: OrderRow,
+  emailText: string,
+): Promise<number> {
+  const email = parseOrderEmail(emailText);
+  if (!email) {
+    deps.out("That is not one valid email address. Nothing changed.");
+    return 2;
+  }
+  if (order.purged_at) {
+    deps.out("This order was already made anonymous. Nothing changed.");
+    return 1;
+  }
+  if (order.mode !== "live") {
+    deps.out("Synthetic orders have no real email. Nothing changed.");
+    return 1;
+  }
+  if (email.toLowerCase() === order.email.toLowerCase()) {
+    deps.out("That is already the email on the order. Nothing changed.");
+    return 1;
+  }
+  // The sender comes first, as in resend: a missing key file changes nothing.
+  const sender = order.report_json ? await deps.makeSender() : undefined;
+  // The address goes in as bytes, so the wrangler path writes it as a hex
+  // literal and never as readable text (R-32).
+  const changed = await deps.db
+    .prepare(
+      `UPDATE orders SET email = CAST(?2 AS TEXT), email_changed_at = ?3
+       WHERE id = ?1 AND purged_at IS NULL`,
+    )
+    .bind(order.id, new TextEncoder().encode(email), deps.now().toISOString())
+    .run();
+  if (changed.meta?.changes !== 1) {
+    deps.out("The order could not be changed. Nothing changed.");
+    return 1;
+  }
+  deps.out("The email on the order is changed.");
+  if (!sender) {
+    deps.out(
+      order.state === "failed" || order.state === "expired"
+        ? "The order has no saved report, so no link was sent."
+        : "The report is not ready yet. Its email will go to the new address.",
+    );
+    return 0;
+  }
+  return resend(deps, { ...order, email }, sender);
+}
+
+const CLOSE_REASONS = ["declined", "delivered", "settled"] as const;
+
+/** An open refund case closed without a refund (founder decision 2026-10-25):
+ * the customer declined it in writing, got the full report another way, or
+ * the money already went back outside these records. It leaves `refunds`, and
+ * the hourly cleanup can reach the order. A case with no final payment answer
+ * is closed with `close` instead. */
+async function closeWithoutRefund(
+  deps: SupportDeps,
+  order: OrderRow,
+  reason: string,
+): Promise<number> {
+  if (!(CLOSE_REASONS as readonly string[]).includes(reason)) {
+    deps.out(`Give the reason: ${CLOSE_REASONS.join(", ")}.`);
+    return 2;
+  }
+  const open = await deps.db
+    .prepare(
+      `SELECT ${MONEY_REFUND_CASE} AS open FROM orders o WHERE o.id = ?1`,
+    )
+    .bind(order.id)
+    .first<{ open: number }>();
+  if (!open?.open) {
+    deps.out(
+      "This order has no open refund case for money taken (a payment with no final answer is closed with close). Nothing changed.",
+    );
+    return 1;
+  }
+  await deps.db
+    .prepare(
+      `INSERT INTO refund_closures (order_id, reason, closed_at)
+       VALUES (?1, ?2, ?3)`,
+    )
+    .bind(order.id, reason, deps.now().toISOString())
+    .run();
+  deps.out(
+    `The refund case is closed without a refund (${reason}). It is off the refunds list; the order now follows its normal lifetime.`,
+  );
+  return 0;
+}
+
 async function show(
   deps: SupportDeps,
   order: OrderRow,
@@ -279,6 +389,18 @@ async function show(
   line("Link", linkState);
   if (order.purged_at) line("Made anonymous", order.purged_at);
   if (order.hold_until) line("Kept until (support hold)", order.hold_until);
+  if (order.email_changed_at) line("Email changed", order.email_changed_at);
+  const closure = await deps.db
+    .prepare(
+      `SELECT reason, closed_at FROM refund_closures WHERE order_id = ?1`,
+    )
+    .bind(order.id)
+    .first<{ reason: string; closed_at: string }>();
+  if (closure)
+    line(
+      "Refund case closed without refund",
+      `${closure.reason}, ${closure.closed_at}`,
+    );
   await showPayments(deps, order);
 
   const ledger = await deps.db
@@ -414,6 +536,7 @@ async function refunds(deps: SupportDeps): Promise<number> {
        JOIN payment_attempts a ON a.id = t.attempt_id
        JOIN orders o ON o.id = a.order_id
        WHERE t.outcome = 'needs_refund' AND t.refund_state != 'refunded'
+         AND NOT EXISTS (SELECT 1 FROM refund_closures c WHERE c.order_id = o.id)
        ORDER BY t.first_seen_at`,
     )
     .bind()
@@ -433,6 +556,7 @@ async function refunds(deps: SupportDeps): Promise<number> {
          AND COALESCE((SELECT t.refund_state FROM payment_transactions t
                        WHERE t.transaction_id = o.paid_transaction_id), 'none')
              NOT IN ('refunded', 'chargeback')
+         AND NOT EXISTS (SELECT 1 FROM refund_closures c WHERE c.order_id = o.id)
        ORDER BY o.ended_at`,
     )
     .bind()
@@ -566,6 +690,11 @@ export function sqlLiteral(value: unknown): string {
   if (value === null || value === undefined) return "NULL";
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   if (typeof value === "boolean") return value ? "1" : "0";
+  // Bytes (an email the founder corrects) go in as a hex literal, never as
+  // readable text.
+  if (value instanceof Uint8Array) {
+    return `X'${Array.from(value, (byte) => byte.toString(16).padStart(2, "0")).join("")}'`;
+  }
   if (typeof value === "string" && PLAIN_TOKEN.test(value)) {
     return `'${value}'`;
   }

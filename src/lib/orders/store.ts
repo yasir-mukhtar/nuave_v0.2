@@ -101,6 +101,8 @@ export type OrderRow = {
   purged_at?: string | null;
   /** A support hold keeps the order past its lifetime until then. */
   hold_until?: string | null;
+  /** When `support email` last replaced a mistyped email. */
+  email_changed_at?: string | null;
 };
 
 /** R-18: SQL for "this order may run paid work": paid through Midtrans, a
