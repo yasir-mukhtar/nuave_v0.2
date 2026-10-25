@@ -382,7 +382,7 @@ Founder line: **Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai.**
 
 ## Footer
 
-**FAQ** (links to `#faq`) · **Syarat dan Ketentuan** · **Kebijakan Privasi** · **Kontak** (the live site's footer labels)
+**FAQ** (links to `#faq`) · **Syarat dan Ketentuan** · **Kebijakan Privasi** · **Kontak** · **Pengaturan cookie** (the live site's footer labels; "Pengaturan cookie" reopens the cookie notice of Spec 019)
 **© 2026 Nuave**
 
 ## Sticky bar (mobile, after the hero)
@@ -412,6 +412,7 @@ Desktop: the sticky menu bar shows the same **Gratis dulu · Audit Rp249.000** n
 - **The H1 stays:** "Pasien sekarang tanya AI dulu, baru pilih klinik." (no variant).
 
 **Still open:**
+- **Cookie notice (Spec 019, live):** on a first visit it covers the bottom of the phone screen. At 360×640 it hides the hero button until the visitor chooses. Its words are fixed by Spec 019, so the layout has to make room for it ([`STRATEGY-v2.md`](./STRATEGY-v2.md) §15).
 - **FAQ length (optional):** to keep the page lighter, drop "Apa yang saya terima?" (S7 lists it) and "Data apa yang perlu saya isi?" (S6 and the hero facts cover it). Then this page and /faq differ by those two questions.
 - **Other clinics heading:** the live report heads the list "Bisnis lain yang disebut", clinics included; the S5 mock says "Klinik lain yang disebut". Recommendation: make clinic reports say "Klinik lain yang disebut" (a small product change). Otherwise the mock takes the product's words.
 - **Which clinic leads the examples:** the target market is now beauty clinics in Jabodetabek and Bandung (decision log, 24 October 2026). The examples lead with dental clinics: the "Gigi" tab, braces in Depok, implants in Surabaya. Recommendation: lead with beauty clinics; see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §13.

@@ -88,7 +88,7 @@ The five gaps found in v2.1, now closed:
 | S7 | Yang Anda dapat dari satu audit. | One card: "AI Visibility Report · Diperiksa di ChatGPT dan Google AI Overview", nine rows with ticks, then the price block: Rp249.000, "Bayar setelah klinik Anda ketemu.", **the form**, payment chips, "Laporan siap dalam 15 menit setelah audit dimulai." Desktop: list left, price right; mobile: stacked |
 | S8 | FAQ | 11 rows in this lofi, the first open: "Bagaimana cara klinik muncul di Google AI Overview?". Anchor #faq. The copy now has 13 rows with the approved /faq words (`COPY-v2.md` §8); the lofi catches up at the next update |
 | S9 | Final call to action | Rp249.000 in the microcopy; founder line "Ada pertanyaan? Email Yasir, pendiri Nuave: support@nuave.ai." |
-| F | Footer | Logo, four links, ©. The copy now says "Syarat dan Ketentuan", as on the live site; the lofi still says "Syarat Penggunaan" |
+| F | Footer | Logo, four links, ©. The copy now says "Syarat dan Ketentuan" and adds a fifth link, "Pengaturan cookie", as on the live site; the lofi still shows the four old links |
 
 **Extra frames, mobile board:**
 - the fold check at 360×640;
@@ -126,6 +126,8 @@ The five gaps found in v2.1, now closed:
 
 The demo's tab row starts just above the 640 fold. At 390×844 the demo's top edge sits at 580px, so it peeks above the fold.
 
+**Cookie notice (Spec 019, live since 25 October 2026):** on a first visit a 276px card covers the bottom of the screen until the visitor taps Tolak or Setuju. At 360×640 it starts at 364px, so it hides almost all of the button and everything below it. At 390×844 it starts at 568px, below the price line. This lofi doesn't draw it yet; see [`STRATEGY-v2.md`](./STRATEGY-v2.md) §15.
+
 ## Length (to the end of the final call to action)
 
 | | Pixels | Screens | v2.1 | v2.0 |
@@ -152,7 +154,8 @@ Most of mobile's extra length is the step pictures in S4 (about +280px), now on 
 - **FAQ (S5, approved 25 October 2026):** the FAQ uses the /faq words, and refunds are partial ([`STRATEGY-v2.md`](./STRATEGY-v2.md) §14).
 
 **Still open:**
-- **Lofi update:** the FAQ (13 rows, the approved words) and the footer label, together with the examples decision below.
+- **Lofi update:** the FAQ (13 rows, the approved words), the footer links and the cookie notice, together with the examples decision below.
+- **Cookie notice:** draw it in the first-screen frame. Recommendation: show the sticky bar only after the visitor has chosen.
 - **Search engines:** let them in at launch (`src/app/robots.ts` blocks the whole site while it is pre-release).
 - **Other clinics heading:** the live report says "Bisnis lain yang disebut"; the S5 mock says "Klinik lain yang disebut". Recommendation: the product says "Klinik lain yang disebut" for clinics.
 - **Which clinic leads the examples:** the target market is now beauty clinics in Jabodetabek and Bandung. Recommendation: "Kecantikan" becomes the first, selected tab, and S3 to S5 use a beauty example in Jabodetabek or Bandung ([`STRATEGY-v2.md`](./STRATEGY-v2.md) §13).

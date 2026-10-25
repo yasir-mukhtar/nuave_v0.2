@@ -3,6 +3,7 @@
 > Status: approved direction (Yasir, 24 October 2026: "go with your recommendations"), updated to **v2.1** the same day after his feedback on lofi v2 (see §10: Rp249.000, ChatGPT and Google AI Overview, questions based on Google searches, a value list), then to **v2.2** after his and Fable's review (see §11: one spoken register, his wording, mobile = desktop). It replaces [`STRATEGY.md`](./STRATEGY.md) v1, kept as history. Final copy: [`COPY-v2.md`](./COPY-v2.md). Lofi: [`LOFI-v2.md`](./LOFI-v2.md) and the Figma page [Lofi v2.2 · Light](https://www.figma.com/design/pE6HryXbVyJo24lxqy6JZE/Nuave-Landing-Page?node-id=16-2).
 > **Update, later on 24 October 2026:** Spec 018 is merged and live: Rp249.000, the new delivery line, and "Klinik Anda" in clinic reports. Yasir also set the target market: beauty clinics in Jabodetabek and Bandung. See §13.
 > **Update, 25 October 2026:** Yasir approved the live site's terms, privacy, support and FAQ wording. The FAQ here now uses the same words, refunds are partial, and the footer says "Syarat dan Ketentuan". See §14.
+> **Update, 25 October 2026 (later):** the cookie notice (Spec 019) is live. On a small phone it covers the hero's button until the visitor chooses, and the footer gains "Pengaturan cookie". See §15.
 > Reading note: §1 to §9 are the v2.0 strategy as approved (Rp99.000, the old S3 and price section). Where they differ from §10 and §11, the later section wins.
 > Why v2: Yasir found v1 too heavy. It looked like a typical local digital-marketer page: wordy, over-explained, a little scammy, and likely to bounce. His reference for the right weight is [haloai.co.id](https://www.haloai.co.id/) (not to copy; we are a different product).
 
@@ -383,3 +384,17 @@ Still open:
 - the optional shorter FAQ (`COPY-v2.md` notes);
 - letting search engines in at launch;
 - landing analytics.
+
+## 15. Cookie notice and Meta Pixel (25 October 2026)
+
+Spec 019 went live on 25 October 2026 (PR #162). It changes three things for this page:
+
+- **A cookie notice on the first visit.** A card at the bottom of the screen, "Cookie untuk iklan", has two equal buttons, **Tolak** and **Setuju**. It stays until the visitor taps one, and its words are fixed by Spec 019. Measured on the live site, it is 276px tall on a phone:
+  - at 360×640 it covers everything below 364px. In this page's first screen (`LOFI-v2.md`, fold check) that hides almost all of the button (its bottom edge is at 413px), the price line (461px) and the facts;
+  - at 390×844 it starts at 568px, below the price line.
+
+  So on a small phone the first screen shows the headline and the field, and the button appears after one tap on the notice. For the next lofi update:
+  - draw the notice in the 360×640 first-screen frame;
+  - recommendation: show the sticky bar only after the visitor has chosen, so the two bars never stack.
+- **Footer:** a fifth link, "Pengaturan cookie", reopens the notice.
+- **Analytics, in part.** With consent, the site now sends four Meta events: page view, lead (the free check found the clinic), checkout started and purchase. They measure ads. The landing events that the A/B test in `GROWTH.md` Part 5 needs, such as which button was pressed, still don't exist.
