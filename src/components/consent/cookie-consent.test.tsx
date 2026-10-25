@@ -91,6 +91,16 @@ describe("without a Pixel ID (R-01)", () => {
 describe("with a Pixel ID", () => {
   beforeEach(() => setUp());
 
+  it("keeps focused controls clear of the open notice, and lets go after a choice (R-14)", () => {
+    app();
+    expect(notice()).not.toBeNull();
+    // jsdom lays nothing out: the notice measures 0, so only the 8px margin.
+    expect(document.documentElement.style.scrollPaddingBottom).toBe("8px");
+    act(() => screen.getByRole("button", { name: "Tolak" }).click());
+    expect(notice()).toBeNull();
+    expect(document.documentElement.style.scrollPaddingBottom).toBe("");
+  });
+
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();

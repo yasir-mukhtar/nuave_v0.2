@@ -32,6 +32,8 @@ export function CookieConsent() {
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const noticeRef = useRef<HTMLElement>(null);
+  const roomRef = useRef<HTMLDivElement>(null);
   // The "Pengaturan cookie" link that reopened the notice gets focus back.
   const openerRef = useRef<HTMLElement | null>(null);
 
@@ -84,6 +86,32 @@ export function CookieConsent() {
     if (open && reopened) headingRef.current?.focus();
   }, [open, reopened]);
 
+  // R-14: while the notice is open, the browser keeps a focused control, and
+  // any scroll to one, above it. Set inline so it wins over a page's own
+  // scroll padding, and put back when the notice closes. The room at the
+  // page's end lets its last controls scroll that far too.
+  useEffect(() => {
+    const notice = noticeRef.current;
+    if (!open || !notice) return;
+    const root = document.documentElement;
+    const before = root.style.scrollPaddingBottom;
+    const keepClear = () => {
+      const clear = `${notice.offsetHeight + 8}px`;
+      root.style.scrollPaddingBottom = clear;
+      if (roomRef.current) roomRef.current.style.height = clear;
+    };
+    keepClear();
+    const resize =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(keepClear);
+    resize?.observe(notice);
+    return () => {
+      resize?.disconnect();
+      root.style.scrollPaddingBottom = before;
+    };
+  }, [open]);
+
   if (!enabled || !open) return null;
 
   function choose(next: CookieChoice) {
@@ -99,56 +127,60 @@ export function CookieConsent() {
   }
 
   return (
-    <section
-      aria-labelledby="cookie-notice-title"
-      data-cookie-notice=""
-      className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
-    >
-      <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">
-        <div className="grid gap-1">
-          <h2
-            id="cookie-notice-title"
-            ref={headingRef}
-            tabIndex={-1}
-            className="type-label-strong m-0 text-ink-900"
-          >
-            <span aria-hidden="true">🍪 </span>Cookie?
-          </h2>
-          <p className="type-caption m-0 text-ink-600">
-            Meta cookies help us measure our ads. Your report and answers are
-            never shared.{" "}
-            <Link href="/privacy#cookie" className="text-ink-900 underline">
-              Privacy policy
-            </Link>
-          </p>
-          {reopened && choice ? (
+    <>
+      <div ref={roomRef} aria-hidden="true" />
+      <section
+        ref={noticeRef}
+        aria-labelledby="cookie-notice-title"
+        data-cookie-notice=""
+        className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+      >
+        <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">
+          <div className="grid gap-1">
+            <h2
+              id="cookie-notice-title"
+              ref={headingRef}
+              tabIndex={-1}
+              className="type-label-strong m-0 text-ink-900"
+            >
+              <span aria-hidden="true">🍪 </span>Cookie?
+            </h2>
             <p className="type-caption m-0 text-ink-600">
-              Your choice now:{" "}
-              <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
-              {choice === "yes"
-                ? "Meta cookies already set can be removed in your browser settings."
-                : null}
+              Meta cookies help us measure our ads. Your report and answers are
+              never shared.{" "}
+              <Link href="/privacy#cookie" className="text-ink-900 underline">
+                Privacy policy
+              </Link>
             </p>
-          ) : null}
+            {reopened && choice ? (
+              <p className="type-caption m-0 text-ink-600">
+                Your choice now:{" "}
+                <strong>{choice === "yes" ? "Setuju" : "Tolak"}</strong>.{" "}
+                {choice === "yes"
+                  ? "Meta cookies already set can be removed in your browser settings."
+                  : null}
+              </p>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="inkOutline"
+              className="h-10"
+              onClick={() => choose("no")}
+            >
+              Tolak
+            </Button>
+            <Button
+              variant="inkOutline"
+              className="h-10"
+              onClick={() => choose("yes")}
+            >
+              Setuju
+            </Button>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="inkOutline"
-            className="h-10"
-            onClick={() => choose("no")}
-          >
-            Tolak
-          </Button>
-          <Button
-            variant="inkOutline"
-            className="h-10"
-            onClick={() => choose("yes")}
-          >
-            Setuju
-          </Button>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 

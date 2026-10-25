@@ -140,6 +140,10 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   2026-10-25, ID 890453577390181, set in `.github/workflows/ci.yml`), switch
   off automatic advanced matching before merging, and after deploy check the events
   with Meta's Test Events screen.
+- **R-14 Focus stays in view.** While the notice is open, a control reached
+  with the keyboard is never hidden behind it (WCAG 2.2 AA, 2.4.11): the page
+  keeps the notice's height clear at the bottom when it scrolls to a focused
+  control, and has that much room at its end. Both go when the notice closes.
 
 ## Failure and recovery
 
@@ -170,6 +174,8 @@ cookie), all listed in section 10. Nuave stores nothing new on its server.
   event carries the email, business name, website or order number, and a
   reload sends no second Purchase.
 - **AC-07** Notice text follows `docs/VOICE.md` and is approved by Yasir.
+- **AC-08** With a test ID on a phone (390×844), tabbing through `/faq` with
+  the notice open never leaves a focused control behind the notice.
 
 ## Open questions
 

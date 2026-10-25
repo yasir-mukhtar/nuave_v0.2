@@ -192,3 +192,30 @@ test("back from Midtrans, the order number leaves the address before the Pixel s
   expect(hrefs.length).toBeGreaterThan(0);
   expect(hrefs.join(" ")).not.toContain("NV-");
 });
+
+// R-14 on a long page (/faq) and a short one (/), whose last controls need
+// the room at the page's end to scroll clear of the notice.
+for (const path of ["/faq", "/"]) {
+  test(`on a phone, Tab never leaves a focused control on ${path} behind the open notice (R-14)`, async ({
+    page,
+    baseURL,
+  }) => {
+    await setUp(page, baseURL!);
+    await page.goto(path);
+    await expect(notice(page)).toBeVisible();
+    for (let stop = 1; stop <= 30; stop += 1) {
+      await page.keyboard.press("Tab");
+      const hidden = await page.evaluate(() => {
+        const focused = document.activeElement;
+        const box = document.querySelector("[data-cookie-notice]");
+        if (!(focused instanceof HTMLElement) || !box || box.contains(focused))
+          return null;
+        return focused.getBoundingClientRect().top >=
+          box.getBoundingClientRect().top
+          ? (focused.textContent ?? "").trim() || focused.tagName
+          : null;
+      });
+      expect(hidden, `Tab stop ${stop}`).toBeNull();
+    }
+  });
+}
