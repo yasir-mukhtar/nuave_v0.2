@@ -28,9 +28,12 @@ Yasir chose how the two founder commands work:
   section 10), the command replaces the order email. When the report is
   saved, the old link stops in the same write and a new link goes to the new
   address only; nothing is sent to the old address. An order still running
-  sends its ready email to the new address (the command waits while the
-  runner holds the order, and reads the order again after the change, so a
-  report finished meanwhile also gets a new link). Only paid orders: an
+  sends its ready email to the new address (the command refuses, "try again
+  in a minute", while the runner holds the order, and reads the order again
+  after the change, so a report finished meanwhile also gets a new link).
+  One narrow gap stays: a payment or failure email already picked up by a
+  cron run in progress may still reach the old address; those carry no
+  report link. Only paid orders: an
   unpaid order has no receipt, and the customer can simply order again.
   Running it again with the same address finishes a run that stopped before
   the new link went out. This changes Spec 016 R-32 ("the script never

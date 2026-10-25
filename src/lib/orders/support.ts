@@ -291,7 +291,9 @@ async function changeEmail(
     deps.out("Synthetic orders have no real email. Nothing changed.");
     return 1;
   }
-  if (order.state === "open" && !order.paid_at) {
+  // Only a paid order (or the founder's test pass, or one made before
+  // payment existed): an unpaid order has no receipt to check.
+  if (!order.paid_at && order.payment_kind && order.payment_kind !== "test") {
     deps.out(
       "This order is not paid, so there is no receipt to check. The customer can start again with the right email. Nothing changed.",
     );

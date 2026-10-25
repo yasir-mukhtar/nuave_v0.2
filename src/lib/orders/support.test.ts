@@ -1058,4 +1058,43 @@ describe("email (founder decision 2026-10-25)", () => {
     expect(s.sender.sent.map((message) => message.to)).toEqual([NEW_EMAIL]);
     expect((await openLink(secretIn(s.sender.sent[0]!))).status).toBe(200);
   });
+
+  it("the old link stops in the same write as the new address: a failure right after it leaves no working old link", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    let changed = false;
+    const breaking = {
+      ...d1.db,
+      prepare: (sql: string) => {
+        if (changed) throw new Error("wrangler did not answer");
+        if (/^\s*UPDATE orders SET email/.test(sql)) changed = true;
+        return d1.db.prepare(sql);
+      },
+    };
+    const s = support({ db: breaking as typeof d1.db });
+    await expect(s.run("email", id, NEW_EMAIL)).rejects.toThrow();
+    expect(order(id).email).toBe(NEW_EMAIL);
+    expect(s.sender.sent).toEqual([]);
+    expect((await openLink(firstSecret)).status).not.toBe(200);
+    const again = support();
+    expect(await again.run("email", id, NEW_EMAIL)).toBe(0);
+    expect(again.sender.sent.map((message) => message.to)).toEqual([NEW_EMAIL]);
+    expect((await openLink(secretIn(again.sender.sent[0]!))).status).toBe(200);
+  });
+
+  it("refuses an order that was never paid, also once it expired", async () => {
+    const unpaid = await makeOrder(d1.db, {
+      email: EMAIL,
+      mode: "live",
+      payment: "unpaid",
+      now: clock,
+    });
+    await d1.db
+      .prepare(
+        `UPDATE orders SET state = 'expired', ended_at = ?2 WHERE id = ?1`,
+      )
+      .bind(unpaid, clock.toISOString())
+      .run();
+    expect(await support().run("email", unpaid, NEW_EMAIL)).toBe(1);
+    expect(order(unpaid).email).toBe(EMAIL);
+  });
 });
