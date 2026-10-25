@@ -18,6 +18,12 @@ import {
   type CookieChoice,
 } from "@/lib/consent/meta-pixel";
 
+/** R-14: the room the open notice needs below a focused control. */
+const NOTICE_CLEAR_VAR = "--cookie-notice-clear";
+/** The /audit journey's bottom bar height while it shows (JourneyBars'
+ * BOTTOM_BAR_HEIGHT_VAR); the notice sits just above that bar. */
+const BOTTOM_BAR_VAR = "--journey-bottom-bar";
+
 /**
  * Spec 019: the cookie notice. Shown on every page except `/r` and `/uji`
  * while there is no stored choice, and again from "Pengaturan cookie".
@@ -33,7 +39,6 @@ export function CookieConsent() {
   const [reopened, setReopened] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const noticeRef = useRef<HTMLElement>(null);
-  const roomRef = useRef<HTMLDivElement>(null);
   // The "Pengaturan cookie" link that reopened the notice gets focus back.
   const openerRef = useRef<HTMLElement | null>(null);
 
@@ -86,33 +91,34 @@ export function CookieConsent() {
     if (open && reopened) headingRef.current?.focus();
   }, [open, reopened]);
 
-  // R-14: while the notice is open, the browser keeps a focused control, and
-  // any scroll to one, above it. Set inline so it wins over a page's own
-  // scroll padding, and put back when the notice closes. The room at the
-  // page's end lets its last controls scroll that far too.
+  // R-14: while the notice shows, the browser keeps a focused control, and
+  // any scroll to one, clear of it (and on /audit of the journey's bottom bar
+  // it sits on). Set inline so it wins over a page's own scroll padding, and
+  // put back when the notice goes. The room at the page's end lets its last
+  // controls scroll that far.
+  const shown = enabled && open;
   useEffect(() => {
     const notice = noticeRef.current;
-    if (!open || !notice) return;
+    if (!shown || !notice) return;
     const root = document.documentElement;
     const before = root.style.scrollPaddingBottom;
-    const keepClear = () => {
-      const clear = `${notice.offsetHeight + 8}px`;
-      root.style.scrollPaddingBottom = clear;
-      if (roomRef.current) roomRef.current.style.height = clear;
-    };
-    keepClear();
+    const measure = () =>
+      root.style.setProperty(NOTICE_CLEAR_VAR, `${notice.offsetHeight + 8}px`);
+    measure();
+    root.style.scrollPaddingBottom = `calc(var(${NOTICE_CLEAR_VAR}) + var(${BOTTOM_BAR_VAR}, 0px))`;
     const resize =
       typeof ResizeObserver === "undefined"
         ? null
-        : new ResizeObserver(keepClear);
+        : new ResizeObserver(measure);
     resize?.observe(notice);
     return () => {
       resize?.disconnect();
+      root.style.removeProperty(NOTICE_CLEAR_VAR);
       root.style.scrollPaddingBottom = before;
     };
-  }, [open]);
+  }, [shown]);
 
-  if (!enabled || !open) return null;
+  if (!shown) return null;
 
   function choose(next: CookieChoice) {
     // R-03: with storage blocked the choice cannot be kept, so the Pixel
@@ -128,12 +134,19 @@ export function CookieConsent() {
 
   return (
     <>
-      <div ref={roomRef} aria-hidden="true" />
+      <div aria-hidden="true" style={{ height: `var(${NOTICE_CLEAR_VAR})` }} />
       <section
         ref={noticeRef}
         aria-labelledby="cookie-notice-title"
         data-cookie-notice=""
-        className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+        className="fixed inset-x-0 z-50 px-4"
+        style={{
+          // On /audit it sits just above the journey's bottom bar, whose
+          // buttons stay in view and tappable (R-14). The bar already clears
+          // the home-bar inset, so the notice adds it only without a bar.
+          bottom: `var(${BOTTOM_BAR_VAR}, 0px)`,
+          paddingBottom: `calc(16px + max(env(safe-area-inset-bottom, 0px) - var(${BOTTOM_BAR_VAR}, 0px), 0px))`,
+        }}
       >
         <div className="mx-auto grid max-w-[420px] gap-3 rounded-2xl border border-line-200 bg-white p-4 shadow-lg">
           <div className="grid gap-1">

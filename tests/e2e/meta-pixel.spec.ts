@@ -6,6 +6,7 @@ import {
   fillEntry,
   FICTIONAL_BUSINESS,
   ORDER_EMAIL,
+  payButton,
   payOrder,
   pressPeriksa,
 } from "./journey";
@@ -219,3 +220,26 @@ for (const path of ["/faq", "/"]) {
     }
   });
 }
+
+test("on /audit the notice sits above the journey's bottom bar, so its buttons stay usable (R-14)", async ({
+  page,
+  baseURL,
+}) => {
+  await setUp(page, baseURL!);
+  await fillEntry(page);
+  await expect(notice(page)).toBeVisible();
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  // No choice made yet: the bar's buttons are still in view and tappable.
+  await continueToOrder(page);
+  await expect(payButton(page)).toBeVisible();
+  const { payTop, cardBottom } = await page.evaluate(() => ({
+    payTop: [...document.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Bayar Rp249.000"))!
+      .getBoundingClientRect().top,
+    cardBottom: document
+      .querySelector("[data-cookie-notice] > div")!
+      .getBoundingClientRect().bottom,
+  }));
+  expect(payTop).toBeGreaterThanOrEqual(cardBottom);
+});
