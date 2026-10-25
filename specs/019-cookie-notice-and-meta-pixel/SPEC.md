@@ -95,8 +95,9 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   configuration off (`autoConfig` false) and without advanced matching, so it
   never reads form fields, button text or the email the visitor types.
   `autoConfig` covers Meta's automatic events and page reading; Meta's
-  "Automatic advanced matching" is a setting in Events Manager that code
-  cannot switch off, so the founder keeps it off (R-13). It must be off
+  "Automatic advanced matching" is a setting in Events Manager that this code
+  does not switch off (Meta's `disableConfigLoading` could, but may turn off
+  more than that, untested), so the founder keeps it off (R-13). It must be off
   before this ships.
 - **R-06 PageView.** One PageView per page shown, including moves inside the
   site, never for `/r` or `/uji`. The Pixel's own history tracking is off;
@@ -126,6 +127,8 @@ terpasang bisa Anda hapus lewat pengaturan browser."
   **Setuju**, no further events are sent in this page, in other open tabs
   (the stored choice is read again before every event), or later visits.
   Tolak also removes the codes kept for R-09a.
+  Known edge: Tolak then Setuju clears those codes, so a reload of a still
+  open paid order can send Purchase a second time.
 - **R-11a Founder test runs.** A tab holding the test-pass code sends no
   journey events.
 - **R-12 Privacy page.** Section 10 adds that the cookie choice itself is

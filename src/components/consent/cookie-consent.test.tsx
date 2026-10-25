@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   COOKIE_CHOICE_KEY,
+  grantTracking,
   resetTrackingForTests,
   trackJourneyEvent,
 } from "@/lib/consent/meta-pixel";
@@ -343,5 +344,18 @@ describe("with a Pixel ID", () => {
     expect(document.activeElement?.id).toBe("cookie-notice-title");
     act(() => screen.getByRole("button", { name: "Tolak" }).click());
     expect(document.activeElement).toBe(link);
+  });
+
+  it("cleans the address before the Pixel loads, keeping the page's own history state (R-10a)", () => {
+    const state = { nuaveIntake: true, step: 3 };
+    window.history.replaceState(
+      state,
+      "",
+      "/audit?result=%7B%7D&order_id=NV-ABC123-1&fbclid=abc",
+    );
+    expect(grantTracking("/audit")).toBe(true);
+    expect(window.location.search).toBe("?fbclid=abc");
+    expect(window.history.state).toEqual(state);
+    expect(metaScripts()).toHaveLength(1);
   });
 });
