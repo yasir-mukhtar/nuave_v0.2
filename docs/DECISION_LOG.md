@@ -1,10 +1,78 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-24
+> Updated: 2026-10-25
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-25 — S5 wording approved
+
+Yasir approved the final Indonesian wording of the terms, privacy, support
+and FAQ pages (PR #159) and asked for it to be merged. The pages take
+effect on 24 Oktober 2026, version 1.0, as written in `src/lib/legal.ts`.
+
+## 2026-10-24 — S5 follow-up: promise clause, mistyped email, provider names, FAQ
+
+Yasir decided, reviewing the S5 pages (PR #159):
+
+- **Delivery promise:** the refund clause now says the refund is partial,
+  by the failed checks: "Laporan siap dalam 15 menit setelah audit dimulai.
+  Jika ada bagian yang gagal diperiksa, tim kami membantu
+  menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana
+  sebagian, sesuai jumlah pemeriksaan yang gagal." (`DELIVERY_PROMISE`, so
+  the order preview, checkout, payment email and terms all change.)
+- **Mistyped order email:** support may accept a payment receipt or a
+  Midtrans transaction number as proof, then send the report link to the
+  correct email and switch off the old link. This narrows S0 D5 and D7 for
+  that one case. The support script has no command to change an order's
+  email yet, so for now it is done by hand in the database; switch off the
+  old link (`npm run support -- off <order>`) before sending the new one. A
+  support command for this is parked.
+- **Provider names on the privacy page:** name only the companies a
+  customer deals with directly (Midtrans, Meta) and describe the others by
+  type; give the names to a customer who asks. The internal map lives in
+  `docs/content/website/PRIVACY.md`.
+- **FAQ:** the /faq page takes the clinic landing FAQ questions (lofi v2.2),
+  with answers corrected to the product.
+
+## 2026-10-24 — S5: Meta consent, operator, refunds and record deletion
+
+Yasir answered eight questions while the S5 wording (terms, privacy,
+support and FAQ pages) was written and reviewed:
+
+- **Meta ads tracking:** keep the promise of a choice before tracking. The
+  Meta Pixel and Conversions API run only for visitors who agree on a cookie
+  notice. That notice belongs to the separate tracking change.
+- **Privacy contact:** support@nuave.ai handles privacy requests too.
+- **Operator:** the pages say Nuave is run by **PT Nuave Arah Baru** in
+  **Jakarta Selatan**.
+- **Cancellation:** a customer who cancels after paying but before the audit
+  starts (before approving the ten questions) gets a full refund.
+- **Record deletion:** keep the record lifetimes of Spec 016 Q3 on the
+  privacy page and build an automatic cleanup job before the first failed
+  orders reach 30 days (mid-November 2026). This replaces "no deletion now"
+  for those lifetimes; the job needs its own change.
+- **Failed checks in a delivered report:** when a failed check cannot be
+  re-run, the refund is by share: Rp12.450 per failed check (Rp249.000 over
+  20 checks, 10 on ChatGPT and 10 on Google).
+- **Support email:** kept 12 months after the issue is closed.
+- **Quote validity:** remove "Ringkasan ini berlaku 30 hari" from the
+  checkout; no quote validity is promised (an unpaid order ends after 2
+  hours, Spec 016 Q2).
+
+Worker choices in the same change, for Yasir to approve with the final
+wording: the refund clock starts when the failure is recorded or the
+cancellation is received (S0 D3); refund routes follow Q9 of 2026-10-14
+(Midtrans for QRIS, GoPay and DANA; a transfer from the founder's bank for
+bank transfer); the tracking change must also add a **Pengaturan cookie**
+footer link and send server events only for visitors who agreed; if
+Midtrans cannot refund a QRIS, GoPay or DANA payment, the founder transfers
+the refund by bank; the order status answer now carries `started_at` (a
+change to Spec 016 R-21's field list, still with no email, report or
+secret), so a reloaded running page shows the elapsed time and the
+15-minute delay notice. That last point supersedes the "no clock after a
+reload" part of item 7 of the 2026-10-21 journey design decision.
 
 ## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
 

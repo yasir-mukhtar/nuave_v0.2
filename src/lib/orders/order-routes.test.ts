@@ -633,10 +633,13 @@ describe("order status (R-21)", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     const json = await response.json();
+    // S5 adds started_at so a reloaded page can tell when the audit passed
+    // the 15-minute promise; it carries no email, report or secret.
     expect(Object.keys(json).sort()).toEqual([
       "completed",
       "payment",
       "questions",
+      "started_at",
       "state",
       "total",
     ]);

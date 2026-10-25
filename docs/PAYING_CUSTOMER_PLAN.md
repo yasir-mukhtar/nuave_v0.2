@@ -45,7 +45,7 @@ done.
 | S2 | Spending cap on the server | Worker | Done; merged `2d2c4ec` | [#127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127) (supersedes #123) | [PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127#issuecomment-6118211608) (`8c9d6a6`; notes fixed) |
 | S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Done; merged `d641701`, deployed; AC-21 live run passed 2026-10-13 | [#129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129) | [Verified](../specs/016-order-and-saved-report/VERIFICATION.md) (PASS+NOTES on `ae2b711`; AC-20 evidence exception; AC-21 USD 0.1372) |
 | S4 | Real payment + founder test pass | Worker | Done; merged and deployed (#137, #138, #139); AC-25 live run passed 2026-10-18 | [#136](https://github.com/yasir-mukhtar/nuave_v0.2/pull/136) (spec), [#137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137), [#138](https://github.com/yasir-mukhtar/nuave_v0.2/pull/138), [#139](https://github.com/yasir-mukhtar/nuave_v0.2/pull/139) | [Verified](../specs/017-payment-and-test-pass/VERIFICATION.md) (AC-25 USD 0.4048; refund checks moved to G1) |
-| S5 | Terms, price and promise wording | Worker | Not started | — | — |
+| S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
 | **Stage 3** | **Go live** | | | | |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |

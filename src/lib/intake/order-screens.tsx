@@ -20,6 +20,7 @@ import {
   KeyboardAccessory,
   useCoarsePointer,
 } from "@/components/product/journey/KeyboardAccessory";
+import { SUPPORT_EMAIL } from "@/lib/legal";
 import { AUDIT_SOURCES_TEXT, DELIVERY_PROMISE } from "@/lib/orders/promise";
 import { cn } from "@/lib/utils";
 import { emailCompletions, emailTypoSuggestion } from "./email-assist";
@@ -42,8 +43,6 @@ export type OrderPayment = {
   redirect_url?: string;
   last_try?: string;
 };
-
-const SUPPORT_EMAIL = "support@nuave.ai";
 
 const TRY_MESSAGE: Record<string, string> = {
   denied: "Pembayaran ditolak. Anda bisa mencoba lagi di halaman pembayaran.",
@@ -357,8 +356,7 @@ function OrderCard({
             <span>Rp249.000</span>
           </p>
           <p className="type-copy-sm m-0 mt-1.5 text-ink-600">
-            Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave. Ringkasan
-            ini berlaku 30 hari.
+            Sekali bayar. Tanpa pajak atau biaya tambahan dari Nuave.
           </p>
         </div>
       ) : null}
@@ -626,9 +624,9 @@ export function PayConsent() {
         target="_blank"
         rel="noopener noreferrer"
       >
-        Syarat Penggunaan
+        Syarat dan Ketentuan
       </a>{" "}
-      dan{" "}
+      serta{" "}
       <a
         className="underline decoration-1 underline-offset-2"
         href="/privacy"
