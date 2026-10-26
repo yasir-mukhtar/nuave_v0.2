@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "experiments/report-v2-poc/template.html"
+        ],
+        "createdAt": "2026-10-26T11:36:58.368Z",
+        "reason": "Claude: static check pairs dark-theme text tokens with the light background; rendered contrast measured in Chromium passes in both themes (2026-10-26)"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "experiments/report-v2-poc/template.html"
+        ],
+        "createdAt": "2026-10-26T11:39:26.202Z",
+        "reason": "Claude: padding sits on inner .gutter/.col wrappers the static check does not resolve; rendered screenshots show 24-52px insets (2026-10-26)"
+      }
+    ]
+  }
+}
