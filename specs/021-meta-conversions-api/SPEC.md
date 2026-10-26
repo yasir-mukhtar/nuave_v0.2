@@ -1,9 +1,10 @@
 # Spec 021: Meta Conversions API (server Purchase event)
 
-> Status: **Approved** by Yasir on 2026-10-26 (revision 5: his answers to
+> Status: **Approved** by Yasir on 2026-10-26 (revision 6: his answers to
 > Q-1 to Q-8, with the layered cookie notice of Q-1; see Decisions). The
-> "How it works" wording (Q-9, approved) and the layered approach itself
-> need the lawyer check before ads start. Revisions 2 and 3 applied independent
+> revised "How it works" wording (Q-9) and Q-2 summary need Yasir's
+> re-approval after review round 4, and the layered approach itself needs
+> the lawyer check before ads start. Revisions 2 and 3 applied independent
 > review rounds 1 and 2; round 3 PASS (PR #170).
 > Owner: orchestrator
 > Updated: 2026-10-26
@@ -23,7 +24,9 @@ Read in order:
    Spec 019 R-09 and R-10 (see R-09 and Non-scope below).
 3. `docs/DECISION_LOG.md`, 2026-10-24 "S5: Meta consent…" and the 2026-10-25
    entries "Cookie notice and Meta Pixel (Spec 019)", "Cookie notice in
-   English, shorter" and "Cookie notice: Allow cookies?".
+   English, shorter" and "Cookie notice: Allow cookies?"; and the two
+   2026-10-26 entries on Spec 021 ("Approve Spec 021…" and "Cookie notice:
+   layered disclosure").
 4. The paid screen and how the page learns an order is paid:
    `src/app/api/orders/status/route.ts`, `src/lib/payments/attempts.ts`
    (`paymentView`), `src/lib/payments/apply.ts` (the writes that record a
@@ -257,8 +260,9 @@ background and its outcome is never shown.
   `src/lib/legal.ts`, page and `PRIVACY.md` together) with the section 10
   changes of Q-2; it remains the full explanation and names Meta. The
   change notes record that items 2 and 7 are met and how, that item 1 now
-  reads "the notice links to a short explanation, shown before the choice,
-  that names the hashed order email" (R-19, R-19a), that this spec changes
+  reads "a How it works link opens, inside the notice and before the
+  choice, a short explanation that names the hashed order email and Meta"
+  (R-19, R-19a), that this spec changes
   Spec 019 R-09 and R-10, and how Q-8 was settled.
 - **R-21 Cleanup.** The hourly cleanup clears the order's event code when it
   makes the order anonymous. The send time, version and outcome code may
@@ -267,8 +271,9 @@ background and its outcome is never shown.
   the site (`wrangler.jsonc`, `observability`) and record details of every
   request, kept 3 days (7 on Workers Paid) in Nuave's Cloudflare account.
   Cloudflare hides cookies there but, by its documentation, probably not the
-  IP address or browser type. As decided in Q-8, this
-  change switches off that automatic per-request log
+  IP address or browser type. As decided in Q-8, the founder first opens
+  one request in that log (founder step 0); if it shows the IP address or
+  browser type, this change switches off that automatic per-request log
   (`observability.logs.invocation_logs: false`) for the production worker,
   keeping Nuave's own log lines, so that section 2's "Nuave sendiri tidak
   menyimpan alamat IP Anda" holds for the whole site, not only this route.
@@ -314,7 +319,11 @@ background and its outcome is never shown.
   the lawyer's check, not a claim that it is compliant. Points for the
   lawyer: whether the Q-1 and Q-9 text meet UU PDP's requirements for
   informed consent, and whether they meet Meta's Business Tools terms on
-  notice to visitors.
+  notice to visitors; in particular, that the first layer names one purpose
+  (measuring which ads lead to sales) but not the second (showing ads to
+  people similar to buyers), which Q-9 and privacy sections 4 and 10 name;
+  and whether "limited purchase information" fairly describes a coded
+  email, an IP address and a browser type.
 
 ## Acceptance criteria
 
@@ -356,7 +365,8 @@ background and its outcome is never shown.
   its Worker secrets; `pr-preview.yml` sets no Meta token.
 - **AC-10** The cleanup clears the event code of an order it makes
   anonymous (extends the existing cleanup test).
-- **AC-11** The notice text matches Q-1 exactly; the privacy page shows
+- **AC-11** The notice text matches Q-1 exactly and the How it works text
+  matches Q-9 word for word; the privacy page shows
   version 1.4 with the Q-2 changes, and a choice stored under 1.3 brings
   the notice back (Spec 019 R-03).
 - **AC-11a** Browser test (phone 390×844 and desktop): **How it works** is
@@ -379,6 +389,11 @@ background and its outcome is never shown.
 
 ## Founder steps in Meta Events Manager
 
+0. **Before the build merges, check Cloudflare's log (Q-8, R-22).**
+   Cloudflare → Workers & Pages → `nuave-v2` → Observability: open one
+   request. If it shows the IP address or browser type, R-22 stands and the
+   build switches that log off; if not, tell the orchestrator so R-22 can
+   be dropped.
 1. **Before merging, make the token.** In Events Manager, open the Pixel
    (890453577390181) → **Settings** → **Conversions API** → **Generate
    access token**. Save it only in GitHub (repository **Settings → Secrets
@@ -444,10 +459,13 @@ Cloudflare's current screens.
   the version asks everyone to choose again, under the notice above. The
   public changes, all in section 10:
   - a new first paragraph of the Meta part, before the details: "Singkatnya:
-    kami tidak mengirim apa pun ke Meta kecuali Anda memilih Allow. Email
-    Anda tidak pernah dikirim dalam bentuk yang bisa dibaca. Laporan,
-    pertanyaan, jawaban AI, dan data bisnis Anda tidak pernah dikirim. Kami
-    tidak menjual data Anda, dan Anda bisa mengubah pilihan kapan saja."
+    kami tidak mengirim data Anda ke Meta kecuali Anda memilih Allow. Email
+    Anda tidak pernah dikirim ke Meta dalam bentuk yang bisa dibaca.
+    Laporan, pertanyaan, jawaban AI, dan data bisnis Anda tidak pernah
+    dikirim ke Meta. Kami tidak menjual data Anda, dan Anda bisa mengubah
+    pilihan kapan saja." (Revised after review round 4, which added "data
+    Anda" and "ke Meta" so no sentence suggests nothing is shared with
+    anyone; **needs Yasir's re-approval**.)
   - the third point, narrowing server events to purchases and naming the
     page address: "untuk pembelian, catatan yang sama dari server kami,
     beserta alamat IP, jenis browser, kode cookie Meta Anda, dan alamat
@@ -478,23 +496,37 @@ Cloudflare's current screens.
   history of past requests and cron runs (a check like the 2026-10-14 cron
   CPU reading needs a temporary switch back on).
 
-- **Q-9 "How it works" text: approved as written** (Yasir, 2026-10-26).
-  English like the notice:
+- **Q-9 "How it works" text.** Yasir approved the first draft as written
+  (2026-10-26). Review round 4 found it said less than the privacy page
+  and overstated in two places, so the text below is **revised and needs
+  Yasir's re-approval**. English like the notice:
 
   > **How it works**
-  > - If you allow, our advertising partner, Meta (Facebook and Instagram),
-  >   sets cookies so we can see which ads bring visitors.
+  > - If you allow, Meta (Facebook and Instagram), our advertising partner,
+  >   sets cookies and learns which Nuave pages you open and when you
+  >   finish the free check or open checkout, with your IP address and
+  >   device type, so we can see which ads bring visitors.
   > - If you buy, we also send Meta that a purchase happened and its value
-  >   (Rp249.000), your IP address and browser type, and your order email
-  >   in coded (hashed) form, never as readable text. Meta uses these to
-  >   match the purchase to an ad, and to show our ads to people similar to
+  >   (Rp249.000), your IP address, browser type and Meta cookie codes, and
+  >   your order email in coded (hashed) form, never as readable text. Meta
+  >   uses these to match the purchase to your Facebook or Instagram
+  >   account and the ad you saw, and to show our ads to people similar to
   >   our buyers.
-  > - We never send your report, your questions, AI answers or your
+  > - We never send Meta your report, your questions, AI answers or your
   >   business details.
-  > - If you don't allow, nothing is sent to Meta, from your browser or
-  >   from our server. You can change your choice anytime under Cookie
-  >   settings at the bottom of the page.
+  > - If you don't allow, none of your data is sent to Meta, from your
+  >   browser or from our server. You can change your choice anytime under
+  >   Pengaturan cookie, at the bottom of our home page and privacy page.
   > [Privacy policy]
+
+  What changed from the first draft: bullet 1 now says what the browser
+  shares for everyone who allows (privacy section 10, first two points);
+  bullet 2 adds the Meta cookie codes and says the email is matched to the
+  buyer's account, as section 10 does; bullet 3 says "never send Meta"
+  (questions and business data do go to the AI and search providers,
+  sections 6 and 7); bullet 4 says "none of your data" (the free check
+  reads a business's public Instagram page whatever the choice) and names
+  the real link, which `/audit` does not show.
 
   It names Meta here because this is the place a visitor goes to learn who
   receives the data; the first layer stays free of it, as Yasir chose.
@@ -523,4 +555,5 @@ applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
 Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).
 Revision 5 (same day): the layered cookie notice of Q-1, R-19a, R-19b,
 AC-11a and Q-9, on Yasir's instruction; Q-9 approved as written. Review
-round 4 on revision 5: pending.
+round 4 on revision 5: ALMOST; findings 1–6 applied in revision 6 (Q-9 and
+the Q-2 summary reworded, awaiting Yasir's re-approval).
