@@ -1,10 +1,18 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-25
+> Updated: 2026-10-26
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-26 — Production runs on Workers Paid
+
+Yasir confirmed the Cloudflare account that hosts worker `nuave-v2` is on
+**Workers Paid**. This completes the 2026-10-14 decision (Workers Paid
+before G1) and the Spec 018 assumption that production has the Paid CPU and
+subrequest limits. Earlier notes about Workers Free limits are history; they
+no longer block G1 or AC-14. No code or configuration changed.
 
 ## 2026-10-25 — Cookie notice: "🍪 Allow cookies?", Allow as the main button
 
