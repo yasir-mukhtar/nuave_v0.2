@@ -24,8 +24,8 @@ that the server step brings the email back into the notice itself, and
 privacy item 1's "the notice names it": the information must instead be
 clearly available before consent. Yasir's view is that informed consent
 does not require the hashed email in the first layer; this is recorded as
-a decision for the lawyer's check, not a claim that it is compliant. The
-How it works wording (Spec 021 Q-9) is still for Yasir to approve.
+a decision for the lawyer's check, not a claim that it is compliant. Yasir
+approved the How it works wording (Spec 021 Q-9) as written.
 
 ## 2026-10-26 — Approve Spec 021 (Meta Conversions API, server Purchase)
 

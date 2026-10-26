@@ -2,8 +2,8 @@
 
 > Status: **Approved** by Yasir on 2026-10-26 (revision 5: his answers to
 > Q-1 to Q-8, with the layered cookie notice of Q-1; see Decisions). The
-> "How it works" wording (Q-9) and the layered approach itself need the
-> lawyer check before ads start. Revisions 2 and 3 applied independent
+> "How it works" wording (Q-9, approved) and the layered approach itself
+> need the lawyer check before ads start. Revisions 2 and 3 applied independent
 > review rounds 1 and 2; round 3 PASS (PR #170).
 > Owner: orchestrator
 > Updated: 2026-10-26
@@ -478,8 +478,8 @@ Cloudflare's current screens.
   history of past requests and cron runs (a check like the 2026-10-14 cron
   CPU reading needs a temporary switch back on).
 
-- **Q-9 "How it works" text (open, for Yasir).** Proposed, English like the
-  notice:
+- **Q-9 "How it works" text: approved as written** (Yasir, 2026-10-26).
+  English like the notice:
 
   > **How it works**
   > - If you allow, our advertising partner, Meta (Facebook and Instagram),
@@ -496,9 +496,9 @@ Cloudflare's current screens.
   >   settings at the bottom of the page.
   > [Privacy policy]
 
-  **Recommended:** approve as written. It names Meta here because this is
-  the place a visitor goes to learn who receives the data; the first layer
-  stays free of it, as Yasir chose. Lawyer check with Q-1.
+  It names Meta here because this is the place a visitor goes to learn who
+  receives the data; the first layer stays free of it, as Yasir chose.
+  Lawyer check with Q-1.
 
 ## Implementation notes
 
@@ -522,4 +522,5 @@ Not started. Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
 applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
 Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).
 Revision 5 (same day): the layered cookie notice of Q-1, R-19a, R-19b,
-AC-11a and Q-9, on Yasir's instruction; not yet re-reviewed.
+AC-11a and Q-9, on Yasir's instruction; Q-9 approved as written. Review
+round 4 on revision 5: pending.
