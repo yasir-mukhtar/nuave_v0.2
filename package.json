@@ -13,6 +13,7 @@
     "test:audit": "vitest run src/lib/audit",
     "test:unit": "vitest run",
     "test:live-provider": "vitest run --config vitest.live-provider.config.ts",
+    "test:canary:questions": "vitest run --config vitest.live-provider.config.ts scripts/canary",
     "test:e2e": "playwright test && playwright test -c playwright.config.disabled.ts && playwright test -c playwright.config.pixel.ts",
     "test:e2e:enabled": "playwright test",
     "test:e2e:disabled": "playwright test -c playwright.config.disabled.ts",

@@ -6,6 +6,43 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Question writing: four fixes and a live canary
+
+On 2026-10-26 a paid order with a search city (NV-3WDSAY, a skin clinic)
+could not get its ten questions after three tries. A live replay found four
+causes, all fixed together on the founder's request for a durable fix:
+
+1. **Room to think.** The provider's hosts now think longer before they
+   answer, and the thinking shares the 4,096-token reply limit; some replies
+   were cut off ("length"). The limit is now 16,384. Cost follows the tokens
+   actually used, not the limit.
+2. **Billing.** Cheaper Inference moved the billed cost to a new field, so
+   each call's USD 0.05 hold was never settled and counted against the
+   order's USD 0.25 question allowance. Nuave now reads the new field, the old
+   one, and `usage.cost`.
+3. **The brief and the check disagreed.** The check needs every key word of a
+   search topic in a question; the brief never named those words. The brief
+   now lists them per topic and says so.
+4. **Generic words in a name.** For "Sozo Skin Clinic", "skin" counted as the
+   brand, so its own "Skin Booster" was treated as its name and every skin
+   booster question was rejected. Generic words (skin, clinic, beauty, kopi,
+   and so on) no longer count as brand words, unless the name has no other
+   words ("Beauty Glow Clinic" keeps them all).
+
+Also: a cut-off reply is retried like a rejected one; each request writes one
+line to the Worker log saying how each call ended, as codes only (never the
+reply text, the questions or the email; a crash logs "error" alone); and
+`npm run test:canary:questions` runs the real writer once on a live-mode test
+order (about USD 0.01) and fails when replies use more than half the limit, a
+cost cannot be read, or a call's spend record is not settled at that cost.
+Before: 0 of 10 grounded tries passed. After: 5 of 5 runs gave ten
+questions, all calls finished normally.
+
+The founder approved settling NV-3WDSAY's three stuck question holds
+(USD 0.05 each) at USD 0.0015 each in production, an upper bound from the
+replay (a call cut off at 4,096 tokens cost USD 0.0012), so the order can be
+retried with its full allowance.
+
 ## 2026-10-26 — Production runs on Workers Paid
 
 Yasir confirmed the Cloudflare account that hosts worker `nuave-v2` is on

@@ -40,6 +40,8 @@ export const runtime = "nodejs";
  * request or response is logged here; the raw envelope stays server-side.
  */
 export async function POST(request: Request) {
+  // Set once question writing starts, so a crash is on record too.
+  let writing: { order_number: string | null } | null = null;
   try {
     const switchedOff = auditSwitchResponse();
     if (switchedOff)
@@ -120,6 +122,7 @@ export async function POST(request: Request) {
     // Spec 018: an intake with "Kota untuk pencarian" is written from the
     // saved search pool (R-10) or the fallback (R-08); the questions and their
     // server-owned origins are saved on the order for approval (R-07).
+    writing = order;
     const frozen = parseFrozenSmartIntake(record.intake);
     const place = frozen ? contextSearchPlace(frozen.context) : null;
     if (frozen && place) {
@@ -135,6 +138,7 @@ export async function POST(request: Request) {
           }),
       );
       await noticeQuestionLimit(server.db, order, grounded, now);
+      logQuestionOutcome(order, grounded);
       if (grounded.status === "ok" && grounded.origins)
         await saveGeneratedQuestions(server.db, {
           orderId: order.id,
@@ -144,7 +148,10 @@ export async function POST(request: Request) {
             origins: grounded.origins,
           }),
         });
-      return NextResponse.json(projectQuestionOutcome(grounded));
+      // The per-call record is for the log only, never the browser.
+      const { tries: _tries, ...answer } = grounded;
+      void _tries;
+      return NextResponse.json(projectQuestionOutcome(answer));
     }
     const outcome = await withOrderSpend(
       { db: server.db, orderId: order.id },
@@ -155,8 +162,10 @@ export async function POST(request: Request) {
         }),
     );
     await noticeQuestionLimit(server.db, order, outcome, now);
+    logQuestionOutcome(order, outcome);
     return NextResponse.json(projectQuestionOutcome(outcome));
   } catch {
+    if (writing) logQuestionOutcome(writing, { status: "error" });
     // Execution may already have started: never fabricate no work or zero cost.
     return NextResponse.json(questionUnexpectedError(), { status: 500 });
   }
@@ -178,4 +187,32 @@ async function noticeQuestionLimit(
     detail: { order_number: order.order_number },
     now,
   }).catch(() => false);
+}
+
+/** One line per question-writing request in the Worker log (Cloudflare
+ * observability), so a failure's cause is on record: on 2026-10-26 three
+ * failed requests left only "incomplete", and finding "finish_reason:
+ * length" took a live replay. It carries the order number, how each call
+ * ended and why, as codes only: never a detail text (it can quote the
+ * model's questions), the intake or the email. A crash logs status "error"
+ * without the per-call record, which the crash loses. */
+function logQuestionOutcome(
+  order: { order_number: string | null },
+  outcome: {
+    status: string;
+    reason?: string;
+    mode?: string;
+    tries?: unknown[];
+  },
+) {
+  const line = JSON.stringify({
+    event: "question_writing",
+    order: order.order_number,
+    status: outcome.status,
+    ...(outcome.mode ? { mode: outcome.mode } : {}),
+    ...(outcome.reason ? { reason: outcome.reason } : {}),
+    ...(outcome.tries ? { tries: outcome.tries } : {}),
+  });
+  if (outcome.status === "ok") console.info(line);
+  else console.warn(line);
 }

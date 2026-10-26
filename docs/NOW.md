@@ -44,6 +44,13 @@
 
 ## Next action
 
+- **Question writing fixed** (2026-10-26): orders with a search city failed
+  to get their ten questions; four causes fixed and a live check added
+  ([decision](./DECISION_LOG.md#2026-10-26--question-writing-four-fixes-and-a-live-canary)).
+  Run `npm run test:canary:questions` (needs `CHEAPERINFERENCE_API_KEY`,
+  about USD 0.01) after any change to the question writer, and when orders
+  fail at the question step.
+
 - **S6 is built, in review** ([#155](https://github.com/yasir-mukhtar/nuave_v0.2/pull/155)):
   [Spec 020](../specs/020-clinic-landing-page/SPEC.md) replaces the page at
   `/` with the founder's clinic landing page (Figma 244:2). The founder
@@ -242,10 +249,12 @@
   OpenAI directly (`gpt-5.6-luna`, low reasoning). DataForSEO supplies the
   Google search data and both checks (the ChatGPT app's answers and Google
   AI Overview); payment start refuses new orders when its balance is below
-  USD 2. AC-14 (the first live order on this audit) has not run yet.
-  Question writing uses GLM 5.3 Flash through Cheaper Inference, given the
-  DataForSEO search data
-  ([2026-09-20](./DECISION_LOG.md#2026-09-20--audit-provider-switches-to-direct-openai-opencode-go-dropped)).
+  USD 2. AC-14 (a live order through to the report on this audit) has not
+  passed yet. Question writing uses GLM 5.3 Flash through Cheaper Inference,
+  given the DataForSEO search data
+  ([2026-09-20](./DECISION_LOG.md#2026-09-20--audit-provider-switches-to-direct-openai-opencode-go-dropped)),
+  with a 16,384-token reply limit since 2026-10-26; its live check is
+  `npm run test:canary:questions`.
 - Web search: OpenAI's web search only for reading the business's own
   website; the checks are real ChatGPT app answers and Google results
   fetched through DataForSEO; none for question writing or the report.
