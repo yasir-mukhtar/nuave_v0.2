@@ -95,9 +95,12 @@
   [Spec 022](../specs/022-meta-conversions-api/SPEC.md) was approved on
   2026-10-26 (Purchase only, sent when the buyer's browser reaches the paid
   screen; privacy page to 1.4) and is built on
-  [PR #170](https://github.com/yasir-mukhtar/nuave_v0.2/pull/170). Before
-  merging it, the founder checks one Cloudflare log entry (founder step 0)
-  and makes the Meta access token, saved as `META_CAPI_ACCESS_TOKEN`.
+  [PR #170](https://github.com/yasir-mukhtar/nuave_v0.2/pull/170). Founder
+  step 0 (Cloudflare's per-request log keeps visitor IP addresses, so it is
+  switched off) and the Meta access token are done (2026-10-27). Its
+  migration is 0015; Report v2 keeps 0014, which must be named by hand
+  (`wrangler d1 migrations create` would suggest 0016) and must not touch
+  the `meta_` columns.
 
 - **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
   questions from real Google search data, each answered by the ChatGPT app
