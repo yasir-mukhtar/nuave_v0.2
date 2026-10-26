@@ -1,7 +1,8 @@
 # Spec 021: Meta Conversions API (server Purchase event)
 
-> Status: **Draft**, revision 2 (for Yasir's review; Q-1 to Q-8 need
-> answers). Revision 2 applies the first independent review (PR #170).
+> Status: **Draft**, revision 3 (for Yasir's review; Q-1 to Q-8 need
+> answers). Revisions 2 and 3 apply independent review rounds 1 and 2
+> (PR #170).
 > Owner: orchestrator
 > Updated: 2026-10-26
 > Implements: privacy page change notes, "Before the Meta Pixel or
@@ -54,7 +55,8 @@ The browser Pixel sends the same Purchase with the same event code, so Meta
 counts one purchase, not two. Nothing is sent for anyone who did not tap
 Allow, for test-pass orders, from previews, or from `/r` and `/uji`. If Meta
 is slow or down, the customer notices nothing. Nuave keeps no copy of the IP
-address or browser type, including in its Cloudflare logs (R-22).
+address or browser type; R-22 and AC-14 aim to make that true of its
+Cloudflare logs as well, and check it.
 
 ## User and situation
 
@@ -195,8 +197,9 @@ background and its outcome is never shown.
   browser type, cookie codes, hashed email, the request sent to Meta or
   Meta's reply.
 - **R-14 Nuave's own logs.** No log line Nuave writes holds the IP address,
-  browser type, cookie codes, order email, its hash or the access token. At
-  most one line per call with the outcome code.
+  browser type, cookie codes, order email, its hash or the access token. The
+  route writes exactly one line per call, with the outcome code only (also
+  when nothing is sent, e.g. `skipped`), so AC-14 has a line to inspect.
 - **R-15 Abuse.** The route uses the existing per-IP rate limit (as the
   status route does); when it trips, the route gives that limit's usual
   answer (429, or 503 when the limit cannot be checked), which the browser
@@ -239,8 +242,10 @@ background and its outcome is never shown.
   IP address or browser type. Unless Yasir decides otherwise (Q-8), this
   change switches off that automatic per-request log
   (`observability.logs.invocation_logs: false`) for the production worker,
-  keeping Nuave's own log lines, so section 2's "Nuave sendiri tidak
+  keeping Nuave's own log lines, so that section 2's "Nuave sendiri tidak
   menyimpan alamat IP Anda" holds for the whole site, not only this route.
+  Cloudflare's documentation does not say whether it attaches request
+  details to Nuave's own log lines; AC-14 checks that.
 - **R-23 Only the browser's call sends.** No other code path (the Midtrans
   notification, the status check, which can itself record a payment, the
   cron, the support script) makes any request to a Meta address.
@@ -261,9 +266,9 @@ background and its outcome is never shown.
 - No cost from Meta. One extra short request per paid order.
 - New data stored on Nuave's server: per paid order, a random event code,
   a send time, a privacy-page version and an outcome code. No IP address,
-  browser type or cookie code is stored by Nuave's code, and with R-22 none
-  is kept in Nuave's Cloudflare request log either, so section 2's "Nuave
-  sendiri tidak menyimpan alamat IP Anda" stays true. Cloudflare still
+  browser type or cookie code is stored by Nuave's code. R-22 aims to keep
+  none in Nuave's Cloudflare logs either, and AC-14 checks it, so section
+  2's "Nuave sendiri tidak menyimpan alamat IP Anda" stays true. Cloudflare still
   processes the IP address to run the site, as sections 2 and 7 say.
 - Personal data sent to Meta: the hashed order email, IP address, browser
   type and Meta cookie codes, only after Allow, as section 10 lists. Section
@@ -291,7 +296,8 @@ background and its outcome is never shown.
   code equals the one stored on the order; the page address is exactly
   `<site>/audit`; with a test code set, `test_event_code` appears once at the
   top level. The token is not in the request address. The serialised
-  request contains none of: the order number, plain email, business name,
+  request contains none of: the order number (internal order id), plain
+  email, business name,
   website, report link, questions or intake text.
 - **AC-04** After a send, no stored row or column and no captured log line
   contains the test IP address, user agent, cookie codes, order email, its
@@ -323,9 +329,11 @@ background and its outcome is never shown.
   records a payment, and a cron run make no request to a Meta address (unit
   tests with a fake `fetch` that fails on any Meta address).
 - **AC-14** Unless Q-8 is answered otherwise: the production worker's
-  `wrangler.jsonc` has `observability.logs.invocation_logs` set to `false`,
-  and after deploy the founder opens Cloudflare's log for one request and
-  finds no IP address or browser type.
+  `wrangler.jsonc` has `observability.logs.invocation_logs` set to `false`.
+  After deploy, the founder opens, in Cloudflare's logs, the route's own
+  outcome line from the AC-12 check purchase (R-14) and finds no IP address
+  or browser type attached to it. If Cloudflare does attach them, the
+  question goes back to Yasir under Q-8 before ads start.
 
 ## Founder steps in Meta Events Manager
 
@@ -333,8 +341,9 @@ background and its outcome is never shown.
    (890453577390181) → **Settings** → **Conversions API** → **Generate
    access token**. Save it only in GitHub (repository **Settings → Secrets
    and variables → Actions**) as `META_CAPI_ACCESS_TOKEN`. If the merge
-   comes first, that deploy fails until the secret exists, and nothing new
-   goes live meanwhile.
+   comes first, that deploy fails and nothing new goes live; adding the
+   secret afterwards does not restart it, so re-run the failed deploy in
+   GitHub **Actions** (open the run → **Re-run jobs**).
 2. **Keep "Automatic advanced matching" off** (unchanged from Spec 019).
 3. **Before the check:** Events Manager → the Pixel → **Test events** →
    copy the test code (it looks like `TEST12345`). In Cloudflare, worker
@@ -353,8 +362,9 @@ background and its outcome is never shown.
 5. **Straight after the check:** delete `META_CAPI_TEST_EVENT_CODE` in
    Cloudflare, and tap **Don't allow** again in your test browsers.
 6. **Cloudflare log check (AC-14):** Cloudflare → Workers & Pages →
-   `nuave-v2` → Observability: open one request from after the deploy and
-   confirm no IP address or browser type is shown.
+   `nuave-v2` → Observability: find the route's outcome line from the
+   check purchase in step 4 and confirm no IP address or browser type is
+   shown with it. If one is, tell the orchestrator before ads start (Q-8).
 7. **To stop server events at once:** delete `META_CAPI_ACCESS_TOKEN` in
    Cloudflare (`nuave-v2` → Settings → Variables and Secrets). Nothing is
    sent until the next deploy from `main` puts it back; to stop for good,
@@ -398,7 +408,8 @@ Cloudflare's current screens.
     pemesanan Nuave; dan" (was "untuk cek gratis dan pembelian, …");
   - only if the lawyer agrees, after "Pilihan cookie Anda sendiri disimpan
     di browser Anda selama 12 bulan.": "Untuk setiap pembelian yang kami
-    kirim ke Meta, kami mencatat bahwa Anda memilih Allow dan kapan."
+    kirim ke Meta, kami mencatat waktu pengirimannya dan versi kebijakan
+    yang Anda setujui."
 
   Adding a server Lead later would then need its own version change and
   fresh consent, which is right.
@@ -425,8 +436,10 @@ Cloudflare's current screens.
   address and browser type for 3 to 7 days, on every page, not only this
   one. **Recommended:** (a) switch off that automatic log (R-22) after
   opening one log entry to confirm what it holds; Nuave's own log lines
-  stay, and per-request details remain visible live in Cloudflare's
-  dashboard while you watch. The alternative, (b), is to treat these
+  stay. The cost: Cloudflare no longer saves a record of each past request
+  and cron run, the record you used on 2026-10-14 to read cron CPU times
+  (Spec 016 verification) before the Workers Paid decision; such checks
+  would then need a temporary switch back on. The alternative, (b), is to treat these
   short-lived logs as the hosting provider's processing that sections 2
   and 7 already mention ("Permintaan ke situs (termasuk alamat IP)"), and
   record that for the lawyer check.
@@ -450,4 +463,4 @@ Cloudflare's current screens.
 ## Verification record
 
 Not started. Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
-applied in revision 2.
+applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
