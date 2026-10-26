@@ -188,3 +188,36 @@ export function makeSmartCustomerEvidenceExport(
     ...(provenance ? { provenance } : {}),
   };
 }
+
+/** What the report-data route returns for a valid link (spec 016 R-26). */
+export type SavedReportData = {
+  report: AuditReport;
+  context: DirectTenAuditContext;
+  prompts: AuditPrompt[];
+  originals: string[];
+  observations: AuditObservation[];
+  synthetic: boolean;
+};
+
+/** The evidence JSON of a saved order. The report page's "Unduh bukti JSON"
+ * (reports saved before Spec 018) and `npm run support -- export` (Spec 021
+ * A-08) both build it here, so the two files are the same. */
+export function savedReportEvidence(data: SavedReportData) {
+  const originalByPromptId = new Map(
+    data.prompts.map((prompt, index) => [
+      prompt.prompt_id,
+      data.originals[index] ?? prompt.question,
+    ]),
+  );
+  return makeSmartCustomerEvidenceExport(
+    data.context,
+    promptsWithOriginals(data.prompts, originalByPromptId),
+    data.observations,
+    data.report,
+    {
+      report_context_version: data.context.version,
+      question_method: "direct-ten",
+      synthetic: data.synthetic,
+    },
+  );
+}

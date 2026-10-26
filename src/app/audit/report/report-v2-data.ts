@@ -1,0 +1,235 @@
+import {
+  sentences,
+  subjectNoun,
+  type ReportSubject,
+  type TwoSourceQuestion,
+  type TwoSourceReport,
+} from "@/lib/audit/two-source-report";
+import type { AuditObservation } from "@/lib/audit/types";
+import { findNames } from "./mark-names";
+
+/**
+ * Spec 021 Part A: what the new two-source report shows, worked out from what
+ * a saved Spec 018 report already holds. Nothing here calls a provider or
+ * writes anything; counts are taken from the saved answers.
+ */
+
+export type Source = "chatgpt" | "google";
+
+/** The dot looks (Figma "Legends" 2011:24), weakest to strongest, plus the
+ * two states that are not a result. */
+export type MentionState =
+  "noaio" | "none" | "cited" | "mentioned" | "recommended" | "failed";
+
+export function mentionState(
+  question: TwoSourceQuestion,
+  source: Source,
+): MentionState {
+  if (source === "chatgpt") {
+    const c = question.chatgpt;
+    if (c.outcome !== "answered") return "failed";
+    if (c.named === "named") return c.recommended ? "recommended" : "mentioned";
+    return c.named === "source_only" ? "cited" : "none";
+  }
+  const g = question.google;
+  if (g.outcome === "failed") return "failed";
+  if (g.outcome === "not_shown") return "noaio";
+  if (g.named === "named") return "mentioned";
+  return g.named === "source_only" ? "cited" : "none";
+}
+
+export const MENTION_LABEL: Record<MentionState, string> = {
+  noaio: "Tidak ada AI Overview",
+  none: "Tidak disebut",
+  cited: "Situs dikutip, nama tidak disebut",
+  mentioned: "Disebut",
+  recommended: "Direkomendasikan",
+  failed: "Tidak dapat diuji",
+};
+
+export const SOURCE_LABEL: Record<Source, string> = {
+  chatgpt: "ChatGPT",
+  google: "Google AI Overview",
+};
+
+/** The saved answer text of each completed check, by source. */
+export function answerTexts(
+  question: TwoSourceQuestion,
+  observations: readonly AuditObservation[],
+): Record<Source, string> {
+  const observation = observations.find(
+    (item) => item.prompt_id === question.prompt_id,
+  );
+  return {
+    chatgpt:
+      question.chatgpt.outcome === "answered" &&
+      observation?.run_status === "completed"
+        ? observation.raw_answer
+        : "",
+    google: question.google.outcome === "summary" ? question.google.text : "",
+  };
+}
+
+export type CompetitorRow = {
+  name: string;
+  /** Answers per source that name the business. */
+  chatgpt: number;
+  google: number;
+  /** The owner's own row; its counts come from the saved facts. */
+  own?: { cited: number; recommended: number };
+};
+
+/**
+ * Spec 021 A-04: the other businesses the saved report lists, counted by how
+ * many saved answers name them (an answer counts once, however often it
+ * repeats the name). Reports saved before Part C hold names only, so this is
+ * the count for them. The owner's row is added from the saved facts.
+ */
+export function competitorRows(
+  two: TwoSourceReport,
+  observations: readonly AuditObservation[],
+  ownName: string,
+): { counted: CompetitorRow[]; uncounted: string[] } {
+  const seen = new Map<string, string>();
+  for (const name of [
+    ...two.other_businesses.chatgpt,
+    ...two.other_businesses.google,
+  ]) {
+    const key = name.trim().toLowerCase();
+    if (key && !seen.has(key)) seen.set(key, name.trim());
+  }
+  const names = [...seen.values()];
+  const rows = new Map<string, CompetitorRow>(
+    names.map((name) => [name, { name, chatgpt: 0, google: 0 }]),
+  );
+  for (const question of two.questions) {
+    const texts = answerTexts(question, observations);
+    for (const source of ["chatgpt", "google"] as const) {
+      const found = new Set(findNames(texts[source], names).map((m) => m.name));
+      for (const name of found) rows.get(name)![source] += 1;
+    }
+  }
+  const counted = [...rows.values()].filter((r) => r.chatgpt + r.google > 0);
+  const uncounted = [...rows.values()]
+    .filter((r) => r.chatgpt + r.google === 0)
+    .map((r) => r.name);
+  const cited = two.questions.filter(
+    (q) =>
+      mentionState(q, "chatgpt") === "cited" ||
+      mentionState(q, "google") === "cited",
+  ).length;
+  counted.push({
+    name: ownName,
+    chatgpt: two.counts.chatgpt.named,
+    google: two.counts.google.named,
+    own: { cited, recommended: two.counts.chatgpt.recommended },
+  });
+  counted.sort(
+    (a, b) =>
+      b.chatgpt + b.google - (a.chatgpt + a.google) ||
+      (a.own ? -1 : b.own ? 1 : a.name.localeCompare(b.name)),
+  );
+  return { counted, uncounted };
+}
+
+export type TopicGapRow = {
+  ordinal: number;
+  topic: string;
+  volume: number | null;
+  /** Other businesses named in this question's answers (when no volume). */
+  othersNamed: number;
+  /** Where the business stands for this topic, in one sentence. */
+  standing: string;
+  domains: string[];
+};
+
+/**
+ * Spec 021 A-05: Celah Topik. A saved row whose topic is its whole question
+ * has no topic name and is left out until Part B supplies one.
+ */
+export function topicGapRows(
+  two: TwoSourceReport,
+  observations: readonly AuditObservation[],
+  subject?: ReportSubject,
+): TopicGapRow[] {
+  const names = [
+    ...two.other_businesses.chatgpt,
+    ...two.other_businesses.google,
+  ];
+  return two.topics_missing.flatMap((row) => {
+    const question = two.questions.find((q) => q.prompt_id === row.prompt_id);
+    if (
+      !question ||
+      !row.topic ||
+      row.topic.trim() === question.question.trim()
+    )
+      return [];
+    const texts = answerTexts(question, observations);
+    const othersNamed = new Set(
+      [
+        ...findNames(texts.chatgpt, names),
+        ...findNames(texts.google, names),
+      ].map((m) => m.name.toLowerCase()),
+    ).size;
+    const answered: string[] = [];
+    if (question.chatgpt.outcome === "answered") answered.push("ChatGPT");
+    if (question.google.outcome === "summary")
+      answered.push("Google AI Overview");
+    const who = subjectNoun(subject, false);
+    let standing = `Tidak disebut di ${answered.join(" maupun ")}.`;
+    if (
+      mentionState(question, "google") === "cited" ||
+      mentionState(question, "chatgpt") === "cited"
+    )
+      standing = `Situs ${who} dikutip, tetapi namanya tidak disebut.`;
+    return [
+      {
+        ordinal: row.ordinal,
+        topic: row.topic,
+        volume: row.volume,
+        othersNamed,
+        standing,
+        domains: row.domains,
+      },
+    ];
+  });
+}
+
+export const VERDICT_MAX = 220;
+
+/**
+ * Spec 021: the verdict for a report written before Part B is the saved
+ * conclusion's first sentences up to 220 characters, cut at a sentence end.
+ * A first sentence longer than that is cut at the last word with "…".
+ */
+export function verdictFromConclusion(conclusion: string): string {
+  const parts = sentences(conclusion.trim());
+  if (!parts.length) return "";
+  let verdict = "";
+  for (const part of parts) {
+    const next = verdict ? `${verdict} ${part}` : part;
+    if (next.length > VERDICT_MAX) break;
+    verdict = next;
+  }
+  if (verdict) return verdict;
+  const first = parts[0]!;
+  const cut = first.slice(0, VERDICT_MAX - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > 0 ? cut.slice(0, space) : cut).replace(/[,;:]$/, "")}…`;
+}
+
+/** The address the audit started from, as a short host name. */
+export function displayHost(source: string): string {
+  try {
+    const url = new URL(source);
+    const host = url.hostname.replace(/^www\./, "");
+    if (!host) return source;
+    if (host === "instagram.com") {
+      const account = url.pathname.split("/").filter(Boolean)[0];
+      return account ? `instagram.com/${account}` : host;
+    }
+    return host;
+  } catch {
+    return source;
+  }
+}

@@ -20,7 +20,6 @@ import {
   customerNeedsScreen,
   differentiatorInput,
   differentiatorScreen,
-  downloadEvidenceJson,
   downloadPdfButtons,
   editFocusFromReview,
   editQuestion,
@@ -61,7 +60,6 @@ import {
   openAuditFromLanding,
   openFocusTarget,
   openStartSheet,
-  ORDER_EMAIL,
   paidReadingScreen,
   payOrder,
   pressLanjut,
@@ -879,7 +877,7 @@ async function reportLink(ctx: DriveContext) {
     "The emailed link opens the report in a browser with no cookies; the page is noindex and sends no referrer",
   );
   await ctx.step("download-pdf-pressed", async () => {
-    // The report has two: in the top bar and under the report.
+    // The report has two: in the top bar and at the end.
     await expect(downloadPdfButtons(fresh)).toHaveCount(2);
     await downloadPdfButtons(fresh).first().click();
     expect(await printCalls()).toBe(1);
@@ -887,7 +885,7 @@ async function reportLink(ctx: DriveContext) {
     expect(await printCalls()).toBe(2);
   });
   ctx.check(
-    "Each `Download PDF` (top bar and under the report) opens the browser print dialog once (window.print)",
+    "Each `Unduh PDF` (top bar and at the end) opens the browser print dialog once (window.print)",
   );
   await fresh.emulateMedia({ media: "print" });
   for (const answer of await reportLocator(fresh)
@@ -906,17 +904,12 @@ async function reportLink(ctx: DriveContext) {
   );
   await fresh.emulateMedia({ media: "screen" });
   ctx.check("Every answer is visible in print media; A4 PDF saved");
-  const { download, json } = await downloadEvidenceJson(fresh);
-  await download.saveAs(join(ctx.dir, "download-evidence.json"));
-  ctx.artifacts.json = "download-evidence.json";
-  ctx.artifacts.jsonSuggestedName = download.suggestedFilename();
-  expect(json.export_version).toBe("nuave-evidence-two-source-v1");
-  expect(json.observations).toHaveLength(10);
-  expect(json.report).toBeTruthy();
-  expect(JSON.stringify(json)).not.toContain(ORDER_EMAIL);
-  ctx.check(
-    "`Unduh bukti JSON` downloads nuave-evidence-two-source-v1 with ten observations and a report, and no email",
-  );
+  // Spec 021 A-08: no JSON download on a two-source report (support exports
+  // it with `npm run support -- export`).
+  await expect(
+    fresh.getByRole("button", { name: "Unduh bukti JSON" }),
+  ).toHaveCount(0);
+  ctx.check("The report offers no `Unduh bukti JSON` button");
   // A wrong secret gets the plain not-available page and nothing else.
   const wrong = await ctx.freshBrowserPage();
   await ctx.step("wrong-link-not-available", async () => {

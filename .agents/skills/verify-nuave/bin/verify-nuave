@@ -8,9 +8,13 @@ const { dirname, join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const skillDir = dirname(dirname(realpathSync(__filename)));
-const root = execFileSync("git", ["-C", skillDir, "rev-parse", "--show-toplevel"], {
-  encoding: "utf8",
-}).trim();
+const root = execFileSync(
+  "git",
+  ["-C", skillDir, "rev-parse", "--show-toplevel"],
+  {
+    encoding: "utf8",
+  },
+).trim();
 const outfile = join(root, "node_modules", ".cache", "verify-nuave", "cli.mjs");
 
 require(require.resolve("esbuild", { paths: [root] }))
@@ -31,7 +35,9 @@ require(require.resolve("esbuild", { paths: [root] }))
       process.exitCode = code;
     },
     (error) => {
-      console.error(`verify-nuave: ${error instanceof Error ? error.message : error}`);
+      console.error(
+        `verify-nuave: ${error instanceof Error ? error.message : error}`,
+      );
       process.exitCode = 1;
     },
   );

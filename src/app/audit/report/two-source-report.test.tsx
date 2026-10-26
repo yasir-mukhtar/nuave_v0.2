@@ -204,25 +204,85 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     const google = container.querySelector<HTMLElement>(
       '[data-source-card="google"]',
     )!;
-    // D-05 word for word, N = 9 (AC-09).
+    // Spec 021 A-02 sentences, N = 9 (AC-09).
     expect(chatgpt).toHaveTextContent(
-      "Bisnis Anda muncul di 0 dari 9 pertanyaan",
-    );
-    expect(chatgpt).toHaveTextContent(
-      "Bisnis Anda direkomendasikan di 0 dari 9 pertanyaan",
+      "Bisnis Anda muncul di 0 dari 9 pertanyaan dan direkomendasikan di 0.",
     );
     // M = 8, Z = 7, W = 1; Google has no "direkomendasikan" line.
     expect(google).toHaveTextContent(
-      "Google menampilkan AI Overview di 7 dari 8 pertanyaan",
-    );
-    expect(google).toHaveTextContent(
-      "Bisnis Anda muncul di 1 dari 7 pertanyaan",
+      "Google menampilkan AI Overview di 7 dari 8 pertanyaan; bisnis Anda muncul di 1 dari 7.",
     );
     expect(google).not.toHaveTextContent("direkomendasikan");
+    // One dot per question on each card (AC-A2).
+    expect(chatgpt.querySelectorAll("[data-mention]")).toHaveLength(10);
+    expect(google.querySelectorAll("[data-mention]")).toHaveLength(10);
     expect(container.querySelector("[data-failed-count]")).toHaveTextContent(
       "3 pemeriksaan tidak dapat diuji",
     );
     expect(container.textContent).not.toMatch(/0 dari 0/);
+  });
+
+  it("AC-A2: each card's headline count equals its dots, and every dot names its look", () => {
+    const container = body();
+    for (const [source, looks] of [
+      ["chatgpt", ["mentioned", "recommended"]],
+      ["google", ["mentioned", "recommended"]],
+    ] as const) {
+      const card = container.querySelector<HTMLElement>(
+        `[data-source-card="${source}"]`,
+      )!;
+      const dots = [...card.querySelectorAll("[data-mention]")];
+      const named = dots.filter((dot) =>
+        (looks as readonly string[]).includes(
+          dot.getAttribute("data-mention")!,
+        ),
+      ).length;
+      const headline = card.querySelector("[aria-hidden] > span");
+      expect(headline?.textContent).toBe(String(named));
+      for (const dot of dots)
+        expect(dot.getAttribute("aria-label")).toMatch(/^Pertanyaan \d+: \S/);
+    }
+    const google = container.querySelector('[data-source-card="google"]')!;
+    expect(google.querySelectorAll('[data-mention="noaio"]')).toHaveLength(1);
+    expect(google.querySelectorAll('[data-mention="cited"]')).toHaveLength(1);
+    expect(google.querySelectorAll('[data-mention="failed"]')).toHaveLength(2);
+    // The legend shows "Tidak dapat diuji" only because a check failed.
+    expect(container.querySelector("#summary")).toHaveTextContent(
+      "Tidak dapat diuji",
+    );
+  });
+
+  it("before Part B: findings without a headline number, recommendations as action and why, Penutup with the conclusion and the re-audit card", () => {
+    const container = body();
+    const finding = container.querySelector("[data-finding]")!;
+    expect(finding).toHaveTextContent("Temuan fiktif");
+    expect(finding).toHaveTextContent(
+      "Keterangan perlu dibaca bersama batasannya.",
+    );
+    const rec = container.querySelector("[data-recommendation]")!;
+    expect(rec).toHaveTextContent("Periksa keterangan contoh.");
+    expect(rec).toHaveTextContent("Ada batasan yang harus diperiksa.");
+    for (const removed of [
+      "Mengapa",
+      "Berdasarkan",
+      "Penanggung jawab",
+      "Selesai ketika",
+      "Kerjakan dulu",
+      "Bukan diagnosis penyebab.",
+    ])
+      expect(container.textContent).not.toContain(removed);
+    const closing = container.querySelector("#penutup")!;
+    expect(closing).toHaveTextContent(
+      "Ini contoh fiktif untuk menguji pembacaan bukti",
+    );
+    expect(closing.querySelector("[data-reaudit]")).toHaveTextContent(
+      "Audit ulang setelah 8 minggu",
+    );
+    expect(closing.querySelector("button")).toBeNull();
+    // The verdict is the conclusion's opening, cut at a sentence end.
+    expect(container.querySelector("[data-verdict]")?.textContent).toBe(
+      "Ini contoh fiktif untuk menguji pembacaan bukti, bukan hasil bisnis nyata.",
+    );
   });
 
   it("AC-20: a clinic's report says Klinik Anda on both cards and in the profile note", () => {
@@ -234,14 +294,9 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
       '[data-source-card="google"]',
     )!;
     expect(chatgpt).toHaveTextContent(
-      "Klinik Anda muncul di 0 dari 9 pertanyaan",
+      "Klinik Anda muncul di 0 dari 9 pertanyaan dan direkomendasikan di 0.",
     );
-    expect(chatgpt).toHaveTextContent(
-      "Klinik Anda direkomendasikan di 0 dari 9 pertanyaan",
-    );
-    expect(google).toHaveTextContent(
-      "Klinik Anda muncul di 1 dari 7 pertanyaan",
-    );
+    expect(google).toHaveTextContent("klinik Anda muncul di 1 dari 7.");
     expect(container.textContent).toContain("disusun dari profil klinik Anda.");
     expect(container.textContent).not.toMatch(/Bisnis Anda|bisnis Anda/);
   });
@@ -316,27 +371,27 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
         '[data-report-answer="3"] [data-source-answer="google"]',
       ),
     ).toHaveTextContent("Dipakai sebagai sumber");
-    expect(container.querySelector("#detail")).toHaveTextContent(
-      "Jawaban ChatGPT dan Google AI Overview",
-    );
+    expect(container.querySelector("#jawaban")).toHaveTextContent("Jawaban AI");
   });
 
-  it("the code-built Google finding, the per-source lists and Topik yang belum menyebut Anda", () => {
+  it("the code-built Google finding, the competitor list and Celah Topik", () => {
     const container = body();
     expect(container.querySelector("[data-google-finding]")).toHaveTextContent(
       "Google tidak menampilkan AI Overview untuk 1 dari 8 pertanyaan ini.",
     );
     const others = container.querySelector("[data-other-businesses]")!;
     expect(others).toHaveTextContent("Kopi Lain");
-    // N-19: Google showed summaries, so an empty list never reads "Tidak ada."
-    expect(others).toHaveTextContent(
-      "Tidak ada nama bisnis lain yang kami kenali.",
+    // The business itself is highlighted, never listed as a competitor.
+    expect(others.querySelector('[data-competitor="own"]')).toHaveTextContent(
+      "Kedai Fiksi",
     );
     const topics = container.querySelector("[data-topics-missing]")!;
-    expect(topics).toHaveTextContent("Topik yang belum menyebut Anda");
+    expect(container.querySelector("#topik")).toHaveTextContent("Celah Topik");
     expect(topics).toHaveTextContent("topik 2");
-    expect(topics).toHaveTextContent("Tidak ada data jumlah pencarian");
-    expect(topics).toHaveTextContent("source.example");
+    // AC-A4: never "Tidak ada data jumlah pencarian".
+    expect(container.textContent).not.toContain(
+      "Tidak ada data jumlah pencarian",
+    );
     // No AI-assistant estimate (AC-11).
     expect(container.textContent).not.toMatch(/perkiraan.*asisten AI/i);
   });
@@ -353,7 +408,7 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     );
   });
 
-  it("the page header names both sources and both places", () => {
+  it("the page header names both sources once, and the chips follow the page order (AC-A3)", () => {
     const fixture = twoSourceFixture();
     const { container } = render(
       <DirectTenReportPage
@@ -365,11 +420,23 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     );
     const checked = container.querySelector("[data-report-checked]")!;
     expect(checked).toHaveTextContent(
-      "Diperiksa di ChatGPT dan Google AI Overview · 22 September 2026",
+      "Diperiksa 22 September 2026 · ChatGPT dan Google AI Overview",
     );
-    expect(checked).toHaveTextContent("Google: Surabaya · ChatGPT: Indonesia");
-    expect(container.querySelector('[data-chip="detail"]')).toHaveTextContent(
-      "Jawaban ChatGPT dan Google AI Overview",
-    );
+    expect(container.querySelector("header")).toHaveTextContent("Surabaya");
+    expect(
+      [...container.querySelectorAll("[data-chip]")].map((chip) =>
+        chip.textContent?.trim(),
+      ),
+    ).toEqual([
+      "Temuan Utama",
+      "Peta Pesaing",
+      "Celah Topik",
+      "Rekomendasi",
+      "Penutup",
+      "Jawaban AI",
+    ]);
+    // AC-A4: no JSON export and no "Tentang audit ini" on a two-source report.
+    expect(container.textContent).not.toContain("Unduh bukti JSON");
+    expect(container.textContent).not.toContain("Tentang audit ini");
   });
 });

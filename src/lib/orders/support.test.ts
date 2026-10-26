@@ -13,6 +13,10 @@ import {
   executeSyntheticLocalObservation,
   generateSyntheticLocalReport,
 } from "../audit/local-direct-ten-audit";
+import {
+  savedReportEvidence,
+  type SavedReportData,
+} from "../audit/customer-evidence-export";
 import { applyRefund, applyStatus } from "../payments/apply";
 import { paymentView, startAttempt } from "../payments/attempts";
 import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
@@ -1096,5 +1100,58 @@ describe("email (founder decision 2026-10-25)", () => {
       .run();
     expect(await support().run("email", unpaid, NEW_EMAIL)).toBe(1);
     expect(order(unpaid).email).toBe(EMAIL);
+  });
+});
+
+describe("export (spec 021 A-08)", () => {
+  it("saves the same evidence JSON the report page builds from its link, and prints none of it", async () => {
+    const { id, firstSecret } = await deliveredOrder();
+    const files = new Map<string, string>();
+    const s = support({
+      saveEvidence: async (fileName, text) => {
+        files.set(fileName, text);
+        return `.local-evidence/${fileName}`;
+      },
+    });
+    const number = String(order(id).order_number);
+    expect(await s.run("export", number)).toBe(0);
+    const saved = files.get(`${number}-evidence.json`);
+    expect(saved).toBeDefined();
+    const fromLink = savedReportEvidence(
+      (await (await openLink(firstSecret)).json()) as SavedReportData,
+    );
+    const exported = JSON.parse(saved!) as typeof fromLink;
+    expect({ ...exported, exported_at: "" }).toEqual({
+      ...JSON.parse(JSON.stringify(fromLink)),
+      exported_at: "",
+    });
+    expect(exported.observations).toHaveLength(10);
+    const printed = output.join("\n");
+    expect(printed).toContain(`.local-evidence/${number}-evidence.json`);
+    expect(printed).not.toContain(EMAIL);
+    expect(printed).not.toContain(firstSecret);
+    expect(printed).not.toContain(exported.observations[0]!.raw_answer);
+    expect(s.makeSender).not.toHaveBeenCalled();
+  });
+
+  it("saves nothing for an anonymised order, a bad reference or extra arguments", async () => {
+    const { id } = await deliveredOrder();
+    const files = new Map<string, string>();
+    const s = support({
+      saveEvidence: async (fileName, text) => {
+        files.set(fileName, text);
+        return fileName;
+      },
+    });
+    expect(await s.run("export")).toBe(2);
+    expect(await s.run("export", id, "extra")).toBe(2);
+    expect(await s.run("export", "abc")).toBe(2);
+    await d1.db
+      .prepare(`UPDATE orders SET report_json = NULL WHERE id = '${id}'`)
+      .bind()
+      .run();
+    expect(await s.run("export", id)).toBe(1);
+    expect(output.join("\n")).toContain("no saved report");
+    expect(files.size).toBe(0);
   });
 });
