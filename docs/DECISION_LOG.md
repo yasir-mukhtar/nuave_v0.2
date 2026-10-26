@@ -6,6 +6,15 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — AC-14 passed; its findings go to the parking lot
+
+Yasir ran AC-14 (order NV-3WDSAY): delivered in 12.5 minutes for USD 0.177,
+questions judged good enough. The report layout gets its own design sessions.
+The run's findings (Google AI Overview not shown on some checks, no city
+making ChatGPT pick one, DataForSEO status 40101) and the ideas to improve
+reading and report quality are recorded in the plan's parking lot without a
+schedule. The plan continues to G1 unchanged.
+
 ## 2026-10-26 — Question writing: four fixes and a live canary
 
 On 2026-10-26 a paid order with a search city (NV-3WDSAY, a skin clinic)
@@ -42,6 +51,14 @@ The founder approved settling NV-3WDSAY's three stuck question holds
 (USD 0.05 each) at USD 0.0015 each in production, an upper bound from the
 replay (a call cut off at 4,096 tokens cost USD 0.0012), so the order can be
 retried with its full allowance.
+
+## 2026-10-26 — Production runs on Workers Paid
+
+Yasir confirmed the Cloudflare account that hosts worker `nuave-v2` is on
+**Workers Paid**. This completes the 2026-10-14 decision (Workers Paid
+before G1) and the Spec 018 assumption that production has the Paid CPU and
+subrequest limits. Earlier notes about Workers Free limits are history; they
+no longer block G1 or AC-14. No code or configuration changed.
 
 ## 2026-10-25 — Cookie notice: "🍪 Allow cookies?", Allow as the main button
 
