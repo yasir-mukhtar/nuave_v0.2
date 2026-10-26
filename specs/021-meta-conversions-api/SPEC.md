@@ -296,7 +296,7 @@ background and its outcome is never shown.
   code equals the one stored on the order; the page address is exactly
   `<site>/audit`; with a test code set, `test_event_code` appears once at the
   top level. The token is not in the request address. The serialised
-  request contains none of: the order number (internal order id), plain
+  request contains none of: the order number, the internal order id, plain
   email, business name,
   website, report link, questions or intake text.
 - **AC-04** After a send, no stored row or column and no captured log line
@@ -365,6 +365,9 @@ background and its outcome is never shown.
    `nuave-v2` → Observability: find the route's outcome line from the
    check purchase in step 4 and confirm no IP address or browser type is
    shown with it. If one is, tell the orchestrator before ads start (Q-8).
+   Cloudflare keeps these lines only 3 days (7 on Workers Paid), so do this
+   within that time after step 4; if the line cannot be found, AC-14 is not
+   checked yet (repeat step 4), not passed.
 7. **To stop server events at once:** delete `META_CAPI_ACCESS_TOKEN` in
    Cloudflare (`nuave-v2` → Settings → Variables and Secrets). Nothing is
    sent until the next deploy from `main` puts it back; to stop for good,
@@ -464,3 +467,4 @@ Cloudflare's current screens.
 
 Not started. Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
 applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
+Round 3: PASS; its two nits applied.
