@@ -1,7 +1,7 @@
 # Spec 021 build plan
 
-> Status: **PASS** in review round 2; the build starts once the founder
-> confirms the spec edits (A-11 light only)
+> Status: **PASS** (review rounds 2 and 3); the build starts once the
+> founder confirms the spec edits (A-11 light only)
 > Spec: [`SPEC.md`](./SPEC.md) (approved 2026-10-26)
 > Reference: `experiments/report-v2-poc/` (approved prototype)
 > Updated: 2026-10-26
@@ -151,8 +151,9 @@ founder's NV-3WDSAY reading (acceptable: presentation only).
   existing `--ease-in-out` token in `tokens.css` (founder asked for ease in
   and out; a line in `docs/DESIGN.md` motion rules records it). The panel
   animates `transform` only; its overlay animates opacity only, through a new
-  `blur={false}` prop on `SheetOverlay` (default unchanged for `LandingNav`
-  and `SiteHeader`). Reduced motion comes from a `prefers-reduced-motion`
+  `blur={false}` prop on `SheetOverlay`, passed through `SheetContent` (which
+  draws the overlay itself); the default is unchanged for `LandingNav` and
+  `SiteHeader`. Reduced motion comes from a `prefers-reduced-motion`
   media rule (no slide, fades kept), since CSS transitions do not read
   `useMotionAllowed`.
 - One `openAnswer(questionNumber, source?)` used by dots, rows and "P"
@@ -265,12 +266,15 @@ Built and tested offline first; live steps wait for the founder.
    adapter (`openai.ts` via OpenCode Go).
 4. **Output schema** (B-04): the new fields live in a versioned
    `report.two_source_writing` block. For this new version the content
-   schema in `contracts.ts` (lines 1099-1110) is relaxed: recommendations need
+   schema (`reportContentSchema` in `contracts.ts`) and the "observed gap"
+   rule (`contracts.ts` lines 1099-1110) are relaxed: recommendations need
    order, title, argument and at least one cited question; `basis`, `owner`,
    `done_when` and `timing` are no longer asked for, and code never invents
    them. The "observed gap" rule becomes "each recommendation cites at least
    one question where the clinic was absent, cited without its name, or not
-   recommended". Older versions keep the old schema. **`src/lib/audit/report-presentation.ts`** validates the
+   recommended"; when no question shows a gap (named and recommended
+   everywhere), recommendations may cite any question, so a valid report can
+   never fail the check. Older versions keep the old schema. **`src/lib/audit/report-presentation.ts`** validates the
    block when present (its content schema check, lines 82-84 and 169-193,
    would otherwise reject new reports and show "Bukti laporan tidak
    tersedia"); `contracts.ts` follows.
@@ -345,6 +349,12 @@ report so the journey and snapshots cover it.
   USD 2.00 each; negligible at current volume, watched in the dashboard.
 
 ## Review history
+
+**Round 3 (PASS,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/171#issuecomment-6417619121)).**
+Two non-blocking notes folded in afterwards (the overlay prop passes through
+`SheetContent`; the schema name and the no-gap case in PR 6). They are
+checked again by the reviews of PR 3 and PR 6.
 
 **Round 2 (PASS,
 [comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/171#issuecomment-6417576325)).**
