@@ -13,6 +13,7 @@ import {
 import { buildV3WriterContext } from "./question-context-v3";
 import {
   assessCheaperInferenceIndonesianResponse,
+  cheaperInferenceBilledCostUsd,
   buildCheaperInferenceIndonesianQuestionRequest,
   extractIndonesianSlotQuestions,
   glmQuestionWriterInstructionV3,
@@ -112,7 +113,7 @@ describe("buildCheaperInferenceIndonesianQuestionRequest", () => {
     expect(request.model).toBe(INDONESIAN_QUESTION_GLM_MODEL);
     expect(request.model).toBe("glm-5.3-flash");
     expect(request.stream).toBe(false);
-    expect(request.max_tokens).toBe(4096);
+    expect(request.max_tokens).toBe(16384);
     expect(request.reasoning_effort).toBe("low");
     expect(request.messages).toHaveLength(1);
     expect(request.messages[0].role).toBe("user");
@@ -363,6 +364,47 @@ describe("assessCheaperInferenceIndonesianResponse", () => {
       (body.cheaper_inference.billing as Record<string, unknown>)
         .billed_cost_usd,
     ).toBe("0.000496");
+  });
+
+  it("reads the cost where the provider puts it since 2026-10-25 (top-level billing, then usage.cost)", () => {
+    // The 2026-10-26 live reply: no cheaper_inference wrapper; the settled
+    // cost sits in a top-level `billing` and in `usage.cost`. Read as null,
+    // every call stayed held at 0.05 USD and filled the order's question
+    // allowance after five calls.
+    const current = okBody({
+      cheaper_inference: undefined,
+      usage: {
+        prompt_tokens: 3833,
+        completion_tokens: 2820,
+        total_tokens: 6653,
+        cost: 0.001091,
+      },
+      billing: {
+        status: "settled",
+        billed_cost_usd: "0.001091",
+        currency: "USD",
+        zero_data_retention: false,
+      },
+    });
+    expect(cheaperInferenceBilledCostUsd(current)).toBe(0.001091);
+    const usageOnly = okBody({
+      cheaper_inference: undefined,
+      usage: {
+        prompt_tokens: 1,
+        completion_tokens: 2,
+        total_tokens: 3,
+        cost: 0.0007,
+      },
+    });
+    expect(cheaperInferenceBilledCostUsd(usageOnly)).toBe(0.0007);
+    // A settled billing amount wins over usage.cost.
+    expect(
+      cheaperInferenceBilledCostUsd({
+        billing: { billed_cost_usd: 0.002 },
+        usage: { cost: 0.9 },
+      }),
+    ).toBe(0.002);
+    expect(cheaperInferenceBilledCostUsd({ usage: { cost: "x" } })).toBeNull();
   });
 
   it("rejects malformed, negative or non-finite settled billing", () => {

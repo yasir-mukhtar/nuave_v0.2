@@ -138,7 +138,9 @@ describe("PR121 public question errors — MOCK_ONLY source reproduction", () =>
         ...(kind === "provider"
           ? { error: { message: "MOCK_ONLY_PROVIDER_PROSE" } }
           : {}),
-        usage: { cost: 0 },
+        // usage.cost is also read as the billed cost (questions-id-glm.ts), so
+        // the "extractor" reply, which tests a missing billed cost, has none.
+        usage: kind === "extractor" ? {} : { cost: 0 },
         cheaper_inference: {
           billing: {
             billed_cost_usd:

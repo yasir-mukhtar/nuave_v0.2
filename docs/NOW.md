@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-25
+> Updated: 2026-10-26
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -43,6 +43,13 @@
   adopted 2026-09-26; its §B.3 guards merged through PR #91 on 2026-09-27.
 
 ## Next action
+
+- **Question writing fixed** (2026-10-26): orders with a search city failed
+  to get their ten questions; four causes fixed and a live check added
+  ([decision](./DECISION_LOG.md#2026-10-26--question-writing-four-fixes-and-a-live-canary)).
+  Run `npm run test:canary:questions` (needs `CHEAPERINFERENCE_API_KEY`,
+  about USD 0.01) after any change to the question writer, and when orders
+  fail at the question step.
 
 - **S6 is built, in review** ([#155](https://github.com/yasir-mukhtar/nuave_v0.2/pull/155)):
   [Spec 020](../specs/020-clinic-landing-page/SPEC.md) replaces the page at
@@ -236,7 +243,9 @@
 - Extraction, observations and the report use OpenAI directly
   (`gpt-5.6-luna`, low reasoning). Question writing uses GLM 5.3 Flash
   through Cheaper Inference
-  ([2026-09-20](./DECISION_LOG.md#2026-09-20--audit-provider-switches-to-direct-openai-opencode-go-dropped)).
+  ([2026-09-20](./DECISION_LOG.md#2026-09-20--audit-provider-switches-to-direct-openai-opencode-go-dropped)),
+  with a 16,384-token reply limit since 2026-10-26; its live check is
+  `npm run test:canary:questions`.
 - Web search: extraction only on the business's own website; required for
   every observation; none for question writing or the report.
 - Call limits: `AUDIT_STAGE_CALL_LIMITS` in `src/lib/audit/telemetry.ts`.

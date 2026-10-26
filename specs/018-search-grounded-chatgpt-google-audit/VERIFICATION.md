@@ -1458,3 +1458,20 @@ has done the pre-merge actions above (squash-merge or rebuild; Workers Paid).
   tests and the earlier rounds' tests show no other change.
 - Before the first paying customer: N-37's remaining wordings, then N-41 with N-38. All three sit
   in the source check in `two-source-report.ts` and are cheap to fix.
+
+## 2026-10-26 — first live grounded order failed; fixed
+
+The first live order with a search city (NV-3WDSAY) got no questions after
+three tries. Live replay against the saved pool: 0 of 10 grounded tries
+passed, 2 of 5 runs failed outright. Causes and fixes are in the decision log
+([2026-10-26](../../docs/DECISION_LOG.md#2026-10-26--question-writing-four-fixes-and-a-live-canary)):
+reply limit too small for the provider's thinking, billed cost not read,
+the brief not naming the key words the check needs (`searchBrief` now lists
+them), and generic name words ("skin") treated as the brand
+(`distinctiveBrandTokens`). After the fixes: 5 of 5 runs ok (4 grounded, 1
+fallback), every call finished normally, 2.8k–4.2k reply tokens. Tests:
+`src/lib/audit/brand-words.test.ts`, `questions-id-glm.test.ts` (billing),
+`question-tries.test.ts` (retry on a cut-off reply; no reply text in the log
+record), `order-discovery-routes.test.ts` (the log line, kept from the
+browser), and the
+live `scripts/canary/question-writer.spec.ts`.
