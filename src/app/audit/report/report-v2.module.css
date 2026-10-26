@@ -735,7 +735,8 @@
   .finding,
   .rec,
   .compRow,
-  .topic {
+  .topic,
+  .reaudit {
     break-inside: avoid;
   }
 }

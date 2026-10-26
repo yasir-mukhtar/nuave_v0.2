@@ -29,15 +29,15 @@ Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 
 ### Acceptance results
 
-| Criterion | Result | Evidence |
-|---|---|---|
-| AC-A1 | Pass | e2e "Spec 012 on the saved report": at 390×844 the verdict and the first card's ten dots are in the first viewport (with the synthetic-test notice above them) |
-| AC-A2 | Pass | unit "AC-A2: each card's headline count equals its dots"; `report-v2-data.test.ts` covers every look, including no AI Overview, cited and failed |
-| AC-A3 | Pass | unit chip-order test; e2e chip names (Celah Topik is hidden in the synthetic run because its saved topics equal the questions, per A-05) |
-| AC-A4 | Pass | unit and e2e: no "Tidak ada data jumlah pencarian", "Unduh bukti JSON", "Tentang audit ini", or the removed recommendation labels; saved topic lines that carry the no-volume phrase are shown without it |
-| AC-A5 | Pass | the pre-Spec 018 snapshot in `two-source-report.test.tsx` passes unchanged |
-| AC-A6 | Pass | `npm run check` and `npm run test:unit` pass; all three Playwright suites pass (see Checks run); no sideways scroll at 1920, 1280, 768, 390 and 320 wide and at 200% zoom |
-| AC-A7 | Pending | founder reading on the PR preview, then on NV-3WDSAY after deploy |
+| Criterion | Result  | Evidence                                                                                                                                                                                                  |
+| --------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-A1     | Pass    | e2e "Spec 012 on the saved report": at 390×844 the verdict and the first card's ten dots are in the first viewport (with the synthetic-test notice above them)                                            |
+| AC-A2     | Pass    | unit "AC-A2: each card's headline count equals its dots"; `report-v2-data.test.ts` covers every look, including no AI Overview, cited and failed                                                          |
+| AC-A3     | Pass    | unit chip-order test; e2e chip names (Celah Topik is hidden in the synthetic run because its saved topics equal the questions, per A-05)                                                                  |
+| AC-A4     | Pass    | unit and e2e: no "Tidak ada data jumlah pencarian", "Unduh bukti JSON", "Tentang audit ini", or the removed recommendation labels; saved topic lines that carry the no-volume phrase are shown without it |
+| AC-A5     | Pass    | the pre-Spec 018 snapshot in `two-source-report.test.tsx` passes unchanged                                                                                                                                |
+| AC-A6     | Pass    | `npm run check` and `npm run test:unit` pass; all three Playwright suites pass (see Checks run); no sideways scroll at 1920, 1280, 768, 390 and 320 wide and at 200% zoom                                 |
+| AC-A7     | Pending | founder reading on the PR preview, then on NV-3WDSAY after deploy                                                                                                                                         |
 
 ### Checks run
 
@@ -64,7 +64,19 @@ Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
   `customer-evidence-export.test.ts`, and `support.test.ts` checks that the
   support export equals the old button's file.
 
-### Review round 1 (ALMOST) and fixes
+### Independent review
+
+- Round 1: **ALMOST**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/173#issuecomment-6419303413)),
+  fixed in 09699b4 as listed below.
+- Round 2: **PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/173#issuecomment-6419792781)).
+  Its optional notes: the re-audit card no longer splits across printed
+  pages (fixed); chip height and radius, the source cards' heading level,
+  and an automated check for the 320px own row are left for Part D, which
+  rebuilds this part of the page.
+
+### Review round 1 fixes
 
 - The verdict no longer stops on ";" (a clause stays with its sentence).
 - On phones under 480px a competitor's numbers sit under its name, so a long
