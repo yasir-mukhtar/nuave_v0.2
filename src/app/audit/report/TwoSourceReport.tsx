@@ -110,7 +110,7 @@ function ContentsNav({ ids }: { ids: readonly SectionId[] }) {
   const [active, setActive] = useActiveSection(ids);
   return (
     <nav
-      aria-label="Report contents"
+      aria-label="Isi laporan"
       className={cn(styles.chips, auditStyles.noPrint)}
     >
       <ol className={styles.inner}>
@@ -205,7 +205,7 @@ function QuestionRefs({ ordinals }: { ordinals: readonly number[] }) {
           className={styles.ref}
           href={`#report-question-${n}`}
           onClick={(event) => goToQuestion(event, n)}
-          aria-label={`Lihat pertanyaan ${n}`}
+          aria-label={`P${n}: pertanyaan ${n}`}
         >
           P{n}
         </a>
@@ -386,13 +386,14 @@ function CompetitorLine({
 function Competitors({
   two,
   observations,
-  ownName,
+  ownNames,
 }: {
   two: TwoSourceReport;
   observations: readonly AuditObservation[];
-  ownName: string;
+  /** The owner's display name first, then its other names. */
+  ownNames: readonly string[];
 }) {
-  const { counted, uncounted } = competitorRows(two, observations, ownName);
+  const { counted, uncounted } = competitorRows(two, observations, ownNames);
   const others = counted.filter((row) => !row.own);
   const top = new Set(others.slice(0, 5));
   const shown = counted.filter((row) => row.own || top.has(row));
@@ -589,7 +590,11 @@ export function TwoSourceReportBody({
         title="Peta Pesaing"
         lede="Bisnis yang disebut ChatGPT dan Google dalam jawaban ini, diurutkan dari yang paling sering disebut."
       >
-        <Competitors two={two} observations={observations} ownName={ownName} />
+        <Competitors
+          two={two}
+          observations={observations}
+          ownNames={[ownName, ...names.slice(1)]}
+        />
       </Band>
       {hasTopics ? (
         <Band
@@ -713,7 +718,7 @@ export function TwoSourceReportPage({
       <div className={styles.inner}>
         <div className={cn(styles.save, auditStyles.noPrint)}>
           <div className="grid gap-1">
-            <h3>Simpan laporan ini</h3>
+            <h2>Simpan laporan ini</h2>
             <p>
               Satu PDF berisi temuan, rekomendasi, dan semua jawaban lengkap,
               siap dibagikan ke tim atau agensi Anda.

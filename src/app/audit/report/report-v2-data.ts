@@ -83,13 +83,17 @@ export type CompetitorRow = {
  * Spec 021 A-04: the other businesses the saved report lists, counted by how
  * many saved answers name them (an answer counts once, however often it
  * repeats the name). Reports saved before Part C hold names only, so this is
- * the count for them. The owner's row is added from the saved facts.
+ * the count for them. The owner's row is added from the saved facts. The
+ * owner's own names are matched too, longest first, so a competitor whose
+ * name sits inside the owner's ("Natasha" in "Natasha Skin Clinic") is not
+ * counted for an answer that only names the owner.
  */
 export function competitorRows(
   two: TwoSourceReport,
   observations: readonly AuditObservation[],
-  ownName: string,
+  ownNames: readonly string[],
 ): { counted: CompetitorRow[]; uncounted: string[] } {
+  const ownName = ownNames[0] ?? "";
   const seen = new Map<string, string>();
   for (const name of [
     ...two.other_businesses.chatgpt,
@@ -105,8 +109,13 @@ export function competitorRows(
   for (const question of two.questions) {
     const texts = answerTexts(question, observations);
     for (const source of ["chatgpt", "google"] as const) {
-      const found = new Set(findNames(texts[source], names).map((m) => m.name));
-      for (const name of found) rows.get(name)![source] += 1;
+      const found = new Set(
+        findNames(texts[source], [...ownNames, ...names]).map((m) => m.name),
+      );
+      for (const name of found) {
+        const row = rows.get(name);
+        if (row) row[source] += 1;
+      }
     }
   }
   const counted = [...rows.values()].filter((r) => r.chatgpt + r.google > 0);
@@ -203,7 +212,13 @@ export const VERDICT_MAX = 220;
  * A first sentence longer than that is cut at the last word with "…".
  */
 export function verdictFromConclusion(conclusion: string): string {
-  const parts = sentences(conclusion.trim());
+  // A ";" ends a clause, not a sentence: keep it joined to what follows.
+  const parts = sentences(conclusion.trim()).reduce<string[]>((out, part) => {
+    const last = out.at(-1);
+    if (last?.endsWith(";")) out[out.length - 1] = `${last} ${part}`;
+    else out.push(part);
+    return out;
+  }, []);
   if (!parts.length) return "";
   let verdict = "";
   for (const part of parts) {

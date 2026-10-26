@@ -6,7 +6,7 @@ import styles from "./mention-dot.module.css";
  * "Legends" 2011:24). Kept as a plain union so the product stays free of the
  * report data module. */
 export type MentionLook =
-  "noaio" | "none" | "cited" | "mentioned" | "recommended" | "failed" | "empty";
+  "noaio" | "none" | "cited" | "mentioned" | "recommended" | "failed";
 
 /**
  * One dot. Rings are drawn inside the circle (no border), so the dash, the

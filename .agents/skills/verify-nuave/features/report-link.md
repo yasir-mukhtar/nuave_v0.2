@@ -16,7 +16,7 @@ report itself.
   cached and send no referrer. The secret is in the fragment, never in a
   request URL.
 - `report-view`: `[data-saved-report="ready"]`, `[data-direct-ten-report]` and
-  the navigation `Report contents`.
+  the navigation `Isi laporan`.
 - `report-pdf`: the report has two `Unduh PDF` buttons, in the top bar and
   at the end. Each calls `window.print()` once. In print media, all ten
   answers are visible.
@@ -45,7 +45,7 @@ Run `$V drive report-link`. Steps, in order:
   (`01-entry-filled` … `10-server-finishes-audit`).
 - **Report by link.** Opens the link from the fake mailbox in a new browser
   context. The page is `noindex` and sends no referrer;
-  `[data-saved-report="ready"]` and `Report contents` show. Evidence:
+  `[data-saved-report="ready"]` and `Isi laporan` show. Evidence:
   `11-report-by-link`.
 - **PDF.** Two `Unduh PDF` buttons show. Pressing the first (top bar)
   brings the counted `window.print()` calls to 1, the last (at the end)

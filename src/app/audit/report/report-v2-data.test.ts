@@ -169,7 +169,7 @@ describe("competitor rows from saved answers (A-04)", () => {
         observation(1, "ZAP Clinic bagus."),
         observation(2, "Erha punya dokter."),
       ],
-      "Klinik Saya",
+      ["Klinik Saya"],
     );
     const zap = counted.find((r) => r.name === "ZAP Clinic")!;
     expect(zap).toMatchObject({ chatgpt: 1, google: 1 });
@@ -247,12 +247,46 @@ describe("Celah Topik rows (A-05)", () => {
   });
 });
 
+describe("competitor counts and the owner's own names", () => {
+  it("an answer that only names the owner does not count for a competitor inside the owner's name", () => {
+    const two = report([question(1), question(2)], {
+      other_businesses: { chatgpt: ["Natasha"], google: [] },
+    });
+    const { counted, uncounted } = competitorRows(
+      two,
+      [
+        observation(1, "Natasha Skin Clinic Center punya dokter kulit."),
+        observation(
+          2,
+          "Coba Natasha di Kemang, atau Natasha Skin Clinic Center.",
+        ),
+      ],
+      ["Natasha Skin Clinic Center"],
+    );
+    expect(counted.find((r) => r.name === "Natasha")).toMatchObject({
+      chatgpt: 1,
+    });
+    expect(uncounted).toEqual([]);
+  });
+});
+
 describe("verdict cut", () => {
   it("keeps whole sentences up to the limit", () => {
     const a = "Kalimat pertama cukup pendek.";
     const b = "Kalimat kedua juga.";
     const long = "x".repeat(VERDICT_MAX);
     expect(verdictFromConclusion(`${a} ${b} ${long}.`)).toBe(`${a} ${b}`);
+  });
+
+  it("never stops on a semicolon: a clause stays with the rest of its sentence", () => {
+    const clause = `Klinik Anda dikenal ChatGPT sebagai pilihan yang mudah dijangkau ${"di banyak kota ".repeat(4)}dan sering disebut;`;
+    const rest = `namun untuk tindakan medis AI mengarahkan pasien ke klinik lain ${"yang menampilkan dokter spesialis ".repeat(3)}di halaman mereka.`;
+    expect(clause.length).toBeLessThan(VERDICT_MAX);
+    expect(clause.length + rest.length).toBeGreaterThan(VERDICT_MAX);
+    const verdict = verdictFromConclusion(`${clause} ${rest} Lalu.`);
+    expect(verdict.endsWith(";")).toBe(false);
+    expect(verdict.endsWith("…")).toBe(true);
+    expect(verdict.length).toBeLessThanOrEqual(VERDICT_MAX);
   });
 
   it("does not split at an abbreviation", () => {

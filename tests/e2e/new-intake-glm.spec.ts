@@ -675,7 +675,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await expect(source).toHaveAttribute("referrerpolicy", "no-referrer");
   expect(external).toEqual([]);
 
-  const contents = fresh.getByRole("navigation", { name: "Report contents" });
+  const contents = fresh.getByRole("navigation", { name: "Isi laporan" });
   async function checkContentsNavigation() {
     const requestsBefore = Object.entries(calls);
     const urlBefore = fresh.url();

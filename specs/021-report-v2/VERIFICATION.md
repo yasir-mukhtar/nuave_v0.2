@@ -57,3 +57,27 @@ Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
   address unchanged, so the link secret after `#` is never replaced.
 - Delivered reports show the new layout as soon as it deploys, before the
   founder's NV-3WDSAY reading (presentation only; saved reports unchanged).
+- The removed JSON e2e steps checked the customer export's shape (no `brief`,
+  no `operational_telemetry`, no observation `telemetry`). Those checks did
+  not move to the report-data response, because that route returns the saved
+  report as it is (as before this PR). The export's shape stays covered by
+  `customer-evidence-export.test.ts`, and `support.test.ts` checks that the
+  support export equals the old button's file.
+
+### Review round 1 (ALMOST) and fixes
+
+- The verdict no longer stops on ";" (a clause stays with its sentence).
+- On phones under 480px a competitor's numbers sit under its name, so a long
+  clinic name keeps its width at 320px.
+- Dots, the check and the recommendation numbers print without the
+  browser's "Background graphics" option.
+- An answer that only names the clinic no longer counts for a competitor
+  whose name sits inside the clinic's ("Natasha" in "Natasha Skin Clinic").
+- Every text style uses one whole type role (size, weight, line height,
+  tracking).
+- Tests added for each of the above that can be unit tested, and for
+  ChatGPT's recommended, named and cited looks.
+- Smaller: the contents navigation is named "Isi laporan"; "P2" links say
+  "P2" to screen readers and are 24px tall; "Simpan laporan ini" is its own
+  heading; unused code removed; section titles stay with their content in
+  print.

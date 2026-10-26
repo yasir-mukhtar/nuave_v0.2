@@ -252,6 +252,39 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     );
   });
 
+  it("AC-A2: ChatGPT's recommended, named and cited answers each draw their look, and the headline counts named answers", () => {
+    const fixture = twoSourceFixture();
+    const two = fixture.report.two_source!;
+    const looks = [
+      { named: "named", recommended: true },
+      { named: "named", recommended: false },
+      { named: "source_only", recommended: false },
+    ] as const;
+    looks.forEach((look, i) => {
+      two.questions[i]!.chatgpt = { outcome: "answered", ...look };
+    });
+    two.counts.chatgpt = { ...two.counts.chatgpt, named: 2, recommended: 1 };
+    const { container } = render(
+      <DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />,
+    );
+    const card = container.querySelector<HTMLElement>(
+      '[data-source-card="chatgpt"]',
+    )!;
+    const dots = [...card.querySelectorAll("[data-mention]")].map((dot) =>
+      dot.getAttribute("data-mention"),
+    );
+    expect(dots.slice(0, 3)).toEqual(["recommended", "mentioned", "cited"]);
+    expect(
+      dots.filter((look) => look === "recommended" || look === "mentioned"),
+    ).toHaveLength(2);
+    expect(card.querySelector("[aria-hidden] > span")?.textContent).toBe("2");
+    expect(card).toHaveTextContent("direkomendasikan di 1.");
+    // The recommended dot draws its check.
+    expect(
+      card.querySelector('[data-mention="recommended"] svg'),
+    ).not.toBeNull();
+  });
+
   it("before Part B: findings without a headline number, recommendations as action and why, Penutup with the conclusion and the re-audit card", () => {
     const container = body();
     const finding = container.querySelector("[data-finding]")!;

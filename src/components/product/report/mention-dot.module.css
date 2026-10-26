@@ -1,5 +1,7 @@
-/* Spec 021 mention dots (Figma "Legends" 2011:24). Rings are inset shadows,
-   so the centre marks never shift; ring colours keep 3:1 on white. */
+/* Spec 021 mention dots (Figma "Legends" 2011:24). Solid rings are inset
+   shadows, so the centre marks never shift; the failed look's dashed ring is
+   a border (a shadow cannot dash). Ring colours keep 3:1 on white. Fills and
+   marks print even with the browser's "Background graphics" off. */
 
 .dot {
   display: inline-grid;
@@ -9,6 +11,8 @@
   height: 22px;
   border-radius: 50%;
   background: var(--bg-page);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .sm {
   width: 18px;
@@ -62,7 +66,4 @@
 
 .dot[data-look="failed"] {
   border: 1.5px dashed var(--mention-ring);
-}
-.dot[data-look="empty"] {
-  visibility: hidden;
 }

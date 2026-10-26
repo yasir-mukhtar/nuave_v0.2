@@ -870,7 +870,7 @@ async function reportLink(ctx: DriveContext) {
     expect(headers["referrer-policy"]).toBe("no-referrer");
     await expect(savedReport(fresh)).toBeVisible({ timeout: 60_000 });
     await expect(
-      fresh.getByRole("navigation", { name: "Report contents" }),
+      fresh.getByRole("navigation", { name: "Isi laporan" }),
     ).toBeVisible();
   });
   ctx.check(
