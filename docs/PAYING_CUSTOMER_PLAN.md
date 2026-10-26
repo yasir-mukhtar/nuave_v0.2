@@ -47,6 +47,7 @@ done.
 | S4 | Real payment + founder test pass | Worker | Done; merged and deployed (#137, #138, #139); AC-25 live run passed 2026-10-18 | [#136](https://github.com/yasir-mukhtar/nuave_v0.2/pull/136) (spec), [#137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137), [#138](https://github.com/yasir-mukhtar/nuave_v0.2/pull/138), [#139](https://github.com/yasir-mukhtar/nuave_v0.2/pull/139) | [Verified](../specs/017-payment-and-test-pass/VERIFICATION.md) (AC-25 USD 0.4048; refund checks moved to G1) |
 | S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
+| S7 | Report quality: blind report-writer test, then Google's words reach the writer | Worker + founder | Approved 2026-10-26; waiting on test keys and two founder-run orders | — | [Decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after) |
 | **Stage 3** | **Go live** | | | | |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
@@ -642,7 +643,9 @@ founder moves it into a milestone.
   the owner, and let the report recommend, within Spec 012's evidence rule.
 - Compare report writing by Claude Sonnet with GPT-5.6 Luna on the same
   saved answers; try a page scraper (for example Firecrawl) for the website
-  reading.
+  reading. *Report comparison moved to S7 on 2026-10-26; the reading test
+  stays here until after G1
+  ([decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)).*
 
 **Open questions** (from the former `NOW.md`; Track V starts on the first
 three)

@@ -44,6 +44,17 @@
 
 ## Next action
 
+- **Report quality before G1** (approved 2026-10-26,
+  [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+  [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): a blind test of
+  report writers (Luna low as delivered, Luna high, Claude Sonnet 5.5 medium
+  and high, Claude Haiku 5.5) on three orders with ChatGPT and Google
+  answers, then the report input fix (Google's words reach the writer, Spec
+  018 R-28 amended). **Waiting on the founder:** an Anthropic API key for the
+  test, an OpenAI key for the agent's Luna runs, and two more live orders
+  (two businesses, two cities, one at a time). The reading test (Firecrawl,
+  Cloudflare, Apify) follows G1.
+
 - **Question writing fixed** (2026-10-26): orders with a search city failed
   to get their ten questions; four causes fixed and a live check added
   ([decision](./DECISION_LOG.md#2026-10-26--question-writing-four-fixes-and-a-live-canary)).
@@ -181,6 +192,10 @@
   allowance on 2026-09-27; update this line after each approved agent run.
   The founder's own test runs (plan §5, JZ) are not counted here; the
   provider dashboards show total spend.
+- **Audit stack tests allowance** (approved 2026-10-26): up to USD 5 of
+  agent-run live calls for the reading test and the report-writer test
+  together, USD 0 used so far. Public business pages and the founder's own
+  test-order data only.
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
   engagement only. This does not reset the separately dated September allowance
   usage above. Founder-run charges remain unknown; no new spending is authorized.

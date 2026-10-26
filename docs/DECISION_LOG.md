@@ -6,6 +6,38 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Audit stack plan: report test before G1, reading after
+
+Yasir approved the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
+(independent review PASS after three rounds) and its five decisions:
+
+1. **Timing.** The blind report-writer test (test B) and the report input
+   fix (build item 1) move ahead of G1, because the report is what the first
+   customer pays for. The reading test (test A) and the page reader,
+   Instagram reader and Google re-check follow G1, unless an early customer
+   is Instagram-only.
+2. **Test accounts and budget.** Accounts with Anthropic, Firecrawl and Apify
+   may be opened for the tests only. They receive public business pages and
+   the founder's own test-order data, never customer orders. Agent-run live
+   calls for tests A and B: up to USD 5 in total. Test B also needs two new
+   founder-run live orders (about USD 0.18 each, run one at a time).
+3. **Spec 018 R-28 changes.** The report writer may read Google's AI
+   Overview text (trimmed, phone numbers removed), not only the code-made
+   facts. The amendment goes into Spec 018 with the build.
+4. **New vendors for real orders,** only if they win their test: Anthropic,
+   Firecrawl (USD 19 a month only past about 160–200 orders a month), Apify.
+   Each needs a privacy wording update the founder approves before customer
+   data reaches it.
+5. **Spending guard.** Keep the USD 2.00 order hold. A report writer other
+   than Luna is reserved from the prompt's real token count, the report is
+   limited to the 3 calls the runner allows, and the reading's web search is
+   allowed on its first call only. Planned worst case about USD 1.83.
+   Separately still open: how many orders may run at once before real sales
+   (at USD 2 per hold, the USD 5 daily cap allows two).
+
+Kept unchanged: DataForSEO discovery, GLM 5.3 Flash question writing
+(including "similar businesses"), and the ChatGPT and Google checks.
+
 ## 2026-10-26 — AC-14 passed; its findings go to the parking lot
 
 Yasir ran AC-14 (order NV-3WDSAY): delivered in 12.5 minutes for USD 0.177,
