@@ -594,8 +594,8 @@ document.getElementById("appendix").innerHTML =
   `<div class="sec-head"><h2>Lampiran: jawaban lengkap</h2></div>` +
   DATA.questions.map((q) => `<div class="ap-q"><p class="eyebrow">Pertanyaan ${q.n} · ${SOURCE_NAME[q.source]}</p>${answerHtml(q, q.source)}</div>`).join("");
 const print = () => window.print();
-document.getElementById("pdf").addEventListener("click", print);
-document.getElementById("pdf2").addEventListener("click", print);
+document.getElementById("pdf")?.addEventListener("click", print);
+document.getElementById("pdf2")?.addEventListener("click", print);
 
 /* Contents chips follow the reader */
 const chips = [...document.querySelectorAll("#chips a")];
