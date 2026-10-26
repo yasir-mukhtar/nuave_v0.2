@@ -32,7 +32,7 @@ export function CookieConsent() {
   const [choice, setChoice] = useState<CookieChoice | null | undefined>();
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
-  // Spec 021 R-19a: the second layer, opened inside the notice.
+  // Spec 022 R-19a: the second layer, opened inside the notice.
   const [explained, setExplained] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const noticeRef = useRef<HTMLElement>(null);
@@ -156,7 +156,7 @@ export function CookieConsent() {
             >
               Help us understand what works
             </h2>
-            {/* Spec 021 Q-1 (founder, 2026-10-26): the first layer, short and
+            {/* Spec 022 Q-1 (founder, 2026-10-26): the first layer, short and
                 about the purpose. Its wording is for the lawyer's check. */}
             <p className="type-caption m-0 text-ink-600">
               We use cookies and limited purchase information to measure which
@@ -206,7 +206,7 @@ export function CookieConsent() {
   );
 }
 
-/** Spec 021 Q-9 (approved 2026-10-26): what is shared, with whom and why,
+/** Spec 022 Q-9 (approved 2026-10-26): what is shared, with whom and why,
  * shown inside the notice before the choice (R-19a). Nothing loads from Meta.
  * It scrolls on its own, so the buttons below stay in reach on a phone. */
 function HowItWorks() {

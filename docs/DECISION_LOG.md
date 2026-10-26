@@ -6,7 +6,17 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
-## 2026-10-26 — Spec 021 wording re-approved after review round 4
+## 2026-10-27 — Meta Conversions API spec renumbered 022
+
+Yasir chose to renumber the Meta Conversions API spec from 021 to 022
+(`specs/022-meta-conversions-api/`), because the Report v2 spec reached main
+first as Spec 021 (PR #171), as with Spec 019/020. Its database change
+becomes migration 0015, so Report v2 keeps the 0014 its plan reserves. The
+2026-10-26 entries below, written under the old number, now read 022.
+Founder step 0 is done (Cloudflare's per-request log keeps visitor IP
+addresses, so it is switched off), and the Meta access token is saved.
+
+## 2026-10-26 — Spec 022 wording re-approved after review round 4
 
 Review round 4 found the first "How it works" text (Q-9) and the privacy
 page's reassurance paragraph (Q-2) said less than the privacy page or
@@ -19,9 +29,9 @@ reassurance paragraph says "data Anda" and "ke Meta" throughout. This
 supersedes the Q-9 approval recorded in the entry below. Review round 5:
 PASS.
 
-## 2026-10-26 — Cookie notice: layered disclosure (Spec 021)
+## 2026-10-26 — Cookie notice: layered disclosure (Spec 022)
 
-Yasir replaced the Spec 021 notice wording (Q-1, option A) with a layered
+Yasir replaced the Spec 022 notice wording (Q-1, option A) with a layered
 notice. First layer: "**Help us understand what works** We use cookies and
 limited purchase information to measure which ads lead to sales. Your
 report and business answers are never shared with advertising partners.",
@@ -38,11 +48,11 @@ privacy item 1's "the notice names it": the information must instead be
 clearly available before consent. Yasir's view is that informed consent
 does not require the hashed email in the first layer; this is recorded as
 a decision for the lawyer's check, not a claim that it is compliant. Yasir
-approved the How it works wording (Spec 021 Q-9) as written.
+approved the How it works wording (Spec 022 Q-9) as written.
 
-## 2026-10-26 — Approve Spec 021 (Meta Conversions API, server Purchase)
+## 2026-10-26 — Approve Spec 022 (Meta Conversions API, server Purchase)
 
-Yasir approved [Spec 021](../specs/021-meta-conversions-api/SPEC.md)
+Yasir approved [Spec 022](../specs/022-meta-conversions-api/SPEC.md)
 (revision 4, after three independent review rounds, the last PASS; PR
 #170). The server sends Meta one Purchase (249000 IDR) per paid order, only
 when the buyer's own browser reaches the paid screen after Allow (Option A,

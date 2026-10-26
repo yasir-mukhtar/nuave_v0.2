@@ -1,4 +1,4 @@
-# Spec 021: Meta Conversions API (server Purchase event)
+# Spec 022: Meta Conversions API (server Purchase event)
 
 > Status: **Implementing** on PR #170 (build started 2026-10-26; see
 > [VERIFICATION.md](./VERIFICATION.md)). **Approved** by Yasir on 2026-10-26 (revision 6: his answers to
@@ -7,6 +7,9 @@
 > review round 4, were re-approved by Yasir as written; the layered
 > approach itself needs the lawyer check before ads start. Revisions 2 and 3 applied independent
 > review rounds 1 and 2; round 3 PASS (PR #170).
+> Number: drafted and approved as Spec 021; renumbered 022 on 2026-10-27
+> (founder) because Report v2 reached main first as Spec 021 (PR #171), as
+> with Spec 019/020. Its migration is 0015, so Report v2 keeps 0014.
 > Owner: orchestrator
 > Updated: 2026-10-26
 > Implements: privacy page change notes, "Before the Meta Pixel or
@@ -26,7 +29,7 @@ Read in order:
 3. `docs/DECISION_LOG.md`, 2026-10-24 "S5: Meta consent…" and the 2026-10-25
    entries "Cookie notice and Meta Pixel (Spec 019)", "Cookie notice in
    English, shorter" and "Cookie notice: Allow cookies?"; and the two
-   2026-10-26 entries on Spec 021 ("Approve Spec 021…" and "Cookie notice:
+   2026-10-26 entries on Spec 022 ("Approve Spec 022…" and "Cookie notice:
    layered disclosure").
 4. The paid screen and how the page learns an order is paid:
    `src/app/api/orders/status/route.ts`, `src/lib/payments/attempts.ts`

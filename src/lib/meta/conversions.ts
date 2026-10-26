@@ -7,7 +7,7 @@ import { sha256Hex } from "../orders/link-secret";
 import { ORDER_GROSS_AMOUNT } from "../payments/midtrans";
 
 /**
- * Spec 021: the server Purchase event (Meta Conversions API). Sent once per
+ * Spec 022: the server Purchase event (Meta Conversions API). Sent once per
  * paid order, only from the paying customer's own browser call after Allow
  * (Option A), so the IP address and browser type go to Meta at the moment of
  * that request and are never stored (privacy item 7). Nothing else in Nuave

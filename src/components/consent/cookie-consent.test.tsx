@@ -71,7 +71,7 @@ const notice = () =>
 
 const normalised = (text: string | null | undefined) =>
   (text ?? "").replace(/\s+/g, " ").trim();
-/** Spec 021 Q-1 and Q-9, exactly as approved on 2026-10-26. */
+/** Spec 022 Q-1 and Q-9, exactly as approved on 2026-10-26. */
 const FIRST_LAYER =
   "We use cookies and limited purchase information to measure which ads lead to sales. Your report and business answers are never shared with advertising partners. How it works";
 const HOW_IT_WORKS = [
@@ -159,7 +159,7 @@ describe("with a Pixel ID", () => {
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();
-    // Spec 021 Q-1: the first layer, word for word (AC-11).
+    // Spec 022 Q-1: the first layer, word for word (AC-11).
     expect(normalised(screen.getByText(/We use cookies/).textContent)).toBe(
       FIRST_LAYER,
     );
@@ -420,7 +420,7 @@ describe("with a Pixel ID", () => {
   });
 });
 
-describe("Spec 021: the layered notice (R-19, R-19a, AC-11, AC-11a)", () => {
+describe("Spec 022: the layered notice (R-19, R-19a, AC-11, AC-11a)", () => {
   beforeEach(() => setUp());
 
   it("How it works opens the Q-9 text inside the notice, before the choice, with nothing from Meta", () => {
@@ -462,7 +462,7 @@ describe("Spec 021: the layered notice (R-19, R-19a, AC-11, AC-11a)", () => {
   });
 });
 
-describe("Spec 021: the server Purchase from the browser (R-01, R-05, R-09, R-11, R-19b, AC-07, AC-08)", () => {
+describe("Spec 022: the server Purchase from the browser (R-01, R-05, R-09, R-11, R-19b, AC-07, AC-08)", () => {
   const EVENT_ID = "6f1c2b9e-1d2a-4c3b-9e8f-0a1b2c3d4e5f";
   let fetchCalls: Array<{ url: string; init?: RequestInit }>;
 
@@ -502,7 +502,7 @@ describe("Spec 021: the server Purchase from the browser (R-01, R-05, R-09, R-11
     await Promise.resolve();
   });
 
-  it("an order paid before Spec 021 (no code) sends the Pixel Purchase as before and asks nothing", () => {
+  it("an order paid before Spec 022 (no code) sends the Pixel Purchase as before and asks nothing", () => {
     storeChoice("yes");
     app();
     trackJourneyEvent("Purchase", "0123456789abcdef");

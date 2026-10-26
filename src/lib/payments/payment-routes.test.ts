@@ -576,7 +576,7 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
     expect(order(id).state).toBe("running");
     // The status says paid, with the order number.
     const answer = await (await status({ order_id: id })).json();
-    // Spec 021 R-07/R-08: the payment write made the Purchase event code.
+    // Spec 022 R-07/R-08: the payment write made the Purchase event code.
     expect(answer.payment).toEqual({
       state: "paid",
       order_number: number(id),
@@ -960,7 +960,7 @@ describe("the internal order ID never reaches a live AI provider request (R-03, 
   });
 });
 
-describe("Spec 021 Option A: only the browser's own call contacts Meta (R-23, AC-13)", () => {
+describe("Spec 022 Option A: only the browser's own call contacts Meta (R-23, AC-13)", () => {
   it("the notification, a status check that records a payment and a cron run make no request to a Meta address", async () => {
     vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ID", "890453577390181");
     vi.stubEnv("META_CAPI_ACCESS_TOKEN", "offline-test-meta-token");
@@ -1039,7 +1039,7 @@ describe("the status answer (R-14, AC-12, AC-15; shapes for S4d)", () => {
       status: "settlement",
     });
     const answer = await (await status({ order_id: id })).json();
-    // Spec 021 R-07/R-08: the payment write made the Purchase event code.
+    // Spec 022 R-07/R-08: the payment write made the Purchase event code.
     expect(answer.payment).toEqual({
       state: "paid",
       order_number: number(id),

@@ -303,7 +303,7 @@ export type PaymentView = {
   order_number?: string;
   redirect_url?: string;
   last_try?: "denied" | "cancelled" | "failed" | "expired";
-  /** Spec 021 R-08: the paid order's Purchase event code, shared by the
+  /** Spec 022 R-08: the paid order's Purchase event code, shared by the
    * browser Pixel and the server send. Absent for orders paid before it. */
   purchase_event_id?: string;
 };

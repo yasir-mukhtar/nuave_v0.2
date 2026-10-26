@@ -1,4 +1,4 @@
-# Verification: Spec 021 — Meta Conversions API (server Purchase event)
+# Verification: Spec 022 — Meta Conversions API (server Purchase event)
 
 > Result: **Implementing.** Offline criteria checked by the builder (below);
 > independent review of the code and the founder-run AC-12 and AC-14 are
@@ -9,7 +9,7 @@
 
 ## What was built
 
-- **Migration 0014** (`migrations/0014_meta_purchase.sql`): four nullable
+- **Migration 0015** (`migrations/0015_meta_purchase.sql`): four nullable
   columns on `orders`: `meta_event_id`, `meta_sent_at`,
   `meta_consent_version`, `meta_outcome`.
 - **Event code (R-07):** made with `crypto.randomUUID()` in the write that

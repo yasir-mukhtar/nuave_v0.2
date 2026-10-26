@@ -39,7 +39,7 @@ describe("wrangler.jsonc environments", () => {
     expect(previewDb.database_id).toBe("5613a4a7-7a86-432a-810c-7ccef7e80a25");
   });
 
-  it("production keeps no automatic per-request log (Spec 021 R-22, AC-14)", () => {
+  it("production keeps no automatic per-request log (Spec 022 R-22, AC-14)", () => {
     const observability = (
       config as unknown as {
         observability?: { logs?: { invocation_logs?: boolean } };
@@ -122,7 +122,7 @@ describe("workflows and the payment settings", () => {
     }
   });
 
-  it("the deploy job writes the Meta token as a Worker secret; previews get none (Spec 021 AC-09)", () => {
+  it("the deploy job writes the Meta token as a Worker secret; previews get none (Spec 022 AC-09)", () => {
     const ci = read("ci.yml");
     const preview = read("pr-preview.yml");
     const name = "META_CAPI_ACCESS_TOKEN";

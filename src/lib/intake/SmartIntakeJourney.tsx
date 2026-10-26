@@ -900,7 +900,7 @@ export default function SmartIntakeJourney({
     if (ready && session.stage === "order" && checkoutSite)
       trackJourneyEvent("InitiateCheckout", checkoutSite);
   }, [ready, session.stage, checkoutSite]);
-  // Spec 021: the paid order's event code goes with the Pixel Purchase, and
+  // Spec 022: the paid order's event code goes with the Pixel Purchase, and
   // the same code with the server's.
   const purchaseEventId =
     paymentFor && paymentFor.orderId === session.order?.id

@@ -1,4 +1,4 @@
--- Spec 021: the server Purchase event (Meta Conversions API).
+-- Spec 022: the server Purchase event (Meta Conversions API).
 -- meta_event_id: a random code made in the write that records the payment
 -- (R-07), shared by the browser Pixel and the server so Meta counts the
 -- purchase once. Cleared when the order is made anonymous (R-21).

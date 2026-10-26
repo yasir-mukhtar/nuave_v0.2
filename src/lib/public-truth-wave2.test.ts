@@ -54,7 +54,7 @@ describe("Wave 2 public truth", () => {
     expect(privacy).toContain("https://www.facebook.com/adpreferences");
   });
 
-  it("Spec 021 AC-11: privacy 1.4 says 'ke Meta' in its summary and names server events for purchases only", () => {
+  it("Spec 022 AC-11: privacy 1.4 says 'ke Meta' in its summary and names server events for purchases only", () => {
     const privacy = source("src/app/privacy/page.tsx").replace(/\s+/g, " ");
     const legal = source("src/lib/legal.ts");
     expect(legal).toContain('PRIVACY_VERSION = "1.4"');

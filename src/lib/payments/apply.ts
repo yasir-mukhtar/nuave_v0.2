@@ -235,7 +235,7 @@ async function applySettled(
     // not yet made anonymous (retention.ts): a payment for an anonymised order
     // becomes a refund case instead. The
     // hold goes on the UTC day of payment even if the cap is now full, and is
-    // written only if this write changed the order. Spec 021 R-07: the same
+    // written only if this write changed the order. Spec 022 R-07: the same
     // write makes the order's Purchase event code.
     const paidEnd = new Date(now.getTime() + ORDER_PAID_MS).toISOString();
     const results = await db.batch([

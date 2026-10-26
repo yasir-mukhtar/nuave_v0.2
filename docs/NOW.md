@@ -82,7 +82,7 @@
   is set in the production build, so it goes live with that merge; before
   merging, switch off "Automatic advanced matching" in Meta Events Manager.
   Server events (Conversions API) are the next step:
-  [Spec 021](../specs/021-meta-conversions-api/SPEC.md) was approved on
+  [Spec 022](../specs/022-meta-conversions-api/SPEC.md) was approved on
   2026-10-26 (Purchase only, sent when the buyer's browser reaches the paid
   screen; privacy page to 1.4) and is built on
   [PR #170](https://github.com/yasir-mukhtar/nuave_v0.2/pull/170). Before

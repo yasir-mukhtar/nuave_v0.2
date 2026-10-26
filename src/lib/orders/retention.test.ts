@@ -282,7 +282,7 @@ describe("making an order anonymous", () => {
        VALUES ('tx-paid', 'NV-ABCDEF-1', 'settlement', 'paid', 'none', ?1, ?1)`,
       T0.toISOString(),
     );
-    // Spec 021: a server Purchase was sent for this order.
+    // Spec 022: a server Purchase was sent for this order.
     await sql(
       `UPDATE orders SET meta_sent_at = ?2, meta_consent_version = '1.4',
          meta_outcome = 'sent' WHERE id = ?1`,
@@ -306,7 +306,7 @@ describe("making an order anonymous", () => {
       report_json: null,
       link_hash: null,
       link_off: 1,
-      // Spec 021 R-21 (AC-10): the event code goes; the send record stays.
+      // Spec 022 R-21 (AC-10): the event code goes; the send record stays.
       meta_event_id: null,
       meta_sent_at: T0.toISOString(),
       meta_consent_version: "1.4",

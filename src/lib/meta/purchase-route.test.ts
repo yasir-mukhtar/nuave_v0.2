@@ -15,7 +15,7 @@ import { makeOrder } from "../orders/orders.test-helper";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { META_GRAPH_VERSION } from "./conversions";
 
-// Spec 021 at the route level: the real route, the real order store and a
+// Spec 022 at the route level: the real route, the real order store and a
 // fake Meta address. No test calls Meta.
 
 const PIXEL_ID = "890453577390181";
@@ -125,7 +125,7 @@ function everythingStored(): string {
   );
 }
 
-describe("Spec 021: the server Purchase route", () => {
+describe("Spec 022: the server Purchase route", () => {
   it("sends one Purchase with exactly the R-03 fields, and answers 204 with no body (AC-03)", async () => {
     const id = await paidOrder();
     await d1.db

@@ -134,7 +134,7 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
   baseURL,
 }) => {
   await setUp(page, baseURL!);
-  // Spec 021 AC-07: the paid screen asks the server for the Purchase once,
+  // Spec 022 AC-07: the paid screen asks the server for the Purchase once,
   // in the background.
   const serverAsks: unknown[] = [];
   await page.route("**/api/meta/purchase", async (route) => {
@@ -204,7 +204,7 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
   expect(serverAsks).toHaveLength(1);
 });
 
-test("Spec 021 AC-07: a server call that hangs never holds up the paid screen or the next step", async ({
+test("Spec 022 AC-07: a server call that hangs never holds up the paid screen or the next step", async ({
   page,
   baseURL,
 }) => {
@@ -230,7 +230,7 @@ test("Spec 021 AC-07: a server call that hangs never holds up the paid screen or
   ).toBeVisible();
 });
 
-test("Spec 021 AC-08: with Don't allow the paid screen asks the server nothing", async ({
+test("Spec 022 AC-08: with Don't allow the paid screen asks the server nothing", async ({
   page,
   baseURL,
 }) => {
@@ -258,7 +258,7 @@ for (const size of [
   { name: "a phone", width: 390, height: 844 },
   { name: "a laptop", width: 1280, height: 800 },
 ]) {
-  test(`Spec 021 AC-11a: How it works opens inside the notice on ${size.name}, with both choices still tappable and nothing from Meta`, async ({
+  test(`Spec 022 AC-11a: How it works opens inside the notice on ${size.name}, with both choices still tappable and nothing from Meta`, async ({
     page,
     baseURL,
   }) => {

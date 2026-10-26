@@ -96,7 +96,7 @@
       "migrations_dir": "migrations",
     },
   ],
-  // Spec 021 R-22 (Q-8): Cloudflare's automatic per-request log is off, so
+  // Spec 022 R-22 (Q-8): Cloudflare's automatic per-request log is off, so
   // visitors' IP addresses and browser types are not kept there; Nuave's own
   // log lines stay. The founder confirms before merge (founder step 0).
   "observability": {

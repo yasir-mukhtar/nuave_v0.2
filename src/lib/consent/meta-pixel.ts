@@ -252,7 +252,7 @@ function firstTime(key: string, now: number): boolean {
 export type JourneyEvent = "Lead" | "InitiateCheckout" | "Purchase";
 
 /** R-07..R-10: one journey event per `key` (a website or an order), carrying
- * only the value and currency, never who or what the order is. Spec 021: a
+ * only the value and currency, never who or what the order is. Spec 022: a
  * Purchase with the order's event code also carries that code (R-09) and asks
  * the server to send the same Purchase (R-01), under the same checks: Allow
  * under the current privacy version, not `/r` or `/uji`, no test-pass code
@@ -277,7 +277,7 @@ export function trackJourneyEvent(
   } else window.fbq!("track", event, params);
 }
 
-/** Spec 021 R-11: in the background, never waited for, its answer and any
+/** Spec 022 R-11: in the background, never waited for, its answer and any
  * error ignored; `keepalive` so leaving the page does not cancel it. The Meta
  * cookie codes go with it as the browser's own cookies. */
 function askServerPurchase(orderId: string) {

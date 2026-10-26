@@ -1,7 +1,7 @@
 # Kebijakan Privasi dan Data
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
-> Status: version 1.4 (2026-10-26, Spec 021) adds a short summary of what
+> Status: version 1.4 (2026-10-26, Spec 022) adds a short summary of what
 > goes to Meta at the start of the Meta part of section 10 and narrows server
 > events to purchases; approved by the founder on 2026-10-26. Version 1.3
 > (2026-10-25) names the cookie notice's English button, **Allow**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
@@ -27,7 +27,7 @@
   1. show a cookie notice with **Allow** and **Don't allow** (English since
      2026-10-25), and load nothing from Meta until the visitor taps Allow; a
      How it works link opens, inside the notice and before the choice, a
-     short explanation that names the hashed order email and Meta (Spec 021
+     short explanation that names the hashed order email and Meta (Spec 022
      layered notice, founder 2026-10-26; this replaces "the notice names
      it", and is for the lawyer's check);
   2. send server events (Conversions API) only for visitors who agreed, and
@@ -49,7 +49,7 @@
   business, order number or report, and runs with automatic configuration
   off. The page's "seberapa jauh Anda membacanya" is not sent yet; sending
   less than the page lists keeps it true.
-  **Spec 021 (server step)** meets items 2 and 7 and the new item 1: the
+  **Spec 022 (server step)** meets items 2 and 7 and the new item 1: the
   server sends one Purchase per paid order (`/api/meta/purchase`), only when
   the paying customer's own browser reaches the paid screen after Allow, with
   the event, value, IP address, browser type, Meta cookie codes, hashed order
@@ -92,7 +92,7 @@
   before the Meta details, and its third point names server events for
   purchases only, with the page address. A sentence that Nuave records the
   send time and the policy version for each purchase sent to Meta waits for
-  the lawyer (Spec 021 Q-2).
+  the lawyer (Spec 022 Q-2).
 - **Version 1.3 (2026-10-25):** section 10 names the notice's button
   **Allow** (was **Setuju**): the notice's buttons are now English, Allow
   (the main, purple button) and Don't allow, under the title "Allow cookies?".
