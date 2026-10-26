@@ -1,7 +1,7 @@
 # Nuave now
 
 > Updated: 2026-10-26
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -87,7 +87,14 @@
   questions from real Google search data, each answered by the ChatGPT app
   and Google AI Overview, one package at Rp249.000
   ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)). S6 and G1
-  follow S5.
+  follow S5. **AC-14 passed** on 2026-10-26 (founder-run, order NV-3WDSAY):
+  delivered by email 12.5 minutes after approval, USD 0.177 in provider
+  costs, questions approved by the founder; the report layout waits for its
+  own design sessions
+  ([record](../specs/018-search-grounded-chatgpt-google-audit/VERIFICATION.md#2026-10-26--ac-14-live-run-founder)).
+  Improvements it found are in the plan's
+  [parking lot](./PAYING_CUSTOMER_PLAN.md#6-parking-lot-after-we-have-paying-customers);
+  the plan continues to G1.
 
 - **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
   one immutable private report per order, stored on the server, reached through
@@ -249,8 +256,8 @@
   OpenAI directly (`gpt-5.6-luna`, low reasoning). DataForSEO supplies the
   Google search data and both checks (the ChatGPT app's answers and Google
   AI Overview); payment start refuses new orders when its balance is below
-  USD 2. AC-14 (a live order through to the report on this audit) has not
-  passed yet. Question writing uses GLM 5.3 Flash through Cheaper Inference,
+  USD 2. AC-14 (a live order through to the report on this audit) passed
+  on 2026-10-26. Question writing uses GLM 5.3 Flash through Cheaper Inference,
   given the DataForSEO search data
   ([2026-09-20](./DECISION_LOG.md#2026-09-20--audit-provider-switches-to-direct-openai-opencode-go-dropped)),
   with a 16,384-token reply limit since 2026-10-26; its live check is

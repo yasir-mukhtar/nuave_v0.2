@@ -6,6 +6,15 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — AC-14 passed; its findings go to the parking lot
+
+Yasir ran AC-14 (order NV-3WDSAY): delivered in 12.5 minutes for USD 0.177,
+questions judged good enough. The report layout gets its own design sessions.
+The run's findings (Google AI Overview not shown on some checks, no city
+making ChatGPT pick one, DataForSEO status 40101) and the ideas to improve
+reading and report quality are recorded in the plan's parking lot without a
+schedule. The plan continues to G1 unchanged.
+
 ## 2026-10-26 — Question writing: four fixes and a live canary
 
 On 2026-10-26 a paid order with a search city (NV-3WDSAY, a skin clinic)
