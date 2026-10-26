@@ -1,7 +1,7 @@
 # Spec 021 build plan
 
-> Status: **In review**, round 2 (round 1: ALMOST, fixes below); the build
-> starts after a PASS
+> Status: **PASS** in review round 2; the build starts once the founder
+> confirms the spec edits (A-11 light only)
 > Spec: [`SPEC.md`](./SPEC.md) (approved 2026-10-26)
 > Reference: `experiments/report-v2-poc/` (approved prototype)
 > Updated: 2026-10-26
@@ -65,8 +65,12 @@ regenerated when a report is opened (S0).
 
 So, for these reports, PR 2 **derives counts at render time** by matching each
 saved name in each saved answer text (ChatGPT `raw_answer`, Google `text`),
-with the same whole-word, case-insensitive matching `mark-names.ts` uses to
-highlight names. That gives per-business "named N×" and per-topic "N klinik
+with the same whole-word, case-insensitive rule `mark-names.ts` uses to
+highlight names, pulled out of that rehype plugin into a plain shared
+function. A count is the number of answers that name the business (not
+occurrences); names are matched longest first and a shorter name inside a
+longer matched one ("Erha" inside "Erha Clinic") is not counted again. That
+gives per-business "named N×" and per-topic "N klinik
 lain disebut AI". No "direkomendasikan N×" for competitors and no ratings or
 links until PR 5. A topic row whose stored topic equals its question text has
 no topic name and is hidden until PR 6 supplies names.
@@ -87,8 +91,11 @@ no topic name and is hidden until PR 6 supplies names.
 - New `src/components/product/report/MentionDot.tsx` (six looks, marks drawn
   so they stay centred). `TenBeads.tsx` stays for old reports.
 - **Verdict for reports written before Part B:** the first sentences of the
-  saved conclusion, cut at a sentence end, at most 220 characters; the full
-  conclusion is Penutup's paragraph.
+  saved conclusion, cut at a sentence end, at most 220 characters, using the
+  abbreviation-aware sentence splitter in `two-source-report.ts` (exported
+  for this). If the first sentence alone is longer, it is cut at the last
+  word before 220 characters with "…". The full conclusion is Penutup's
+  paragraph.
 - `src/styles/tokens.css`: dot, band and card tokens (light only; the design
   system has no dark scheme, so the report stays light like the rest of the
   product). `report-body.module.css`: bands, findings grid, competitor rows,
@@ -98,9 +105,12 @@ no topic name and is hidden until PR 6 supplies names.
   `src/lib/orders/support.ts`, which `scripts/support.mjs` already bundles
   with esbuild) builds the same JSON (`makeSmartCustomerEvidenceExport`
   and `promptsWithOriginals` from `customer-evidence-export.ts`) from the saved
-  order, with the same privacy rules. Its unit test replaces the end-to-end
-  JSON step for Spec 018 reports; the JSON e2e step stays for old reports.
-  `ReportView` and `SavedReport` keep `onDownloadJson` for the old branch.
+  order, with the same privacy rules, and has a unit test. Both existing
+  JSON e2e steps run on two-source reports (`new-intake-glm.spec.ts:464` and
+  `:817`); their assertions, including the byte-for-byte check that every
+  answer reaches the customer, move onto the report-data route's JSON
+  response, which the test already fetches. `ReportView` and `SavedReport`
+  keep `onDownloadJson` for the old branch.
 - Jawaban AI keeps today's stacked question blocks in this PR (moved to the
   end, renamed, notes added); PR 3 replaces them.
 
@@ -122,7 +132,9 @@ no topic name and is hidden until PR 6 supplies names.
 
 **Finish.** AC-A1 to AC-A6 pass. AC-A7 (founder judgement) is done on the PR
 preview with a synthetic report, and by the founder on NV-3WDSAY after deploy;
-no production data is pulled by an agent.
+no production data is pulled by an agent. The PR description says that
+delivered reports show the new layout as soon as it deploys, before the
+founder's NV-3WDSAY reading (acceptable: presentation only).
 
 ## PR 3: Part D, answers
 
@@ -135,12 +147,14 @@ no production data is pulled by an agent.
 - **Tooltips:** add the shadcn `Tooltip` component (Base UI, already a
   dependency) with the shadcn CLI; no hand-made tooltip.
 - **Motion:** the sheet's own CSS transitions only (Base UI
-  `data-starting-style`/`data-ending-style`), not Motion as well. The overlay
-  for this sheet drops `backdrop-blur-xs` (only opacity animates); the panel
-  animates `transform` only. Add one named ease-in-out curve to
-  `src/components/motion/presets.ts` and a line to `docs/DESIGN.md` motion
-  rules for it (the founder asked for ease in and out). Reduced motion: no
-  slide, fades kept, per `useMotionAllowed`.
+  `data-starting-style`/`data-ending-style`), not Motion as well, with the
+  existing `--ease-in-out` token in `tokens.css` (founder asked for ease in
+  and out; a line in `docs/DESIGN.md` motion rules records it). The panel
+  animates `transform` only; its overlay animates opacity only, through a new
+  `blur={false}` prop on `SheetOverlay` (default unchanged for `LandingNav`
+  and `SiteHeader`). Reduced motion comes from a `prefers-reduced-motion`
+  media rule (no slide, fades kept), since CSS transitions do not read
+  `useMotionAllowed`.
 - One `openAnswer(questionNumber, source?)` used by dots, rows and "P"
   references, under `two` only; old reports keep anchor jumps.
 - `ReportAppendix.tsx`: every answer in the chat style, print only (PR 4 uses
@@ -164,8 +178,13 @@ Quick Actions and limits pages.
 - New route `POST /api/report/pdf`, body `{ secret }`. It reuses the
   report-data route's secret check (same "not available" answer for a wrong
   secret) and has **its own tighter rate limit**: a new ratelimit binding of 3
-  per minute per caller, and a per-report cap of 20 PDFs per UTC day (D1
-  counter), so one link cannot use up the included browser hours.
+  per minute per caller (ids in all three wrangler environments, and
+  `wrangler-config.test.ts` updated), and a per-report cap of 20 PDFs per UTC
+  day, so one link cannot use up the included browser hours.
+- **Migration `migrations/0014`:** one small table for the daily PDF count
+  (and, only if the spike falls back to URL mode, the hashed single-use print
+  tokens). It holds no report data (order id, day, count; token hash and
+  expiry), and `src/lib/orders/retention.ts` deletes its rows with the order.
 - **The secret never goes into a URL.** Browser Run's dashboard lists each
   run's target URL, so URL mode with the secret is ruled out.
   - **HTML mode (preferred):** the route builds the print view's HTML on the
@@ -176,8 +195,9 @@ Quick Actions and limits pages.
 - **Spike (time box: one working day), pass criteria:**
   1. `react-dom/server` imports and renders the report's print view inside an
      OpenNext route handler on Workers;
-  2. the built CSS and the Geist font files are found and inlined (or the
-     fonts are referenced from the site's own origin);
+  2. the built CSS and the Geist font files are found and inlined (if fonts
+     load from the site's own address instead, Browser Run must reach the
+     preview and production addresses);
   3. `next/link` and `next/image` render acceptably outside Next (or are
      avoided in the print view);
   4. the Worker bundle stays under the Workers Paid size limit, with the
@@ -224,7 +244,8 @@ record the time per PDF.
   browser with `referrerPolicy="no-referrer"`; initials on error. No
   third-party icon service. In synthetic mode no logo is requested (the
   offline network guard forbids outside requests; synthetic data uses
-  initials).
+  initials); the `synthetic` flag `SavedReport` already receives is passed
+  down to the report components for this.
 
 **Tests.** Unit: extraction from schema-shaped fixtures with and without the
 fields; phone numbers and addresses never kept (AC-C2); counts and owner row
@@ -243,9 +264,13 @@ Built and tested offline first; live steps wait for the founder.
 3. **Instructions** (B-03) in `report-prompt-contract.ts` and the production
    adapter (`openai.ts` via OpenCode Go).
 4. **Output schema** (B-04): the new fields live in a versioned
-   `report.two_source_writing` block beside the existing content fields, which
-   the writer still fills (title, explanation, action, why), so older readers
-   keep working. **`src/lib/audit/report-presentation.ts`** validates the
+   `report.two_source_writing` block. For this new version the content
+   schema in `contracts.ts` (lines 1099-1110) is relaxed: recommendations need
+   order, title, argument and at least one cited question; `basis`, `owner`,
+   `done_when` and `timing` are no longer asked for, and code never invents
+   them. The "observed gap" rule becomes "each recommendation cites at least
+   one question where the clinic was absent, cited without its name, or not
+   recommended". Older versions keep the old schema. **`src/lib/audit/report-presentation.ts`** validates the
    block when present (its content schema check, lines 82-84 and 169-193,
    would otherwise reject new reports and show "Bukti laporan tidak
    tersedia"); `contracts.ts` follows.
@@ -310,8 +335,8 @@ report so the journey and snapshots cover it.
 - **Browser Run inside OpenNext:** the spike may fail HTML mode; the fallback
   keeps the secret out of logs with a single-use token.
 - **Render-time counts** on older reports rely on name matching in answer
-  texts; a name written differently in an answer is missed (undercount, never
-  overcount). PR 5 replaces it with saved counts for new orders.
+  texts; a name written differently in an answer is missed (undercount), and
+  longest-first matching keeps nested names from being counted twice. PR 5 replaces it with saved counts for new orders.
 - **Provider fields:** if DataForSEO lacks websites or ratings for listed
   businesses, Peta Pesaing shows counts and reasons only.
 - **Writer quality:** stronger instructions may still produce recaps with
@@ -320,6 +345,16 @@ report so the journey and snapshots cover it.
   USD 2.00 each; negligible at current volume, watched in the dashboard.
 
 ## Review history
+
+**Round 2 (PASS,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/171#issuecomment-6417576325)).**
+Its five small points are folded in: founder confirmation of the spec edits
+(asked), the JSON e2e assertions moved to the report-data response,
+migration 0014 with retention and rate-limit ids, motion with the existing
+`--ease-in-out` token and a no-blur overlay prop, and the relaxed schema for
+the new writer version; plus its notes (shared matching function, answers
+not occurrences, verdict cut for long sentences, synthetic flag, font reach,
+AC-A7 timing).
 
 **Round 1 (ALMOST,
 [comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/171#issuecomment-6417470715)).**
