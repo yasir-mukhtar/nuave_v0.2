@@ -44,15 +44,25 @@
 
 ## Next action
 
-- **Report quality before G1** (approved 2026-10-26,
+- **Report v2 before G1** (2026-10-26,
+  [decision](./DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score)):
+  [Spec 021](../specs/021-report-v2/SPEC.md) reworks the report in four
+  parts plus a server-made PDF. **Approved 2026-10-26** after four prototype
+  rounds ([prototype](../experiments/report-v2-poc/),
+  [decision](./DECISION_LOG.md#2026-10-26--approve-spec-021-server-pdf-now-re-audit-reminder-later)).
+  Next: the [build plan](../specs/021-report-v2/PLAN.md) passes independent
+  review, then six PRs in order (layout, answers, PDF, competitor data,
+  writing).
+- **Audit stack plan** (approved 2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
-  [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): a blind test of
-  report writers (Luna low as delivered, Luna high, Claude Sonnet 5.5 medium
-  and high, Claude Haiku 5.5) on three orders with ChatGPT and Google
-  answers, then the report input fix (Google's words reach the writer, Spec
-  018 R-28 amended). **Waiting on the founder:** an Anthropic API key for the
-  test, an OpenAI key for the agent's Luna runs, and two more live orders
-  (two businesses, two cities, one at a time). The reading test (Firecrawl,
+  [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
+  report-writer test is Spec 021 B-07 (Luna low as delivered, Luna high,
+  Claude Sonnet 5.5 medium and high, Claude Haiku 5.5, on three orders with
+  ChatGPT and Google answers). The founder added OpenAI, Anthropic and
+  Firecrawl keys to the cloud environment on 2026-10-26; a new session
+  picks them up (Anthropic key named `NUAVE_ANTHROPIC_API_KEY`, so Claude
+  Code does not use it). Still needed: two more founder-run live orders (two
+  businesses, two cities, one at a time). The reading test (Firecrawl,
   Cloudflare, Apify) follows G1.
 
 - **Question writing fixed** (2026-10-26): orders with a search city failed

@@ -47,7 +47,6 @@ done.
 | S4 | Real payment + founder test pass | Worker | Done; merged and deployed (#137, #138, #139); AC-25 live run passed 2026-10-18 | [#136](https://github.com/yasir-mukhtar/nuave_v0.2/pull/136) (spec), [#137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137), [#138](https://github.com/yasir-mukhtar/nuave_v0.2/pull/138), [#139](https://github.com/yasir-mukhtar/nuave_v0.2/pull/139) | [Verified](../specs/017-payment-and-test-pass/VERIFICATION.md) (AC-25 USD 0.4048; refund checks moved to G1) |
 | S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
-| S7 | Report quality: blind report-writer test, then Google's words reach the writer | Worker + founder | Approved 2026-10-26; waiting on test keys and two founder-run orders | — | [Decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after) |
 | **Stage 3** | **Go live** | | | | |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
@@ -616,7 +615,8 @@ founder moves it into a milestone.
 - Remaining English JSX in `/audit/fixture`; product-wide design pass (Spec
   006 P2–P7).
 - Native-speaker review of emails and all copy beyond the founder's review.
-- Server-side PDF generation (the browser PDF path stays for now).
+- ~~Server-side PDF generation~~: moved into Spec 021 (Report v2) on
+  2026-10-26.
 
 **Question generation and engine**
 - GLM model name and billing field (copied from the former `NOW.md`,
@@ -641,10 +641,9 @@ founder moves it into a milestone.
   on purpose).
 - Show the reading's guesses (target customer, needs, competitors) back to
   the owner, and let the report recommend, within Spec 012's evidence rule.
-- Compare report writing by Claude Sonnet with GPT-5.6 Luna on the same
-  saved answers; try a page scraper (for example Firecrawl) for the website
-  reading. *Report comparison moved to S7 on 2026-10-26; the reading test
-  stays here until after G1
+- ~~Compare report writing by Claude Sonnet with GPT-5.6 Luna~~: moved into
+  Spec 021 Part B (2026-10-26). Try a page scraper (for example Firecrawl) for the website
+  reading. *The reading test stays here until after G1
   ([decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)).*
 
 **Open questions** (from the former `NOW.md`; Track V starts on the first
@@ -670,6 +669,12 @@ three)
 - 30-day unpaid quote expiry and refresh.
 - Funnel analytics and monitoring alerts.
 - Comparable re-check (Phase 9).
+- Re-audit reminder (founder wishlist, 2026-10-26): from the report's closing
+  section, the owner picks a date (6, 8 or 12 weeks); Nuave emails a link to
+  re-run the same ten questions and compares the result with the first
+  report, question by question. Needs a re-audit price, keeping the order
+  email for the reminder (privacy page update), and a scheduled email. The
+  look is in the Spec 021 prototype (`experiments/report-v2-poc/`).
 - Unit economics with payment fees, retries, and support time.
 - Launch wedge (one city, one category): needed before outreach, not before
   launch.

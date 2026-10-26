@@ -11,25 +11,30 @@ old rows to make history cleaner; add a superseding row.
 Yasir approved the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
 (independent review PASS after three rounds) and its five decisions:
 
-1. **Timing.** The blind report-writer test (test B) and the report input
-   fix (build item 1) move ahead of G1, because the report is what the first
-   customer pays for. The reading test (test A) and the page reader,
-   Instagram reader and Google re-check follow G1, unless an early customer
-   is Instagram-only.
+1. **Timing.** The report-writer test runs before G1, as
+   [Spec 021](../specs/021-report-v2/SPEC.md) Part B's side-by-side test
+   (B-07), with this plan's blind design: three orders with ChatGPT and
+   Google answers; five writers (the delivered Luna-low report, Luna high,
+   Claude Sonnet 5.5 medium and high, Claude Haiku 5.5); the founder rates
+   them without knowing which wrote what. The reading test (test A) and the
+   page reader, Instagram reader and Google re-check follow G1, unless an
+   early customer is Instagram-only.
 2. **Test accounts and budget.** Accounts with Anthropic, Firecrawl and Apify
    may be opened for the tests only. They receive public business pages and
    the founder's own test-order data, never customer orders. Agent-run live
    calls for tests A and B: up to USD 5 in total. Test B also needs two new
-   founder-run live orders (about USD 0.18 each, run one at a time).
-3. **Spec 018 R-28 changes.** The report writer may read Google's AI
-   Overview text (trimmed, phone numbers removed), not only the code-made
-   facts. The amendment goes into Spec 018 with the build.
+   founder-run live orders (about USD 0.18 each, run one at a time). This
+   answers Spec 021's open question on the Anthropic API key.
+3. **Google's words reach the writer.** The report writer may read Google's
+   AI Overview text (phone numbers removed), not only the code-made facts.
+   Spec 021 B-01 and AC-B1 already build this; this approval confirms the
+   change to Spec 018 R-28, recorded in Spec 018 with that build.
 4. **New vendors for real orders,** only if they win their test: Anthropic,
    Firecrawl (USD 19 a month only past about 160–200 orders a month), Apify.
    Each needs a privacy wording update the founder approves before customer
    data reaches it.
-5. **Spending guard.** Keep the USD 2.00 order hold. A report writer other
-   than Luna is reserved from the prompt's real token count, the report is
+5. **Spending guard.** Keep the USD 2.00 order hold (Spec 021 B-07 also
+   requires this). A report writer other than Luna is reserved from the prompt's real token count, the report is
    limited to the 3 calls the runner allows, and the reading's web search is
    allowed on its first call only. Planned worst case about USD 1.83.
    Separately still open: how many orders may run at once before real sales
@@ -37,6 +42,43 @@ Yasir approved the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK
 
 Kept unchanged: DataForSEO discovery, GLM 5.3 Flash question writing
 (including "similar businesses"), and the ChatGPT and Google checks.
+
+## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
+
+After four rounds on the clickable prototype (`experiments/report-v2-poc/`),
+Yasir approved [Spec 021](../specs/021-report-v2/SPEC.md):
+
+1. **Server-made PDF comes with this work.** "Unduh PDF" returns an A4 PDF made
+   on the server with Cloudflare Browser Run (footer with page numbers, answers
+   appendix), instead of the browser's print. It leaves the parking lot.
+2. **Re-audit reminder goes to the wishlist** (plan §6). Penutup recommends a
+   re-audit after eight weeks in words, without a scheduling button.
+3. **Light only.** The report keeps the product's light palette (the design
+   system has no dark scheme); confirmed after the plan review.
+4. **Build after review.** The build follows
+   [`PLAN.md`](../specs/021-report-v2/PLAN.md) once an independent review
+   passes; each build PR gets its own review, and merge stays with the founder.
+
+## 2026-10-26 — Report v2 before G1; confident advice; no score
+
+Yasir reviewed the NV-3WDSAY report and found it hard to read and shallow
+for Rp249.000 (header repeats, two-row dot cards, long answer blocks, recap
+instead of analysis, a bare competitor list, hedged recommendations with
+"Mengapa/Berdasarkan/Penanggung jawab/Selesai ketika" boxes, an over-long
+method section, an unused JSON button). Decisions:
+
+1. **Before G1.** The report rework ([Spec 021](../specs/021-report-v2/SPEC.md))
+   moves out of the parking lot and goes ahead of G1, in four parts: clean
+   layout, deeper writing, competitor map, answers in a side panel.
+2. **Confident advice.** Facts in a report must still come from the saved
+   answers. Advice may be confident expert guidance, drawn from a written
+   Nuave playbook the founder approves. A report never claims that something
+   *caused* the business's result. This replaces the writer's "do not
+   diagnose from absence" instruction; `AGENTS.md` rules 7 to 9 stand.
+3. **No score yet.** No 0 to 100 score; a short verdict and one row of ten
+   dots per source carry the big picture.
+4. **Lo-fi first.** Built from the spec without a Figma design; the founder
+   adjusts the look afterwards.
 
 ## 2026-10-26 — AC-14 passed; its findings go to the parking lot
 
