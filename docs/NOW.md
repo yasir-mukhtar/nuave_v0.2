@@ -81,7 +81,10 @@
   browser part (notice, footer link, Pixel). The Pixel ID (890453577390181)
   is set in the production build, so it goes live with that merge; before
   merging, switch off "Automatic advanced matching" in Meta Events Manager.
-  Server events (Conversions API) are the next step.
+  Server events (Conversions API) are the next step:
+  [Spec 021](../specs/021-meta-conversions-api/SPEC.md) is a draft for the
+  founder's review (Purchase only, sent when the buyer's browser reaches the
+  paid screen; Q-1 to Q-7 open).
 
 - **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
   questions from real Google search data, each answered by the ChatGPT app
