@@ -1,18 +1,20 @@
 # Spec 021 build plan
 
-> Status: **In review** (independent review on PR #171; the build starts after
-> a PASS)
+> Status: **In review**, round 2 (round 1: ALMOST, fixes below); the build
+> starts after a PASS
 > Spec: [`SPEC.md`](./SPEC.md) (approved 2026-10-26)
 > Reference: `experiments/report-v2-poc/` (approved prototype)
 > Updated: 2026-10-26
+> Kept in the spec folder at the founder's request of 2026-10-26 ("create plan
+> first and make a PR"), the exception `docs/WORKFLOW.md` allows. The founder
+> also set this plan's review verdicts to PASS, ALMOST or FAIL.
 
 ## How the work is cut
 
-Six pull requests, merged in this order. Each one leaves `main` working and
-deployable, so the founder can stop after any of them and customers still get
-a better report. Each gets its own independent review (verdict PASS, ALMOST or
-FAIL, posted on the PR) and is iterated until it passes; merge and deploy stay
-with the founder.
+Six pull requests, merged in this order. Each leaves `main` working and
+deployable, so the founder can stop after any of them. Each gets an
+independent review (PASS, ALMOST or FAIL, posted on the PR), iterated until it
+passes; merge and deploy stay with the founder.
 
 | PR | Part | What changes for the customer | Live calls or new cost |
 |---|---|---|---|
@@ -20,204 +22,329 @@ with the founder.
 | 2 | A, layout | New page structure and look for every Spec 018 report, including delivered ones | None |
 | 3 | D, answers | Questions table with tooltips and the side panel | None |
 | 4 | P, PDF | "Unduh PDF" gives a server-made, branded PDF | Browser Run time (within included hours) |
-| 5 | C, competitor data | Richer competitor list for new orders: links, ratings, logos, counts | None |
+| 5 | C, competitor data | Exact counts, links, ratings, logos for new orders | None, or one live check (founder approval) |
 | 6 | B, writing | Deeper findings with headline numbers, firm recommendations, reasons, takeaways, Penutup plan | Side-by-side test (founder approval); Anthropic key if Claude (founder decision) |
 
 Why this order: A and D are presentation only and help every report at once,
-including the ones already delivered. P removes the last "print it yourself"
-step. C starts saving richer competitor data early, because only orders made
-after it ships have it. B depends on founder approvals and its outputs (reasons,
-headline numbers, Penutup) slot into places A, C and D already built.
+including delivered ones. P removes the last "print it yourself" step. C starts
+saving richer competitor data early, because only orders made after it have
+it. B waits on founder approvals; its outputs slot into places A, C and D built.
+
+## The rule for old reports (applies to every PR)
+
+There are three kinds of saved report. Every change is gated so each keeps
+working:
+
+1. **Before Spec 018** (no `report.two_source`): renders byte-for-byte as
+   today, including both "Download PDF" buttons (browser print), "Unduh bukti
+   JSON", `TenBeads`, the anchor jumps and the footer. The protected snapshot
+   in `two-source-report.test.tsx` (the "report saved before Spec 018" case)
+   must pass unchanged in every PR. None of PRs 2–6 touches this branch: new
+   components are only used under the `two` check, `TenBeads` stays for this
+   branch, and no shared component changes behaviour for it. These reports do
+   not get the server PDF.
+2. **Spec 018 reports saved before PR 5/PR 6:** get the new layout, using only
+   what they hold (see "What saved Spec 018 reports hold" below).
+3. **Reports saved after PR 5/PR 6:** use the new fields.
+
+The renderer branches on the presence of fields, never on dates; nothing is
+regenerated when a report is opened (S0).
+
+### What saved Spec 018 reports hold (checked in code)
+
+- `two_source.questions[]`: per question the ChatGPT and Google outcomes,
+  named facts, ChatGPT recommended flag, the AI Overview text and references,
+  topic (stored as `topic ?? question`), volume, data month.
+- `two_source.other_businesses`: one de-duplicated name list per source, at
+  most 10 each, with **no counts or question ids**
+  (`src/lib/orders/two-source.ts:377-389`).
+- The ChatGPT answer texts in the saved observations (`raw_answer`, with the
+  local-business card lines appended by `chatgptAnswerText`).
+- `report.conclusion`, `key_findings` (title, explanation, prompt ids),
+  `priorities` (action, why, …).
+
+So, for these reports, PR 2 **derives counts at render time** by matching each
+saved name in each saved answer text (ChatGPT `raw_answer`, Google `text`),
+with the same whole-word, case-insensitive matching `mark-names.ts` uses to
+highlight names. That gives per-business "named N×" and per-topic "N klinik
+lain disebut AI". No "direkomendasikan N×" for competitors and no ratings or
+links until PR 5. A topic row whose stored topic equals its question text has
+no topic name and is hidden until PR 6 supplies names.
 
 ## PR 2: Part A, layout
 
-**Approach.** Rebuild the two-source branch of the report renderer to the
-prototype; keep the pre-Spec 018 branch untouched.
-
-- `src/app/audit/report/DirectTenReportPage.tsx`: new top bar ("Unduh PDF"
-  calls the browser print until PR 4), header, chips (no Ringkasan), the
-  end-of-report save row. The direct-ten (old) header stays as is behind the
-  `two` check.
-- `src/app/audit/report/DirectTenReportBody.tsx`: for `two` reports, render
-  the new sections in the new order; old reports keep today's markup exactly.
-- `src/app/audit/report/TwoSourceSections.tsx`: replace `TwoSourceSummary`
-  (cards, legend), `OtherBusinesses` (competitor list from today's per-source
-  name lists, deduplicated, with the owner's card), `TopicsMissing` (topic
-  names, volume or "N klinik lain disebut AI" counted from the per-question
-  business lists), `TwoSourceMethod` (becomes the three notes under Jawaban
-  AI). New `Findings`, `Recommendations`, `Closing` components with the
-  pre-Part B fallbacks of the spec.
-- `src/components/product/report/TenBeads.tsx`: replaced by a `MentionDot`
-  component with the six looks (centred marks drawn without borders that
-  shift the centre) and a `MentionLegend`.
-- `src/styles/tokens.css`: dot, band and card tokens for light and dark (no
-  raw colours in components).
-- `report-body.module.css`: section bands, findings grid, competitor rows,
+**Files and approach.**
+- `src/app/audit/report/DirectTenReportPage.tsx`: under `two` only, the new top
+  bar ("Unduh PDF", browser print until PR 4), header, chips without
+  Ringkasan, the end-of-report save row and footer. The old header, buttons,
+  JSON button and footer stay for the old branch.
+- `src/app/audit/report/DirectTenReportBody.tsx`: under `two` only, the new
+  sections in the new order.
+- `src/app/audit/report/TwoSourceSections.tsx`: new `SourceCards` and
+  `MentionLegend`, `Findings`, `CompetitorList` (with the render-time counts
+  above and the owner's card), `TopicGaps`, `Recommendations`, `Closing`, and
+  `AnswerNotes` (the three notes, replacing `TwoSourceMethod`).
+- New `src/components/product/report/MentionDot.tsx` (six looks, marks drawn
+  so they stay centred). `TenBeads.tsx` stays for old reports.
+- **Verdict for reports written before Part B:** the first sentences of the
+  saved conclusion, cut at a sentence end, at most 220 characters; the full
+  conclusion is Penutup's paragraph.
+- `src/styles/tokens.css`: dot, band and card tokens (light only; the design
+  system has no dark scheme, so the report stays light like the rest of the
+  product). `report-body.module.css`: bands, findings grid, competitor rows,
   recommendation cards, closing band.
-- Remove "Unduh bukti JSON" from the page (`DirectTenReportPage`,
-  `ReportView`, `SavedReport`); keep `customer-evidence-export.ts` and its
-  route for support.
+- **"Unduh bukti JSON" is removed for Spec 018 reports only.** Support keeps
+  the export: a new `npm run support -- export <order>` (logic in
+  `src/lib/orders/support.ts`, which `scripts/support.mjs` already bundles
+  with esbuild) builds the same JSON (`makeSmartCustomerEvidenceExport`
+  and `promptsWithOriginals` from `customer-evidence-export.ts`) from the saved
+  order, with the same privacy rules. Its unit test replaces the end-to-end
+  JSON step for Spec 018 reports; the JSON e2e step stays for old reports.
+  `ReportView` and `SavedReport` keep `onDownloadJson` for the old branch.
 - Jawaban AI keeps today's stacked question blocks in this PR (moved to the
   end, renamed, notes added); PR 3 replaces them.
 
 **Tests.**
-- `two-source-report.test.tsx`: new assertions per AC-A2 (each dot look,
-  counts equal dots, headline sentences), AC-A3 (order, chip names), AC-A4
-  (absent strings); update its Spec 018 snapshot deliberately; the "report
-  saved before Spec 018" snapshot must pass unchanged (AC-A5).
+- `two-source-report.test.tsx`: assertions for AC-A2 (each dot look, counts
+  equal dots), AC-A3 (order and chip names), AC-A4 (absent strings), the
+  render-time competitor and topic counts, hidden topic rows, the verdict cut;
+  the Spec 018 snapshot is updated deliberately; the pre-Spec 018 snapshot
+  passes unchanged (AC-A5).
 - `report-body.test.tsx`: recommendation fallback (action + why, no removed
-  labels), finding without a headline number, Penutup fallback.
-- `tests/e2e/journey.ts` and the specs that use it: button name "Unduh PDF";
-  drop the JSON download step; `.claude/skills/verify-nuave/SKILL.md` and its
-  feature files follow.
-- `npm run verify` (includes `check:typography`, lint, format, unit, e2e
-  offline).
-- Browser check at 390, 768 and 1280 wide, light and dark, no sideways scroll
-  (Playwright screenshot script kept out of the repo).
+  labels), finding without a headline number, Penutup fallback; the anchor
+  test at line 108 keeps passing for old reports.
+- `tests/e2e/journey.ts` and its specs: "Unduh PDF" for Spec 018 reports, no
+  JSON step for them; `.claude/skills/verify-nuave/` follows.
+- **Layout check (automated, Playwright, in the e2e suite):** at 390×844 the
+  verdict and the first card's dots are inside the first viewport (AC-A1);
+  no horizontal scroll at 320, 390, 768, 1280 and 1920 wide.
+- `npm run verify` before every push.
 
-**Finish.** AC-A1 to AC-A6 pass; screenshots of NV-3WDSAY's saved data (local
-fixture copy, no live calls) attached to the PR for AC-A7.
+**Finish.** AC-A1 to AC-A6 pass. AC-A7 (founder judgement) is done on the PR
+preview with a synthetic report, and by the founder on NV-3WDSAY after deploy;
+no production data is pulled by an agent.
 
 ## PR 3: Part D, answers
 
-- New `src/app/audit/report/AnswersTable.tsx` (table with header row,
-  tooltips on logos and dots) and `AnswerPanel.tsx` (shadcn `Sheet` from the
-  right, full width under 640px; shadcn `Tabs`; chat layout reusing
-  `AnswerMarkdown` and the name marking from `mark-names.ts`).
-- Motion from `src/components/motion/presets.ts` and `useMotionAllowed`:
-  scrim opacity and panel transform only, one ease-in-out curve for both
-  directions, instant under reduced motion.
+- **First, search BeUI** for a side sheet, tabs and tooltip (`AGENTS.md` UI
+  rule 3); record what was found and why it was used or not.
+- New `src/app/audit/report/AnswersTable.tsx` (table with header row) and
+  `AnswerPanel.tsx`: shadcn `Sheet` (Base UI dialog) from the right, full width
+  under 640px; shadcn `Tabs`; chat layout reusing `AnswerMarkdown` and
+  `mark-names.ts`.
+- **Tooltips:** add the shadcn `Tooltip` component (Base UI, already a
+  dependency) with the shadcn CLI; no hand-made tooltip.
+- **Motion:** the sheet's own CSS transitions only (Base UI
+  `data-starting-style`/`data-ending-style`), not Motion as well. The overlay
+  for this sheet drops `backdrop-blur-xs` (only opacity animates); the panel
+  animates `transform` only. Add one named ease-in-out curve to
+  `src/components/motion/presets.ts` and a line to `docs/DESIGN.md` motion
+  rules for it (the founder asked for ease in and out). Reduced motion: no
+  slide, fades kept, per `useMotionAllowed`.
 - One `openAnswer(questionNumber, source?)` used by dots, rows and "P"
-  references (replaces today's jump-to-anchor).
-- Print: the panel never prints; `ReportAppendix.tsx` renders every answer in
-  the chat style for print only (PR 4 uses it for the PDF).
-- Tooltips: a small Base UI tooltip via shadcn if present, else a CSS tooltip
-  with `aria-label` (no new library).
+  references, under `two` only; old reports keep anchor jumps.
+- `ReportAppendix.tsx`: every answer in the chat style, print only (PR 4 uses
+  it).
 
-**Tests.** Unit: panel opens on the right question and source, Escape and
-focus return, tab arrow keys, failed and not-shown states. E2e: open, switch
-tab, next, close. AC-D2: a Chromium performance trace in the PR (no frame over
-20 ms while opening).
+**Tests.** Unit: panel opens on the right question and source; Escape and
+focus return; tab arrow keys; failed and not-shown states; tooltips have
+accessible names. E2e: open, switch tab, next, close. AC-D2: a Chromium trace
+attached to the PR (no frame over 20 ms while opening).
 
 ## PR 4: Part P, PDF
 
-**Approach.**
-- `wrangler.jsonc`: a `browser` binding (`BROWSER`) for production and the PR
-  preview environments; the compatibility date already supports Quick Actions.
-- New route `POST /api/report/pdf` with `{ secret }` in the body. It reuses
-  the report-data route's secret check and rate limiter, then asks Browser Run
-  (`env.BROWSER.quickAction("pdf", …)`) to open the report page in print mode
-  inside Cloudflare and returns the PDF with `Content-Disposition: attachment;
-  filename="Laporan-Nuave-<klinik>.pdf"`, `no-store`.
-- How the page gets the data inside Browser Run without putting the secret in
-  a URL that leaves Cloudflare is settled by a **spike** at the start of the
-  PR, choosing between:
-  1. **HTML mode:** the route renders the print view to HTML on the server
-     (same React components and the built CSS) and sends it as `html`; or
-  2. **URL mode:** Browser Run opens `/r?print=1#<secret>`; the request stays
-     inside Cloudflare's network, and the page signals `data-report-ready`
-     before printing.
-  The spike records which works on Workers with OpenNext, its time per PDF,
-  and the choice, in the PR description. HTML mode is preferred if it works.
-- Footer and page numbers through the PDF options' footer template; A4; print
-  CSS from PR 2 and the appendix from PR 3; light palette forced.
-- Client: "Unduh PDF" posts the secret, shows a spinner, saves the file;
-  failure shows a retry message. Where `BROWSER` is absent (local, tests),
-  the button falls back to the browser's print.
+**Read first:** the Next 16 route-handler guide in
+`node_modules/next/dist/docs/` (`AGENTS.md`), and Cloudflare Browser Run's
+Quick Actions and limits pages.
 
-**Tests.** Unit: route rejects a wrong secret with the standard answer, sends
-no secret in any URL, sets the headers; client fallback. Manual on the PR
-preview: download a PDF of a synthetic report, check footer, page breaks,
-appendix (AC-P1), and attach it to the PR. Browser Run time per PDF recorded.
+**Approach.**
+- `wrangler.jsonc`: a `browser` binding `BROWSER` in production **and** the PR
+  preview environment (previews test the real path). Local dev and the offline
+  tests have no binding (Quick Actions need remote mode).
+- New route `POST /api/report/pdf`, body `{ secret }`. It reuses the
+  report-data route's secret check (same "not available" answer for a wrong
+  secret) and has **its own tighter rate limit**: a new ratelimit binding of 3
+  per minute per caller, and a per-report cap of 20 PDFs per UTC day (D1
+  counter), so one link cannot use up the included browser hours.
+- **The secret never goes into a URL.** Browser Run's dashboard lists each
+  run's target URL, so URL mode with the secret is ruled out.
+  - **HTML mode (preferred):** the route builds the print view's HTML on the
+    server and sends it as `html`, with the CSS inlined.
+  - **Fallback, if HTML mode fails the spike:** URL mode with a **single-use
+    print token** (random, stored hashed in D1, valid 60 seconds, spent on
+    first read) so a logged URL is useless afterwards.
+- **Spike (time box: one working day), pass criteria:**
+  1. `react-dom/server` imports and renders the report's print view inside an
+     OpenNext route handler on Workers;
+  2. the built CSS and the Geist font files are found and inlined (or the
+     fonts are referenced from the site's own origin);
+  3. `next/link` and `next/image` render acceptably outside Next (or are
+     avoided in the print view);
+  4. the Worker bundle stays under the Workers Paid size limit, with the
+     increase recorded;
+  5. a synthetic report's PDF matches the print layout and takes under 15
+     seconds.
+  Fail on any → URL mode with the single-use token. The result goes in the PR
+  description.
+- PDF options: A4, print media, background graphics, footer template with
+  "Nuave · Laporan Visibilitas AI · <klinik>" (HTML-escaped) and page numbers.
+  `Content-Disposition: attachment; filename="Laporan-Nuave.pdf";
+  filename*=UTF-8''<encoded clinic name>`; `Cache-Control: no-store`.
+- Time per PDF from the `X-Browser-Ms-Used` response header is written to the
+  Worker log as a number (no report data).
+- **Client:** "Unduh PDF" posts the secret, shows a spinner, saves the file. The
+  route answers `501 {"code":"pdf_unavailable"}` when `BROWSER` is missing; the
+  client then uses the browser's print. Other failures show "PDF belum bisa
+  dibuat. Coba lagi." with a retry.
+
+**Tests.** Unit: wrong secret → standard answer; no secret in any outgoing
+URL or log; headers and filename encoding; footer escaping; rate limits;
+`pdf_unavailable` → print fallback. On the PR preview: download a synthetic
+report's PDF, check footer, page breaks and appendix (AC-P1), attach it, and
+record the time per PDF.
 
 ## PR 5: Part C, competitor data
 
-- **Check first:** read a saved raw ChatGPT and Google response in the
-  restricted evidence (local fixtures, no new calls) to confirm which fields
-  the provider returns for listed businesses (website, rating, review count;
-  for ChatGPT local-business cards and Google's local pack and organic
-  results). The PR states what was found; fields that do not exist are not
-  promised.
-- `src/lib/checks/chatgpt.ts` and `google.ts`: keep, per listed business,
-  name, website or Instagram, rating, review count (never phone or address).
-  Saved inside the existing JSON columns; no migration.
+- **Source for the provider fields:** raw responses are never saved (Spec 018
+  R-28), so the fields are confirmed from DataForSEO's published response
+  schema for the ChatGPT scraper (`chat_gpt_local_businesses`,
+  `brand_entities`) and Google Organic (`local_pack`, `organic`). If the schema
+  leaves a field unclear, one live check (about USD 0.02) runs only with the
+  founder's named approval. The PR lists the fields found; missing fields are
+  not promised.
+- `src/lib/checks/chatgpt.ts` and `google.ts`: keep per listed business:
+  name, website or Instagram, rating, review count. Never phone numbers or
+  addresses. Stored in the existing JSON columns; no migration.
 - `src/lib/orders/two-source.ts`: a `competitors` block in the saved report:
-  per business, named per source, recommended, question ids, website, rating,
-  reviews; the owner's own row from the same counts. New report version
-  string; Part A's list reads it when present and falls back to today's name
-  lists.
-- Logos: site icon loaded by the browser with `referrerPolicy="no-referrer"`;
-  initials fallback (C-03).
+  per business, named per source, recommended (ChatGPT, from the saved
+  assessment), question ids, website, rating, reviews; the owner's row from
+  the same counts. New report version string. The renderer prefers this block
+  and falls back to PR 2's render-time counts.
+- **Logos:** the business's own `https://<domain>/favicon.ico`, loaded by the
+  browser with `referrerPolicy="no-referrer"`; initials on error. No
+  third-party icon service. In synthetic mode no logo is requested (the
+  offline network guard forbids outside requests; synthetic data uses
+  initials).
 
-**Tests.** Unit: extraction from fixture responses (with and without the
-fields), phone numbers never kept (AC-C2), counts and owner row (AC-C1),
-fallback for reports without the block.
+**Tests.** Unit: extraction from schema-shaped fixtures with and without the
+fields; phone numbers and addresses never kept (AC-C2); counts and owner row
+(AC-C1); fallback for reports without the block; no logo request in synthetic
+mode.
 
 ## PR 6: Part B, writing
 
 Built and tested offline first; live steps wait for the founder.
 
 1. **Playbook draft** `docs/content/report/PLAYBOOK.md` (public, checkable
-   guidance on how AI assistants choose local clinics and what clinics can
-   do). Founder approves before the writer uses it.
+   guidance). The founder approves it before the writer uses it live.
 2. **Writer input** (B-01) in `report-pipeline.ts`, `runner.ts` and the
-   two-source facts: add Google answer texts (phone-stripped), businesses per
+   two-source facts: Google answer texts (phone-stripped), businesses per
    answer, profile, playbook.
 3. **Instructions** (B-03) in `report-prompt-contract.ts` and the production
-   adapter (`openai.ts` via OpenCode Go): analysis angles, the confident-advice
-   rule, banned shapes.
-4. **Output schema** (B-04) with a new version; `contracts.ts` validation;
-   the count check (`two-source-report.ts`) extended to headline numbers,
-   recommendations and the closing (B-05); banned title starts (B-06).
-5. **Renderer** reads the new fields (headline numbers, reasons, takeaways,
-   closing, plan, topic names, Google recommendation reading).
-6. **Side-by-side test** (B-07): a script runs the new writer on the saved
-   NV-3WDSAY answers with each model and writes three reports to
-   `.local-evidence/`; needs the founder's named approval for the calls
-   (estimated under USD 2 in total) and, for Claude, an Anthropic API key
-   (new paid provider, founder decision) and a small adapter
-   (`anthropic.ts`) with the same spend reservation as other providers.
-7. **Switch** to the founder's pick; record cost and time per report;
-   confirm the per-order hold covers it.
+   adapter (`openai.ts` via OpenCode Go).
+4. **Output schema** (B-04): the new fields live in a versioned
+   `report.two_source_writing` block beside the existing content fields, which
+   the writer still fills (title, explanation, action, why), so older readers
+   keep working. **`src/lib/audit/report-presentation.ts`** validates the
+   block when present (its content schema check, lines 82-84 and 169-193,
+   would otherwise reject new reports and show "Bukti laporan tidak
+   tersedia"); `contracts.ts` follows.
+5. **Checks:** the count check in `two-source-report.ts` extended (B-05);
+   banned title starts (B-06). **Headline number rule:** a number is kept only
+   if it is one of:
+   - a count code can compute from the per-question facts of the questions
+     the finding cites, written "X dari Y" where Y is the number of those
+     questions (so "0 dari 2" over two cited questions passes) or a source's
+     completed count;
+   - a count of distinct cited domains or named businesses in the cited
+     answers;
+   - a figure that appears verbatim in a cited answer text (for example
+     "75+").
+   Anything else is dropped; the finding keeps its text.
+6. **Renderer** reads the block: headline numbers, reasons, takeaways,
+   closing, plan, topic names, Google recommendation reading.
+7. **Side-by-side test** (B-07): a script runs the new writer on saved answers
+   with each model and writes the reports to `.local-evidence/` (never Git).
+   The answers come from NV-3WDSAY, exported by the founder with
+   `npm run support -- export NV-3WDSAY` (PR 2) or another order the founder
+   chooses. Needs the founder's named approval for the calls (estimated under
+   USD 2 in total) and, for Claude, an Anthropic API key (new paid provider,
+   founder decision) with a small adapter (`anthropic.ts`) using the same
+   spend reservation as other providers.
+8. **Switch** to the founder's pick; record cost and time per report; confirm
+   the per-order hold covers it.
 
-**Tests.** Unit: schema validation, count check on headline numbers, banned
-titles, repair path, renderer with old and new versions. The offline fixture
-writer returns a Part B shaped report so the journey and snapshots cover it.
-AC-B4 is the founder's reading.
+**Tests.** Unit: schema and presentation validation for old and new versions;
+headline number rule (each kind kept, others dropped); banned titles; repair
+path; **AC-B1: the writer input builder includes Google texts and the
+playbook and contains no phone number** (checked with the phone patterns in
+`src/lib/checks/phones.ts`). The offline fixture writer returns a Part B
+report so the journey and snapshots cover it.
 
 ## Cross-cutting rules
 
-- **Old reports:** pre-Spec 018 renders byte-for-byte as today; Spec 018
-  reports get each part's layout where their data allows; nothing is
-  regenerated on open (S0).
-- **Versions:** the saved two-source block gains a version per data change
-  (PR 5, PR 6); the renderer branches on presence of fields, not on dates.
 - **Privacy:** no phone numbers anywhere new; competitor data is public
-  business information; PDFs are not stored.
+  business information; PDFs and exports are not stored; agents pull no
+  production data (founder exports go to `.local-evidence/`).
 - **Design system:** Geist roles from `docs/DESIGN.md`, tokens in
-  `tokens.css`, Tabler icons, shadcn/Base UI parts, motion presets; the
-  prototype's raw colours become tokens.
+  `tokens.css`, Tabler icons, shadcn/Base UI parts, BeUI searched first, motion
+  presets; the prototype's raw colours become tokens; light only.
 - **Checks per PR:** `npm run verify` green before pushing; the PR preview is
-  checked on a phone width; the review comment links evidence.
-- **Docs:** `NOW.md` and `DECISION_LOG.md` updated only when a part ships or a
-  decision is made; Spec 018's report layout table is marked as replaced.
+  checked at phone width; the review comment links evidence.
+- **Verification and closeout:** each PR adds its results to
+  `specs/021-report-v2/VERIFICATION.md` (from `docs/templates/VERIFICATION.md`)
+  with the PR and verdict link. After PR 6 and the founder's AC-A7 and AC-B4
+  readings, the spec is marked **Verified**, `NOW.md` names the next outcome,
+  and Spec 018's report layout table is marked as replaced.
 
 ## Decisions the founder still owes
 
-1. Named approval for the B-07 live writer calls (before PR 6 step 6).
-2. Anthropic API key, or to compare only models on the existing providers
-   (before PR 6 step 6).
-3. Approval of `PLAYBOOK.md` (before PR 6 step 3 is used live).
+1. Named approval for the B-07 live writer calls (before PR 6 step 7).
+2. An Anthropic API key, or comparing only models on the existing providers
+   (before PR 6 step 7).
+3. Approval of `PLAYBOOK.md` (before PR 6 runs live).
+4. Only if DataForSEO's schema is unclear: one live check in PR 5.
 
 ## Risks
 
-- **Browser Run inside OpenNext:** the spike in PR 4 may show HTML mode is
-  not practical; URL mode is the fallback, with the secret staying inside
-  Cloudflare's network.
-- **Provider fields:** if DataForSEO does not return websites or ratings for
-  listed businesses, Peta Pesaing shows counts and reasons only, and links
-  come from cited sources.
-- **Writer quality:** the stronger instructions may still produce recaps with
-  GPT-5.6 Luna; B-07 exists to measure that before switching.
-- **Snapshot churn:** PR 2 rewrites the Spec 018 snapshot; reviewers compare
-  it against the prototype, not the old snapshot.
+- **Browser Run inside OpenNext:** the spike may fail HTML mode; the fallback
+  keeps the secret out of logs with a single-use token.
+- **Render-time counts** on older reports rely on name matching in answer
+  texts; a name written differently in an answer is missed (undercount, never
+  overcount). PR 5 replaces it with saved counts for new orders.
+- **Provider fields:** if DataForSEO lacks websites or ratings for listed
+  businesses, Peta Pesaing shows counts and reasons only.
+- **Writer quality:** stronger instructions may still produce recaps with
+  GPT-5.6 Luna; B-07 measures that before switching.
+- **Browser Run cost:** concurrency beyond 10 browsers averaged monthly costs
+  USD 2.00 each; negligible at current volume, watched in the dashboard.
+
+## Review history
+
+**Round 1 (ALMOST,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/171#issuecomment-6417470715)).**
+Fixed in this revision:
+- Must fix 1 (old reports): "The rule for old reports"; every change gated
+  under `two`; JSON, `TenBeads`, anchors kept for old reports; no server PDF
+  for them.
+- Must fix 2 (saved data): "What saved Spec 018 reports hold"; render-time
+  counts; hidden topic rows.
+- Must fix 3 (presentation check): PR 6 step 4.
+- Must fix 4 (secret in Browser Run logs): URL mode with the secret ruled out;
+  HTML mode or a single-use token; spike criteria and time box.
+- Must fix 5 (nothing to read): DataForSEO's published schema, live check only
+  with approval.
+- Should fix 1: support export command; SPEC A-08 corrected.
+- Should fix 2: verdict cut rule; automated 390×844 and width checks.
+- Should fix 3: light only; SPEC A-11 corrected.
+- Should fix 4: shadcn Tooltip.
+- Should fix 5: BeUI search; sheet CSS transitions only; no blur; ease-in-out
+  preset and DESIGN.md line.
+- Should fix 6: own rate limits; `pdf_unavailable`; previews have the binding
+  (SPEC P-05 corrected); escaping and filename encoding; browser time logged.
+- Should fix 7: own-site favicons; no logo requests in synthetic mode.
+- Should fix 8: headline number rule.
+- Should fix 9: AC-B1 test.
+- Should fix 10: founder export to `.local-evidence/`; no agent pulls.
+- Should fix 11: VERIFICATION.md and closeout; PLAN.md kept at the founder's
+  request.

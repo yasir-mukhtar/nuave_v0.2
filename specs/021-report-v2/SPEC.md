@@ -140,7 +140,10 @@ dark (ink); Jawaban AI's band is light grey.
 - Label "Laporan Visibilitas AI", the clinic name large, one line with the
   address the audit started from and the search place, one line "Diperiksa
   <tanggal> · ChatGPT dan Google AI Overview". Each fact once.
-- **Verdict:** one or two sentences in large type, no highlight.
+- **Verdict:** one or two sentences in large type, no highlight. Reports
+  written before Part B use the saved conclusion's first sentences, cut at a
+  sentence end, at most 220 characters; the full conclusion is Penutup's
+  paragraph.
 - **Two source cards**, each with the source logo (Tabler `IconBrandOpenai`,
   `IconBrandGoogle`), a headline count ("3 dari 10 jawaban", "1 dari 8
   ringkasan AI"), one sentence, and **one row of ten dots**.
@@ -182,13 +185,18 @@ dark (ink); Jawaban AI's band is light grey.
   website or Instagram is a link (outlined, external-link icon, violet on
   hover); a chip without one is plain grey text. A note explains the icon.
 - Under the list, two or three **takeaways** from the writer (Part B).
+- Spec 018 reports saved before Part C hold only one name list per source, so
+  their counts are derived when the page renders, by matching each saved name
+  in the saved answer texts (the same matching that highlights names); they
+  show no recommended counts, ratings or links.
 
 ### Celah Topik
 
 - Rows are short topic names ("Bekas jerawat dan bopeng"), never questions.
 - Right column: "±1.146 pencarian/bulan" when the search volume is known;
-  otherwise **"N klinik lain disebut AI"** for that topic. Never "Tidak ada
-  data jumlah pencarian".
+  otherwise **"N klinik lain disebut AI"** for that topic (named businesses
+  found in that question's answers). Never "Tidak ada data jumlah
+  pencarian".
 - Each row says where the clinic stands, the sites AI used ("Sumber yang
   dipakai AI: …") and the question references. Hidden when empty.
 
@@ -207,12 +215,13 @@ dark (ink); Jawaban AI's band is light grey.
 - A conclusion paragraph, a three-step plan with week ranges, and a card
   "Audit ulang setelah 8 minggu" explaining why and that the same ten
   questions make the result comparable. No button (wishlist).
-- Reports written before Part B show only the re-audit card.
+- Reports written before Part B show the saved conclusion and the re-audit
+  card (no plan).
 
 ### Jawaban AI
 
 - A table with its header row inside: "#", "Pertanyaan", ChatGPT logo,
-  Google logo. Each row: number, question (with a "menyebut nama Anda" tag
+  Google logo (shadcn Tooltip). Each row: number, question (with a "menyebut nama Anda" tag
   when the question names the clinic), and one dot per source.
 - Hovering or focusing a header logo shows a tooltip above it, centred
   ("ChatGPT", "Google AI Overview"). Hovering a row's dot shows "ChatGPT ·
@@ -251,20 +260,24 @@ dark (ink); Jawaban AI's band is light grey.
   the dots of each look; every dot opens its question.
 - **A-03** Findings layout, with and without a headline number; neutral
   question references.
-- **A-04** Competitor list layout from the data saved today (names and
-  per-source lists); richer fields arrive with Part C.
-- **A-05** Celah Topik as specified; a row without a topic name is left out
-  until Part B supplies names.
+- **A-04** Competitor list layout from the data saved today, with counts
+  derived at render time as described in Peta Pesaing; richer fields arrive
+  with Part C.
+- **A-05** Celah Topik as specified; a row whose saved topic equals its
+  question text has no topic name and is left out until Part B supplies
+  names.
 - **A-06** Recommendation cards as specified, with the pre-Part B fallback.
 - **A-07** Penutup as specified, with the pre-Part B fallback.
-- **A-08** No "Unduh bukti JSON" on the page; the export route stays for
-  support.
+- **A-08** No "Unduh bukti JSON" on Spec 018 reports. Support keeps the
+  export through a new `npm run support -- export <order>` that builds the
+  same JSON from the saved order. Reports saved before Spec 018 keep their
+  button.
 - **A-09** Reports saved before Spec 018 render exactly as today (the
   existing snapshot passes unchanged).
 - **A-10** Typography uses `docs/DESIGN.md` roles (`npm run check:typography`
   passes); icons from Tabler; generic parts from shadcn/Base UI.
 - **A-11** The page works from 320px to 1920px wide with no sideways scroll,
-  in light and dark mode.
+  in the product's light palette (the design system has no dark scheme).
 
 ### Part D, answers
 
@@ -281,15 +294,18 @@ dark (ink); Jawaban AI's band is light grey.
   Cloudflare Browser Run (Workers Paid; 10 browser-hours a month included,
   then USD 0.09 per hour, checked 2026-10-26) and returns it as a download.
 - **P-02** It takes the same secret as the report-data route, in a POST
-  body, never in a URL that leaves Cloudflare; it is rate-limited like that
-  route; a wrong secret gets the same "not available" answer.
+  body, and never puts it in any URL (Browser Run's dashboard logs target
+  URLs); a wrong secret gets the same "not available" answer. It has its own
+  tighter rate limit and a per-report daily cap, so one link cannot use up
+  the included browser hours.
 - **P-03** Layout as in "Experience" (A4, page breaks, footer, appendix,
   light palette).
 - **P-04** Nothing is stored; each download is made fresh from the saved,
   unchanging report.
-- **P-05** Failure shows a retry message; the browser's print stays
-  available as a fallback only when Browser Run is not configured (local and
-  preview).
+- **P-05** Failure shows a retry message. Production and PR previews have
+  Browser Run; where it is missing (local development, offline tests) the
+  route answers `pdf_unavailable` and the button uses the browser's print.
+  Reports saved before Spec 018 keep the browser's print.
 
 ### Part C, competitor data
 
@@ -298,8 +314,10 @@ dark (ink); Jawaban AI's band is light grey.
   when present. Never phone numbers (Spec 018 R-28).
 - **C-02** Per business, code counts times named per source, times
   recommended, and which questions.
-- **C-03** Logos come from the business's site icon, fetched from the browser
-  without a referrer; initials otherwise; never a logo guessed from a name.
+- **C-03** Logos come from the business's own site icon
+  (`https://<domain>/favicon.ico`), loaded by the browser without a referrer;
+  no third-party icon service; initials on error or with no site; never a
+  logo guessed from a name; no logo requests in synthetic mode.
 - **C-04** Links only for addresses that came from the provider data or the
   answers' cited sources.
 
@@ -327,8 +345,12 @@ dark (ink); Jawaban AI's band is light grey.
   three-step plan with week ranges; a topic name for any question without
   one; a recommendation reading for each AI Overview that names the clinic.
   Reports keep a new version string; older versions still render.
-- **B-05** The existing count check covers the new fields; a headline number
-  that does not match the counts is dropped (the finding keeps its text).
+- **B-05** The existing count check covers the new fields. A headline number
+  is kept only if code can confirm it: a count over the finding's cited
+  questions or a source's completed checks ("X dari Y"), a count of distinct
+  cited domains or named businesses in the cited answers, or a figure that
+  appears verbatim in a cited answer. Otherwise it is dropped and the finding
+  keeps its text.
 - **B-06** Titles never start with "Periksa", "Pertahankan", "Pertimbangkan"
   or "Pastikan"; no "Mengapa"/"Berdasarkan" labels; a code check asks for one
   revision, as today.
@@ -376,7 +398,8 @@ dark (ink); Jawaban AI's band is light grey.
   two-source report.
 - **AC-A5** A report saved before Spec 018 renders exactly as before.
 - **AC-A6** `npm run verify` passes; the `verify-nuave` journey reaches the
-  report.
+  report; an automated check finds no sideways scroll at 320, 390, 768, 1280
+  and 1920 wide.
 - **AC-A7 (judgement)** The founder reads NV-3WDSAY in the new layout on a
   phone and agrees it matches the prototype's intent.
 
