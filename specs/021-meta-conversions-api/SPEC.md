@@ -1,6 +1,7 @@
 # Spec 021: Meta Conversions API (server Purchase event)
 
-> Status: **Approved** by Yasir on 2026-10-26 (revision 6: his answers to
+> Status: **Implementing** on PR #170 (build started 2026-10-26; see
+> [VERIFICATION.md](./VERIFICATION.md)). **Approved** by Yasir on 2026-10-26 (revision 6: his answers to
 > Q-1 to Q-8, with the layered cookie notice of Q-1; see Decisions). The
 > revised "How it works" wording (Q-9) and Q-2 summary, reworded after
 > review round 4, were re-approved by Yasir as written; the layered
@@ -551,7 +552,7 @@ Cloudflare's current screens.
 
 ## Verification record
 
-Not started. Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
+Build and offline checks: [VERIFICATION.md](./VERIFICATION.md). Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
 applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
 Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).
 Revision 5 (same day): the layered cookie notice of Q-1, R-19a, R-19b,

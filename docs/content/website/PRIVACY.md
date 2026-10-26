@@ -1,8 +1,10 @@
 # Kebijakan Privasi dan Data
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
-> Status: version 1.3 (2026-10-25) names the cookie notice's English
-> button, **Allow**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
+> Status: version 1.4 (2026-10-26, Spec 021) adds a short summary of what
+> goes to Meta at the start of the Meta part of section 10 and narrows server
+> events to purchases; approved by the founder on 2026-10-26. Version 1.3
+> (2026-10-25) names the cookie notice's English button, **Allow**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
 > browser for 12 months (Spec 019). Version 1.1 (2026-10-25) added the clauses
 > adopted from the HaloAI comparison; approved by the founder on 2026-10-25
 > (PR #160). The lawyer
@@ -23,9 +25,11 @@
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
   1. show a cookie notice with **Allow** and **Don't allow** (English since
-     2026-10-25), and load nothing from Meta until the visitor taps Allow; once server events send the
-     hashed order email, the notice names it (founder, 2026-10-25: the
-     browser step sends no email, so the notice does not mention one yet);
+     2026-10-25), and load nothing from Meta until the visitor taps Allow; a
+     How it works link opens, inside the notice and before the choice, a
+     short explanation that names the hashed order email and Meta (Spec 021
+     layered notice, founder 2026-10-26; this replaces "the notice names
+     it", and is for the lawyer's check);
   2. send server events (Conversions API) only for visitors who agreed, and
      send no fields beyond those section 10 lists (event, value, IP address,
      browser type, Meta cookie codes, hashed email for purchases);
@@ -43,9 +47,19 @@
   `.github/workflows/ci.yml`); with the ID blank, all three are off. The Pixel sends PageView, Lead (the free check found
   the business), InitiateCheckout and Purchase (249000 IDR), never the email,
   business, order number or report, and runs with automatic configuration
-  off. Items 2 and 7 (server events) wait for the Conversions API step. The
-  page's "seberapa jauh Anda membacanya" is not sent yet; sending less than the
-  page lists keeps it true.
+  off. The page's "seberapa jauh Anda membacanya" is not sent yet; sending
+  less than the page lists keeps it true.
+  **Spec 021 (server step)** meets items 2 and 7 and the new item 1: the
+  server sends one Purchase per paid order (`/api/meta/purchase`), only when
+  the paying customer's own browser reaches the paid screen after Allow, with
+  the event, value, IP address, browser type, Meta cookie codes, hashed order
+  email and the fixed `/audit` page address. The IP address and browser type
+  are read from that request and passed to Meta without being stored; the
+  order keeps only a random event code, the send time, the privacy version
+  agreed to and an outcome code. No server Lead: section 10 now names server
+  events for purchases only. It changes Spec 019 R-09 and R-10 (the Pixel
+  Purchase carries the event code). Cloudflare's automatic per-request log is
+  switched off (Q-8) if the founder's check shows it holds the IP address.
 - **Deletion (section 9):** an hourly cleanup in the order cron
   (`src/lib/orders/retention.ts`, minute 17) makes an order anonymous 12 months
   after its report was saved, or 30 days after it failed or expired. It empties
@@ -74,6 +88,11 @@
   For a paid order, the bare row and the payment records still carry Midtrans
   IDs that Midtrans can link to the customer, so paid orders are pseudonymous
   rather than anonymous; unpaid orders become effectively anonymous.
+- **Version 1.4 (2026-10-26):** section 10 gets the "Singkatnya" summary
+  before the Meta details, and its third point names server events for
+  purchases only, with the page address. A sentence that Nuave records the
+  send time and the policy version for each purchase sent to Meta waits for
+  the lawyer (Spec 021 Q-2).
 - **Version 1.3 (2026-10-25):** section 10 names the notice's button
   **Allow** (was **Setuju**): the notice's buttons are now English, Allow
   (the main, purple button) and Don't allow, under the title "Allow cookies?".
@@ -115,7 +134,7 @@ memprosesnya, berapa lama disimpan, dan pilihan Anda.
 
 # Kebijakan privasi dan data
 
-Berlaku sejak 25 Oktober 2026 · Versi 1.3
+Berlaku sejak 26 Oktober 2026 · Versi 1.4
 
 Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang ikut
 memprosesnya, berapa lama disimpan, dan pilihan Anda. Prinsip kami sederhana.
@@ -254,6 +273,12 @@ setelah halaman dimuat ulang. Data ini tetap di perangkat Anda. Setelah 7 hari d
 dihapus saat Anda membuka Nuave berikutnya. Penyedia hosting kami juga dapat memasang cookie keamanan untuk
 menahan lalu lintas berbahaya.
 
+Singkatnya: kami tidak mengirim data Anda ke Meta kecuali Anda memilih
+**Allow**. Email Anda tidak pernah dikirim ke Meta dalam bentuk yang bisa
+dibaca. Laporan, pertanyaan, jawaban AI, dan data bisnis Anda tidak pernah
+dikirim ke Meta. Kami tidak menjual data Anda, dan Anda bisa mengubah pilihan
+kapan saja.
+
 Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai Meta Pixel
 di browser dan Meta Conversions API dari server kami. Keduanya hanya aktif jika
 Anda memilih **Allow** pada pemberitahuan cookie. Jika Anda menolak atau belum
@@ -266,8 +291,8 @@ Jika Anda setuju, yang dikirim ke Meta Platforms adalah:
   IP dan jenis perangkat;
 - tanda bahwa cek gratis selesai, checkout dibuka, dan pembayaran berhasil,
   beserta nilai pembelian (Rp249.000);
-- untuk cek gratis dan pembelian, catatan yang sama dari server kami, beserta
-  alamat IP, jenis browser, dan kode cookie Meta Anda; dan
+- untuk pembelian, catatan yang sama dari server kami, beserta alamat IP, jenis
+  browser, kode cookie Meta Anda, dan alamat halaman pemesanan Nuave; dan
 - untuk pembelian, email pesanan yang sudah diubah menjadi kode acak (hash)
   sebelum dikirim. Meta memakainya untuk mencocokkan pembelian dengan akun
   Facebook atau Instagram Anda.

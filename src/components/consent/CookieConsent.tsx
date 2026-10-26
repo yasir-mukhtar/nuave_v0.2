@@ -32,6 +32,8 @@ export function CookieConsent() {
   const [choice, setChoice] = useState<CookieChoice | null | undefined>();
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
+  // Spec 021 R-19a: the second layer, opened inside the notice.
+  const [explained, setExplained] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const noticeRef = useRef<HTMLElement>(null);
   // The "Pengaturan cookie" link that reopened the notice gets focus back.
@@ -123,6 +125,7 @@ export function CookieConsent() {
     else revokeTracking();
     setChoice(next);
     setOpen(false);
+    setExplained(false);
     if (reopened) openerRef.current?.focus();
     setReopened(false);
   }
@@ -151,15 +154,25 @@ export function CookieConsent() {
               tabIndex={-1}
               className="type-label-strong m-0 text-ink-900"
             >
-              <span aria-hidden="true">🍪 </span>Allow cookies?
+              Help us understand what works
             </h2>
+            {/* Spec 021 Q-1 (founder, 2026-10-26): the first layer, short and
+                about the purpose. Its wording is for the lawyer's check. */}
             <p className="type-caption m-0 text-ink-600">
-              Cookies help us measure our ads. Your report and answers are never
-              shared.{" "}
-              <Link href="/privacy#cookie" className="text-ink-900 underline">
-                Privacy policy
-              </Link>
+              We use cookies and limited purchase information to measure which
+              ads lead to sales. Your report and business answers are never
+              shared with advertising partners.{" "}
+              <button
+                type="button"
+                aria-expanded={explained}
+                aria-controls="cookie-notice-how"
+                className="text-ink-900 underline"
+                onClick={() => setExplained((shown) => !shown)}
+              >
+                How it works
+              </button>
             </p>
+            {explained ? <HowItWorks /> : null}
             {reopened && choice ? (
               <p className="type-caption m-0 text-ink-600">
                 Your choice now:{" "}
@@ -190,6 +203,48 @@ export function CookieConsent() {
         </div>
       </section>
     </>
+  );
+}
+
+/** Spec 021 Q-9 (approved 2026-10-26): what is shared, with whom and why,
+ * shown inside the notice before the choice (R-19a). Nothing loads from Meta.
+ * It scrolls on its own, so the buttons below stay in reach on a phone. */
+function HowItWorks() {
+  return (
+    <div
+      id="cookie-notice-how"
+      className="type-caption mt-1 grid max-h-[40vh] gap-2 overflow-y-auto rounded-xl bg-stone-50 p-3 text-ink-700"
+    >
+      <p className="type-label-strong m-0 text-ink-900">How it works</p>
+      <ul className="m-0 grid gap-1.5 pl-4">
+        <li>
+          If you allow, Meta (Facebook and Instagram), our advertising partner,
+          sets cookies and learns which Nuave pages you open and when you finish
+          the free check or open checkout, with your IP address and device type,
+          so we can see which ads bring visitors.
+        </li>
+        <li>
+          If you buy, we also send Meta that a purchase happened and its value
+          (Rp249.000), your IP address, browser type and Meta cookie codes, and
+          your order email in coded (hashed) form, never as readable text. Meta
+          uses these to match the purchase to your Facebook or Instagram account
+          and the ad you saw, and to show our ads to people similar to our
+          buyers.
+        </li>
+        <li>
+          We never send Meta your report, your questions, AI answers or your
+          business details.
+        </li>
+        <li>
+          If you don&apos;t allow, none of your data is sent to Meta, from your
+          browser or from our server. You can change your choice anytime under
+          Pengaturan cookie, at the bottom of our home page and privacy page.
+        </li>
+      </ul>
+      <Link href="/privacy#cookie" className="text-ink-900 underline">
+        Privacy policy
+      </Link>
+    </div>
   );
 }
 

@@ -84,8 +84,10 @@
   Server events (Conversions API) are the next step:
   [Spec 021](../specs/021-meta-conversions-api/SPEC.md) was approved on
   2026-10-26 (Purchase only, sent when the buyer's browser reaches the paid
-  screen; privacy page to 1.4). Before merging its build, the founder makes
-  the Meta access token and saves it as `META_CAPI_ACCESS_TOKEN`.
+  screen; privacy page to 1.4) and is built on
+  [PR #170](https://github.com/yasir-mukhtar/nuave_v0.2/pull/170). Before
+  merging it, the founder checks one Cloudflare log entry (founder step 0)
+  and makes the Meta access token, saved as `META_CAPI_ACCESS_TOKEN`.
 
 - **Spec 018 is merged** ([#151](https://github.com/yasir-mukhtar/nuave_v0.2/pull/151)):
   questions from real Google search data, each answered by the ChatGPT app

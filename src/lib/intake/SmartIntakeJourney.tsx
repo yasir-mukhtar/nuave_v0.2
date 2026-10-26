@@ -900,10 +900,27 @@ export default function SmartIntakeJourney({
     if (ready && session.stage === "order" && checkoutSite)
       trackJourneyEvent("InitiateCheckout", checkoutSite);
   }, [ready, session.stage, checkoutSite]);
+  // Spec 021: the paid order's event code goes with the Pixel Purchase, and
+  // the same code with the server's.
+  const purchaseEventId =
+    paymentFor && paymentFor.orderId === session.order?.id
+      ? paymentFor.payment.purchase_event_id
+      : undefined;
   useEffect(() => {
     if (ready && session.order?.paid && paymentState === "paid")
-      trackJourneyEvent("Purchase", session.order.id);
-  }, [ready, session.order?.paid, session.order?.id, paymentState]);
+      trackJourneyEvent(
+        "Purchase",
+        session.order.id,
+        Date.now(),
+        purchaseEventId,
+      );
+  }, [
+    ready,
+    session.order?.paid,
+    session.order?.id,
+    paymentState,
+    purchaseEventId,
+  ]);
 
   // An unpaid order made for another website or name is replaced on Lanjut,
   // which needs the email typed again (R-01), so it never starts by itself.

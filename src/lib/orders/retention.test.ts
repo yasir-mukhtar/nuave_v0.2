@@ -282,8 +282,16 @@ describe("making an order anonymous", () => {
        VALUES ('tx-paid', 'NV-ABCDEF-1', 'settlement', 'paid', 'none', ?1, ?1)`,
       T0.toISOString(),
     );
+    // Spec 021: a server Purchase was sent for this order.
+    await sql(
+      `UPDATE orders SET meta_sent_at = ?2, meta_consent_version = '1.4',
+         meta_outcome = 'sent' WHERE id = ?1`,
+      id,
+      T0.toISOString(),
+    );
     const spendRows = d1.query("SELECT id FROM provider_spend").length;
     const before = orderRow(id);
+    expect(before.meta_event_id).toBeTruthy();
     const now = new Date(T0.getTime() + 400 * DAY);
     expect(await purgeOrder(d1.db, { orderId: id, now })).toBe(true);
     const row = orderRow(id);
@@ -298,6 +306,11 @@ describe("making an order anonymous", () => {
       report_json: null,
       link_hash: null,
       link_off: 1,
+      // Spec 021 R-21 (AC-10): the event code goes; the send record stays.
+      meta_event_id: null,
+      meta_sent_at: T0.toISOString(),
+      meta_consent_version: "1.4",
+      meta_outcome: "sent",
       purged_at: now.toISOString(),
       // Kept: the order number, state, dates and payment link.
       order_number: before.order_number,

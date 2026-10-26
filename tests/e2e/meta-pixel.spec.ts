@@ -19,7 +19,7 @@ import {
 const META_SCRIPT = "https://connect.facebook.net/en_US/fbevents.js";
 
 function notice(page: Page) {
-  return page.getByRole("region", { name: "Allow cookies?" });
+  return page.getByRole("region", { name: "Help us understand what works" });
 }
 
 async function setUp(page: Page, baseURL: string) {
@@ -65,7 +65,7 @@ test("before a choice nothing loads from Meta; Allow loads the Pixel and sends P
   await page.goto("/");
   await expect(notice(page)).toBeVisible();
   await expect(notice(page)).toContainText(
-    "Your report and answers are never shared",
+    "Your report and business answers are never shared with advertising partners.",
   );
   await expect(
     page.getByRole("button", { name: "Pengaturan cookie" }),
@@ -134,6 +134,21 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
   baseURL,
 }) => {
   await setUp(page, baseURL!);
+  // Spec 021 AC-07: the paid screen asks the server for the Purchase once,
+  // in the background.
+  const serverAsks: unknown[] = [];
+  await page.route("**/api/meta/purchase", async (route) => {
+    serverAsks.push(route.request().postDataJSON());
+    await route.continue();
+  });
+  const paidAnswers: Array<{ purchase_event_id?: string }> = [];
+  page.on("response", async (response) => {
+    if (!response.url().endsWith("/api/orders/status")) return;
+    const body = (await response.json().catch(() => null)) as {
+      payment?: { state?: string; purchase_event_id?: string };
+    } | null;
+    if (body?.payment?.state === "paid") paidAnswers.push(body.payment);
+  });
   await page.goto("/");
   await notice(page)
     .getByRole("button", { name: "Allow", exact: true })
@@ -152,8 +167,24 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
     .toEqual([
       ["track", "Lead"],
       ["track", "InitiateCheckout", { value: 249000, currency: "IDR" }],
-      ["track", "Purchase", { value: 249000, currency: "IDR" }],
+      [
+        "track",
+        "Purchase",
+        { value: 249000, currency: "IDR" },
+        { eventID: expect.stringMatching(/^[0-9a-f-]{36}$/) },
+      ],
     ]);
+  // The Pixel's event code is the one the server gave for this order.
+  const purchase = (await tracked(page)).find(
+    (call) => call[1] === "Purchase",
+  )!;
+  const eventId = (purchase[3] as { eventID: string }).eventID;
+  expect(paidAnswers.at(-1)?.purchase_event_id).toBe(eventId);
+  await expect.poll(() => serverAsks.length).toBe(1);
+  expect(serverAsks[0]).toEqual({
+    order_id: expect.stringMatching(/^[0-9a-f]{32}$/),
+    consent_version: expect.any(String),
+  });
 
   const everything = JSON.stringify(await pixelCalls(page));
   expect(everything).not.toContain(ORDER_EMAIL);
@@ -170,6 +201,81 @@ test("the journey sends Lead, InitiateCheckout and Purchase once each, with valu
   expect(
     (await tracked(page)).filter((call) => call[1] !== "PageView"),
   ).toEqual([]);
+  expect(serverAsks).toHaveLength(1);
+});
+
+test("Spec 021 AC-07: a server call that hangs never holds up the paid screen or the next step", async ({
+  page,
+  baseURL,
+}) => {
+  await setUp(page, baseURL!);
+  let asked = 0;
+  // The call never answers.
+  await page.route("**/api/meta/purchase", () => {
+    asked += 1;
+  });
+  await page.goto("/");
+  await notice(page)
+    .getByRole("button", { name: "Allow", exact: true })
+    .click();
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await continueToOrder(page);
+  await payOrder(page);
+  await expect.poll(() => asked).toBe(1);
+  // The journey carries on to the next step while the call still hangs.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Ceritakan bisnis Anda" }),
+  ).toBeVisible();
+});
+
+test("Spec 021 AC-08: with Don't allow the paid screen asks the server nothing", async ({
+  page,
+  baseURL,
+}) => {
+  await setUp(page, baseURL!);
+  let asked = 0;
+  await page.route("**/api/meta/purchase", (route) => {
+    asked += 1;
+    return route.fulfill({ status: 204 });
+  });
+  await page.goto("/");
+  await notice(page).getByRole("button", { name: "Don't allow" }).click();
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await continueToOrder(page);
+  await payOrder(page);
+  const statusAsked = page.waitForResponse("**/api/orders/status");
+  await page.reload();
+  await statusAsked;
+  await page.waitForTimeout(500);
+  expect(asked).toBe(0);
+});
+
+test("Spec 021 AC-11a: How it works opens inside the notice on a phone, with both choices still tappable and nothing from Meta", async ({
+  page,
+  baseURL,
+}) => {
+  const meta = await setUp(page, baseURL!);
+  await page.goto("/audit");
+  await notice(page).getByRole("button", { name: "How it works" }).click();
+  const panel = page.locator("#cookie-notice-how");
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("your order email in coded (hashed) form");
+  await expect(
+    panel.getByRole("link", { name: "Privacy policy" }),
+  ).toHaveAttribute("href", "/privacy#cookie");
+  for (const name of ["Allow", "Don't allow"]) {
+    const button = notice(page).getByRole("button", { name, exact: true });
+    await expect(button).toBeInViewport();
+  }
+  await page.waitForTimeout(300);
+  expect(meta).toEqual([]);
+  await notice(page)
+    .getByRole("button", { name: "Don't allow" })
+    .click({ trial: true });
 });
 
 test("back from Midtrans, the order number leaves the address before the Pixel sees it", async ({
