@@ -79,7 +79,8 @@ status until it shows the payment as received.
   (Q-9), and the privacy page change that goes with it (Q-2).
 - Secret `META_CAPI_ACCESS_TOKEN` in the deploy job; an optional test code
   for Meta's Test Events screen.
-- Switching off Cloudflare's automatic per-request log (R-22, Q-8).
+- Switching off Cloudflare's automatic per-request log, if founder step 0
+  shows it holds the IP address or browser type (R-22, Q-8).
 - Founder steps in Meta Events Manager.
 
 ## Non-scope
@@ -380,7 +381,7 @@ background and its outcome is never shown.
 - **AC-13** Recording a paid Midtrans notification, a status check that
   records a payment, and a cron run make no request to a Meta address (unit
   tests with a fake `fetch` that fails on any Meta address).
-- **AC-14** As decided in Q-8: the production worker's
+- **AC-14** If R-22 stands (founder step 0): the production worker's
   `wrangler.jsonc` has `observability.logs.invocation_logs` set to `false`.
   After deploy, the founder opens, in Cloudflare's logs, the route's own
   outcome line from the AC-12 check purchase (R-14) and finds no IP address
@@ -556,4 +557,5 @@ Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).
 Revision 5 (same day): the layered cookie notice of Q-1, R-19a, R-19b,
 AC-11a and Q-9, on Yasir's instruction; Q-9 approved as written. Review
 round 4 on revision 5: ALMOST; findings 1–6 applied in revision 6 (Q-9 and
-the Q-2 summary reworded, awaiting Yasir's re-approval).
+the Q-2 summary reworded, awaiting Yasir's re-approval). Round 5: PASS;
+its nit (AC-14 and Scope conditional on founder step 0) applied.
