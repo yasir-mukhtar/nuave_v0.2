@@ -6,6 +6,19 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Spec 021 wording re-approved after review round 4
+
+Review round 4 found the first "How it works" text (Q-9) and the privacy
+page's reassurance paragraph (Q-2) said less than the privacy page or
+more than is true. Yasir re-approved both reworded texts as written: How
+it works now says what the browser shares for everyone who allows, adds
+the Meta cookie codes, says the coded email is matched to the buyer's
+Facebook or Instagram account, says "never send Meta" and "none of your
+data", and points to Pengaturan cookie on the home and privacy pages; the
+reassurance paragraph says "data Anda" and "ke Meta" throughout. This
+supersedes the Q-9 approval recorded in the entry below. Review round 5:
+PASS.
+
 ## 2026-10-26 — Cookie notice: layered disclosure (Spec 021)
 
 Yasir replaced the Spec 021 notice wording (Q-1, option A) with a layered

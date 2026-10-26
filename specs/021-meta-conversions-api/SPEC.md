@@ -2,9 +2,9 @@
 
 > Status: **Approved** by Yasir on 2026-10-26 (revision 6: his answers to
 > Q-1 to Q-8, with the layered cookie notice of Q-1; see Decisions). The
-> revised "How it works" wording (Q-9) and Q-2 summary need Yasir's
-> re-approval after review round 4, and the layered approach itself needs
-> the lawyer check before ads start. Revisions 2 and 3 applied independent
+> revised "How it works" wording (Q-9) and Q-2 summary, reworded after
+> review round 4, were re-approved by Yasir as written; the layered
+> approach itself needs the lawyer check before ads start. Revisions 2 and 3 applied independent
 > review rounds 1 and 2; round 3 PASS (PR #170).
 > Owner: orchestrator
 > Updated: 2026-10-26
@@ -466,7 +466,7 @@ Cloudflare's current screens.
     dikirim ke Meta. Kami tidak menjual data Anda, dan Anda bisa mengubah
     pilihan kapan saja." (Revised after review round 4, which added "data
     Anda" and "ke Meta" so no sentence suggests nothing is shared with
-    anyone; **needs Yasir's re-approval**.)
+    anyone; **re-approved by Yasir as written**, 2026-10-26.)
   - the third point, narrowing server events to purchases and naming the
     page address: "untuk pembelian, catatan yang sama dari server kami,
     beserta alamat IP, jenis browser, kode cookie Meta Anda, dan alamat
@@ -499,8 +499,8 @@ Cloudflare's current screens.
 
 - **Q-9 "How it works" text.** Yasir approved the first draft as written
   (2026-10-26). Review round 4 found it said less than the privacy page
-  and overstated in two places, so the text below is **revised and needs
-  Yasir's re-approval**. English like the notice:
+  and overstated in two places, so the text below was revised; **Yasir
+  re-approved it as written** (2026-10-26). English like the notice:
 
   > **How it works**
   > - If you allow, Meta (Facebook and Instagram), our advertising partner,
@@ -557,5 +557,5 @@ Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).
 Revision 5 (same day): the layered cookie notice of Q-1, R-19a, R-19b,
 AC-11a and Q-9, on Yasir's instruction; Q-9 approved as written. Review
 round 4 on revision 5: ALMOST; findings 1–6 applied in revision 6 (Q-9 and
-the Q-2 summary reworded, awaiting Yasir's re-approval). Round 5: PASS;
+the Q-2 summary reworded; both re-approved by Yasir as written). Round 5: PASS;
 its nit (AC-14 and Scope conditional on founder step 0) applied.
