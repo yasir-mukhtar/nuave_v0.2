@@ -79,6 +79,43 @@ Answers:
   automatic per-request log switched off if it holds IP addresses, giving
   up its saved request history.
 
+## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
+
+After four rounds on the clickable prototype (`experiments/report-v2-poc/`),
+Yasir approved [Spec 021](../specs/021-report-v2/SPEC.md):
+
+1. **Server-made PDF comes with this work.** "Unduh PDF" returns an A4 PDF made
+   on the server with Cloudflare Browser Run (footer with page numbers, answers
+   appendix), instead of the browser's print. It leaves the parking lot.
+2. **Re-audit reminder goes to the wishlist** (plan §6). Penutup recommends a
+   re-audit after eight weeks in words, without a scheduling button.
+3. **Light only.** The report keeps the product's light palette (the design
+   system has no dark scheme); confirmed after the plan review.
+4. **Build after review.** The build follows
+   [`PLAN.md`](../specs/021-report-v2/PLAN.md) once an independent review
+   passes; each build PR gets its own review, and merge stays with the founder.
+
+## 2026-10-26 — Report v2 before G1; confident advice; no score
+
+Yasir reviewed the NV-3WDSAY report and found it hard to read and shallow
+for Rp249.000 (header repeats, two-row dot cards, long answer blocks, recap
+instead of analysis, a bare competitor list, hedged recommendations with
+"Mengapa/Berdasarkan/Penanggung jawab/Selesai ketika" boxes, an over-long
+method section, an unused JSON button). Decisions:
+
+1. **Before G1.** The report rework ([Spec 021](../specs/021-report-v2/SPEC.md))
+   moves out of the parking lot and goes ahead of G1, in four parts: clean
+   layout, deeper writing, competitor map, answers in a side panel.
+2. **Confident advice.** Facts in a report must still come from the saved
+   answers. Advice may be confident expert guidance, drawn from a written
+   Nuave playbook the founder approves. A report never claims that something
+   *caused* the business's result. This replaces the writer's "do not
+   diagnose from absence" instruction; `AGENTS.md` rules 7 to 9 stand.
+3. **No score yet.** No 0 to 100 score; a short verdict and one row of ten
+   dots per source carry the big picture.
+4. **Lo-fi first.** Built from the spec without a Figma design; the founder
+   adjusts the look afterwards.
+
 ## 2026-10-26 — AC-14 passed; its findings go to the parking lot
 
 Yasir ran AC-14 (order NV-3WDSAY): delivered in 12.5 minutes for USD 0.177,
