@@ -5,6 +5,7 @@ and the depth of writing before any product code changes. It is not served by
 the app.
 
 - `index.html`: open it in a browser (phone or laptop). Built file; do not edit.
+- `sample-report.pdf`: what the browser prints from `index.html` (A4).
 - `template.html`: the page.
 - `build.py`: fills the template with the real answers saved in
   `../dataforseo-sozo/results/answers/SUMMARY.md` (run 2026-10-24).
