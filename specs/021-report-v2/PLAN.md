@@ -1,7 +1,7 @@
 # Spec 021 build plan
 
-> Status: **PASS** (review rounds 2 and 3); the build starts once the
-> founder confirms the spec edits (A-11 light only)
+> Status: **PASS** (review rounds 2 and 3); the founder confirmed the spec
+> edits (A-11 light only) on 2026-10-26; building
 > Spec: [`SPEC.md`](./SPEC.md) (approved 2026-10-26)
 > Reference: `experiments/report-v2-poc/` (approved prototype)
 > Updated: 2026-10-26

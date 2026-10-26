@@ -16,7 +16,9 @@ Yasir approved [Spec 021](../specs/021-report-v2/SPEC.md):
    appendix), instead of the browser's print. It leaves the parking lot.
 2. **Re-audit reminder goes to the wishlist** (plan §6). Penutup recommends a
    re-audit after eight weeks in words, without a scheduling button.
-3. **Build after review.** The build follows
+3. **Light only.** The report keeps the product's light palette (the design
+   system has no dark scheme); confirmed after the plan review.
+4. **Build after review.** The build follows
    [`PLAN.md`](../specs/021-report-v2/PLAN.md) once an independent review
    passes; each build PR gets its own review, and merge stays with the founder.
 

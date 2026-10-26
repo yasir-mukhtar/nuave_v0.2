@@ -7,8 +7,7 @@
 > follow-up branches
 > Updated: 2026-10-26. Edited after approval from the plan review (rounds 1-2):
 > A-04 and A-05 (counts from saved answers, hidden topic rows), A-08 (support
-> export), A-11 (light only, **awaiting founder confirmation**: the prototype
-> also showed dark mode), P-02 and P-05 (no secret in URLs, own rate limit,
+> export), A-11 (light only; confirmed by the founder on 2026-10-26), P-02 and P-05 (no secret in URLs, own rate limit,
 > previews have Browser Run), C-03 (own-site icons), B-05 (headline number
 > rule), verdict and Penutup fallbacks.
 > Implements: the founder's report feedback of 2026-10-26; moved ahead of G1
