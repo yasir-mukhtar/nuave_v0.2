@@ -67,6 +67,17 @@
 - `npm run build` and `npm run build:cf`: pass.
 - Browser suites: main 86 passed, switched-off 3 passed, Pixel 14 passed.
 
+## Founder step 0 (2026-10-27)
+
+Yasir opened a page-visit entry (`$workers.eventType = "fetch"`) in
+Cloudflare → `nuave-v2` → Observability, last 3 days. Cloudflare's automatic
+per-request log keeps, for every visit, the request headers
+`cf-connecting-ip`, `x-real-ip` and `user-agent`, and the visitor's city,
+region, postal code, latitude and longitude (cookies show as "REDACTED").
+So R-22 stands: `observability.logs.invocation_logs: false` stays in this
+change. The every-minute cron entries carry no visitor data. AC-14's
+after-deploy check (the route's own log line) is still to do.
+
 ## Notes
 
 - This session's shell sets `CHEAPERINFERENCE_API_KEY` and
