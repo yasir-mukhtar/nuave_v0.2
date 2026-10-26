@@ -9,7 +9,7 @@
 
 ## What was built
 
-- **Migration 0015** (`migrations/0015_meta_purchase.sql`): four nullable
+- **Migration 0015** (`migrations/0015_meta_purchase.sql`; was 0014 before the renumbering): four nullable
   columns on `orders`: `meta_event_id`, `meta_sent_at`,
   `meta_consent_version`, `meta_outcome`.
 - **Event code (R-07):** made with `crypto.randomUUID()` in the write that
@@ -66,6 +66,24 @@
 - `npm run test:unit`: 145 files, 2,616 tests pass.
 - `npm run build` and `npm run build:cf`: pass.
 - Browser suites: main 86 passed, switched-off 3 passed, Pixel 14 passed.
+
+## Independent code review (2026-10-27)
+
+Reviewer (Opus, did not write the code) on head `f5e39be`: **ALMOST**, no
+bug found; [PR comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/170#issuecomment-6429594170).
+Findings and what was done:
+
+1. Two specs numbered 021 and a migration-number clash with Report v2:
+   renumbered this spec 022 and its migration 0015 (founder, 2026-10-27),
+   merged main (`e3f5b55`), decision-log conflict resolved by keeping both
+   entries. Main changed only documents.
+2. R-14: the route now writes its one log line (`rate_limited`) also when
+   the per-IP limit stops a call; tested.
+3. AC-11a: the browser test now runs on a laptop size (1280×800) too.
+
+After these changes: unit tests 145 files, 2,616 pass; `npm run check`
+passes; Pixel browser suite 15 passed. The merged head needs a short
+re-check by the reviewer.
 
 ## Founder step 0 (2026-10-27)
 
