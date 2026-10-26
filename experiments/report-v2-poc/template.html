@@ -29,12 +29,17 @@
   --dot-rec: #533afd;
   --you: #fff1b8;
   --you-ink: #5c4500;
+  --you-border: #ccc3ff;
+  --band-glow: #ebe5ff;
+  --rec-glow: rgba(83, 58, 253, 0.10);
+  --rec-border: #e4dfff;
   --close-bg: #16161d;
   --close-fg: #f1f0f6;
   --close-muted: #b9b8cc;
   --close-line: #34333f;
   --scrim: rgba(22, 22, 29, 0.42);
   --shadow: 0 18px 48px rgba(22, 22, 29, 0.18);
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
   --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
@@ -43,7 +48,7 @@
     --muted: #a2a1b6; --faint: #6b6a85; --line: #2a2a35; --line-2: #3b3a4a;
     --accent: #8f7eff; --accent-ink: #b9aeff; --accent-soft: #2f2770; --accent-wash: #17142e;
     --on-accent: #111117; --dot-none: #6b6a85; --dot-cited-fill: #241e55; --dot-mid-border: #8f7eff;
-    --dot-mentioned-fill: #5d4be0; --dot-rec: #a99bff; --you: #4a3a00; --you-ink: #ffe28a;
+    --dot-mentioned-fill: #5d4be0; --dot-rec: #a99bff; --you: #4a3a00; --you-ink: #ffe28a; --you-border: #3e3591; --band-glow: #211a4a; --rec-glow: rgba(143, 126, 255, 0.16); --rec-border: #2f2770;
     --close-bg: #1d1940; --close-fg: #f1f0f6; --close-muted: #c9c3f0; --close-line: #322b66;
     --scrim: rgba(0,0,0,0.6); --shadow: 0 18px 48px rgba(0,0,0,0.5); color-scheme: dark;
   }
@@ -53,7 +58,7 @@
   --muted: #a2a1b6; --faint: #6b6a85; --line: #2a2a35; --line-2: #3b3a4a;
   --accent: #8f7eff; --accent-ink: #b9aeff; --accent-soft: #2f2770; --accent-wash: #17142e;
   --on-accent: #111117; --dot-none: #6b6a85; --dot-cited-fill: #241e55; --dot-mid-border: #8f7eff;
-  --dot-mentioned-fill: #5d4be0; --dot-rec: #a99bff; --you: #4a3a00; --you-ink: #ffe28a;
+  --dot-mentioned-fill: #5d4be0; --dot-rec: #a99bff; --you: #4a3a00; --you-ink: #ffe28a; --you-border: #3e3591; --band-glow: #211a4a; --rec-glow: rgba(143, 126, 255, 0.16); --rec-border: #2f2770;
   --close-bg: #1d1940; --close-fg: #f1f0f6; --close-muted: #c9c3f0; --close-line: #322b66;
   --scrim: rgba(0,0,0,0.6); --shadow: 0 18px 48px rgba(0,0,0,0.5); color-scheme: dark;
 }
@@ -94,7 +99,6 @@ p { margin: 0; }
 .head .meta strong { color: var(--fg-2); font-weight: 500; }
 .summary { padding-block: 20px 36px; display: grid; gap: 18px; }
 .verdict { font-size: clamp(19px, 3.2vw, 23px); line-height: 1.42; letter-spacing: -0.01em; font-weight: 500; max-width: 40ch; }
-.verdict em { font-style: normal; background: linear-gradient(transparent 62%, var(--accent-soft) 62%); }
 .cards { display: grid; gap: 12px; }
 @media (min-width: 640px) { .cards { grid-template-columns: 1fr 1fr; } }
 .card { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 12px; align-content: start; background: var(--bg); }
@@ -106,18 +110,21 @@ p { margin: 0; }
 .dots { display: flex; gap: 8px; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .dotbtn { display: grid; justify-items: center; gap: 4px; background: none; border: 0; padding: 2px; cursor: pointer; }
 .dotbtn .n { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-.dot[data-s="none"] { border: 1.5px solid var(--dot-none); background: var(--bg); }
-.dot[data-s="cited"] { border: 1.5px solid var(--dot-mid-border); background: var(--dot-cited-fill); }
-.dot[data-s="mentioned"] { border: 1.5px solid var(--dot-mid-border); background: var(--dot-mentioned-fill); }
-.dot[data-s="recommended"] { background: var(--dot-rec); }
-.dot[data-s="recommended"] svg { width: 14px; height: 14px; color: var(--on-accent); }
-.dot[data-s="noaio"]::after { content: ""; width: 12px; height: 2px; border-radius: 2px; background: var(--dot-none); }
+/* Figma "Legends" (2011:24): grey rings for absent, violet ring + dot for a
+   cited website, solid violet for named, solid violet + check for recommended. */
+.dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.dot[data-s="none"], .dot[data-s="noaio"] { border: 1.5px solid var(--dot-none); background: var(--bg); }
+.dot[data-s="noaio"]::after { content: ""; width: 10px; height: 2px; border-radius: 2px; background: var(--dot-none); }
+.dot[data-s="cited"] { border: 1.5px solid var(--dot-rec); background: var(--bg); }
+.dot[data-s="cited"]::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--dot-rec); }
+.dot[data-s="mentioned"], .dot[data-s="recommended"] { background: var(--dot-rec); }
+.dot[data-s="recommended"] svg { width: 13px; height: 13px; color: var(--on-accent); }
 .dot[data-s="failed"] { border: 1.5px dashed var(--dot-none); }
 .dot[data-s="notasked"] { visibility: hidden; }
 .dot.sm { width: 18px; height: 18px; }
+.dot.sm[data-s="noaio"]::after { width: 8px; }
+.dot.sm[data-s="cited"]::after { width: 4px; height: 4px; }
 .dot.sm[data-s="recommended"] svg { width: 11px; height: 11px; }
-.dot.sm[data-s="noaio"]::after { width: 9px; }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 12.5px; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .summary > * { min-width: 0; }
@@ -133,7 +140,7 @@ p { margin: 0; }
 /* Section bands */
 .band { border-top: 1px solid var(--line); }
 .band > .gutter > .col { padding-block: 52px 56px; display: grid; gap: 22px; }
-.band.wash { background: var(--accent-wash); border-top-color: var(--accent-soft); }
+.band.wash { background: radial-gradient(90% 60% at 50% 0%, var(--band-glow) 0%, transparent 100%), linear-gradient(180deg, var(--accent-wash) 0%, var(--bg) 55%); }
 .band.grey { background: var(--surface); }
 .sec-head { display: grid; gap: 6px; }
 .sec-head h2 { font-size: clamp(24px, 4vw, 30px); line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; }
@@ -160,7 +167,9 @@ p { margin: 0; }
 .comp-row:first-child { border-top: 0; }
 .logo-box { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; overflow: hidden; font-weight: 600; font-size: 13px; color: var(--fg-2); }
 .logo-box img { width: 22px; height: 22px; }
-.comp-row.you .logo-box { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+/* The owner's clinic: its own inset card inside the list, not a selected row. */
+.comp-row.you { margin: 8px; padding: 13px 14px; border: 1px solid var(--you-border); border-radius: 12px; background: linear-gradient(100deg, var(--accent-wash) 0%, var(--bg) 75%); }
+.comp-row.you + .comp-row { border-top: 0; }
 .name { font-weight: 600; line-height: 1.35; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
 .name small { flex-basis: 100%; font-weight: 400; color: var(--muted); font-size: 12.5px; }
 .you-pill { font-size: 11.5px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; }
@@ -191,8 +200,8 @@ p { margin: 0; }
 
 /* Recommendations */
 .recs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: rec; }
-.rec { background: var(--bg); border: 1px solid var(--accent-soft); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 6px 14px; }
-.rec::before { counter-increment: rec; content: counter(rec); width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; display: grid; place-items: center; font-size: 14px; grid-row: 1 / 3; }
+.rec { background: radial-gradient(120% 110% at 0% 0%, var(--rec-glow) 0%, transparent 42%), var(--bg); border: 1px solid var(--rec-border); box-shadow: 0 1px 2px rgba(22, 22, 29, 0.04), 0 8px 24px -12px rgba(83, 58, 253, 0.18); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 6px 14px; }
+.rec::before { counter-increment: rec; content: counter(rec); width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(140deg, #8f7eff 0%, var(--accent) 60%); color: #ffffff; font-weight: 700; display: grid; place-items: center; font-size: 14px; grid-row: 1 / 3; box-shadow: 0 4px 12px -4px rgba(83, 58, 253, 0.55); }
 .rec h3 { font-size: 18px; line-height: 1.35; letter-spacing: -0.01em; font-weight: 650; }
 .rec p { color: var(--fg-2); max-width: 64ch; }
 
@@ -213,9 +222,10 @@ p { margin: 0; }
 .btn.light { background: var(--close-fg); color: var(--close-bg); border-color: var(--close-fg); height: 44px; padding: 0 20px; }
 
 /* Answers table */
-.qlist { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); }
+.qlist { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); }
+.qlist > li:last-child .qrow { border-radius: 0 0 15px 15px; }
 .qgrid { display: grid; grid-template-columns: 28px minmax(0, 1fr) 58px; gap: 12px; align-items: center; padding: 13px 16px; }
-.qhead { background: var(--surface-2); font-size: 12.5px; font-weight: 600; color: var(--fg-2); padding-block: 10px; }
+.qhead { border-radius: 15px 15px 0 0; position: relative; z-index: 2; background: var(--surface-2); font-size: 12.5px; font-weight: 600; color: var(--fg-2); padding-block: 10px; }
 .qhead .icons { display: flex; justify-content: space-between; }
 .qhead svg { width: 16px; height: 16px; }
 .qrow { width: 100%; text-align: left; background: var(--bg); border: 0; border-top: 1px solid var(--line); cursor: pointer; }
@@ -224,6 +234,11 @@ p { margin: 0; }
 .qrow .qt { font-size: 14.5px; line-height: 1.45; }
 .qrow .qt small { display: inline-block; margin-left: 6px; font-size: 11.5px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 6px; padding: 1px 7px; }
 .marks { display: flex; justify-content: space-between; align-items: center; }
+[data-tip] { position: relative; display: inline-flex; }
+[data-tip]::after { content: attr(data-tip); position: absolute; right: -6px; bottom: calc(100% + 8px); background: var(--fg); color: var(--bg); font-size: 12px; font-weight: 500; line-height: 1.3; padding: 5px 9px; border-radius: 7px; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(3px); transition: opacity 0.15s var(--ease), transform 0.15s var(--ease); z-index: 5; }
+[data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: none; }
+.qhead [data-tip]::after { bottom: auto; top: calc(100% + 8px); transform: translateY(-3px); }
+.qhead [data-tip]:hover::after, .qhead [data-tip]:focus-visible::after { transform: none; }
 
 /* Notes */
 .notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
@@ -232,10 +247,11 @@ p { margin: 0; }
 .foot .row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
 
 /* Side panel */
-.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 60; }
-.panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(580px, 100%); background: var(--bg); z-index: 70; box-shadow: var(--shadow); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
-@media (prefers-reduced-motion: no-preference) { .panel:not([hidden]) { animation: slide 0.22s ease-out; } }
-@keyframes slide { from { transform: translateX(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 60; opacity: 0; visibility: hidden; transition: opacity 0.32s var(--ease), visibility 0s linear 0.32s; }
+.scrim.is-open { opacity: 1; visibility: visible; transition: opacity 0.32s var(--ease); }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(580px, 100%); background: var(--bg); z-index: 70; box-shadow: var(--shadow); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); transform: translate3d(100%, 0, 0); visibility: hidden; will-change: transform; transition: transform 0.42s var(--ease), visibility 0s linear 0.42s; }
+.panel.is-open { transform: translate3d(0, 0, 0); visibility: visible; transition: transform 0.42s var(--ease); }
+@media (prefers-reduced-motion: reduce) { .panel, .panel.is-open, .scrim, .scrim.is-open, .dialog, .dialog.is-open { transition-duration: 0.01s; } }
 .p-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .p-top h2 { font-size: 14px; font-weight: 600; color: var(--muted); }
 .iconbtn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--bg); display: grid; place-items: center; cursor: pointer; }
@@ -272,6 +288,33 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
 .srcs a { font-size: 12px; text-decoration: none; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .empty { color: var(--muted); font-size: 14px; padding: 18px; border: 1px dashed var(--line-2); border-radius: 14px; background: var(--bg); }
 
+/* Save row, re-audit dialog, toast */
+.save { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+@media (min-width: 640px) { .save { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+.save h3 { font-size: 16px; font-weight: 600; }
+.save p { font-size: 13.5px; color: var(--fg-2); max-width: 52ch; }
+.dialog { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: var(--scrim); opacity: 0; visibility: hidden; transition: opacity 0.28s var(--ease), visibility 0s linear 0.28s; }
+.dialog.is-open { opacity: 1; visibility: visible; transition: opacity 0.28s var(--ease); }
+.dialog-card { width: min(440px, 100%); background: var(--bg); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); transform: translate3d(0, 14px, 0) scale(0.98); transition: transform 0.34s var(--ease); }
+.dialog.is-open .dialog-card { transform: none; }
+.dlg-body { display: grid; gap: 14px; }
+.dlg-body h2 { font-size: 20px; letter-spacing: -0.015em; }
+.dlg-lede { font-size: 14px; color: var(--fg-2); }
+.when-pick { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.when-pick legend { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; padding: 0; }
+.when-pick label { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 12px; cursor: pointer; }
+.when-pick label:has(input:checked) { border-color: var(--accent); background: var(--accent-wash); }
+.when-pick input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.when-pick span { display: grid; flex: 1; }
+.when-pick b { font-weight: 600; font-size: 14.5px; }
+.when-pick small { font-size: 12.5px; color: var(--muted); }
+.when-pick em { font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.done-mark { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+.done-mark svg { width: 20px; height: 20px; }
+.toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 90; width: max-content; max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); font-size: 13.5px; padding: 10px 16px; border-radius: 12px; box-shadow: var(--shadow); opacity: 0; transform: translate3d(-50%, 10px, 0); pointer-events: none; transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); }
+.toast.is-on { opacity: 1; transform: translate3d(-50%, 0, 0); }
+
 /* Print / PDF: light palette, page 1 is the summary, answers as an appendix */
 .appendix { display: none; }
 .print-only { display: none; }
@@ -281,11 +324,11 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
     --bg: #ffffff; --surface: #f8f8fb; --surface-2: #f1f0f6; --fg: #16161d; --fg-2: #3b3a4a; --muted: #6b6a85;
     --line: #e7e6ee; --line-2: #d3d2de; --accent: #533afd; --accent-ink: #3620b8; --accent-soft: #e5e0ff; --accent-wash: #f5f3ff;
     --on-accent: #ffffff; --dot-none: #8f8ea6; --dot-cited-fill: #ece8ff; --dot-mid-border: #7f6cfe; --dot-mentioned-fill: #b3a8ff; --dot-rec: #533afd;
-    --close-bg: #f5f3ff; --close-fg: #16161d; --close-muted: #3b3a4a; --close-line: #d3d2de; color-scheme: light;
+    --you-border: #ccc3ff; --band-glow: #ebe5ff; --rec-glow: rgba(83, 58, 253, 0.10); --rec-border: #e4dfff; --close-bg: #f5f3ff; --close-fg: #16161d; --close-muted: #3b3a4a; --close-line: #d3d2de; color-scheme: light;
   }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-size: 10.5pt; }
-  .topbar, .chips, .proto, .panel, .scrim, .no-print, .jump { display: none !important; }
+  .topbar, .chips, .proto, .panel, .scrim, .dialog, .toast, .no-print, .jump { display: none !important; }
   .print-only { display: block; }
   .gutter { padding-left: 0; padding-right: 0; }
   .col { max-width: none; }
@@ -320,7 +363,7 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
     <span class="logo">nuave<span>.</span></span>
     <button class="btn" type="button" id="pdf">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 11l5 5l5-5"/><path d="M12 4v12"/></svg>
-      Download PDF
+      Unduh PDF
     </button>
   </div>
 </div>
@@ -335,7 +378,7 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
       <p class="meta">Diperiksa 24 Oktober 2026 · ChatGPT dan Google AI Overview</p>
     </header>
     <div class="summary">
-      <p class="verdict">ChatGPT dan Google mengenal Sozo sebagai <em>klinik promo dengan banyak cabang</em>. Untuk filler, botox, dan bekas jerawat, AI mengarahkan pasien ke klinik yang menampilkan dokter spesialisnya.</p>
+      <p class="verdict">ChatGPT dan Google mengenal Sozo sebagai klinik promo dengan banyak cabang. Untuk filler, botox, dan bekas jerawat, AI mengarahkan pasien ke klinik yang menampilkan dokter spesialisnya.</p>
       <div class="cards" id="cards"></div>
       <div class="legend" id="legend"></div>
       <a class="jump" href="#rekomendasi">Lihat 6 rekomendasi
@@ -411,7 +454,7 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
   <div class="sec-head"><h2>Celah Topik</h2><p class="lede">Topik yang dicari orang, tetapi jawabannya belum menyebut nama Anda.</p></div>
   <ul class="topics">
     <li class="topic"><h3>Bekas jerawat dan bopeng</h3><span class="vol">±1.146<small>pencarian/bulan</small></span><p>Tidak disebut di ChatGPT maupun Google. <span class="src-line">Sumber yang dipakai AI: alodokter.com, erhaultimate.co.id, primavitaclinic.co.id</span> <span class="qrefs" data-q="2,9"></span></p></li>
-    <li class="topic"><h3>Filler dan botox</h3><span class="vol">±1.435<small>pencarian/bulan</small></span><p>Tidak disebut. <span class="src-line">Sumber yang dipakai AI: perdoski.id, cderma.id, klinikbamed.com</span> <span class="qrefs" data-q="3"></span></p></li>
+    <li class="topic"><h3>Filler dan botox</h3><span class="vol">4 klinik<small>lain disebut AI</small></span><p>Tidak disebut. <span class="src-line">Sumber yang dipakai AI: perdoski.id, cderma.id, klinikbamed.com</span> <span class="qrefs" data-q="3"></span></p></li>
     <li class="topic"><h3>Flek hitam</h3><span class="vol">±3.602<small>pencarian/bulan</small></span><p>Disebut di ChatGPT, tetapi bukan pilihan utama; di Google hanya artikel Anda yang dikutip. <span class="src-line">Sumber yang dipakai AI: diricare.com, klinikmagna.com, erhaultimate.co.id</span> <span class="qrefs" data-q="1,8"></span></p></li>
   </ul>
 </div></div></section>
@@ -441,7 +484,7 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
       <h3>Audit ulang setelah 8 minggu</h3>
       <p>ChatGPT dan Google perlu waktu untuk membaca halaman baru. Setelah perubahan berjalan sekitar delapan minggu, audit ulang dengan 10 pertanyaan yang sama, supaya hasilnya bisa dibandingkan langsung dengan laporan ini.</p>
     </div>
-    <a class="btn light no-print" href="#penutup">Jadwalkan audit ulang</a>
+    <button class="btn light no-print" type="button" id="reaudit-open">Jadwalkan audit ulang</button>
   </div>
 </div></div></section>
 
@@ -458,12 +501,19 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
 <div class="gutter"><div class="col">
   <div class="appendix" id="appendix"></div>
   <div class="foot">
+    <div class="save no-print">
+      <div style="display:grid;gap:4px"><h3>Simpan laporan ini</h3><p>Satu PDF berisi temuan, rekomendasi, dan semua jawaban lengkap, siap dibagikan ke tim atau agensi Anda.</p></div>
+      <button class="btn" type="button" data-pdf>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 11l5 5l5-5"/><path d="M12 4v12"/></svg>
+        Unduh PDF
+      </button>
+    </div>
     <div class="row"><span>Nuave · Laporan Visibilitas AI · Sozo Skin Clinic</span><span>Butuh bantuan? support@nuave.ai</span></div>
   </div>
 </div></div>
 
-<div class="scrim" id="scrim" hidden></div>
-<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="p-title" hidden>
+<div class="scrim" id="scrim"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="p-title" aria-hidden="true">
   <div class="p-top">
     <h2 id="p-title">Pertanyaan 1 dari 10</h2>
     <button class="iconbtn" type="button" id="p-close" aria-label="Tutup">
@@ -480,6 +530,29 @@ mark.comp { background: transparent; color: inherit; box-shadow: inset 0 -2px 0 
     <button class="btn ghost" type="button" id="p-next">Berikutnya ›</button>
   </div>
 </aside>
+
+<div class="dialog" id="reaudit" role="dialog" aria-modal="true" aria-labelledby="ra-title" aria-hidden="true">
+  <div class="dialog-card">
+    <div id="ra-form" class="dlg-body">
+      <h2 id="ra-title">Jadwalkan audit ulang</h2>
+      <p class="dlg-lede">Kami kirim pengingat ke email pesanan Anda, berisi tautan untuk mengaudit ulang Sozo Skin Clinic dengan 10 pertanyaan yang sama. Tidak ada pembayaran sekarang.</p>
+      <fieldset class="when-pick">
+        <legend>Kirim pengingat dalam</legend>
+        <label><input type="radio" name="ra-when" value="6"><span><b>6 minggu</b><small>5 Desember 2026</small></span></label>
+        <label><input type="radio" name="ra-when" value="8" checked><span><b>8 minggu</b><small>19 Desember 2026</small></span><em>Disarankan</em></label>
+        <label><input type="radio" name="ra-when" value="12"><span><b>12 minggu</b><small>16 Januari 2027</small></span></label>
+      </fieldset>
+      <div class="dlg-actions"><button class="btn ghost" type="button" data-close-dialog>Batal</button><button class="btn" type="button" id="ra-confirm">Ingatkan saya</button></div>
+    </div>
+    <div id="ra-done" class="dlg-body" hidden>
+      <span class="done-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"/></svg></span>
+      <h2>Pengingat dijadwalkan</h2>
+      <p class="dlg-lede">Pada <b id="ra-date">19 Desember 2026</b>, kami kirim email berisi tautan audit ulang. Hasil barunya dibandingkan langsung dengan laporan ini, pertanyaan demi pertanyaan.</p>
+      <div class="dlg-actions"><button class="btn" type="button" data-close-dialog>Selesai</button></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script>
@@ -504,6 +577,7 @@ const LABEL = {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const dot = (s, sm) => `<span class="dot${sm ? " sm" : ""}" data-s="${s}">${s === "recommended" ? ICON.check : ""}</span>`;
 const statusOf = (q, src) => (q.source === src ? q.status : "notasked");
+const tipDot = (q, src) => statusOf(q, src) === "notasked" ? dot("notasked", true) : `<span data-tip="${SOURCE_NAME[src]} · ${LABEL[statusOf(q, src)]}">${dot(statusOf(q, src), true)}</span>`;
 
 /* Summary cards */
 function card(src) {
@@ -524,8 +598,7 @@ function card(src) {
 }
 document.getElementById("cards").innerHTML = card("chatgpt") + card("google");
 document.getElementById("legend").innerHTML =
-  `<span class="scale">${["none", "cited", "mentioned", "recommended"].map((s) => `<span>${dot(s, true)}${LABEL[s]}</span>`).join("")}</span>` +
-  `<span>${dot("noaio", true)}Tidak ada AI Overview</span>`;
+  `<span class="scale">${["noaio", "none", "cited", "mentioned", "recommended"].map((s) => `<span>${dot(s, true)}${s === "noaio" ? "Tidak ada AI Overview" : LABEL[s]}</span>`).join("")}</span>`;
 
 /* Question refs */
 document.querySelectorAll(".qrefs").forEach((el) => {
@@ -545,7 +618,7 @@ function compRow(c) {
   const total = c.chatgpt + c.google;
   const split = [c.chatgpt ? `ChatGPT ${c.chatgpt}` : "", c.google ? `Google ${c.google}` : "", c.cited ? `dikutip ${c.cited}` : ""].filter(Boolean).join(" · ");
   const sub = c.rating ? `<small>${esc(c.rating)}</small>` : c.domain ? `<small>${esc(c.domain)}</small>` : "";
-  return `<div class="comp-row${c.you ? " you" : ""}">${logo(c)}<div class="name">${esc(c.name)}${c.you ? '<span class="you-pill">Klinik Anda</span>' : ""}${sub}</div><div class="stats"><strong>${total}×</strong>${c.rec ? `direkomendasikan ${c.rec}×<br>` : ""}<span class="split">${split}</span></div><p class="why"><b>Dipuji AI karena:</b> ${esc(c.why)}</p></div>`;
+  return `<div class="comp-row${c.you ? " you" : ""}">${logo(c)}<div class="name">${esc(c.name)}${c.you ? '<span class="you-pill">Klinik Anda</span>' : ""}${sub}</div><div class="stats"><strong>${total}×</strong>${c.rec ? `direkomendasikan ${c.rec}×<br>` : ""}<span class="split">${split}</span></div><p class="why"><b>Disebut AI karena:</b> ${esc(c.why)}</p></div>`;
 }
 const comps = [...DATA.competitors].sort((a, b) => b.chatgpt + b.google - (a.chatgpt + a.google) || b.rec - a.rec);
 const full = comps.filter((c) => c.full);
@@ -556,9 +629,9 @@ document.getElementById("comp").innerHTML =
 
 /* Answers table, header row inside */
 document.getElementById("qlist").innerHTML =
-  `<li class="qgrid qhead" aria-hidden="true"><span>#</span><span>Pertanyaan</span><span class="icons">${ICON.chatgpt}${ICON.google}</span></li>` +
+  `<li class="qgrid qhead"><span>#</span><span>Pertanyaan</span><span class="icons"><span data-tip="ChatGPT" tabindex="0" aria-label="ChatGPT">${ICON.chatgpt}</span><span data-tip="Google AI Overview" tabindex="0" aria-label="Google AI Overview">${ICON.google}</span></span></li>` +
   DATA.questions.map((q) =>
-    `<li><button class="qrow qgrid" type="button" data-open="${q.n}"><span class="qn">${q.n}</span><span class="qt">${esc(q.q)}${q.brand ? "<small>menyebut nama Anda</small>" : ""}</span><span class="marks" aria-label="ChatGPT: ${LABEL[statusOf(q, "chatgpt")]}. Google: ${LABEL[statusOf(q, "google")]}.">${dot(statusOf(q, "chatgpt"), true)}${dot(statusOf(q, "google"), true)}</span></button></li>`
+    `<li><button class="qrow qgrid" type="button" data-open="${q.n}"><span class="qn">${q.n}</span><span class="qt">${esc(q.q)}${q.brand ? "<small>menyebut nama Anda</small>" : ""}</span><span class="marks" aria-label="ChatGPT: ${LABEL[statusOf(q, "chatgpt")]}. Google: ${LABEL[statusOf(q, "google")]}.">${tipDot(q, "chatgpt")}${tipDot(q, "google")}</span></button></li>`
   ).join("");
 
 /* Answer rendering */
@@ -600,7 +673,7 @@ function answerHtml(q, src) {
   const srcs = q.sources.length
     ? `<div class="srcs">${q.sources.map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" title="${esc(s.title)}">${esc(s.domain)}</a>`).join("")}</div>`
     : "";
-  return `<div class="chat">${user}<div class="ai"><span class="avatar">${ICON[src]}</span><div style="min-width:0">${pill}${body}${srcs}</div></div></div>`;
+  return `<div class="chat">${user}<div class="ai"><span class="avatar" data-tip="${SOURCE_NAME[src]}">${ICON[src]}</span><div style="min-width:0">${pill}${body}${srcs}</div></div></div>`;
 }
 
 /* Side panel */
@@ -624,21 +697,28 @@ function show(n, t) {
   document.getElementById("p-prev").disabled = n === 1;
   document.getElementById("p-next").disabled = n === DATA.questions.length;
 }
+const isOpen = () => panel.classList.contains("is-open");
 function open(n, from) {
   opener = from || document.activeElement;
   show(n);
-  scrim.hidden = panel.hidden = false;
+  panel.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => {
+    scrim.classList.add("is-open");
+    panel.classList.add("is-open");
+  });
   document.body.style.overflow = "hidden";
-  document.getElementById("p-close").focus();
+  document.getElementById("p-close").focus({ preventScroll: true });
 }
 function close() {
-  scrim.hidden = panel.hidden = true;
+  scrim.classList.remove("is-open");
+  panel.classList.remove("is-open");
+  panel.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
-  if (opener && opener.focus) opener.focus();
+  if (opener && opener.focus) opener.focus({ preventScroll: true });
 }
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-open]");
-  if (t) open(Number(t.dataset.open), t);
+  if (t && !t.closest(".panel")) open(Number(t.dataset.open), t);
 });
 document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => show(current, b.dataset.tab)));
 document.querySelector(".tabs").addEventListener("keydown", (e) => {
@@ -652,7 +732,8 @@ scrim.addEventListener("click", close);
 document.getElementById("p-prev").addEventListener("click", () => show(current - 1));
 document.getElementById("p-next").addEventListener("click", () => show(current + 1));
 document.addEventListener("keydown", (e) => {
-  if (panel.hidden) return;
+  if (dialog.classList.contains("is-open")) { if (e.key === "Escape") closeDialog(); return; }
+  if (!isOpen()) return;
   if (e.key === "Escape") close();
   if (e.key === "Tab") {
     const f = [...panel.querySelectorAll("button:not([disabled]), a[href], [tabindex='0']")].filter((el) => el.offsetParent);
@@ -666,7 +747,51 @@ document.addEventListener("keydown", (e) => {
 document.getElementById("appendix").innerHTML =
   `<div class="sec-head" style="margin-bottom:8px"><h2>Lampiran: jawaban lengkap</h2></div>` +
   DATA.questions.map((q) => `<div class="ap-q"><p class="eyebrow">Pertanyaan ${q.n} · ${SOURCE_NAME[q.source]}</p>${answerHtml(q, q.source)}</div>`).join("");
-document.getElementById("pdf")?.addEventListener("click", () => window.print());
+/* Download: the browser's print to PDF here; the link copy explains instead */
+const IS_LINK = false;
+const toastEl = document.getElementById("toast");
+let toastTimer;
+function toast(text) {
+  toastEl.textContent = text;
+  toastEl.classList.add("is-on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("is-on"), 4200);
+}
+function downloadPdf() {
+  if (IS_LINK) return toast("Di laporan asli, tombol ini mengunduh PDF laporan (lihat contoh sample-report.pdf).");
+  window.print();
+}
+document.querySelectorAll("#pdf, [data-pdf]").forEach((b) => b.addEventListener("click", downloadPdf));
+
+/* Re-audit reminder */
+const dialog = document.getElementById("reaudit");
+let dialogOpener = null;
+function openDialog(from) {
+  dialogOpener = from;
+  document.getElementById("ra-form").hidden = false;
+  document.getElementById("ra-done").hidden = true;
+  dialog.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => dialog.classList.add("is-open"));
+  document.body.style.overflow = "hidden";
+  document.getElementById("ra-confirm").focus({ preventScroll: true });
+}
+function closeDialog() {
+  dialog.classList.remove("is-open");
+  dialog.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if (dialogOpener) dialogOpener.focus({ preventScroll: true });
+}
+document.getElementById("reaudit-open").addEventListener("click", (e) => openDialog(e.currentTarget));
+dialog.addEventListener("click", (e) => {
+  if (e.target === dialog || e.target.closest("[data-close-dialog]")) closeDialog();
+});
+document.getElementById("ra-confirm").addEventListener("click", () => {
+  const picked = dialog.querySelector('input[name="ra-when"]:checked');
+  document.getElementById("ra-date").textContent = picked.closest("label").querySelector("small").textContent;
+  document.getElementById("ra-form").hidden = true;
+  document.getElementById("ra-done").hidden = false;
+  dialog.querySelector("#ra-done [data-close-dialog]").focus({ preventScroll: true });
+});
 
 /* Contents chips follow the reader */
 const chips = [...document.querySelectorAll("#chips a")];
