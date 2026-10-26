@@ -140,7 +140,7 @@ p { margin: 0; }
 /* Section bands */
 .band { border-top: 1px solid var(--line); }
 .band > .gutter > .col { padding-block: 52px 56px; display: grid; gap: 22px; }
-.band.wash { border-top: 0; background: radial-gradient(75% 65% at 100% 100%, var(--band-glow) 0%, transparent 100%), linear-gradient(180deg, var(--bg) 0%, var(--bg) 35%, var(--accent-wash) 100%); }
+.band.wash { border-top: 1px solid var(--line); background-origin: border-box; background-repeat: no-repeat; background: radial-gradient(75% 65% at 100% 100%, var(--band-glow) 0%, transparent 100%), linear-gradient(180deg, var(--bg) 0%, var(--bg) 35%, var(--accent-wash) 100%); }
 .band.grey { background: var(--surface); }
 .sec-head { display: grid; gap: 6px; }
 .sec-head h2 { font-size: clamp(24px, 4vw, 30px); line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; }

@@ -47,8 +47,12 @@
 - **Report v2 before G1** (2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score)):
   [Spec 021](../specs/021-report-v2/SPEC.md) reworks the report in four
-  parts (clean layout, deeper writing, competitor map, answers in a side
-  panel). Spec drafted; next, the founder approves it, then Part A is built.
+  parts plus a server-made PDF. **Approved 2026-10-26** after four prototype
+  rounds ([prototype](../experiments/report-v2-poc/),
+  [decision](./DECISION_LOG.md#2026-10-26--approve-spec-021-server-pdf-now-re-audit-reminder-later)).
+  Next: the [build plan](../specs/021-report-v2/PLAN.md) passes independent
+  review, then six PRs in order (layout, answers, PDF, competitor data,
+  writing).
 
 - **Question writing fixed** (2026-10-26): orders with a search city failed
   to get their ten questions; four causes fixed and a live check added

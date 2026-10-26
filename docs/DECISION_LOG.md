@@ -6,6 +6,20 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
+
+After four rounds on the clickable prototype (`experiments/report-v2-poc/`),
+Yasir approved [Spec 021](../specs/021-report-v2/SPEC.md):
+
+1. **Server-made PDF comes with this work.** "Unduh PDF" returns an A4 PDF made
+   on the server with Cloudflare Browser Run (footer with page numbers, answers
+   appendix), instead of the browser's print. It leaves the parking lot.
+2. **Re-audit reminder goes to the wishlist** (plan §6). Penutup recommends a
+   re-audit after eight weeks in words, without a scheduling button.
+3. **Build after review.** The build follows
+   [`PLAN.md`](../specs/021-report-v2/PLAN.md) once an independent review
+   passes; each build PR gets its own review, and merge stays with the founder.
+
 ## 2026-10-26 — Report v2 before G1; confident advice; no score
 
 Yasir reviewed the NV-3WDSAY report and found it hard to read and shallow

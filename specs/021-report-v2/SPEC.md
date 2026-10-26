@@ -1,7 +1,10 @@
 # Spec 021: Report v2, a report worth Rp249.000
 
-> Status: **Draft**, waiting for the founder's approval
-> Owner: founder; built by Claude Code on `claude/sweet-mayer-3uzcuk`
+> Status: **Approved** by the founder on 2026-10-26, after four prototype
+> rounds; the build follows [`PLAN.md`](./PLAN.md) once its independent review
+> passes
+> Owner: founder; built by Claude Code on `claude/sweet-mayer-3uzcuk` and
+> follow-up branches
 > Updated: 2026-10-26
 > Implements: the founder's report feedback of 2026-10-26; moved ahead of G1
 > ([decision](../../docs/DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score))
@@ -10,17 +13,21 @@
 
 Read in order:
 
-1. `AGENTS.md`, `docs/DESIGN.md`, `docs/VOICE.md`.
-2. [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md): the
-   "Report layout" table, R-16 to R-19 (outcomes, topics, counts), R-28
-   (privacy) and R-29 (old reports). This spec replaces that layout table and
-   keeps everything else.
-3. The report today: `src/app/audit/report/DirectTenReportPage.tsx`,
-   `DirectTenReportBody.tsx`, `TwoSourceSections.tsx`,
-   `src/lib/audit/two-source-report.ts`, `src/lib/orders/two-source.ts`,
-   `src/lib/audit/report-prompt-contract.ts`.
-4. The reference look the founder likes: isitagentready.com (a short, clean
-   header; the result visible at once; one row per check, details on click).
+1. `AGENTS.md`, `docs/DESIGN.md` (type roles, motion, report exception),
+   `docs/VOICE.md`.
+2. **The approved prototype:** `experiments/report-v2-poc/` (open
+   `index.html`; `template.html` is the source; `sample-report.pdf` is the
+   PDF). It is the visual and behavioural reference for this spec. Where the
+   prototype and this text disagree, this text wins.
+3. [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md): R-16 to
+   R-19 (outcomes, topics, counts), R-28 (privacy) and R-29 (old reports).
+   This spec replaces Spec 018's "Report layout" table and keeps everything
+   else.
+4. The report today: `src/app/r/SavedReport.tsx`, `src/app/audit/ReportView.tsx`,
+   `src/app/audit/report/*`, `src/lib/audit/two-source-report.ts`,
+   `src/lib/orders/two-source.ts`, `src/lib/orders/runner.ts` (report step),
+   `src/lib/audit/report-pipeline.ts`, `src/lib/audit/openai.ts` (writer
+   schema), `src/lib/audit/report-prompt-contract.ts`.
 
 Do not load: `archive/`, Spec 014, older report prototypes.
 
@@ -29,440 +36,393 @@ Do not load: `archive/`, Spec 014, older report prototypes.
 The founder's review of a real report (order NV-3WDSAY, 2026-10-26),
 summarised:
 
-- **Hard to read.** The header says the date twice and "ChatGPT and Google AI
-  Overview" twice. The two summary cards look alike, and each has two rows of
-  ten dots that take effort to compare. The big picture is not visible
-  without scrolling.
-- **The answers section is the most painful part.** Ten long blocks, each
-  with two full answers and repeated details (place, time, sources, notes).
-- **The analysis is a recap, not an analysis.** It restates the counts
-  ("you don't say") instead of showing the owner something they did not
-  know.
-- **The competitor list looks like lazy work.** It lists names, with no sense
-  of how strong each competitor is or what the owner can learn from them.
-- **The recommendations are not authoritative.** "Periksa…",
-  "Pertahankan…", followed by boxes for *Mengapa*, *Berdasarkan*,
-  *Penanggung jawab yang disarankan* and *Selesai ketika*.
-- **Section names over-explain** ("Topik yang belum menyebut Anda"), and a
-  topic row says "Tidak ada data jumlah pencarian", which reads as an
-  admission of not knowing.
-- **"Tentang audit ini" explains the method at length**, and **"Unduh bukti
-  JSON"** has no use for a clinic owner.
+- **Hard to read.** The header repeats the date and the source names; the two
+  summary cards look alike, each with two rows of ten dots; the big picture is
+  not visible without scrolling.
+- **The answers section is the most painful part:** ten long blocks with two
+  full answers each and repeated details.
+- **The analysis is a recap, not an analysis.** It restates the counts.
+- **The competitor list looks like lazy work:** names only.
+- **The recommendations are not authoritative:** "Periksa…", "Pertahankan…",
+  then boxes for *Mengapa*, *Berdasarkan*, *Penanggung jawab yang disarankan*
+  and *Selesai ketika*.
+- **Section names over-explain**, a topic row says "Tidak ada data jumlah
+  pencarian", "Tentang audit ini" is long, and "Unduh bukti JSON" has no use
+  for a clinic owner.
+- **The PDF is the browser's print**, with no reliable page numbers or
+  branding.
 
-Causes found in the code (evidence, not guesses):
+Causes found in the code (evidence):
 
-- The report writer (GPT-5.6 Luna) is told mostly what *not* to say (for
-  example "Non-appearance alone does not show a missing page… Do not
-  diagnose one from absence") and gets ChatGPT's answer texts but only
-  counts and cited domains from Google.
-- The writer's output format requires *why, basis, owner, done_when* and
-  *caveat* for every action, which produces the boxes.
-- The competitor list is the names ChatGPT and Google listed themselves,
-  without counts, ratings or reasons, although the answers usually say why
-  each clinic was picked.
+- The writer (GPT-5.6 Luna) is told mostly what *not* to say ("Do not diagnose
+  one from absence"), reads ChatGPT's answer texts but only counts and cited
+  domains from Google.
+- Its output format requires *why, basis, owner, done_when, caveat* per
+  action, which produces the boxes.
+- The competitor list is the names ChatGPT and Google listed themselves, with
+  no counts, ratings, links or reasons.
 - "Tentang audit ini", the per-answer details and the JSON export come from
-  the evidence-first report (Spec 012), whose job was to prove the method.
+  the evidence-first report (Spec 012).
 
 ## Desired outcome
 
-A clinic owner opens their report and within one screen knows how visible
-their clinic is in ChatGPT and in Google's AI Overview, and what that means.
-Reading on, they learn something about their market they did not know,
-see which competitors AI favours and why, and get a short list of firm,
-specific recommendations they believe. The answers stay available as proof,
-one click away.
+A clinic owner opens the report and within one screen knows how visible the
+clinic is in ChatGPT and Google's AI Overview, and what that means. Reading
+on, they learn something about their market they did not know, see which
+competitors AI names and why, and get firm, specific recommendations and a
+short plan. The answers stay one click away as proof. "Unduh PDF" gives a
+clean, branded PDF of the same report.
 
 ## User and situation
 
-A clinic owner (beauty, skin, dental) who paid Rp249.000 and opened the
-report from the email link, usually on a phone, sometimes on a laptop, and
-sometimes as a PDF to share with staff or a marketing person.
+A clinic owner (beauty, skin, dental) who paid Rp249.000 and opened the report
+from the email link, usually on a phone, sometimes on a laptop, and sometimes
+as a PDF to share with staff or an agency.
 
 ## Scope
 
-Built in four parts, one pull request each, in this order. A part may ship
-before the next one starts.
+Five parts, built and merged in the order of [`PLAN.md`](./PLAN.md):
 
-- **Part A: clean layout.** Header, summary, section names and order,
-  recommendation layout, topic gaps, the short disclaimer, no JSON button.
-  Uses only what saved reports already hold, so it improves every Spec 018
-  report, including ones already delivered.
-- **Part B: deeper writing.** What the report writer reads, how it is
-  instructed, what it returns, and which model writes it. Applies to reports
-  made after it ships.
-- **Part C: competitor map.** Per-competitor counts, strength signals,
-  logos and takeaways. Applies to reports made after it ships (logos and
-  counts may also show on older Spec 018 reports where the saved data allows).
-- **Part D: answers as a list with a side panel.** A one-line row per
-  question; a click opens the full answers in a chat-like panel; the PDF
-  prints them as an appendix.
+- **Part A, layout:** the whole page structure and look of the prototype,
+  using what saved Spec 018 reports already hold, so delivered reports improve
+  too.
+- **Part D, answers:** the questions table with the chat-style side panel.
+- **Part P, PDF:** a server-made PDF behind "Unduh PDF".
+- **Part C, competitor data:** keep competitor websites, ratings and review
+  counts when checks are saved; counts per competitor; logos and links.
+- **Part B, writing:** what the report writer reads, how it is instructed,
+  what it returns (verdict, findings with a headline number, recommendations,
+  competitor reasons and takeaways, closing and plan, topic names, Google
+  recommendation reading), and which model writes it.
 
 ## Non-scope
 
-- A 0 to 100 score (founder decision 2026-10-26: not yet).
-- New answer sources, more questions, asking from the customer's city, or
-  re-checking a missing AI Overview (these stay in the plan's parking lot).
-- Reports saved before Spec 018 (one-source, direct-ten): they keep
-  rendering exactly as today (Spec 018 R-29, AC-18 snapshot).
-- Server-side PDF. The browser's print path stays.
-- The landing page's report preview (`ReportShowcase`, Spec 020) and the
-  report email. They are updated in a follow-up once Part A's names settle.
-- A polished visual design. This is a lo-fi build from this spec; the
-  founder tweaks the look later.
+- A 0 to 100 score (decision 2026-10-26).
+- **The re-audit reminder** ("Jadwalkan audit ulang"): in the plan's wishlist
+  since 2026-10-26. Penutup recommends a re-audit after eight weeks in words,
+  with no scheduling button.
+- New answer sources, more questions, asking from the customer's city,
+  re-checking a missing AI Overview (parking lot).
+- Reports saved before Spec 018 (one-source, direct-ten): unchanged (Spec 018
+  R-29, AC-18 snapshot).
+- The landing page's report preview (Spec 020) and the report email: a
+  follow-up once Part A ships.
+- Stored PDF files: the PDF is made on request and not kept (Spec 016
+  non-scope stands).
 
 ## Experience
 
-### Page order (Part A)
+The prototype shows every element below. Customer text is Indonesian and says
+"Klinik Anda" for a clinic (Spec 018 AC-20).
 
-1. **Header**
-2. **Ringkasan** (the summary; no section number)
-3. **Temuan Utama** (key findings)
-4. **Peta Pesaing** (competitor map)
-5. **Celah Topik** (topics where the clinic is missing)
-6. **Rekomendasi**
-7. **Jawaban AI** (the questions and answers, as proof)
-8. **Catatan** (three short lines)
+### Page order
 
-The sticky contents chips use these names. Section numbers 01 to 06 stay on
-the numbered sections (Temuan Utama to Jawaban AI).
+1. Top bar: Nuave logo, **"Unduh PDF"** (always visible).
+2. **Header and Ringkasan** (one block, no section heading).
+3. Contents chips: Temuan Utama, Peta Pesaing, Celah Topik, Rekomendasi,
+   Penutup, Jawaban AI. No chip for Ringkasan.
+4. **Temuan Utama**
+5. **Peta Pesaing**
+6. **Celah Topik**
+7. **Rekomendasi**
+8. **Penutup**
+9. **Jawaban AI**, ending with the three-line notes (the former "Tentang
+   audit ini").
+10. **Simpan laporan ini** row with "Unduh PDF", then the footer line.
 
-### Header (Part A)
+Sections are full-width bands separated by a thin top line, headed by a large
+title and a one-line lede. No "01, 02" numbers. Rekomendasi's band is white at
+the top with a soft violet glow toward the bottom right; Penutup's band is
+dark (ink); Jawaban AI's band is light grey.
 
-- A small label "Laporan Visibilitas AI".
-- The clinic name, large.
-- One line: the website or Instagram address the audit started from and
-  the search place, for example "rumahkhitanan.com · Padang".
-- One line: "Diperiksa 26 Oktober 2026 · ChatGPT dan Google AI Overview".
-  The date appears once. A check window over two days shows the last day.
-- No facts box, no "Isi laporan" label, no illustration.
-- "Download PDF" stays in the top bar.
+### Header and Ringkasan
 
-### Ringkasan (Part A; the verdict improves in Part B)
+- Label "Laporan Visibilitas AI", the clinic name large, one line with the
+  address the audit started from and the search place, one line "Diperiksa
+  <tanggal> · ChatGPT dan Google AI Overview". Each fact once.
+- **Verdict:** one or two sentences in large type, no highlight.
+- **Two source cards**, each with the source logo (Tabler `IconBrandOpenai`,
+  `IconBrandGoogle`), a headline count ("3 dari 10 jawaban", "1 dari 8
+  ringkasan AI"), one sentence, and **one row of ten dots**.
+- **Dot looks** (Figma `q4dKn79BsqQUPj95Lp5cXD`, node `2011:24`), in this
+  legend order:
+  - Tidak ada AI Overview: grey ring with a grey dash;
+  - Tidak disebut: empty grey ring;
+  - Situs dikutip, nama tidak disebut: violet ring with a violet centre dot;
+  - Disebut: solid violet;
+  - Direkomendasikan: solid violet with a white check;
+  - Tidak dapat diuji: dashed grey ring (not in the legend unless present).
+  Rings and marks are exactly centred; ring borders meet 3:1 contrast.
+- One legend strip under both cards. Each dot opens its question in the side
+  panel. A link "Lihat N rekomendasi" goes to Rekomendasi.
+- A count with nothing to count says "Tidak diuji" (Spec 018 R-19).
 
-Visible on a 390×844 phone without scrolling past the first source card.
+### Temuan Utama
 
-- **Verdict:** one or two sentences in large type. Part A shows the saved
-  conclusion; Part B makes it a sharp verdict.
-- **Two source cards**, each starting with the source's logo (Tabler
-  `IconBrandOpenai` for ChatGPT, `IconBrandGoogle` for Google AI Overview)
-  and name, so they are told apart at a glance.
-- **ChatGPT card:**
-  - Headline: "Disebut di X dari N jawaban · direkomendasikan di Y".
-  - **One row of ten dots**, one per question in order. Each dot is one of:
-    - *not mentioned*: an empty ring;
-    - *mentioned*: a light fill;
-    - *recommended*: a solid fill with a small check;
-    - *not tested* (a failed check): a faint dashed ring.
-- **Google AI Overview card:**
-  - Headline: "Disebut di W dari Z ringkasan AI", and when Google showed no
-    AI Overview for some questions, "· tidak ada AI Overview di K
-    pertanyaan".
-  - One row of ten dots with the same looks, plus *no AI Overview*: a small
-    grey dash in place of a dot. Until Part B adds a recommendation reading
-    for Google, Google dots are never "recommended".
-- **One legend** under both cards explains the looks once.
-- A count with nothing to count says "Tidak diuji", never "0 dari 0" (Spec
-  018 R-19, unchanged).
-- Each dot has an accessible name ("Pertanyaan 3: direkomendasikan"), and
-  clicking a dot goes to that question in Jawaban AI.
-- Under the cards, one link: "Lihat N rekomendasi" to the Rekomendasi
-  section.
-
-### Temuan Utama (Part A layout; Part B content)
-
-- Each finding: a short title and one paragraph. No "Berdasarkan
-  pertanyaan" list under each finding; the question numbers it relies on
-  appear as small links at the end of the paragraph.
+- Each finding: a **headline number** with a short caption on the left ("0
+  dari 2" / "pertanyaan treatment medis yang menyebut Klinik Anda"), then a
+  title and one paragraph; findings separated by thin lines.
+- Question references ("P1", "P5") sit at the end of the paragraph in a
+  neutral grey, and open that question.
+- Reports written before Part B have no headline number: the finding shows
+  title and paragraph only.
 - The code-built Google coverage finding stays when it applies.
 
-### Peta Pesaing (Part A tidy list; Part C full map)
+### Peta Pesaing
 
-- **Part A:** one combined list of the other businesses named, each with
-  small "ChatGPT" and/or "Google" marks for where it appeared, instead of
-  two comma-separated lists.
-- **Part C:** see "Competitor map" below.
+- A list sorted by how often AI named each business (both sources together).
+  Each row: logo (the site's icon; initials when none or when it fails), name,
+  **website as a link** (opens in a new tab, no referrer), rating and review
+  count when saved, "N×" named, "direkomendasikan N×", the per-source split,
+  and **"Disebut AI karena: …"** when the writer gave a reason.
+- The owner's clinic is in the same list, drawn as an inset card inside its
+  row (thin violet border, violet-to-white fill) with a "Klinik Anda" label.
+  Every row, including the owner's, has the same divider.
+- The top five rows show in full; the rest show as chips. A chip with a known
+  website or Instagram is a link (outlined, external-link icon, violet on
+  hover); a chip without one is plain grey text. A note explains the icon.
+- Under the list, two or three **takeaways** from the writer (Part B).
 
-### Celah Topik (Part A)
+### Celah Topik
 
-- Each row is a **topic** (a short service name such as "laser hair
-  removal"), never a full question. A question with no saved topic is
-  left out of this section.
-- When a search volume exists it shows: "±1.900 pencarian/bulan". When it
-  does not, nothing is said about volume.
-- The websites AI quoted for that topic show as "Sumber yang dipakai AI:
-  alodokter.com, …".
-- The section is hidden when it has no rows.
+- Rows are short topic names ("Bekas jerawat dan bopeng"), never questions.
+- Right column: "±1.146 pencarian/bulan" when the search volume is known;
+  otherwise **"N klinik lain disebut AI"** for that topic. Never "Tidak ada
+  data jumlah pencarian".
+- Each row says where the clinic stands, the sites AI used ("Sumber yang
+  dipakai AI: …") and the question references. Hidden when empty.
 
-### Rekomendasi (Part A layout; Part B content)
+### Rekomendasi
 
-- Numbered cards: **1**, **2**, **3** …
-- Each card: the action as a firm, specific title, then one argument
-  paragraph that explains how it works, how to win, and what exactly to do.
-- No *Mengapa*, *Berdasarkan*, *Penanggung jawab yang disarankan*, *Selesai
-  ketika*, "Kerjakan dulu" or caveat lines.
-- For reports saved before Part B, the title is the saved action and the
-  paragraph is the saved "why".
+- Numbered white cards (violet number circle, neutral border, subtle neutral
+  shadow): a firm title that starts with a verb, then one paragraph that says
+  how it works and exactly what to do.
+- None of *Mengapa*, *Berdasarkan*, *Penanggung jawab yang disarankan*,
+  *Selesai ketika*, "Kerjakan dulu" or caveat lines.
+- Reports written before Part B: title = saved action, paragraph = saved
+  "why".
 
-### Jawaban AI (Part A moves it; Part D redesigns it)
+### Penutup
 
-- **Part A:** the section moves after Rekomendasi and is renamed "Jawaban
-  AI". Inside, the question blocks stay as they are, except the topic line
-  "Tidak ada data jumlah pencarian" is no longer shown.
-- **Part D:** see "Answers list and side panel" below.
+- A conclusion paragraph, a three-step plan with week ranges, and a card
+  "Audit ulang setelah 8 minggu" explaining why and that the same ten
+  questions make the result comparable. No button (wishlist).
+- Reports written before Part B show only the re-audit card.
 
-### Catatan (Part A)
+### Jawaban AI
 
-Three short lines, in small type, replacing "Tentang audit ini":
+- A table with its header row inside: "#", "Pertanyaan", ChatGPT logo,
+  Google logo. Each row: number, question (with a "menyebut nama Anda" tag
+  when the question names the clinic), and one dot per source.
+- Hovering or focusing a header logo shows a tooltip above it, centred
+  ("ChatGPT", "Google AI Overview"). Hovering a row's dot shows "ChatGPT ·
+  Disebut" and so on.
+- Clicking a row, a dot or a "P" reference opens the **side panel**: from the
+  right on a laptop, full width on a phone; tabs ChatGPT and Google AI
+  Overview; a chat layout (question as the user's bubble, the answer as the
+  reply with the status pill, names highlighted, sources as chips, time);
+  "Sebelumnya" and "Berikutnya"; Escape and the close button return focus.
+- **Motion:** the backdrop fades in and the panel slides in, both with an
+  ease-in-out curve, and reverse on close; transform and opacity only, so it
+  holds 60 fps; reduced-motion users get an instant change.
+- Notes under the table: answers change with time, model, account and place;
+  where the questions were asked from; mentioned is not recommended; one more
+  line when questions came from the clinic's profile because search data was
+  missing.
 
-- "Jawaban AI dapat berubah menurut waktu, model, akun, dan lokasi."
-- "Pertanyaan diajukan dari Indonesia" (or the search place, when Google was
-  asked from a city: "Pertanyaan diajukan dari Indonesia; Google dari
-  Padang").
-- "Disebut belum tentu direkomendasikan."
+### PDF
 
-When the questions were written from the clinic's profile because search
-data was missing, a fourth line says so plainly. "Laporan dibuat", the
-system, the model and the JSON wording are not shown.
-
-### Bottom of the page (Part A)
-
-"Download PDF" and "Butuh bantuan? support@nuave.ai". No "Unduh bukti JSON"
-button.
-
-### Competitor map (Part C)
-
-- A table (cards on a phone), sorted by how often AI named them:
-  - **logo** (the competitor website's icon; their initials in a circle
-    when there is no website or the icon does not load);
-  - **name**, and website when known;
-  - **"Disebut 7× dari 20 jawaban"**, with a ChatGPT/Google split;
-  - **"Direkomendasikan 4×"** (ChatGPT, and Google once Part B reads it);
-  - **rating and review count** when ChatGPT's or Google's own page showed
-    them;
-  - **"Dipuji AI karena:"** a short phrase taken from the answers, for
-    example "spesialis laser, ulasan 4.8 dari 1.200 pasien".
-- The owner's clinic appears as one highlighted row in the same table, so
-  they see where they stand.
-- The top five show in full; the rest show as a compact list of names with
-  their counts, so thirty names stay tidy.
-- Under the table, **2 or 3 takeaways** written by the report writer: what
-  the leaders do that AI rewards, and what the owner can copy.
-
-### Answers list and side panel (Part D)
-
-- **List:** one row per question: number, the question, a ChatGPT mark and a
-  Google mark using the same four looks as the summary dots.
-- **Click a row:** a side panel (from the right on a laptop, full-height
-  sheet on a phone) with tabs "ChatGPT" and "Google AI Overview".
-- **Inside the panel**, styled like a chat app: the question as the user's
-  bubble, the answer as the assistant's reply (formatted text), the clinic's
-  name and competitors' names highlighted, sources as small chips at the
-  end, and the time in small text.
-- A failed check shows "Tidak dapat diuji" and "Minta bantuan", as today. A
-  missing AI Overview shows "Google tidak menampilkan AI Overview untuk
-  pertanyaan ini."
-- Escape or the close button closes the panel and returns focus to the row.
-  Arrows or "Berikutnya" move to the next question without closing.
-- **PDF:** the panel never prints. The list prints, followed by an appendix
-  "Lampiran: jawaban lengkap" with every question and both answers in the
-  same chat style. One page, two layouts (screen and print); no second
-  page to maintain.
+- "Unduh PDF" (top bar and end row) downloads a file named
+  `Laporan-Nuave-<klinik>.pdf`, made on the server from the same report.
+- A4; page 1 is the header, verdict and source cards; Temuan Utama,
+  Rekomendasi and Penutup start new pages; then an appendix "Lampiran:
+  jawaban lengkap" with every answer in the chat style; a footer on every
+  page "Nuave · Laporan Visibilitas AI · <klinik>" and "<n> / <total>";
+  always the light palette.
+- While it is being made the button shows a spinner (a few seconds). If it
+  fails, a short message offers to try again; the page itself is unaffected.
 
 ## Requirements
 
-### Part A
+### Part A, layout
 
-- **A-01 Header.** As described; the date and the source names each appear
-  once.
-- **A-02 Summary cards.** Source logos; one row of ten dots per source with
-  the looks above; one shared legend; the counts in the headline equal the
-  dots of each look. Dots link to their question.
-- **A-03 Section names and order.** As in "Page order"; the contents chips
-  follow.
-- **A-04 Findings.** Title and paragraph; question numbers as small links.
-- **A-05 Competitor list.** One combined list with source marks.
-- **A-06 Topic gaps.** Topic names only; volume only when known; never "Tidak
-  ada data jumlah pencarian"; hidden when empty.
-- **A-07 Recommendations.** Number, firm title, one paragraph; none of the
-  removed boxes.
-- **A-08 Catatan.** The three (or four) lines; "Tentang audit ini" and its
-  method paragraph are gone from two-source reports.
-- **A-09 No JSON button** on the report page. The server export stays for
-  support use.
-- **A-10 Old reports.** Reports saved before Spec 018 render exactly as
-  today (the existing snapshot test passes unchanged).
-- **A-11 Print.** The PDF shows the same order and content; the sticky bars
-  and links do not print.
-- **A-12 Words.** Customer text is Indonesian, follows `docs/VOICE.md`, and
-  says "Klinik Anda" for a clinic (Spec 018 AC-20).
+- **A-01** Page order, bands, chips and header as in "Experience".
+- **A-02** Source cards, dots and legend as specified; headline counts equal
+  the dots of each look; every dot opens its question.
+- **A-03** Findings layout, with and without a headline number; neutral
+  question references.
+- **A-04** Competitor list layout from the data saved today (names and
+  per-source lists); richer fields arrive with Part C.
+- **A-05** Celah Topik as specified; a row without a topic name is left out
+  until Part B supplies names.
+- **A-06** Recommendation cards as specified, with the pre-Part B fallback.
+- **A-07** Penutup as specified, with the pre-Part B fallback.
+- **A-08** No "Unduh bukti JSON" on the page; the export route stays for
+  support.
+- **A-09** Reports saved before Spec 018 render exactly as today (the
+  existing snapshot passes unchanged).
+- **A-10** Typography uses `docs/DESIGN.md` roles (`npm run check:typography`
+  passes); icons from Tabler; generic parts from shadcn/Base UI.
+- **A-11** The page works from 320px to 1920px wide with no sideways scroll,
+  in light and dark mode.
 
-### Part B
+### Part D, answers
 
-- **B-01 What the writer reads.** Within Spec 018 R-28 (no phones, no raw
-  responses): the questions and topics, both sources' answer texts and
-  cited domains, the code-built counts, the businesses named per answer,
-  and the clinic's confirmed profile (services, place, website).
-- **B-02 Nuave's playbook.** A short written guide in Nuave's voice,
-  `docs/content/report/PLAYBOOK.md`, on how ChatGPT and Google's AI Overview
-  choose which clinics to name, and what clinics can do about it. It is
-  based on public, checkable guidance, reviewed and approved by the founder
-  before the writer uses it, and given to the writer with every report.
-- **B-03 How the writer is instructed.** The instructions ask for analysis,
-  not a recap: each finding must show the owner something the counts alone do
-  not, from angles such as:
-  - which websites AI relies on for this market, and whether the clinic is on
-    them;
-  - which kinds of questions name the clinic and which do not (for example
-    general questions versus treatment questions);
-  - what AI says about the clinic that is wrong, out of date or missing;
-  - how ChatGPT and Google differ, and why that matters;
-  - what the clinics AI favours have in common.
+- **D-01** Table, tooltips and side panel as specified, using the shadcn
+  `Sheet` and `Tabs` and the motion presets in `src/components/motion/`.
+- **D-02** The panel is a labelled dialog; focus moves in and back; tabs
+  work with arrow keys; Escape closes.
+- **D-03** Opening and closing animate only transform and opacity, with an
+  ease-in-out curve; reduced motion removes the slide.
 
-  "Do not diagnose from absence" is replaced by the founder's rule of
-  2026-10-26: facts must come from the answers; advice may be confident
-  expert guidance drawn from the playbook; never claim that something *caused*
-  this clinic's result.
-- **B-04 What the writer returns.**
-  - a verdict of one or two sentences;
-  - 3 to 6 findings (title and paragraph, with the question numbers they use);
-  - 3 to 6 recommendations (a firm title starting with a verb, such as
-    "Gunakan satu alamat yang sama di website dan semua media sosial", and
-    one argument paragraph);
-  - for each competitor, a short "praised for" phrase taken from the answers,
-    and 2 or 3 competitor takeaways;
-  - a short topic name for any question that has none;
-  - a recommendation reading for each Google AI Overview that names the
-    clinic.
+### Part P, PDF
 
-  The old fields stay readable for reports saved before Part B.
-- **B-05 Count check stays.** The existing check that rewrites a sentence
-  with a wrong count stays and covers the new fields.
-- **B-06 Banned shapes.** Titles never start with "Periksa", "Pertahankan",
-  "Pertimbangkan" or "Pastikan"; no "Mengapa"/"Berdasarkan" labels; no
-  sentence that only restates a count shown in Ringkasan. A code check
-  rejects the banned starts and asks for one revision, as today.
-- **B-07 Model choice by side-by-side test.** The same saved answers
-  (NV-3WDSAY) are written by GPT-5.6 Luna (today), Claude Sonnet 5.5 and
-  Claude Opus 5.5 with the new instructions. The founder reads the three
-  reports and picks one. The pick, its cost per report and its time per
-  report are recorded. It must fit the per-order limit (USD 2.00) with room
-  to spare; today's whole order costs about USD 0.18.
+- **P-01** A server route makes the PDF from the saved report with
+  Cloudflare Browser Run (Workers Paid; 10 browser-hours a month included,
+  then USD 0.09 per hour, checked 2026-10-26) and returns it as a download.
+- **P-02** It takes the same secret as the report-data route, in a POST
+  body, never in a URL that leaves Cloudflare; it is rate-limited like that
+  route; a wrong secret gets the same "not available" answer.
+- **P-03** Layout as in "Experience" (A4, page breaks, footer, appendix,
+  light palette).
+- **P-04** Nothing is stored; each download is made fresh from the saved,
+  unchanging report.
+- **P-05** Failure shows a retry message; the browser's print stays
+  available as a fallback only when Browser Run is not configured (local and
+  preview).
 
-### Part C
+### Part C, competitor data
 
-- **C-01 Saved competitor details.** When a check is saved, keep for each
-  business that ChatGPT's or Google's own page listed: name, website, rating
-  and review count, when present. Never phone numbers (Spec 018 R-28).
-- **C-02 Counts.** Per competitor: times named per source, times
-  recommended, and which questions. Built by code.
-- **C-03 Logos.** From the competitor's website icon; initials otherwise;
-  never a logo guessed from the name. Loading a logo never sends the report's
-  private link (no referrer).
-- **C-04 Layout.** As in "Competitor map", including the clinic's own row
-  and the compact tail.
-- **C-05 Takeaways.** From Part B's writer, each tied to questions.
+- **C-01** When a check is saved, keep for each business that ChatGPT's or
+  Google's own page listed: name, website or Instagram, rating, review count,
+  when present. Never phone numbers (Spec 018 R-28).
+- **C-02** Per business, code counts times named per source, times
+  recommended, and which questions.
+- **C-03** Logos come from the business's site icon, fetched from the browser
+  without a referrer; initials otherwise; never a logo guessed from a name.
+- **C-04** Links only for addresses that came from the provider data or the
+  answers' cited sources.
 
-### Part D
+### Part B, writing
 
-- **D-01 List and panel.** As in "Answers list and side panel", using the
-  existing shadcn `Sheet` and `Tabs`.
-- **D-02 Keyboard and screen reader.** The panel is a dialog with a title;
-  focus moves in and back; tabs work with arrow keys.
-- **D-03 PDF appendix.** Every answer prints in full, in the chat style.
-- **D-04 Deep link.** A dot in Ringkasan opens that question's panel.
+- **B-01** The writer reads (within Spec 018 R-28): the questions and topics,
+  both sources' answer texts and cited domains, the code-built counts, the
+  businesses named per answer, the clinic's confirmed profile, and Nuave's
+  playbook.
+- **B-02** Nuave's playbook, `docs/content/report/PLAYBOOK.md`: how ChatGPT
+  and Google's AI Overview choose which clinics to name and what clinics can
+  do, from public, checkable guidance; approved by the founder before use.
+- **B-03** Instructions ask for analysis, not a recap, from angles such as:
+  which sites AI relies on and whether the clinic is on them; which kinds of
+  questions name the clinic; what AI says that is wrong or missing; how the
+  two sources differ; what the favoured clinics have in common. Facts must
+  come from the answers; advice may be confident expert guidance from the
+  playbook; no sentence claims what *caused* this clinic's result (decision
+  2026-10-26).
+- **B-04** The writer returns: a verdict; 3 to 6 findings, each with title,
+  paragraph, question ids and an optional headline number with caption (the
+  number must be checkable against the code-built counts or the answers);
+  3 to 6 recommendations (verb-first title and argument); per competitor a
+  short "disebut karena" reason; 2 or 3 takeaways; a conclusion and a
+  three-step plan with week ranges; a topic name for any question without
+  one; a recommendation reading for each AI Overview that names the clinic.
+  Reports keep a new version string; older versions still render.
+- **B-05** The existing count check covers the new fields; a headline number
+  that does not match the counts is dropped (the finding keeps its text).
+- **B-06** Titles never start with "Periksa", "Pertahankan", "Pertimbangkan"
+  or "Pastikan"; no "Mengapa"/"Berdasarkan" labels; a code check asks for one
+  revision, as today.
+- **B-07** Model choice by side-by-side test on the same saved answers: GPT-5.6
+  Luna (today) and at least one Claude model (Sonnet 5.5; Opus 5.5 if
+  affordable). The founder reads the reports and picks. Cost and time per
+  report are recorded and must fit the per-order limit (USD 2.00) with room.
 
 ## Failure and recovery
 
-- A failed check shows "Tidak dapat diuji" and "Minta bantuan" wherever that
-  question appears (dot, row, panel), as today. No button runs it again.
-- If the Part B writer fails its checks after one revision, the existing
-  repair (code-built count sentences) applies, and an order is never failed
-  for writing quality (Spec 018 B-4, unchanged).
-- If a competitor's logo does not load, initials show. Nothing breaks.
-- A report saved before a part shipped shows that part's new layout only
-  where its saved data allows. Nothing is regenerated when a report is opened
-  (S0).
+- A failed check shows "Tidak dapat diuji" and "Minta bantuan" wherever its
+  question appears (dot, row, panel). No button runs it again.
+- If the writer fails its checks after one revision, the existing repair
+  applies and the order is never failed for writing quality (Spec 018 B-4).
+- A logo that fails shows initials. A PDF that fails shows a retry message.
+- A report saved before a part shipped shows that part only where its saved
+  data allows. Nothing is regenerated when a report is opened (S0).
 
 ## Evidence, data, privacy, and cost
 
-- No new answer data is collected. Part C keeps more of what the provider
-  already returns (website, rating, review count), never phone numbers.
-- The playbook (B-02) states general guidance, not claims about any named
-  business, and is approved by the founder.
-- The report never claims a cause, a ranking guarantee, or the quality of
-  any clinic's actual service (`AGENTS.md` rules 8 and 9).
-- **Cost:** Part A, C and D add no provider calls. Part B's side-by-side test
-  needs a named founder approval for its live writer calls (estimated under
-  USD 2 in total; the result is recorded). A more capable writer may raise the
-  per-order cost; it is measured in B-07 before the switch.
+- No new answer data is collected; Part C keeps more of what the provider
+  already returns, never phone numbers.
+- The playbook states general guidance, not claims about a named business.
+- No claim of cause, ranking guarantee or service quality (`AGENTS.md` 8, 9).
+- **Cost:** Parts A, D and C add no provider calls. Part P uses Browser Run
+  (within the included hours at current volume). Part B's side-by-side test
+  needs a named founder approval for its live writer calls, and a Claude
+  model needs an Anthropic API key, which is a new paid provider and needs a
+  founder decision (`AGENTS.md`).
 
 ## Acceptance criteria
 
 ### Part A
 
-- **AC-A1:** Given a saved Spec 018 report, when it opens on a 390×844
-  phone, then the header shows the date once and the source names once, and
-  the verdict and the ChatGPT card's ten dots are visible without scrolling.
-- **AC-A2:** Given answers where the clinic is not named, named, and named
-  and recommended, plus a failed check and a missing AI Overview, then each
-  dot shows the matching look, and each card's headline counts equal its
-  dots.
-- **AC-A3:** The sections appear in the order of "Page order", with the new
-  names in the page and in the contents chips.
-- **AC-A4:** No recommendation shows "Mengapa", "Berdasarkan", "Penanggung
-  jawab yang disarankan", "Selesai ketika" or "Kerjakan dulu".
-- **AC-A5:** "Tidak ada data jumlah pencarian" and "Unduh bukti JSON" appear
-  nowhere on a two-source report, and Celah Topik lists topic names only.
-- **AC-A6:** "Tentang audit ini" is replaced by Catatan's three lines (four
-  when search data was missing).
-- **AC-A7:** A report saved before Spec 018 renders exactly as before (the
-  existing snapshot passes unchanged).
-- **AC-A8:** `npm run verify` passes, and the `verify-nuave` journey reaches
-  the report and its PDF.
-- **AC-A9 (judgement):** the founder reads the NV-3WDSAY report in the new
-  layout on a phone and agrees the big picture is clear within one screen.
-
-### Part B
-
-- **AC-B1:** The writer's input holds Google's answer texts and the
-  playbook, and no phone numbers.
-- **AC-B2:** A recommendation title that starts with a banned word is
-  rejected and revised once; the delivered report contains none.
-- **AC-B3:** The side-by-side test is run and recorded (three reports, cost
-  and time each), and the founder's pick is the model in use.
-- **AC-B4 (judgement):** on the NV-3WDSAY answers, the founder judges that
-  at least two findings say something not visible from the counts, and that
-  the recommendations read as firm and specific.
-
-### Part C
-
-- **AC-C1:** Given saved checks naming competitors, the map shows each with
-  correct counts per source, its rating and reviews when saved, and the
-  clinic's own row.
-- **AC-C2:** A competitor with no website shows initials; a broken logo
-  shows initials.
-- **AC-C3:** With 30 competitors, five show in full and the rest in the
-  compact list.
+- **AC-A1** A saved Spec 018 report on a 390×844 phone shows the date and the
+  source names once, and the verdict and the first source card's dots without
+  scrolling.
+- **AC-A2** With answers not named, cited, named, recommended, failed, and a
+  missing AI Overview, each dot shows its look, centred, and each card's
+  headline count equals its dots.
+- **AC-A3** Sections and chips appear in the specified order and names; no
+  Ringkasan chip.
+- **AC-A4** No recommendation shows the removed labels; "Tidak ada data jumlah
+  pencarian", "Unduh bukti JSON" and "Tentang audit ini" appear nowhere on a
+  two-source report.
+- **AC-A5** A report saved before Spec 018 renders exactly as before.
+- **AC-A6** `npm run verify` passes; the `verify-nuave` journey reaches the
+  report.
+- **AC-A7 (judgement)** The founder reads NV-3WDSAY in the new layout on a
+  phone and agrees it matches the prototype's intent.
 
 ### Part D
 
-- **AC-D1:** Clicking a question row opens the panel on that question with
-  ChatGPT selected; the Google tab shows its answer, "no AI Overview", or
-  "failed".
-- **AC-D2:** Escape closes the panel and focus returns to the row.
-- **AC-D3:** The printed PDF holds no panel and has every answer in the
-  appendix.
+- **AC-D1** Clicking a row, a dot or a "P" reference opens the panel on that
+  question and source; Escape closes it and focus returns.
+- **AC-D2** Opening the panel runs without long frames on a mid-range laptop
+  (no frame over 20 ms in a Chromium trace).
+
+### Part P
+
+- **AC-P1** "Unduh PDF" downloads an A4 PDF with the footer and page numbers
+  on every page, page breaks as specified, and the appendix.
+- **AC-P2** A wrong secret gets "not available"; the secret never appears in
+  a URL outside Cloudflare.
+
+### Part C
+
+- **AC-C1** From saved checks naming businesses, the map shows correct counts
+  per source, rating and reviews when saved, links only for saved addresses,
+  and the owner's card.
+- **AC-C2** No phone number appears in saved competitor data.
+
+### Part B
+
+- **AC-B1** The writer input holds Google's answer texts and the playbook, and
+  no phone numbers.
+- **AC-B2** A banned title start is revised once; the delivered report has
+  none; a wrong headline number is dropped.
+- **AC-B3** The side-by-side test is recorded and the founder's pick is in
+  use.
+- **AC-B4 (judgement)** On NV-3WDSAY, the founder judges at least two findings
+  new information and the recommendations firm and specific.
 
 ## Decisions (founder, 2026-10-26)
 
-- **D-1 Confident advice.** Facts must come from the answers; advice may be
-  confident expert guidance; the report never claims what caused a result.
-- **D-2 Before G1.** This work moves ahead of G1, out of the parking lot.
-- **D-3 No score yet.** No 0 to 100 score; the verdict and the dots carry the
-  big picture.
-- **D-4 Lo-fi from this spec.** No Figma first; the founder adjusts the
-  look after seeing it.
+- **D-1** Confident advice without claiming causes.
+- **D-2** Before G1, out of the parking lot.
+- **D-3** No score yet.
+- **D-4** Lo-fi prototype first; approved after four rounds.
+- **D-5** The server-made PDF comes with this work.
+- **D-6** The re-audit reminder goes to the wishlist.
 
 ## Open questions
 
-None blocking Part A. Part B's model choice is settled by B-07.
+- **Anthropic API key** for the B-07 side-by-side test (new paid provider;
+  founder). Without it, B-07 compares the models available through the
+  existing providers.
