@@ -648,9 +648,11 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       await expect(chatgpt.locator("[data-failed-slot]")).toContainText(
         "Tidak dapat diuji",
       );
-      await expect(
-        chatgpt.getByRole("link", { name: "Minta bantuan" }),
-      ).toHaveAttribute("href", /^mailto:support@nuave\.ai\?subject=/);
+      // The print appendix holds every answer; on screen it is hidden.
+      await expect(chatgpt.locator("a[data-help-link]")).toHaveAttribute(
+        "href",
+        /^mailto:support@nuave\.ai\?subject=/,
+      );
       continue;
     }
     await expect(chatgpt.locator("[data-answer-body]")).toContainText(
@@ -667,12 +669,68 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       () => (window as unknown as { __unsafeReport?: boolean }).__unsafeReport,
     ),
   ).toBeUndefined();
-  const source = report
-    .getByRole("link", { name: /Sumber fiktif tersimpan/ })
-    .first();
+  // Spec 021 Part D: a row opens its answers in the side panel.
+  const urlBeforePanel = fresh.url();
+  const firstRow = fresh.locator('[data-answer-row="1"]');
+  await firstRow.click();
+  const panel = fresh.getByRole("dialog", { name: "Pertanyaan 1 dari 10" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("tab", { name: "ChatGPT" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(panel.locator("[data-answer-body]")).toContainText(
+    "AKHIR-JAWABAN-1.",
+  );
+  const source = panel.getByRole("link", { name: "source.example" }).first();
   await expect(source).toHaveAttribute("href", "https://source.example/");
+  await expect(source).toHaveAttribute("title", "Sumber fiktif tersimpan");
   await expect(source).toHaveAttribute("rel", "noopener noreferrer");
   await expect(source).toHaveAttribute("referrerpolicy", "no-referrer");
+  await panel.getByRole("tab", { name: "Google AI Overview" }).click();
+  await expect(panel.locator('[data-source-answer="google"]')).toBeVisible();
+  await panel.getByRole("tab", { name: "ChatGPT" }).click();
+  await panel.getByRole("button", { name: "Teks asli pertanyaan 1" }).click();
+  expect(await panel.locator("[data-raw-answer]").textContent()).toBe(
+    raw[0]!.answer,
+  );
+  const copyButton = panel.getByRole("button", {
+    name: "Salin pertanyaan dan jawaban 1",
+    exact: true,
+  });
+  expect(
+    await copyButton.evaluate((el) => el.getBoundingClientRect().height),
+  ).toBeGreaterThanOrEqual(44);
+  await copyButton.click();
+  const copied = await fresh.evaluate(
+    () => (window as unknown as { __copiedAnswer: string }).__copiedAnswer,
+  );
+  expect(copied).toContain(raw[0]!.question);
+  expect(copied).toContain(raw[0]!.answer);
+  await panel.getByRole("button", { name: /Berikutnya/ }).click();
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+  ).toBeVisible();
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  await expect(firstRow).toBeFocused();
+  // A "P" reference opens its question too, by pointer and by keyboard.
+  const reference = fresh.locator('#temuan [data-question-ref="2"]').first();
+  await reference.click();
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+  ).toBeVisible();
+  await fresh.keyboard.press("Escape");
+  await expect(reference).toBeFocused();
+  await fresh.keyboard.press("Enter");
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+  ).toBeVisible();
+  await fresh.screenshot({ path: info.outputPath("answer-panel.png") });
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  // Opening answers never changes the address (the link secret stays).
+  expect(fresh.url()).toBe(urlBeforePanel);
   expect(external).toEqual([]);
 
   const contents = fresh.getByRole("navigation", { name: "Isi laporan" });
@@ -754,36 +812,6 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     "Selesai ketika",
   ])
     await expect(report).not.toContainText(removed);
-  await fresh
-    .getByRole("button", { name: "Teks asli pertanyaan 1", exact: true })
-    .click();
-  expect(await fresh.locator("[data-raw-answer]").textContent()).toBe(
-    raw[0]!.answer,
-  );
-  await fresh
-    .getByRole("button", {
-      name: "Salin pertanyaan dan jawaban 1",
-      exact: true,
-    })
-    .click();
-  const copied = await fresh.evaluate(
-    () => (window as unknown as { __copiedAnswer: string }).__copiedAnswer,
-  );
-  expect(copied).toContain(raw[0]!.question);
-  expect(copied).toContain(raw[0]!.answer);
-  const reference = fresh
-    .locator('#temuan a[href="#report-question-2"]')
-    .first();
-  await reference.click();
-  await expect(fresh.locator("#report-question-2")).toBeFocused();
-  await reference.focus();
-  await fresh.keyboard.press("Enter");
-  await expect(fresh.locator("#report-question-2")).toBeFocused();
-  expect(
-    await fresh
-      .locator("#report-question-2")
-      .evaluate((el) => getComputedStyle(el).outlineStyle),
-  ).not.toBe("none");
   // AC-A6: no sideways scroll from 1920 down to 320 wide.
   for (const width of [1920, 1280, 768, 390, 320]) {
     await fresh.setViewportSize({ width, height: 900 });
@@ -794,7 +822,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       ),
     ).toBe(true);
     await fresh.screenshot({ path: info.outputPath(`report-${width}.png`) });
-    await fresh.locator("#report-question-1").scrollIntoViewIfNeeded();
+    await fresh.locator("#jawaban").scrollIntoViewIfNeeded();
     await fresh.screenshot({ path: info.outputPath(`answer-${width}.png`) });
   }
   await fresh.setViewportSize({ width: 1440, height: 1000 });
@@ -811,14 +839,6 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await fresh.evaluate(() => {
     document.body.style.zoom = "";
   });
-  expect(
-    await fresh
-      .getByRole("button", {
-        name: "Salin pertanyaan dan jawaban 1",
-        exact: true,
-      })
-      .evaluate((el) => el.getBoundingClientRect().height),
-  ).toBeGreaterThanOrEqual(44);
   // One print tree: the PDF button prints once, and every answer shows in print.
   await downloadPdfButtons(fresh).first().click();
   expect(
@@ -827,7 +847,8 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     ),
   ).toBe(1);
   await fresh.emulateMedia({ media: "print" });
-  await expect(fresh.locator("[data-raw-answer]")).toBeHidden();
+  await expect(report.locator("[data-raw-answer]")).toHaveCount(0);
+  await expect(report.locator("[data-answers-table]")).toBeHidden();
   await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   for (const answer of await report.locator("[data-answer-body]").all())
     await expect(answer).toBeVisible();

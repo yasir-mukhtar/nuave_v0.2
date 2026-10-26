@@ -1,14 +1,8 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import {
-  IconArrowRight,
-  IconBrandGoogle,
-  IconBrandOpenai,
-  IconCheck,
-  IconDownload,
-} from "@tabler/icons-react";
+import { IconArrowRight, IconCheck, IconDownload } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { NuaveLogo } from "@/components/product/journey/NuaveLogo";
 import { SUPPORT_EMAIL } from "@/components/product/journey/JourneyBars";
@@ -37,11 +31,10 @@ import {
   type MentionState,
   type Source,
 } from "./report-v2-data";
-import {
-  TwoSourceAnswers,
-  checkedDate,
-  profileQuestionsNote,
-} from "./TwoSourceSections";
+import { checkedDate, profileQuestionsNote } from "./TwoSourceSections";
+import { AnswerPanelProvider, SOURCE_ICON, useOpenAnswer } from "./AnswerPanel";
+import { AnswersTable } from "./AnswersTable";
+import { ReportAppendix } from "./ReportAppendix";
 import auditStyles from "../audit.module.css";
 import bodyStyles from "./report-body.module.css";
 import styles from "./report-v2.module.css";
@@ -61,11 +54,6 @@ const SECTIONS = [
   ["jawaban", "Jawaban AI"],
 ] as const;
 type SectionId = (typeof SECTIONS)[number][0];
-
-const SOURCE_ICON: Record<Source, ReactNode> = {
-  chatgpt: <IconBrandOpenai stroke={1.75} aria-hidden="true" />,
-  google: <IconBrandGoogle stroke={1.75} aria-hidden="true" />,
-};
 
 const numberFormat = new Intl.NumberFormat("id-ID");
 
@@ -181,34 +169,25 @@ function Band({
   );
 }
 
-/** Moves to a question's answer. The report's link keeps its secret after the
- * `#`, so in-page links never change the address (a hash change would also
- * fire the intake's popstate handler). */
-function goToQuestion(event: MouseEvent<HTMLAnchorElement>, ordinal: number) {
-  event.preventDefault();
-  const heading = document.getElementById(`report-question-${ordinal}`);
-  heading?.focus({ preventScroll: true });
-  heading?.scrollIntoView?.({
-    block: "start",
-    behavior: motionAllowedNow() ? "smooth" : "auto",
-  });
-}
-
-/** Question references at the end of a paragraph, in neutral grey. */
+/** Question references at the end of a paragraph, in neutral grey. Each
+ * opens its question in the side panel (Spec 021 Part D); none changes the
+ * address, which keeps the report link's secret after the `#`. */
 function QuestionRefs({ ordinals }: { ordinals: readonly number[] }) {
+  const openAnswer = useOpenAnswer();
   if (!ordinals.length) return null;
   return (
     <span className={styles.refs}>
       {ordinals.map((n) => (
-        <a
+        <button
           key={n}
+          type="button"
           className={styles.ref}
-          href={`#report-question-${n}`}
-          onClick={(event) => goToQuestion(event, n)}
+          onClick={() => openAnswer(n)}
           aria-label={`P${n}: pertanyaan ${n}`}
+          data-question-ref={n}
         >
           P{n}
-        </a>
+        </button>
       ))}
     </span>
   );
@@ -233,6 +212,7 @@ function sourceSentence(two: TwoSourceReport, source: Source) {
 }
 
 function SourceCard({ two, source }: { two: TwoSourceReport; source: Source }) {
+  const openAnswer = useOpenAnswer();
   const { chatgpt, google } = two.counts;
   const [count, of, unit] =
     source === "chatgpt"
@@ -258,16 +238,16 @@ function SourceCard({ two, source }: { two: TwoSourceReport; source: Source }) {
           const state = mentionState(question, source);
           return (
             <li key={question.prompt_id}>
-              <a
+              <button
+                type="button"
                 className={styles.dotLink}
-                href={`#report-question-${question.ordinal}`}
-                onClick={(event) => goToQuestion(event, question.ordinal)}
+                onClick={() => openAnswer(question.ordinal, source)}
                 data-mention={state}
                 aria-label={`Pertanyaan ${question.ordinal}: ${MENTION_LABEL[state]}`}
               >
                 <MentionDot look={state} />
                 <span aria-hidden="true">{question.ordinal}</span>
-              </a>
+              </button>
             </li>
           );
         })}
@@ -550,103 +530,106 @@ export function TwoSourceReportBody({
   const hasTopics = topicGapRows(two, observations, two.subject).length > 0;
   const hasRecs = report.priorities.length > 0;
   return (
-    <div data-direct-ten-report data-report-v2>
-      <section id="summary" className={styles.inner} aria-label="Ringkasan">
-        <div className={styles.summary}>
-          <p className={styles.verdict} data-verdict>
-            {verdictFromConclusion(report.conclusion)}
-          </p>
-          <div className={styles.cards}>
-            <SourceCard two={two} source="chatgpt" />
-            <SourceCard two={two} source="google" />
-          </div>
-          <Legend withFailed={anyFailed} />
-          {two.counts.failed > 0 ? (
-            <p className={styles.failed} data-failed-count>
-              {two.counts.failed} pemeriksaan tidak dapat diuji
+    <AnswerPanelProvider two={two} answers={presentation.answers} names={names}>
+      <div data-direct-ten-report data-report-v2>
+        <section id="summary" className={styles.inner} aria-label="Ringkasan">
+          <div className={styles.summary}>
+            <p className={styles.verdict} data-verdict>
+              {verdictFromConclusion(report.conclusion)}
             </p>
-          ) : null}
-          {hasRecs ? (
-            <a
-              className={cn(styles.jump, auditStyles.noPrint)}
-              href="#rekomendasi"
-              onClick={(event) => {
-                event.preventDefault();
-                scrollToSection("rekomendasi");
-              }}
-            >
-              Lihat {report.priorities.length} rekomendasi
-              <IconArrowRight size={16} aria-hidden="true" />
-            </a>
-          ) : null}
-        </div>
-      </section>
-      {nav}
-      <Band id="temuan" title="Temuan Utama">
-        <Findings report={report} ordinalOf={ordinalOf} />
-      </Band>
-      <Band
-        id="pesaing"
-        title="Peta Pesaing"
-        lede="Bisnis yang disebut ChatGPT dan Google dalam jawaban ini, diurutkan dari yang paling sering disebut."
-      >
-        <Competitors
-          two={two}
-          observations={observations}
-          ownNames={[ownName, ...names.slice(1)]}
-        />
-      </Band>
-      {hasTopics ? (
-        <Band
-          id="topik"
-          title="Celah Topik"
-          lede={`Topik yang dicari orang, tetapi jawabannya belum menyebut ${subjectNoun(two.subject, false)}.`}
-        >
-          <TopicGaps two={two} observations={observations} />
+            <div className={styles.cards}>
+              <SourceCard two={two} source="chatgpt" />
+              <SourceCard two={two} source="google" />
+            </div>
+            <Legend withFailed={anyFailed} />
+            {two.counts.failed > 0 ? (
+              <p className={styles.failed} data-failed-count>
+                {two.counts.failed} pemeriksaan tidak dapat diuji
+              </p>
+            ) : null}
+            {hasRecs ? (
+              <a
+                className={cn(styles.jump, auditStyles.noPrint)}
+                href="#rekomendasi"
+                onClick={(event) => {
+                  event.preventDefault();
+                  scrollToSection("rekomendasi");
+                }}
+              >
+                Lihat {report.priorities.length} rekomendasi
+                <IconArrowRight size={16} aria-hidden="true" />
+              </a>
+            ) : null}
+          </div>
+        </section>
+        {nav}
+        <Band id="temuan" title="Temuan Utama">
+          <Findings report={report} ordinalOf={ordinalOf} />
         </Band>
-      ) : null}
-      {hasRecs ? (
         <Band
-          id="rekomendasi"
-          title="Rekomendasi"
-          lede="Diurutkan dari yang paling penting."
-          tone="wash"
+          id="pesaing"
+          title="Peta Pesaing"
+          lede="Bisnis yang disebut ChatGPT dan Google dalam jawaban ini, diurutkan dari yang paling sering disebut."
         >
-          <Recommendations report={report} />
+          <Competitors
+            two={two}
+            observations={observations}
+            ownNames={[ownName, ...names.slice(1)]}
+          />
         </Band>
-      ) : null}
-      <Band id="penutup" title="Penutup" tone="ink">
-        <Closing report={report} />
-      </Band>
-      <Band
-        id="jawaban"
-        title="Jawaban AI"
-        lede="Bukti di balik laporan ini: setiap pertanyaan dan jawaban lengkapnya."
-        tone="grey"
-      >
-        <div className={bodyStyles.body}>
-          <TwoSourceAnswers
+        {hasTopics ? (
+          <Band
+            id="topik"
+            title="Celah Topik"
+            lede={`Topik yang dicari orang, tetapi jawabannya belum menyebut ${subjectNoun(two.subject, false)}.`}
+          >
+            <TopicGaps two={two} observations={observations} />
+          </Band>
+        ) : null}
+        {hasRecs ? (
+          <Band
+            id="rekomendasi"
+            title="Rekomendasi"
+            lede="Diurutkan dari yang paling penting."
+            tone="wash"
+          >
+            <Recommendations report={report} />
+          </Band>
+        ) : null}
+        <Band id="penutup" title="Penutup" tone="ink">
+          <Closing report={report} />
+        </Band>
+        <Band
+          id="jawaban"
+          title="Jawaban AI"
+          lede="Bukti di balik laporan ini. Ketuk pertanyaan untuk membaca jawaban lengkapnya."
+          tone="grey"
+        >
+          <AnswersTable two={two} names={names} />
+          <ReportAppendix
             two={two}
             answers={presentation.answers}
             names={names}
           />
-        </div>
-        <ul className={styles.notes} data-answer-notes>
-          <li>
-            Jawaban AI dapat berubah menurut waktu, model, akun, dan lokasi.
-          </li>
-          <li>
-            {two.places.google.name === two.places.chatgpt.name
-              ? `Pertanyaan diajukan dari ${two.places.chatgpt.name}.`
-              : `Pertanyaan diajukan dari ${two.places.chatgpt.name}; Google dari ${two.places.google.name}.`}
-          </li>
-          <li>Disebut belum tentu direkomendasikan.</li>
-          {!two.search_data_available ? (
-            <li data-profile-questions>{profileQuestionsNote(two.subject)}</li>
-          ) : null}
-        </ul>
-      </Band>
-    </div>
+          <ul className={styles.notes} data-answer-notes>
+            <li>
+              Jawaban AI dapat berubah menurut waktu, model, akun, dan lokasi.
+            </li>
+            <li>
+              {two.places.google.name === two.places.chatgpt.name
+                ? `Pertanyaan diajukan dari ${two.places.chatgpt.name}.`
+                : `Pertanyaan diajukan dari ${two.places.chatgpt.name}; Google dari ${two.places.google.name}.`}
+            </li>
+            <li>Disebut belum tentu direkomendasikan.</li>
+            {!two.search_data_available ? (
+              <li data-profile-questions>
+                {profileQuestionsNote(two.subject)}
+              </li>
+            ) : null}
+          </ul>
+        </Band>
+      </div>
+    </AnswerPanelProvider>
   );
 }
 

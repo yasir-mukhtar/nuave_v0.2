@@ -831,9 +831,7 @@ async function auditRun(ctx: DriveContext) {
     report.locator('[data-report-answer="7"] [data-failed-slot]'),
   ).toContainText("Tidak dapat diuji");
   await expect(
-    report
-      .locator('[data-report-answer="7"]')
-      .getByRole("link", { name: "Minta bantuan" }),
+    report.locator('[data-report-answer="7"] a[data-help-link]'),
   ).toHaveAttribute("href", /^mailto:support@nuave\.ai\?subject=/);
   await expect(report.locator("[data-not-shown]")).toHaveCount(2);
   await expect(report.locator("[data-failed-count]")).toContainText(

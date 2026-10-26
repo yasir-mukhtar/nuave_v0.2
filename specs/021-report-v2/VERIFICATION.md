@@ -93,3 +93,46 @@ Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
   "P2" to screen readers and are 24px tall; "Simpan laporan ini" is its own
   heading; unused code removed; section titles stay with their content in
   print.
+
+## Part D, answers (PR 3)
+
+### Scope reviewed
+
+- `src/app/audit/report/AnswersTable.tsx`: the Jawaban AI table (header row
+  inside, labelled source logos with tooltips, one row per question with a dot
+  per source and a "menyebut nama Anda" tag).
+- `src/app/audit/report/AnswerPanel.tsx`: the side panel (shadcn `Sheet` from
+  the right, full width on a phone; shadcn `Tabs`; chat layout) and the one
+  `openAnswer` that rows, summary dots and "P" references use.
+- `src/app/audit/report/ReportAppendix.tsx`: every answer in the chat style,
+  print only. The stacked on-screen answers (`TwoSourceAnswers`) are removed.
+- `src/components/ui/tooltip.tsx` (added with the shadcn CLI; the CLI also
+  added an unrelated `cn` npm package and imported from it, which was reverted
+  to the project's `@/lib/utils`), `src/components/ui/sheet.tsx` (`blur`,
+  `overlayClassName` and `keepMounted` options; defaults unchanged for the
+  landing menus).
+- `docs/DESIGN.md`: the ease-in-out exception for the answer panel.
+
+### BeUI search (`AGENTS.md` UI rule 3)
+
+BeUI has `drawer`, `tabs` and `tooltip`. Not used: the drawer and tabs move
+with a spring (the founder asked for ease-in-out), the tabs bring
+`lucide-react` (a second icon set) and the tooltip brings `@floating-ui/dom`.
+The shadcn `Sheet`, `Tabs` and `Tooltip` on Base UI are already the project's
+stack.
+
+### Acceptance results
+
+| Criterion | Result | Evidence                                                                                                                                                                                                                                                                                        |
+| --------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-D1     | Pass   | unit "AC-D1, D-02" (a row, a summary dot and a P reference open the panel on that question and source; Escape and the close button return focus to the opener); e2e "Spec 012 on the saved report" (row, tabs, Berikutnya, P reference by pointer and keyboard, Escape, address unchanged)      |
+| AC-D2     | Pass   | production build, Chromium at 1280×860: every frame while the panel opens and closes is at most 16.8 ms, in three runs each (measured with `requestAnimationFrame` intervals; the click's own work is kept small by keeping the panel mounted and drawing the answer text in a deferred render) |
+
+### Checks run
+
+- Unit: `two-source-report.test.tsx` (table, panel, failed check in the panel,
+  print appendix), all report tests.
+- E2e: the two report tests in `new-intake-glm.spec.ts`, then the full suites
+  (see the PR).
+- Print: the A4 PDF from the e2e run shows the table hidden and every answer
+  in the appendix.
