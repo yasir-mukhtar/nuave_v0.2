@@ -254,29 +254,37 @@ test("Spec 021 AC-08: with Don't allow the paid screen asks the server nothing",
   expect(asked).toBe(0);
 });
 
-test("Spec 021 AC-11a: How it works opens inside the notice on a phone, with both choices still tappable and nothing from Meta", async ({
-  page,
-  baseURL,
-}) => {
-  const meta = await setUp(page, baseURL!);
-  await page.goto("/audit");
-  await notice(page).getByRole("button", { name: "How it works" }).click();
-  const panel = page.locator("#cookie-notice-how");
-  await expect(panel).toBeVisible();
-  await expect(panel).toContainText("your order email in coded (hashed) form");
-  await expect(
-    panel.getByRole("link", { name: "Privacy policy" }),
-  ).toHaveAttribute("href", "/privacy#cookie");
-  for (const name of ["Allow", "Don't allow"]) {
-    const button = notice(page).getByRole("button", { name, exact: true });
-    await expect(button).toBeInViewport();
-  }
-  await page.waitForTimeout(300);
-  expect(meta).toEqual([]);
-  await notice(page)
-    .getByRole("button", { name: "Don't allow" })
-    .click({ trial: true });
-});
+for (const size of [
+  { name: "a phone", width: 390, height: 844 },
+  { name: "a laptop", width: 1280, height: 800 },
+]) {
+  test(`Spec 021 AC-11a: How it works opens inside the notice on ${size.name}, with both choices still tappable and nothing from Meta`, async ({
+    page,
+    baseURL,
+  }) => {
+    const meta = await setUp(page, baseURL!);
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await page.goto("/audit");
+    await notice(page).getByRole("button", { name: "How it works" }).click();
+    const panel = page.locator("#cookie-notice-how");
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(
+      "your order email in coded (hashed) form",
+    );
+    await expect(
+      panel.getByRole("link", { name: "Privacy policy" }),
+    ).toHaveAttribute("href", "/privacy#cookie");
+    for (const name of ["Allow", "Don't allow"]) {
+      const button = notice(page).getByRole("button", { name, exact: true });
+      await expect(button).toBeInViewport();
+    }
+    await page.waitForTimeout(300);
+    expect(meta).toEqual([]);
+    await notice(page)
+      .getByRole("button", { name: "Don't allow" })
+      .click({ trial: true });
+  });
+}
 
 test("back from Midtrans, the order number leaves the address before the Pixel sees it", async ({
   page,

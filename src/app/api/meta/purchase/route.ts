@@ -18,7 +18,12 @@ export async function POST(request: Request) {
     request,
     (bindings) => bindings.orderStatusCaller,
   );
-  if (rateLimited) return rateLimited;
+  if (rateLimited) {
+    console.info(
+      JSON.stringify({ event: "meta_purchase", outcome: "rate_limited" }),
+    );
+    return rateLimited;
+  }
   const body = await request.json().catch(() => null);
   let outcome: PurchaseOutcome;
   try {

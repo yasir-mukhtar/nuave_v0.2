@@ -36,7 +36,9 @@ export type PurchaseOutcome =
   /** Midtrans sandbox without a Test Events code (R-06). */
   | "sandbox"
   /** This order's one send was already tried (R-10). */
-  | "already_sent";
+  | "already_sent"
+  /** The shared per-IP limit stopped the call before any work (R-15). */
+  | "rate_limited";
 
 export type MetaCapiSettings = {
   pixelId: string;

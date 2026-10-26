@@ -365,6 +365,8 @@ describe("Spec 021: the server Purchase route", () => {
     const response = await askFor(id);
     expect(response.status).toBe(429);
     expect(calls).toHaveLength(0);
+    // R-14: still exactly one line, with the outcome code only.
+    expect(outcomes()).toEqual(["rate_limited"]);
     expect(order(id).meta_sent_at).toBeNull();
   });
 
