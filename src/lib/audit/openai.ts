@@ -648,7 +648,10 @@ export async function executeAuditPrompt(input: {
   }
 }
 
-export async function generateReportContent(
+/** The request generateReportContent sends, built from its input. The
+ * report-writer test (scripts/report-writer-test) sends the same prompt to
+ * other models and effort levels. */
+export function reportRequest(
   input: {
     brief: import("./direct-ten-context-v2").AuditSubject;
     prompts: AuditPrompt[];
@@ -665,16 +668,10 @@ export async function generateReportContent(
     draft: ReportContent;
     violations: string[];
   },
-): Promise<{
-  content: ReportContent;
-  requested_model: string;
-  returned_model: string;
-  response_id: string;
-  telemetry: AuditCallTelemetry[];
-}> {
+) {
   const v2Context = "version" in input.brief ? input.brief : null;
   const requestedModel = auditModel();
-  const request = {
+  return {
     model: requestedModel,
     reasoning: { effort: auditReasoningEffort("medium") },
     store: false,
@@ -794,6 +791,20 @@ export async function generateReportContent(
       },
     ],
   } satisfies CostControlledResponseParams;
+}
+
+export async function generateReportContent(
+  input: Parameters<typeof reportRequest>[0],
+  revision?: Parameters<typeof reportRequest>[1],
+): Promise<{
+  content: ReportContent;
+  requested_model: string;
+  returned_model: string;
+  response_id: string;
+  telemetry: AuditCallTelemetry[];
+}> {
+  const request = reportRequest(input, revision);
+  const requestedModel = request.model;
   const reservedCost = reserveAuditCall({
     budget: input.budget,
     stage: "report",
