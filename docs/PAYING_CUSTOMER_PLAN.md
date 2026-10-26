@@ -629,6 +629,21 @@ founder moves it into a milestone.
 - Spec 008 G2P and remaining guard findings; run-to-run variation study.
 - Structured-output failures: provider limit or call bug.
 
+**ChatGPT and Google checks** (found in the AC-14 live run, 2026-10-26)
+- Google AI Overview "not shown" when the founder's browser shows one: check
+  again once when it is missing, and word "not shown" as "Google did not show
+  an AI Overview when we checked".
+- Ask from the customer's city instead of all of Indonesia: with no city,
+  ChatGPT picks one from the asking connection (Batam, Malang and others in
+  NV-3WDSAY), and Google's place changes too.
+- Handle DataForSEO status 40101 (look up its meaning; retry or mark failed
+  on purpose).
+- Show the reading's guesses (target customer, needs, competitors) back to
+  the owner, and let the report recommend, within Spec 012's evidence rule.
+- Compare report writing by Claude Sonnet with GPT-5.6 Luna on the same
+  saved answers; try a page scraper (for example Firecrawl) for the website
+  reading.
+
 **Open questions** (from the former `NOW.md`; Track V starts on the first
 three)
 - Will Indonesian small-business owners pay for one audit at all, and at

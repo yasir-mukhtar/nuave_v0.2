@@ -1,7 +1,7 @@
 # Nuave now
 
 > Updated: 2026-10-26
-> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
+> Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
 
@@ -91,7 +91,14 @@
   questions from real Google search data, each answered by the ChatGPT app
   and Google AI Overview, one package at Rp249.000
   ([approval](./DECISION_LOG.md#2026-10-24--approve-spec-018)). S6 and G1
-  follow S5.
+  follow S5. **AC-14 passed** on 2026-10-26 (founder-run, order NV-3WDSAY):
+  delivered by email 12.5 minutes after approval, USD 0.177 in provider
+  costs, questions approved by the founder; the report layout waits for its
+  own design sessions
+  ([record](../specs/018-search-grounded-chatgpt-google-audit/VERIFICATION.md#2026-10-26--ac-14-live-run-founder)).
+  Improvements it found are in the plan's
+  [parking lot](./PAYING_CUSTOMER_PLAN.md#6-parking-lot-after-we-have-paying-customers);
+  the plan continues to G1.
 
 - **S0 is decided** ([2026-10-05](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved)):
   one immutable private report per order, stored on the server, reached through
@@ -143,7 +150,9 @@
   the sandbox (no merchant balance) and move to G1. Spec 017 is
   **Verified** with that exception. Cloudflare CPU per invocation is about
   200 ms (P50) on Workers Free; Q10 (Workers Paid before G1) stands.
-  **Next:** S5, then the founder moves to Workers Paid and runs G1.
+  **Next:** S5, then G1. **Done 2026-10-26:** the founder confirmed the
+  Cloudflare account runs on **Workers Paid**
+  ([log](./DECISION_LOG.md#2026-10-26--production-runs-on-workers-paid)).
   Post-spec decisions: [2026-10-13](./DECISION_LOG.md#2026-10-13--s3-decisions-after-spec-016).
 - **S2 diagnostic (brief):** the last native child handoffs were complete; the
   old session identifiers are not recognized now, with no cancellation or
@@ -213,8 +222,9 @@
 - **Separate operational finding:** [closed-preview cleanup failed](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060).
   Preview removal, cause and continuing exposure are not established. This does
   not negate the successful main deployment; no cleanup/remediation is authorized.
-- Cloudflare **Workers** (not Pages; Pages could not serve the static assets)
-  worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
+- Cloudflare **Workers** on the **Workers Paid** plan (founder-confirmed
+  2026-10-26; the Workers Free limits recorded below are history, not a
+  blocker), not Pages (Pages could not serve the static assets); worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
 - CI (`.github/workflows/ci.yml`): `validate` on every PR; on `main`,
   `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
@@ -231,6 +241,8 @@
   `true` unless `ci.yml` is changed too. Changing only the build value in
   `ci.yml` stops nothing.
 - Secrets (names only): `OPENAI_API_KEY`, `CHEAPERINFERENCE_API_KEY`,
+  `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` (written to the Worker on every
+  deploy since Spec 018),
   `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NUAVE_ORDER_EMAIL_ALLOWLIST`,
   `RESEND_API_KEY`, `NUAVE_MAIL_FROM`. D1:
   `nuave-v2-spend` (production), `nuave-v2-preview` (PR previews).
@@ -244,14 +256,19 @@
 
 ## Production AI setup
 
-- Extraction, observations and the report use OpenAI directly
-  (`gpt-5.6-luna`, low reasoning). Question writing uses GLM 5.3 Flash
-  through Cheaper Inference
+- Since Spec 018 (#151): reading the website and writing the report use
+  OpenAI directly (`gpt-5.6-luna`, low reasoning). DataForSEO supplies the
+  Google search data and both checks (the ChatGPT app's answers and Google
+  AI Overview); payment start refuses new orders when its balance is below
+  USD 2. AC-14 (a live order through to the report on this audit) passed
+  on 2026-10-26. Question writing uses GLM 5.3 Flash through Cheaper Inference,
+  given the DataForSEO search data
   ([2026-09-20](./DECISION_LOG.md#2026-09-20--audit-provider-switches-to-direct-openai-opencode-go-dropped)),
   with a 16,384-token reply limit since 2026-10-26; its live check is
   `npm run test:canary:questions`.
-- Web search: extraction only on the business's own website; required for
-  every observation; none for question writing or the report.
+- Web search: OpenAI's web search only for reading the business's own
+  website; the checks are real ChatGPT app answers and Google results
+  fetched through DataForSEO; none for question writing or the report.
 - Call limits: `AUDIT_STAGE_CALL_LIMITS` in `src/lib/audit/telemetry.ts`.
   The USD 5 per-session ceiling uses spending history sent by the browser
   (S2 replaces this). `OPENAI_AUDIT_CARRYOVER_COST_USD` adds a minimum

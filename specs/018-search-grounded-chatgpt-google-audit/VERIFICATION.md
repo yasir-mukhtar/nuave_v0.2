@@ -1475,3 +1475,37 @@ fallback), every call finished normally, 2.8k–4.2k reply tokens. Tests:
 record), `order-discovery-routes.test.ts` (the log line, kept from the
 browser), and the
 live `scripts/canary/question-writer.spec.ts`.
+
+## 2026-10-26 — AC-14 live run (founder)
+
+**Pass.** Order NV-3WDSAY, run by the founder on production, after the
+question-writing fixes above. Read from production D1 (`orders`,
+`order_questions`, `provider_spend`, `order_emails`); nothing was changed.
+
+- **Delivered with both sources:** the report email was accepted by Resend.
+  ChatGPT answered all 10 questions; Google returned an AI Overview for 6,
+  "not shown" for 3 (questions 2, 6 and 7) and failed on 1 (question 10,
+  DataForSEO status 40101, not retried because the code is not on either
+  list).
+- **Time:** questions approved 02:46:55 UTC, email sent 02:59:28 UTC:
+  **12.5 minutes**, inside the 15-minute promise.
+- **Cost (settled ledger): USD 0.177** (about Rp2.900): website reading
+  0.0245, discovery 0.0641, question writing 0.0085 (6 calls; the three
+  stuck holds settled at the founder-approved estimate), ChatGPT and Google
+  checks 0.0720, report 0.0079. The Cheaper Inference dashboard shows about
+  USD 0.06 because it also bills the earlier stuck tries.
+- **Questions:** the founder judged the ten questions good enough.
+- **Layout:** not judged here; the founder will rework the report design in
+  dedicated sessions.
+- **Search place:** this order searched all of Indonesia (location 2360).
+
+**Found in the run** (recorded in the plan's parking lot, not blocking G1):
+
+- Google's AI Overview is not shown on every search: the founder's own
+  browser (normal and incognito) showed one for the three "not shown"
+  questions. Google decides per search (device, place, signed-in state,
+  experiments); one anonymous check from "Indonesia" can miss it.
+- With no city, ChatGPT picks one from the asking connection: the answers
+  named Batam, Malang, Jakarta, Bandung and Surabaya.
+- DataForSEO status 40101 is not handled.
+
