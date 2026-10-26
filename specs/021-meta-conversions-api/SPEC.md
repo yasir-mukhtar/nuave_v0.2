@@ -1,8 +1,8 @@
 # Spec 021: Meta Conversions API (server Purchase event)
 
-> Status: **Draft**, revision 3 (for Yasir's review; Q-1 to Q-8 need
-> answers). Revisions 2 and 3 apply independent review rounds 1 and 2
-> (PR #170).
+> Status: **Approved** by Yasir on 2026-10-26 (revision 4: his answers to
+> Q-1 to Q-8, see Decisions). Revisions 2 and 3 applied independent review
+> rounds 1 and 2; round 3 PASS (PR #170).
 > Owner: orchestrator
 > Updated: 2026-10-26
 > Implements: privacy page change notes, "Before the Meta Pixel or
@@ -69,7 +69,7 @@ status until it shows the payment as received.
 - One server event: **Purchase**, sent once per paid order.
 - A small server route the browser calls when it shows the paid screen.
 - A random event code per paid order, shared by the Pixel and the server.
-- The cookie notice naming the hashed email (wording in Q-1), and the privacy
+- The cookie notice naming the coded order email (wording in Q-1), and the privacy
   page change that goes with it (Q-2).
 - Secret `META_CAPI_ACCESS_TOKEN` in the deploy job; an optional test code
   for Meta's Test Events screen.
@@ -93,7 +93,8 @@ status until it shows the payment as received.
 
 ## Experience
 
-Nothing changes on screen except the cookie notice text (Q-1). The paid
+Nothing changes on screen except the cookie notice text (Q-1) and the
+privacy page (Q-2); everyone is asked for their cookie choice again. The paid
 screen appears exactly as fast as today. The server call happens in the
 background and its outcome is never shown.
 
@@ -227,11 +228,14 @@ background and its outcome is never shown.
 
 ### Words and records
 
-- **R-19 Cookie notice.** Before this ships, the notice names the hashed
-  email (privacy item 1), in the wording Yasir approves (Q-1).
-- **R-20 Privacy page.** The change notes record that items 2 and 7 are met
-  and how, that this spec changes Spec 019 R-09 and R-10, and how Q-8 was
-  settled. The public page changes only as Yasir decides in Q-2.
+- **R-19 Cookie notice.** Before this ships, the notice names the coded
+  order email (privacy item 1), in the exact wording of Q-1. The notice
+  calls Meta "our ad partner"; the linked privacy page names Meta.
+- **R-20 Privacy page.** Version 1.4 (`PRIVACY_VERSION` and date in
+  `src/lib/legal.ts`, page and `PRIVACY.md` together) with the section 10
+  changes of Q-2. The change notes record that items 2 and 7 are met and
+  how, that this spec changes Spec 019 R-09 and R-10, and how Q-8 was
+  settled.
 - **R-21 Cleanup.** The hourly cleanup clears the order's event code when it
   makes the order anonymous. The send time, version and outcome code may
   stay on the bare row; they identify no one.
@@ -239,7 +243,7 @@ background and its outcome is never shown.
   the site (`wrangler.jsonc`, `observability`) and record details of every
   request, kept 3 days (7 on Workers Paid) in Nuave's Cloudflare account.
   Cloudflare hides cookies there but, by its documentation, probably not the
-  IP address or browser type. Unless Yasir decides otherwise (Q-8), this
+  IP address or browser type. As decided in Q-8, this
   change switches off that automatic per-request log
   (`observability.logs.invocation_logs: false`) for the production worker,
   keeping Nuave's own log lines, so that section 2's "Nuave sendiri tidak
@@ -319,8 +323,9 @@ background and its outcome is never shown.
   its Worker secrets; `pr-preview.yml` sets no Meta token.
 - **AC-10** The cleanup clears the event code of an order it makes
   anonymous (extends the existing cleanup test).
-- **AC-11** Notice wording and privacy page match Yasir's answers to Q-1 and
-  Q-2.
+- **AC-11** The notice text matches Q-1 exactly; the privacy page shows
+  version 1.4 with the Q-2 changes, and a choice stored under 1.3 brings
+  the notice back (Spec 019 R-03).
 - **AC-12** Founder-run (see Founder steps): one sandbox purchase with the
   test code shows a server Purchase in Test Events, 249000 IDR, with email,
   IP address and browser type matched, and the browser Purchase counted once
@@ -328,7 +333,7 @@ background and its outcome is never shown.
 - **AC-13** Recording a paid Midtrans notification, a status check that
   records a payment, and a cron run make no request to a Meta address (unit
   tests with a fake `fetch` that fails on any Meta address).
-- **AC-14** Unless Q-8 is answered otherwise: the production worker's
+- **AC-14** As decided in Q-8: the production worker's
   `wrangler.jsonc` has `observability.logs.invocation_logs` set to `false`.
   After deploy, the founder opens, in Cloudflare's logs, the route's own
   outcome line from the AC-12 check purchase (R-14) and finds no IP address
@@ -379,73 +384,59 @@ background and its outcome is never shown.
 Menu names are from memory and may differ slightly in Meta's and
 Cloudflare's current screens.
 
-## Open questions
+## Decisions (answered by Yasir on 2026-10-26)
 
-- **Q-1 Cookie notice wording (English).** Today: "🍪 Allow cookies?
-  Cookies help us measure our ads. Your report and answers are never
-  shared." Proposed:
+- **Q-1 Cookie notice wording: option A.** The notice does not name Meta
+  (as decided on 2026-10-25, the linked privacy page names it). Exact text:
 
   > 🍪 **Allow cookies?**
-  > Cookies help us measure our ads. If you buy, Meta also gets your order
-  > email in coded form, so it can match the purchase to your Facebook or
-  > Instagram account. Your report and answers are never shared.
-  > [Privacy policy]
+  > Cookies help us measure our ads. If you buy, our ad partner gets a
+  > coded version of your order email, to see which ad brought you. Your
+  > report and answers are never shared. [Privacy policy]
   >
   > [Don't allow] [Allow]
 
-  **Recommended:** approve as written (one added sentence; buttons
-  unchanged). It says plainly what the coded email is for, so the choice is
-  informed and the notice does not sound more private than it is.
-- **Q-2 Does the privacy page version go up (which asks everyone again)?**
-  The page's words are already true: section 2 and section 10 name the
-  hashed purchase email and server events. But everyone who tapped Allow so
-  far saw a notice that did not mention the email, and the stored choice
-  only resets when `PRIVACY_VERSION` changes. **Recommended:** yes, raise it
-  to **1.4**, so every Allow behind a server event was given under the
-  notice that names the email. It costs little now: no ads run yet and
-  almost every Allow is a founder test. Make true public changes with it in
-  section 10:
-  - third point, narrowing server events to purchases and naming the page
-    address: "untuk pembelian, catatan yang sama dari server kami, beserta
-    alamat IP, jenis browser, kode cookie Meta Anda, dan alamat halaman
-    pemesanan Nuave; dan" (was "untuk cek gratis dan pembelian, …");
+  Buttons unchanged. Yasir asked whether Meta could go unnamed everywhere;
+  it stays named on the privacy page, because Meta's terms for advertisers
+  and UU PDP, as we understand them, expect visitors to be told who
+  receives the data.
+- **Q-2 Privacy page: version 1.4, with a reassurance paragraph.** Raising
+  the version asks everyone to choose again, under the notice above. The
+  public changes, all in section 10:
+  - a new first paragraph of the Meta part, before the details: "Singkatnya:
+    kami tidak mengirim apa pun ke Meta kecuali Anda memilih Allow. Email
+    Anda tidak pernah dikirim dalam bentuk yang bisa dibaca. Laporan,
+    pertanyaan, jawaban AI, dan data bisnis Anda tidak pernah dikirim. Kami
+    tidak menjual data Anda, dan Anda bisa mengubah pilihan kapan saja."
+  - the third point, narrowing server events to purchases and naming the
+    page address: "untuk pembelian, catatan yang sama dari server kami,
+    beserta alamat IP, jenis browser, kode cookie Meta Anda, dan alamat
+    halaman pemesanan Nuave; dan" (was "untuk cek gratis dan pembelian, …");
   - only if the lawyer agrees, after "Pilihan cookie Anda sendiri disimpan
     di browser Anda selama 12 bulan.": "Untuk setiap pembelian yang kami
     kirim ke Meta, kami mencatat waktu pengirimannya dan versi kebijakan
     yang Anda setujui."
 
-  Adding a server Lead later would then need its own version change and
-  fresh consent, which is right.
-- **Q-3 Sandbox payments.** Until G1, payments go through the Midtrans
-  sandbox. **Recommended:** the server sends a Purchase for a sandbox payment
-  only while a Test Events code is set (R-06), so it happens only when you
-  are deliberately checking. Meta still counts such a purchase, so run the
-  check before ads start and remove the code straight after. (The browser
-  Pixel still sends sandbox purchases today; you tap Don't allow in your
-  test browsers.)
-- **Q-4 Page address.** Meta requires a page address for website events.
-  **Recommended:** send the fixed `<site>/audit`, never the real address with
-  its query string. It names no one and is the page section 10 already
-  covers ("halaman Nuave yang Anda buka"); Q-2's text names it too.
-- **Q-5 Failed sends.** **Recommended:** one try per order, never again,
-  even on a later visit. A missed server event is covered by the Pixel when
-  it loaded; Events Manager's diagnostics show if sends fail often.
-- **Q-6 Consent record.** **Recommended:** keep the privacy-page version
-  and time of each send on the order (R-13) as proof of consent, kept on
-  the bare row after cleanup.
-- **Q-7 Purchase only.** **Recommended:** confirm R-02 (no server Lead or
-  InitiateCheckout in this version).
-- **Q-8 Cloudflare's request log.** It probably keeps every visitor's IP
-  address and browser type for 3 to 7 days, on every page, not only this
-  one. **Recommended:** (a) switch off that automatic log (R-22) after
-  opening one log entry to confirm what it holds; Nuave's own log lines
-  stay. The cost: Cloudflare no longer saves a record of each past request
-  and cron run, the record you used on 2026-10-14 to read cron CPU times
-  (Spec 016 verification) before the Workers Paid decision; such checks
-  would then need a temporary switch back on. The alternative, (b), is to treat these
-  short-lived logs as the hosting provider's processing that sections 2
-  and 7 already mention ("Permintaan ke situs (termasuk alamat IP)"), and
-  record that for the lawyer check.
+  The page must not say or suggest that data is not shared with anyone: it
+  is shared with Meta after Allow. Adding a server Lead later needs its own
+  version change and fresh consent.
+- **Q-3 Sandbox payments: as recommended.** The server sends a Purchase for
+  a sandbox payment only while a Test Events code is set (R-06). Meta still
+  counts it, so the check runs before ads start and the code is removed
+  straight after. (The browser Pixel still sends sandbox purchases; Yasir
+  taps Don't allow in his test browsers.)
+- **Q-4 Page address: as recommended.** The fixed `<site>/audit`, never the
+  real address with its query string.
+- **Q-5 Failed sends: as recommended.** One try per order, never again.
+- **Q-6 Consent record: as recommended.** The privacy-page version and time
+  of each send stay on the order (R-13), also on the bare row after
+  cleanup.
+- **Q-7 Purchase only: as recommended** (R-02).
+- **Q-8 Cloudflare's request log: as recommended, option (a).** Open one
+  log entry first; if it holds the IP address, switch off the automatic
+  per-request log (R-22), accepting that Cloudflare then keeps no saved
+  history of past requests and cron runs (a check like the 2026-10-14 cron
+  CPU reading needs a temporary switch back on).
 
 ## Implementation notes
 
@@ -467,4 +458,4 @@ Cloudflare's current screens.
 
 Not started. Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
 applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
-Round 3: PASS; its two nits applied.
+Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).

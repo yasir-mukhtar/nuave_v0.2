@@ -6,6 +6,35 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Approve Spec 021 (Meta Conversions API, server Purchase)
+
+Yasir approved [Spec 021](../specs/021-meta-conversions-api/SPEC.md)
+(revision 4, after three independent review rounds, the last PASS; PR
+#170). The server sends Meta one Purchase (249000 IDR) per paid order, only
+when the buyer's own browser reaches the paid screen after Allow (Option A,
+so the IP address and browser type are passed on without being stored),
+with the same event code as the browser Pixel so Meta counts it once.
+Answers:
+
+- **Notice (Q-1):** option A, without naming Meta: "Cookies help us measure
+  our ads. If you buy, our ad partner gets a coded version of your order
+  email, to see which ad brought you. Your report and answers are never
+  shared." Yasir asked whether Meta could go unnamed everywhere; the
+  privacy page keeps naming it, because Meta's advertiser terms and UU PDP,
+  as we understand them, expect visitors to be told who receives the data.
+- **Privacy page (Q-2):** version 1.4, so everyone is asked again. Section
+  10 gets a short reassurance paragraph first (nothing goes to Meta without
+  Allow; the email is never sent readable; report, questions, AI answers
+  and business data are never sent; data is not sold; the choice can be
+  changed any time), and its server-event point is narrowed to purchases.
+  The page must not suggest that data is shared with no one.
+- **Q-3 to Q-8, as recommended:** sandbox purchases reach Meta only while a
+  test code is set (Meta still counts them, so the check runs before ads
+  start); a fixed `/audit` page address; one try per order; the consent
+  version and send time kept on the order; Purchase only; and Cloudflare's
+  automatic per-request log switched off if it holds IP addresses, giving
+  up its saved request history.
+
 ## 2026-10-26 — Question writing: four fixes and a live canary
 
 On 2026-10-26 a paid order with a search city (NV-3WDSAY, a skin clinic)
