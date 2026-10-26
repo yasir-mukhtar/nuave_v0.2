@@ -6,6 +6,27 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Report v2 before G1; confident advice; no score
+
+Yasir reviewed the NV-3WDSAY report and found it hard to read and shallow
+for Rp249.000 (header repeats, two-row dot cards, long answer blocks, recap
+instead of analysis, a bare competitor list, hedged recommendations with
+"Mengapa/Berdasarkan/Penanggung jawab/Selesai ketika" boxes, an over-long
+method section, an unused JSON button). Decisions:
+
+1. **Before G1.** The report rework ([Spec 021](../specs/021-report-v2/SPEC.md))
+   moves out of the parking lot and goes ahead of G1, in four parts: clean
+   layout, deeper writing, competitor map, answers in a side panel.
+2. **Confident advice.** Facts in a report must still come from the saved
+   answers. Advice may be confident expert guidance, drawn from a written
+   Nuave playbook the founder approves. A report never claims that something
+   *caused* the business's result. This replaces the writer's "do not
+   diagnose from absence" instruction; `AGENTS.md` rules 7 to 9 stand.
+3. **No score yet.** No 0 to 100 score; a short verdict and one row of ten
+   dots per source carry the big picture.
+4. **Lo-fi first.** Built from the spec without a Figma design; the founder
+   adjusts the look afterwards.
+
 ## 2026-10-26 — AC-14 passed; its findings go to the parking lot
 
 Yasir ran AC-14 (order NV-3WDSAY): delivered in 12.5 minutes for USD 0.177,
