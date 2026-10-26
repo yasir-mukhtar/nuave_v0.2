@@ -113,20 +113,20 @@ p { margin: 0; }
 /* Figma "Legends" (2011:24): grey rings for absent, violet ring + dot for a
    cited website, solid violet for named, solid violet + check for recommended. */
 .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-.dot[data-s="none"], .dot[data-s="noaio"] { border: 1.5px solid var(--dot-none); background: var(--bg); }
+.dot[data-s="none"], .dot[data-s="noaio"] { box-shadow: inset 0 0 0 1.5px var(--dot-none); background: var(--bg); }
 .dot[data-s="noaio"]::after { content: ""; width: 10px; height: 2px; border-radius: 2px; background: var(--dot-none); }
-.dot[data-s="cited"] { border: 1.5px solid var(--dot-rec); background: var(--bg); }
-.dot[data-s="cited"]::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--dot-rec); }
+.dot[data-s="cited"] { box-shadow: inset 0 0 0 1.5px var(--dot-rec); background: var(--bg); }
+.dot[data-s="cited"]::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--dot-rec); }
 .dot[data-s="mentioned"], .dot[data-s="recommended"] { background: var(--dot-rec); }
-.dot[data-s="recommended"] svg { width: 13px; height: 13px; color: var(--on-accent); }
-.dot[data-s="failed"] { border: 1.5px dashed var(--dot-none); }
+.dot[data-s="recommended"] svg { display: block; width: 12px; height: 12px; color: var(--on-accent); }
+.dot[data-s="failed"] { border: 1.5px dashed var(--dot-none); box-sizing: border-box; }
 .dot[data-s="notasked"] { visibility: hidden; }
 .dot.sm { width: 18px; height: 18px; }
 .dot.sm[data-s="noaio"]::after { width: 8px; }
 .dot.sm[data-s="cited"]::after { width: 4px; height: 4px; }
-.dot.sm[data-s="recommended"] svg { width: 11px; height: 11px; }
+.dot.sm[data-s="recommended"] svg { width: 10px; height: 10px; }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 12.5px; color: var(--muted); }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend span:not(.dot) { display: inline-flex; align-items: center; gap: 6px; }
 .summary > * { min-width: 0; }
 .legend .scale { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 6px 12px; border-radius: 999px; background: var(--surface); }
 .jump { font-weight: 500; text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
@@ -140,7 +140,7 @@ p { margin: 0; }
 /* Section bands */
 .band { border-top: 1px solid var(--line); }
 .band > .gutter > .col { padding-block: 52px 56px; display: grid; gap: 22px; }
-.band.wash { background: radial-gradient(90% 60% at 50% 0%, var(--band-glow) 0%, transparent 100%), linear-gradient(180deg, var(--accent-wash) 0%, var(--bg) 55%); }
+.band.wash { border-top: 0; background: radial-gradient(75% 65% at 100% 100%, var(--band-glow) 0%, transparent 100%), linear-gradient(180deg, var(--bg) 0%, var(--bg) 35%, var(--accent-wash) 100%); }
 .band.grey { background: var(--surface); }
 .sec-head { display: grid; gap: 6px; }
 .sec-head h2 { font-size: clamp(24px, 4vw, 30px); line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; }
@@ -168,10 +168,15 @@ p { margin: 0; }
 .logo-box { width: 36px; height: 36px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; overflow: hidden; font-weight: 600; font-size: 13px; color: var(--fg-2); }
 .logo-box img { width: 22px; height: 22px; }
 /* The owner's clinic: its own inset card inside the list, not a selected row. */
-.comp-row.you { margin: 8px; padding: 13px 14px; border: 1px solid var(--you-border); border-radius: 12px; background: linear-gradient(100deg, var(--accent-wash) 0%, var(--bg) 75%); }
-.comp-row.you + .comp-row { border-top: 0; }
+.comp-row.you { position: relative; padding-block: 22px; }
+.comp-row.you::before { content: ""; position: absolute; inset: 8px 6px; border: 1px solid var(--you-border); border-radius: 12px; background: linear-gradient(100deg, var(--accent-wash) 0%, var(--bg) 75%); }
+.comp-row.you > * { position: relative; }
+.site { color: var(--muted); font-size: 12.5px; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; border-radius: 4px; }
+.site svg { width: 12px; height: 12px; opacity: 0.55; transition: opacity 0.15s var(--ease); }
+.site:hover, .site:focus-visible { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+.site:hover svg, .site:focus-visible svg { opacity: 1; }
 .name { font-weight: 600; line-height: 1.35; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
-.name small { flex-basis: 100%; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.name small, .name .meta-line { flex-basis: 100%; font-weight: 400; color: var(--muted); font-size: 12.5px; }
 .you-pill { font-size: 11.5px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; }
 .why { grid-column: 2 / 4; font-size: 13.5px; color: var(--fg-2); }
 .why b { font-weight: 500; color: var(--muted); }
@@ -181,8 +186,14 @@ p { margin: 0; }
 .comp-tail { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; background: var(--surface); }
 .comp-tail p { font-size: 13px; color: var(--muted); }
 .tail-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.tail-list li { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
-.tail-list li span { color: var(--muted); }
+.tail-list li > * { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; padding: 4px 11px; border-radius: 999px; }
+.tail-list a { background: var(--bg); border: 1px solid var(--line-2); color: var(--fg); text-decoration: none; transition: border-color 0.15s var(--ease), color 0.15s var(--ease); }
+.tail-list a svg { width: 12px; height: 12px; color: var(--muted); }
+.tail-list a:hover, .tail-list a:focus-visible { border-color: var(--accent); color: var(--accent-ink); }
+.tail-list a:hover svg { color: var(--accent-ink); }
+.tail-list .plain { background: var(--surface-2); border: 1px solid transparent; color: var(--fg-2); }
+.tail-list li em { font-style: normal; color: var(--muted); }
+.tail-note { font-size: 12px; color: var(--muted); }
 .takeaways { display: grid; gap: 12px; }
 @media (min-width: 640px) { .takeaways { grid-template-columns: repeat(3, 1fr); } }
 .take { background: var(--surface); border-radius: 14px; padding: 16px; display: grid; gap: 6px; align-content: start; }
@@ -200,8 +211,8 @@ p { margin: 0; }
 
 /* Recommendations */
 .recs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: rec; }
-.rec { background: radial-gradient(120% 110% at 0% 0%, var(--rec-glow) 0%, transparent 42%), var(--bg); border: 1px solid var(--rec-border); box-shadow: 0 1px 2px rgba(22, 22, 29, 0.04), 0 8px 24px -12px rgba(83, 58, 253, 0.18); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 6px 14px; }
-.rec::before { counter-increment: rec; content: counter(rec); width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(140deg, #8f7eff 0%, var(--accent) 60%); color: #ffffff; font-weight: 700; display: grid; place-items: center; font-size: 14px; grid-row: 1 / 3; box-shadow: 0 4px 12px -4px rgba(83, 58, 253, 0.55); }
+.rec { background: var(--bg); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(22, 22, 29, 0.04), 0 6px 16px -10px rgba(22, 22, 29, 0.12); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 6px 14px; }
+.rec::before { counter-increment: rec; content: counter(rec); width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; display: grid; place-items: center; font-size: 14px; grid-row: 1 / 3; }
 .rec h3 { font-size: 18px; line-height: 1.35; letter-spacing: -0.01em; font-weight: 650; }
 .rec p { color: var(--fg-2); max-width: 64ch; }
 
@@ -237,8 +248,12 @@ p { margin: 0; }
 [data-tip] { position: relative; display: inline-flex; }
 [data-tip]::after { content: attr(data-tip); position: absolute; right: -6px; bottom: calc(100% + 8px); background: var(--fg); color: var(--bg); font-size: 12px; font-weight: 500; line-height: 1.3; padding: 5px 9px; border-radius: 7px; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(3px); transition: opacity 0.15s var(--ease), transform 0.15s var(--ease); z-index: 5; }
 [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: none; }
-.qhead [data-tip]::after { bottom: auto; top: calc(100% + 8px); transform: translateY(-3px); }
-.qhead [data-tip]:hover::after, .qhead [data-tip]:focus-visible::after { transform: none; }
+.qhead [data-tip]::after { right: auto; left: 50%; transform: translate(-50%, 3px); }
+.qhead [data-tip]:hover::after, .qhead [data-tip]:focus-visible::after { transform: translate(-50%, 0); }
+@media (max-width: 520px) {
+  .qhead [data-tip]:last-child::after { left: auto; right: -6px; transform: translateY(3px); }
+  .qhead [data-tip]:last-child:hover::after, .qhead [data-tip]:last-child:focus-visible::after { transform: none; }
+}
 
 /* Notes */
 .notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
@@ -561,7 +576,8 @@ const DATA = __DATA__;
 const ICON = {
   chatgpt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.217 19.384a3.501 3.501 0 0 0 6.783 -1.217v-5.167l-6 -3.35"/><path d="M5.214 15.014a3.501 3.501 0 0 0 4.446 5.266l4.34 -2.534v-6.946"/><path d="M6 7.63c-1.391 -.236 -2.787 .395 -3.534 1.689a3.474 3.474 0 0 0 1.271 4.745l4.263 2.514l6 -3.348"/><path d="M12.783 4.616a3.501 3.501 0 0 0 -6.783 1.217v5.067l6 3.45"/><path d="M18.786 8.986a3.501 3.501 0 0 0 -4.446 -5.266l-4.34 2.534v6.946"/><path d="M18 16.302c1.391 .236 2.787 -.395 3.534 -1.689a3.474 3.474 0 0 0 -1.271 -4.745l-4.308 -2.514l-5.955 3.42"/></svg>',
   google: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.945 11a9 9 0 1 1 -3.284 -5.997l-2.655 2.392a5.5 5.5 0 1 0 2.119 6.605h-4.125v-3h7.945z"/></svg>',
-  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12.5l4 4l8 -8.5"/></svg>',
 };
 const SOURCE_NAME = { chatgpt: "ChatGPT", google: "Google AI Overview" };
 const LABEL = {
@@ -617,7 +633,8 @@ function logo(c) {
 function compRow(c) {
   const total = c.chatgpt + c.google;
   const split = [c.chatgpt ? `ChatGPT ${c.chatgpt}` : "", c.google ? `Google ${c.google}` : "", c.cited ? `dikutip ${c.cited}` : ""].filter(Boolean).join(" · ");
-  const sub = c.rating ? `<small>${esc(c.rating)}</small>` : c.domain ? `<small>${esc(c.domain)}</small>` : "";
+  const site = c.domain ? `<a class="site" href="https://${esc(c.domain)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">${esc(c.domain)}${ICON.ext}</a>` : "";
+  const sub = c.rating || site ? `<span class="meta-line">${[site, c.rating ? esc(c.rating) : ""].filter(Boolean).join(" · ")}</span>` : "";
   return `<div class="comp-row${c.you ? " you" : ""}">${logo(c)}<div class="name">${esc(c.name)}${c.you ? '<span class="you-pill">Klinik Anda</span>' : ""}${sub}</div><div class="stats"><strong>${total}×</strong>${c.rec ? `direkomendasikan ${c.rec}×<br>` : ""}<span class="split">${split}</span></div><p class="why"><b>Disebut AI karena:</b> ${esc(c.why)}</p></div>`;
 }
 const comps = [...DATA.competitors].sort((a, b) => b.chatgpt + b.google - (a.chatgpt + a.google) || b.rec - a.rec);
@@ -625,7 +642,12 @@ const full = comps.filter((c) => c.full);
 const tail = comps.filter((c) => !c.full);
 document.getElementById("comp").innerHTML =
   full.map(compRow).join("") +
-  `<div class="comp-tail"><p>${tail.length} klinik lain disebut sekali:</p><ul class="tail-list">${tail.map((c) => `<li>${esc(c.name)}${c.rec ? " <span>· direkomendasikan</span>" : ""}</li>`).join("")}</ul></div>`;
+  `<div class="comp-tail"><p>${tail.length} klinik lain disebut sekali:</p><ul class="tail-list">${tail.map((c) => {
+    const label = `${esc(c.name)}${c.rec ? " <em>· direkomendasikan</em>" : ""}`;
+    return c.domain
+      ? `<li><a href="https://${esc(c.domain)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" title="${esc(c.domain)}">${label}${ICON.ext}</a></li>`
+      : `<li><span class="plain">${label}</span></li>`;
+  }).join("")}</ul><p class="tail-note">Klinik dengan ikon panah punya website yang dikutip AI; ketuk untuk membukanya.</p></div>`;
 
 /* Answers table, header row inside */
 document.getElementById("qlist").innerHTML =
