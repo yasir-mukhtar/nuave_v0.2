@@ -6,6 +6,27 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-26 — Cookie notice: layered disclosure (Spec 021)
+
+Yasir replaced the Spec 021 notice wording (Q-1, option A) with a layered
+notice. First layer: "**Help us understand what works** We use cookies and
+limited purchase information to measure which ads lead to sales. Your
+report and business answers are never shared with advertising partners.",
+a visible **How it works** link, and the buttons Don't allow and Allow. How
+it works opens, inside the notice and before any choice, a short
+explanation of the data shared (including the hashed order email), with
+whom (Meta) and why; the privacy page gives the full detail and names Meta.
+Don't allow turns off both the browser Pixel and server conversion
+matching.
+
+This supersedes the 2026-10-25 rule ("Cookie notice in English, shorter")
+that the server step brings the email back into the notice itself, and
+privacy item 1's "the notice names it": the information must instead be
+clearly available before consent. Yasir's view is that informed consent
+does not require the hashed email in the first layer; this is recorded as
+a decision for the lawyer's check, not a claim that it is compliant. The
+How it works wording (Spec 021 Q-9) is still for Yasir to approve.
+
 ## 2026-10-26 — Approve Spec 021 (Meta Conversions API, server Purchase)
 
 Yasir approved [Spec 021](../specs/021-meta-conversions-api/SPEC.md)

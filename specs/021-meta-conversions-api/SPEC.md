@@ -1,8 +1,10 @@
 # Spec 021: Meta Conversions API (server Purchase event)
 
-> Status: **Approved** by Yasir on 2026-10-26 (revision 4: his answers to
-> Q-1 to Q-8, see Decisions). Revisions 2 and 3 applied independent review
-> rounds 1 and 2; round 3 PASS (PR #170).
+> Status: **Approved** by Yasir on 2026-10-26 (revision 5: his answers to
+> Q-1 to Q-8, with the layered cookie notice of Q-1; see Decisions). The
+> "How it works" wording (Q-9) and the layered approach itself need the
+> lawyer check before ads start. Revisions 2 and 3 applied independent
+> review rounds 1 and 2; round 3 PASS (PR #170).
 > Owner: orchestrator
 > Updated: 2026-10-26
 > Implements: privacy page change notes, "Before the Meta Pixel or
@@ -69,8 +71,9 @@ status until it shows the payment as received.
 - One server event: **Purchase**, sent once per paid order.
 - A small server route the browser calls when it shows the paid screen.
 - A random event code per paid order, shared by the Pixel and the server.
-- The cookie notice naming the coded order email (wording in Q-1), and the privacy
-  page change that goes with it (Q-2).
+- A layered cookie notice (Q-1): a short, purpose-led notice, a visible
+  "How it works" link that opens a concise explanation inside the notice
+  (Q-9), and the privacy page change that goes with it (Q-2).
 - Secret `META_CAPI_ACCESS_TOKEN` in the deploy job; an optional test code
   for Meta's Test Events screen.
 - Switching off Cloudflare's automatic per-request log (R-22, Q-8).
@@ -93,8 +96,9 @@ status until it shows the payment as received.
 
 ## Experience
 
-Nothing changes on screen except the cookie notice text (Q-1) and the
-privacy page (Q-2); everyone is asked for their cookie choice again. The paid
+Nothing changes on screen except the cookie notice (Q-1: new text and a
+"How it works" link that opens a short explanation within the notice) and
+the privacy page (Q-2); everyone is asked for their cookie choice again. The paid
 screen appears exactly as fast as today. The server call happens in the
 background and its outcome is never shown.
 
@@ -228,14 +232,34 @@ background and its outcome is never shown.
 
 ### Words and records
 
-- **R-19 Cookie notice.** Before this ships, the notice names the coded
-  order email (privacy item 1), in the exact wording of Q-1. The notice
-  calls Meta "our ad partner"; the linked privacy page names Meta.
+- **R-19 Cookie notice, first layer.** Before this ships, the notice shows
+  the exact Q-1 text: short and about the purpose, with a visible
+  **How it works** link and the buttons Don't allow and Allow, both one tap
+  and in plain view. It does not need to name the coded email or Meta; this
+  replaces privacy item 1's "the notice names it" and the 2026-10-25 rule
+  that the server step brings the email back into the notice.
+- **R-19a Second layer, before consent.** **How it works** opens the Q-9
+  explanation inside the notice (it expands in place; no new page, nothing
+  loaded from Meta), with Don't allow and Allow still in reach and a link
+  to the privacy page. It states what is shared (including the coded order
+  email), with whom (Meta), and why, so this is clearly available before
+  the visitor chooses. It is the same when the notice is reopened from
+  **Pengaturan cookie**, and follows Spec 019 R-14 (focus and buttons never
+  hidden on a phone).
+- **R-19b Don't allow means no Meta at all.** Don't allow, no choice, or a
+  choice under an older privacy version turns off both the browser Pixel
+  (Spec 019 R-02, R-11) and server conversion matching (R-05): no call to
+  the route, so no hashed email, IP address or browser type reaches Meta
+  for that order. Switching to Don't allow later stops every send not yet
+  made; a Purchase already sent cannot be recalled (the privacy page says
+  withdrawal does not undo earlier processing, section 5).
 - **R-20 Privacy page.** Version 1.4 (`PRIVACY_VERSION` and date in
   `src/lib/legal.ts`, page and `PRIVACY.md` together) with the section 10
-  changes of Q-2. The change notes record that items 2 and 7 are met and
-  how, that this spec changes Spec 019 R-09 and R-10, and how Q-8 was
-  settled.
+  changes of Q-2; it remains the full explanation and names Meta. The
+  change notes record that items 2 and 7 are met and how, that item 1 now
+  reads "the notice links to a short explanation, shown before the choice,
+  that names the hashed order email" (R-19, R-19a), that this spec changes
+  Spec 019 R-09 and R-10, and how Q-8 was settled.
 - **R-21 Cleanup.** The hourly cleanup clears the order's event code when it
   makes the order anonymous. The send time, version and outcome code may
   stay on the bare row; they identify no one.
@@ -283,6 +307,14 @@ background and its outcome is never shown.
 - Consent proof: UU PDP, as we understand it, expects Nuave to be able to
   show the consent was given; the stored version and time do that for each
   send. Lawyer check alongside the other open privacy checks.
+- **Layered notice, for legal review.** The founder's view (2026-10-26) is
+  that informed consent does not require the first layer to name the hashed
+  email, provided the explanation is clearly available before the choice
+  and the full detail is on the privacy page. This is a decision awaiting
+  the lawyer's check, not a claim that it is compliant. Points for the
+  lawyer: whether the Q-1 and Q-9 text meet UU PDP's requirements for
+  informed consent, and whether they meet Meta's Business Tools terms on
+  notice to visitors.
 
 ## Acceptance criteria
 
@@ -316,9 +348,10 @@ background and its outcome is never shown.
   one call to the route carries the order and privacy version. With the
   route made to hang or fail, the paid screen appears as fast as without it
   and shows no error.
-- **AC-08** Browser test: no call to the route with Don't allow or no
-  choice; with Don't allow chosen in another tab before the paid screen;
-  on `/r`; on `/uji`; and in a tab with a test-pass code.
+- **AC-08** Browser test: no call to the route and no Pixel event with
+  Don't allow or no choice; with Don't allow chosen in another tab before
+  the paid screen; on `/r`; on `/uji`; and in a tab with a test-pass code
+  (no call to the route in each case; R-19b).
 - **AC-09** The deploy job in `ci.yml` lists `META_CAPI_ACCESS_TOKEN` among
   its Worker secrets; `pr-preview.yml` sets no Meta token.
 - **AC-10** The cleanup clears the event code of an order it makes
@@ -326,6 +359,10 @@ background and its outcome is never shown.
 - **AC-11** The notice text matches Q-1 exactly; the privacy page shows
   version 1.4 with the Q-2 changes, and a choice stored under 1.3 brings
   the notice back (Spec 019 R-03).
+- **AC-11a** Browser test (phone 390×844 and desktop): **How it works** is
+  visible in the notice, opens the Q-9 text in place with no request to a
+  Meta address, keeps Don't allow and Allow visible and tappable, and links
+  to the privacy page; the same from **Pengaturan cookie**.
 - **AC-12** Founder-run (see Founder steps): one sandbox purchase with the
   test code shows a server Purchase in Test Events, 249000 IDR, with email,
   IP address and browser type matched, and the browser Purchase counted once
@@ -386,20 +423,23 @@ Cloudflare's current screens.
 
 ## Decisions (answered by Yasir on 2026-10-26)
 
-- **Q-1 Cookie notice wording: option A.** The notice does not name Meta
-  (as decided on 2026-10-25, the linked privacy page names it). Exact text:
+- **Q-1 Cookie notice: layered disclosure** (Yasir, 2026-10-26; replaces
+  the options A and B offered earlier). First layer, exact text:
 
-  > 🍪 **Allow cookies?**
-  > Cookies help us measure our ads. If you buy, our ad partner gets a
-  > coded version of your order email, to see which ad brought you. Your
-  > report and answers are never shared. [Privacy policy]
+  > **Help us understand what works**
+  > We use cookies and limited purchase information to measure which ads
+  > lead to sales. Your report and business answers are never shared with
+  > advertising partners. [How it works]
   >
   > [Don't allow] [Allow]
 
-  Buttons unchanged. Yasir asked whether Meta could go unnamed everywhere;
-  it stays named on the privacy page, because Meta's terms for advertisers
-  and UU PDP, as we understand them, expect visitors to be told who
-  receives the data.
+  The second layer (Q-9) and the privacy page explain the data shared,
+  including the hashed order email, and name Meta. Yasir's reasoning:
+  informed consent without needlessly alarming visitors or hiding what
+  happens. Kept as a decision for legal review (see Evidence), not a claim
+  of compliance. The privacy page keeps naming Meta, because Meta's terms
+  for advertisers and UU PDP, as we understand them, expect visitors to be
+  told who receives the data.
 - **Q-2 Privacy page: version 1.4, with a reassurance paragraph.** Raising
   the version asks everyone to choose again, under the notice above. The
   public changes, all in section 10:
@@ -438,6 +478,28 @@ Cloudflare's current screens.
   history of past requests and cron runs (a check like the 2026-10-14 cron
   CPU reading needs a temporary switch back on).
 
+- **Q-9 "How it works" text (open, for Yasir).** Proposed, English like the
+  notice:
+
+  > **How it works**
+  > - If you allow, our advertising partner, Meta (Facebook and Instagram),
+  >   sets cookies so we can see which ads bring visitors.
+  > - If you buy, we also send Meta that a purchase happened and its value
+  >   (Rp249.000), your IP address and browser type, and your order email
+  >   in coded (hashed) form, never as readable text. Meta uses these to
+  >   match the purchase to an ad, and to show our ads to people similar to
+  >   our buyers.
+  > - We never send your report, your questions, AI answers or your
+  >   business details.
+  > - If you don't allow, nothing is sent to Meta, from your browser or
+  >   from our server. You can change your choice anytime under Cookie
+  >   settings at the bottom of the page.
+  > [Privacy policy]
+
+  **Recommended:** approve as written. It names Meta here because this is
+  the place a visitor goes to learn who receives the data; the first layer
+  stays free of it, as Yasir chose. Lawyer check with Q-1.
+
 ## Implementation notes
 
 - One migration (next free number) adds nullable columns to `orders`: the
@@ -459,3 +521,5 @@ Cloudflare's current screens.
 Not started. Review round 1 (PR #170, 2026-10-26): ALMOST; findings 1–8
 applied in revision 2. Round 2: ALMOST; findings 1–5 applied in revision 3.
 Round 3: PASS; its two nits applied. Approved 2026-10-26 (revision 4).
+Revision 5 (same day): the layered cookie notice of Q-1, R-19a, R-19b,
+AC-11a and Q-9, on Yasir's instruction; not yet re-reviewed.
