@@ -12,6 +12,7 @@ import {
 } from "./direct-ten-context-v2";
 import {
   categoryComparisonFallbackName,
+  distinctiveBrandTokens,
   normalizeIndonesianIdentity,
 } from "./questions-id";
 
@@ -212,12 +213,10 @@ export function projectQuestionFactsV2(input: {
   }
   const sourceUrl = new URL(source.normalizedUrl);
   const market = context.market?.value;
-  const categoryTokens = new Set(
-    normalizeIndonesianIdentity(context.category.value).split(" "),
+  const brandTokens = distinctiveBrandTokens(
+    context.identity.name,
+    context.category.value,
   );
-  const brandTokens = normalizeIndonesianIdentity(context.identity.name)
-    .split(" ")
-    .filter((token) => token.length > 3 && !categoryTokens.has(token));
   const identifying = (value: string) =>
     brandTokens.some((token) =>
       normalizeIndonesianIdentity(value).split(" ").includes(token),
@@ -747,12 +746,10 @@ export function parseQuestionFactsV3(value: unknown): FactsResult {
   // abstractions. A branch name always identifies the audited location; a
   // product target is identifying only when it carries a distinctive brand
   // token, so an ordinary confirmed offering stays usable in unnamed context.
-  const categoryTokens = new Set(
-    normalizeIndonesianIdentity(facts.category).split(" "),
+  const distinctiveTokens = distinctiveBrandTokens(
+    facts.identity.brand,
+    facts.category,
   );
-  const distinctiveTokens = normalizeIndonesianIdentity(facts.identity.brand)
-    .split(" ")
-    .filter((token) => token.length > 3 && !categoryTokens.has(token));
   const carriesBrandToken = (value: string) => {
     const tokens = normalizeIndonesianIdentity(value).split(" ");
     return distinctiveTokens.some((token) => tokens.includes(token));

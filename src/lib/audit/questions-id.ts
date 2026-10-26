@@ -231,6 +231,103 @@ export function normalizeIndonesianIdentity(value: string) {
     .trim();
 }
 
+/**
+ * Words that often sit inside a business name but describe what it is, not
+ * who it is. "Sozo Skin Clinic" sells "Skin Booster": "skin" is in both, yet a
+ * question about skin boosters does not name Sozo. Counting such a word as a
+ * brand word made every question on the clinic's top service read as naming
+ * the business, so the question writer failed for that clinic every time
+ * (2026-10-26). Lowercase, as `normalizeIndonesianIdentity` returns words.
+ */
+export const GENERIC_NAME_WORDS: ReadonlySet<string> = new Set([
+  // Clinics and beauty (the first market).
+  "skin",
+  "skincare",
+  "clinic",
+  "clinics",
+  "klinik",
+  "beauty",
+  "beautycare",
+  "care",
+  "aesthetic",
+  "aesthetics",
+  "estetika",
+  "estetik",
+  "derma",
+  "dermal",
+  "dermatology",
+  "kecantikan",
+  "cantik",
+  "kulit",
+  "wajah",
+  "face",
+  "facial",
+  "body",
+  "hair",
+  "rambut",
+  "nail",
+  "nails",
+  "lash",
+  "lashes",
+  "brow",
+  "brows",
+  "laser",
+  "slim",
+  "slimming",
+  "glow",
+  "spa",
+  "salon",
+  "studio",
+  "wellness",
+  "dental",
+  "gigi",
+  "medical",
+  "medika",
+  "medica",
+  "health",
+  "sehat",
+  "center",
+  "centre",
+  "house",
+  "rumah",
+  "lab",
+  // Other everyday business words.
+  "coffee",
+  "kopi",
+  "cafe",
+  "bakery",
+  "kitchen",
+  "resto",
+  "restaurant",
+  "store",
+  "shop",
+  "toko",
+  "official",
+  "indonesia",
+  "group",
+  "express",
+]);
+
+/** The words of a business name that identify it: longer than three letters,
+ * not part of its category, and not a generic name word. An offering that
+ * holds one of them (Kopi Kenangan's "Kenangan Latte") names the business. */
+export function distinctiveBrandTokens(
+  brand: string,
+  category: string,
+): string[] {
+  const categoryTokens = new Set(
+    normalizeIndonesianIdentity(category).split(" "),
+  );
+  return normalizeIndonesianIdentity(brand)
+    .split(" ")
+    .filter(
+      (token) =>
+        token.length > 3 &&
+        !categoryTokens.has(token) &&
+        !GENERIC_NAME_WORDS.has(token),
+    );
+}
+
 function normalizeId(value: string) {
   return normalizeIndonesianIdentity(value);
 }

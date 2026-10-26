@@ -1,10 +1,39 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-25
+> Updated: 2026-10-26
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-26 — Question writing: four fixes and a live canary
+
+On 2026-10-26 a paid order with a search city (NV-3WDSAY, a skin clinic)
+could not get its ten questions after three tries. A live replay found four
+causes, all fixed together on the founder's request for a durable fix:
+
+1. **Room to think.** The provider's hosts now think longer before they
+   answer, and the thinking shares the 4,096-token reply limit; some replies
+   were cut off ("length"). The limit is now 16,384. Cost follows the tokens
+   actually used, not the limit.
+2. **Billing.** Cheaper Inference moved the billed cost to a new field, so
+   each call's USD 0.05 hold was never settled and counted against the
+   order's USD 0.25 question allowance. Nuave now reads the new field, the old
+   one, and `usage.cost`.
+3. **The brief and the check disagreed.** The check needs every key word of a
+   search topic in a question; the brief never named those words. The brief
+   now lists them per topic and says so.
+4. **Generic words in a name.** For "Sozo Skin Clinic", "skin" counted as the
+   brand, so its own "Skin Booster" was treated as its name and every skin
+   booster question was rejected. Generic words (skin, clinic, beauty, kopi,
+   and so on) no longer count as brand words.
+
+Also: a cut-off reply is retried like a rejected one; each request writes one
+line to the Worker log saying how each call ended (never the questions or the
+email); and `npm run test:canary:questions` runs the real writer once (about
+USD 0.01) and fails when replies use more than half the limit, a cost cannot
+be read, or a hold stays open. Before: 0 of 10 grounded tries passed. After:
+5 of 5 runs gave ten questions, all calls finished normally.
 
 ## 2026-10-25 — Cookie notice: "🍪 Allow cookies?", Allow as the main button
 

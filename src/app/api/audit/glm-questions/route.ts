@@ -135,6 +135,7 @@ export async function POST(request: Request) {
           }),
       );
       await noticeQuestionLimit(server.db, order, grounded, now);
+      logQuestionOutcome(order, grounded);
       if (grounded.status === "ok" && grounded.origins)
         await saveGeneratedQuestions(server.db, {
           orderId: order.id,
@@ -144,7 +145,10 @@ export async function POST(request: Request) {
             origins: grounded.origins,
           }),
         });
-      return NextResponse.json(projectQuestionOutcome(grounded));
+      // The per-call record is for the log only, never the browser.
+      const { tries: _tries, ...answer } = grounded;
+      void _tries;
+      return NextResponse.json(projectQuestionOutcome(answer));
     }
     const outcome = await withOrderSpend(
       { db: server.db, orderId: order.id },
@@ -155,6 +159,7 @@ export async function POST(request: Request) {
         }),
     );
     await noticeQuestionLimit(server.db, order, outcome, now);
+    logQuestionOutcome(order, outcome);
     return NextResponse.json(projectQuestionOutcome(outcome));
   } catch {
     // Execution may already have started: never fabricate no work or zero cost.
@@ -178,4 +183,32 @@ async function noticeQuestionLimit(
     detail: { order_number: order.order_number },
     now,
   }).catch(() => false);
+}
+
+/** One line per question-writing request in the Worker log (Cloudflare
+ * observability), so a failure's cause is on record: on 2026-10-26 three
+ * failed requests left only "incomplete", and finding "finish_reason:
+ * length" took a live replay. It carries the order number, how each call
+ * ended and why; never the questions, the intake or the email. */
+function logQuestionOutcome(
+  order: { order_number: string | null },
+  outcome: {
+    status: string;
+    reason?: string;
+    detail?: string;
+    mode?: string;
+    tries?: unknown[];
+  },
+) {
+  const line = JSON.stringify({
+    event: "question_writing",
+    order: order.order_number,
+    status: outcome.status,
+    ...(outcome.mode ? { mode: outcome.mode } : {}),
+    ...(outcome.reason ? { reason: outcome.reason } : {}),
+    ...(outcome.detail ? { detail: String(outcome.detail).slice(0, 200) } : {}),
+    ...(outcome.tries ? { tries: outcome.tries } : {}),
+  });
+  if (outcome.status === "ok") console.info(line);
+  else console.warn(line);
 }

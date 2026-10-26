@@ -1,0 +1,325 @@
+{
+  "version": "nuave-discovery-pool-v1",
+  "place": {
+    "kind": "indonesia",
+    "code": 2360
+  },
+  "phrases": [
+    "skin booster",
+    "botox estetika",
+    "laser estetika",
+    "facial estetika"
+  ],
+  "topics": [
+    {
+      "text": "skin booster",
+      "phrase": "skin booster",
+      "volume": 6600,
+      "dataMonth": "2026-09",
+      "core": [
+        "skin",
+        "booster"
+      ],
+      "intent": "transactional"
+    },
+    {
+      "text": "skin booster treatment",
+      "phrase": "skin booster",
+      "volume": 880,
+      "dataMonth": "2026-09",
+      "core": [
+        "skin",
+        "booster",
+        "treatment"
+      ],
+      "intent": "transactional"
+    },
+    {
+      "text": "harga skin booster",
+      "phrase": "skin booster",
+      "volume": 480,
+      "dataMonth": "2026-09",
+      "core": [
+        "harga",
+        "skin",
+        "booster"
+      ],
+      "intent": "commercial"
+    },
+    {
+      "text": "skin booster harga",
+      "phrase": "skin booster",
+      "volume": 480,
+      "dataMonth": "2026-09",
+      "core": [
+        "skin",
+        "booster",
+        "harga"
+      ],
+      "intent": "commercial"
+    },
+    {
+      "text": "biaya laser di klinik estetika",
+      "phrase": "laser estetika",
+      "volume": 10,
+      "dataMonth": "2026-09",
+      "core": [
+        "biaya",
+        "laser",
+        "di"
+      ],
+      "intent": "commercial"
+    },
+    {
+      "text": "facial estetika",
+      "phrase": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09",
+      "core": [
+        "facial"
+      ],
+      "intent": "informational"
+    },
+    {
+      "text": "harga facial di klinik estetika dr affandi",
+      "phrase": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09",
+      "core": [
+        "harga",
+        "facial",
+        "di",
+        "dr",
+        "affandi"
+      ],
+      "intent": "transactional"
+    },
+    {
+      "text": "facial di estetika berapa",
+      "phrase": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09",
+      "core": [
+        "facial",
+        "di",
+        "berapa"
+      ],
+      "intent": "informational"
+    },
+    {
+      "text": "harga facial klinik estetika dr affandi",
+      "phrase": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09",
+      "core": [
+        "harga",
+        "facial",
+        "dr",
+        "affandi"
+      ],
+      "intent": "commercial"
+    },
+    {
+      "text": "harga facial ellis estetika",
+      "phrase": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-08",
+      "core": [
+        "harga",
+        "facial",
+        "ellis"
+      ],
+      "intent": "commercial"
+    }
+  ],
+  "wordings": [
+    {
+      "origin": "keyword",
+      "text": "skin booster",
+      "topic": "skin booster",
+      "volume": 6600,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "skin booster treatment",
+      "topic": "skin booster treatment",
+      "volume": 880,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "harga skin booster",
+      "topic": "harga skin booster",
+      "volume": 480,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "skin booster harga",
+      "topic": "harga skin booster",
+      "volume": 480,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "biaya laser di klinik estetika",
+      "topic": "biaya laser di klinik estetika",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "facial estetika",
+      "topic": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "harga facial di klinik estetika dr affandi",
+      "topic": "harga facial di klinik estetika dr affandi",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "facial di estetika berapa",
+      "topic": "facial di estetika berapa",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "harga facial klinik estetika dr affandi",
+      "topic": "harga facial klinik estetika dr affandi",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "keyword",
+      "text": "harga facial ellis estetika",
+      "topic": "harga facial ellis estetika",
+      "volume": 10,
+      "dataMonth": "2026-08"
+    },
+    {
+      "origin": "autocomplete",
+      "text": "skin booster treatment adalah",
+      "topic": "skin booster treatment",
+      "volume": 880,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser cutting",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser quito",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser murcia",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser reseñas",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser and beauty",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser beauty hair",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "mooi laser & estetika robertson",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "urbana estetika.laser",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser kuatro",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "estetika laser fotos",
+      "topic": null,
+      "volume": null,
+      "dataMonth": null
+    },
+    {
+      "origin": "autocomplete",
+      "text": "harga facial estetika",
+      "topic": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "autocomplete",
+      "text": "facial wash estetika",
+      "topic": "facial estetika",
+      "volume": 10,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "people_also_ask",
+      "text": "Berapa bulan sekali treatment skin booster?",
+      "topic": "skin booster treatment",
+      "volume": 880,
+      "dataMonth": "2026-09"
+    },
+    {
+      "origin": "people_also_ask",
+      "text": "Treatment skin booster berapa?",
+      "topic": "skin booster treatment",
+      "volume": 880,
+      "dataMonth": "2026-09"
+    }
+  ],
+  "businessNames": [
+    "instagram natashaskincare",
+    "calysta",
+    "natasha",
+    "ristra",
+    "hdmall indonesia",
+    "tokopedia",
+    "instagram immoderma"
+  ],
+  "thin": false,
+  "incomplete": false,
+  "synthetic": false,
+  "createdAt": "2026-10-25T23:45:12.418Z"
+}

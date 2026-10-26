@@ -202,6 +202,8 @@ describe("questions from the pool and approval (R-07, R-10, R-11, AC-04, AC-05, 
     const outcome = await writeQuestions(id, context);
     expect(outcome.status).toBe("ok");
     expect(outcome.origins).toHaveLength(10);
+    // How each provider call ended goes to the log, not the browser.
+    expect(outcome).not.toHaveProperty("tries");
     expect(
       outcome.origins!.some((origin) => origin.label === "dicari_di_google"),
     ).toBe(true);
