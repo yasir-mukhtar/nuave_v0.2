@@ -31,10 +31,17 @@ causes, all fixed together on the founder's request for a durable fix:
 
 Also: a cut-off reply is retried like a rejected one; each request writes one
 line to the Worker log saying how each call ended, as codes only (never the
-reply text, the questions or the email); and `npm run test:canary:questions` runs the real writer once (about
-USD 0.01) and fails when replies use more than half the limit, a cost cannot
-be read, or a hold stays open. Before: 0 of 10 grounded tries passed. After:
-5 of 5 runs gave ten questions, all calls finished normally.
+reply text, the questions or the email; a crash logs "error" alone); and
+`npm run test:canary:questions` runs the real writer once on a live-mode test
+order (about USD 0.01) and fails when replies use more than half the limit, a
+cost cannot be read, or a call's spend record is not settled at that cost.
+Before: 0 of 10 grounded tries passed. After: 5 of 5 runs gave ten
+questions, all calls finished normally.
+
+The founder approved settling NV-3WDSAY's three stuck question holds
+(USD 0.05 each) at USD 0.0015 each in production, an upper bound from the
+replay (a call cut off at 4,096 tokens cost USD 0.0012), so the order can be
+retried with its full allowance.
 
 ## 2026-10-25 — Cookie notice: "🍪 Allow cookies?", Allow as the main button
 

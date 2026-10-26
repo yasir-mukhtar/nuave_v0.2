@@ -199,11 +199,25 @@ describe("questions from the pool and approval (R-07, R-10, R-11, AC-04, AC-05, 
     await discoveryPOST(
       post("/api/audit/discovery", { order_id: id, intake: frozen(context) }),
     );
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
     const outcome = await writeQuestions(id, context);
     expect(outcome.status).toBe("ok");
     expect(outcome.origins).toHaveLength(10);
-    // How each provider call ended goes to the log, not the browser.
+    // How each provider call ended goes to the log, not the browser, and the
+    // log line carries codes only: never a question.
     expect(outcome).not.toHaveProperty("tries");
+    const lines = log.mock.calls
+      .map(([line]) => String(line))
+      .filter((line) => line.includes('"question_writing"'));
+    log.mockRestore();
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0]!)).toMatchObject({
+      status: "ok",
+      mode: "grounded",
+      tries: [{ mode: "grounded", status: "ok" }],
+    });
+    for (const question of outcome.questions)
+      expect(lines[0]).not.toContain(question);
     expect(
       outcome.origins!.some((origin) => origin.label === "dicari_di_google"),
     ).toBe(true);

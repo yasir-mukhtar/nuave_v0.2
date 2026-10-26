@@ -1471,5 +1471,7 @@ them), and generic name words ("skin") treated as the brand
 (`distinctiveBrandTokens`). After the fixes: 5 of 5 runs ok (4 grounded, 1
 fallback), every call finished normally, 2.8k–4.2k reply tokens. Tests:
 `src/lib/audit/brand-words.test.ts`, `questions-id-glm.test.ts` (billing),
-`order-discovery-routes.test.ts` (log record kept from the browser), and the
+`question-tries.test.ts` (retry on a cut-off reply; no reply text in the log
+record), `order-discovery-routes.test.ts` (the log line, kept from the
+browser), and the
 live `scripts/canary/question-writer.spec.ts`.

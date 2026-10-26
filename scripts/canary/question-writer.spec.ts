@@ -12,7 +12,8 @@
  * - every call ends with finish_reason "stop", using less than half of
  *   INDONESIAN_QUESTION_GLM_MAX_OUTPUT_TOKENS (an early warning, well before
  *   a cut-off);
- * - every call's billed cost is readable, and no spend hold is left open.
+ * - every call's billed cost is readable, and its ledger hold is settled at
+ *   that cost (the order runs in live mode, so the ledger is used).
  *
  * Costs about $0.01 a run. Needs CHEAPERINFERENCE_API_KEY. Run with:
  *
@@ -31,6 +32,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 import { CONTEXT, makeOrder } from "../../src/lib/orders/orders.test-helper";
 import { openFileD1 } from "../../src/lib/spending/sqlite-d1.test-helper";
 import { withOrderSpend } from "../../src/lib/spending/provider-spend";
+import { usdToUnits } from "../../src/lib/spending/spend-ledger";
 import {
   directTenContextSchema,
   type DirectTenAuditContext,
@@ -94,7 +96,10 @@ it.skipIf(!process.env.CHEAPERINFERENCE_API_KEY)(
     );
     mocks.getCloudflareContext.mockReturnValue({ env: { SPEND_DB: d1.db } });
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "5");
-    const orderId = await makeOrder(d1.db, { now: new Date() });
+    // Live mode, so every call reserves and settles in the ledger as in
+    // production (synthetic mode skips the ledger).
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    const orderId = await makeOrder(d1.db, { mode: "live", now: new Date() });
 
     const record = {
       version: SMART_INTAKE_INPUT_VERSION,
@@ -147,13 +152,19 @@ it.skipIf(!process.env.CHEAPERINFERENCE_API_KEY)(
       );
       expect(call.cost).not.toBeNull();
     }
-    const open = await d1.db
+    // One ledger row per call, each settled at the cost the provider billed.
+    const rows = await d1.db
       .prepare(
-        "SELECT COUNT(*) AS n FROM provider_spend WHERE status = 'reserved'",
+        "SELECT status, held_units FROM provider_spend WHERE kind = 'order_call' AND order_id = ?1 ORDER BY created_at",
       )
-      .bind()
-      .first<{ n: number }>();
-    expect(open?.n).toBe(0);
+      .bind(orderId)
+      .all<{ status: string; held_units: number }>();
+    expect(rows.results).toEqual(
+      calls.map((call) => ({
+        status: "settled",
+        held_units: usdToUnits(call.cost!),
+      })),
+    );
   },
   600_000,
 );

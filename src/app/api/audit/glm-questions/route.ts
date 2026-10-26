@@ -40,6 +40,8 @@ export const runtime = "nodejs";
  * request or response is logged here; the raw envelope stays server-side.
  */
 export async function POST(request: Request) {
+  // Set once question writing starts, so a crash is on record too.
+  let writing: { order_number: string | null } | null = null;
   try {
     const switchedOff = auditSwitchResponse();
     if (switchedOff)
@@ -120,6 +122,7 @@ export async function POST(request: Request) {
     // Spec 018: an intake with "Kota untuk pencarian" is written from the
     // saved search pool (R-10) or the fallback (R-08); the questions and their
     // server-owned origins are saved on the order for approval (R-07).
+    writing = order;
     const frozen = parseFrozenSmartIntake(record.intake);
     const place = frozen ? contextSearchPlace(frozen.context) : null;
     if (frozen && place) {
@@ -162,6 +165,7 @@ export async function POST(request: Request) {
     logQuestionOutcome(order, outcome);
     return NextResponse.json(projectQuestionOutcome(outcome));
   } catch {
+    if (writing) logQuestionOutcome(writing, { status: "error" });
     // Execution may already have started: never fabricate no work or zero cost.
     return NextResponse.json(questionUnexpectedError(), { status: 500 });
   }
@@ -190,7 +194,8 @@ async function noticeQuestionLimit(
  * failed requests left only "incomplete", and finding "finish_reason:
  * length" took a live replay. It carries the order number, how each call
  * ended and why, as codes only: never a detail text (it can quote the
- * model's questions), the intake or the email. */
+ * model's questions), the intake or the email. A crash logs status "error"
+ * without the per-call record, which the crash loses. */
 function logQuestionOutcome(
   order: { order_number: string | null },
   outcome: {
