@@ -173,7 +173,8 @@ export type QuestionTry = {
   mode: QuestionMode;
   status: string;
   reason?: string;
-  detail?: string;
+  /** Only "finish_reason: <code>"; other detail texts can quote questions. */
+  finish?: string;
 };
 
 export type SearchGroundedOutcome = GlmQuestionsOutcome & {
@@ -181,6 +182,15 @@ export type SearchGroundedOutcome = GlmQuestionsOutcome & {
   /** Every call made, in order; never sent to the customer. */
   tries?: QuestionTry[];
 };
+
+function finishCode(outcome: GlmQuestionsOutcome): { finish?: string } {
+  const detail = "detail" in outcome ? outcome.detail : undefined;
+  const match =
+    typeof detail === "string"
+      ? /^finish_reason: ([a-z_]{1,24})$/.exec(detail)
+      : null;
+  return match ? { finish: match[1] } : {};
+}
 
 /** R-11: the added checks for one mode, with each question's origin. */
 export function searchChecks(
@@ -255,9 +265,7 @@ export async function prepareSearchGroundedQuestions(input: {
       ...("reason" in outcome && outcome.reason
         ? { reason: outcome.reason }
         : {}),
-      ...("detail" in outcome && outcome.detail
-        ? { detail: String(outcome.detail).slice(0, 200) }
-        : {}),
+      ...finishCode(outcome),
     });
     last = { ...outcome, mode, tries };
     const tryAgain =

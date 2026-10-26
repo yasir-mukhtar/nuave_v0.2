@@ -26,11 +26,12 @@ causes, all fixed together on the founder's request for a durable fix:
 4. **Generic words in a name.** For "Sozo Skin Clinic", "skin" counted as the
    brand, so its own "Skin Booster" was treated as its name and every skin
    booster question was rejected. Generic words (skin, clinic, beauty, kopi,
-   and so on) no longer count as brand words.
+   and so on) no longer count as brand words, unless the name has no other
+   words ("Beauty Glow Clinic" keeps them all).
 
 Also: a cut-off reply is retried like a rejected one; each request writes one
-line to the Worker log saying how each call ended (never the questions or the
-email); and `npm run test:canary:questions` runs the real writer once (about
+line to the Worker log saying how each call ended, as codes only (never the
+reply text, the questions or the email); and `npm run test:canary:questions` runs the real writer once (about
 USD 0.01) and fails when replies use more than half the limit, a cost cannot
 be read, or a hold stays open. Before: 0 of 10 grounded tries passed. After:
 5 of 5 runs gave ten questions, all calls finished normally.

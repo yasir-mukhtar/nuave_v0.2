@@ -27,9 +27,33 @@ describe("distinctiveBrandTokens", () => {
     expect(distinctiveBrandTokens("Kopi Kenangan", "Kedai kopi")).toEqual([
       "kenangan",
     ]);
+  });
+
+  it("keeps every word of a name made only of generic words", () => {
     expect(
       distinctiveBrandTokens("Beauty Glow Clinic", "Klinik kecantikan"),
-    ).toEqual([]);
+    ).toEqual(["beauty", "glow", "clinic"]);
+    const projection = projectQuestionFactsV2({
+      context: {
+        ...sozo(["Beauty Glow Signature Peel", "Laser Treatment"]),
+        identity: {
+          name: "Beauty Glow Clinic",
+          source: "https://beautyglowclinic.com/",
+          sourceOrigin: "owner",
+          aliases: [],
+          origin: "owner",
+        },
+      },
+      factVersion: 1,
+    });
+    if (projection.status !== "projected") throw new Error("not projected");
+    const brief = minimizedBriefFromQuestionFacts(projection.facts);
+    expect(
+      mentionsIndonesianBrand(
+        "Berapa harga Beauty Glow Signature Peel?",
+        brief,
+      ),
+    ).toBe(true);
   });
 });
 

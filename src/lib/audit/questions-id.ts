@@ -310,7 +310,9 @@ export const GENERIC_NAME_WORDS: ReadonlySet<string> = new Set([
 
 /** The words of a business name that identify it: longer than three letters,
  * not part of its category, and not a generic name word. An offering that
- * holds one of them (Kopi Kenangan's "Kenangan Latte") names the business. */
+ * holds one of them (Kopi Kenangan's "Kenangan Latte") names the business.
+ * A name made only of generic words ("Beauty Glow Clinic") keeps them all, so
+ * its "Beauty Glow Signature Peel" is still treated as its name. */
 export function distinctiveBrandTokens(
   brand: string,
   category: string,
@@ -318,14 +320,11 @@ export function distinctiveBrandTokens(
   const categoryTokens = new Set(
     normalizeIndonesianIdentity(category).split(" "),
   );
-  return normalizeIndonesianIdentity(brand)
+  const tokens = normalizeIndonesianIdentity(brand)
     .split(" ")
-    .filter(
-      (token) =>
-        token.length > 3 &&
-        !categoryTokens.has(token) &&
-        !GENERIC_NAME_WORDS.has(token),
-    );
+    .filter((token) => token.length > 3 && !categoryTokens.has(token));
+  const distinctive = tokens.filter((token) => !GENERIC_NAME_WORDS.has(token));
+  return distinctive.length > 0 ? distinctive : tokens;
 }
 
 function normalizeId(value: string) {

@@ -189,13 +189,13 @@ async function noticeQuestionLimit(
  * observability), so a failure's cause is on record: on 2026-10-26 three
  * failed requests left only "incomplete", and finding "finish_reason:
  * length" took a live replay. It carries the order number, how each call
- * ended and why; never the questions, the intake or the email. */
+ * ended and why, as codes only: never a detail text (it can quote the
+ * model's questions), the intake or the email. */
 function logQuestionOutcome(
   order: { order_number: string | null },
   outcome: {
     status: string;
     reason?: string;
-    detail?: string;
     mode?: string;
     tries?: unknown[];
   },
@@ -206,7 +206,6 @@ function logQuestionOutcome(
     status: outcome.status,
     ...(outcome.mode ? { mode: outcome.mode } : {}),
     ...(outcome.reason ? { reason: outcome.reason } : {}),
-    ...(outcome.detail ? { detail: String(outcome.detail).slice(0, 200) } : {}),
     ...(outcome.tries ? { tries: outcome.tries } : {}),
   });
   if (outcome.status === "ok") console.info(line);
