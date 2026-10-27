@@ -37,16 +37,19 @@ const list = (value: unknown): Json[] =>
 const text = (value: unknown): string =>
   typeof value === "string" ? value : "";
 
-/** A map address is a place, not the business's site, and may spell out a
- * street address: never kept as a website. */
+/** A map or search address is a place or a results page, not the business's
+ * site, and a map address may spell out a street address: never kept as a
+ * website. Any Google page counts (maps, search, a place card). */
 function isMapAddress(url: URL): boolean {
   const host = url.hostname.toLowerCase();
   const path = url.pathname.toLowerCase();
   return (
-    /(^|\.)maps\.google\.[a-z.]+$/.test(host) ||
-    (/(^|\.)google\.[a-z.]+$/.test(host) && path.startsWith("/maps")) ||
+    /(^|\.)google\.[a-z.]+$/.test(host) ||
     host === "maps.app.goo.gl" ||
-    (host === "goo.gl" && path.startsWith("/maps"))
+    (host === "goo.gl" && path.startsWith("/maps")) ||
+    host === "maps.apple.com" ||
+    (/(^|\.)bing\.com$/.test(host) &&
+      (path.startsWith("/maps") || path.startsWith("/search")))
   );
 }
 

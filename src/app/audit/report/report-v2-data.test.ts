@@ -393,6 +393,8 @@ describe("site icons (C-03)", () => {
       "https://www.instagram.com/klinik",
       "https://m.facebook.com/klinik",
       "https://wa.me/628123",
+      "https://t.me/klinik",
+      "https://line.me/R/ti/p/@klinik",
       "https://maps.google.com/?cid=1",
       "https://klinik.business.site/",
       "https://www.halodoc.com/klinik",

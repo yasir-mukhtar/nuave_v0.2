@@ -371,7 +371,8 @@ kept, so the founder's one live check was not needed:
 ChatGPT's `brand_entities` carry no reliable website (`urls` is "relevant
 URLs" and often null), so they add names only. Websites pass
 `phoneSafeUrl` (no messaging links, no phone number in the address), and
-map addresses (Google Maps, `maps.app.goo.gl`) are refused: a map link is a
+map and search addresses (any Google page, `maps.app.goo.gl`, Apple Maps,
+Bing Maps and search) are refused: a map link is a
 place, not the business's site, and can spell out a street address. Google's
 map result and organic result for the same name are merged: the website from
 either, the rating and reviews from the map result. The owner's own names are
@@ -395,7 +396,7 @@ looked up on Google's page too, so the owner's map listing is kept.
 - **Rating and reviews:** from the listing with a rating and the most
   reviews across both sources.
 - **Logos:** `https://<host>/favicon.ico` of the saved website, never for a
-  shared platform (Instagram, Facebook, WhatsApp, any Google domain, link
+  shared platform (Instagram, Facebook, WhatsApp, Telegram, LINE, any Google domain, link
   shorteners, marketplaces, health directories) or an IP address, and never
   on synthetic reports or the copy Browser Run prints (no outside request
   from the PDF).

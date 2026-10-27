@@ -169,7 +169,8 @@ function savedCompetitorRows(
     name: fact.name,
     chatgpt: fact.chatgpt.length,
     google: fact.google.length,
-    cards: fact.cards.length,
+    // `?? []`: a preview report saved before the field was renamed.
+    cards: (fact.cards ?? []).length,
     website: fact.website,
     rating: fact.rating,
     reviews: fact.reviews,
@@ -180,7 +181,7 @@ function savedCompetitorRows(
     .map((r) => r.name);
   counted.push({
     ...ownRow(two, ownNames[0] ?? ""),
-    cards: saved.own.cards.length,
+    cards: (saved.own.cards ?? []).length,
     website: saved.own.website,
     rating: saved.own.rating,
     reviews: saved.own.reviews,
@@ -308,6 +309,8 @@ const SHARED_HOSTS = [
   "youtube.com",
   "linktr.ee",
   "wa.me",
+  "t.me",
+  "line.me",
   "goo.gl",
   "bit.ly",
   "s.id",

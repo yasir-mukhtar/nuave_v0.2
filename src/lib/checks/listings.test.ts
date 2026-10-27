@@ -168,16 +168,20 @@ describe("Google's own page (C-01)", () => {
     ).toEqual([merged]);
   });
 
-  it("a map address is never kept as a website", () => {
+  it("a map or search address is never kept as a website", () => {
     for (const url of [
       "https://www.google.com/maps/place/Jl.+Kenanga+5,+Bandung",
       "https://maps.google.co.id/?q=Jl.+Kenanga+5",
+      "https://www.google.com/search?q=Klinik+Seroja",
       "https://maps.app.goo.gl/abc123",
       "https://goo.gl/maps/abc123",
+      "https://maps.apple.com/?address=Jl.+Kenanga+5",
+      "https://www.bing.com/maps?q=Jl.+Kenanga+5",
+      "https://www.bing.com/search?q=Klinik+Seroja",
     ])
       expect(listingWebsite(url), url).toBeNull();
-    expect(listingWebsite("https://www.google.com/search?q=x")).toBe(
-      "https://www.google.com/search?q=x",
+    expect(listingWebsite("https://klinikseroja.example/maps")).toBe(
+      "https://klinikseroja.example/maps",
     );
   });
 
