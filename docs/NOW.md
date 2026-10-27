@@ -261,7 +261,7 @@
   blocker), not Pages (Pages could not serve the static assets); worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
 - CI (`.github/workflows/ci.yml`): on every PR, code checks, unit tests, the
-  build and the three browser suites run side by side, and `validate` passes
+  build and the browser suites (the largest split in four) run side by side, and `validate` passes
   only when all of them pass; on `main`,
   `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
   Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.

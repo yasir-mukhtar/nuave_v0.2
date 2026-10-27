@@ -95,12 +95,34 @@ jobs:
           npm run build:cf
 
   browser-tests:
-    name: Browser tests (${{ matrix.suite }})
+    name: Browser tests (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        suite: [enabled, disabled, pixel]
+        # The enabled suite holds most of the tests, so it is split by test
+        # into four parts that run on separate machines. The tests do not
+        # depend on running in order, so --fully-parallel lets Playwright
+        # split inside a file, not only between files.
+        include:
+          - name: enabled 1/4
+            suite: enabled
+            args: --fully-parallel --shard=1/4
+          - name: enabled 2/4
+            suite: enabled
+            args: --fully-parallel --shard=2/4
+          - name: enabled 3/4
+            suite: enabled
+            args: --fully-parallel --shard=3/4
+          - name: enabled 4/4
+            suite: enabled
+            args: --fully-parallel --shard=4/4
+          - name: disabled
+            suite: disabled
+            args: ""
+          - name: pixel
+            suite: pixel
+            args: ""
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -132,7 +154,7 @@ jobs:
         run: npx playwright install-deps chromium
 
       - name: Run browser tests
-        run: npm run test:e2e:${{ matrix.suite }}
+        run: npm run test:e2e:${{ matrix.suite }} -- ${{ matrix.args }}
 
   validate:
     name: validate
