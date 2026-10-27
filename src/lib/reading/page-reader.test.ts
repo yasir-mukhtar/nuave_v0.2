@@ -35,6 +35,35 @@ describe("which pages are read (the reading test)", () => {
     ]);
   });
 
+  it("one page cited with and without tracking tags is read once", () => {
+    expect(
+      citedPagesToRead(
+        [
+          {
+            prompt_id: "q1",
+            url: "https://erhaultimate.co.id/find-clinic/845",
+          },
+          {
+            prompt_id: "q2",
+            url: "https://erhaultimate.co.id/find-clinic/845?utm_source=chatgpt.com",
+          },
+          {
+            prompt_id: "q3",
+            url: "https://klinik.example/harga?id=2&utm_medium=x&gclid=abc",
+          },
+        ],
+        null,
+      ),
+    ).toEqual([
+      {
+        url: "https://erhaultimate.co.id/find-clinic/845",
+        cited_in: ["q1", "q2"],
+      },
+      // A real query stays: it may be the page itself.
+      { url: "https://klinik.example/harga?id=2", cited_in: ["q3"] },
+    ]);
+  });
+
   it("at most ten cited pages", () => {
     const sources = Array.from({ length: 15 }, (_, i) => ({
       prompt_id: "q1",

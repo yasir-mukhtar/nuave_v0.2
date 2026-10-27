@@ -57,10 +57,18 @@ function readable(url: string): boolean {
 }
 
 /** The address without its fragment, so one page cited twice counts once. */
+/** Tracking tags that change an address but not its page ("?utm_source=
+ * chatgpt.com", which ChatGPT adds to links it cites). */
+const TRACKING_PARAM = /^(?:utm_.+|gclid|fbclid|srsltid|mc_cid|mc_eid)$/i;
+
+/** The address without its fragment or tracking tags, so one page cited
+ * twice, with and without "?utm_source=chatgpt.com", is read once. */
 function canonical(url: string): string {
   try {
     const parsed = new URL(url);
     parsed.hash = "";
+    for (const key of [...parsed.searchParams.keys()])
+      if (TRACKING_PARAM.test(key)) parsed.searchParams.delete(key);
     return parsed.toString();
   } catch {
     return url;
