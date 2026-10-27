@@ -371,7 +371,10 @@ async function freshBrowserPage(
     const url = new URL(route.request().url());
     if (
       url.origin !== new URL(baseURL!).origin ||
-      (url.pathname.startsWith("/api/") && url.pathname !== "/api/report")
+      (url.pathname.startsWith("/api/") &&
+        // The report's data, and its PDF (Spec 021 Part P).
+        url.pathname !== "/api/report" &&
+        url.pathname !== "/api/report/pdf")
     )
       return route.abort();
     return route.continue();
@@ -439,17 +442,33 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   expect(data.headers()["x-robots-tag"]).toContain("noindex");
   expect(data.headers()["referrer-policy"]).toBe("no-referrer");
 
-  // PDF is the browser's print (until Spec 021 Part P). The report has two
-  // Unduh PDF buttons (top bar and at the end); each prints once.
+  // Spec 021 Part P: the report has two Unduh PDF buttons (top bar and at
+  // the end). Each asks the PDF route with the secret in the body; local
+  // development has no Browser Run, so the route answers pdf_unavailable and
+  // the page prints, once per press (P-05).
   const printCalls = () =>
     fresh.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,
     );
   await expect(downloadPdfButtons(fresh)).toHaveCount(2);
+  const pdfAnswer = fresh.waitForResponse(
+    (answer) => new URL(answer.url()).pathname === "/api/report/pdf",
+  );
   await downloadPdfButtons(fresh).first().click();
-  expect(await printCalls()).toBe(1);
+  const pdf = await pdfAnswer;
+  expect(pdf.status()).toBe(501);
+  expect(pdf.request().url()).not.toContain(link.secret);
+  expect(pdf.request().postDataJSON()).toEqual({ secret: link.secret });
+  const unavailable = await fresh.request.post("/api/report/pdf", {
+    data: { secret: link.secret },
+  });
+  expect(unavailable.status()).toBe(501);
+  expect(await unavailable.json()).toMatchObject({ code: "pdf_unavailable" });
+  expect(unavailable.headers()["cache-control"]).toBe("no-store");
+  await expect.poll(printCalls).toBe(1);
   await downloadPdfButtons(fresh).last().click();
-  expect(await printCalls()).toBe(2);
+  await expect.poll(printCalls).toBe(2);
+  await expect(fresh.locator("[data-pdf-failed]")).toHaveCount(0);
   await fresh.emulateMedia({ media: "print" });
   for (const answer of await report.locator("[data-answer-body]").all())
     await expect(answer).toBeVisible();
@@ -940,13 +959,16 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await fresh.evaluate(() => {
     document.body.style.zoom = "";
   });
-  // One print tree: the PDF button prints once, and every answer shows in print.
+  // One print tree: the PDF button prints once (no Browser Run locally), and
+  // every answer shows in print.
   await downloadPdfButtons(fresh).first().click();
-  expect(
-    await fresh.evaluate(
-      () => (window as unknown as { __printCalls: number }).__printCalls,
-    ),
-  ).toBe(1);
+  await expect
+    .poll(() =>
+      fresh.evaluate(
+        () => (window as unknown as { __printCalls: number }).__printCalls,
+      ),
+    )
+    .toBe(1);
   await fresh.emulateMedia({ media: "print" });
   await expect(report.locator("[data-raw-answer]")).toHaveCount(0);
   await expect(report.locator("[data-answers-table]")).toBeHidden();
@@ -963,7 +985,11 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   await checkContentsNavigation();
   expect(external).toEqual([]);
-  // Opening the report asked only the report-data route, every time.
-  expect(Object.keys(calls)).toEqual(["POST /api/report"]);
+  // Opening the report asked only the report-data route, every time; the
+  // PDF button asked the PDF route.
+  expect(Object.keys(calls)).toEqual([
+    "POST /api/report",
+    "POST /api/report/pdf",
+  ]);
   await context.close();
 });

@@ -21,6 +21,10 @@ export const PAYMENT_START_CALLER_RATE_LIMITER =
 export const REPORT_DATA_CALLER_RATE_LIMITER =
   "REPORT_DATA_CALLER_RATE_LIMITER";
 
+/** Spec 021 P-02: the report PDF route, per caller IP (tighter: each PDF uses
+ * Browser Run time). */
+export const REPORT_PDF_CALLER_RATE_LIMITER = "REPORT_PDF_CALLER_RATE_LIMITER";
+
 export const RATE_LIMITED_MESSAGE =
   "Permintaan terlalu banyak. Coba lagi dalam beberapa saat.";
 /** Spec 010 R-03: the caller-facing message for the new paid-stage limiters
@@ -43,6 +47,7 @@ export interface AuditRateLimitBindings {
   orderCreateCaller?: AuditRateLimitBinding;
   orderStatusCaller?: AuditRateLimitBinding;
   reportDataCaller?: AuditRateLimitBinding;
+  reportPdfCaller?: AuditRateLimitBinding;
   paymentStartCaller?: AuditRateLimitBinding;
 }
 
@@ -88,6 +93,7 @@ export function getAuditRateLimitBindings(): AuditRateLimitBindings {
       reportDataCaller: asRateLimitBinding(
         env[REPORT_DATA_CALLER_RATE_LIMITER],
       ),
+      reportPdfCaller: asRateLimitBinding(env[REPORT_PDF_CALLER_RATE_LIMITER]),
       paymentStartCaller: asRateLimitBinding(
         env[PAYMENT_START_CALLER_RATE_LIMITER],
       ),

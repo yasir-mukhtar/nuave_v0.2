@@ -148,9 +148,12 @@ git-ignored. Never commit it.
 Proof rules:
 
 - Use the real user path.
-- `Unduh PDF` is proved by the `window.print()` call it makes. Headless
-  Chromium cannot show the print dialog, so the drive counts the call. The PDF
-  is `page.pdf()`, not the browser's own print output.
+- `Unduh PDF` first asks `POST /api/report/pdf` (Spec 021 Part P). A local
+  run has no Browser Run, so the route answers `pdf_unavailable` (501) and the
+  page prints; the drive checks that answer and the `window.print()` call that
+  follows. Headless Chromium cannot show the print dialog, so the drive counts
+  the call. The PDF is `page.pdf()`, not the browser's own print output. The
+  server-made PDF itself is checked on a PR preview, which has Browser Run.
 
 ## Cleanup
 

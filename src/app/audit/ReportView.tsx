@@ -41,6 +41,7 @@ import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import styles from "./audit.module.css";
 import { DirectTenReportBody } from "./report/DirectTenReportBody";
 import { DirectTenReportPage } from "./report/DirectTenReportPage";
+import type { DownloadPdf } from "./report/report-pdf";
 
 function measurementLabel(promptId: string) {
   return (
@@ -187,12 +188,15 @@ export default function ReportView({
   observations,
   onDownloadJson,
   previewNotice,
+  onDownloadPdf,
 }: {
   report: AuditReport;
   brief: AuditSubject;
   observations: AuditObservation[];
   onDownloadJson: () => void;
   previewNotice?: React.ReactNode;
+  /** Spec 021 Part P: the server PDF, for two-source reports. */
+  onDownloadPdf?: DownloadPdf;
 }) {
   const isDirectTen = report.provenance?.question_method === "direct-ten";
   // The v2 report (J32–J35); the historical renderer below stays as it was.
@@ -204,6 +208,7 @@ export default function ReportView({
         observations={observations}
         onDownloadJson={onDownloadJson}
         previewNotice={previewNotice}
+        onDownloadPdf={onDownloadPdf}
       />
     );
   const brandName = subjectBrandName(brief);

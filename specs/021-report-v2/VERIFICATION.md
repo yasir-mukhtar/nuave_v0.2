@@ -1,11 +1,12 @@
 # Verification: Spec 021 — Report v2
 
-> Result: **Pending** (Parts A and D built; Parts P, C and B to come; not
+> Result: **Pending** (Parts A, D and P built; Parts C and B to come; not
 > Verified until the founder's AC-A7 and AC-D2 checks are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
-> Implementation version or commit: Part A (PR #173), Part D (PR #175)
+> Implementation version or commit: Part A (PR #173), Part D (PR #175),
+> Part P (PR #176)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -243,3 +244,93 @@ report), so the passed print layout stays; the split is cosmetic (no text
 overlaps or goes missing). Left for Part P: an automated long-answer print
 check (word-box overlap on the PDF) before the server PDF reuses the appendix,
 and print-only links from "P2" to the appendix.
+
+## Part P, PDF (PR 176)
+
+### Scope reviewed
+
+- `src/app/api/report/pdf/route.ts`: "Unduh PDF" posts the link secret; the
+  route checks it like the report-data route, counts the PDF against the
+  report's daily cap, makes a single-use print code and asks Browser Run
+  (`env.BROWSER.quickAction("pdf", …)`) to print `/r/print#<code>`.
+- `src/lib/orders/report-pdf.ts`: the cap (20 per report per UTC day), the
+  print code (32 random bytes, 60 seconds, hash only, deleted when read), the
+  footer, the file name and the Browser Run request.
+- `src/app/api/report/route.ts`: also accepts `print_token` and spends it.
+  Its shared answers moved to `src/lib/orders/report-route.ts`.
+- `src/app/r/print/page.tsx` and `src/app/r/SavedReport.tsx` (`via="print"`).
+- `src/app/audit/report/ReportPdfButton.tsx`, `report-pdf.ts` (page side),
+  `TwoSourceReport.tsx` (both buttons; Temuan Utama, Rekomendasi and Penutup
+  start a new page in print; the "Ketuk pertanyaan" hint is not printed).
+- `migrations/0014_report_pdf.sql`, `src/lib/orders/retention.ts` (both new
+  tables deleted with the order), `wrangler.jsonc` (Browser Run binding in
+  production and previews, none in `dev`; `REPORT_PDF_CALLER_RATE_LIMITER`,
+  3 a minute, in all three environments).
+- The `verify-nuave` skill's PDF step.
+
+### Spike (PLAN.md PR 4): HTML mode failed, URL mode with a print code
+
+Criterion 1 failed at once: a route handler that imports `react-dom/server`
+does not build on Next 16 ("You're importing a component that imports
+react-dom/server"), and the report's components are client components, which
+the server layer only sees as references. So, as the plan says for a failed
+spike, Browser Run opens the real report page by URL with a **single-use
+print code** in the fragment, never the link secret. The code is spent when
+the page reads the report, so a URL in Browser Run's run list opens nothing
+afterwards. What this gives:
+
+- The PDF is the page's own print layout (the same CSS and Geist fonts as the
+  browser's print), so criteria 2 and 3 do not arise; fonts and CSS load from
+  the site's own address, which Browser Run reaches (public pages).
+- No server renderer is added to the Worker (criterion 4).
+- Time (criterion 5): on the PR preview, with the real Browser Run, 10.9 and
+  8.0 seconds from the press to the saved file (under 15). Locally, against
+  `next start` with Chromium, 1.5 to 1.9 seconds for 11, 29 and 75 pages.
+
+### Acceptance results
+
+| Criterion | Result | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-P1     | Pass   | **PR preview (real Browser Run), 2026-10-27:** a fictional synthetic report put in the preview database; "Unduh PDF" in a browser saved `Laporan-Nuave-Klinik-Kecantikan-Contoh-Sentosa-Kemang-Raya.pdf` (200, `application/pdf`, `no-store`): 11 A4 pages, Geist embedded, footer "Nuave · Laporan Visibilitas AI · <klinik>" and "n / 11" on every page, page 1 the header, verdict and source cards, Temuan Utama (p. 2), Rekomendasi (p. 4) and Penutup (p. 5) each start a page, then "Lampiran: jawaban lengkap"; no text overlaps beyond the page-1 baseline. **Time per PDF: 10.9 s, then 8.0 s** (press to saved file). Afterwards no print code was left in the database and the day count was 2. Local runs of the same request for 29 and 75 page reports were also clean. Unit: request options, headers, file name. |
+| AC-P2     | Pass   | Unit "the link secret never goes into a URL": Browser Run gets `/r/print#<43-character code>`, never the secret; only the code's hash is stored; the code opens the report once and not after 60 seconds or after the link is switched off; a wrong, malformed or switched-off secret gets the report route's exact answer and Browser Run is not called; logs carry numbers and codes only. E2e: the page posts the secret in the body, never in a URL.                                                                                                                                                                                                                                                                                                                                                                          |
+
+### Checks run
+
+- Unit: `report-pdf.test.ts` (16), `saved-report.test.tsx` (the print page
+  sends a print code, never the secret), `two-source-report.test.tsx` (button,
+  spinner, one request per press, retry message next to the pressed button,
+  print fallback, page breaks), `retention.test.ts`, `wrangler-config.test.ts`,
+  `rate-limit-config.test.ts`, then the full suite.
+- E2e: `new-intake-glm.spec.ts` checks the PDF route's `pdf_unavailable`
+  answer locally and the print that follows, then the full suites (see the
+  PR).
+- `npm run check`, `next build`.
+
+### Independent review
+
+- **Round 1: PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/176#issuecomment-6434084965)),
+  nothing blocking. Its should-fix list was handled in 27ec9c5: a long name
+  with an emoji at the cut broke the file name header (now cut by whole
+  characters, made before Browser Run is asked); a print page test; private
+  headers on `/r/print`; the spinner and focus for screen readers and
+  keyboards; the secret checked before the Browser Run check; two risks
+  recorded below; doc fixes.
+- **Round 2: PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/176#issuecomment-6434222311))
+  on 27ec9c5, nothing open.
+
+### Risks to check after merge
+
+- Browser Run is identified as a bot. Cloudflare does not block it by
+  default; if bot protection (for example Bot Fight Mode) is switched on for
+  `nuave.ai`, the PDF fails with "PDF belum bisa dibuat" in production while
+  the preview (on `workers.dev`) works. The first production download after
+  the deploy confirms it.
+- Browser Run's reads of `/api/report` probably all come from one address, so
+  every PDF being made at the same moment shares that route's 20-a-minute
+  limit. Fine at today's volume; a busy day would show "PDF belum bisa
+  dibuat" for some presses.
+- When a report's 20 PDFs for the day are used up, "Unduh PDF" opens the
+  browser's print without a note (by design: the customer still gets a PDF,
+  and no browser time is used).

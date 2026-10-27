@@ -875,15 +875,21 @@ async function reportLink(ctx: DriveContext) {
     "The emailed link opens the report in a browser with no cookies; the page is noindex and sends no referrer",
   );
   await ctx.step("download-pdf-pressed", async () => {
-    // The report has two: in the top bar and at the end.
+    // The report has two: in the top bar and at the end. Each asks the PDF
+    // route first (Spec 021 Part P); a local run has no Browser Run, so the
+    // route answers pdf_unavailable and the page prints.
     await expect(downloadPdfButtons(fresh)).toHaveCount(2);
+    const answer = fresh.waitForResponse(
+      (response) => new URL(response.url()).pathname === "/api/report/pdf",
+    );
     await downloadPdfButtons(fresh).first().click();
-    expect(await printCalls()).toBe(1);
+    expect((await answer).status()).toBe(501);
+    await expect.poll(printCalls).toBe(1);
     await downloadPdfButtons(fresh).last().click();
-    expect(await printCalls()).toBe(2);
+    await expect.poll(printCalls).toBe(2);
   });
   ctx.check(
-    "Each `Unduh PDF` (top bar and at the end) opens the browser print dialog once (window.print)",
+    "Each `Unduh PDF` (top bar and at the end) asks the PDF route (pdf_unavailable locally) and then opens the browser print dialog once (window.print)",
   );
   await fresh.emulateMedia({ media: "print" });
   for (const answer of await reportLocator(fresh)

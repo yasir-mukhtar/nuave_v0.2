@@ -1211,25 +1211,47 @@ export function emailBackingOff(
   );
 }
 
+/** A saved report as the report page reads it, with its order's id. */
+export type SavedReportRow = {
+  order_id: string;
+  report_json: string;
+  intake_json: string;
+  observations: string[];
+  mode: OrderMode;
+};
+
 /** R-24/R-26: the saved report behind a link secret. Only the secret's hash is
  * compared. A wrong, expired or switched-off secret all give null, so the
  * caller cannot tell them apart. No provider is involved. */
 export async function reportForLink(
   db: SpendDb,
   input: { linkHash: string; environment: OrderEnvironment; now: Date },
-): Promise<{
-  report_json: string;
-  intake_json: string;
-  observations: string[];
-  mode: OrderMode;
-} | null> {
+): Promise<SavedReportRow | null> {
+  return savedReport(db, "link_hash = ?1", input.linkHash, input);
+}
+
+/** Spec 021 P-02: the same saved report by order id, for a spent print code.
+ * The link must still work (not expired, not switched off). */
+export async function reportForOrder(
+  db: SpendDb,
+  input: { orderId: string; environment: OrderEnvironment; now: Date },
+): Promise<SavedReportRow | null> {
+  return savedReport(db, "id = ?1", input.orderId, input);
+}
+
+async function savedReport(
+  db: SpendDb,
+  match: "link_hash = ?1" | "id = ?1",
+  key: string,
+  input: { environment: OrderEnvironment; now: Date },
+): Promise<SavedReportRow | null> {
   const order = await db
     .prepare(
       `SELECT id, report_json, intake_json, mode FROM orders
-       WHERE link_hash = ?1 AND link_off = 0 AND report_json IS NOT NULL
+       WHERE ${match} AND link_off = 0 AND report_json IS NOT NULL
          AND link_expires_at > ?2 AND environment = ?3`,
     )
-    .bind(input.linkHash, iso(input.now), input.environment)
+    .bind(key, iso(input.now), input.environment)
     .first<{
       id: string;
       report_json: string;
@@ -1239,6 +1261,7 @@ export async function reportForLink(
   if (!order) return null;
   const questions = await listQuestions(db, order.id);
   return {
+    order_id: order.id,
     report_json: order.report_json,
     intake_json: order.intake_json,
     observations: questions.flatMap((question) =>

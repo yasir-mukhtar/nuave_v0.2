@@ -92,6 +92,36 @@ describe("wrangler.jsonc environments", () => {
   });
 });
 
+// Spec 021 Part P (P-02, P-05): Browser Run in production and PR previews,
+// never in local development, and its own tighter per-caller limit.
+describe("wrangler.jsonc and the report PDF", () => {
+  it("production and previews have the Browser Run binding; local development has none", () => {
+    expect(config.browser).toEqual({ binding: "BROWSER" });
+    expect(config.env?.preview?.browser).toEqual({ binding: "BROWSER" });
+    expect(config.env?.dev?.browser).toBeUndefined();
+    // Quick Actions through the binding need this date or later.
+    expect(config.compatibility_date! >= "2026-03-24").toBe(true);
+  });
+
+  it("every environment has the PDF rate limit, each with its own counter, 3 a minute where deployed", () => {
+    const environments = [config, ...Object.values(config.env ?? {})];
+    const limits = environments.map((environment) =>
+      environment.ratelimits?.find(
+        (item) => item.name === "REPORT_PDF_CALLER_RATE_LIMITER",
+      ),
+    );
+    expect(limits.every(Boolean)).toBe(true);
+    const ids = limits.map((item) => item!.namespace_id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(limits[0]!.simple).toEqual({ limit: 3, period: 60 });
+    expect(
+      config.env?.preview?.ratelimits?.find(
+        (item) => item.name === "REPORT_PDF_CALLER_RATE_LIMITER",
+      )?.simple,
+    ).toEqual({ limit: 3, period: 60 });
+  });
+});
+
 // Spec 017 R-17, AC-20: the deploy job writes the payment settings as Worker
 // secrets, and preview workers never get a real key.
 describe("workflows and the payment settings", () => {

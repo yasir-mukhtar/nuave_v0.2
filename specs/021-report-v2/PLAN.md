@@ -207,6 +207,11 @@ Quick Actions and limits pages.
      seconds.
   Fail on any → URL mode with the single-use token. The result goes in the PR
   description.
+
+  **Result (2026-10-27): criterion 1 failed** (Next 16 refuses
+  `react-dom/server` in a route handler, and the report is client
+  components), so PR 4 (#176) uses URL mode with the single-use print code.
+  Details in [`VERIFICATION.md`](./VERIFICATION.md#part-p-pdf-pr-176).
 - PDF options: A4, print media, background graphics, footer template with
   "Nuave · Laporan Visibilitas AI · <klinik>" (HTML-escaped) and page numbers.
   `Content-Disposition: attachment; filename="Laporan-Nuave.pdf";
