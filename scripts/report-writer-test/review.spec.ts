@@ -1,8 +1,9 @@
 /**
  * Shows each report of the test B review pack (run.spec.ts) on the real
  * report page, /r, and saves what the browser prints as a PDF:
- * .local-evidence/report-writer-test/review/<order>/Laporan <letter>.pdf, and
- * preview/<order>.pdf for the delivered report before the pack exists.
+ * .local-evidence/report-writer-test/review/<order>/Laporan <letter>.pdf for
+ * the blind reports, and "Referensi - laporan yang dikirim.pdf" for the
+ * delivered report, labelled.
  *
  *   npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/review.spec.ts
  *
@@ -23,27 +24,22 @@ const ORIGIN = `http://localhost:${PORT}`;
 
 function pages(): { file: string; pdf: string }[] {
   const out: { file: string; pdf: string }[] = [];
-  const preview = join(EVIDENCE_DIR, "preview");
-  if (existsSync(preview))
-    for (const name of readdirSync(preview).filter((n) => n.endsWith(".json")))
-      out.push({
-        file: join(preview, name),
-        pdf: join(preview, name.replace(/\.json$/, ".pdf")),
-      });
   const review = join(EVIDENCE_DIR, "review");
-  if (existsSync(review))
-    for (const order of readdirSync(review))
-      for (const name of readdirSync(join(review, order)).filter((n) =>
-        n.endsWith(".json"),
-      ))
-        out.push({
-          file: join(review, order, name),
-          pdf: join(
-            review,
-            order,
-            `Laporan ${name.replace(/\.json$/, "")}.pdf`,
-          ),
-        });
+  if (!existsSync(review)) return out;
+  for (const order of readdirSync(review))
+    for (const name of readdirSync(join(review, order)).filter((n) =>
+      n.endsWith(".json"),
+    ))
+      out.push({
+        file: join(review, order, name),
+        pdf: join(
+          review,
+          order,
+          name === "reference.json"
+            ? "Referensi - laporan yang dikirim.pdf"
+            : `Laporan ${name.replace(/\.json$/, "")}.pdf`,
+        ),
+      });
   return out;
 }
 

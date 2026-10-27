@@ -27,6 +27,8 @@ import {
   blindReport,
   claudeWriter,
   ENTRIES,
+  REFERENCE,
+  writerFingerprint,
   entryInput,
   evidenceFromD1,
   Ledger,
@@ -106,7 +108,7 @@ describe("test B harness", () => {
 
     const result = await runEntry(
       evidence,
-      ENTRIES[0]!,
+      REFERENCE,
       null,
       new Ledger(join(dir, "spend.json")),
     );
@@ -126,7 +128,7 @@ describe("test B harness", () => {
   it("gives new-input writers Google's words and the instruction, and today's writer neither", async () => {
     const exported = await deliveredOrderExport();
     const evidence = evidenceFromD1(exported.order, exported.questions);
-    const today = await entryInput(evidence, ENTRIES[0]!);
+    const today = await entryInput(evidence, REFERENCE);
     const fresh = await entryInput(evidence, ENTRIES[1]!);
 
     const todayGoogle = today.input.two_source_facts!.google;
@@ -200,7 +202,7 @@ describe("test B harness", () => {
   it("adds Google's words only while the production prompt lacks them", async () => {
     const exported = await deliveredOrderExport();
     const evidence = evidenceFromD1(exported.order, exported.questions);
-    const today = await entryInput(evidence, ENTRIES[0]!);
+    const today = await entryInput(evidence, REFERENCE);
     const fresh = await entryInput(evidence, ENTRIES[1]!);
     const texts = (
       fresh.input.two_source_facts!.google as { ai_overview_text?: string }[]
@@ -210,6 +212,21 @@ describe("test B harness", () => {
     expect(productionSendsGoogleWords(today.input, texts)).toBe(false);
     // A prompt that already carries them (as Part B's will) is left alone.
     expect(productionSendsGoogleWords(fresh.input, texts)).toBe(true);
+  });
+
+  it("tells writers apart by their instructions, not by model or effort", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const fresh = await entryInput(evidence, ENTRIES[1]!);
+    const today = await entryInput(evidence, REFERENCE);
+
+    // The five blind entries share one writer: today's, on the new input.
+    const prints = new Set(
+      ENTRIES.map((entry) => writerFingerprint(entry, fresh.input)),
+    );
+    expect(prints.size).toBe(1);
+    // Other instructions (here without Google's words) are another writer.
+    expect(writerFingerprint(REFERENCE, today.input)).not.toBe([...prints][0]);
   });
 
   it("refuses an order approved before Spec 018", async () => {

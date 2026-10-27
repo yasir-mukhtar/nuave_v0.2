@@ -21,7 +21,7 @@
  * it. Evidence, results and the letter key stay in the git-ignored
  * .local-evidence/report-writer-test/ folder.
  */
-import { randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
@@ -151,11 +151,15 @@ export function loadEvidence(
 
 /* --------------------------------- entries -------------------------------- */
 
+/** The five blind writers (decision 2026-10-26 as fixed on 2026-10-27, Spec
+ * 021 B-07): each runs today's production writer on the new input. */
 export type EntryId =
-  "delivered" | "luna-high" | "sonnet-medium" | "sonnet-high" | "haiku-medium";
+  "luna-low" | "luna-high" | "sonnet-medium" | "sonnet-high" | "haiku-medium";
+
+export type EntryKey = EntryId | "reference";
 
 export type Entry = {
-  id: EntryId;
+  id: EntryKey;
   label: string;
   provider: "openai" | "anthropic" | null;
   model: string | null;
@@ -163,14 +167,26 @@ export type Entry = {
   input: "today" | "new";
 };
 
+/** The report the customer received, shown beside the blind reports as a
+ * labelled reference, never under a letter: it was written with the
+ * instructions of its day, so it does not compare models fairly. */
+export const REFERENCE: Entry = {
+  id: "reference",
+  label: "Reference: the report delivered to the customer",
+  provider: null,
+  model: null,
+  effort: null,
+  input: "today",
+};
+
 export const ENTRIES: readonly Entry[] = [
   {
-    id: "delivered",
-    label: "Delivered report: GPT-5.6 Luna, low effort, today's input",
-    provider: null,
-    model: null,
-    effort: null,
-    input: "today",
+    id: "luna-low",
+    label: "GPT-5.6 Luna, low effort, new input",
+    provider: "openai",
+    model: "gpt-5.6-luna",
+    effort: "low",
+    input: "new",
   },
   {
     id: "luna-high",
@@ -308,7 +324,7 @@ export const HARD_STOP_USD = 5;
 type LedgerCall = {
   at: string;
   order: string;
-  entry: EntryId;
+  entry: EntryKey;
   model: string;
   reserved_usd: number;
   actual_usd: number | null;
@@ -439,6 +455,19 @@ export function entryPrompt(entry: Entry, ...args: WriterArgs) {
   return { request, developer, user: request.input[1].content };
 }
 
+/** Which writer a report came from: the production instructions and answer
+ * format it was given (not the model or effort, which the entry names). It
+ * changes when Spec 021 Part B changes the writer, so earlier results are not
+ * mistaken for results of the new writer. */
+export function writerFingerprint(entry: Entry, input: WriterArgs[0]): string {
+  const { request, developer } = entryPrompt(entry, input);
+  return createHash("sha256")
+    .update(developer)
+    .update(JSON.stringify(request.text.format))
+    .digest("hex")
+    .slice(0, 12);
+}
+
 function harnessAddedGoogleWords(input: WriterArgs[0]): boolean {
   return (
     input.two_source_facts?.google.some(
@@ -515,7 +544,7 @@ const contentOf = (synthesis: ReportSynthesis, args: WriterArgs) =>
   reportContentFromAnswer(synthesis, args[0]);
 
 /** Offline: returns the delivered report's own writing, so the pipeline can
- * be checked end to end without a provider. Re-running entry 1 this way must
+ * be checked end to end without a provider. Re-running the reference this way must
  * give back the delivered report. */
 export function replayWriter(delivered: AuditReport): ReportGenerator {
   return async () => ({
@@ -744,7 +773,7 @@ export function claudeWriter(
 /** What the scoring sheet records for one entry on one order. */
 export type EntryResult = {
   order: string;
-  entry: EntryId;
+  entry: EntryKey;
   label: string;
   status: "ok" | "failed";
   failure: string | null;
@@ -758,7 +787,10 @@ export type EntryResult = {
   };
   cost_usd: number;
   prompt_chars: number;
-  /** Entry 1 only: whether re-running the delivered writing through today's
+  /** The writer fingerprint (see writerFingerprint); "delivered" for the
+   * reference. */
+  writer: string;
+  /** The reference only: whether re-running the delivered writing through today's
    * pipeline gave it back unchanged. */
   replay?: string;
 };
@@ -785,6 +817,7 @@ export async function runEntry(
     entry: entry.id,
     label: entry.label,
     prompt_chars: developer.length + user.length,
+    writer: writer ? writerFingerprint(entry, built.input) : "delivered",
   };
   try {
     const written = await createValidatedAuditReport(
@@ -868,7 +901,7 @@ export async function replayDelivered(
   ledger: Ledger,
 ): Promise<{ result: EntryResult; note: string; reproduced: boolean | null }> {
   const delivered = JSON.parse(evidence.order.report_json) as AuditReport;
-  const result = await runEntry(evidence, ENTRIES[0]!, null, ledger);
+  const result = await runEntry(evidence, REFERENCE, null, ledger);
   const was = delivered.provenance.report_prompt_version;
   if (result.status !== "ok")
     return {
@@ -895,7 +928,7 @@ export async function replayDelivered(
   };
 }
 
-/** Entry 1's record: the delivered report as saved, with the calls, repairs
+/** The reference's record: the delivered report as saved, with the calls, repairs
  * and cost it recorded itself (a replay starts from the already repaired
  * writing, so it cannot see them). */
 export function deliveredResult(
@@ -952,7 +985,7 @@ export function assignLetters(
 ): Record<string, Record<string, EntryId>> {
   const key: Record<string, Record<string, EntryId>> = {};
   for (const order of orders) {
-    const ids = ENTRIES.map((entry) => entry.id);
+    const ids = ENTRIES.map((entry) => entry.id as EntryId);
     for (let i = ids.length - 1; i > 0; i -= 1) {
       const j = pick(i + 1);
       [ids[i], ids[j]] = [ids[j]!, ids[i]!];

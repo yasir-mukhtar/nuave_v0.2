@@ -1,21 +1,26 @@
 # Report-writer test (test B)
 
 Test B of the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
-(decision 2026-10-26): five report writers on the same saved orders, judged
-blind by the founder.
+(decision 2026-10-26, as fixed on 2026-10-27), which is Spec 021's
+side-by-side writer test (B-07): five writers on the same saved orders, each
+running today's production writer, judged blind by the founder.
 
-| Entry | Writer | Input |
+| Blind entry | Model | Effort |
 | --- | --- | --- |
-| 1 | The delivered report (GPT-5.6 Luna, low effort) | today's |
-| 2 | GPT-5.6 Luna, high effort | new |
-| 3 | Claude Sonnet 5.5, medium effort | new |
-| 4 | Claude Sonnet 5.5, high effort | new |
-| 5 | Claude Haiku 5.5, medium effort | new |
+| `luna-low` | GPT-5.6 Luna | low |
+| `luna-high` | GPT-5.6 Luna | high |
+| `sonnet-medium` | Claude Sonnet 5.5 | medium |
+| `sonnet-high` | Claude Sonnet 5.5 | high |
+| `haiku-medium` | Claude Haiku 5.5 | medium |
 
-"New input" is today's input plus the words of Google's AI Overview for each
-question (phone numbers removed, answers longer than 3,000 characters
-shortened). Every entry goes through the order runner's own report code, so
-all reports get the same checks and repairs.
+Every entry reads the new input: today's input plus the words of Google's AI
+Overview for each question (phone numbers removed, answers longer than 3,000
+characters shortened). Every entry goes through the order runner's own report
+code, so all reports get the same checks and repairs.
+
+The report the customer received is printed beside them as a labelled
+**reference**, never under a letter: it was written with the instructions of
+its day, so it does not compare models fairly.
 
 Everything the test reads and writes stays in the git-ignored
 `.local-evidence/report-writer-test/` folder.
@@ -31,9 +36,12 @@ merged it writes Part B reports with no change here:
   `src/lib/audit/openai.ts`;
 - Google's answer texts are added only while the production prompt does not
   already carry them (B-01);
-- the delivered report is compared with a replay of its own writing only when
-  today's writer version wrote it; an older one is shown as delivered, in the
-  new layout's fallbacks;
+- each result records which writer wrote it (a fingerprint of the
+  instructions and answer format). A result from an earlier writer is moved to
+  `runs/<order>/superseded/` and written again, and letters are drawn only
+  for five results from the same writer;
+- the reference is compared with a replay of its own writing only when
+  today's writer version wrote it; an older one is shown as delivered;
 - the reports print from today's `/r` page.
 
 Run it on orders delivered after Part B for a like-for-like comparison.
@@ -71,11 +79,12 @@ workspace. `ORDERS=NV-…` and
 `ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
 `spend.json` at its worst case and is refused when that could take the total
 past **USD 5** (the hard stop for tests A and B together); it is then settled
-at its real cost. A finished entry is never run again; delete its file under
-`runs/` to redo it.
+at its real cost. An entry already written by today's writer is never run
+again; delete its file under `runs/` to redo it.
 
-Once all five entries of an order exist, letters A–E are drawn at random and
-kept in `key.json`. Do not open it until scoring is done.
+Once all five entries of an order exist from the same writer, letters A–E
+are drawn at random and kept in `key.json`. Do not open it until scoring is
+done.
 
 ## 4. Review
 
@@ -84,7 +93,8 @@ npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-tes
 ```
 
 It starts the app locally and prints each report from the real report page:
-`review/<order>/Laporan A.pdf` … `Laporan E.pdf`. Score them in `scores.csv`
+`review/<order>/Laporan A.pdf` … `Laporan E.pdf`, and the reference as
+`Referensi - laporan yang dikirim.pdf`. Score the lettered ones in `scores.csv`
 (1–5: sticks to the evidence, actions specific to this business, natural
 Indonesian per `docs/VOICE.md`, clear to an owner; and yes/no: would I send
 this to a paying customer?). Then open `key.json`. The `runs/` files give
