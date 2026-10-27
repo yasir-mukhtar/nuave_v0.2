@@ -16,14 +16,14 @@ deployable, so the founder can stop after any of them. Each gets an
 independent review (PASS, ALMOST or FAIL, posted on the PR), iterated until it
 passes; merge and deploy stay with the founder.
 
-| PR       | Part               | What changes for the customer                                                                 | Live calls or new cost                                                           |
-| -------- | ------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| 1 (#171) | Plan               | Nothing (spec, plan, prototype, wishlist, decisions)                                          | None                                                                             |
-| 2        | A, layout          | New page structure and look for every Spec 018 report, including delivered ones               | None                                                                             |
-| 3        | D, answers         | Questions table with tooltips and the side panel                                              | None                                                                             |
-| 4        | P, PDF             | "Unduh PDF" gives a server-made, branded PDF                                                  | Browser Run time (within included hours)                                         |
-| 5        | C, competitor data | Exact counts, links, ratings, logos for new orders                                            | None, or one live check (founder approval)                                       |
-| 6        | B, writing         | Deeper findings with headline numbers, firm recommendations, reasons, takeaways, Penutup plan | Side-by-side test (founder approval); Anthropic key if Claude (founder decision) |
+| PR | Part | What changes for the customer | Live calls or new cost |
+|---|---|---|---|
+| 1 (#171) | Plan | Nothing (spec, plan, prototype, wishlist, decisions) | None |
+| 2 | A, layout | New page structure and look for every Spec 018 report, including delivered ones | None |
+| 3 | D, answers | Questions table with tooltips and the side panel | None |
+| 4 | P, PDF | "Unduh PDF" gives a server-made, branded PDF | Browser Run time (within included hours) |
+| 5 | C, competitor data | Exact counts, links, ratings, logos for new orders | None, or one live check (founder approval) |
+| 6 | B, writing | Deeper findings with headline numbers, firm recommendations, reasons, takeaways, Penutup plan | Side-by-side test (founder approval); Anthropic key if Claude (founder decision) |
 
 Why this order: A and D are presentation only and help every report at once,
 including delivered ones. P removes the last "print it yourself" step. C starts
@@ -78,7 +78,6 @@ no topic name and is hidden until PR 6 supplies names.
 ## PR 2: Part A, layout
 
 **Files and approach.**
-
 - `src/app/audit/report/DirectTenReportPage.tsx`: under `two` only, the new top
   bar ("Unduh PDF", browser print until PR 4), header, chips without
   Ringkasan, the end-of-report save row and footer. The old header, buttons,
@@ -116,7 +115,6 @@ no topic name and is hidden until PR 6 supplies names.
   end, renamed, notes added); PR 3 replaces them.
 
 **Tests.**
-
 - `two-source-report.test.tsx`: assertions for AC-A2 (each dot look, counts
   equal dots), AC-A3 (order and chip names), AC-A4 (absent strings), the
   render-time competitor and topic counts, hidden topic rows, the verdict cut;
@@ -175,7 +173,6 @@ attached to the PR (no frame over 20 ms while opening).
 Quick Actions and limits pages.
 
 **Approach.**
-
 - `wrangler.jsonc`: a `browser` binding `BROWSER` in production **and** the PR
   preview environment (previews test the real path). Local dev and the offline
   tests have no binding (Quick Actions need remote mode).
@@ -208,16 +205,17 @@ Quick Actions and limits pages.
      increase recorded;
   5. a synthetic report's PDF matches the print layout and takes under 15
      seconds.
-     Fail on any → URL mode with the single-use token. The result goes in the PR
-     description.
-     **Result (2026-10-27): failed criterion 1** (Next 16 refuses
-     `react-dom/server` in a route handler, and the report is client
-     components), so PR 4 uses URL mode with the single-use print code. Details in
-     [`VERIFICATION.md`](./VERIFICATION.md#part-p-pdf-pr-4).
+  Fail on any → URL mode with the single-use token. The result goes in the PR
+  description.
+
+  **Result (2026-10-27): criterion 1 failed** (Next 16 refuses
+  `react-dom/server` in a route handler, and the report is client
+  components), so PR 4 (#176) uses URL mode with the single-use print code.
+  Details in [`VERIFICATION.md`](./VERIFICATION.md#part-p-pdf-pr-176).
 - PDF options: A4, print media, background graphics, footer template with
   "Nuave · Laporan Visibilitas AI · <klinik>" (HTML-escaped) and page numbers.
   `Content-Disposition: attachment; filename="Laporan-Nuave.pdf";
-filename*=UTF-8''<encoded clinic name>`; `Cache-Control: no-store`.
+  filename*=UTF-8''<encoded clinic name>`; `Cache-Control: no-store`.
 - Time per PDF from the `X-Browser-Ms-Used` response header is written to the
   Worker log as a number (no report data).
 - **Client:** "Unduh PDF" posts the secret, shows a spinner, saves the file. The
@@ -296,7 +294,7 @@ Built and tested offline first; live steps wait for the founder.
      answers;
    - a figure that appears verbatim in a cited answer text (for example
      "75+").
-     Anything else is dropped; the finding keeps its text.
+   Anything else is dropped; the finding keeps its text.
 6. **Renderer** reads the block: headline numbers, reasons, takeaways,
    closing, plan, topic names, Google recommendation reading.
 7. **Side-by-side test** (B-07): a script runs the new writer on saved answers
@@ -376,7 +374,6 @@ AC-A7 timing).
 **Round 1 (ALMOST,
 [comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/171#issuecomment-6417470715)).**
 Fixed in this revision:
-
 - Must fix 1 (old reports): "The rule for old reports"; every change gated
   under `two`; JSON, `TenBeads`, anchors kept for old reports; no server PDF
   for them.

@@ -6,7 +6,7 @@
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
 > Implementation version or commit: Part A (PR #173), Part D (PR #175),
-> Part P (PR 4)
+> Part P (PR #176)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -245,7 +245,7 @@ overlaps or goes missing). Left for Part P: an automated long-answer print
 check (word-box overlap on the PDF) before the server PDF reuses the appendix,
 and print-only links from "P2" to the appendix.
 
-## Part P, PDF (PR 4)
+## Part P, PDF (PR 176)
 
 ### Scope reviewed
 
@@ -296,7 +296,8 @@ afterwards. What this gives:
 
 ### Checks run
 
-- Unit: `report-pdf.test.ts` (14), `two-source-report.test.tsx` (button,
+- Unit: `report-pdf.test.ts` (16), `saved-report.test.tsx` (the print page
+  sends a print code, never the secret), `two-source-report.test.tsx` (button,
   spinner, one request per press, retry message next to the pressed button,
   print fallback, page breaks), `retention.test.ts`, `wrangler-config.test.ts`,
   `rate-limit-config.test.ts`, then the full suite.
@@ -312,3 +313,10 @@ afterwards. What this gives:
   `nuave.ai`, the PDF fails with "PDF belum bisa dibuat" in production while
   the preview (on `workers.dev`) works. The first production download after
   the deploy confirms it.
+- Browser Run's reads of `/api/report` probably all come from one address, so
+  every PDF being made at the same moment shares that route's 20-a-minute
+  limit. Fine at today's volume; a busy day would show "PDF belum bisa
+  dibuat" for some presses.
+- When a report's 20 PDFs for the day are used up, "Unduh PDF" opens the
+  browser's print without a note (by design: the customer still gets a PDF,
+  and no browser time is used).

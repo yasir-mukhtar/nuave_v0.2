@@ -74,15 +74,9 @@ export async function POST(request: Request) {
   if (typeof secret !== "string" || !SECRET_PATTERN.test(secret)) {
     return neutral();
   }
-  const browser = pdfBrowser();
-  if (!browser) {
-    return answer(501, "pdf_unavailable", "PDF dibuat lewat cetak browser.");
-  }
   const server = orderRuntime();
   if (!server) return unavailable();
   const now = new Date();
-  const origin = printOrigin(request, server.environment);
-  if (!origin) return unavailable();
 
   let saved: Awaited<ReturnType<typeof reportForLink>>;
   try {
@@ -103,10 +97,19 @@ export async function POST(request: Request) {
   } catch {
     return neutral();
   }
-  // Reports saved before Spec 018 keep the browser's print.
-  if (!twoSource) {
+  // Reports saved before Spec 018, and deployments without Browser Run,
+  // keep the browser's print. Checked after the secret, so a wrong secret
+  // gets the same answer everywhere.
+  const browser = pdfBrowser();
+  if (!twoSource || !browser) {
     return answer(501, "pdf_unavailable", "PDF dibuat lewat cetak browser.");
   }
+  const origin = printOrigin(request, server.environment);
+  if (!origin) return unavailable();
+  // Made before Browser Run is asked, so a name the header cannot carry
+  // never costs browser time.
+  const name = businessName(saved.intake_json);
+  const disposition = pdfContentDisposition(name);
 
   let token: string;
   try {
@@ -131,10 +134,7 @@ export async function POST(request: Request) {
   try {
     pdf = await browser.quickAction(
       "pdf",
-      pdfRequest({
-        url: `${origin}/r/print#${token}`,
-        name: businessName(saved.intake_json),
-      }),
+      pdfRequest({ url: `${origin}/r/print#${token}`, name }),
     );
   } catch {
     logPdf("browser_error");
@@ -156,9 +156,7 @@ export async function POST(request: Request) {
     headers: {
       ...PRIVATE_HEADERS,
       "Content-Type": "application/pdf",
-      "Content-Disposition": pdfContentDisposition(
-        businessName(saved.intake_json),
-      ),
+      "Content-Disposition": disposition,
     },
   });
 }

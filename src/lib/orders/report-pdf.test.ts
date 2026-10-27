@@ -317,6 +317,40 @@ describe("when there is no server PDF (P-05)", () => {
     expect(d1.query("SELECT * FROM report_pdf_days")).toEqual([]);
   });
 
+  it("without Browser Run a wrong secret still gets the standard answer", async () => {
+    await reportOrder();
+    const neutral = await seen(await readReport({ secret: newLinkSecret() }));
+    withBrowser = false;
+    bind();
+    expect(await seen(await askPdf({ secret: newLinkSecret() }))).toEqual(
+      neutral,
+    );
+  });
+
+  it("a long name with an emoji at the cut still downloads (the header is made before Browser Run)", async () => {
+    const id = await makeOrder(d1.db, { now: T0 });
+    const secret = newLinkSecret();
+    const name = `${"K".repeat(79)}😀 Klinik`;
+    await d1.db
+      .prepare(
+        `UPDATE orders SET report_json = '{"two_source":{}}', intake_json = ?2,
+           link_hash = ?3, link_off = 0,
+           link_expires_at = '2099-01-01T00:00:00.000Z'
+         WHERE id = ?1`,
+      )
+      .bind(
+        id,
+        JSON.stringify({ context: { identity: { name } }, prompts: [] }),
+        await sha256Hex(secret),
+      )
+      .run();
+    const response = await askPdf({ secret });
+    expect(response.status).toBe(200);
+    expect(pdfFileName(response.headers.get("content-disposition"))).toBe(
+      `Laporan-Nuave-${"K".repeat(79)}😀.pdf`,
+    );
+  });
+
   it("a report saved before Spec 018 keeps the browser's print", async () => {
     const { secret } = await reportOrder({ report_version: "nuave-report-v3" });
     const response = await askPdf({ secret });
@@ -395,6 +429,11 @@ describe("footer and file name", () => {
       "Klinik-Gigi-Sehat",
     );
     expect(fileNamePart("../..")).toBe("");
+    // Whole characters only: no half emoji, no lone surrogate.
+    expect(fileNamePart(`${"a".repeat(79)}😀😀`)).toBe(`${"a".repeat(79)}😀`);
+    expect(() =>
+      pdfContentDisposition(`Klinik \uD83D Ayu ${"x".repeat(90)}`),
+    ).not.toThrow();
     const header = pdfContentDisposition("Klinik Ayu (Bandung)");
     expect(header).toBe(
       `attachment; filename="Laporan-Nuave.pdf"; filename*=UTF-8''Laporan-Nuave-Klinik-Ayu-%28Bandung%29.pdf`,

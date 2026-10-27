@@ -16,10 +16,14 @@ export type PdfPlace = "top" | "end";
  * prints, as before.
  */
 export function useReportPdf(download?: DownloadPdf) {
-  const [busy, setBusy] = useState(false);
+  // The button that is making a PDF, or the one whose PDF failed.
+  const [busyAt, setBusyAt] = useState<PdfPlace | null>(null);
   const [failedAt, setFailedAt] = useState<PdfPlace | null>(null);
   // A second press while one is being made does nothing.
   const running = useRef(false);
+  const buttons = useRef<Partial<Record<PdfPlace, HTMLButtonElement | null>>>(
+    {},
+  );
   const run = useCallback(
     async (place: PdfPlace) => {
       if (!download) {
@@ -28,39 +32,55 @@ export function useReportPdf(download?: DownloadPdf) {
       }
       if (running.current) return;
       running.current = true;
-      setBusy(true);
+      // "Coba lagi" disappears now: keep focus on the button it retries.
+      if (failedAt === place) buttons.current[place]?.focus();
+      setBusyAt(place);
       setFailedAt(null);
       const outcome = await download().catch(() => "failed" as const);
       running.current = false;
-      setBusy(false);
+      setBusyAt(null);
       if (outcome === "print") window.print();
       else if (outcome === "failed") setFailedAt(place);
     },
-    [download],
+    [download, failedAt],
   );
-  return { busy, failedAt, run };
+  const buttonRef = useCallback(
+    (place: PdfPlace) => (element: HTMLButtonElement | null) => {
+      buttons.current[place] = element;
+    },
+    [],
+  );
+  return { busy: busyAt !== null, busyAt, failedAt, run, buttonRef };
 }
 
 export type ReportPdf = ReturnType<typeof useReportPdf>;
 
 export function PdfButton({ pdf, place }: { pdf: ReportPdf; place: PdfPlace }) {
+  const making = pdf.busyAt === place;
   return (
-    <Button
-      type="button"
-      variant="ink"
-      size="sm"
-      className="rounded-chip px-4"
-      aria-busy={pdf.busy || undefined}
-      onClick={() => void pdf.run(place)}
-      data-pdf-button={place}
-    >
-      {pdf.busy ? (
-        <IconLoader2 className="animate-spin" aria-hidden="true" />
-      ) : (
-        <IconDownload aria-hidden="true" />
-      )}
-      Unduh PDF
-    </Button>
+    <>
+      <Button
+        type="button"
+        variant="ink"
+        size="sm"
+        className="rounded-chip px-4"
+        ref={pdf.buttonRef(place)}
+        aria-busy={making || undefined}
+        onClick={() => void pdf.run(place)}
+        data-pdf-button={place}
+      >
+        {making ? (
+          <IconLoader2 className="animate-spin" aria-hidden="true" />
+        ) : (
+          <IconDownload aria-hidden="true" />
+        )}
+        Unduh PDF
+      </Button>
+      {/* Said to screen readers while the PDF is being made. */}
+      <span className="sr-only" role="status">
+        {making ? "PDF sedang dibuat…" : ""}
+      </span>
+    </>
   );
 }
 

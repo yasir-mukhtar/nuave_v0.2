@@ -133,13 +133,14 @@ function ContentsNav({ ids }: { ids: readonly SectionId[] }) {
   );
 }
 
-/** A full-width section band with its title and lede. */
+/** Spec 021 "PDF": these sections start a new page on paper. */
 const NEW_PAGE: ReadonlySet<SectionId> = new Set([
   "temuan",
   "rekomendasi",
   "penutup",
 ]);
 
+/** A full-width section band with its title and lede. */
 function Band({
   id,
   title,
@@ -158,7 +159,6 @@ function Band({
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-title`}
-      // Spec 021 "PDF": these sections start a new page on paper.
       data-new-page={NEW_PAGE.has(id) || undefined}
       className={cn(
         styles.band,

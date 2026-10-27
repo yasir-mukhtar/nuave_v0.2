@@ -729,6 +729,13 @@ describe("Unduh PDF (Part P)", () => {
     await userEvent.click(buttons()[0]!);
     expect(buttons()[0]).toHaveAttribute("aria-busy", "true");
     expect(buttons()[0]!.querySelector(".animate-spin")).not.toBeNull();
+    // Only the pressed button spins, and screen readers hear it once.
+    expect(buttons()[1]!.querySelector(".animate-spin")).toBeNull();
+    expect(
+      screen
+        .getAllByRole("status")
+        .filter((status) => status.textContent === "PDF sedang dibuat…"),
+    ).toHaveLength(1);
     // A second press while it is being made does nothing.
     await userEvent.click(buttons()[1]!);
     expect(download).toHaveBeenCalledTimes(1);
@@ -750,7 +757,7 @@ describe("Unduh PDF (Part P)", () => {
     expect(alert).toHaveTextContent("PDF belum bisa dibuat. Coba lagi");
     expect(container.querySelectorAll("[data-pdf-failed]")).toHaveLength(1);
     expect(
-      alert.closest("[data-pdf-failed]")!.previousElementSibling,
+      alert.parentElement!.querySelector("[data-pdf-button]"),
     ).toHaveAttribute("data-pdf-button", "end");
     // The report itself is unaffected.
     expect(container.querySelector("#temuan")).not.toBeNull();
@@ -759,6 +766,8 @@ describe("Unduh PDF (Part P)", () => {
     );
     expect(download).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    // "Coba lagi" is gone; focus stays on the button it retried.
+    expect(document.activeElement).toBe(buttons()[1]);
   });
 
   it("prints when the server has no PDF for it (pdf_unavailable), and when there is no server PDF at all", async () => {

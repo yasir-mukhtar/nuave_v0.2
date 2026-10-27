@@ -163,16 +163,24 @@ export function pdfFooterTemplate(name: string): string {
 }
 
 /** The business name as part of a file name: no path, quote or control
- * characters, spaces as dashes, at most 80 characters. */
+ * characters, spaces as dashes, at most 80 characters (whole characters, so
+ * an emoji is never cut in half). */
 export function fileNamePart(name: string): string {
-  return name
+  const cleaned = name
     .normalize("NFC")
+    // A lone surrogate cannot be percent-encoded.
+    .replace(
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+      "",
+    )
     .replace(/\s+/g, " ")
     .replace(/[\u0000-\u001f\u007f/\\:*?"<>|]/g, "")
     .trim()
     .replace(/ /g, "-")
-    .replace(/-+/g, "-")
+    .replace(/-+/g, "-");
+  return Array.from(cleaned)
     .slice(0, 80)
+    .join("")
     .replace(/^[-.]+|[-.]+$/g, "");
 }
 
