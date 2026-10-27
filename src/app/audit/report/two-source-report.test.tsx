@@ -508,6 +508,65 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     ).toBeInTheDocument();
   });
 
+  it("a table dot opens its own source's tab; at the last question focus stays in the panel", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>(
+        '[data-answer-row="9"] [data-source="google"]',
+      )!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 9 dari 10",
+    });
+    expect(
+      within(dialog).getByRole("tab", { name: "Google AI Overview" }),
+    ).toHaveAttribute("aria-selected", "true");
+    // Berikutnya turns off at question 10; focus moves to Sebelumnya.
+    await user.click(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pertanyaan 10 dari 10" }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole("button", { name: /Sebelumnya/ }),
+    ).toHaveFocus();
+  });
+
+  it("a copied note does not carry over to the next question", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: async () => {} },
+    });
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>('[data-answer-row="1"]')!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 1 dari 10",
+    });
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Salin pertanyaan dan jawaban 1",
+      }),
+    );
+    expect(dialog).toHaveTextContent("tersalin");
+    await user.click(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    );
+    await screen.findByRole("button", {
+      name: "Salin pertanyaan dan jawaban 2",
+    });
+    expect(dialog).not.toHaveTextContent("tersalin");
+  });
+
   it("the panel shows a failed check with its help link, never an empty answer", async () => {
     const user = userEvent.setup();
     const fixture = twoSourceFixture();

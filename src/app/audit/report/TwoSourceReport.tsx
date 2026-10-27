@@ -182,7 +182,7 @@ function QuestionRefs({ ordinals }: { ordinals: readonly number[] }) {
           key={n}
           type="button"
           className={styles.ref}
-          onClick={() => openAnswer(n)}
+          onClick={(event) => openAnswer(n, undefined, event.currentTarget)}
           aria-label={`P${n}: pertanyaan ${n}`}
           data-question-ref={n}
         >
@@ -241,7 +241,9 @@ function SourceCard({ two, source }: { two: TwoSourceReport; source: Source }) {
               <button
                 type="button"
                 className={styles.dotLink}
-                onClick={() => openAnswer(question.ordinal, source)}
+                onClick={(event) =>
+                  openAnswer(question.ordinal, source, event.currentTarget)
+                }
                 data-mention={state}
                 aria-label={`Pertanyaan ${question.ordinal}: ${MENTION_LABEL[state]}`}
               >

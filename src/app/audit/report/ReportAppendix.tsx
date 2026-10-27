@@ -30,9 +30,9 @@ export function ReportAppendix({
           <p className={styles.context}>
             Pertanyaan {question.ordinal} · {questionContext(question)}
           </p>
-          <h3 id={`report-question-${question.ordinal}`}>
+          <h4 id={`report-question-${question.ordinal}`}>
             {question.question}
-          </h3>
+          </h4>
           {(["chatgpt", "google"] as const).map((source) => (
             <SourceAnswer
               key={source}

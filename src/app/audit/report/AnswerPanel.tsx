@@ -3,6 +3,7 @@
 import {
   createContext,
   memo,
+  useCallback,
   useContext,
   useDeferredValue,
   useRef,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MentionDot } from "@/components/product/report/MentionDot";
+import { cn } from "@/lib/utils";
 import type { AnswerPresentation } from "@/lib/audit/report-presentation";
 import {
   urlDomain,
@@ -53,7 +55,13 @@ export const SOURCE_ICON: Record<Source, ReactNode> = {
   google: <IconBrandGoogle stroke={1.75} aria-hidden="true" />,
 };
 
-export type OpenAnswer = (ordinal: number, source?: Source) => void;
+/** `opener` is the element focus returns to on close: pass the clicked
+ * element, since Safari does not focus a button on a mouse click. */
+export type OpenAnswer = (
+  ordinal: number,
+  source?: Source,
+  opener?: HTMLElement | null,
+) => void;
 
 const OpenAnswerContext = createContext<OpenAnswer>(() => {});
 
@@ -151,7 +159,8 @@ export const SourceAnswer = memo(function SourceAnswer({
           </p>
         ) : null}
         {source === "chatgpt" && answered ? (
-          <AnswerControls answer={answer!} />
+          // Keyed, so a "copied" note never carries over to another question.
+          <AnswerControls key={answer!.id} answer={answer!} />
         ) : null}
       </div>
     </div>
@@ -181,15 +190,23 @@ export function AnswerPanelProvider({
   const [source, setSource] = useState<Source>("chatgpt");
   // Focus goes back to whatever opened the panel (Spec 021 D-02).
   const opener = useRef<HTMLElement | null>(null);
-  const openAnswer: OpenAnswer = (next, nextSource = "chatgpt") => {
-    opener.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    setOrdinal(next);
-    setSource(nextSource);
-    setOpen(true);
-  };
+  const prevButton = useRef<HTMLButtonElement | null>(null);
+  const nextButton = useRef<HTMLButtonElement | null>(null);
+  // Stable, so opening, paging or switching tabs does not re-render every
+  // row, dot and "P" reference that uses it.
+  const openAnswer = useCallback<OpenAnswer>(
+    (next, nextSource = "chatgpt", from) => {
+      opener.current =
+        from ??
+        (document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null);
+      setOrdinal(next);
+      setSource(nextSource);
+      setOpen(true);
+    },
+    [],
+  );
   const total = two.questions.length;
   const questionAt = (n: number) =>
     two.questions.find((q) => q.ordinal === n) ?? two.questions[0]!;
@@ -208,7 +225,12 @@ export function AnswerPanelProvider({
           showCloseButton={false}
           overlayBlur={false}
           overlayClassName={styles.overlay}
-          className={styles.panel}
+          className={cn(
+            styles.panel,
+            // Replaces the sheet's own 40px nudge (the separate `translate`
+            // property, which is not animated here and would snap on close).
+            "data-[side=right]:data-starting-style:translate-x-0 data-[side=right]:data-ending-style:translate-x-0",
+          )}
           finalFocus={opener}
           keepMounted
           data-answer-panel
@@ -240,8 +262,10 @@ export function AnswerPanelProvider({
             <div className={styles.body}>
               {(["chatgpt", "google"] as const).map((item) => (
                 <TabsContent key={item} value={item} className={styles.chat}>
-                  <p className={styles.context}>{questionContext(question)}</p>
-                  <p className={styles.bubble}>{question.question}</p>
+                  <p className={styles.context}>
+                    {questionContext(shownQuestion)}
+                  </p>
+                  <p className={styles.bubble}>{shownQuestion.question}</p>
                   <SourceAnswer
                     two={two}
                     question={shownQuestion}
@@ -258,8 +282,15 @@ export function AnswerPanelProvider({
               type="button"
               variant="inkOutline"
               size="touch"
+              ref={prevButton}
               disabled={question.ordinal <= 1}
-              onClick={() => setOrdinal(question.ordinal - 1)}
+              onClick={() => {
+                const next = question.ordinal - 1;
+                setOrdinal(next);
+                // This button turns off at the first question: keep focus
+                // in the panel, on the other one.
+                if (next <= 1) nextButton.current?.focus();
+              }}
             >
               <IconChevronLeft aria-hidden="true" />
               Sebelumnya
@@ -268,8 +299,14 @@ export function AnswerPanelProvider({
               type="button"
               variant="inkOutline"
               size="touch"
+              ref={nextButton}
+              data-panel-next
               disabled={question.ordinal >= total}
-              onClick={() => setOrdinal(question.ordinal + 1)}
+              onClick={() => {
+                const next = question.ordinal + 1;
+                setOrdinal(next);
+                if (next >= total) prevButton.current?.focus();
+              }}
             >
               Berikutnya
               <IconChevronRight aria-hidden="true" />

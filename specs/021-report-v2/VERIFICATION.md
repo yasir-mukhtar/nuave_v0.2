@@ -136,3 +136,38 @@ stack.
   (see the PR).
 - Print: the A4 PDF from the e2e run shows the table hidden and every answer
   in the appendix.
+
+### Review round 1 (ALMOST) and fixes
+
+[Round 1 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6430058137).
+
+- The panel fits a 320px phone: one shrinkable column, a tab row that may
+  scroll, a chat column that keeps long tables inside their own scroll box,
+  and footer buttons that share the width. The e2e test now opens the panel
+  at 320px and checks that nothing reaches past the screen edge.
+- No 40px snap on close: the sheet's own `translate` nudge is replaced for
+  this panel (the build merged a `translate: none` override into `transform`,
+  so a class override is used instead). The e2e test checks that the panel
+  carries no extra offset while it closes and only moves right. Under reduced
+  motion the panel stays in place and fades.
+- Focus stays in the panel when "Berikutnya" or "Sebelumnya" turns off at the
+  last or first question; a "copied" note no longer carries over to another
+  question; an open panel never prints over the report; the header logos are
+  labelled images; a dot in the table opens that source's tab.
+- Smaller: `openAnswer` is stable (no re-render of every row on open), the
+  bubble and the answer always show the same question, focus returns to the
+  clicked element (Safari does not focus buttons on click), appendix questions
+  are `h4`, an unused class is removed.
+
+### Smoothness method (AC-D2)
+
+Production build (`next build` and `next start`), headless Chromium at
+1280×860, a fictional report served through a route intercept. Frame times are
+the intervals between `requestAnimationFrame` callbacks while the panel opens
+and while it closes, three runs each: every frame was at most 16.8 ms. A
+Chromium performance trace of one opening (main-thread tasks) was also taken;
+the click's own work fell from 93 ms to 41 ms after the panel was kept mounted
+and the answer text moved to a deferred render. The reviewer's re-run with the
+CPU slowed showed one 33 ms frame at 2× and 50 to 100 ms frames at 4×, so a
+much slower phone may drop frames at the start of the slide; the slide itself
+is a compositor transform.

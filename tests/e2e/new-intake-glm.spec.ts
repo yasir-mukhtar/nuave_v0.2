@@ -729,6 +729,71 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await fresh.screenshot({ path: info.outputPath("answer-panel.png") });
   await fresh.keyboard.press("Escape");
   await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  // On a 320px phone the open panel fits the screen: nothing is cut off.
+  const desktop = fresh.viewportSize();
+  await fresh.setViewportSize({ width: 320, height: 700 });
+  await firstRow.scrollIntoViewIfNeeded();
+  await firstRow.click();
+  const narrow = fresh.getByRole("dialog", { name: "Pertanyaan 1 dari 10" });
+  await expect(narrow).toBeVisible();
+  await fresh.waitForTimeout(600);
+  const fit = await narrow.evaluate((el) => {
+    const right = (sel: string) =>
+      el.querySelector(sel)?.getBoundingClientRect().right ?? 0;
+    return {
+      width: el.getBoundingClientRect().width,
+      clipped: el.scrollWidth > el.clientWidth + 1,
+      close: right('[aria-label="Tutup"]'),
+      answer: right("[data-answer-body]"),
+      next: right("[data-panel-next]"),
+    };
+  });
+  expect(fit.width).toBeLessThanOrEqual(320);
+  expect(fit.clipped).toBe(false);
+  expect(fit.close).toBeLessThanOrEqual(320);
+  expect(fit.answer).toBeLessThanOrEqual(320);
+  expect(fit.next).toBeLessThanOrEqual(320);
+  await fresh.screenshot({ path: info.outputPath("answer-panel-320.png") });
+  // Printing with the panel open prints the report, not the panel.
+  await fresh.emulateMedia({ media: "print" });
+  await expect(narrow).toBeHidden();
+  await expect(
+    report.locator("[data-report-appendix] [data-answer-body]").first(),
+  ).toBeVisible();
+  await fresh.emulateMedia({ media: "screen" });
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  if (desktop) await fresh.setViewportSize(desktop);
+  // Closing slides back without a snap: the left edge only moves right, and
+  // no extra offset (the sheet's 40px `translate`) jumps in first (D-03).
+  await firstRow.click();
+  await expect(panel).toBeVisible();
+  await fresh.waitForTimeout(600);
+  const closing = await fresh.evaluate(
+    () =>
+      new Promise<{ lefts: number[]; translates: string[] }>((resolve) => {
+        const el = document.querySelector("[data-answer-panel]")!;
+        const lefts = [el.getBoundingClientRect().left];
+        const translates: string[] = [];
+        const tick = () => {
+          lefts.push(el.getBoundingClientRect().left);
+          translates.push(getComputedStyle(el).translate);
+          if (lefts.length < 8) requestAnimationFrame(tick);
+          else resolve({ lefts, translates });
+        };
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+        requestAnimationFrame(tick);
+      }),
+  );
+  for (const value of closing.translates)
+    expect(["none", "0px"]).toContain(value);
+  for (let i = 1; i < closing.lefts.length; i++)
+    expect(closing.lefts[i]!).toBeGreaterThanOrEqual(
+      closing.lefts[i - 1]! - 0.5,
+    );
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
   // Opening answers never changes the address (the link secret stays).
   expect(fresh.url()).toBe(urlBeforePanel);
   expect(external).toEqual([]);

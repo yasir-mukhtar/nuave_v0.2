@@ -125,6 +125,8 @@
 }
 .panel {
   display: grid;
+  /* One column that may shrink below the tab row's width (320px phones). */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 0;
   width: 100%;
@@ -178,10 +180,14 @@
 .tabs {
   display: flex;
   gap: 4px;
+  min-width: 0;
   padding: 10px 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
   border-bottom: 1px solid var(--line-200);
 }
 .tab {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -198,6 +204,15 @@
   letter-spacing: var(--type-label-tracking);
   cursor: pointer;
 }
+@media (max-width: 380px) {
+  .tabs {
+    gap: 0;
+    padding-inline: 8px;
+  }
+  .tab.tab {
+    padding-inline: 8px;
+  }
+}
 .tab svg {
   width: 16px;
   height: 16px;
@@ -212,6 +227,7 @@
   outline-offset: -2px;
 }
 .body {
+  min-width: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 18px 16px 24px;
@@ -228,11 +244,24 @@
   padding: 10px 16px;
   border-top: 1px solid var(--line-200);
 }
+.foot > button {
+  min-width: 0;
+}
+@media (max-width: 380px) {
+  /* Both buttons share the width on the smallest phones. */
+  .foot > button {
+    flex: 1 1 0;
+    padding-inline: 10px;
+  }
+}
 
 /* ── Chat look ── */
 
 .chat {
   display: grid;
+  /* Long answers (tables, links) scroll inside their own box, never widen
+     the panel. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 .context {
@@ -279,6 +308,7 @@
 }
 .reply {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 10px;
   min-width: 0;
@@ -368,7 +398,7 @@ a.src:hover {
   padding-block: 16px;
   border-top: 1px solid var(--line-200);
 }
-.appendixQuestion h3 {
+.appendixQuestion h4 {
   margin: 0;
   color: var(--text-heading);
   font-size: var(--type-title-sm-size);
@@ -385,8 +415,7 @@ a.src:hover {
 }
 
 @media print {
-  .table,
-  .notesScreen {
+  .table {
     display: none;
   }
   .appendix {
@@ -405,7 +434,12 @@ a.src:hover {
   .appendixQuestion {
     break-inside: auto;
   }
-  .appendixQuestion h3 {
+  .appendixQuestion h4 {
     break-after: avoid;
+  }
+  /* An open panel never prints over the report (Ctrl/Cmd+P). */
+  .panel,
+  .overlay {
+    display: none !important;
   }
 }

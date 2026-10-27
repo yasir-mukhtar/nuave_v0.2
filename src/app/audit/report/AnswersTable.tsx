@@ -38,7 +38,7 @@ export function AnswersTable({
             {SOURCES.map((source) => (
               <Tooltip key={source}>
                 <TooltipTrigger
-                  render={<span tabIndex={0} />}
+                  render={<span tabIndex={0} role="img" />}
                   className={styles.icon}
                   aria-label={SOURCE_LABEL[source]}
                   data-source-logo={source}
@@ -63,7 +63,18 @@ export function AnswersTable({
               <button
                 type="button"
                 className={`${styles.grid} ${styles.row}`}
-                onClick={() => openAnswer(question.ordinal)}
+                onClick={(event) => {
+                  // A click on a dot opens that source's tab (AC-D1).
+                  const dot = (event.target as Element).closest<HTMLElement>(
+                    "[data-source]",
+                  );
+                  const source = dot?.dataset.source;
+                  openAnswer(
+                    question.ordinal,
+                    source === "google" ? "google" : "chatgpt",
+                    event.currentTarget,
+                  );
+                }}
                 data-answer-row={question.ordinal}
                 aria-label={`Pertanyaan ${question.ordinal}: ${question.question}${
                   ownName ? " (menyebut nama Anda)" : ""
