@@ -2,7 +2,7 @@
 
 Test B of the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
 (decision 2026-10-26, as fixed on 2026-10-27), which is Spec 021's
-side-by-side writer test (B-07): six writers on the same saved orders, each
+side-by-side writer test (B-07): eight writers on the same saved orders, each
 running today's production writer, judged blind by the founder.
 
 | Blind entry | Model | Effort |
@@ -13,6 +13,8 @@ running today's production writer, judged blind by the founder.
 | `sonnet-high` | Claude Sonnet 5.5 | high |
 | `haiku-medium` | Claude Haiku 5.5 | medium |
 | `glm-low` | GLM 5.3 Flash (Cheaper Inference; added 2026-10-27) | low |
+| `opus-low` | Claude Opus 5.5 (added 2026-10-27) | low |
+| `opus-medium` | Claude Opus 5.5 (added 2026-10-27) | medium |
 
 Every entry reads the new input: today's input plus the words of Google's AI
 Overview for each question (phone numbers removed, answers longer than 3,000

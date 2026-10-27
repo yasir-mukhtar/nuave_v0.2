@@ -3,8 +3,9 @@
  * of report writers on saved orders that have both ChatGPT and Google answers.
  *
  * For each order, the blind entries in ENTRIES (Spec 021 B-07: GPT-5.6 Luna
- * low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5 medium,
- * and GLM 5.3 Flash low, added 2026-10-27), each running today's production
+ * low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5 medium;
+ * GLM 5.3 Flash low and Claude Opus 5.5 low and medium, added 2026-10-27),
+ * each running today's production
  * writer on the new input, and the delivered report as a labelled reference.
  * "New input" is today's input plus the words of Google's AI Overview for each
  * question (phone numbers removed, long answers shortened): the change to
@@ -167,7 +168,9 @@ export type EntryId =
   | "sonnet-medium"
   | "sonnet-high"
   | "haiku-medium"
-  | "glm-low";
+  | "glm-low"
+  | "opus-low"
+  | "opus-medium";
 
 export type EntryKey = EntryId | "reference";
 
@@ -241,6 +244,24 @@ export const ENTRIES: readonly Entry[] = [
     provider: "cheaper-inference",
     model: INDONESIAN_QUESTION_GLM_MODEL,
     effort: "low",
+    input: "new",
+  },
+  // Added at the founder's request (2026-10-27); Spec 021 B-07 names Opus
+  // "if affordable".
+  {
+    id: "opus-low",
+    label: "Claude Opus 5.5, low effort, new input",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
+    effort: "low",
+    input: "new",
+  },
+  {
+    id: "opus-medium",
+    label: "Claude Opus 5.5, medium effort, new input",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
+    effort: "medium",
     input: "new",
   },
 ];
@@ -424,6 +445,7 @@ export const PRICES: Record<
 > = {
   "gpt-5.6-luna": { input: 0.2, output: 1.2 },
   "claude-sonnet-5-5": { input: 2, output: 10 },
+  "claude-opus-5-5": { input: 4, output: 20 },
   "claude-haiku-5-5": {
     input: 0.1,
     output: 0.5,

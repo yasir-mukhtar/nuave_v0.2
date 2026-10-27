@@ -509,7 +509,7 @@ describe("blind review", () => {
     const key = assignLetters(["NV-AAAAAA", "NV-BBBBBB"]);
     for (const letters of Object.values(key)) {
       expect(Object.keys(letters)).toEqual(
-        ["A", "B", "C", "D", "E", "F"].slice(0, ENTRIES.length),
+        ["A", "B", "C", "D", "E", "F", "G", "H"].slice(0, ENTRIES.length),
       );
       expect(new Set(Object.values(letters))).toEqual(
         new Set(ENTRIES.map((entry) => entry.id)),
@@ -525,7 +525,14 @@ describe("blind review", () => {
       D: "haiku-medium",
       E: "luna-high",
     } as const;
-    expect(extendLetters({ ...scored })).toEqual({ ...scored, F: "glm-low" });
+    const extended = extendLetters({ ...scored });
+    expect(extended).toMatchObject(scored);
+    expect(new Set(Object.values(extended))).toEqual(
+      new Set(ENTRIES.map((entry) => entry.id)),
+    );
+    expect(Object.keys(extended).slice(5).sort()).toEqual(
+      ["F", "G", "H"].slice(0, ENTRIES.length - 5),
+    );
   });
 
   it("hides the writer and dates every entry like the delivered report", async () => {
