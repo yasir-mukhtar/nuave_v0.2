@@ -6,6 +6,8 @@
  */
 import { failedChatGptObservation, type ChatGptFacts } from "../checks/chatgpt";
 import type { GoogleCheck } from "../checks/google";
+import type { BusinessListing } from "../checks/listings";
+import { findNames } from "../audit/find-names";
 import {
   subjectAliases,
   subjectBrandName,
@@ -17,6 +19,7 @@ import {
   topicsMissing,
   TWO_SOURCE_REPORT_VERSION,
   urlDomain,
+  type CompetitorFact,
   type ReportSubject,
   type TwoSourceQuestion,
   type TwoSourceReport,
@@ -262,6 +265,13 @@ export function buildTwoSourceReport(input: {
   const chatgptBusinesses: string[] = [];
   const googleBusinesses: string[] = [];
   const times: string[] = [];
+  // Spec 021 Part C: what each answer says and what each page listed.
+  const answers: {
+    id: string;
+    chatgpt: string;
+    google: string;
+    listings: { chatgpt: BusinessListing[]; google: BusinessListing[] };
+  }[] = [];
   const questions = input.prompts.map((prompt, index) => {
     const row = input.rows.find((item) => item.prompt_id === prompt.prompt_id);
     const observation = input.observations.find(
@@ -286,6 +296,18 @@ export function buildTwoSourceReport(input: {
         if (!isOwn(name) && !googleBusinesses.includes(name))
           googleBusinesses.push(name);
     }
+    answers.push({
+      id: prompt.prompt_id,
+      chatgpt: answered && observation ? observation.raw_answer : "",
+      google: googleDone && google.outcome === "summary" ? google.text : "",
+      listings: {
+        chatgpt: answered ? (facts?.listings ?? []) : [],
+        google:
+          googleDone && google.outcome === "summary"
+            ? (google.listings ?? [])
+            : [],
+      },
+    });
     const detail = input.report.details.find(
       (item) => item.prompt_id === prompt.prompt_id,
     );
@@ -336,6 +358,19 @@ export function buildTwoSourceReport(input: {
   );
   const summaries = questions.filter((q) => q.google.outcome === "summary");
   const sorted = [...times].sort();
+  const otherBusinesses = {
+    chatgpt: chatgptBusinesses.slice(0, 10),
+    // N-19: Google's own page names, plus any business ChatGPT named that
+    // the AI Overview text also names.
+    google: [
+      ...googleBusinesses,
+      ...chatgptBusinesses.filter(
+        (name) =>
+          !googleBusinesses.includes(name) &&
+          googleTexts.some((text) => text.includes(` ${normalized(name)} `)),
+      ),
+    ].slice(0, 10),
+  };
   return {
     version: TWO_SOURCE_REPORT_VERSION,
     subject: setup.subject,
@@ -374,18 +409,109 @@ export function buildTwoSourceReport(input: {
       googleCompleted.length,
     ),
     topics_missing: topicsMissing(questions),
-    other_businesses: {
-      chatgpt: chatgptBusinesses.slice(0, 10),
-      // N-19: Google's own page names, plus any business ChatGPT named that
-      // the AI Overview text also names.
-      google: [
-        ...googleBusinesses,
-        ...chatgptBusinesses.filter(
-          (name) =>
-            !googleBusinesses.includes(name) &&
-            googleTexts.some((text) => text.includes(` ${normalized(name)} `)),
-        ),
-      ].slice(0, 10),
-    },
+    other_businesses: otherBusinesses,
+    competitors: competitorFacts({
+      answers,
+      names: [...otherBusinesses.chatgpt, ...otherBusinesses.google],
+      ownNames: setup.names,
+      isOwn,
+    }),
+  };
+}
+
+/** The listing with the most to show: a rating, then the most reviews. */
+function richest(
+  listings: readonly BusinessListing[],
+): BusinessListing | undefined {
+  return [...listings]
+    .filter((listing) => listing.rating)
+    .sort((a, b) => (b.reviews ?? 0) - (a.reviews ?? 0))[0];
+}
+
+function details(
+  listings: readonly BusinessListing[],
+): Pick<CompetitorFact, "website" | "rating" | "reviews"> {
+  const rated = richest(listings);
+  return {
+    website: listings.find((listing) => listing.website)?.website ?? null,
+    rating: rated?.rating ?? null,
+    reviews: rated?.reviews ?? null,
+  };
+}
+
+/**
+ * Spec 021 C-01/C-02: each other business counted by the answers that name
+ * it (once per answer, whole words, longest name first, the owner's names
+ * matched too; the rule the report highlights names with), the ChatGPT
+ * answers that showed it as a business card while naming it, and what the
+ * sources' own pages listed about it. The owner's card count and listing
+ * details come only from listings under one of its own names exactly; a
+ * branch ("Erha Clinic Surabaya") is neither the owner nor a competitor.
+ */
+export function competitorFacts(input: {
+  answers: readonly {
+    id: string;
+    chatgpt: string;
+    google: string;
+    listings: { chatgpt: BusinessListing[]; google: BusinessListing[] };
+  }[];
+  names: readonly string[];
+  ownNames: readonly string[];
+  isOwn: (name: string) => boolean;
+}): NonNullable<TwoSourceReport["competitors"]> {
+  const keyOf = (name: string) =>
+    name.trim().replace(/\s+/g, " ").toLowerCase();
+  const ownKeys = new Set(input.ownNames.map(keyOf).filter(Boolean));
+  const byKey = new Map<string, CompetitorFact>();
+  for (const name of input.names) {
+    const key = keyOf(name);
+    if (key && !byKey.has(key) && !ownKeys.has(key))
+      byKey.set(key, {
+        name: name.trim(),
+        chatgpt: [],
+        google: [],
+        cards: [],
+        website: null,
+        rating: null,
+        reviews: null,
+      });
+  }
+  const others = [...byKey.values()];
+  const listed = new Map<string, BusinessListing[]>();
+  const own: BusinessListing[] = [];
+  const ownCards: string[] = [];
+  for (const answer of input.answers) {
+    for (const source of ["chatgpt", "google"] as const) {
+      const found = new Set(
+        findNames(answer[source], [
+          ...input.ownNames,
+          ...others.map((fact) => fact.name),
+        ]).map((match) => keyOf(match.name)),
+      );
+      for (const key of found) byKey.get(key)?.[source].push(answer.id);
+      for (const listing of answer.listings[source]) {
+        const key = keyOf(listing.name);
+        // A card counts only in an answer that also names the business.
+        const carded = listing.card && found.has(key);
+        if (ownKeys.has(key)) {
+          own.push(listing);
+          if (carded && !ownCards.includes(answer.id)) ownCards.push(answer.id);
+          continue;
+        }
+        if (input.isOwn(listing.name)) continue;
+        const fact = byKey.get(key);
+        if (!fact) continue;
+        listed.set(key, [...(listed.get(key) ?? []), listing]);
+        if (carded && !fact.cards.includes(answer.id))
+          fact.cards.push(answer.id);
+      }
+    }
+  }
+  return {
+    others: others.map((fact) => ({
+      ...fact,
+      ...details(listed.get(keyOf(fact.name)) ?? []),
+    })),
+    own: { ...details(own), cards: ownCards },
   };
 }

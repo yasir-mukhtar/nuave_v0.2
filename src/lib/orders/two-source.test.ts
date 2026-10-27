@@ -18,6 +18,8 @@ import { syntheticCheckSend } from "../checks/synthetic";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { runOrders, type CheckCallInput, type RunnerDeps } from "./runner";
 import { orderStatus } from "./store";
+import { competitorFacts } from "./two-source";
+import type { BusinessListing } from "../checks/listings";
 import {
   approveTwoSource,
   makeOrder,
@@ -739,5 +741,165 @@ describe("the report gate and failures (R-14, R-19, R-21, AC-10, AC-13)", () => 
     expect(sent).toEqual([]);
     expect(orderRow(id).state).toBe("failed");
     expect(orderRow(id).failure_code).toBe("order_limit");
+  });
+});
+
+/* ------------------- Spec 021 Part C: competitor data ------------------- */
+
+describe("competitor data saved with the report (Spec 021 C-01, C-02, AC-C1, AC-C2)", () => {
+  it("a synthetic order saves each business's counts, recommendations, website, rating and reviews, with no phone or address", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(two.version).toBe("nuave-two-source-v2");
+    // Klinik Sintesa Contoh: named in the 9 ChatGPT answers and the 8 AI
+    // Overviews, shown as a ChatGPT business card in all 9 answers.
+    const fact = two.competitors!.others.find(
+      (item) => item.name === "Klinik Sintesa Contoh",
+    )!;
+    expect(fact.chatgpt).toHaveLength(9);
+    expect(fact.google).toHaveLength(8);
+    expect(fact.cards).toHaveLength(9);
+    expect(fact.chatgpt).not.toContain(two.questions[6]!.prompt_id);
+    expect(fact).toMatchObject({
+      website: "https://klinik-sintesa.test/",
+      rating: { value: 4.6, max: 5 },
+      // The listing with the most reviews: Google's map result.
+      reviews: 131,
+    });
+    expect(two.competitors!.own).toEqual({
+      cards: [],
+      website: null,
+      rating: null,
+      reviews: null,
+    });
+    // AC-C2: no phone number and no address in what is saved about
+    // businesses, in the report or in the saved checks.
+    const saved = [
+      JSON.stringify(two.competitors),
+      ...rows<{ c_facts_json: string | null; g_result_json: string | null }>(
+        `SELECT c_facts_json, g_result_json FROM order_questions WHERE order_id = '${id}'`,
+      ).flatMap((row) => [
+        JSON.stringify(
+          (JSON.parse(row.c_facts_json ?? "{}") as { listings?: unknown })
+            .listings ?? [],
+        ),
+        JSON.stringify(
+          (JSON.parse(row.g_result_json ?? "{}") as { listings?: unknown })
+            .listings ?? [],
+        ),
+      ]),
+    ].join("\n");
+    expect(saved).toContain("klinik-sintesa.test");
+    expect(containsPhoneNumber(saved)).toBe(false);
+    expect(saved).not.toContain("Jl. Contoh");
+  });
+});
+
+describe("competitorFacts (C-02)", () => {
+  const card = (
+    name: string,
+    more: Partial<BusinessListing> = {},
+  ): BusinessListing => ({
+    name,
+    website: null,
+    rating: null,
+    reviews: null,
+    card: true,
+    ...more,
+  });
+  const own = ["Erha Clinic"];
+  const isOwn = (name: string) => / erha clinic /i.test(` ${name} `);
+
+  it("counts answers once per source, longest name first, owner's names matched too; a card counts once per answer that names the business", () => {
+    const facts = competitorFacts({
+      answers: [
+        {
+          id: "q1",
+          chatgpt:
+            "Erha Clinic dan Natasha Skin Clinic. Natasha Skin Clinic lagi.",
+          google: "Natasha Skin Clinic.",
+          listings: {
+            chatgpt: [
+              card("Natasha Skin Clinic", {
+                website: "https://natasha.example/",
+                rating: { value: 4.5, max: 5 },
+                reviews: 40,
+              }),
+              card("Natasha Skin Clinic"),
+              card("Erha Clinic", {
+                website: "https://erha.example/",
+                rating: { value: 4.8, max: 5 },
+                reviews: 900,
+              }),
+              // A branch: neither the owner nor a competitor.
+              card("Erha Clinic Surabaya", {
+                rating: { value: 3.1, max: 5 },
+                reviews: 5000,
+              }),
+              // A card for a business the answer does not name: no card.
+              card("Klinik Kosong"),
+            ],
+            google: [
+              card("Natasha Skin Clinic", {
+                card: false,
+                rating: { value: 4.6, max: 5 },
+                reviews: 300,
+              }),
+            ],
+          },
+        },
+        // "Erha" alone is not "Erha Clinic"; "Natasha" alone is a competitor.
+        {
+          id: "q2",
+          chatgpt: "Coba Natasha atau Erha.",
+          google: "",
+          listings: { chatgpt: [], google: [] },
+        },
+      ],
+      names: ["Natasha Skin Clinic", "Natasha", "Klinik  Kosong"],
+      ownNames: own,
+      isOwn,
+    });
+    expect(facts.others).toEqual([
+      {
+        name: "Natasha Skin Clinic",
+        chatgpt: ["q1"],
+        google: ["q1"],
+        cards: ["q1"],
+        website: "https://natasha.example/",
+        rating: { value: 4.6, max: 5 },
+        reviews: 300,
+      },
+      {
+        name: "Natasha",
+        chatgpt: ["q2"],
+        google: [],
+        cards: [],
+        website: null,
+        rating: null,
+        reviews: null,
+      },
+      {
+        name: "Klinik  Kosong",
+        chatgpt: [],
+        google: [],
+        cards: [],
+        website: null,
+        rating: null,
+        reviews: null,
+      },
+    ]);
+    // The owner's details come only from listings under its own name: the
+    // branch's 3.1 with 5,000 reviews is not the owner's rating.
+    expect(facts.own).toEqual({
+      cards: ["q1"],
+      website: "https://erha.example/",
+      rating: { value: 4.8, max: 5 },
+      reviews: 900,
+    });
   });
 });

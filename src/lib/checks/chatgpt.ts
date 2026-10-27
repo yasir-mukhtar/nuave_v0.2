@@ -14,6 +14,7 @@ import type {
 } from "../audit/types";
 import { SOURCE_TITLE_MAX_LENGTH } from "../audit/types";
 import { INDONESIA_LOCATION_CODE } from "../discovery/places";
+import { chatgptListings, type BusinessListing } from "./listings";
 import { namedOutcome, type NamedOutcome } from "./named";
 import { stripPhoneNumbers, phoneSafeUrl } from "./phones";
 import type { CheckSend } from "./send";
@@ -45,6 +46,9 @@ export type ChatGptFacts = {
   call_ms: number;
   /** Names ChatGPT itself listed (brand entities, local-business cards). */
   businesses: string[];
+  /** Spec 021 C-01: its business cards' website, rating and reviews. Absent
+   * on checks saved before Part C. */
+  listings?: BusinessListing[];
 };
 
 export type ChatGptAttempt =
@@ -322,6 +326,7 @@ export function readChatGptAttempt(input: {
         .slice(0, 20),
       call_ms: telemetry.latency_ms,
       businesses: chatgptBusinesses(result),
+      listings: chatgptListings(result),
     },
   };
 }
