@@ -218,6 +218,10 @@ jobs:
           # and Google AI Overview checks). Preview workers get none.
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
           DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+          # Spec 022 R-16: the Meta Conversions API token for the server
+          # Purchase event. Preview workers get none, so they send nothing.
+          # The founder makes it in Meta Events Manager before this merges.
+          META_CAPI_ACCESS_TOKEN: ${{ secrets.META_CAPI_ACCESS_TOKEN }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -244,3 +248,4 @@ jobs:
             CHEAPERINFERENCE_API_KEY
             DATAFORSEO_LOGIN
             DATAFORSEO_PASSWORD
+            META_CAPI_ACCESS_TOKEN

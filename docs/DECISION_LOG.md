@@ -6,6 +6,79 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-27 — Meta Conversions API spec renumbered 022
+
+Yasir chose to renumber the Meta Conversions API spec from 021 to 022
+(`specs/022-meta-conversions-api/`), because the Report v2 spec reached main
+first as Spec 021 (PR #171), as with Spec 019/020. Its database change
+becomes migration 0015, so Report v2 keeps the 0014 its plan reserves. The
+2026-10-26 entries below, written under the old number, now read 022.
+Founder step 0 is done (Cloudflare's per-request log keeps visitor IP
+addresses, so it is switched off), and the Meta access token is saved.
+
+## 2026-10-26 — Spec 022 wording re-approved after review round 4
+
+Review round 4 found the first "How it works" text (Q-9) and the privacy
+page's reassurance paragraph (Q-2) said less than the privacy page or
+more than is true. Yasir re-approved both reworded texts as written: How
+it works now says what the browser shares for everyone who allows, adds
+the Meta cookie codes, says the coded email is matched to the buyer's
+Facebook or Instagram account, says "never send Meta" and "none of your
+data", and points to Pengaturan cookie on the home and privacy pages; the
+reassurance paragraph says "data Anda" and "ke Meta" throughout. This
+supersedes the Q-9 approval recorded in the entry below. Review round 5:
+PASS.
+
+## 2026-10-26 — Cookie notice: layered disclosure (Spec 022)
+
+Yasir replaced the Spec 022 notice wording (Q-1, option A) with a layered
+notice. First layer: "**Help us understand what works** We use cookies and
+limited purchase information to measure which ads lead to sales. Your
+report and business answers are never shared with advertising partners.",
+a visible **How it works** link, and the buttons Don't allow and Allow. How
+it works opens, inside the notice and before any choice, a short
+explanation of the data shared (including the hashed order email), with
+whom (Meta) and why; the privacy page gives the full detail and names Meta.
+Don't allow turns off both the browser Pixel and server conversion
+matching.
+
+This supersedes the 2026-10-25 rule ("Cookie notice in English, shorter")
+that the server step brings the email back into the notice itself, and
+privacy item 1's "the notice names it": the information must instead be
+clearly available before consent. Yasir's view is that informed consent
+does not require the hashed email in the first layer; this is recorded as
+a decision for the lawyer's check, not a claim that it is compliant. Yasir
+approved the How it works wording (Spec 022 Q-9) as written.
+
+## 2026-10-26 — Approve Spec 022 (Meta Conversions API, server Purchase)
+
+Yasir approved [Spec 022](../specs/022-meta-conversions-api/SPEC.md)
+(revision 4, after three independent review rounds, the last PASS; PR
+#170). The server sends Meta one Purchase (249000 IDR) per paid order, only
+when the buyer's own browser reaches the paid screen after Allow (Option A,
+so the IP address and browser type are passed on without being stored),
+with the same event code as the browser Pixel so Meta counts it once.
+Answers:
+
+- **Notice (Q-1):** option A, without naming Meta: "Cookies help us measure
+  our ads. If you buy, our ad partner gets a coded version of your order
+  email, to see which ad brought you. Your report and answers are never
+  shared." Yasir asked whether Meta could go unnamed everywhere; the
+  privacy page keeps naming it, because Meta's advertiser terms and UU PDP,
+  as we understand them, expect visitors to be told who receives the data.
+- **Privacy page (Q-2):** version 1.4, so everyone is asked again. Section
+  10 gets a short reassurance paragraph first (nothing goes to Meta without
+  Allow; the email is never sent readable; report, questions, AI answers
+  and business data are never sent; data is not sold; the choice can be
+  changed any time), and its server-event point is narrowed to purchases.
+  The page must not suggest that data is shared with no one.
+- **Q-3 to Q-8, as recommended:** sandbox purchases reach Meta only while a
+  test code is set (Meta still counts them, so the check runs before ads
+  start); a fixed `/audit` page address; one try per order; the consent
+  version and send time kept on the order; Purchase only; and Cloudflare's
+  automatic per-request log switched off if it holds IP addresses, giving
+  up its saved request history.
+
 ## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
 
 After four rounds on the clickable prototype (`experiments/report-v2-poc/`),
