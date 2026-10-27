@@ -471,5 +471,15 @@ verdict, headline, reason, takeaways, plan, named topic rows and a
 recommended Google dot; the new answer shape has every field required
 (OpenAI strict mode) while older writers' shapes are unchanged; e2e, the
 synthetic journey shows the verdict, a headline, a reason, the takeaways, the
-plan and the named topics.
+plan and the named topics. Full main e2e suite: 86 passed. Unit: 2,701
+passed.
+
+Independent review: round 1 ALMOST (three Musts on headline numbers, all
+fixed), round 2 PASS
+([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/182#issuecomment-6437892962)).
+Its non-blocking points: a caption must now fit its basis; the save guard
+and the version switch are tested; the guard has its own diagnostic. Still
+open, for PR 6b: one live harness call on NV-3WDSAY's export to measure the
+new answer's output tokens against the 16,000-token call limit before the
+founder deploys the writer.
 

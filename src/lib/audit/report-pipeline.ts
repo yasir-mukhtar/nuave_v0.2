@@ -6,6 +6,7 @@ import {
 import {
   finishTwoSourceWriting,
   partBWritingViolations,
+  saveableTwoSourceWriting,
 } from "./two-source-writing";
 import { hasWriterFacts } from "./two-source-writer";
 import {
@@ -84,7 +85,6 @@ import { validateDirectTenQuestions } from "./questions-id-direct-ten";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
   TWO_SOURCE_WRITING_VERSION,
-  reportContentSchema,
 } from "./types";
 
 export type ReportPipelineInput = {
@@ -591,18 +591,9 @@ export async function createValidatedAuditReport(
     // Last guard: the saved report must pass the page's own schema check,
     // or the customer would see "Bukti laporan tidak tersedia". Should the
     // new block still fail it, the report keeps everything else.
-    if (!reportContentSchema.safeParse(content).success) {
-      const { two_source_writing, ...rest } = content;
-      void two_source_writing;
-      content = {
-        ...rest,
-        key_findings: rest.key_findings.map(({ headline, ...finding }) => {
-          void headline;
-          return finding;
-        }),
-      };
-      diagnostics.add("writing_item_dropped");
-    }
+    const saveable = saveableTwoSourceWriting(content);
+    content = saveable.content;
+    if (saveable.dropped) diagnostics.add("writing_block_dropped");
   }
 
   // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and

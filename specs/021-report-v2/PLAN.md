@@ -417,8 +417,12 @@ so new reports are not marked "Bukti laporan tidak tersedia".
      the "2" of "Rp 250.000"); two such figures may stand side by side
      ("70 vs 75+").
 
-  A number code cannot confirm, or one outside the saved bounds (number up
-  to 24 characters, caption 1 to 160), is dropped; the finding keeps its
+  The caption must fit the basis: a "not" basis (not named, not
+  recommended, not shown, named by neither) needs a negation ("tidak",
+  "belum", "tanpa"), any other per-question basis may not have one (cited
+  only is not checked: "tanpa menyebut nama" is how it reads). A number code
+  cannot confirm, a caption that does not fit, or a headline outside the
+  saved bounds (number up to 24 characters, caption 1 to 160) is dropped; the finding keeps its
   text, and the report diagnostic is `headline_dropped`.
 - *Banned title starts* ("Periksa", "Pertahankan", "Pertimbangkan",
   "Pastikan") on finding titles and recommendation titles: a writing
@@ -453,7 +457,7 @@ so new reports are not marked "Bukti laporan tidak tersedia".
 - *Last guard:* before saving, the report must pass the saved schema the
   page checks; should the new block still fail it, the report is saved
   without the block (and its headlines) rather than shown as "Bukti laporan
-  tidak tersedia".
+  tidak tersedia" (diagnostic `writing_block_dropped`).
 - *Version:* a report from the new writer records `report_prompt_version`
   `nuave-two-source-writing-v1`, so the side-by-side test never compares a
   delivered report with a writer that did not write it.

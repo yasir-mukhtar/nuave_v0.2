@@ -13,6 +13,7 @@ import {
 import {
   HEADLINE_CAPTION_MAX,
   HEADLINE_NUMBER_MAX,
+  reportContentSchema,
   type AuditObservation,
   type HeadlineBasis,
   type ReportContent,
@@ -409,6 +410,50 @@ export function headlineConfirmed(
   return n > 0 && size() === n;
 }
 
+/** A negation in a caption: "tidak", "belum", "tanpa"… */
+const NEGATION =
+  /(?:^|[^\p{L}])(?:tidak|tak|belum|bukan|tanpa|absen)(?![\p{L}])/iu;
+
+/**
+ * A caption must say what its basis counts: a "not" basis (not named, not
+ * recommended, not shown, named by neither) needs a negation; any other
+ * per-question basis may not have one ("2 dari 2" counted as not named but
+ * captioned "menyebut Klinik Anda" is dropped). Cited-only captions may say
+ * "tanpa menyebut nama", so they are not checked.
+ */
+export function captionFitsBasis(headline: {
+  caption: string;
+  basis: HeadlineBasis;
+}): boolean {
+  const { basis, caption } = headline;
+  if (!isQuestionBasis(basis) || basis.endsWith("_cited_only")) return true;
+  const negative = basis.includes("_not_") || basis === "named_by_neither";
+  return NEGATION.test(caption) === negative;
+}
+
+/** The report as it may be saved: the page refuses one that fails the
+ * saved schema, so the new block (and its headlines) goes rather than the
+ * whole report. */
+export function saveableTwoSourceWriting(content: ReportContent): {
+  content: ReportContent;
+  dropped: boolean;
+} {
+  if (reportContentSchema.safeParse(content).success)
+    return { content, dropped: false };
+  const { two_source_writing, ...rest } = content;
+  void two_source_writing;
+  return {
+    content: {
+      ...rest,
+      key_findings: rest.key_findings.map(({ headline, ...finding }) => {
+        void headline;
+        return finding;
+      }),
+    },
+    dropped: true,
+  };
+}
+
 /** Questions where the business was absent, cited without its name, or not
  * recommended, in either source (the new observed-gap rule). */
 function gapIds(
@@ -485,6 +530,7 @@ export function finishTwoSourceWriting(
         headline.number.length > HEADLINE_NUMBER_MAX ||
         !headline.caption ||
         headline.caption.length > HEADLINE_CAPTION_MAX ||
+        !captionFitsBasis(headline) ||
         !headlineConfirmed(
           headline,
           finding.evidence_prompt_ids,

@@ -26,6 +26,7 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "banned_title_repaired",
   "writing_label_removed",
   "writing_item_dropped",
+  "writing_block_dropped",
   "verdict_cut",
 ] as const;
 

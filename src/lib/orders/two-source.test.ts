@@ -954,6 +954,10 @@ describe("Spec 021 Part B: the new writer on the whole path (AC-B1, AC-B2)", () 
     const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
     const writing = report.two_source_writing!;
     expect(writing.version).toBe("nuave-two-source-writing-v1");
+    // The report says which writer wrote it (the side-by-side test reads it).
+    expect(report.provenance.report_prompt_version).toBe(
+      "nuave-two-source-writing-v1",
+    );
     expect(writing.verdict).toMatch(/^Uji alur sintetis/);
     expect(writing.plan).toHaveLength(3);
     expect(report.key_findings[0]!.headline?.number).toMatch(/^\d+ dari \d+$/);

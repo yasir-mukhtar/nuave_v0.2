@@ -4,8 +4,10 @@ import type {
   TwoSourceWriterFacts,
 } from "./two-source-report";
 import {
+  captionFitsBasis,
   cutVerdict,
   finishTwoSourceWriting,
+  saveableTwoSourceWriting,
   headlineConfirmed,
   partBWritingViolations,
 } from "./two-source-writing";
@@ -555,6 +557,87 @@ describe("after the revision, code finishes the block (B-04 to B-06)", () => {
     );
     expect(out.priorities).toHaveLength(1);
     expect(diagnostics).not.toContain("unsupported_priority_removed");
+  });
+
+  it("a caption must say what its basis counts", () => {
+    const fits = (caption: string, basis: HeadlineBasis) =>
+      captionFitsBasis({ caption, basis });
+    expect(fits("pertanyaan yang menyebut Klinik Anda", "chatgpt_named")).toBe(
+      true,
+    );
+    expect(
+      fits("pertanyaan yang menyebut Klinik Anda", "chatgpt_not_named"),
+    ).toBe(false);
+    expect(
+      fits("jawaban yang tidak menyebut Klinik Anda", "chatgpt_not_named"),
+    ).toBe(true);
+    expect(
+      fits("jawaban yang tidak menyebut Klinik Anda", "chatgpt_named"),
+    ).toBe(false);
+    expect(fits("pertanyaan tanpa AI Overview", "google_not_shown")).toBe(true);
+    expect(fits("belum disebut sumber mana pun", "named_by_neither")).toBe(
+      true,
+    );
+    // A cited-only caption may say "tanpa menyebut nama".
+    expect(
+      fits(
+        "blog Anda dikutip Google, tanpa menyebut nama",
+        "google_cited_only",
+      ),
+    ).toBe(true);
+    // Counts of domains or businesses, and verbatim figures, are not checked.
+    expect(fits("sumber pihak ketiga", "cited_domains")).toBe(true);
+    expect(fits("cabang, belum termasuk mitra", "verbatim")).toBe(true);
+
+    const draft = content({
+      key_findings: [
+        {
+          title: "Dua jawaban",
+          explanation: "Di ChatGPT, dua jawaban.",
+          evidence_prompt_ids: ["q2", "q3"],
+          headline: {
+            number: "2 dari 2",
+            caption: "jawaban yang menyebut Klinik Anda",
+            basis: "chatgpt_not_named",
+          },
+        },
+      ],
+    });
+    expect(
+      finishTwoSourceWriting(draft, facts, observations).content
+        .key_findings[0]!.headline,
+    ).toBeUndefined();
+  });
+
+  it("a report that would fail the saved schema is saved without the new block", () => {
+    // A saved report holds ten answers.
+    const ten = [
+      ...content().details,
+      ...["q5", "q6", "q7", "q8", "q9", "q10"].map((id) =>
+        detail(id, "absent", "not_assessed"),
+      ),
+    ] as ReportContent["details"];
+    const fine = content({ details: ten });
+    expect(saveableTwoSourceWriting(fine)).toEqual({
+      content: fine,
+      dropped: false,
+    });
+    const broken = content({
+      details: ten,
+      key_findings: [
+        {
+          title: "x",
+          explanation: "y",
+          evidence_prompt_ids: ["q2"],
+          headline: { number: "", caption: "", basis: "verbatim" },
+        },
+      ],
+    });
+    const { content: out, dropped } = saveableTwoSourceWriting(broken);
+    expect(dropped).toBe(true);
+    expect(out.two_source_writing).toBeUndefined();
+    expect(out.key_findings[0]).not.toHaveProperty("headline");
+    expect(out.conclusion).toBe(broken.conclusion);
   });
 
   it("cuts a verdict to two sentences and 220 characters", () => {
