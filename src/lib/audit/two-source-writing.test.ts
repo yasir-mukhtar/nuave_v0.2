@@ -277,6 +277,54 @@ describe("headline numbers, checked by their basis (B-05)", () => {
     expect(check("250")).toBe(false);
   });
 
+  it("verbatim: a figure from a page read (the business's own, or one a cited question's answer cited)", () => {
+    const withPages = {
+      ...facts,
+      writer: {
+        ...facts.writer,
+        pages: [
+          {
+            url: "https://fiksi.example/",
+            domain: "fiksi.example",
+            title: "",
+            kind: "own" as const,
+            cited_in: [],
+            text: "Kami punya 120 dokter.",
+          },
+          {
+            url: "https://hadirr.com/a",
+            domain: "hadirr.com",
+            title: "",
+            kind: "cited" as const,
+            cited_in: ["q4"],
+            text: "Daftar 37 klinik.",
+          },
+        ],
+      },
+    };
+    const check = (number: string) =>
+      headlineConfirmed(
+        { number, basis: "verbatim" },
+        ["q2"],
+        content(),
+        withPages,
+        observations,
+      );
+    expect(check("120")).toBe(true);
+    // A page cited only by a question the finding does not cite.
+    expect(check("37")).toBe(false);
+    // The same page, when the finding cites the question that cited it.
+    expect(
+      headlineConfirmed(
+        { number: "37", basis: "verbatim" },
+        ["q2", "q4"],
+        content(),
+        withPages,
+        observations,
+      ),
+    ).toBe(true);
+  });
+
   it("verbatim: two figures side by side, each a token of a cited answer", () => {
     expect(confirmed("2 vs 75+", "verbatim")).toBe(false);
     const two = [
