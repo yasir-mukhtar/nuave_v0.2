@@ -1,8 +1,7 @@
 # Verification: Spec 021 — Report v2
 
 > Result: **Pending** (Parts A, D and P built; Parts C and B to come; not
-> Verified until the founder's AC-A7 and AC-D2 checks and the Part P preview
-> check are recorded)
+> Verified until the founder's AC-A7 and AC-D2 checks are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
@@ -284,17 +283,16 @@ afterwards. What this gives:
   browser's print), so criteria 2 and 3 do not arise; fonts and CSS load from
   the site's own address, which Browser Run reaches (public pages).
 - No server renderer is added to the Worker (criterion 4).
-- Time (criterion 5): the same request run locally against `next start` with
-  Chromium (page load, report read, A4 print with the footer) took 1.5 to
-  1.9 seconds for 11, 29 and 75 pages. Browser Run's time is recorded on the
-  PR preview.
+- Time (criterion 5): on the PR preview, with the real Browser Run, 10.9 and
+  8.0 seconds from the press to the saved file (under 15). Locally, against
+  `next start` with Chromium, 1.5 to 1.9 seconds for 11, 29 and 75 pages.
 
 ### Acceptance results
 
-| Criterion | Result                        | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| --------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-P1     | Pass offline; preview pending | Local run of the route's own Browser Run request (`pdfRequest`) with Chromium: A4, footer "Nuave · Laporan Visibilitas AI · <klinik>" and "n / total" on every page, page 1 is the header, verdict and source cards, Temuan Utama, Rekomendasi and Penutup each start a page, then "Lampiran: jawaban lengkap" with every answer; no text overlaps beyond the page-1 baseline in 11, 29 and 75 page reports. Unit: request options, headers, file name. **Still to do: download a synthetic report's PDF on the PR preview and record the time per PDF.** |
-| AC-P2     | Pass                          | Unit "the link secret never goes into a URL": Browser Run gets `/r/print#<43-character code>`, never the secret; only the code's hash is stored; the code opens the report once and not after 60 seconds or after the link is switched off; a wrong, malformed or switched-off secret gets the report route's exact answer and Browser Run is not called; logs carry numbers and codes only. E2e: the page posts the secret in the body, never in a URL.                                                                                                  |
+| Criterion | Result | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-P1     | Pass   | **PR preview (real Browser Run), 2026-10-27:** a fictional synthetic report put in the preview database; "Unduh PDF" in a browser saved `Laporan-Nuave-Klinik-Kecantikan-Contoh-Sentosa-Kemang-Raya.pdf` (200, `application/pdf`, `no-store`): 11 A4 pages, Geist embedded, footer "Nuave · Laporan Visibilitas AI · <klinik>" and "n / 11" on every page, page 1 the header, verdict and source cards, Temuan Utama (p. 2), Rekomendasi (p. 4) and Penutup (p. 5) each start a page, then "Lampiran: jawaban lengkap"; no text overlaps beyond the page-1 baseline. **Time per PDF: 10.9 s, then 8.0 s** (press to saved file). Afterwards no print code was left in the database and the day count was 2. Local runs of the same request for 29 and 75 page reports were also clean. Unit: request options, headers, file name. |
+| AC-P2     | Pass   | Unit "the link secret never goes into a URL": Browser Run gets `/r/print#<43-character code>`, never the secret; only the code's hash is stored; the code opens the report once and not after 60 seconds or after the link is switched off; a wrong, malformed or switched-off secret gets the report route's exact answer and Browser Run is not called; logs carry numbers and codes only. E2e: the page posts the secret in the body, never in a URL.                                                                                                                                                                                                                                                                                                                                                                          |
 
 ### Checks run
 
