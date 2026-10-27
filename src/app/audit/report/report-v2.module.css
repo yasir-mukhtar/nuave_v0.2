@@ -693,6 +693,45 @@
   line-height: var(--type-copy-sm-leading);
   letter-spacing: var(--type-copy-sm-tracking);
 }
+.saveAction {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+@media (min-width: 640px) {
+  .saveAction {
+    justify-items: end;
+  }
+}
+/* Part P: "PDF belum bisa dibuat. Coba lagi." under the button pressed
+   (also inside the save row, whose own paragraphs are body grey). */
+.pdfFailed,
+.save .pdfFailed {
+  margin: 0;
+  color: var(--red);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+/* The same width and side padding as the bar's own row. */
+.topbarNote {
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 10px
+    max(16px, env(safe-area-inset-left, 0px));
+  text-align: right;
+}
+.pdfFailed button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
 .footer {
   display: flex;
   flex-wrap: wrap;
@@ -725,6 +764,9 @@
   .band {
     border-top: 0;
     break-inside: auto;
+  }
+  .band[data-new-page] {
+    break-before: page;
   }
   .bandWash,
   .bandGrey {

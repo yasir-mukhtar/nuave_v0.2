@@ -2,45 +2,25 @@ import { NextResponse } from "next/server";
 import { enforceAuditCallerRateLimit } from "@/lib/audit/rate-limit";
 import { sha256Hex } from "@/lib/orders/config";
 import { orderRuntime } from "@/lib/orders/http";
-import { reportForLink } from "@/lib/orders/store";
+import { PRINT_TOKEN_PATTERN, spendPrintToken } from "@/lib/orders/report-pdf";
+import {
+  PRIVATE_HEADERS,
+  SECRET_PATTERN,
+  neutral,
+  unavailable,
+} from "@/lib/orders/report-route";
+import { reportForLink, reportForOrder } from "@/lib/orders/store";
 
 export const runtime = "nodejs";
-
-/** R-26/R-27: the page, its data and every answer are kept out of search, out
- * of caches and out of the Referer header. */
-const PRIVATE_HEADERS = {
-  "Cache-Control": "no-store",
-  "X-Robots-Tag": "noindex, nofollow",
-  "Referrer-Policy": "no-referrer",
-} as const;
-
-export const REPORT_UNAVAILABLE_MESSAGE = "Laporan ini tidak tersedia.";
-
-/** One response for a wrong, expired or switched-off secret (R-27): the same
- * status, headers and body, so the three cannot be told apart. */
-function neutral() {
-  return NextResponse.json(
-    { error: REPORT_UNAVAILABLE_MESSAGE, code: "REPORT_UNAVAILABLE" },
-    { status: 404, headers: PRIVATE_HEADERS },
-  );
-}
-
-/** The server cannot look (no database, or it failed). It does not depend on
- * the secret, so it tells a caller nothing about one. */
-function unavailable() {
-  return NextResponse.json(
-    { error: "Laporan belum bisa dibuka sekarang.", code: "REPORT_TRY_LATER" },
-    { status: 503, headers: PRIVATE_HEADERS },
-  );
-}
-
-/** The secret as the link makes it: 24 random bytes, URL-safe base64. */
-const SECRET_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 
 /**
  * Spec 016 R-26/R-27: the report page POSTs the link secret (from the URL
  * fragment, never in a URL the server sees) and gets the saved report. No login,
  * no provider call. The route is rate-limited per IP.
+ *
+ * Spec 021 P-02: Browser Run's print page sends a single-use print code
+ * (`print_token`) instead; it is spent on this read, so it opens the report
+ * once.
  */
 export async function POST(request: Request) {
   const rateLimited = await enforceAuditCallerRateLimit(
@@ -56,21 +36,41 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as {
     secret?: unknown;
+    print_token?: unknown;
   } | null;
   const secret = body?.secret;
-  if (typeof secret !== "string" || !SECRET_PATTERN.test(secret)) {
-    return neutral();
-  }
+  const printToken = body?.print_token;
+  const bySecret = typeof secret === "string" && SECRET_PATTERN.test(secret);
+  const byPrintToken =
+    !bySecret &&
+    typeof printToken === "string" &&
+    PRINT_TOKEN_PATTERN.test(printToken);
+  if (!bySecret && !byPrintToken) return neutral();
   const server = orderRuntime();
   if (!server) return unavailable();
 
   let saved: Awaited<ReturnType<typeof reportForLink>>;
   try {
-    saved = await reportForLink(server.db, {
-      linkHash: await sha256Hex(secret),
-      environment: server.environment,
-      now: new Date(),
-    });
+    const now = new Date();
+    if (bySecret) {
+      saved = await reportForLink(server.db, {
+        linkHash: await sha256Hex(secret),
+        environment: server.environment,
+        now,
+      });
+    } else {
+      const orderId = await spendPrintToken(server.db, {
+        tokenHash: await sha256Hex(printToken as string),
+        now,
+      });
+      saved = orderId
+        ? await reportForOrder(server.db, {
+            orderId,
+            environment: server.environment,
+            now,
+          })
+        : null;
+    }
   } catch {
     return unavailable();
   }

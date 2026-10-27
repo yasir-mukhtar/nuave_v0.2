@@ -15,10 +15,11 @@ const NAMES = [
   "ORDER_STATUS_CALLER_RATE_LIMITER",
   "REPORT_DATA_CALLER_RATE_LIMITER",
   "PAYMENT_START_CALLER_RATE_LIMITER",
+  "REPORT_PDF_CALLER_RATE_LIMITER",
 ];
 
 describe("Worker rate-limit configuration", () => {
-  it("declares exactly the eight approved independent 60-second limiters in production", () => {
+  it("declares exactly the nine approved independent 60-second limiters in production", () => {
     expect(config.ratelimits).toEqual([
       {
         name: "IDENTITY_CALLER_RATE_LIMITER",
@@ -63,6 +64,12 @@ describe("Worker rate-limit configuration", () => {
         name: "PAYMENT_START_CALLER_RATE_LIMITER",
         namespace_id: "307",
         simple: { limit: 5, period: 60 },
+      },
+      // Spec 021 P-02: the report PDF, per caller IP (Browser Run time).
+      {
+        name: "REPORT_PDF_CALLER_RATE_LIMITER",
+        namespace_id: "308",
+        simple: { limit: 3, period: 60 },
       },
     ]);
   });

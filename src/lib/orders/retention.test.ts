@@ -282,6 +282,17 @@ describe("making an order anonymous", () => {
        VALUES ('tx-paid', 'NV-ABCDEF-1', 'settlement', 'paid', 'none', ?1, ?1)`,
       T0.toISOString(),
     );
+    // Spec 021 Part P: a PDF count and an unspent print code.
+    await sql(
+      `INSERT INTO report_pdf_days (order_id, day, count) VALUES (?1, '2026-10-12', 2)`,
+      id,
+    );
+    await sql(
+      `INSERT INTO report_print_tokens (token_hash, order_id, expires_at)
+       VALUES ('hash', ?1, ?2)`,
+      id,
+      T0.toISOString(),
+    );
     // Spec 022: a server Purchase was sent for this order.
     await sql(
       `UPDATE orders SET meta_sent_at = ?2, meta_consent_version = '1.4',
@@ -327,6 +338,10 @@ describe("making an order anonymous", () => {
     expect(
       d1.query("SELECT * FROM payment_emails WHERE order_id = ?", id),
     ).toEqual([]);
+    for (const table of ["report_pdf_days", "report_print_tokens"])
+      expect(d1.query(`SELECT * FROM ${table} WHERE order_id = ?`, id)).toEqual(
+        [],
+      );
     // Payment and cost records stay.
     expect(
       d1.query("SELECT * FROM payment_attempts WHERE order_id = ?", id),
