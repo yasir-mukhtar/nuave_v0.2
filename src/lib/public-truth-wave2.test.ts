@@ -53,6 +53,19 @@ describe("Wave 2 public truth", () => {
     expect(privacy).toContain("https://www.facebook.com/privacy/policy");
     expect(privacy).toContain("https://www.facebook.com/adpreferences");
   });
+
+  it("Spec 022 AC-11: privacy 1.4 says 'ke Meta' in its summary and names server events for purchases only", () => {
+    const privacy = source("src/app/privacy/page.tsx").replace(/\s+/g, " ");
+    const legal = source("src/lib/legal.ts");
+    expect(legal).toContain('PRIVACY_VERSION = "1.4"');
+    expect(privacy).toContain(
+      "Singkatnya: kami tidak mengirim data Anda ke Meta kecuali Anda memilih <strong>Allow</strong>. Email Anda tidak pernah dikirim ke Meta dalam bentuk yang bisa dibaca. Laporan, pertanyaan, jawaban AI, dan data bisnis Anda tidak pernah dikirim ke Meta. Kami tidak menjual data Anda, dan Anda bisa mengubah pilihan kapan saja.",
+    );
+    expect(privacy).toContain(
+      "untuk pembelian, catatan yang sama dari server kami, beserta alamat IP, jenis browser, kode cookie Meta Anda, dan alamat halaman pemesanan Nuave; dan",
+    );
+    expect(privacy).not.toContain("untuk cek gratis dan pembelian");
+  });
 });
 
 describe("Wave 2 public accessibility and asset truth", () => {

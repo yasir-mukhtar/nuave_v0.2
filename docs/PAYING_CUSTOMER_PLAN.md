@@ -643,7 +643,8 @@ founder moves it into a milestone.
   the owner, and let the report recommend, within Spec 012's evidence rule.
 - ~~Compare report writing by Claude Sonnet with GPT-5.6 Luna~~: moved into
   Spec 021 Part B (2026-10-26). Try a page scraper (for example Firecrawl) for the website
-  reading.
+  reading. *The reading test stays here until after G1
+  ([decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)).*
 
 **Open questions** (from the former `NOW.md`; Track V starts on the first
 three)

@@ -66,7 +66,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const notice = () => screen.queryByRole("region", { name: "Allow cookies?" });
+const notice = () =>
+  screen.queryByRole("region", { name: "Help us understand what works" });
+
+const normalised = (text: string | null | undefined) =>
+  (text ?? "").replace(/\s+/g, " ").trim();
+/** Spec 022 Q-1 and Q-9, exactly as approved on 2026-10-26. */
+const FIRST_LAYER =
+  "We use cookies and limited purchase information to measure which ads lead to sales. Your report and business answers are never shared with advertising partners. How it works";
+const HOW_IT_WORKS = [
+  "If you allow, Meta (Facebook and Instagram), our advertising partner, sets cookies and learns which Nuave pages you open and when you finish the free check or open checkout, with your IP address and device type, so we can see which ads bring visitors.",
+  "If you buy, we also send Meta that a purchase happened and its value (Rp249.000), your IP address, browser type and Meta cookie codes, and your order email in coded (hashed) form, never as readable text. Meta uses these to match the purchase to your Facebook or Instagram account and the ad you saw, and to show our ads to people similar to our buyers.",
+  "We never send Meta your report, your questions, AI answers or your business details.",
+  "If you don't allow, none of your data is sent to Meta, from your browser or from our server. You can change your choice anytime under Pengaturan cookie, at the bottom of our home page and privacy page.",
+];
 
 describe("without a Pixel ID (R-01)", () => {
   it("shows no notice and no link, and loads nothing from Meta", () => {
@@ -146,12 +159,10 @@ describe("with a Pixel ID", () => {
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();
-    expect(
-      screen.getByText(/Your report and answers are never shared/),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Privacy policy" }).getAttribute("href"),
-    ).toBe("/privacy#cookie");
+    // Spec 022 Q-1: the first layer, word for word (AC-11).
+    expect(normalised(screen.getByText(/We use cookies/).textContent)).toBe(
+      FIRST_LAYER,
+    );
     expect(metaScripts()).toHaveLength(0);
     expect(window.fbq).toBeUndefined();
   });
@@ -406,5 +417,146 @@ describe("with a Pixel ID", () => {
     expect(window.location.search).toBe("?fbclid=abc");
     expect(window.history.state).toEqual(state);
     expect(metaScripts()).toHaveLength(1);
+  });
+});
+
+describe("Spec 022: the layered notice (R-19, R-19a, AC-11, AC-11a)", () => {
+  beforeEach(() => setUp());
+
+  it("How it works opens the Q-9 text inside the notice, before the choice, with nothing from Meta", () => {
+    app();
+    const toggle = screen.getByRole("button", { name: "How it works" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(document.getElementById("cookie-notice-how")).toBeNull();
+    act(() => toggle.click());
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    const panel = document.getElementById("cookie-notice-how")!;
+    expect(notice()!.contains(panel)).toBe(true);
+    const items = Array.from(panel.querySelectorAll("li"), (item) =>
+      normalised(item.textContent),
+    );
+    expect(items).toEqual(HOW_IT_WORKS);
+    expect(
+      screen.getByRole("link", { name: "Privacy policy" }).getAttribute("href"),
+    ).toBe("/privacy#cookie");
+    // Both choices stay in reach, and nothing loaded from Meta.
+    expect(screen.getByRole("button", { name: "Allow" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Don't allow" })).toBeTruthy();
+    expect(metaScripts()).toHaveLength(0);
+    expect(window.fbq).toBeUndefined();
+  });
+
+  it("is the same when the notice is reopened from Pengaturan cookie", () => {
+    storeChoice("no");
+    app();
+    act(() =>
+      screen.getByRole("button", { name: "Pengaturan cookie" }).click(),
+    );
+    act(() => screen.getByRole("button", { name: "How it works" }).click());
+    const panel = document.getElementById("cookie-notice-how")!;
+    expect(
+      Array.from(panel.querySelectorAll("li"), (item) =>
+        normalised(item.textContent),
+      ),
+    ).toEqual(HOW_IT_WORKS);
+  });
+});
+
+describe("Spec 022: the server Purchase from the browser (R-01, R-05, R-09, R-11, R-19b, AC-07, AC-08)", () => {
+  const EVENT_ID = "6f1c2b9e-1d2a-4c3b-9e8f-0a1b2c3d4e5f";
+  let fetchCalls: Array<{ url: string; init?: RequestInit }>;
+
+  beforeEach(() => {
+    setUp();
+    fetchCalls = [];
+    vi.stubGlobal("fetch", (url: string, init?: RequestInit) => {
+      fetchCalls.push({ url, init });
+      return Promise.reject(new Error("offline"));
+    });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("the Pixel Purchase carries the event code, and one background call asks the server", async () => {
+    storeChoice("yes");
+    pathname = "/audit";
+    window.history.replaceState(null, "", "/audit");
+    app();
+    trackJourneyEvent("Purchase", "0123456789abcdef", Date.now(), EVENT_ID);
+    trackJourneyEvent("Purchase", "0123456789abcdef", Date.now(), EVENT_ID);
+    expect(tracked()).toContainEqual([
+      "track",
+      "Purchase",
+      { value: 249000, currency: "IDR" },
+      { eventID: EVENT_ID },
+    ]);
+    expect(fetchCalls).toHaveLength(1);
+    const { url, init } = fetchCalls[0]!;
+    expect(url).toBe("/api/meta/purchase");
+    expect(init?.method).toBe("POST");
+    expect(init?.keepalive).toBe(true);
+    expect(JSON.parse(String(init?.body))).toEqual({
+      order_id: "0123456789abcdef",
+      consent_version: PRIVACY_VERSION,
+    });
+    // A failed call changes nothing on screen and throws nowhere.
+    await Promise.resolve();
+  });
+
+  it("an order paid before Spec 022 (no code) sends the Pixel Purchase as before and asks nothing", () => {
+    storeChoice("yes");
+    app();
+    trackJourneyEvent("Purchase", "0123456789abcdef");
+    expect(tracked()).toContainEqual([
+      "track",
+      "Purchase",
+      { value: 249000, currency: "IDR" },
+    ]);
+    expect(fetchCalls).toHaveLength(0);
+  });
+
+  it.each([
+    ["no choice", () => undefined],
+    ["Don't allow", () => storeChoice("no")],
+    [
+      "a choice under an older privacy version",
+      () => storeChoice("yes", new Date(), "1.3"),
+    ],
+  ])(
+    "with %s, neither the Pixel nor the server gets the Purchase",
+    (_, before) => {
+      before();
+      app();
+      trackJourneyEvent("Purchase", "0123456789abcdef", Date.now(), EVENT_ID);
+      expect(tracked()).toEqual([]);
+      expect(fetchCalls).toHaveLength(0);
+    },
+  );
+
+  it("Don't allow chosen in another tab before the paid screen stops both", () => {
+    storeChoice("yes");
+    app();
+    storeChoice("no");
+    trackJourneyEvent("Purchase", "0123456789abcdef", Date.now(), EVENT_ID);
+    expect(tracked()).toEqual([["track", "PageView"]]);
+    expect(fetchCalls).toHaveLength(0);
+  });
+
+  it("a tab with the founder's test-pass code asks nothing", () => {
+    storeChoice("yes");
+    app();
+    window.sessionStorage.setItem(
+      "nuave.testPass.v1",
+      "test-pass-code-of-at-least-24-chars",
+    );
+    trackJourneyEvent("Purchase", "0123456789abcdef", Date.now(), EVENT_ID);
+    expect(fetchCalls).toHaveLength(0);
+  });
+
+  it.each(["/r/secret", "/uji"])("on %s nothing is asked", (path) => {
+    storeChoice("yes");
+    app();
+    window.history.replaceState(null, "", path);
+    trackJourneyEvent("Purchase", "0123456789abcdef", Date.now(), EVENT_ID);
+    expect(fetchCalls).toHaveLength(0);
   });
 });

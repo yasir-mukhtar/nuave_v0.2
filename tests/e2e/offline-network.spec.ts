@@ -18,7 +18,7 @@ for (const path of ["/", "/audit", "/faq"] as const) {
     // also once the page is running in the browser.
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("region", { name: "Allow cookies?" }),
+      page.getByRole("region", { name: "Help us understand what works" }),
     ).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Pengaturan cookie" }),

@@ -6,6 +6,124 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-27 — Meta Conversions API spec renumbered 022
+
+Yasir chose to renumber the Meta Conversions API spec from 021 to 022
+(`specs/022-meta-conversions-api/`), because the Report v2 spec reached main
+first as Spec 021 (PR #171), as with Spec 019/020. Its database change
+becomes migration 0015, so Report v2 keeps the 0014 its plan reserves. The
+2026-10-26 entries below, written under the old number, now read 022.
+Founder step 0 is done (Cloudflare's per-request log keeps visitor IP
+addresses, so it is switched off), and the Meta access token is saved.
+
+## 2026-10-26 — Spec 022 wording re-approved after review round 4
+
+Review round 4 found the first "How it works" text (Q-9) and the privacy
+page's reassurance paragraph (Q-2) said less than the privacy page or
+more than is true. Yasir re-approved both reworded texts as written: How
+it works now says what the browser shares for everyone who allows, adds
+the Meta cookie codes, says the coded email is matched to the buyer's
+Facebook or Instagram account, says "never send Meta" and "none of your
+data", and points to Pengaturan cookie on the home and privacy pages; the
+reassurance paragraph says "data Anda" and "ke Meta" throughout. This
+supersedes the Q-9 approval recorded in the entry below. Review round 5:
+PASS.
+
+## 2026-10-26 — Cookie notice: layered disclosure (Spec 022)
+
+Yasir replaced the Spec 022 notice wording (Q-1, option A) with a layered
+notice. First layer: "**Help us understand what works** We use cookies and
+limited purchase information to measure which ads lead to sales. Your
+report and business answers are never shared with advertising partners.",
+a visible **How it works** link, and the buttons Don't allow and Allow. How
+it works opens, inside the notice and before any choice, a short
+explanation of the data shared (including the hashed order email), with
+whom (Meta) and why; the privacy page gives the full detail and names Meta.
+Don't allow turns off both the browser Pixel and server conversion
+matching.
+
+This supersedes the 2026-10-25 rule ("Cookie notice in English, shorter")
+that the server step brings the email back into the notice itself, and
+privacy item 1's "the notice names it": the information must instead be
+clearly available before consent. Yasir's view is that informed consent
+does not require the hashed email in the first layer; this is recorded as
+a decision for the lawyer's check, not a claim that it is compliant. Yasir
+approved the How it works wording (Spec 022 Q-9) as written.
+
+## 2026-10-26 — Approve Spec 022 (Meta Conversions API, server Purchase)
+
+Yasir approved [Spec 022](../specs/022-meta-conversions-api/SPEC.md)
+(revision 4, after three independent review rounds, the last PASS; PR
+#170). The server sends Meta one Purchase (249000 IDR) per paid order, only
+when the buyer's own browser reaches the paid screen after Allow (Option A,
+so the IP address and browser type are passed on without being stored),
+with the same event code as the browser Pixel so Meta counts it once.
+Answers:
+
+- **Notice (Q-1):** option A, without naming Meta: "Cookies help us measure
+  our ads. If you buy, our ad partner gets a coded version of your order
+  email, to see which ad brought you. Your report and answers are never
+  shared." Yasir asked whether Meta could go unnamed everywhere; the
+  privacy page keeps naming it, because Meta's advertiser terms and UU PDP,
+  as we understand them, expect visitors to be told who receives the data.
+- **Privacy page (Q-2):** version 1.4, so everyone is asked again. Section
+  10 gets a short reassurance paragraph first (nothing goes to Meta without
+  Allow; the email is never sent readable; report, questions, AI answers
+  and business data are never sent; data is not sold; the choice can be
+  changed any time), and its server-event point is narrowed to purchases.
+  The page must not suggest that data is shared with no one.
+- **Q-3 to Q-8, as recommended:** sandbox purchases reach Meta only while a
+  test code is set (Meta still counts them, so the check runs before ads
+  start); a fixed `/audit` page address; one try per order; the consent
+  version and send time kept on the order; Purchase only; and Cloudflare's
+  automatic per-request log switched off if it holds IP addresses, giving
+  up its saved request history.
+
+## 2026-10-26 — Audit stack plan: report test before G1, reading after
+
+Yasir approved the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
+(independent review PASS after three rounds). Its five questions were
+answered "1. Yes 2. Okay 3. Okay 4. Ok 5. Accepted"; 5 is read as the
+recommended option.
+
+1. **Timing.** The report-writer test runs before G1, as
+   [Spec 021](../specs/021-report-v2/SPEC.md) Part B's side-by-side test
+   (B-07, [PLAN](../specs/021-report-v2/PLAN.md) PR 6 step 7), with the
+   plan's blind design: three orders with ChatGPT and Google answers; five
+   writers, each running Spec 021's new writer (GPT-5.6 Luna low, Luna high,
+   Claude Sonnet 5.5 medium and high, Claude Haiku 5.5 medium); the founder
+   rates them without knowing which wrote what. The report already delivered
+   for NV-3WDSAY is shown beside them as a labelled reference, not as a blind
+   entry: it used the old instructions, so it would not compare models
+   fairly. The rest of the plan (the reading test with its page reader and
+   Instagram reader, and the Google re-check) follows G1, unless an early
+   customer is Instagram-only.
+2. **Test accounts and budget.** Accounts with Anthropic, Firecrawl and Apify
+   may be opened for the tests only. They receive public business pages and
+   the founder's own test-order data, never customer orders. Agent-run live
+   calls for tests A and B: up to USD 5 in total. This is the named approval
+   for the B-07 live writer calls and the answer on the Anthropic API key
+   (items 1 and 2 of the decisions PLAN.md says the founder still owes).
+   Test B also needs two new founder-run live orders (about USD 0.18 each,
+   run one at a time).
+3. **Google's words reach the writer.** The report writer may read Google's
+   AI Overview text (phone numbers removed), not only the code-made facts.
+   Spec 021 B-01 and AC-B1 specify this (built in its PR 6). Spec 018 R-28
+   is updated with that PR to say so.
+4. **New vendors for real orders,** only if they win their test: Anthropic,
+   Firecrawl (USD 19 a month only past about 160–200 orders a month), Apify.
+   Each needs a privacy wording update the founder approves before customer
+   data reaches it.
+5. **Spending guard.** Keep the USD 2.00 order hold (Spec 021 B-07 also
+   requires this). The report is reserved from the prompt's real token
+   count, limited to the 3 calls the runner allows, and the reading's web
+   search is allowed on its first call only. Planned worst case about
+   USD 1.83. Separately still open: how many orders may run at once before
+   real sales (at USD 2 per hold, the USD 5 daily cap allows two).
+
+Kept unchanged: DataForSEO discovery, GLM 5.3 Flash question writing
+(including "similar businesses"), and the ChatGPT and Google checks.
+
 ## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
 
 After four rounds on the clickable prototype (`experiments/report-v2-poc/`),
