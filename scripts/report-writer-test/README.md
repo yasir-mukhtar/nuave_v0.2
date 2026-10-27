@@ -47,7 +47,9 @@ call's worst case.
 REPORT_TEST_LIVE=1 npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/run.spec.ts
 ```
 
-Needs `OPENAI_API_KEY` and `NUAVE_ANTHROPIC_API_KEY`. `ORDERS=NV-…` and
+Needs `OPENAI_API_KEY` and `NUAVE_ANTHROPIC_API_KEY`, plus
+`NUAVE_ANTHROPIC_WORKSPACE_ID` when the Anthropic key is not scoped to a
+workspace. `ORDERS=NV-…` and
 `ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
 `spend.json` at its worst case and is refused when that could take the total
 past **USD 5** (the hard stop for tests A and B together); it is then settled

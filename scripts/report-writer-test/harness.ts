@@ -601,6 +601,14 @@ export function claudeWriter(
   client = new Anthropic({
     apiKey: process.env.NUAVE_ANTHROPIC_API_KEY,
     maxRetries: 0,
+    // A key not scoped to a workspace must name one on every request.
+    ...(process.env.NUAVE_ANTHROPIC_WORKSPACE_ID
+      ? {
+          defaultHeaders: {
+            "anthropic-workspace-id": process.env.NUAVE_ANTHROPIC_WORKSPACE_ID,
+          },
+        }
+      : {}),
   }),
 ): ReportGenerator {
   return async (...args) => {

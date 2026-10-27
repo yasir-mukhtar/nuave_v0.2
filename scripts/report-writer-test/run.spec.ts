@@ -123,7 +123,10 @@ it.skipIf(orders.length === 0)(
         if (!live || done) continue;
         const writer = entry.provider === "openai" ? lunaWriter : claudeWriter;
         const result = await runEntry(evidence, entry, writer, ledger);
-        write(resultPath(order, entry.id), result);
+        // An entry whose first request was turned away ran nothing: it is
+        // not saved, so the next run tries it again.
+        if (result.status === "ok" || result.calls.length > 0)
+          write(resultPath(order, entry.id), result);
         console.log(
           `${order} ${entry.id}: ${result.status}${result.failure ? ` (${result.failure})` : ""}, USD ${result.cost_usd}; ledger USD ${ledger.spentUsd()}`,
         );
