@@ -27,9 +27,10 @@ import { dirname, join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import OpenAI from "openai";
-import { assembleReportContent } from "../../src/lib/audit/contracts";
 import {
   hashSafetyIdentifier,
+  reportContentFromAnswer,
+  reportOutputSchema,
   reportRequest,
   structuredOutputOrThrow,
 } from "../../src/lib/audit/openai";
@@ -45,7 +46,6 @@ import {
 } from "../../src/lib/audit/telemetry";
 import type { TwoSourceReportFacts } from "../../src/lib/audit/two-source-report";
 import {
-  reportSynthesisSchemaForMethod,
   type AuditCallTelemetry,
   type AuditReport,
   type ReportContent,
@@ -264,6 +264,10 @@ export async function entryInput(evidence: OrderEvidence, entry: Entry) {
       ];
     }),
   );
+  // Spec 021 Part B (B-01) gives the production writer Google's answer
+  // texts. Once it does, the new input is simply the production input.
+  if (productionSendsGoogleWords(built.input, [...texts.values()]))
+    return { ...built, intake };
   const withText: FactsWithText = {
     ...facts,
     google: facts.google.map((fact) =>
@@ -277,6 +281,22 @@ export async function entryInput(evidence: OrderEvidence, entry: Entry) {
     intake,
     input: { ...built.input, two_source_facts: withText },
   };
+}
+
+/** True when the production writer's own prompt already carries Google's
+ * answer texts, so the harness adds nothing. Checked on the opening words of
+ * each answer, as they appear inside the prompt's JSON. */
+export function productionSendsGoogleWords(
+  input: Parameters<typeof reportRequest>[0],
+  texts: readonly string[],
+): boolean {
+  const user = reportRequest(input).input[1].content;
+  const openings = texts
+    .filter(Boolean)
+    .map((text) => JSON.stringify(text.slice(0, 60)).slice(1, -1));
+  return (
+    openings.length > 0 && openings.every((opening) => user.includes(opening))
+  );
 }
 
 /* --------------------------------- ledger --------------------------------- */
@@ -406,17 +426,25 @@ type Request = ReturnType<typeof reportRequest>;
 type WriterArgs = Parameters<ReportGenerator>;
 
 /** The developer and user text of a report call, as production builds it,
- * with the new-input instruction added for new-input entries. */
+ * with the new-input instruction when the harness added Google's words. */
 export function entryPrompt(entry: Entry, ...args: WriterArgs) {
   const request: Request = reportRequest(
     args[0] as Parameters<typeof reportRequest>[0],
     args[1],
   );
   const developer =
-    entry.input === "new"
+    entry.input === "new" && harnessAddedGoogleWords(args[0])
       ? `${request.input[0].content}\n${NEW_INPUT_INSTRUCTIONS}`
       : request.input[0].content;
   return { request, developer, user: request.input[1].content };
+}
+
+function harnessAddedGoogleWords(input: WriterArgs[0]): boolean {
+  return (
+    input.two_source_facts?.google.some(
+      (fact) => (fact as { ai_overview_text?: string }).ai_overview_text,
+    ) ?? false
+  );
 }
 
 /** What a writer did on one order, read by the scoring sheet. */
@@ -482,17 +510,9 @@ function telemetryOf(input: {
   };
 }
 
-const contentOf = (synthesis: ReportSynthesis, args: WriterArgs) => {
-  const [input] = args;
-  return assembleReportContent(
-    synthesis,
-    input.observations,
-    input.brief,
-    input.historical_fixture_id,
-    input.question_method,
-    input.language,
-  );
-};
+/** The report content production builds from a writer's answer. */
+const contentOf = (synthesis: ReportSynthesis, args: WriterArgs) =>
+  reportContentFromAnswer(synthesis, args[0]);
 
 /** Offline: returns the delivered report's own writing, so the pipeline can
  * be checked end to end without a provider. Re-running entry 1 this way must
@@ -595,7 +615,7 @@ export function lunaWriter(
 /** The JSON text of a Claude answer, checked against the report schema. */
 function parseAnswer(
   content: readonly { type: string; text?: string }[],
-  schema: ReturnType<typeof reportSynthesisSchemaForMethod>,
+  schema: ReturnType<typeof reportOutputSchema>,
 ): { success: true; data: unknown } | { success: false; error: string } {
   const text = content
     .flatMap((block) => (block.type === "text" ? [block.text ?? ""] : []))
@@ -649,7 +669,7 @@ export function claudeWriter(
     });
     // The answer is read and checked here, not by the SDK, so an answer that
     // breaks the report format is still recorded with its cost and reason.
-    const schema = reportSynthesisSchemaForMethod(input.question_method);
+    const schema = reportOutputSchema(input);
     const startedAt = Date.now();
     const response = await sendHeld(hold, () =>
       client.messages.create(
@@ -738,6 +758,9 @@ export type EntryResult = {
   };
   cost_usd: number;
   prompt_chars: number;
+  /** Entry 1 only: whether re-running the delivered writing through today's
+   * pipeline gave it back unchanged. */
+  replay?: string;
 };
 
 /** Writes one entry's report from the order's evidence through the order
@@ -822,12 +845,63 @@ export async function runEntry(
   }
 }
 
-/** Entry 1's record: the replay's report check, with the calls, repairs and
- * cost the delivered report itself recorded (a replay starts from the already
- * repaired writing, so it cannot see them). */
+/** The writing the founder judges, as the writer gave it. Code-built blocks
+ * (counts, competitors) are left out: they change with the code, not the
+ * writer. */
+export function writerText(report: AuditReport) {
+  return {
+    conclusion: report.conclusion,
+    accuracy_status: report.accuracy_status,
+    key_findings: report.key_findings,
+    priorities: report.priorities,
+    details: report.details,
+  };
+}
+
+/** Re-runs the delivered report's own writing through today's pipeline.
+ * When today's writer version is the one that wrote it, the result must be
+ * unchanged: proof that the other entries get the order's real input and
+ * checks. A report from an earlier writer version (before Spec 021 Part B,
+ * say) is shown as delivered and not compared. */
+export async function replayDelivered(
+  evidence: OrderEvidence,
+  ledger: Ledger,
+): Promise<{ result: EntryResult; note: string; reproduced: boolean | null }> {
+  const delivered = JSON.parse(evidence.order.report_json) as AuditReport;
+  const result = await runEntry(evidence, ENTRIES[0]!, null, ledger);
+  const was = delivered.provenance.report_prompt_version;
+  if (result.status !== "ok")
+    return {
+      result,
+      note: `not compared: today's pipeline did not accept the delivered writing (${result.failure}); delivered by writer version ${was}`,
+      reproduced: null,
+    };
+  const now = result.report!.provenance.report_prompt_version;
+  if (now !== was)
+    return {
+      result,
+      note: `not compared: delivered by writer version ${was}, today's is ${now}`,
+      reproduced: null,
+    };
+  const same =
+    JSON.stringify(writerText(result.report!)) ===
+    JSON.stringify(writerText(delivered));
+  return {
+    result,
+    note: same
+      ? "reproduced unchanged"
+      : "CHANGED: today's pipeline altered the delivered writing",
+    reproduced: same,
+  };
+}
+
+/** Entry 1's record: the delivered report as saved, with the calls, repairs
+ * and cost it recorded itself (a replay starts from the already repaired
+ * writing, so it cannot see them). */
 export function deliveredResult(
   replay: EntryResult,
   delivered: AuditReport,
+  note: string,
 ): EntryResult {
   const reportCalls = delivered.operational_telemetry.calls.filter(
     (call) => call.stage === "report",
@@ -843,6 +917,9 @@ export function deliveredResult(
   }));
   return {
     ...replay,
+    status: "ok",
+    failure: null,
+    replay: note,
     report: delivered,
     calls,
     checks: {

@@ -31,6 +31,8 @@ import {
   evidenceFromD1,
   Ledger,
   NEW_INPUT_INSTRUCTIONS,
+  productionSendsGoogleWords,
+  replayDelivered,
   runEntry,
   SpendRefused,
   telltaleIn,
@@ -163,6 +165,51 @@ describe("test B harness", () => {
     await runEntry(evidence, ENTRIES[1]!, spy, new Ledger(join(dir, "s.json")));
     expect(seen[0]).toContain("ai_overview_text");
     expect(NEW_INPUT_INSTRUCTIONS).toContain("ai_overview_text");
+  });
+
+  it("compares the delivered writing only when today's writer version wrote it", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const same = await replayDelivered(
+      evidence,
+      new Ledger(join(dir, "a.json")),
+    );
+    expect(same.reproduced).toBe(true);
+
+    // A report from an earlier writer version (before Spec 021 Part B, say)
+    // is shown as delivered and not compared.
+    const report = JSON.parse(evidence.order.report_json) as AuditReport;
+    const older: OrderEvidence = {
+      ...evidence,
+      order: {
+        ...evidence.order,
+        report_json: JSON.stringify({
+          ...report,
+          provenance: {
+            ...report.provenance,
+            report_prompt_version: "report-synthesis-v6",
+          },
+        }),
+      },
+    };
+    const other = await replayDelivered(older, new Ledger(join(dir, "b.json")));
+    expect(other.reproduced).toBeNull();
+    expect(other.note).toMatch(/report-synthesis-v6/);
+  });
+
+  it("adds Google's words only while the production prompt lacks them", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const today = await entryInput(evidence, ENTRIES[0]!);
+    const fresh = await entryInput(evidence, ENTRIES[1]!);
+    const texts = (
+      fresh.input.two_source_facts!.google as { ai_overview_text?: string }[]
+    ).flatMap((fact) => (fact.ai_overview_text ? [fact.ai_overview_text] : []));
+
+    // Today's production prompt carries no Google words.
+    expect(productionSendsGoogleWords(today.input, texts)).toBe(false);
+    // A prompt that already carries them (as Part B's will) is left alone.
+    expect(productionSendsGoogleWords(fresh.input, texts)).toBe(true);
   });
 
   it("refuses an order approved before Spec 018", async () => {

@@ -20,6 +20,24 @@ all reports get the same checks and repairs.
 Everything the test reads and writes stays in the git-ignored
 `.local-evidence/report-writer-test/` folder.
 
+## With Spec 021 Part B
+
+This test is Spec 021's side-by-side writer test (B-07). It writes with
+whatever the production writer is at the time of the run, so once Part B is
+merged it writes Part B reports with no change here:
+
+- the prompt, output format and assembly come from `reportRequest`,
+  `reportOutputSchema` and `reportContentFromAnswer` in
+  `src/lib/audit/openai.ts`;
+- Google's answer texts are added only while the production prompt does not
+  already carry them (B-01);
+- the delivered report is compared with a replay of its own writing only when
+  today's writer version wrote it; an older one is shown as delivered, in the
+  new layout's fallbacks;
+- the reports print from today's `/r` page.
+
+Run it on orders delivered after Part B for a like-for-like comparison.
+
 ## 1. Save an order's evidence
 
 For each order (delivered, with ChatGPT and Google answers), save two

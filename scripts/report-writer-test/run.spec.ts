@@ -42,6 +42,7 @@ import {
   blindReport,
   claudeWriter,
   deliveredResult,
+  replayDelivered,
   ENTRIES,
   EVIDENCE_DIR,
   entryPrompt,
@@ -79,17 +80,6 @@ const write = (path: string, value: unknown) => {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 };
 
-/** The writing a founder judges; equal when the pipeline replays faithfully. */
-const writing = (report: AuditReport) => ({
-  conclusion: report.conclusion,
-  accuracy_status: report.accuracy_status,
-  key_findings: report.key_findings,
-  priorities: report.priorities,
-  details: report.details,
-  method_summary: report.method_summary,
-  two_source: report.two_source,
-});
-
 it.skipIf(orders.length === 0)(
   "test B: report writers on saved two-source orders",
   { timeout: 60 * 60 * 1000 },
@@ -101,13 +91,16 @@ it.skipIf(orders.length === 0)(
       const evidence = loadEvidence(order);
       const delivered = JSON.parse(evidence.order.report_json) as AuditReport;
 
-      // Entry 1: the delivered report, re-run from its evidence with its own
-      // writing. It must come back as it was delivered: proof that every
-      // other entry gets the order's real input and checks.
-      const replay = await runEntry(evidence, ENTRIES[0]!, null, ledger);
-      expect(replay.status, replay.failure ?? "").toBe("ok");
-      expect(writing(replay.report!)).toEqual(writing(delivered));
-      write(resultPath(order, "delivered"), deliveredResult(replay, delivered));
+      // Entry 1: the delivered report, as saved. Its writing is re-run
+      // through today's pipeline; with the same writer version it must come
+      // back unchanged (see replayDelivered).
+      const replay = await replayDelivered(evidence, ledger);
+      expect(replay.reproduced, replay.note).not.toBe(false);
+      write(
+        resultPath(order, "delivered"),
+        deliveredResult(replay.result, delivered, replay.note),
+      );
+      console.log(`${order} delivered report: ${replay.note}`);
 
       for (const entry of entries.slice(1)) {
         const { input } = await entryInput(evidence, entry);
