@@ -139,19 +139,15 @@ jobs:
       # The downloaded browser is kept between runs and only fetched again
       # when the lockfile (and so the Playwright version) changes.
       - name: Restore Playwright browser
-        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
+      # Skips the download when the restored browser is already there, and
+      # always installs the system packages the browser needs.
       - name: Install Playwright browser
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
 
       - name: Run browser tests
         run: npm run test:e2e:${{ matrix.suite }} -- ${{ matrix.args }}
