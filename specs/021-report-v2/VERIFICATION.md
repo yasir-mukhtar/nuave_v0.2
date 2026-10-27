@@ -1,11 +1,13 @@
 # Verification: Spec 021 — Report v2
 
-> Result: **Pending** (Parts A and D built; Parts P, C and B to come; not
-> Verified until the founder's AC-A7 and AC-D2 checks are recorded)
+> Result: **Pending** (Parts A, D and P built; Parts C and B to come; not
+> Verified until the founder's AC-A7 and AC-D2 checks and the Part P preview
+> check are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
-> Implementation version or commit: Part A (PR #173), Part D (PR #175)
+> Implementation version or commit: Part A (PR #173), Part D (PR #175),
+> Part P (PR 4)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -243,3 +245,72 @@ report), so the passed print layout stays; the split is cosmetic (no text
 overlaps or goes missing). Left for Part P: an automated long-answer print
 check (word-box overlap on the PDF) before the server PDF reuses the appendix,
 and print-only links from "P2" to the appendix.
+
+## Part P, PDF (PR 4)
+
+### Scope reviewed
+
+- `src/app/api/report/pdf/route.ts`: "Unduh PDF" posts the link secret; the
+  route checks it like the report-data route, counts the PDF against the
+  report's daily cap, makes a single-use print code and asks Browser Run
+  (`env.BROWSER.quickAction("pdf", …)`) to print `/r/print#<code>`.
+- `src/lib/orders/report-pdf.ts`: the cap (20 per report per UTC day), the
+  print code (32 random bytes, 60 seconds, hash only, deleted when read), the
+  footer, the file name and the Browser Run request.
+- `src/app/api/report/route.ts`: also accepts `print_token` and spends it.
+  Its shared answers moved to `src/lib/orders/report-route.ts`.
+- `src/app/r/print/page.tsx` and `src/app/r/SavedReport.tsx` (`via="print"`).
+- `src/app/audit/report/ReportPdfButton.tsx`, `report-pdf.ts` (page side),
+  `TwoSourceReport.tsx` (both buttons; Temuan Utama, Rekomendasi and Penutup
+  start a new page in print; the "Ketuk pertanyaan" hint is not printed).
+- `migrations/0014_report_pdf.sql`, `src/lib/orders/retention.ts` (both new
+  tables deleted with the order), `wrangler.jsonc` (Browser Run binding in
+  production and previews, none in `dev`; `REPORT_PDF_CALLER_RATE_LIMITER`,
+  3 a minute, in all three environments).
+- The `verify-nuave` skill's PDF step.
+
+### Spike (PLAN.md PR 4): HTML mode failed, URL mode with a print code
+
+Criterion 1 failed at once: a route handler that imports `react-dom/server`
+does not build on Next 16 ("You're importing a component that imports
+react-dom/server"), and the report's components are client components, which
+the server layer only sees as references. So, as the plan says for a failed
+spike, Browser Run opens the real report page by URL with a **single-use
+print code** in the fragment, never the link secret. The code is spent when
+the page reads the report, so a URL in Browser Run's run list opens nothing
+afterwards. What this gives:
+
+- The PDF is the page's own print layout (the same CSS and Geist fonts as the
+  browser's print), so criteria 2 and 3 do not arise; fonts and CSS load from
+  the site's own address, which Browser Run reaches (public pages).
+- No server renderer is added to the Worker (criterion 4).
+- Time (criterion 5): the same request run locally against `next start` with
+  Chromium (page load, report read, A4 print with the footer) took 1.5 to
+  1.9 seconds for 11, 29 and 75 pages. Browser Run's time is recorded on the
+  PR preview.
+
+### Acceptance results
+
+| Criterion | Result                        | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-P1     | Pass offline; preview pending | Local run of the route's own Browser Run request (`pdfRequest`) with Chromium: A4, footer "Nuave · Laporan Visibilitas AI · <klinik>" and "n / total" on every page, page 1 is the header, verdict and source cards, Temuan Utama, Rekomendasi and Penutup each start a page, then "Lampiran: jawaban lengkap" with every answer; no text overlaps beyond the page-1 baseline in 11, 29 and 75 page reports. Unit: request options, headers, file name. **Still to do: download a synthetic report's PDF on the PR preview and record the time per PDF.** |
+| AC-P2     | Pass                          | Unit "the link secret never goes into a URL": Browser Run gets `/r/print#<43-character code>`, never the secret; only the code's hash is stored; the code opens the report once and not after 60 seconds or after the link is switched off; a wrong, malformed or switched-off secret gets the report route's exact answer and Browser Run is not called; logs carry numbers and codes only. E2e: the page posts the secret in the body, never in a URL.                                                                                                  |
+
+### Checks run
+
+- Unit: `report-pdf.test.ts` (14), `two-source-report.test.tsx` (button,
+  spinner, one request per press, retry message next to the pressed button,
+  print fallback, page breaks), `retention.test.ts`, `wrangler-config.test.ts`,
+  `rate-limit-config.test.ts`, then the full suite.
+- E2e: `new-intake-glm.spec.ts` checks the PDF route's `pdf_unavailable`
+  answer locally and the print that follows, then the full suites (see the
+  PR).
+- `npm run check`, `next build`.
+
+### Risks to check after merge
+
+- Browser Run is identified as a bot. Cloudflare does not block it by
+  default; if bot protection (for example Bot Fight Mode) is switched on for
+  `nuave.ai`, the PDF fails with "PDF belum bisa dibuat" in production while
+  the preview (on `workers.dev`) works. The first production download after
+  the deploy confirms it.

@@ -8,7 +8,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { presentationFixture } from "@/lib/audit/report-presentation.fixture";
 import {
   DIRECT_TEN_CONTEXT_VERSION,
@@ -22,6 +22,7 @@ import {
 } from "@/lib/audit/two-source-report";
 import { DirectTenReportBody } from "./DirectTenReportBody";
 import { DirectTenReportPage } from "./DirectTenReportPage";
+import type { PdfOutcome } from "./report-pdf";
 
 afterEach(cleanup);
 
@@ -695,5 +696,86 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     // AC-A4: no JSON export and no "Tentang audit ini" on a two-source report.
     expect(container.textContent).not.toContain("Unduh bukti JSON");
     expect(container.textContent).not.toContain("Tentang audit ini");
+  });
+});
+
+/* ------------------------- Spec 021 Part P, PDF ------------------------- */
+
+describe("Unduh PDF (Part P)", () => {
+  function page(onDownloadPdf?: () => Promise<PdfOutcome>) {
+    const fixture = twoSourceFixture();
+    return render(
+      <DirectTenReportPage
+        report={fixture.report}
+        brief={brief}
+        observations={fixture.observations}
+        onDownloadJson={() => {}}
+        onDownloadPdf={onDownloadPdf}
+      />,
+    );
+  }
+  const buttons = () => screen.getAllByRole("button", { name: "Unduh PDF" });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("asks for the server PDF with a spinner, once per press, and does not print", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    let finish: (value: PdfOutcome) => void = () => {};
+    const download = vi.fn(
+      () => new Promise<PdfOutcome>((resolve) => (finish = resolve)),
+    );
+    page(download);
+    expect(buttons()).toHaveLength(2);
+    await userEvent.click(buttons()[0]!);
+    expect(buttons()[0]).toHaveAttribute("aria-busy", "true");
+    expect(buttons()[0]!.querySelector(".animate-spin")).not.toBeNull();
+    // A second press while it is being made does nothing.
+    await userEvent.click(buttons()[1]!);
+    expect(download).toHaveBeenCalledTimes(1);
+    finish("saved");
+    await waitFor(() => expect(buttons()[0]).not.toHaveAttribute("aria-busy"));
+    expect(print).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("a failure shows the retry message next to the button pressed; Coba lagi asks again", async () => {
+    vi.spyOn(window, "print").mockImplementation(() => {});
+    const download = vi
+      .fn<() => Promise<PdfOutcome>>()
+      .mockResolvedValueOnce("failed")
+      .mockResolvedValueOnce("saved");
+    const { container } = page(download);
+    await userEvent.click(buttons()[1]!);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("PDF belum bisa dibuat. Coba lagi");
+    expect(container.querySelectorAll("[data-pdf-failed]")).toHaveLength(1);
+    expect(
+      alert.closest("[data-pdf-failed]")!.previousElementSibling,
+    ).toHaveAttribute("data-pdf-button", "end");
+    // The report itself is unaffected.
+    expect(container.querySelector("#temuan")).not.toBeNull();
+    await userEvent.click(
+      within(alert).getByRole("button", { name: "Coba lagi" }),
+    );
+    expect(download).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  });
+
+  it("prints when the server has no PDF for it (pdf_unavailable), and when there is no server PDF at all", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    page(async () => "print");
+    await userEvent.click(buttons()[0]!);
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+    cleanup();
+    page();
+    await userEvent.click(buttons()[1]!);
+    expect(print).toHaveBeenCalledTimes(2);
+  });
+
+  it("Temuan Utama, Rekomendasi and Penutup start a new page on paper", () => {
+    const { container } = page();
+    expect(
+      [...container.querySelectorAll("[data-new-page]")].map((band) => band.id),
+    ).toEqual(["temuan", "rekomendasi", "penutup"]);
   });
 });

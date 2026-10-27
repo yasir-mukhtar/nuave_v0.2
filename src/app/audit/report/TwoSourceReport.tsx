@@ -2,8 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { IconArrowRight, IconCheck, IconDownload } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import { IconArrowRight, IconCheck } from "@tabler/icons-react";
 import { NuaveLogo } from "@/components/product/journey/NuaveLogo";
 import { SUPPORT_EMAIL } from "@/components/product/journey/JourneyBars";
 import { motionAllowedNow } from "@/components/motion/useMotionAllowed";
@@ -35,6 +34,8 @@ import { checkedDate, profileQuestionsNote } from "./TwoSourceSections";
 import { AnswerPanelProvider, SOURCE_ICON, useOpenAnswer } from "./AnswerPanel";
 import { AnswersTable } from "./AnswersTable";
 import { ReportAppendix } from "./ReportAppendix";
+import { PdfButton, PdfFailed, useReportPdf } from "./ReportPdfButton";
+import type { DownloadPdf } from "./report-pdf";
 import auditStyles from "../audit.module.css";
 import bodyStyles from "./report-body.module.css";
 import styles from "./report-v2.module.css";
@@ -133,6 +134,12 @@ function ContentsNav({ ids }: { ids: readonly SectionId[] }) {
 }
 
 /** A full-width section band with its title and lede. */
+const NEW_PAGE: ReadonlySet<SectionId> = new Set([
+  "temuan",
+  "rekomendasi",
+  "penutup",
+]);
+
 function Band({
   id,
   title,
@@ -142,7 +149,7 @@ function Band({
 }: {
   id: SectionId;
   title: string;
-  lede?: string;
+  lede?: ReactNode;
   tone?: "wash" | "ink" | "grey";
   children: ReactNode;
 }) {
@@ -151,6 +158,8 @@ function Band({
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-title`}
+      // Spec 021 "PDF": these sections start a new page on paper.
+      data-new-page={NEW_PAGE.has(id) || undefined}
       className={cn(
         styles.band,
         tone === "wash" && styles.bandWash,
@@ -604,7 +613,16 @@ export function TwoSourceReportBody({
         <Band
           id="jawaban"
           title="Jawaban AI"
-          lede="Bukti di balik laporan ini. Ketuk pertanyaan untuk membaca jawaban lengkapnya."
+          lede={
+            <>
+              Bukti di balik laporan ini.
+              {/* On paper the answers follow in full; nothing to tap. */}
+              <span className={auditStyles.noPrint}>
+                {" "}
+                Ketuk pertanyaan untuk membaca jawaban lengkapnya.
+              </span>
+            </>
+          }
           tone="grey"
         >
           <AnswersTable two={two} names={names} />
@@ -641,16 +659,19 @@ export function TwoSourceReportPage({
   brief,
   observations,
   previewNotice,
+  onDownloadPdf,
 }: {
   report: AuditReport;
   brief: DirectTenAuditContext;
   observations: AuditObservation[];
   previewNotice?: ReactNode;
+  /** The server PDF (Part P); without it, "Unduh PDF" prints. */
+  onDownloadPdf?: DownloadPdf;
 }) {
   const two = report.two_source!;
   const name = brief.identity.name;
   const date = checkedDate(two);
-  const print = () => window.print();
+  const pdf = useReportPdf(onDownloadPdf);
   const hasTopics = topicGapRows(two, observations, two.subject).length > 0;
   const ids = SECTIONS.map(([id]) => id).filter(
     (id) =>
@@ -664,17 +685,9 @@ export function TwoSourceReportPage({
           <Link href="/" aria-label="Nuave, ke beranda" className="flex">
             <NuaveLogo className="h-[25px] w-auto" />
           </Link>
-          <Button
-            type="button"
-            variant="ink"
-            size="sm"
-            className="rounded-chip px-4"
-            onClick={print}
-          >
-            <IconDownload aria-hidden="true" />
-            Unduh PDF
-          </Button>
+          <PdfButton pdf={pdf} place="top" />
         </div>
+        <PdfFailed pdf={pdf} place="top" className={styles.topbarNote} />
       </div>
       {previewNotice ? (
         <div className={cn(styles.inner, "pt-4")}>{previewNotice}</div>
@@ -709,16 +722,10 @@ export function TwoSourceReportPage({
               siap dibagikan ke tim atau agensi Anda.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="ink"
-            size="sm"
-            className="rounded-chip px-4"
-            onClick={print}
-          >
-            <IconDownload aria-hidden="true" />
-            Unduh PDF
-          </Button>
+          <div className={styles.saveAction}>
+            <PdfButton pdf={pdf} place="end" />
+            <PdfFailed pdf={pdf} place="end" />
+          </div>
         </div>
         <footer className={styles.footer}>
           <span>Nuave · Laporan Visibilitas AI · {name}</span>

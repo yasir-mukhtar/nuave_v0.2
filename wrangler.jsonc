@@ -87,7 +87,21 @@
         "period": 60,
       },
     },
+    // Spec 021 P-02: each report PDF uses Browser Run time.
+    {
+      "name": "REPORT_PDF_CALLER_RATE_LIMITER",
+      "namespace_id": "308",
+      "simple": {
+        "limit": 3,
+        "period": 60,
+      },
+    },
   ],
+  // Spec 021 Part P: Browser Run makes the report PDF (Quick Actions through
+  // the binding; production and PR previews only, P-05).
+  "browser": {
+    "binding": "BROWSER",
+  },
   "d1_databases": [
     {
       "binding": "SPEND_DB",
@@ -152,7 +166,16 @@
           "namespace_id": "418",
           "simple": { "limit": 5, "period": 60 },
         },
+        {
+          "name": "REPORT_PDF_CALLER_RATE_LIMITER",
+          "namespace_id": "419",
+          "simple": { "limit": 3, "period": 60 },
+        },
       ],
+      // Previews test the real PDF path (Spec 021 P-05).
+      "browser": {
+        "binding": "BROWSER",
+      },
       "d1_databases": [
         {
           "binding": "SPEND_DB",
@@ -215,7 +238,14 @@
           "namespace_id": "518",
           "simple": { "limit": 100000, "period": 60 },
         },
+        {
+          "name": "REPORT_PDF_CALLER_RATE_LIMITER",
+          "namespace_id": "519",
+          "simple": { "limit": 100000, "period": 60 },
+        },
       ],
+      // No "browser" binding: Quick Actions need remote mode, so local
+      // development answers pdf_unavailable and prints (Spec 021 P-05).
       "d1_databases": [
         {
           "binding": "SPEND_DB",
