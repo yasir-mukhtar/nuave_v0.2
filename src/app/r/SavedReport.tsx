@@ -104,6 +104,9 @@ export default function SavedReport({
           observations={data.observations}
           onDownloadJson={downloadJson}
           onDownloadPdf={via === "link" ? downloadPdf : undefined}
+          // Spec 021 C-03: no logo requests for a synthetic report or in the
+          // copy Browser Run prints.
+          showLogos={via === "link" && !data.synthetic}
           previewNotice={
             data.synthetic ? (
               <AuditNotice tone="info" title="Audit uji — jawaban sintetis">

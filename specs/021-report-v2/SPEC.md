@@ -180,8 +180,12 @@ dark (ink); Jawaban AI's band is light grey.
 - A list sorted by how often AI named each business (both sources together).
   Each row: logo (the site's icon; initials when none or when it fails), name,
   **website as a link** (opens in a new tab, no referrer), rating and review
-  count when saved, "N×" named, "direkomendasikan N×", the per-source split,
-  and **"Disebut AI karena: …"** when the writer gave a reason.
+  count when saved, "N×" named, the per-source split, and **"Disebut AI
+  karena: …"** when the writer gave a reason. The owner's row says
+  "direkomendasikan N×" (the writer's assessment); other businesses' rows say
+  "kartu ChatGPT N×" (ChatGPT answers that named the business and showed it
+  as a business card), with a note under the list explaining it (founder,
+  2026-10-27).
 - The owner's clinic is in the same list, drawn as an inset card inside its
   row (thin violet border, violet-to-white fill) with a "Klinik Anda" label.
   Every row, including the owner's, has the same divider.

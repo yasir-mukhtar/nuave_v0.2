@@ -1,10 +1,21 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-26
+> Updated: 2026-10-27
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-27 — Report playbook approved
+
+Yasir approved the report writer's playbook,
+[`docs/content/report/PLAYBOOK.md`](content/report/PLAYBOOK.md) (Spec 021
+B-02): how ChatGPT and Google's AI Overview choose clinics, from Google's and
+OpenAI's public pages, nine checkable actions a clinic can take, and what the
+writer never advises. Three sources (two OpenAI help pages and Permenkes
+1787/2010) were read through search results and summaries only; the playbook
+says so. The approval also settles item 3 of the decisions PLAN.md listed as
+owed; items 1 and 2 were settled on 2026-10-26 (audit stack plan, point 2).
 
 ## 2026-10-27 — Meta Conversions API spec renumbered 022
 

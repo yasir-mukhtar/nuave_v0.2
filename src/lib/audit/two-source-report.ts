@@ -10,11 +10,16 @@
  * - R-18: "Topik yang belum menyebut Anda".
  * - Q-3 default: the Google coverage finding.
  * - R-08: whether search data was available.
+ * - Spec 021 C-01/C-02: per business, the answers that name it and what the
+ *   sources' own pages showed about it (v2).
  *
  * This module has no server imports, so the report page can use its types.
  */
 
-export const TWO_SOURCE_REPORT_VERSION = "nuave-two-source-v1" as const;
+/** v2 (Spec 021 Part C) adds `competitors`; v1 reports have names only. */
+export const TWO_SOURCE_REPORT_VERSION = "nuave-two-source-v2" as const;
+export type TwoSourceReportVersion =
+  "nuave-two-source-v1" | typeof TWO_SOURCE_REPORT_VERSION;
 /** The evidence export carries its own version for two-source reports (R-29). */
 export const TWO_SOURCE_EXPORT_VERSION =
   "nuave-evidence-two-source-v1" as const;
@@ -90,8 +95,24 @@ export type TopicRow = {
   domains: string[];
 };
 
+/** Spec 021 C-01/C-02: one business, counted by code when the report was
+ * made. Ids are the questions whose answers name it. */
+export type CompetitorFact = {
+  name: string;
+  chatgpt: string[];
+  google: string[];
+  /** ChatGPT answers that name it and showed it as one of ChatGPT's own
+   * business cards. Not "recommended": that word stays for the report
+   * writer's reading of the owner's answers. */
+  cards: string[];
+  /** From the provider data only (C-04); null when none was given. */
+  website: string | null;
+  rating: { value: number; max: number } | null;
+  reviews: number | null;
+};
+
 export type TwoSourceReport = {
-  version: typeof TWO_SOURCE_REPORT_VERSION;
+  version: TwoSourceReportVersion;
   /** AC-20: absent on reports saved before the label existed ("Bisnis Anda"). */
   subject?: ReportSubject;
   /** For the "Minta bantuan" email (R-20); null when the order has none. */
@@ -133,6 +154,13 @@ export type TwoSourceReport = {
   topics_missing: TopicRow[];
   /** One short list per source, taken from the answer text. */
   other_businesses: { chatgpt: string[]; google: string[] };
+  /** Spec 021 Part C: every business in `other_businesses`, counted, and the
+   * owner's listing details. Absent on reports made before Part C, whose
+   * counts are derived when the page opens. */
+  competitors?: {
+    others: CompetitorFact[];
+    own: Pick<CompetitorFact, "cards" | "website" | "rating" | "reviews">;
+  };
 };
 
 /** "Bisnis Anda muncul di X dari N pertanyaan" ("Klinik Anda …" for a

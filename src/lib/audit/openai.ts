@@ -648,7 +648,40 @@ export async function executeAuditPrompt(input: {
   }
 }
 
-export async function generateReportContent(
+/** The shape the report writer must answer in, for this input. The
+ * report-writer test asks other models for the same shape. */
+export function reportOutputSchema(input: {
+  question_method?: AuditQuestionMethod;
+}) {
+  return reportSynthesisSchemaForMethod(input.question_method);
+}
+
+/** The report content code builds from the writer's answer. */
+export function reportContentFromAnswer(
+  synthesis: ReportSynthesis,
+  input: Pick<
+    Parameters<typeof reportRequest>[0],
+    | "observations"
+    | "brief"
+    | "historical_fixture_id"
+    | "question_method"
+    | "language"
+  >,
+): ReportContent {
+  return assembleReportContent(
+    synthesis,
+    input.observations,
+    input.brief,
+    input.historical_fixture_id,
+    input.question_method,
+    input.language,
+  );
+}
+
+/** The request generateReportContent sends, built from its input. The
+ * report-writer test (scripts/report-writer-test) sends the same prompt to
+ * other models and effort levels. */
+export function reportRequest(
   input: {
     brief: import("./direct-ten-context-v2").AuditSubject;
     prompts: AuditPrompt[];
@@ -665,16 +698,10 @@ export async function generateReportContent(
     draft: ReportContent;
     violations: string[];
   },
-): Promise<{
-  content: ReportContent;
-  requested_model: string;
-  returned_model: string;
-  response_id: string;
-  telemetry: AuditCallTelemetry[];
-}> {
+) {
   const v2Context = "version" in input.brief ? input.brief : null;
   const requestedModel = auditModel();
-  const request = {
+  return {
     model: requestedModel,
     reasoning: { effort: auditReasoningEffort("medium") },
     store: false,
@@ -682,10 +709,7 @@ export async function generateReportContent(
     max_output_tokens: AUDIT_CALL_LIMITS.report.max_output_tokens,
     safety_identifier: hashSafetyIdentifier(input.safety_identifier),
     text: {
-      format: zodTextFormat(
-        reportSynthesisSchemaForMethod(input.question_method),
-        "nuave_audit_report",
-      ),
+      format: zodTextFormat(reportOutputSchema(input), "nuave_audit_report"),
       verbosity: "low" as const,
     },
     input: [
@@ -794,6 +818,20 @@ export async function generateReportContent(
       },
     ],
   } satisfies CostControlledResponseParams;
+}
+
+export async function generateReportContent(
+  input: Parameters<typeof reportRequest>[0],
+  revision?: Parameters<typeof reportRequest>[1],
+): Promise<{
+  content: ReportContent;
+  requested_model: string;
+  returned_model: string;
+  response_id: string;
+  telemetry: AuditCallTelemetry[];
+}> {
+  const request = reportRequest(input, revision);
+  const requestedModel = request.model;
   const reservedCost = reserveAuditCall({
     budget: input.budget,
     stage: "report",
@@ -820,17 +858,13 @@ export async function generateReportContent(
     });
     await spend.settle(telemetry.accounted_cost_usd);
     return {
-      content: assembleReportContent(
+      content: reportContentFromAnswer(
         structuredOutputOrThrow<ReportSynthesis>(
           response.output_parsed,
           "Report generation",
           response,
         ),
-        input.observations,
-        input.brief,
-        input.historical_fixture_id,
-        input.question_method,
-        input.language,
+        input,
       ),
       requested_model: requestedModel,
       returned_model: response.model,
