@@ -228,7 +228,8 @@ export function AnswerPanelProvider({
   }, [open, shownQuestion.ordinal]);
   // On every opening, the reset is repeated on the next frame: the dialog
   // shows the kept-mounted panel only after this render, and a reset made
-  // while it is hidden does not stick. The panel is still off-screen then.
+  // while it is hidden does not stick. It lands before the first frame is
+  // drawn (with or without the slide).
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {

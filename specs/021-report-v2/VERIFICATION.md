@@ -179,7 +179,7 @@ All seven round-1 findings confirmed fixed. New:
 
 - Long links and words in an answer wrap again on screen (`overflow-wrap:
 anywhere` on the panel and the print appendix; source chips may shrink). The
-  print overlap round 2 also saw had another cause, fixed in round 3 below. The e2e test now
+  print overlap round 2 also saw had another cause, fixed in round 4 below. The e2e test now
   adds a long plain-text link to every answer and checks, at 320px, every
   question on both tabs; it fails without the fix.
 - Each question opens at its top when paging; the e2e test scrolls to the end
@@ -229,3 +229,17 @@ All round-2 findings confirmed fixed on screen. New:
 - Not changed: "P" references are buttons now, so a printed or PDF report has
   no internal link from "P2" to the appendix. Noted for Part P (the server PDF
   can add a print-only link).
+
+### Review round 5: PASS
+
+[Round 5 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6431487510).
+Both round-4 findings confirmed fixed (word-box check on five printed reports;
+per-frame reopen probe), every earlier fix holds, AC-D2 recorded accurately as
+partly met. Of its optional notes, one stale line and one code comment are
+corrected. Not done: keeping a status pill and its avatar on one printed page
+with `break-inside`/`break-after` rules made source chips print over the notes
+below the appendix (word-box check on the long mixed report and the fictional
+report), so the passed print layout stays; the split is cosmetic (no text
+overlaps or goes missing). Left for Part P: an automated long-answer print
+check (word-box overlap on the PDF) before the server PDF reuses the appendix,
+and print-only links from "P2" to the appendix.
