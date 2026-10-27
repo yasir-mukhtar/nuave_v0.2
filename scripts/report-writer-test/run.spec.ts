@@ -60,6 +60,9 @@ import {
   readOrderPages,
   blindWriterFingerprint,
   drawPagePairs,
+  drawPageSet,
+  PAGE_SET,
+  type PageSetKey,
   type PagePairKey,
   entryPrompt,
   entryInput,
@@ -442,6 +445,67 @@ it.skipIf(orders.length === 0)(
       }
     }
     write(pairsKeyPath, pairsKey);
+
+    // The page-reading set, blind: review-pages-set/<order>/<letter>.json
+    // for Opus medium and Sonnet medium and high, all with pages read;
+    // review-pages-set/key.json says which is which.
+    const setKeyPath = join(EVIDENCE_DIR, "review-pages-set", "key.json");
+    const setStored = existsSync(setKeyPath)
+      ? (JSON.parse(readFileSync(setKeyPath, "utf8")) as Record<
+          string,
+          PageSetKey
+        >)
+      : {};
+    const setKey: Record<string, PageSetKey> = { ...setStored };
+    for (const order of orders) {
+      const evidence = loadEvidence(order);
+      const deliveredAt = (
+        JSON.parse(evidence.order.report_json) as AuditReport
+      ).generated_at;
+      const writersNow: Partial<Record<EntryId, string>> = {};
+      const reports = new Map<EntryId, AuditReport>();
+      if (existsSync(pagesPath(order)))
+        for (const id of PAGE_SET) {
+          const entry = PAGE_ENTRIES.find((item) => item.id === id)!;
+          const result = readResult(order, id);
+          const writer = writerFingerprint(
+            entry,
+            (await entryInput(evidence, entry)).input,
+          );
+          if (result?.report && result.writer === writer) {
+            writersNow[id] = writer;
+            reports.set(id, result.report);
+          }
+        }
+      const dir = join(EVIDENCE_DIR, "review-pages-set", order);
+      rmSync(dir, { recursive: true, force: true });
+      const drawn = drawPageSet(writersNow, setStored[order]);
+      if (!drawn) {
+        delete setKey[order];
+        continue;
+      }
+      setKey[order] = drawn;
+      const intake = JSON.parse(evidence.order.intake_json) as {
+        context: unknown;
+        prompts: unknown;
+        originals?: unknown;
+      };
+      for (const [letter, id] of Object.entries(drawn.letters)) {
+        const report = blindReport(reports.get(id)!, deliveredAt);
+        expect(telltaleIn(report), `${order} set ${letter}`).toBeNull();
+        write(join(dir, `${letter}.json`), {
+          report,
+          context: intake.context,
+          prompts: intake.prompts,
+          originals: intake.originals ?? [],
+          observations: evidence.rows.flatMap((row) =>
+            row.observation_json ? [JSON.parse(row.observation_json)] : [],
+          ),
+          synthetic: false,
+        });
+      }
+    }
+    write(setKeyPath, setKey);
     if (scoresDropped && existsSync(scoresPath))
       renameSync(
         scoresPath,

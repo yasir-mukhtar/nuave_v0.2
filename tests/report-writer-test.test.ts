@@ -48,6 +48,8 @@ import {
   readOrderPages,
   blindWriterFingerprint,
   drawPagePairs,
+  drawPageSet,
+  PAGE_SET,
   type OrderEvidence,
 } from "../scripts/report-writer-test/harness";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -584,6 +586,23 @@ describe("blind review", () => {
 });
 
 describe("the reading test (founder decision 2026-10-27)", () => {
+  it("draws the page-reading set's letters only once every report in it exists, and keeps them while the writers stay", () => {
+    const writers = Object.fromEntries(PAGE_SET.map((id) => [id, "w1"]));
+    expect(
+      drawPageSet({ ...writers, "sonnet-high-pages": undefined }, undefined),
+    ).toBeNull();
+    const drawn = drawPageSet(writers, undefined, () => 0)!;
+    expect(Object.keys(drawn.letters)).toEqual(["A", "B", "C"]);
+    expect(new Set(Object.values(drawn.letters))).toEqual(new Set(PAGE_SET));
+    expect(drawPageSet(writers, drawn, () => 1)).toBe(drawn);
+    const redrawn = drawPageSet(
+      { ...writers, "sonnet-medium-pages": "w2" },
+      drawn,
+      () => 0,
+    )!;
+    expect(redrawn.writers["sonnet-medium-pages"]).toBe("w2");
+  });
+
   it("waits out Firecrawl's rate limit, then gives the reader the answer", async () => {
     const answers = [429, 429, 200];
     const calls: (RequestInit | undefined)[] = [];

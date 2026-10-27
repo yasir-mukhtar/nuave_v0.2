@@ -6,6 +6,24 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-27 — Reading test: Opus 5.5 medium with pages read wins on NV-3WDSAY
+
+Yasir judged the reading test's blind pairs on NV-3WDSAY (no 1–5 scores):
+pair B report 2, written by Claude Opus 5.5 at medium effort with the pages
+Firecrawl read, is the best of every report so far and the first one he
+would be confident offering to customers. He will not score the other
+reports. It cost USD 1.26 (two calls) plus 16 Firecrawl requests, against
+USD 0.05 for Luna high with the same pages. Before deciding the production
+writer, Claude Sonnet 5.5 at medium and high effort run with the same pages
+and are judged against it.
+
+Not yet decided: the production writer, page reading in production, and the
+per-order spend hold (USD 2.00) and daily cap (USD 5), which an Opus writer
+reading pages would likely exceed (its two calls cost USD 1.26 here, and each
+is reserved at its worst case first).
+The single order is one business; the plan's further test orders still
+apply.
+
 ## 2026-10-27 — Report-writer test allowance raised to USD 7
 
 Yasir raised the agent-run allowance for the audit stack tests (the reading

@@ -134,6 +134,13 @@ come from today's writers. The report without pages in each pair is also one
 of the blind set's letters, so **score the blind set before opening the
 pairs**.
 
+After Opus medium with pages won the pairs (decision 2026-10-27), Sonnet
+5.5 medium and high also run with the same pages (`sonnet-medium-pages`,
+`sonnet-high-pages`; they have no pair). The three page reports by Opus
+medium and Sonnet medium and high are printed as one blind set,
+`review-pages-set/<order>/Laporan A.pdf` … `C.pdf`, once all three exist from
+today's writer; `review-pages-set/key.json` says which is which.
+
 ## 4. Review
 
 ```sh
