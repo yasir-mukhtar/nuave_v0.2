@@ -50,19 +50,21 @@
   parts plus a server-made PDF. **Approved 2026-10-26** after four prototype
   rounds ([prototype](../experiments/report-v2-poc/),
   [decision](./DECISION_LOG.md#2026-10-26--approve-spec-021-server-pdf-now-re-audit-reminder-later)).
-  Next: the [build plan](../specs/021-report-v2/PLAN.md) passes independent
-  review, then six PRs in order (layout, answers, PDF, competitor data,
-  writing).
+  The [build plan](../specs/021-report-v2/PLAN.md) passed independent
+  review (round 3); next, six PRs in order (layout, answers, PDF, competitor
+  data, writing).
 - **Audit stack plan** (approved 2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
   [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
-  report-writer test is Spec 021 B-07 (Luna low as delivered, Luna high,
-  Claude Sonnet 5.5 medium and high, Claude Haiku 5.5, on three orders with
-  ChatGPT and Google answers). The founder added OpenAI, Anthropic and
-  Firecrawl keys to the cloud environment on 2026-10-26; a new session
-  picks them up (Anthropic key named `NUAVE_ANTHROPIC_API_KEY`, so Claude
-  Code does not use it). Still needed: two more founder-run live orders (two
-  businesses, two cities, one at a time). The reading test (Firecrawl,
+  report-writer test is Spec 021 B-07: five writers on Spec 021's new writer
+  (Luna low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5),
+  on three orders with ChatGPT and Google answers, with the delivered
+  NV-3WDSAY report as a labelled reference. The OpenAI, Anthropic and
+  Firecrawl keys are in the cloud environment (seen 2026-10-27; Anthropic as
+  `NUAVE_ANTHROPIC_API_KEY`, so Claude Code does not use it). Still needed:
+  two more founder-run live orders (two businesses, two cities, one at a
+  time), best run after Spec 021 PR 5 (competitor data) is deployed so they
+  carry everything the new writer reads. The reading test (Firecrawl,
   Cloudflare, Apify) follows G1.
 
 - **Question writing fixed** (2026-10-26): orders with a search city failed
