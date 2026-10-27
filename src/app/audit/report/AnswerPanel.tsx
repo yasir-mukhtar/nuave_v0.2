@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useDeferredValue,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -208,8 +209,6 @@ export function AnswerPanelProvider({
       setOrdinal(next);
       setSource(nextSource);
       setAnnouncement("");
-      // Every opening starts at the top, even of the question last read.
-      if (body.current) body.current.scrollTop = 0;
       setOpen(true);
     },
     [],
@@ -225,8 +224,18 @@ export function AnswerPanelProvider({
   const answer = answers.find((a) => a.id === shownQuestion.prompt_id);
   // Each question starts at its top, with its bubble in view.
   useLayoutEffect(() => {
-    if (body.current) body.current.scrollTop = 0;
-  }, [shownQuestion.ordinal]);
+    if (open && body.current) body.current.scrollTop = 0;
+  }, [open, shownQuestion.ordinal]);
+  // On every opening, the reset is repeated on the next frame: the dialog
+  // shows the kept-mounted panel only after this render, and a reset made
+  // while it is hidden does not stick. The panel is still off-screen then.
+  useEffect(() => {
+    if (!open) return;
+    const frame = requestAnimationFrame(() => {
+      if (body.current) body.current.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open]);
   const page = (next: number) => {
     setOrdinal(next);
     setAnnouncement(`Pertanyaan ${next} dari ${total}`);

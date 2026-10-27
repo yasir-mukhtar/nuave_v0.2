@@ -779,6 +779,17 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     ).toBeVisible();
     await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
   }
+  // Reopening the question last read starts at its top too (a real browser
+  // keeps the hidden panel's scroll position; jsdom cannot show this).
+  await scroller.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  expect(await scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  await fresh.locator('[data-answer-row="10"]').click();
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 10 dari 10" }),
+  ).toBeVisible();
+  await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
   // Printing with the panel open prints the report, not the panel.
   await fresh.emulateMedia({ media: "print" });
   await expect(openPanel).toBeHidden();

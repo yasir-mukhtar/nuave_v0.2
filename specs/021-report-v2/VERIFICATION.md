@@ -8,7 +8,7 @@
 > Implementation version or commit: Part A (PR #173), Part D (PR #175)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
-**Verified** after PR 6 and the founder's AC-A7 and AC-B4 readings.
+**Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
 
 ## Part A, layout (PR 2)
 
@@ -165,13 +165,12 @@ stack.
 Production build (`next build` and `next start`), headless Chromium at
 1280×860, a fictional report served through a route intercept. Frame times are
 the intervals between `requestAnimationFrame` callbacks while the panel opens
-and while it closes, three runs each: every frame was at most 16.8 ms. A
-Chromium performance trace of one opening (main-thread tasks) was also taken;
-the click's own work fell from 93 ms to 41 ms after the panel was kept mounted
-and the answer text moved to a deferred render. The reviewer's re-run with the
-CPU slowed showed one 33 ms frame at 2× and 50 to 100 ms frames at 4×, so a
-much slower phone may drop frames at the start of the slide; the slide itself
-is a compositor transform.
+and closes; long tasks come from a Chromium performance trace. The figures
+are in the AC-D2 row above: the first open of a fresh page drops one or two
+frames of about 33 ms, later opens and closes stay at or under 16.8 ms per
+frame, and with the CPU slowed 2× the first open shows frames of 50 to 70 ms.
+Keeping the panel mounted and drawing the answer text in a deferred render
+cut the click's own work from 93 ms to about 30 to 40 ms on the first open.
 
 ### Review round 2 (ALMOST) and fixes
 
@@ -195,15 +194,38 @@ anywhere` on the panel and the print appendix; source chips may shrink). The
 [Round 3 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6430879466).
 All round-2 findings confirmed fixed on screen. New:
 
-- **Print overlap fixed.** When a table in an answer crossed a page break,
-  Chromium repeated its header on the next page and pushed the answer under
-  the source chips and time that follow it in the appendix grid. The table
-  header now prints once (`.appendix thead { display: table-row-group }` in
-  print). Checked by printing the reviewer's report with a 9-row table in
-  every answer (14 A4 pages): the chips sit below each answer, where before
-  "source.example" printed over the last sentence.
+- Print: the table header now prints once (`.appendix thead`). This removed
+  one trigger of the print overlap but not its cause; round 4 below has the
+  real fix.
 - AC-D2 is worded accurately above (the first open's dropped frames, a
   mid-range laptop and a phone for the founder's check).
-- Smaller: the panel opens at the top even when reopening the question last
-  read; the scroll reset runs before paint; a long source domain ends with
+- Smaller: the scroll reset when paging runs before paint (the reset on
+  reopening did not work in a real browser; round 4 below); a long source domain ends with
   "…"; the unused reduced-motion fade is removed (the panel appears in place).
+
+### Review round 4 (ALMOST) and fixes
+
+[Round 4 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6431170685).
+
+- **Print overlap fixed at its cause.** The appendix used CSS grids, whose
+  rows are sized before the page is split; any answer that grows at a page
+  break (a split line, a table header) ran under the source chips and time
+  after it. In print the appendix now flows as blocks (the avatar sits to the
+  left by positioning). Checked with the reviewer's four long reports (plain
+  paragraphs, a long list, long mixed Markdown in both sources, and a table
+  in every answer; 14 to 74 A4 pages) and a word-box overlap check
+  (`pdftotext -bbox`): no answer, chip or time text overlaps anywhere, the
+  same result as the reviewer's tested fix. The only boxes the check flags
+  are in the page-1 report header, present in every run including the base
+  branch.
+- **Reopening the question last read starts at its top in a real browser.**
+  The closed panel is not displayed, so the reset is repeated on the first
+  frame after it is shown (while it is still off-screen). Checked with the
+  reviewer's browser probe (by row, dot and "P" reference: scroll 0 from the
+  second frame); the e2e test now scrolls a question to its end, closes,
+  reopens it and checks it starts at the top.
+- The smoothness paragraph agrees with the AC-D2 row; the Verified condition
+  above names AC-D2.
+- Not changed: "P" references are buttons now, so a printed or PDF report has
+  no internal link from "P2" to the appendix. Noted for Part P (the server PDF
+  can add a print-only link).

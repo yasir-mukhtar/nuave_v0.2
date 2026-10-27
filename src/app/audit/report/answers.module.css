@@ -447,9 +447,30 @@ a.src:hover {
   .appendixQuestion h4 {
     break-after: avoid;
   }
-  /* A table that crosses a page break would repeat its header on the next
-     page, pushing the answer down under the sources and time that follow in
-     the grid. Print the header once, where the table starts. */
+  /* Grid rows are sized before the page is split, so an answer that grows
+     at a page break (a split line, a repeated table header) would run under
+     the sources and time after it. In print the appendix flows as blocks. */
+  .appendixQuestion,
+  .ai,
+  .reply {
+    display: block;
+  }
+  .appendix .appendixQuestion > * + * {
+    margin-top: 12px;
+  }
+  .appendix .reply > * + * {
+    margin-top: 10px;
+  }
+  .ai {
+    position: relative;
+    padding-left: 38px;
+  }
+  .ai > .avatar {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  /* A table's header prints once, where the table starts. */
   .appendix thead {
     display: table-row-group;
   }
