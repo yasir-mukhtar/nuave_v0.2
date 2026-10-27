@@ -549,16 +549,6 @@
 }
 
 /* Spec 018: the two-source report (ChatGPT and Google AI Overview). */
-.resultCard + .resultCard {
-  margin-top: var(--space-md);
-}
-.sourceTitle {
-  margin: 0 0 var(--space-xs);
-  color: var(--text-heading);
-  font-size: var(--type-label-sm-size);
-  font-weight: var(--type-heading-sm-weight);
-  line-height: var(--type-label-sm-leading);
-}
 .originLabel {
   display: inline-block;
   margin: 0 0 var(--space-xs);

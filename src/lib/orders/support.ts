@@ -4,6 +4,7 @@ import {
   OPEN_PAID_ORDER_FAILED,
   holdOrder,
 } from "./retention";
+import { savedReportEvidence } from "../audit/customer-evidence-export";
 import { applyRefund } from "../payments/apply";
 import type { SpendDb, SpendStatement } from "../spending/spend-ledger";
 import { newLinkSecret, sha256Hex } from "./link-secret";
@@ -46,6 +47,11 @@ import {
  *   npm run support -- email <order> <new-email>
  *   npm run support -- norefund <order> <declined|delivered|settled>
  *
+ * and, from spec 021 (A-08), the evidence JSON a two-source report no longer
+ * offers as a download:
+ *
+ *   npm run support -- export <order>
+ *
  * The logic lives here so tests can run it on a test database with a fake
  * sender (AC-17). `scripts/support.mjs` supplies the real database (through
  * `wrangler d1 execute`) and the real sender (the founder's Resend key from a
@@ -62,6 +68,9 @@ export type SupportDeps = {
   /** Pause between email tries (tests pass a no-op). */
   sleep?: (ms: number) => Promise<void>;
   out: (line: string) => void;
+  /** Saves a file under `.local-evidence/` and returns where it went
+   * (`export` only; the script writes it to disk, tests keep it in memory). */
+  saveEvidence?: (fileName: string, text: string) => Promise<string>;
 };
 
 const UNITS_PER_USD = 100_000_000;
@@ -74,7 +83,8 @@ export const SUPPORT_USAGE =
   "       npm run support -- close <midtrans-order-id> <unknown|unpaid> [--local]\n" +
   "       npm run support -- hold <order-id|order-number|midtrans-order-id> <days, 0 releases> [--local]\n" +
   "       npm run support -- email <order-id|order-number|midtrans-order-id> <new-email> [--local]\n" +
-  "       npm run support -- norefund <order-id|order-number|midtrans-order-id> <declined|delivered|settled> [--local]";
+  "       npm run support -- norefund <order-id|order-number|midtrans-order-id> <declined|delivered|settled> [--local]\n" +
+  "       npm run support -- export <order-id|order-number|midtrans-order-id> [--local]";
 
 const MIDTRANS_ORDER_ID = /^NV-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}-\d{1,3}$/;
 const TRANSACTION_ID = /^[A-Za-z0-9_.-]{6,100}$/;
@@ -98,6 +108,7 @@ export async function runSupport(
     hold: 2,
     email: 2,
     norefund: 2,
+    export: 1,
   };
   const given = [reference, second].filter((word) => word !== undefined).length;
   if (
@@ -133,6 +144,7 @@ export async function runSupport(
   if (command === "hold") return hold(deps, order, second!);
   if (command === "email") return changeEmail(deps, order, second!);
   if (command === "norefund") return closeWithoutRefund(deps, order, second!);
+  if (command === "export") return exportEvidence(deps, order);
   if (command === "show") {
     return show(deps, order, flags.includes("--email"));
   }
@@ -155,6 +167,49 @@ async function findOrder(db: SpendDb, reference: string) {
         .bind(reference)
         .first<{ id: string }>();
   return row ? getOrder(db, row.id) : null;
+}
+
+/** Spec 021 A-08: the evidence JSON of a saved report, built the way the report
+ * page builds its download, from the same saved rows the report-data route
+ * reads. It holds the customer's answers, so it goes to the git-ignored
+ * `.local-evidence/` folder and is never printed. */
+async function exportEvidence(
+  deps: SupportDeps,
+  order: OrderRow,
+): Promise<number> {
+  if (!order.report_json || !order.intake_json) {
+    deps.out("This order has no saved report. Nothing to export.");
+    return 1;
+  }
+  if (!deps.saveEvidence) {
+    deps.out("This support run cannot save files.");
+    return 1;
+  }
+  const intake = JSON.parse(order.intake_json) as {
+    context: Parameters<typeof savedReportEvidence>[0]["context"];
+    prompts: Parameters<typeof savedReportEvidence>[0]["prompts"];
+    originals?: string[];
+  };
+  const questions = await listQuestions(deps.db, order.id);
+  const evidence = savedReportEvidence({
+    report: JSON.parse(order.report_json),
+    context: intake.context,
+    prompts: intake.prompts,
+    originals: intake.originals ?? [],
+    observations: questions.flatMap((question) =>
+      question.observation_json ? [JSON.parse(question.observation_json)] : [],
+    ),
+    synthetic: order.mode === "synthetic",
+  });
+  const name = order.order_number ?? order.id;
+  const path = await deps.saveEvidence(
+    `${name}-evidence.json`,
+    `${JSON.stringify(evidence, null, 2)}\n`,
+  );
+  deps.out(
+    `Saved the evidence of ${name} to ${path}. It holds the customer's answers: share it only with them and delete it when done.`,
+  );
+  return 0;
 }
 
 /** Privacy page section 9: keeps the order past its lifetime while a support
