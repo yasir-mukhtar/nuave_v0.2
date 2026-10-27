@@ -16,7 +16,7 @@
  * withTwoSourceBlock), so all reports pass the same checks and repairs.
  *
  * Nothing here calls a provider unless a live writer is passed in; every live
- * call is reserved against a USD 5 ledger first and refused when it could pass
+ * call is reserved against the ledger (HARD_STOP_USD) first and refused when it could pass
  * it. Evidence, results and the letter key stay in the git-ignored
  * .local-evidence/report-writer-test/ folder.
  */
@@ -350,9 +350,9 @@ export function productionSendsGoogleWords(
 
 /* --------------------------------- ledger --------------------------------- */
 
-/** Founder decision 2026-10-26: agent-run calls for tests A and B, together,
- * stop at USD 5. */
-export const HARD_STOP_USD = 5;
+/** Agent-run calls for tests A and B, together, stop here: USD 5 by the
+ * founder's decision of 2026-10-26, raised to USD 7 on 2026-10-27. */
+export const HARD_STOP_USD = 7;
 
 type LedgerCall = {
   at: string;

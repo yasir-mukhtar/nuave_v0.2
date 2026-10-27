@@ -6,6 +6,15 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-27 — Report-writer test allowance raised to USD 7
+
+Yasir raised the agent-run allowance for the audit stack tests (the reading
+test and the report-writer test together) from USD 5 to USD 7, and approved
+running Spec 021's new writer with Luna high and Opus medium on NV-3WDSAY.
+USD 2.80 was used by then. The harness's hard stop
+(`scripts/report-writer-test`) is USD 7. Earlier, at the founder's request,
+GLM 5.3 Flash and Claude Opus 5.5 (low, medium) joined the test's writers.
+
 ## 2026-10-27 — Report playbook approved
 
 Yasir approved the report writer's playbook,

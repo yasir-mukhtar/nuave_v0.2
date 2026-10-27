@@ -9,7 +9,7 @@
  * keeps each delivered report as the labelled reference (re-running its writing
  * through today's pipeline, which must give it back unchanged when today's
  * writer wrote it), builds every entry's prompt and prints each planned call's
- * worst case against the USD 5 hard stop.
+ * worst case against the hard stop (HARD_STOP_USD in harness.ts).
  *
  * Live (only with the founder's go-ahead): add REPORT_TEST_LIVE=1. Needs
  * OPENAI_API_KEY and NUAVE_ANTHROPIC_API_KEY. ORDERS=NV-…,NV-… and
@@ -31,7 +31,6 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
-  rmSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -249,7 +248,18 @@ it.skipIf(orders.length === 0)(
       const kept =
         previous?.writer === writer && previous.letters ? previous : null;
       if (!kept) {
-        rmSync(dir, { recursive: true, force: true });
+        // A pack from an earlier writer is archived with its letters, never
+        // deleted: the founder may still be scoring its PDFs.
+        if (previous && existsSync(dir)) {
+          const archive = join(
+            EVIDENCE_DIR,
+            "review-superseded",
+            `${order}-${previous.writer}-${Date.now()}`,
+          );
+          mkdirSync(join(archive, ".."), { recursive: true });
+          renameSync(dir, archive);
+          write(join(archive, "key.json"), previous);
+        }
         scoresDropped ||= [...scored.keys()].some((k) =>
           k.startsWith(`${order},`),
         );

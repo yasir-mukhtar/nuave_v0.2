@@ -270,7 +270,7 @@ describe("test B harness", () => {
   });
 });
 
-describe("the USD 5 ledger", () => {
+describe("the spend ledger", () => {
   it("refuses a call whose worst case would pass the hard stop, and counts an unsettled call at its worst case", () => {
     const ledger = new Ledger(join(dir, "spend.json"), 1);
     const first = {

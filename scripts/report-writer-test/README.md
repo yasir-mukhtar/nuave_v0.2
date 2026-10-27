@@ -82,7 +82,8 @@ Needs `OPENAI_API_KEY`, `NUAVE_ANTHROPIC_API_KEY` and
 workspace. `ORDERS=NV-…` and
 `ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
 `spend.json` at its worst case and is refused when that could take the total
-past **USD 5** (the hard stop for tests A and B together); it is then settled
+past **USD 7** (the hard stop for tests A and B together, raised from USD 5 on
+2026-10-27); it is then settled
 at its real cost. An entry already written by today's writer is never run
 again; move its file out of `runs/` to redo it.
 `REPORT_TEST_MAX_OUTPUT_TOKENS=32000` gives that run a bigger output allowance
