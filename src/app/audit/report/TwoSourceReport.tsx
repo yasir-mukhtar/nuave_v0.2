@@ -32,6 +32,8 @@ import {
   siteIcon,
   topicGapRows,
   verdictFromConclusion,
+  twoSourceView,
+  competitorReasons,
   type CompetitorRow,
   type MentionState,
   type Source,
@@ -311,12 +313,25 @@ function Findings({
   return (
     <ol className={styles.findings}>
       {report.key_findings.map((finding, i) => (
-        <li key={i} className={styles.finding} data-finding>
-          <h3>{finding.title}</h3>
-          <p>
-            {finding.explanation}{" "}
-            <QuestionRefs ordinals={ordinals(finding.evidence_prompt_ids)} />
-          </p>
+        <li
+          key={i}
+          className={cn(styles.finding, finding.headline && styles.withStat)}
+          data-finding
+        >
+          {/* Spec 021 B-05: a headline number code has confirmed. */}
+          {finding.headline ? (
+            <p className={styles.stat} data-finding-stat>
+              <strong>{finding.headline.number}</strong>
+              <span>{finding.headline.caption}</span>
+            </p>
+          ) : null}
+          <div className={styles.findingText}>
+            <h3>{finding.title}</h3>
+            <p>
+              {finding.explanation}{" "}
+              <QuestionRefs ordinals={ordinals(finding.evidence_prompt_ids)} />
+            </p>
+          </div>
         </li>
       ))}
       {two.google_finding ? (
@@ -399,10 +414,13 @@ function CompetitorLine({
   row,
   ownLabel,
   showLogos,
+  reason,
 }: {
   row: CompetitorRow;
   ownLabel: string;
   showLogos: boolean;
+  /** Spec 021 Part B: "Disebut AI karena: …", from the writer. */
+  reason?: string;
 }) {
   const total = row.chatgpt + row.google;
   // "direkomendasikan" is the report writer's reading of the owner's
@@ -454,6 +472,11 @@ function CompetitorLine({
         ) : null}
         <span className={styles.split}>{split}</span>
       </p>
+      {reason ? (
+        <p className={styles.why} data-competitor-reason>
+          <b>Disebut AI karena:</b> {reason}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -464,8 +487,11 @@ function Competitors({
   ownNames,
   ownWebsite,
   showLogos,
+  reasons,
 }: {
   two: TwoSourceReport;
+  /** Spec 021 Part B: the writer's reason per business, by lowercase name. */
+  reasons: ReadonlyMap<string, string>;
   observations: readonly AuditObservation[];
   /** The owner's display name first, then its other names. */
   ownNames: readonly string[];
@@ -504,6 +530,16 @@ function Competitors({
           row={row}
           ownLabel={subjectNoun(two.subject)}
           showLogos={showLogos}
+          reason={
+            row.own
+              ? undefined
+              : reasons.get(
+                  row.name
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .toLocaleLowerCase("id-ID"),
+                )
+          }
         />
       ))}
       {rest.length ? (
@@ -615,10 +651,23 @@ function Recommendations({ report }: { report: AuditReport }) {
 }
 
 function Closing({ report }: { report: AuditReport }) {
+  const plan = report.two_source_writing?.plan ?? [];
   return (
     <>
       {report.conclusion ? (
         <p className={styles.conclusion}>{report.conclusion}</p>
+      ) : null}
+      {/* Spec 021 Part B: the three-step plan with week ranges. */}
+      {plan.length ? (
+        <ol className={styles.plan} data-plan>
+          {plan.map((step, i) => (
+            <li key={i} className={styles.step}>
+              <span className={styles.when}>{step.weeks}</span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </li>
+          ))}
+        </ol>
       ) : null}
       <div className={styles.reaudit} data-reaudit>
         <h3>Audit ulang setelah 8 minggu</h3>
@@ -655,8 +704,9 @@ export function TwoSourceReportBody({
    * the copy Browser Run prints. */
   showLogos?: boolean;
 }) {
-  const two = report.two_source!;
+  const two = twoSourceView(report);
   const presentation = buildReportPresentation(report, observations);
+  const takeaways = report.two_source_writing?.takeaways ?? [];
   if (presentation.status !== "ready")
     return (
       <div className={bodyStyles.body} role="alert">
@@ -687,7 +737,8 @@ export function TwoSourceReportBody({
         <section id="summary" className={styles.inner} aria-label="Ringkasan">
           <div className={styles.summary}>
             <p className={styles.verdict} data-verdict>
-              {verdictFromConclusion(report.conclusion)}
+              {report.two_source_writing?.verdict ||
+                verdictFromConclusion(report.conclusion)}
             </p>
             <div className={styles.cards}>
               <SourceCard two={two} source="chatgpt" />
@@ -729,7 +780,18 @@ export function TwoSourceReportBody({
             ownNames={[ownName, ...names.slice(1)]}
             ownWebsite={ownWebsite}
             showLogos={showLogos}
+            reasons={competitorReasons(report)}
           />
+          {takeaways.length ? (
+            <ul className={styles.takeaways} data-takeaways>
+              {takeaways.map((item, i) => (
+                <li key={i} className={styles.take}>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </Band>
         {hasTopics ? (
           <Band
@@ -814,7 +876,7 @@ export function TwoSourceReportPage({
   /** Competitors' site icons (Part C); off unless the page turns them on. */
   showLogos?: boolean;
 }) {
-  const two = report.two_source!;
+  const two = twoSourceView(report);
   const name = brief.identity.name;
   const date = checkedDate(two);
   const pdf = useReportPdf(onDownloadPdf);

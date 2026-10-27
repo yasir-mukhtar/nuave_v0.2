@@ -52,7 +52,6 @@ import {
   type ReportSynthesis,
   type TwoSourceWritingSynthesis,
 } from "../../src/lib/audit/types";
-import { stripPhoneNumbers } from "../../src/lib/checks/phones";
 import type { GoogleCheck } from "../../src/lib/checks/google";
 import {
   orderReportInput,
@@ -223,24 +222,13 @@ export const ENTRIES: readonly Entry[] = [
   },
 ];
 
-/** Longest Google answer the writer reads; the longest in NV-3WDSAY is 4,227
- * characters, so most answers arrive whole. */
-export const GOOGLE_TEXT_MAX_CHARS = 3_000;
-
-/** Shortens a Google answer at the last sentence (or word) end that fits,
- * and removes phone numbers again in case a saved answer predates the filter. */
-export function trimGoogleText(text: string, max = GOOGLE_TEXT_MAX_CHARS) {
-  const clean = stripPhoneNumbers(text).trim();
-  if (clean.length <= max) return clean;
-  const cut = clean.slice(0, max);
-  const sentence = Math.max(
-    cut.lastIndexOf(". "),
-    cut.lastIndexOf(".\n"),
-    cut.lastIndexOf("\n"),
-  );
-  const end = sentence > max * 0.6 ? sentence + 1 : cut.lastIndexOf(" ");
-  return `${cut.slice(0, end > 0 ? end : max).trim()} …`;
-}
+/** Google's answers are shortened by the production writer's own rule
+ * (Spec 021 B-01), so the harness and production never differ. */
+export {
+  WRITER_GOOGLE_TEXT_MAX_CHARS as GOOGLE_TEXT_MAX_CHARS,
+  writerGoogleText as trimGoogleText,
+} from "../../src/lib/orders/two-source";
+import { writerGoogleText as trimGoogleText } from "../../src/lib/orders/two-source";
 
 /** The instruction that goes with the new input, added after today's
  * developer instruction. */
@@ -903,6 +891,7 @@ export function writerText(report: AuditReport) {
     key_findings: report.key_findings,
     priorities: report.priorities,
     details: report.details,
+    two_source_writing: report.two_source_writing,
   };
 }
 

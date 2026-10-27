@@ -83,6 +83,9 @@ export type TwoSourceQuestion = {
     /** Null unless a summary with text was shown. */
     named: NamedFact | null;
     observed_at: string | null;
+    /** Spec 021 Part B: the writer's reading of an AI Overview that names the
+     * business, applied when the page opens (never saved here). */
+    recommended?: boolean;
   };
 };
 
@@ -612,8 +615,11 @@ export function repairTwoSourceWriting<
   T extends {
     conclusion: string;
     key_findings: { title: string; explanation: string }[];
-    /** Spec 021 Part B: the verdict and takeaways are checked too. */
-    two_source_writing?: { verdict: string; takeaways: string[] };
+    /** Spec 021 Part B: the verdict is checked too. Recommendations,
+     * takeaways and the plan are not: they are about other businesses and
+     * advice, which this check would misread as claims about the owner ("ERHA
+     * disebut AI lewat dokternya"). */
+    two_source_writing?: { verdict: string };
   },
 >(content: T, facts: TwoSourceReportFacts): { content: T; changed: boolean } {
   let changed = false;
@@ -662,13 +668,7 @@ export function repairTwoSourceWriting<
       conclusion,
       key_findings,
       ...(writing
-        ? {
-            two_source_writing: {
-              ...writing,
-              verdict: fix(writing.verdict),
-              takeaways: writing.takeaways.map((text) => fix(text)),
-            },
-          }
+        ? { two_source_writing: { ...writing, verdict: fix(writing.verdict) } }
         : {}),
     },
     changed,
@@ -684,7 +684,7 @@ export function twoSourceWritingViolations(
   content: {
     conclusion: string;
     key_findings: { title: string; explanation: string }[];
-    two_source_writing?: { verdict: string; takeaways: string[] };
+    two_source_writing?: { verdict: string };
   },
   facts: TwoSourceReportFacts,
 ): string[] {
@@ -703,12 +703,7 @@ export function twoSourceWritingViolations(
   const texts = [
     content.conclusion,
     ...content.key_findings.flatMap((f) => [f.title, f.explanation]),
-    ...(content.two_source_writing
-      ? [
-          content.two_source_writing.verdict,
-          ...content.two_source_writing.takeaways,
-        ]
-      : []),
+    ...(content.two_source_writing ? [content.two_source_writing.verdict] : []),
   ];
   for (const sentence of texts.flatMap(sentences)) {
     const source = contradictedSource(sentence, facts);

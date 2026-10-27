@@ -10,7 +10,13 @@ import {
   type TwoSourceReportFacts,
   type TwoSourceWriterFacts,
 } from "./two-source-report";
-import type { AuditObservation, ReportContent } from "./types";
+import {
+  HEADLINE_CAPTION_MAX,
+  HEADLINE_NUMBER_MAX,
+  type AuditObservation,
+  type HeadlineBasis,
+  type ReportContent,
+} from "./types";
 
 /** Word and character limits of the new writer's fields (B-04). */
 export const TWO_SOURCE_WRITING_LIMITS = {
@@ -18,10 +24,11 @@ export const TWO_SOURCE_WRITING_LIMITS = {
   verdict_sentences: 2,
   conclusion_words: 70,
   finding_title_words: 12,
-  finding_words: 70,
-  recommendation_title_words: 12,
-  recommendation_words: 80,
+  finding_words: 80,
+  recommendation_title_words: 14,
+  recommendation_words: 100,
   reason_words: 20,
+  takeaway_title_words: 10,
   takeaway_words: 30,
   plan_words: 35,
   topic_words: 6,
@@ -65,9 +72,9 @@ export function twoSourceWritingFields(
       `Reason ${index + 1}`,
       item.reason,
     ]),
-    ...writing.takeaways.map((text, index): [string, string] => [
-      `Takeaway ${index + 1}`,
-      text,
+    ...writing.takeaways.flatMap((item, index): [string, string][] => [
+      [`Takeaway ${index + 1} title`, item.title],
+      [`Takeaway ${index + 1} text`, item.text],
     ]),
     ...writing.plan.flatMap((step, index): [string, string][] => [
       [`Plan step ${index + 1} title`, step.title],
@@ -191,10 +198,9 @@ export function partBWritingViolations(content: ReportContent): string[] {
       item.reason,
       limits.reason_words,
     ]),
-    ...writing.takeaways.map((text, index): [string, string, number] => [
-      `Takeaway ${index + 1}`,
-      text,
-      limits.takeaway_words,
+    ...writing.takeaways.flatMap((item, index): [string, string, number][] => [
+      [`Takeaway ${index + 1} title`, item.title, limits.takeaway_title_words],
+      [`Takeaway ${index + 1} text`, item.text, limits.takeaway_words],
     ]),
     ...writing.plan.map((step, index): [string, string, number] => [
       `Plan step ${index + 1} text`,
@@ -230,12 +236,12 @@ function key(name: string): string {
   return name.replace(/\s+/g, " ").trim().toLocaleLowerCase("id-ID");
 }
 
-/** Per-question facts a headline count may be taken from. */
+/** The per-question facts a headline may count, one per question basis. */
 function questionFacts(
   id: string,
   content: ReportContent,
   facts: TwoSourceReportFacts & { writer: TwoSourceWriterFacts },
-) {
+): Record<QuestionBasis, boolean> {
   const detail = content.details.find((item) => item.prompt_id === id);
   const question = facts.writer.questions.find((q) => q.prompt_id === id);
   const google = facts.google.find((item) => item.prompt_id === id);
@@ -244,125 +250,163 @@ function questionFacts(
   );
   const answered = detail?.run === "completed";
   const chatgptNamed =
-    question?.named.chatgpt === "named" || detail?.appearance === "mentioned";
+    answered &&
+    (question?.named.chatgpt === "named" || detail?.appearance === "mentioned");
   const summary = google?.outcome === "summary";
   const googleNamed = google?.business_named === true;
   return {
-    chatgpt_answered: answered,
-    chatgpt_named: answered && chatgptNamed,
+    chatgpt_named: chatgptNamed,
     chatgpt_not_named: answered && !chatgptNamed,
     chatgpt_cited_only: answered && question?.named.chatgpt === "source_only",
     chatgpt_recommended: answered && detail?.recommendation === "recommended",
     chatgpt_not_recommended:
       answered && detail?.recommendation !== "recommended",
-    chatgpt_failed: !answered,
-    google_summary: summary,
+    google_shown: summary,
     google_not_shown: google?.outcome === "not_shown",
     google_named: googleNamed,
     google_not_named: summary && !googleNamed,
     google_cited_only: summary && question?.named.google === "source_only",
     google_recommended: googleNamed && reading?.recommended === true,
-    google_failed: google?.outcome === "failed" || google === undefined,
-    any_named: (answered && chatgptNamed) || googleNamed,
-    none_named: !(answered && chatgptNamed) && !googleNamed,
+    named_by_either: chatgptNamed || googleNamed,
+    named_by_neither: (answered || summary) && !chatgptNamed && !googleNamed,
   };
 }
 
+const QUESTION_BASES = [
+  "chatgpt_named",
+  "chatgpt_not_named",
+  "chatgpt_cited_only",
+  "chatgpt_recommended",
+  "chatgpt_not_recommended",
+  "google_shown",
+  "google_not_shown",
+  "google_named",
+  "google_not_named",
+  "google_cited_only",
+  "google_recommended",
+  "named_by_either",
+  "named_by_neither",
+] as const satisfies readonly HeadlineBasis[];
+type QuestionBasis = (typeof QUESTION_BASES)[number];
+const isQuestionBasis = (basis: HeadlineBasis): basis is QuestionBasis =>
+  (QUESTION_BASES as readonly string[]).includes(basis);
+
+/** The source-wide denominator for a basis: ChatGPT's completed answers,
+ * Google's completed checks, or Google's summaries. */
+function sourceDenominator(
+  basis: QuestionBasis,
+  facts: TwoSourceReportFacts,
+): number | null {
+  const { chatgpt, google } = facts.counts;
+  if (basis.startsWith("chatgpt_")) return chatgpt.completed;
+  if (basis === "google_shown" || basis === "google_not_shown")
+    return google.completed;
+  if (basis.startsWith("google_")) return google.summaries;
+  return null;
+}
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** A figure as a whole token of the text: "75+" in "75+ cabang", but never
+ * "2" or "000" inside "Rp 250.000". */
+function hasToken(text: string, figure: string): boolean {
+  return new RegExp(
+    `(?<![\\p{L}\\p{N}]|\\p{N}[.,])${escapeRegExp(figure)}(?![\\p{L}\\p{N}]|[.,]\\p{N})`,
+    "u",
+  ).test(text);
+}
+
 /**
- * B-05: whether code can confirm a finding's headline number:
- * - "X dari Y" over the cited questions (Y their number, X a count of them
- *   by one per-question fact), or over a source's completed checks;
- * - a whole number of distinct cited domains or named other businesses in
- *   the cited answers;
- * - a figure that appears verbatim in a cited answer.
+ * B-05: whether code can confirm a finding's headline number by the basis
+ * the writer named for it; any other count is not checked:
+ * - a per-question fact: "X dari Y" where Y is the number of cited
+ *   questions and X those with the fact, or Y the source's completed count
+ *   and X all questions with it; "N" or "N×" for the cited questions with it;
+ * - domains or businesses: "N", the distinct ones in the cited answers;
+ * - `verbatim`: the figure is a whole token of a cited answer; two of them
+ *   may be set side by side ("70 vs 75+").
  */
 export function headlineConfirmed(
-  number: string,
+  headline: { number: string; basis: HeadlineBasis },
   citedIds: readonly string[],
   content: ReportContent,
   facts: TwoSourceReportFacts & { writer: TwoSourceWriterFacts },
   observations: readonly AuditObservation[],
 ): boolean {
-  const value = number.replace(/\s+/g, " ").trim();
+  const value = headline.number.replace(/\s+/g, " ").trim();
+  const { basis } = headline;
   if (!/\d/.test(value)) return false;
   const ids = [...new Set(citedIds)];
-  const pair = /^(\d+) dari (\d+)$/i.exec(value);
-  if (pair) {
-    const x = Number(pair[1]);
-    const y = Number(pair[2]);
-    if (y === ids.length) {
-      const rows = ids.map((id) => questionFacts(id, content, facts));
-      const keys = Object.keys(rows[0] ?? {}) as (keyof (typeof rows)[0])[];
-      if (keys.some((k) => rows.filter((row) => row[k]).length === x))
-        return true;
-    }
-    const { chatgpt, google } = facts.counts;
-    const recommended = content.details.filter(
-      (detail) => detail.recommendation === "recommended",
-    ).length;
-    const googleRecommended =
-      content.two_source_writing?.google_readings.filter((r) => r.recommended)
-        .length ?? 0;
-    const sourcePairs = [
-      [chatgpt.named, chatgpt.completed],
-      [chatgpt.completed - chatgpt.named, chatgpt.completed],
-      [recommended, chatgpt.completed],
-      [chatgpt.completed - recommended, chatgpt.completed],
-      [google.named, google.summaries],
-      [google.summaries - google.named, google.summaries],
-      [googleRecommended, google.summaries],
-      [google.summaries, google.completed],
-      [google.completed - google.summaries, google.completed],
-      [google.named, google.completed],
-    ];
-    if (sourcePairs.some(([a, b]) => a === x && b === y && b > 0)) return true;
-  }
   const cited = ids.map((id) => ({
     observation: observations.find((item) => item.prompt_id === id),
     question: facts.writer.questions.find((q) => q.prompt_id === id),
     google: facts.google.find((item) => item.prompt_id === id),
   }));
-  if (/^\d+$/.test(value)) {
-    const n = Number(value);
-    const chatgptDomains = new Set(
-      cited.flatMap(({ observation }) =>
-        observation?.run_status === "completed"
-          ? observation.sources.flatMap((source) => {
-              const domain = urlDomain(source.url);
-              return domain ? [domain] : [];
-            })
-          : [],
-      ),
-    );
-    const googleDomains = new Set(
-      cited.flatMap(({ google }) => google?.cited_domains ?? []),
-    );
-    const chatgptNames = new Set(
-      cited.flatMap(({ question }) =>
-        (question?.businesses.chatgpt ?? []).map(key),
-      ),
-    );
-    const googleNames = new Set(
-      cited.flatMap(({ question }) =>
-        (question?.businesses.google ?? []).map(key),
-      ),
-    );
-    const sizes = [
-      chatgptDomains.size,
-      googleDomains.size,
-      new Set([...chatgptDomains, ...googleDomains]).size,
-      chatgptNames.size,
-      googleNames.size,
-      new Set([...chatgptNames, ...googleNames]).size,
-    ];
-    if (n > 0 && sizes.includes(n)) return true;
+
+  if (basis === "verbatim") {
+    const texts = cited.flatMap(({ observation, question }) => [
+      observation?.run_status === "completed" ? observation.raw_answer : "",
+      question?.google_text ?? "",
+    ]);
+    return value
+      .split(/\s+vs\.?\s+/i)
+      .every(
+        (side) => /\d/.test(side) && texts.some((text) => hasToken(text, side)),
+      );
   }
-  return cited.some(
-    ({ observation, question }) =>
-      (observation?.run_status === "completed" &&
-        observation.raw_answer.includes(value)) ||
-      (question?.google_text ?? "").includes(value),
-  );
+
+  const whole = /^(\d+)\s*×?$/.exec(value);
+  if (isQuestionBasis(basis)) {
+    const cites = ids.filter(
+      (id) => questionFacts(id, content, facts)[basis],
+    ).length;
+    const pair = /^(\d+) dari (\d+)$/i.exec(value);
+    if (pair) {
+      const x = Number(pair[1]);
+      const y = Number(pair[2]);
+      if (y === ids.length && x === cites) return true;
+      const all = content.details.filter(
+        (detail) => questionFacts(detail.prompt_id, content, facts)[basis],
+      ).length;
+      return y > 0 && y === sourceDenominator(basis, facts) && x === all;
+    }
+    return whole !== null && Number(whole[1]) > 0 && Number(whole[1]) === cites;
+  }
+
+  if (!whole) return false;
+  const domains = (source: "chatgpt" | "google") =>
+    new Set(
+      cited.flatMap(({ observation, google }) =>
+        source === "chatgpt"
+          ? observation?.run_status === "completed"
+            ? observation.sources.flatMap((item) => {
+                const domain = urlDomain(item.url);
+                return domain ? [domain] : [];
+              })
+            : []
+          : (google?.cited_domains ?? []),
+      ),
+    );
+  const businesses = (source: "chatgpt" | "google") =>
+    new Set(
+      cited.flatMap(({ question }) =>
+        (question?.businesses[source] ?? []).map(key),
+      ),
+    );
+  const n = Number(whole[1]);
+  const size = {
+    chatgpt_cited_domains: () => domains("chatgpt").size,
+    google_cited_domains: () => domains("google").size,
+    cited_domains: () =>
+      new Set([...domains("chatgpt"), ...domains("google")]).size,
+    chatgpt_named_businesses: () => businesses("chatgpt").size,
+    google_named_businesses: () => businesses("google").size,
+    named_businesses: () =>
+      new Set([...businesses("chatgpt"), ...businesses("google")]).size,
+  }[basis];
+  return n > 0 && size() === n;
 }
 
 /** Questions where the business was absent, cited without its name, or not
@@ -391,6 +435,7 @@ export type PartBRepair = {
   diagnostics: (
     | "headline_dropped"
     | "banned_title_repaired"
+    | "writing_label_removed"
     | "writing_item_dropped"
     | "verdict_cut"
     | "unsupported_priority_removed"
@@ -417,7 +462,7 @@ export function finishTwoSourceWriting(
   };
   const prose = (text: string) => {
     if (!LABEL.test(text)) return text;
-    diagnostics.add("banned_title_repaired");
+    diagnostics.add("writing_label_removed");
     return withoutLabels(text);
   };
 
@@ -427,41 +472,55 @@ export function finishTwoSourceWriting(
       title: title(finding.title),
       explanation: prose(finding.explanation),
     };
+    const headline = finding.headline && {
+      ...finding.headline,
+      number: finding.headline.number.trim(),
+      caption: finding.headline.caption.trim(),
+    };
     if (
-      finding.headline &&
-      !headlineConfirmed(
-        finding.headline.number,
-        finding.evidence_prompt_ids,
-        content,
-        facts,
-        observations,
-      )
+      headline &&
+      // The saved schema's bounds: a headline outside them would make the
+      // page refuse the report.
+      (!headline.number ||
+        headline.number.length > HEADLINE_NUMBER_MAX ||
+        !headline.caption ||
+        headline.caption.length > HEADLINE_CAPTION_MAX ||
+        !headlineConfirmed(
+          headline,
+          finding.evidence_prompt_ids,
+          content,
+          facts,
+          observations,
+        ))
     ) {
       diagnostics.add("headline_dropped");
-      const { headline, ...rest } = next;
-      void headline;
+      const { headline: dropped, ...rest } = next;
+      void dropped;
       return rest;
     }
-    return next;
+    return headline ? { ...next, headline } : next;
   });
 
   // The new observed-gap rule; when no question shows a gap, any cited
   // question passes, so a valid report never fails it.
   const gaps = gapIds(content, facts);
-  const priorities = content.priorities
-    .filter((priority) => {
-      const ok =
-        gaps.size === 0 ||
-        priority.evidence_prompt_ids.some((id) => gaps.has(id));
-      if (!ok) diagnostics.add("unsupported_priority_removed");
-      return ok;
-    })
-    .map((priority, index) => ({
+  const supported = content.priorities.filter(
+    (priority) =>
+      gaps.size === 0 ||
+      priority.evidence_prompt_ids.some((id) => gaps.has(id)),
+  );
+  if (supported.length && supported.length < content.priorities.length)
+    diagnostics.add("unsupported_priority_removed");
+  // The writer's list stays whole rather than empty: an empty list would
+  // bring back the old code-written action or fail the paid order.
+  const priorities = (supported.length ? supported : content.priorities).map(
+    (priority, index) => ({
       ...priority,
       order: index + 1,
       action: title(priority.action),
       why: prose(priority.why),
-    }));
+    }),
+  );
 
   const questions = new Map(
     facts.writer.questions.map((q) => [q.prompt_id, q]),
@@ -533,8 +592,11 @@ export function finishTwoSourceWriting(
         verdict,
         competitor_reasons,
         takeaways: writing.takeaways
-          .map((text) => prose(text.trim()))
-          .filter(Boolean),
+          .map((item) => ({
+            title: title(item.title.trim()),
+            text: prose(item.text.trim()),
+          }))
+          .filter((item) => item.title && item.text),
         plan: writing.plan.map((step) => ({
           ...step,
           title: title(step.title),

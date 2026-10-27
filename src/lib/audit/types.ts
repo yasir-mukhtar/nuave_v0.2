@@ -429,9 +429,43 @@ const keyFindingSchema = z.object({
 
 /** Spec 021 B-04/B-05: a finding's headline number, kept only when code can
  * confirm it ("0 dari 2", "3", "75+"). */
+/** What a headline number counts (B-05), so code checks only that fact:
+ * - a per-question fact, counted over the questions the finding cites
+ *   ("0 dari 2", "2×") or over the source's completed checks ("1 dari 9");
+ * - the distinct domains cited, or other businesses named, in the cited
+ *   answers (per source or both);
+ * - `verbatim`: a figure copied from a cited answer ("75+", "70 vs 75+"). */
+export const HEADLINE_BASES = [
+  "chatgpt_named",
+  "chatgpt_not_named",
+  "chatgpt_cited_only",
+  "chatgpt_recommended",
+  "chatgpt_not_recommended",
+  "google_shown",
+  "google_not_shown",
+  "google_named",
+  "google_not_named",
+  "google_cited_only",
+  "google_recommended",
+  "named_by_either",
+  "named_by_neither",
+  "chatgpt_cited_domains",
+  "google_cited_domains",
+  "cited_domains",
+  "chatgpt_named_businesses",
+  "google_named_businesses",
+  "named_businesses",
+  "verbatim",
+] as const;
+export type HeadlineBasis = (typeof HEADLINE_BASES)[number];
+
+export const HEADLINE_NUMBER_MAX = 24;
+export const HEADLINE_CAPTION_MAX = 160;
+
 export const findingHeadlineSchema = z.object({
-  number: z.string().trim().min(1).max(24),
-  caption: z.string().trim().min(1).max(160),
+  number: z.string().trim().min(1).max(HEADLINE_NUMBER_MAX),
+  caption: z.string().trim().min(1).max(HEADLINE_CAPTION_MAX),
+  basis: z.enum(HEADLINE_BASES),
 });
 
 /** A priority as every writer before Spec 021 Part B returns it. */
@@ -462,8 +496,8 @@ export const twoSourceWritingSchema = z.object({
   competitor_reasons: z
     .array(z.object({ name: z.string(), reason: z.string() }))
     .max(20),
-  /** Two or three lines under Peta Pesaing. */
-  takeaways: z.array(z.string()).max(3),
+  /** Two or three short cards under Peta Pesaing. */
+  takeaways: z.array(z.object({ title: z.string(), text: z.string() })).max(3),
   /** Penutup's three steps, with week ranges ("Minggu 1–2"). */
   plan: z
     .array(z.object({ weeks: z.string(), title: z.string(), text: z.string() }))
@@ -556,7 +590,11 @@ export const twoSourceWritingSynthesisSchema = z.object({
     .array(
       keyFindingSchema.extend({
         headline: z
-          .object({ number: z.string(), caption: z.string() })
+          .object({
+            number: z.string(),
+            caption: z.string(),
+            basis: z.enum(HEADLINE_BASES),
+          })
           .nullable(),
       }),
     )

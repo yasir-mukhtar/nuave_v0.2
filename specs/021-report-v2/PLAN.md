@@ -349,7 +349,8 @@ code from saved rows:
 - the list of other businesses that a "disebut karena" reason may name.
 
 The ChatGPT answers are sent as today (already phone-stripped when saved,
-`src/lib/checks/chatgpt.ts`). The approved playbook is sent as text in the
+`src/lib/checks/chatgpt.ts`); every text in the request is still cleaned of
+phone numbers once more before it is sent, so nothing saved earlier can leak. The approved playbook is sent as text in the
 developer message: `src/lib/audit/report-playbook.ts` exports it, and a unit
 test checks it equals `docs/content/report/PLAYBOOK.md` byte for byte, so the
 Worker bundle needs no file read. The request is built by one pure function,
@@ -373,10 +374,10 @@ optional, so OpenAI strict mode accepts it):
 | --- | --- | --- |
 | `verdict` | string | one or two sentences, ≤ 220 characters |
 | `conclusion`, `accuracy_status`, `assessments` | as today | |
-| `key_findings[]` | `title`, `explanation`, `evidence_prompt_ids`, `headline: {number, caption} \| null` | 1 to 6 in the schema; 3 to 6 asked |
+| `key_findings[]` | `title`, `explanation`, `evidence_prompt_ids`, `headline: {number, caption, basis} \| null` | 1 to 6 in the schema; 3 to 6 asked; `basis` names what the number counts |
 | `priorities[]` | `order`, `action` (title), `why` (argument), `evidence_prompt_ids` | 1 to 6 in the schema; 3 to 6 asked |
 | `competitor_reasons[]` | `name`, `reason` | names from the supplied list only |
-| `takeaways[]` | string | 0 to 3; 2 or 3 asked |
+| `takeaways[]` | `title`, `text` | 0 to 3; 2 or 3 asked (the prototype's cards) |
 | `plan[]` | `weeks` ("Minggu 1–2"), `title`, `text` | exactly 3 |
 | `topic_names[]` | `prompt_id`, `topic` | for questions without a topic |
 | `google_readings[]` | `prompt_id`, `recommended` | for each AI Overview that names the clinic |
@@ -399,42 +400,63 @@ so new reports are not marked "Bukti laporan tidak tersedia".
 - *Observed-gap rule:* each recommendation cites a question where the clinic
   was absent, cited without its name, or not recommended (either source).
   When no question shows a gap, any cited question passes (a valid report
-  can never fail it).
-- *Headline number:* kept only if it is
-  1. "X dari Y", where Y is the number of cited questions and X is one of
-     the counts code computes over them (ChatGPT named / not named /
-     recommended, Google summary shown / named / not named, cited only), or
-     Y is a source's completed count and X its named, recommended or
-     not-named count;
-  2. a plain number equal to the distinct cited domains or named businesses
-     in the cited answers;
-  3. a figure that appears verbatim in a cited answer text.
+  can never fail it). When the rule would leave no recommendation, the
+  writer's list is kept whole: an empty list would bring back the old
+  code-written action or fail the paid order.
+- *Headline number:* the writer names a `basis` (what the number counts)
+  and code checks the number against that basis only:
+  1. a per-question fact (ChatGPT named / not named / cited only /
+     recommended / not recommended; Google shown / not shown / named / not
+     named / cited only / recommended; named by either or neither): "X dari
+     Y" with Y the cited questions and X those with the fact, or Y the
+     source's completed count and X all questions with the fact; or "N" /
+     "N×" for the cited questions with the fact;
+  2. the distinct domains cited, or other businesses named, in the cited
+     answers (per source or both): "N";
+  3. `verbatim`: the figure is a whole token of a cited answer ("75+", never
+     the "2" of "Rp 250.000"); two such figures may stand side by side
+     ("70 vs 75+").
 
-  Otherwise the headline is dropped, the finding keeps its text, and the
-  report diagnostic is `headline_dropped`.
+  A number code cannot confirm, or one outside the saved bounds (number up
+  to 24 characters, caption 1 to 160), is dropped; the finding keeps its
+  text, and the report diagnostic is `headline_dropped`.
 - *Banned title starts* ("Periksa", "Pertahankan", "Pertimbangkan",
   "Pastikan") on finding titles and recommendation titles: a writing
   violation, so the one revision call fixes it. A title still banned after
   the revision has the word removed by code. The delivered report never
   has one (AC-B2).
 - *Counts:* the existing contradiction check and repair also read the
-  verdict and the takeaways.
+  verdict. Not the recommendations, takeaways or plan: they are about other
+  businesses and advice, which that check misreads as claims about the
+  owner ("ERHA, C Derma, dan Bamed disebut AI lewat dokternya" reads as "the
+  business was named"), so it would replace good advice with count
+  sentences.
 - *Language:* the same prohibited-claim and Indonesian checks read every new
   text field. Word limits for this version:
 
   | Field | Limit |
   | --- | --- |
-  | verdict | 40 words |
-  | finding paragraph | 70 words |
-  | recommendation paragraph | 80 words |
-  | takeaway | 30 words |
+  | verdict | 2 sentences, 220 characters (longer is cut by code) |
+  | finding title | 12 words |
+  | finding paragraph | 80 words |
+  | recommendation title | 14 words |
+  | recommendation paragraph | 100 words |
+  | takeaway | title 10 words, text 30 words |
   | plan step | 35 words |
   | reason | 20 words |
   | topic name | 6 words |
 - *Clean-up without a call:* code drops topic names for unknown or
   already-named questions (or a name equal to the question), reasons for
   businesses not in the list, and readings for AI Overviews that do not
-  name the clinic.
+  name the clinic. A "Mengapa:" or "Berdasarkan:" label left after the
+  revision is removed (`writing_label_removed`).
+- *Last guard:* before saving, the report must pass the saved schema the
+  page checks; should the new block still fail it, the report is saved
+  without the block (and its headlines) rather than shown as "Bukti laporan
+  tidak tersedia".
+- *Version:* a report from the new writer records `report_prompt_version`
+  `nuave-two-source-writing-v1`, so the side-by-side test never compares a
+  delivered report with a writer that did not write it.
 
 **Page.** `TwoSourceReport.tsx` reads the block when present:
 - the verdict;

@@ -6,6 +6,7 @@
 import { assembleReportContent } from "./contracts";
 import { reportAssessmentInstructions } from "./report-prompt-contract";
 import { REPORT_PLAYBOOK } from "./report-playbook";
+import { stripPhoneNumbers } from "../checks/phones";
 import {
   contextForReportModel,
   type AuditSubject,
@@ -62,11 +63,11 @@ function writerInstructions(
     `verdict: one or two sentences, at most ${limits.verdict_characters} characters: the big picture for the owner, with the per-source result.`,
     `conclusion: the full closing paragraph, at most ${limits.conclusion_words} words. Say, for each source, how often the business was named in this tested sample ("Di ${SOURCE_CHATGPT} …; di ${SOURCE_GOOGLE} …"). Do not imply a wider or permanent result.`,
     `key_findings: three to six findings, each new information for the owner. title: short, at most ${limits.finding_title_words} words. explanation: one paragraph of at most ${limits.finding_words} words. evidence_prompt_ids: every question the finding relies on.`,
-    'headline: a number and a short caption ("0 dari 2" / "pertanyaan treatment medis yang menyebut Klinik Anda") only when code can check the number: (a) "X dari Y" where Y is the number of questions the finding cites and X counts those questions by a fact in the input (named or not named by a source, recommended, AI Overview shown or not, site cited without the name), or Y is a source\'s completed count from source_counts and X its named, recommended or not-named count; (b) a whole number of distinct cited domains or of named other businesses in the cited answers; (c) a figure copied exactly from a cited answer ("75+"). Otherwise headline is null. A wrong number is removed.',
+    'headline: a number, a short caption ("0 dari 2" / "pertanyaan treatment medis yang menyebut Klinik Anda") and the basis code checks it against, or null. The caption must describe exactly what the basis counts. Bases: a per-question fact (chatgpt_named, chatgpt_not_named, chatgpt_cited_only, chatgpt_recommended, chatgpt_not_recommended, google_shown, google_not_shown, google_named, google_not_named, google_cited_only, google_recommended, named_by_either, named_by_neither) as "X dari Y" where Y is the number of questions the finding cites and X those with the fact, or Y the source\'s completed count (ChatGPT answers; Google checks for shown or not shown; Google summaries otherwise) and X all questions with the fact, or as "N" / "N×" for the cited questions with the fact; chatgpt_cited_domains, google_cited_domains or cited_domains as "N", the distinct domains cited in the cited answers; chatgpt_named_businesses, google_named_businesses or named_businesses as "N", the distinct other businesses named in the cited answers; verbatim for a figure copied exactly from a cited answer ("75+"), or two such figures side by side ("70 vs 75+"). A number code cannot confirm by its basis is removed.',
     `priorities: three to six recommendations, order from 1. action: a firm title of at most ${limits.recommendation_title_words} words that starts with a verb. why: one paragraph of at most ${limits.recommendation_words} words that says how it works and exactly what to do. evidence_prompt_ids: cite at least one question where the business was absent, its site was cited without its name, or it was not recommended, when such a question exists.`,
     `Titles of findings and recommendations never start with ${BANNED_TITLE_STARTS.map((word) => `"${word}"`).join(", ")}. Never write the labels "Mengapa" or "Berdasarkan".`,
     `competitor_reasons: for businesses in other_businesses (names copied exactly), one short reason of at most ${limits.reason_words} words, from what the answers say about that business (what AI said it offers or why it suggested it). Leave out a business the answers say nothing about.`,
-    `takeaways: two or three lines of at most ${limits.takeaway_words} words each, on what the businesses AI favours have in common, from the answers.`,
+    `takeaways: two or three short cards on what the businesses AI favours have in common, from the answers: title (at most ${limits.takeaway_title_words} words, "Pemenang menjual keahlian, bukan harga") and text (at most ${limits.takeaway_words} words).`,
     `plan: exactly three steps from the recommendations, in order, with week ranges ("Minggu 1–2", "Minggu 3–4", "Minggu 5–8"). title: a short verb-first title. text: at most ${limits.plan_words} words.`,
     `topic_names: for each question in questions whose topic is null, a short topic name of two to ${limits.topic_words} words ("Bekas jerawat dan bopeng"), never the question itself.`,
     "google_readings: for each question whose AI Overview names the business, recommended is true only when the AI Overview text explicitly suggests or endorses the business; a mention or a contact detail is not a recommendation.",
@@ -136,32 +137,52 @@ export function twoSourceWriterMessages(
     "version" in input.brief ? input.brief : null;
   return {
     developer: writerInstructions(facts, revision !== undefined).join("\n"),
-    user: JSON.stringify({
-      ...(context
-        ? { confirmed_context: contextForReportModel(context) }
-        : {
-            verified_brief: {
-              ...input.brief,
-              agency_logo_data_url: "[not sent]",
-            },
-          }),
-      prompts: input.prompts,
-      observations: input.observations.map(({ telemetry, ...observation }) => {
-        void telemetry;
-        return observation;
+    // AC-B1: saved answers are phone-free already; every text is cleaned
+    // again so no phone number can reach the writer whatever was saved.
+    user: JSON.stringify(
+      withoutPhoneNumbers({
+        ...(context
+          ? { confirmed_context: contextForReportModel(context) }
+          : {
+              verified_brief: {
+                ...input.brief,
+                agency_logo_data_url: "[not sent]",
+              },
+            }),
+        prompts: input.prompts,
+        observations: input.observations.map(
+          ({ telemetry, ...observation }) => {
+            void telemetry;
+            return observation;
+          },
+        ),
+        source_counts: facts.counts,
+        google_ai_overview: facts.google,
+        questions: facts.writer.questions,
+        other_businesses: facts.writer.businesses,
+        ...(revision
+          ? {
+              report_draft: revisionDraft(revision.draft),
+              writing_violations: revision.violations,
+            }
+          : {}),
       }),
-      source_counts: facts.counts,
-      google_ai_overview: facts.google,
-      questions: facts.writer.questions,
-      other_businesses: facts.writer.businesses,
-      ...(revision
-        ? {
-            report_draft: revisionDraft(revision.draft),
-            writing_violations: revision.violations,
-          }
-        : {}),
-    }),
+    ),
   };
+}
+
+/** Every string in a JSON value with phone numbers removed. */
+function withoutPhoneNumbers<T>(value: T): T {
+  if (typeof value === "string") return stripPhoneNumbers(value) as T;
+  if (Array.isArray(value)) return value.map(withoutPhoneNumbers) as T;
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        withoutPhoneNumbers(item),
+      ]),
+    ) as T;
+  return value;
 }
 
 /** B-04: the writer's answer as saved report content (plus the new block).

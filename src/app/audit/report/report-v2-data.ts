@@ -4,7 +4,7 @@ import {
   type TwoSourceQuestion,
   type TwoSourceReport,
 } from "@/lib/audit/two-source-report";
-import type { AuditObservation } from "@/lib/audit/types";
+import type { AuditObservation, AuditReport } from "@/lib/audit/types";
 import { findNames } from "./mark-names";
 
 /**
@@ -33,7 +33,7 @@ export function mentionState(
   const g = question.google;
   if (g.outcome === "failed") return "failed";
   if (g.outcome === "not_shown") return "noaio";
-  if (g.named === "named") return "mentioned";
+  if (g.named === "named") return g.recommended ? "recommended" : "mentioned";
   return g.named === "source_only" ? "cited" : "none";
 }
 
@@ -50,6 +50,54 @@ export const SOURCE_LABEL: Record<Source, string> = {
   chatgpt: "ChatGPT",
   google: "Google AI Overview",
 };
+
+/**
+ * Spec 021 Part B: the saved block as the page shows it, with the writer's
+ * readings applied: an AI Overview the writer read as recommending the
+ * business shows "Direkomendasikan", and a topic row saved without a topic
+ * name takes the writer's name. Reports written before Part B are returned
+ * as saved.
+ */
+export function twoSourceView(
+  report: Pick<AuditReport, "two_source" | "two_source_writing">,
+): TwoSourceReport {
+  const two = report.two_source!;
+  const writing = report.two_source_writing;
+  if (!writing) return two;
+  const readings = new Map(
+    writing.google_readings.map((item) => [item.prompt_id, item.recommended]),
+  );
+  const names = new Map(
+    writing.topic_names.map((item) => [item.prompt_id, item.topic]),
+  );
+  return {
+    ...two,
+    questions: two.questions.map((question) =>
+      question.google.named === "named" && readings.get(question.prompt_id)
+        ? { ...question, google: { ...question.google, recommended: true } }
+        : question,
+    ),
+    topics_missing: two.topics_missing.map((row) => {
+      const question = two.questions.find((q) => q.prompt_id === row.prompt_id);
+      const name = names.get(row.prompt_id);
+      return name && question && row.topic.trim() === question.question.trim()
+        ? { ...row, topic: name }
+        : row;
+    }),
+  };
+}
+
+/** Spec 021 Part B: the writer's "Disebut AI karena" reason per business. */
+export function competitorReasons(
+  report: Pick<AuditReport, "two_source_writing">,
+): Map<string, string> {
+  return new Map(
+    (report.two_source_writing?.competitor_reasons ?? []).map((item) => [
+      item.name.replace(/\s+/g, " ").trim().toLocaleLowerCase("id-ID"),
+      item.reason,
+    ]),
+  );
+}
 
 /** The saved answer text of each completed check, by source. */
 export function answerTexts(

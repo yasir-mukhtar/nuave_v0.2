@@ -480,6 +480,7 @@ function syntheticTwoSourceWriting(
             ? {
                 number: `${chatgpt.named} dari ${chatgpt.completed}`,
                 caption: `jawaban ChatGPT sintetis yang menyebut ${brandName}`,
+                basis: "chatgpt_named",
               }
             : null,
       },
@@ -493,6 +494,7 @@ function syntheticTwoSourceWriting(
             ? {
                 number: String(businesses.size),
                 caption: "bisnis lain yang disebut di jawaban sintetis",
+                basis: "named_businesses",
               }
             : null,
       },
@@ -533,8 +535,14 @@ function syntheticTwoSourceWriting(
         ]
       : [],
     takeaways: [
-      "Jawaban sintetis menyebut bisnis fiktif; tidak ada pola nyata yang bisa dibaca.",
-      "Pada audit nyata, bagian ini merangkum kesamaan bisnis yang disebut AI.",
+      {
+        title: "Semua nama di sini fiktif",
+        text: "Jawaban sintetis menyebut bisnis fiktif; tidak ada pola nyata yang bisa dibaca.",
+      },
+      {
+        title: "Bagian ini merangkum kesamaan",
+        text: "Pada audit nyata, bagian ini merangkum kesamaan bisnis yang disebut AI.",
+      },
     ],
     plan: [
       {

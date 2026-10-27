@@ -1,12 +1,13 @@
 # Verification: Spec 021 — Report v2
 
-> Result: **Pending** (Parts A, D, P and C built; Part B to come; not
-> Verified until the founder's AC-A7 and AC-D2 checks are recorded)
+> Result: **Pending** (Parts A, D, P and C built; Part B's writer in PR #182,
+> its model choice to come; not Verified until the founder's AC-A7, AC-D2,
+> AC-B3 and AC-B4 checks are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
 > Implementation version or commit: Part A (PR #173), Part D (PR #175),
-> Part P (PR #176), Part C (PR #179)
+> Part P (PR #176), Part C (PR #179), Part B writer (PR #182)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -414,4 +415,61 @@ looked up on Google's page too, so the owner's map listing is kept.
 | --- | --- | --- |
 | AC-C1 | Pass | Unit: `competitorFacts` (counts per source, nested names, cards counted once per answer, owner's details); saved rows preferred over matching; page rows show counts, "kartu ChatGPT" with its note, website link (new tab, no referrer), rating line, owner's row; chips link only with a saved website; logos from the own site only, initials on error. Whole path: a synthetic order saves the block (9 ChatGPT, 8 Google, 9 cards, website, rating 4.6, 131 reviews; the map and organic results merged). Branch listings never reach the owner's row; a card without a mention is not counted; map addresses and Google, shortener and IP hosts get no icon. The printed copy and synthetic reports request no logo. E2e: the fictional competitor's link, "Rating 4,6 · 131 ulasan" and "kartu ChatGPT 9×" on the report, no logo request. |
 | AC-C2 | Pass | Unit: listings keep no phone, address or messaging link; the whole-path test finds no phone number or address in the saved block or in any saved check's listings. |
+
+## Part B, the new writer (PR #182)
+
+PR 6a of the plan: what the writer reads and returns, the code checks and
+the page. The model choice (B-07, AC-B3) is PR 6b, run with the harness
+already merged (`scripts/report-writer-test/`, PR #174).
+
+### Scope reviewed
+
+- `src/lib/audit/two-source-writer.ts` (new): the request (B-01, B-03) and
+  the mapping of the answer onto the saved report (B-04).
+- `src/lib/audit/two-source-writing.ts` (new): the code checks (B-04 to
+  B-06) and the verdict cut.
+- `src/lib/audit/report-playbook.ts` (new): the approved playbook as text,
+  tested equal to `docs/content/report/PLAYBOOK.md`.
+- `src/lib/audit/types.ts`: the new answer shape, the `two_source_writing`
+  block (`nuave-two-source-writing-v1`), headline bases; the old priority
+  fields optional in a saved report.
+- `report-pipeline.ts`, `openai.ts`, `contracts.ts`, `report-language.ts`,
+  `report-quality-repair.ts`, `two-source-report.ts`: wiring, the
+  prohibited-claim and language checks over the new fields, the verdict in
+  the count check, the save guard and the version.
+- `src/lib/orders/two-source.ts`, `runner.ts`: `twoSourceWriterFacts`.
+- `TwoSourceReport.tsx`, `report-v2-data.ts`, `report-v2.module.css`: the
+  page.
+- `local-direct-ten-audit.ts`: the labelled synthetic writer in the new
+  shape.
+- `scripts/report-writer-test/harness.ts`: reads the new answer shape, uses
+  the production rule for shortening Google's text, and judges the new block.
+
+### Definitions
+
+- **Headline basis:** the writer names what each number counts; code
+  checks the number against that only (PLAN.md, "PR 6a design").
+- **Gap (recommendations):** a question where the business was absent,
+  cited without its name, or not recommended, by either source.
+- **Count check:** reads the conclusion, findings and verdict. Not the
+  recommendations, takeaways or plan, which talk about other businesses: a
+  probe showed sentences such as "ERHA, C Derma, dan Bamed disebut AI lewat
+  dokternya" read as claims about the owner.
+
+### Acceptance results
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| AC-B1 | Pass | Unit (`two-source-writer.test.ts`): Google's words, topics, businesses per answer and the playbook are in the request; phone numbers planted in an answer, a source title, Google's text and the profile never reach it. Whole path (`two-source.test.ts`): the order's real request carries Google's text for every summary and the playbook, and no phone number. |
+| AC-B2 | Pass | Whole path: a recommendation titled "Pastikan …" gets the one revision with that violation; kept by the revision, code removes the word; the delivered report has no banned start; a headline "42" with no basis behind it is dropped, the confirmed one stays. Unit (`two-source-writing.test.ts`): each headline basis kept when true, refused when its complement or another fact matches, verbatim only as a whole token. |
+| AC-B3 | Pending | PR 6b: the side-by-side run and the founder's pick. |
+| AC-B4 | Pending (judgement) | The founder reads NV-3WDSAY written by the picked writer. |
+
+Also checked: older saved reports render unchanged (existing snapshot tests);
+a report with the block passes the page's evidence check and shows the
+verdict, headline, reason, takeaways, plan, named topic rows and a
+recommended Google dot; the new answer shape has every field required
+(OpenAI strict mode) while older writers' shapes are unchanged; e2e, the
+synthetic journey shows the verdict, a headline, a reason, the takeaways, the
+plan and the named topics.
 

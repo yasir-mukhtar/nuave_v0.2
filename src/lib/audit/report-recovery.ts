@@ -24,6 +24,7 @@ export const REPORT_DIAGNOSTIC_CODES = [
   // Spec 021 Part B (B-05, B-06).
   "headline_dropped",
   "banned_title_repaired",
+  "writing_label_removed",
   "writing_item_dropped",
   "verdict_cut",
 ] as const;

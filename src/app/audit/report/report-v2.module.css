@@ -352,6 +352,42 @@
   line-height: var(--type-copy-leading);
   letter-spacing: var(--type-copy-tracking);
 }
+/* Part B: the headline number beside the finding. */
+.withStat {
+  gap: 10px 32px;
+}
+@media (min-width: 640px) {
+  .withStat {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+}
+.stat {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.stat strong {
+  color: var(--text-accent);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-heading-lg-size);
+  font-weight: var(--type-heading-lg-weight);
+  line-height: var(--type-heading-lg-leading);
+  letter-spacing: var(--type-heading-lg-tracking);
+}
+.stat span {
+  max-width: 22ch;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+.findingText {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
 .refs {
   display: inline-flex;
   flex-wrap: wrap;
@@ -689,6 +725,57 @@
   letter-spacing: var(--type-label-strong-tracking);
 }
 
+/* Part B: why AI named a business, and the takeaways under the map. */
+.why {
+  grid-column: 2 / 4;
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+.why b {
+  color: var(--text-muted);
+  font-weight: var(--type-label-strong-weight);
+}
+.takeaways {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .takeaways {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.take {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 16px;
+  border-radius: var(--radius-token-lg);
+  background: var(--stone-50);
+}
+.take h3 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  letter-spacing: var(--type-title-sm-tracking);
+}
+.take p {
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+
 /* ── Penutup ── */
 
 .conclusion {
@@ -699,6 +786,50 @@
   font-weight: var(--type-copy-lg-weight);
   line-height: var(--type-copy-lg-leading);
   letter-spacing: var(--type-copy-lg-tracking);
+}
+/* Part B: the three-step plan. */
+.plan {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .plan {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+}
+.step {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding-block: 16px;
+  border-top: 1px solid var(--ink-700);
+}
+.when {
+  color: var(--ink-400);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: var(--type-label-sm-strong-leading);
+  letter-spacing: var(--type-label-sm-strong-tracking);
+  text-transform: uppercase;
+}
+.step h3 {
+  margin: 0;
+  color: var(--bg-page);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  letter-spacing: var(--type-title-sm-tracking);
+}
+.step p {
+  margin: 0;
+  color: var(--ink-400);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
 }
 .reaudit {
   display: grid;
@@ -860,8 +991,16 @@
   }
   .bandInk .secHead h2,
   .conclusion,
-  .reaudit h3 {
+  .reaudit h3,
+  .step h3 {
     color: var(--text-heading);
+  }
+  .step {
+    border-color: var(--line-200);
+  }
+  .step p,
+  .when {
+    color: var(--text-body);
   }
   .reaudit {
     border-color: var(--line-200);
@@ -874,6 +1013,8 @@
   .rec,
   .compRow,
   .topic,
+  .take,
+  .step,
   .reaudit {
     break-inside: avoid;
   }

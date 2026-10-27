@@ -81,7 +81,11 @@ import {
   validateCanonicalIndonesianQuestionPack,
 } from "./questions-id";
 import { validateDirectTenQuestions } from "./questions-id-direct-ten";
-import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "./types";
+import {
+  SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+  TWO_SOURCE_WRITING_VERSION,
+  reportContentSchema,
+} from "./types";
 
 export type ReportPipelineInput = {
   brief: AuditSubject;
@@ -584,6 +588,21 @@ export async function createValidatedAuditReport(
     );
     content = finished.content;
     finished.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
+    // Last guard: the saved report must pass the page's own schema check,
+    // or the customer would see "Bukti laporan tidak tersedia". Should the
+    // new block still fail it, the report keeps everything else.
+    if (!reportContentSchema.safeParse(content).success) {
+      const { two_source_writing, ...rest } = content;
+      void two_source_writing;
+      content = {
+        ...rest,
+        key_findings: rest.key_findings.map(({ headline, ...finding }) => {
+          void headline;
+          return finding;
+        }),
+      };
+      diagnostics.add("writing_item_dropped");
+    }
   }
 
   // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and
@@ -656,7 +675,12 @@ export async function createValidatedAuditReport(
     {
       requested_model: final.requested_model,
       ...(isDirectTenAuditContext(lockedInput.brief)
-        ? { report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION_V2 }
+        ? {
+            // Spec 021 Part B: a report from the new writer says so.
+            report_prompt_version: content.two_source_writing
+              ? TWO_SOURCE_WRITING_VERSION
+              : REPORT_SYNTHESIS_PROMPT_VERSION_V2,
+          }
         : {}),
       returned_model: final.returned_model,
       response_id: final.response_id,

@@ -255,7 +255,9 @@ export function sanitizeRecoverableReportQuality(
       competitor_reasons: writing.competitor_reasons.filter((item) =>
         safe(item.reason),
       ),
-      takeaways: writing.takeaways.filter(safe),
+      takeaways: writing.takeaways.filter(
+        (item) => safe(item.title) && safe(item.text),
+      ),
       plan: writing.plan.filter((step) => safe(step.title) && safe(step.text)),
       topic_names: writing.topic_names.filter((item) => safe(item.topic)),
     };

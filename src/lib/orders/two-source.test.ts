@@ -903,3 +903,117 @@ describe("competitorFacts (C-02)", () => {
     });
   });
 });
+
+describe("Spec 021 Part B: the new writer on the whole path (AC-B1, AC-B2)", () => {
+  it("AC-B1: the writer's request holds Google's words, the topics, the businesses per answer and the playbook, and no phone number", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    const input = t.reportInputs[0] as Parameters<
+      typeof import("../audit/openai").reportRequest
+    >[0];
+    const { reportRequest } = await import("../audit/openai");
+    const request = reportRequest(input);
+    const developer = request.input[0].content;
+    const user = request.input[1].content;
+    expect(developer).toContain("# Nuave report playbook");
+    expect(developer).toContain("Rule 3, no causes");
+    const sent = JSON.parse(user) as {
+      questions: {
+        prompt_id: string;
+        google_text: string;
+        businesses: { chatgpt: string[] };
+      }[];
+      google_ai_overview: { prompt_id: string; outcome: string }[];
+      other_businesses: string[];
+    };
+    const summaries = sent.google_ai_overview.filter(
+      (fact) => fact.outcome === "summary",
+    );
+    expect(summaries.length).toBeGreaterThan(0);
+    for (const fact of summaries)
+      expect(
+        sent.questions.find((q) => q.prompt_id === fact.prompt_id)!.google_text,
+      ).not.toBe("");
+    expect(sent.other_businesses.length).toBeGreaterThan(0);
+    expect(sent.questions.some((q) => q.businesses.chatgpt.length > 0)).toBe(
+      true,
+    );
+    // The synthetic ChatGPT answers carry "0812-3456-7890": none reaches
+    // the writer.
+    expect(containsPhoneNumber(developer)).toBe(false);
+    expect(containsPhoneNumber(user)).toBe(false);
+  });
+
+  it("saves the new block", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    await runUntilEnded(deps(), id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const writing = report.two_source_writing!;
+    expect(writing.version).toBe("nuave-two-source-writing-v1");
+    expect(writing.verdict).toMatch(/^Uji alur sintetis/);
+    expect(writing.plan).toHaveLength(3);
+    expect(report.key_findings[0]!.headline?.number).toMatch(/^\d+ dari \d+$/);
+    // The new writer's recommendations carry a title and one paragraph only.
+    expect(report.priorities[0]).not.toHaveProperty("done_when");
+    expect(report.priorities[0]).not.toHaveProperty("owner");
+    // The page check (status "ready") runs on this same synthetic report in
+    // the whole-path test above.
+  });
+
+  it("AC-B2: a banned title start is revised once; one the revision keeps is removed by code; a wrong headline number is dropped", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: string[][] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            key_findings: result.content.key_findings.map((finding, i) =>
+              i === 1
+                ? {
+                    ...finding,
+                    headline: {
+                      number: "42",
+                      caption: "salah",
+                      basis: "cited_domains" as const,
+                    },
+                  }
+                : finding,
+            ),
+            priorities: result.content.priorities.map((priority, i) =>
+              i === 0
+                ? { ...priority, action: "Pastikan audit nyata berjalan" }
+                : priority,
+            ),
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(1);
+    expect(revisions[0]!.join("\n")).toMatch(
+      /Recommendation 1 title starts with/,
+    );
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.priorities[0]!.action).toBe("Audit nyata berjalan");
+    for (const text of [
+      ...report.key_findings.map((f) => f.title),
+      ...report.priorities.map((p) => p.action),
+    ])
+      expect(text).not.toMatch(
+        /^(Periksa|Pertahankan|Pertimbangkan|Pastikan)\b/i,
+      );
+    expect(report.key_findings[1]!.headline).toBeUndefined();
+    // The confirmed headline stays.
+    expect(report.key_findings[0]!.headline).toBeDefined();
+  });
+});
