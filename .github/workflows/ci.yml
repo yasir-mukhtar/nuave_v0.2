@@ -152,6 +152,17 @@ jobs:
       - name: Run browser tests
         run: npm run test:e2e:${{ matrix.suite }} -- ${{ matrix.args }}
 
+      # Keeps the screenshot and trace of a failed test, so a failure that
+      # does not happen again locally can still be explained.
+      - name: Save failed-test screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ strategy.job-index }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
   validate:
     name: validate
     if: always()
