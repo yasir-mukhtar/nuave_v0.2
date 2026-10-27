@@ -227,8 +227,9 @@ unless a concrete customer experience justifies it here.
 The report's answer panel (Spec 021 Part D) is the one ease-in-out exception,
 at the founder's request: the shadcn `Sheet` slides in from the right with
 `--ease-in-out` (420ms, transform only) while its overlay fades (opacity
-only). It uses the sheet's own CSS transitions, not Motion, and under reduced
-motion it fades instead of sliding.
+only). It uses the sheet's own CSS transitions, not Motion; under reduced
+motion it appears at once, without sliding (the site-wide reduced-motion rule
+shortens every transition).
 
 All migrated interactions preserve keyboard operation, visible focus, Escape
 and focus-return behavior where applicable, status announcements, responsive

@@ -123,10 +123,10 @@ stack.
 
 ### Acceptance results
 
-| Criterion | Result | Evidence                                                                                                                                                                                                                                                                                        |
-| --------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-D1     | Pass   | unit "AC-D1, D-02" (a row, a summary dot and a P reference open the panel on that question and source; Escape and the close button return focus to the opener); e2e "Spec 012 on the saved report" (row, tabs, Berikutnya, P reference by pointer and keyboard, Escape, address unchanged)      |
-| AC-D2     | Pass   | production build, Chromium at 1280×860: every frame while the panel opens and closes is at most 16.8 ms, in three runs each (measured with `requestAnimationFrame` intervals; the click's own work is kept small by keeping the panel mounted and drawing the answer text in a deferred render) |
+| Criterion | Result     | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-D1     | Pass       | unit "AC-D1, D-02" (a row, a summary dot and a P reference open the panel on that question and source; Escape and the close button return focus to the opener); e2e "Spec 012 on the saved report" (row, tabs, Berikutnya, P reference by pointer and keyboard, Escape, address unchanged)                                                                                                                                                                                                                                   |
+| AC-D2     | Partly met | Frame timing on the production build (Chromium, 1280×860, no CPU slow-down): every frame while the panel opens and closes is at most 16.8 ms, three runs each. A Chromium performance trace (not attached to the PR) shows one longer task on the first open, 29 to 41 ms in this container, which has no GPU; later opens stay at or under 14.5 ms. With the CPU slowed 2× one 33 ms frame appears, at 4× frames of 50 to 100 ms. The slide itself runs on the compositor. Left to the founder's judgement on a real phone. |
 
 ### Checks run
 
@@ -149,7 +149,7 @@ stack.
   this panel (the build merged a `translate: none` override into `transform`,
   so a class override is used instead). The e2e test checks that the panel
   carries no extra offset while it closes and only moves right. Under reduced
-  motion the panel stays in place and fades.
+  motion the panel stays in place and appears at once.
 - Focus stays in the panel when "Berikutnya" or "Sebelumnya" turns off at the
   last or first question; a "copied" note no longer carries over to another
   question; an open panel never prints over the report; the header logos are
@@ -171,3 +171,19 @@ and the answer text moved to a deferred render. The reviewer's re-run with the
 CPU slowed showed one 33 ms frame at 2× and 50 to 100 ms frames at 4×, so a
 much slower phone may drop frames at the start of the slide; the slide itself
 is a compositor transform.
+
+### Review round 2 (ALMOST) and fixes
+
+[Round 2 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6430529047).
+All seven round-1 findings confirmed fixed. New:
+
+- Long links and words in an answer wrap again (`overflow-wrap: anywhere` on
+  the panel and the print appendix; source chips may shrink). The e2e test now
+  adds a long plain-text link to every answer and checks, at 320px, every
+  question on both tabs; it fails without the fix.
+- Each question opens at its top when paging; the e2e test scrolls to the end
+  and checks the next question starts at the top.
+- AC-D2 is recorded as partly met above, with the trace numbers.
+- Paging is announced to screen readers; the title follows the shown
+  question; the panel is full width below 640px; a unit test covers focus when
+  "Sebelumnya" reaches question 1; the reduced-motion wording is corrected.

@@ -131,6 +131,8 @@
   gap: 0;
   width: 100%;
   max-width: 580px;
+  /* Long links and words in an answer wrap instead of widening the panel. */
+  overflow-wrap: anywhere;
   padding-top: env(safe-area-inset-top, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -143,6 +145,12 @@
   transition-duration: 420ms;
   transition-timing-function: var(--ease-in-out);
   will-change: transform;
+}
+@media (max-width: 639px) {
+  /* Full width on a phone (Spec 021). */
+  .panel.panel {
+    max-width: none;
+  }
 }
 .panel.panel[data-starting-style],
 .panel.panel[data-ending-style] {
@@ -347,6 +355,10 @@
   line-height: var(--type-copy-sm-leading);
   letter-spacing: var(--type-copy-sm-tracking);
 }
+.srcs li {
+  min-width: 0;
+  max-width: 100%;
+}
 .srcs {
   display: flex;
   flex-wrap: wrap;
@@ -391,6 +403,7 @@ a.src:hover {
 
 .appendix {
   display: none;
+  overflow-wrap: anywhere;
 }
 .appendixQuestion {
   display: grid;

@@ -538,6 +538,33 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     ).toHaveFocus();
   });
 
+  it("paging back to question 1 keeps focus in the panel and tells screen readers the new question", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>('[data-answer-row="2"]')!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 2 dari 10",
+    });
+    await user.click(
+      within(dialog).getByRole("button", { name: /Sebelumnya/ }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pertanyaan 1 dari 10" }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: /Sebelumnya/ }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    ).toHaveFocus();
+    expect(dialog.querySelector('[aria-live="polite"]')).toHaveTextContent(
+      "Pertanyaan 1 dari 10",
+    );
+  });
+
   it("a copied note does not carry over to the next question", async () => {
     const user = userEvent.setup();
     Object.defineProperty(navigator, "clipboard", {

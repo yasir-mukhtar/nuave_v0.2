@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useDeferredValue,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -192,6 +193,9 @@ export function AnswerPanelProvider({
   const opener = useRef<HTMLElement | null>(null);
   const prevButton = useRef<HTMLButtonElement | null>(null);
   const nextButton = useRef<HTMLButtonElement | null>(null);
+  const body = useRef<HTMLDivElement | null>(null);
+  // Said to screen readers when paging (the title alone is not re-read).
+  const [announcement, setAnnouncement] = useState("");
   // Stable, so opening, paging or switching tabs does not re-render every
   // row, dot and "P" reference that uses it.
   const openAnswer = useCallback<OpenAnswer>(
@@ -203,6 +207,7 @@ export function AnswerPanelProvider({
           : null);
       setOrdinal(next);
       setSource(nextSource);
+      setAnnouncement("");
       setOpen(true);
     },
     [],
@@ -216,6 +221,14 @@ export function AnswerPanelProvider({
   // slide starts at once (Spec 021 AC-D2).
   const shownQuestion = questionAt(useDeferredValue(ordinal));
   const answer = answers.find((a) => a.id === shownQuestion.prompt_id);
+  // Each question starts at its top, with its bubble in view.
+  useEffect(() => {
+    if (body.current) body.current.scrollTop = 0;
+  }, [shownQuestion.ordinal]);
+  const page = (next: number) => {
+    setOrdinal(next);
+    setAnnouncement(`Pertanyaan ${next} dari ${total}`);
+  };
   return (
     <OpenAnswerContext.Provider value={openAnswer}>
       {children}
@@ -237,8 +250,11 @@ export function AnswerPanelProvider({
         >
           <div className={styles.top}>
             <SheetTitle className={styles.title}>
-              Pertanyaan {question.ordinal} dari {total}
+              Pertanyaan {shownQuestion.ordinal} dari {total}
             </SheetTitle>
+            <p className="sr-only" aria-live="polite">
+              {announcement}
+            </p>
             <SheetClose
               render={<Button type="button" variant="inkOutline" size="icon" />}
               aria-label="Tutup"
@@ -259,7 +275,7 @@ export function AnswerPanelProvider({
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div className={styles.body}>
+            <div className={styles.body} ref={body} data-panel-body>
               {(["chatgpt", "google"] as const).map((item) => (
                 <TabsContent key={item} value={item} className={styles.chat}>
                   <p className={styles.context}>
@@ -286,7 +302,7 @@ export function AnswerPanelProvider({
               disabled={question.ordinal <= 1}
               onClick={() => {
                 const next = question.ordinal - 1;
-                setOrdinal(next);
+                page(next);
                 // This button turns off at the first question: keep focus
                 // in the panel, on the other one.
                 if (next <= 1) nextButton.current?.focus();
@@ -304,7 +320,7 @@ export function AnswerPanelProvider({
               disabled={question.ordinal >= total}
               onClick={() => {
                 const next = question.ordinal + 1;
-                setOrdinal(next);
+                page(next);
                 if (next >= total) prevButton.current?.focus();
               }}
             >

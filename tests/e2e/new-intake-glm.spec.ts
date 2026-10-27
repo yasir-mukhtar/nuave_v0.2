@@ -592,6 +592,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
             "panjang".repeat(28) +
             " |\r\n\r\n- satu\r\n  - anak pertama\r\n  - anak kedua\r\n- [x] penanda selesai\r\n- [ ] penanda belum selesai\r\n\r\n```text\r\nhttps://source.example/kode\r\n```\r\n\r\n[Label sumber](https://source.example/)\r\n\r\n![Gambar](https://source.example/tracker.png)\r\n\r\n<script>window.__unsafeReport = true</script>\r\n\r\n"
           : "") +
+        `Rujukan https://source.example/${"sangatpanjang".repeat(12)}\r\n\r\n` +
         `Namun, batas akhir jawaban ${i + 1} harus dibaca. AKHIR-JAWABAN-${i + 1}.`;
       o.sources = [
         { title: "Sumber fiktif tersimpan", url: "https://source.example/" },
@@ -754,9 +755,33 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   expect(fit.answer).toBeLessThanOrEqual(320);
   expect(fit.next).toBeLessThanOrEqual(320);
   await fresh.screenshot({ path: info.outputPath("answer-panel-320.png") });
+  // Every question, on both tabs, wraps inside the panel; each new question
+  // starts at its top.
+  const openPanel = fresh.locator("[data-answer-panel]");
+  const scroller = openPanel.locator("[data-panel-body]");
+  for (let n = 1; n <= 10; n++) {
+    for (const tab of ["ChatGPT", "Google AI Overview"]) {
+      await openPanel.getByRole("tab", { name: tab }).click();
+      const sizes = await scroller.evaluate((el) => ({
+        scroll: el.scrollWidth,
+        client: el.clientWidth,
+      }));
+      expect(sizes.scroll, `question ${n}, ${tab}`).toBeLessThanOrEqual(
+        sizes.client + 1,
+      );
+    }
+    await openPanel.getByRole("tab", { name: "ChatGPT" }).click();
+    if (n === 10) break;
+    await scroller.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    await openPanel.locator("[data-panel-next]").click();
+    await expect(
+      fresh.getByRole("dialog", { name: `Pertanyaan ${n + 1} dari 10` }),
+    ).toBeVisible();
+    await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
+  }
   // Printing with the panel open prints the report, not the panel.
   await fresh.emulateMedia({ media: "print" });
-  await expect(narrow).toBeHidden();
+  await expect(openPanel).toBeHidden();
   await expect(
     report.locator("[data-report-appendix] [data-answer-body]").first(),
   ).toBeVisible();
