@@ -2,19 +2,18 @@
  * Test B of the audit stack plan (founder decision 2026-10-26): a blind test
  * of report writers on saved orders that have both ChatGPT and Google answers.
  *
- * For each order, five entries:
- *   1. the report that was delivered (GPT-5.6 Luna, low effort, today's input);
- *   2. Luna, high effort, new input;
- *   3. Claude Sonnet 5.5, medium effort, new input;
- *   4. Claude Sonnet 5.5, high effort, new input;
- *   5. Claude Haiku 5.5, medium effort, new input.
+ * For each order, the blind entries in ENTRIES (Spec 021 B-07: GPT-5.6 Luna
+ * low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5 medium;
+ * GLM 5.3 Flash low and Claude Opus 5.5 low and medium, added 2026-10-27),
+ * each running today's production
+ * writer on the new input, and the delivered report as a labelled reference.
  * "New input" is today's input plus the words of Google's AI Overview for each
  * question (phone numbers removed, long answers shortened): the change to
  * Spec 018 R-28 the founder approved with the plan.
  *
  * Every entry is built from the order's saved evidence by the same code the
  * order runner uses (orderReportInput, createValidatedAuditReport,
- * withTwoSourceBlock), so all fifteen reports pass the same checks and repairs.
+ * withTwoSourceBlock), so all reports pass the same checks and repairs.
  *
  * Nothing here calls a provider unless a live writer is passed in; every live
  * call is reserved against a USD 5 ledger first and refused when it could pass
@@ -52,6 +51,15 @@ import {
   type ReportSynthesis,
   type TwoSourceWritingSynthesis,
 } from "../../src/lib/audit/types";
+import {
+  cheaperInferenceBilledCostUsd,
+  INDONESIAN_QUESTION_GLM_MODEL,
+} from "../../src/lib/audit/questions-id-glm";
+import {
+  liveGlmTransport,
+  type GlmQuestionTransport,
+} from "../../src/lib/intake/glm-local";
+import { z } from "zod";
 import type { GoogleCheck } from "../../src/lib/checks/google";
 import {
   orderReportInput,
@@ -151,17 +159,25 @@ export function loadEvidence(
 
 /* --------------------------------- entries -------------------------------- */
 
-/** The five blind writers (decision 2026-10-26 as fixed on 2026-10-27, Spec
- * 021 B-07): each runs today's production writer on the new input. */
+/** The blind writers (decision 2026-10-26 as fixed on 2026-10-27, Spec 021
+ * B-07, plus GLM at the founder's request): each runs today's production
+ * writer on the new input. */
 export type EntryId =
-  "luna-low" | "luna-high" | "sonnet-medium" | "sonnet-high" | "haiku-medium";
+  | "luna-low"
+  | "luna-high"
+  | "sonnet-medium"
+  | "sonnet-high"
+  | "haiku-medium"
+  | "glm-low"
+  | "opus-low"
+  | "opus-medium";
 
 export type EntryKey = EntryId | "reference";
 
 export type Entry = {
   id: EntryKey;
   label: string;
-  provider: "openai" | "anthropic" | null;
+  provider: "openai" | "anthropic" | "cheaper-inference" | null;
   model: string | null;
   effort: "low" | "medium" | "high" | null;
   input: "today" | "new";
@@ -217,6 +233,34 @@ export const ENTRIES: readonly Entry[] = [
     label: "Claude Haiku 5.5, medium effort, new input",
     provider: "anthropic",
     model: "claude-haiku-5-5",
+    effort: "medium",
+    input: "new",
+  },
+  {
+    // Added at the founder's request (2026-10-27): the model that writes the
+    // ten questions, at its production effort.
+    id: "glm-low",
+    label: "GLM 5.3 Flash (Cheaper Inference), low effort, new input",
+    provider: "cheaper-inference",
+    model: INDONESIAN_QUESTION_GLM_MODEL,
+    effort: "low",
+    input: "new",
+  },
+  // Added at the founder's request (2026-10-27); Spec 021 B-07 names Opus
+  // "if affordable".
+  {
+    id: "opus-low",
+    label: "Claude Opus 5.5, low effort, new input",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
+    effort: "low",
+    input: "new",
+  },
+  {
+    id: "opus-medium",
+    label: "Claude Opus 5.5, medium effort, new input",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
     effort: "medium",
     input: "new",
   },
@@ -390,6 +434,7 @@ export const PRICES: Record<
 > = {
   "gpt-5.6-luna": { input: 0.2, output: 1.2 },
   "claude-sonnet-5-5": { input: 2, output: 10 },
+  "claude-opus-5-5": { input: 4, output: 20 },
   "claude-haiku-5-5": {
     input: 0.1,
     output: 0.5,
@@ -415,15 +460,30 @@ export function costUsd(
   );
 }
 
+/** The output allowance of each report call (answer plus thinking):
+ * production's, unless REPORT_TEST_MAX_OUTPUT_TOKENS gives a run another one
+ * (for a writer cut off at production's). Recorded with every result. */
+export function outputAllowance(): number {
+  const raw = process.env.REPORT_TEST_MAX_OUTPUT_TOKENS?.trim();
+  if (!raw) return AUDIT_CALL_LIMITS.report.max_output_tokens;
+  const tokens = Number(raw);
+  if (!Number.isInteger(tokens) || tokens < 1_000 || tokens > 64_000)
+    throw new Error(
+      "REPORT_TEST_MAX_OUTPUT_TOKENS must be a whole number from 1000 to 64000.",
+    );
+  return tokens;
+}
+
 /** A call's worst case before it is sent: every prompt character counted as a
  * token (the order guard's rule) and the whole output allowance used. */
 export function worstCaseUsd(model: string, promptChars: number) {
-  return costUsd(
-    model,
-    promptChars,
-    AUDIT_CALL_LIMITS.report.max_output_tokens,
-  );
+  if (model === INDONESIAN_QUESTION_GLM_MODEL) return GLM_CALL_RESERVE_USD;
+  return costUsd(model, promptChars, outputAllowance());
 }
+
+/** Production reserves a flat USD 0.05 per GLM call (glm-local.ts); the call
+ * settles at the cost Cheaper Inference bills. */
+export const GLM_CALL_RESERVE_USD = 0.05;
 
 /* --------------------------------- writers -------------------------------- */
 
@@ -592,6 +652,7 @@ export function lunaWriter(
     const body = {
       ...request,
       reasoning: { effort: ctx.entry.effort! },
+      max_output_tokens: outputAllowance(),
       input: [{ ...request.input[0], content: developer }, request.input[1]],
     } as Request;
     const promptChars = developer.length + request.input[1].content.length;
@@ -643,15 +704,18 @@ export function lunaWriter(
 
 /** The JSON text of a Claude answer, checked against the report schema. */
 function parseAnswer(
-  content: readonly { type: string; text?: string }[],
+  text: string,
   schema: ReturnType<typeof reportOutputSchema>,
 ): { success: true; data: unknown } | { success: false; error: string } {
-  const text = content
-    .flatMap((block) => (block.type === "text" ? [block.text ?? ""] : []))
-    .join("");
   let json: unknown;
   try {
-    json = JSON.parse(text);
+    // A model without enforced JSON output may wrap it in a code fence.
+    json = JSON.parse(
+      text
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, ""),
+    );
   } catch {
     return { success: false, error: "the answer is not JSON" };
   }
@@ -704,7 +768,7 @@ export function claudeWriter(
       client.messages.create(
         {
           model,
-          max_tokens: AUDIT_CALL_LIMITS.report.max_output_tokens,
+          max_tokens: outputAllowance(),
           thinking: { type: "adaptive" },
           output_config: {
             effort: ctx.entry.effort!,
@@ -746,7 +810,14 @@ export function claudeWriter(
       stop,
     };
     const parsed =
-      stop === "end_turn" ? parseAnswer(response.content, schema) : null;
+      stop === "end_turn"
+        ? parseAnswer(
+            response.content
+              .flatMap((block) => (block.type === "text" ? [block.text] : []))
+              .join(""),
+            schema,
+          )
+        : null;
     if (!parsed?.success) {
       const failure =
         stop === "max_tokens"
@@ -771,6 +842,104 @@ export function claudeWriter(
   };
 }
 
+/** GLM 5.3 Flash through Cheaper Inference's chat endpoint, the transport
+ * that writes the ten questions. The endpoint does not enforce a JSON shape,
+ * so the report schema is given in the instructions and the answer is checked
+ * here; a mismatch is a failed entry with its cost recorded. */
+export function glmWriter(
+  ctx: WriterContext,
+  transport: Pick<GlmQuestionTransport, "call"> = liveGlmTransport,
+): ReportGenerator {
+  return async (...args) => {
+    const [input, revision] = args;
+    const { developer, user } = entryPrompt(ctx.entry, ...args);
+    const schema = reportOutputSchema(input);
+    const model = ctx.entry.model!;
+    const hold = ctx.ledger.reserve({
+      order: ctx.order,
+      entry: ctx.entry.id,
+      model,
+      reserved_usd: worstCaseUsd(model, developer.length + user.length),
+    });
+    const startedAt = Date.now();
+    const envelope = await transport.call({
+      model,
+      stream: false,
+      max_tokens: outputAllowance(),
+      reasoning_effort: ctx.entry.effort!,
+      messages: [
+        {
+          role: "system",
+          content: `${developer}\nAnswer with one JSON object and nothing else. It must match this JSON Schema:\n${JSON.stringify(z.toJSONSchema(schema))}`,
+        },
+        { role: "user", content: user },
+      ],
+    });
+    // A request turned away (4xx) was not run; a lost connection or another
+    // failure may still be billed, so it stays held at its worst case.
+    if (envelope.httpStatus < 200 || envelope.httpStatus >= 300) {
+      if (envelope.httpStatus >= 400 && envelope.httpStatus < 500)
+        hold.settle(0);
+      throw new Error(
+        `Cheaper Inference answered ${envelope.httpStatus || envelope.transportError || "nothing"}.`,
+      );
+    }
+    const body = envelope.body as {
+      id?: string;
+      model?: string;
+      choices?: { message?: { content?: string }; finish_reason?: string }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    } | null;
+    const billed = cheaperInferenceBilledCostUsd(body);
+    if (billed !== null) hold.settle(billed);
+    const cost = billed ?? GLM_CALL_RESERVE_USD;
+    const choice = body?.choices?.[0];
+    const stop = choice?.finish_reason ?? "";
+    const inputTokens = body?.usage?.prompt_tokens ?? 0;
+    const outputTokens = body?.usage?.completion_tokens ?? 0;
+    ctx.calls.push({
+      model: body?.model ?? "",
+      revision: revision !== undefined,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      cost_usd: cost,
+      stop,
+      cut_off: stop === "length",
+    });
+    const base = {
+      model,
+      returnedModel: body?.model ?? "",
+      responseId: body?.id ?? "",
+      startedAt,
+      inputTokens,
+      cachedTokens: 0,
+      outputTokens,
+      costUsd: cost,
+      stop: stop === "length" ? "max_tokens" : stop,
+    };
+    const parsed =
+      stop === "stop"
+        ? parseAnswer(choice?.message?.content ?? "", schema)
+        : null;
+    if (!parsed?.success) {
+      const failure =
+        stop === "length"
+          ? "The answer was cut off at the output limit."
+          : `The answer did not match the report schema: ${parsed?.error ?? (stop || "no answer")}`;
+      throw new AuditCallExecutionError(failure, [
+        telemetryOf({ ...base, status: "failed", failure }),
+      ]);
+    }
+    return {
+      content: contentOf(parsed.data as ReportSynthesis, args),
+      requested_model: model,
+      returned_model: body?.model ?? "",
+      response_id: body?.id ?? "",
+      telemetry: [telemetryOf({ ...base, status: "completed" })],
+    };
+  };
+}
+
 /* ------------------------------ one report run ---------------------------- */
 
 /** What the scoring sheet records for one entry on one order. */
@@ -790,6 +959,8 @@ export type EntryResult = {
   };
   cost_usd: number;
   prompt_chars: number;
+  /** The output allowance per call (production's unless the run set one). */
+  max_output_tokens?: number;
   /** The writer fingerprint (see writerFingerprint); "delivered" for the
    * reference. */
   writer: string;
@@ -821,6 +992,7 @@ export async function runEntry(
     label: entry.label,
     prompt_chars: developer.length + user.length,
     writer: writer ? writerFingerprint(entry, built.input) : "delivered",
+    ...(writer ? { max_output_tokens: outputAllowance() } : {}),
   };
   try {
     const written = await createValidatedAuditReport(
@@ -979,7 +1151,7 @@ export function deliveredResult(
 
 /* ---------------------------------- blind --------------------------------- */
 
-const LETTERS = ["A", "B", "C", "D", "E"] as const;
+const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"] as const;
 
 /** A random letter per entry, per order. The key is kept apart from the
  * review pack and opened only after scoring. */
@@ -994,11 +1166,31 @@ export function assignLetters(
       const j = pick(i + 1);
       [ids[i], ids[j]] = [ids[j]!, ids[i]!];
     }
-    key[order] = Object.fromEntries(
-      LETTERS.map((letter, i) => [letter, ids[i]!]),
-    );
+    key[order] = Object.fromEntries(ids.map((id, i) => [LETTERS[i]!, id]));
   }
   return key;
+}
+
+/** Letters for entries added after an order's letters were drawn (and
+ * scored): the next free letters, in random order, so the scored letters
+ * keep their meaning. */
+export function extendLetters(
+  letters: Record<string, EntryId>,
+  pick: (n: number) => number = (n) => randomInt(n),
+): Record<string, EntryId> {
+  const have = new Set(Object.values(letters));
+  const added = ENTRIES.map((entry) => entry.id as EntryId).filter(
+    (id) => !have.has(id),
+  );
+  for (let i = added.length - 1; i > 0; i -= 1) {
+    const j = pick(i + 1);
+    [added[i], added[j]] = [added[j]!, added[i]!];
+  }
+  const free = LETTERS.filter((letter) => !(letter in letters));
+  return {
+    ...letters,
+    ...Object.fromEntries(added.map((id, i) => [free[i]!, id])),
+  };
 }
 
 /** Writer names and response ids that must not appear in what the founder

@@ -19,7 +19,7 @@
  * runs/<order>/superseded/ and written again.
  *
  * Either way it then writes the review pack: review/<order>/reference.json
- * (the delivered report, labelled) and, once all five entries exist from the
+ * (the delivered report, labelled) and, once every entry exists from the
  * same writer, review/<order>/<letter>.json for each, key.json (kept apart;
  * open only after scoring) and scores.csv. review.spec.ts prints the pack
  * from the report page as PDFs.
@@ -49,6 +49,8 @@ import {
   blindReport,
   claudeWriter,
   deliveredResult,
+  extendLetters,
+  glmWriter,
   replayDelivered,
   ENTRIES,
   EVIDENCE_DIR,
@@ -93,7 +95,7 @@ const write = (path: string, value: unknown) => {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 };
 
-/** An order's letters, drawn for one set of five results from one writer. */
+/** An order's letters, drawn for one full set of results from one writer. */
 type OrderKey = { writer: string; letters: Record<string, EntryId> };
 
 it.skipIf(orders.length === 0)(
@@ -152,7 +154,11 @@ it.skipIf(orders.length === 0)(
         const result = await runEntry(
           evidence,
           entry,
-          entry.provider === "openai" ? lunaWriter : claudeWriter,
+          entry.provider === "openai"
+            ? lunaWriter
+            : entry.provider === "cheaper-inference"
+              ? glmWriter
+              : claudeWriter,
           ledger,
         );
         // Every attempt is logged (test output is not shown). An entry whose
@@ -194,7 +200,7 @@ it.skipIf(orders.length === 0)(
     write(join(EVIDENCE_DIR, "plan.json"), plan);
 
     // The review pack. The reference is always written, labelled. An order's
-    // letters are drawn only once all five entries exist from today's writer,
+    // letters are drawn only once every entry exists from today's writer,
     // so no partial or mixed pack can show which letter is which; they are
     // kept until the writer changes, when the old pack is removed.
     const keyPath = join(EVIDENCE_DIR, "key.json");
@@ -202,9 +208,22 @@ it.skipIf(orders.length === 0)(
       ? (JSON.parse(readFileSync(keyPath, "utf8")) as Record<string, unknown>)
       : {};
     const key: Record<string, OrderKey> = {};
-    const rows = [
-      "order,letter,report,evidence_1_5,specific_actions_1_5,natural_indonesian_1_5,clear_to_owner_1_5,send_to_paying_customer_yes_no,notes",
-    ];
+    const header =
+      "order,letter,report,evidence_1_5,specific_actions_1_5,natural_indonesian_1_5,clear_to_owner_1_5,send_to_paying_customer_yes_no,notes";
+    const rows = [header];
+    // The founder's scores are kept while an order's letters stay the same;
+    // a sheet whose letters are redrawn is kept aside, never overwritten.
+    const scoresPath = join(EVIDENCE_DIR, "scores.csv");
+    const scored = new Map<string, string>();
+    if (existsSync(scoresPath))
+      for (const line of readFileSync(scoresPath, "utf8")
+        .split("\n")
+        .slice(1)) {
+        const [order, letter, , ...rest] = line.split(",");
+        if (order && letter && rest.some((cell) => cell.trim()))
+          scored.set(`${order},${letter}`, rest.join(","));
+      }
+    let scoresDropped = false;
     for (const order of orders) {
       const evidence = loadEvidence(order);
       const intake = JSON.parse(evidence.order.intake_json) as {
@@ -229,28 +248,34 @@ it.skipIf(orders.length === 0)(
       const previous = stored[order] as OrderKey | undefined;
       const kept =
         previous?.writer === writer && previous.letters ? previous : null;
-      if (!kept) rmSync(dir, { recursive: true, force: true });
+      if (!kept) {
+        rmSync(dir, { recursive: true, force: true });
+        scoresDropped ||= [...scored.keys()].some((k) =>
+          k.startsWith(`${order},`),
+        );
+      }
       write(
         join(dir, "reference.json"),
         page(readResult(order, "reference")!.report!),
       );
-      if (!complete) {
-        if (kept) key[order] = kept;
-        continue;
-      }
-      key[order] = kept ?? {
-        writer,
-        letters: assignLetters([order])[order]!,
-      };
+      if (!complete && !kept) continue;
+      // An entry added after scoring gets the next free letter once it has
+      // run; the scored letters keep their meaning.
+      key[order] = kept
+        ? complete
+          ? { ...kept, letters: extendLetters(kept.letters) }
+          : kept
+        : { writer, letters: assignLetters([order])[order]! };
       const deliveredAt = (
         JSON.parse(evidence.order.report_json) as AuditReport
       ).generated_at;
       for (const [letter, id] of Object.entries(key[order]!.letters)) {
-        const result = readResult(order, id)!;
+        const found = readResult(order, id);
+        const result = found?.writer === writer ? found : null;
         rows.push(
-          `${order},${letter},${result.report ? "ready" : "no report (writer failed)"},,,,,,`,
+          `${order},${letter},${!result ? "not run" : result.report ? "ready" : "no report (writer failed)"},${(kept && scored.get(`${order},${letter}`)) || ",,,,,"}`,
         );
-        if (!result.report) continue;
+        if (!result?.report) continue;
         const report = blindReport(result.report, deliveredAt);
         expect(
           telltaleIn(report),
@@ -260,6 +285,11 @@ it.skipIf(orders.length === 0)(
       }
     }
     write(keyPath, key);
-    writeFileSync(join(EVIDENCE_DIR, "scores.csv"), `${rows.join("\n")}\n`);
+    if (scoresDropped && existsSync(scoresPath))
+      renameSync(
+        scoresPath,
+        join(EVIDENCE_DIR, `scores-superseded-${Date.now()}.csv`),
+      );
+    writeFileSync(scoresPath, `${rows.join("\n")}\n`);
   },
 );
