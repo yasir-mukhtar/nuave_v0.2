@@ -314,6 +314,182 @@ Built and tested offline first; live steps wait for the founder.
    and change SPEC B-01's "(within Spec 018 R-28)" to "(Spec 018 R-28 as
    amended 2026-10-26)". B-07 runs the five writers that decision names.
 
+### PR 6 is built in two pull requests
+
+PR 6 is large and its last step needs the founder's blind reading, so it ships
+as two pull requests, each with its own independent review:
+
+- **PR 6a, the new writer** (steps 1 to 6 and 9): what the writer reads and
+  returns, the code checks, the page, and the offline writer. New orders
+  get the new writer, on today's model (GPT-5.6 Luna through OpenCode Go).
+- **PR 6b, the model choice** (steps 7 and 8, AC-B3): run the blind
+  side-by-side test on orders delivered after PR 6a, the founder's reading,
+  and the switch to the pick (with an Anthropic adapter if a Claude model
+  wins). The test harness itself is already merged
+  (`scripts/report-writer-test/`, PR #174): it writes with whatever the
+  production writer is, through `reportRequest`, `reportOutputSchema` and
+  `reportContentFromAnswer`, so PR 6a routes the new writer through those
+  three functions.
+
+### PR 6a design
+
+**Which reports.** Every two-source order made after PR 6a uses the new
+writer. Orders without two-source checks keep today's writer unchanged.
+Saved reports are never rewritten (S0): a saved report without the new block
+renders as today (Part A's fallbacks).
+
+**What the writer reads (B-01).** `twoSourceReportFacts` gains, all built by
+code from saved rows:
+- per question: `topic` and `volume` (when known), whether each source named
+  the business or cited its site only, Google's AI Overview text
+  (`stripPhoneNumbers` applied again; longer than 3,000 characters is cut at
+  a sentence end with "…", the limit the test harness uses), and the
+  businesses each source's answer names (`chatgpt`, `google` name lists, from
+  the same counting as Part C);
+- the list of other businesses that a "disebut karena" reason may name.
+
+The ChatGPT answers are sent as today (already phone-stripped when saved,
+`src/lib/checks/chatgpt.ts`); every text in the request is still cleaned of
+phone numbers once more before it is sent, so nothing saved earlier can leak. The approved playbook is sent as text in the
+developer message: `src/lib/audit/report-playbook.ts` exports it, and a unit
+test checks it equals `docs/content/report/PLAYBOOK.md` byte for byte, so the
+Worker bundle needs no file read. The request is built by one pure function,
+so AC-B1 tests it directly: Google texts and playbook present, no phone
+number (`src/lib/checks/phones.ts` patterns).
+
+**Instructions (B-03).** The developer message gets a Part B block:
+analysis angles (sites AI relies on and whether the clinic is on them;
+which kinds of questions name the clinic; what AI says that is wrong or
+missing; how the sources differ; what favoured clinics share); facts only
+from the answers; advice confident and specific, only where the playbook
+supports it; never a sentence that says why this clinic got its result.
+The old "do not diagnose from absence" line is dropped for this writer
+(decision 2026-10-26, point 2). The existing source and count rules stay.
+
+**What the writer returns (B-04).** A new structured-output schema,
+`twoSourceWritingSynthesisSchema` (all fields required, nulls where
+optional, so OpenAI strict mode accepts it):
+
+| Field | Shape | Notes |
+| --- | --- | --- |
+| `verdict` | string | one or two sentences, ≤ 220 characters |
+| `conclusion`, `accuracy_status`, `assessments` | as today | |
+| `key_findings[]` | `title`, `explanation`, `evidence_prompt_ids`, `headline: {number, caption, basis} \| null` | 1 to 6 in the schema; 3 to 6 asked; `basis` names what the number counts |
+| `priorities[]` | `order`, `action` (title), `why` (argument), `evidence_prompt_ids` | 1 to 6 in the schema; 3 to 6 asked |
+| `competitor_reasons[]` | `name`, `reason` | names from the supplied list only |
+| `takeaways[]` | `title`, `text` | 0 to 3; 2 or 3 asked (the prototype's cards) |
+| `plan[]` | `weeks` ("Minggu 1–2"), `title`, `text` | exactly 3 |
+| `topic_names[]` | `prompt_id`, `topic` | for questions without a topic |
+| `google_readings[]` | `prompt_id`, `recommended` | for each AI Overview that names the clinic |
+
+Saving. Code maps this onto the saved report:
+- **Findings:** `key_findings` keep their shape, plus an optional `headline`.
+- **Priorities:** `priorities` keep `order`, `action`, `why` and
+  `evidence_prompt_ids`. `basis`, `owner`, `done_when`, `timing` and `caveat`
+  become optional in the saved schema, and code never fills them for this
+  version.
+- **The rest** goes into a new optional block, `two_source_writing: {version:
+  "nuave-two-source-writing-v1", verdict, competitor_reasons, takeaways,
+  plan, topic_names, google_readings}`.
+
+Older saved reports parse unchanged, and the old synthesis schemas keep every
+field required. `report-presentation.ts` validates through the same schema,
+so new reports are not marked "Bukti laporan tidak tersedia".
+
+**Checks (B-05, B-06), all in code, all for the new version only:**
+- *Observed-gap rule:* each recommendation cites a question where the clinic
+  was absent, cited without its name, or not recommended (either source).
+  When no question shows a gap, any cited question passes (a valid report
+  can never fail it). When the rule would leave no recommendation, the
+  writer's list is kept whole: an empty list would bring back the old
+  code-written action or fail the paid order.
+- *Headline number:* the writer names a `basis` (what the number counts)
+  and code checks the number against that basis only:
+  1. a per-question fact (ChatGPT named / not named / cited only /
+     recommended / not recommended; Google shown / not shown / named / not
+     named / cited only / recommended; named by either or neither): "X dari
+     Y" with Y the cited questions and X those with the fact, or Y the
+     source's completed count and X all questions with the fact; or "N" /
+     "N×" for the cited questions with the fact;
+  2. the distinct domains cited, or other businesses named, in the cited
+     answers (per source or both): "N";
+  3. `verbatim`: the figure is a whole token of a cited answer ("75+", never
+     the "2" of "Rp 250.000"); two such figures may stand side by side
+     ("70 vs 75+").
+
+  The caption must fit the basis: a "not" basis (not named, not
+  recommended, not shown, named by neither) needs a negation ("tidak",
+  "belum", "tanpa"), any other per-question basis may not have one (cited
+  only is not checked: "tanpa menyebut nama" is how it reads). A number code
+  cannot confirm, a caption that does not fit, or a headline outside the
+  saved bounds (number up to 24 characters, caption 1 to 160) is dropped; the finding keeps its
+  text, and the report diagnostic is `headline_dropped`.
+- *Banned title starts* ("Periksa", "Pertahankan", "Pertimbangkan",
+  "Pastikan") on finding titles and recommendation titles: a writing
+  violation, so the one revision call fixes it. A title still banned after
+  the revision has the word removed by code. The delivered report never
+  has one (AC-B2).
+- *Counts:* the existing contradiction check and repair also read the
+  verdict. Not the recommendations, takeaways or plan: they are about other
+  businesses and advice, which that check misreads as claims about the
+  owner ("ERHA, C Derma, dan Bamed disebut AI lewat dokternya" reads as "the
+  business was named"), so it would replace good advice with count
+  sentences.
+- *Language:* the same prohibited-claim and Indonesian checks read every new
+  text field. Word limits for this version:
+
+  | Field | Limit |
+  | --- | --- |
+  | verdict | 2 sentences, 220 characters (longer is cut by code) |
+  | finding title | 12 words |
+  | finding paragraph | 80 words |
+  | recommendation title | 14 words |
+  | recommendation paragraph | 100 words |
+  | takeaway | title 10 words, text 30 words |
+  | plan step | 35 words |
+  | reason | 20 words |
+  | topic name | 6 words |
+- *Clean-up without a call:* code drops topic names for unknown or
+  already-named questions (or a name equal to the question), reasons for
+  businesses not in the list, and readings for AI Overviews that do not
+  name the clinic. A "Mengapa:" or "Berdasarkan:" label left after the
+  revision is removed (`writing_label_removed`).
+- *Last guard:* before saving, the report must pass the saved schema the
+  page checks; should the new block still fail it, the report is saved
+  without the block (and its headlines) rather than shown as "Bukti laporan
+  tidak tersedia" (diagnostic `writing_block_dropped`).
+- *Version:* a report from the new writer records `report_prompt_version`
+  `nuave-two-source-writing-v1`, so the side-by-side test never compares a
+  delivered report with a writer that did not write it.
+
+**Page.** `TwoSourceReport.tsx` reads the block when present:
+- the verdict;
+- the headline number and caption in Temuan Utama;
+- "Disebut AI karena: …" on competitor rows, and the takeaways under Peta
+  Pesaing;
+- Penutup's three-step plan;
+- topic names in Celah Topik, so rows that were hidden appear;
+- a Google dot shows "Direkomendasikan" when its reading says so.
+
+Without the block, every section renders as today.
+
+**Offline writer.** `generateSyntheticLocalReport` returns the new shape
+(fictional, labelled), so the journey, the e2e tests and the PDF cover it.
+
+**Spec 018 R-28** wording is updated as step 9 says.
+
+**Tests (PR 6a).**
+- Schema: the old and the new version both parse, and the presentation
+  check passes both.
+- AC-B1: the input builder.
+- Headline rule: each kind kept, others dropped.
+- Banned titles: revision first, then code removal.
+- Observed-gap rule for the new version.
+- The repair path with the new fields.
+- The page shows each new field, and old reports render unchanged.
+- E2e: the synthetic journey shows the verdict, a headline, the plan and a
+  reason.
+
 **Tests.** Unit: schema and presentation validation for old and new versions;
 headline number rule (each kind kept, others dropped); banned titles; repair
 path; **AC-B1: the writer input builder includes Google texts and the

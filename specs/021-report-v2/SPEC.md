@@ -331,7 +331,7 @@ dark (ink); Jawaban AI's band is light grey.
 
 ### Part B, writing
 
-- **B-01** The writer reads (within Spec 018 R-28): the questions and topics,
+- **B-01** The writer reads (Spec 018 R-28 as amended 2026-10-26): the questions and topics,
   both sources' answer texts and cited domains, the code-built counts, the
   businesses named per answer, the clinic's confirmed profile, and Nuave's
   playbook.

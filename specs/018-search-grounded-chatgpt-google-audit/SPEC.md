@@ -833,6 +833,13 @@ clinic landing page, whose report pictures show "Klinik Anda".
     - each answer's text (phone numbers removed);
     - the cited domains;
     - the named and source facts (R-16) and the outcomes (R-17).
+  - Amended 2026-10-26 ([decision](../../docs/DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+    built in Spec 021 Part B): "each answer's text" includes the words of
+    Google's AI Overview, not only the code-made facts, with phone numbers
+    removed (and removed again, with every other text, before the prompt is
+    sent). The prompt also receives the other businesses each answer names,
+    the customer's confirmed profile and Nuave's approved playbook
+    (`docs/content/report/PLAYBOOK.md`).
   - S5's privacy page must name DataForSEO as a recipient of the questions
     and the place before G1.
 - **R-29: Old reports.**

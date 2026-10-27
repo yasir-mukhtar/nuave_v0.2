@@ -162,6 +162,13 @@ export function sanitizeRecoverableReportQuality(
       }
       return [];
     }
+    // Spec 021 Part B: an unsafe headline caption loses the headline only.
+    if (finding.headline && hasProhibitedClaim(finding.headline.caption)) {
+      diagnostics.add("prohibited_claim_removed");
+      const { headline, ...rest } = finding;
+      void headline;
+      return [{ ...rest, evidence_prompt_ids }];
+    }
     return [{ ...finding, evidence_prompt_ids }];
   });
 
@@ -172,7 +179,7 @@ export function sanitizeRecoverableReportQuality(
       priority.basis,
       priority.done_when,
       priority.caveat,
-    ];
+    ].filter((text): text is string => text !== undefined);
     if (authored.some(hasProhibitedClaim)) {
       diagnostics.add("prohibited_claim_removed");
       diagnostics.add("unsupported_priority_removed");
@@ -232,6 +239,30 @@ export function sanitizeRecoverableReportQuality(
     diagnostics.add("minimum_report_fallback_used");
   }
 
+  // Spec 021 Part B: an unsafe verdict is left empty (the page then cuts
+  // one from the conclusion); any other unsafe item is dropped.
+  const writing = content.two_source_writing;
+  let two_source_writing = writing;
+  if (writing) {
+    const safe = (text: string) => {
+      const unsafe = hasProhibitedClaim(text);
+      if (unsafe) diagnostics.add("prohibited_claim_removed");
+      return !unsafe;
+    };
+    two_source_writing = {
+      ...writing,
+      verdict: safe(writing.verdict) ? writing.verdict : "",
+      competitor_reasons: writing.competitor_reasons.filter((item) =>
+        safe(item.reason),
+      ),
+      takeaways: writing.takeaways.filter(
+        (item) => safe(item.title) && safe(item.text),
+      ),
+      plan: writing.plan.filter((step) => safe(step.title) && safe(step.text)),
+      topic_names: writing.topic_names.filter((item) => safe(item.topic)),
+    };
+  }
+
   return {
     content: {
       ...content,
@@ -240,6 +271,7 @@ export function sanitizeRecoverableReportQuality(
       key_findings,
       priorities,
       details,
+      ...(two_source_writing ? { two_source_writing } : {}),
     },
     diagnostics: [...diagnostics],
   };

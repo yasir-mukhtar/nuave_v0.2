@@ -49,8 +49,8 @@ import {
   type AuditReport,
   type ReportContent,
   type ReportSynthesis,
+  type TwoSourceWritingSynthesis,
 } from "../../src/lib/audit/types";
-import { stripPhoneNumbers } from "../../src/lib/checks/phones";
 import {
   cheaperInferenceBilledCostUsd,
   INDONESIAN_QUESTION_GLM_MODEL,
@@ -266,24 +266,13 @@ export const ENTRIES: readonly Entry[] = [
   },
 ];
 
-/** Longest Google answer the writer reads; the longest in NV-3WDSAY is 4,227
- * characters, so most answers arrive whole. */
-export const GOOGLE_TEXT_MAX_CHARS = 3_000;
-
-/** Shortens a Google answer at the last sentence (or word) end that fits,
- * and removes phone numbers again in case a saved answer predates the filter. */
-export function trimGoogleText(text: string, max = GOOGLE_TEXT_MAX_CHARS) {
-  const clean = stripPhoneNumbers(text).trim();
-  if (clean.length <= max) return clean;
-  const cut = clean.slice(0, max);
-  const sentence = Math.max(
-    cut.lastIndexOf(". "),
-    cut.lastIndexOf(".\n"),
-    cut.lastIndexOf("\n"),
-  );
-  const end = sentence > max * 0.6 ? sentence + 1 : cut.lastIndexOf(" ");
-  return `${cut.slice(0, end > 0 ? end : max).trim()} …`;
-}
+/** Google's answers are shortened by the production writer's own rule
+ * (Spec 021 B-01), so the harness and production never differ. */
+export {
+  WRITER_GOOGLE_TEXT_MAX_CHARS as GOOGLE_TEXT_MAX_CHARS,
+  writerGoogleText as trimGoogleText,
+} from "../../src/lib/orders/two-source";
+import { writerGoogleText as trimGoogleText } from "../../src/lib/orders/two-source";
 
 /** The instruction that goes with the new input, added after today's
  * developer instruction. */
@@ -600,8 +589,10 @@ function telemetryOf(input: {
 }
 
 /** The report content production builds from a writer's answer. */
-const contentOf = (synthesis: ReportSynthesis, args: WriterArgs) =>
-  reportContentFromAnswer(synthesis, args[0]);
+const contentOf = (
+  synthesis: ReportSynthesis | TwoSourceWritingSynthesis,
+  args: WriterArgs,
+) => reportContentFromAnswer(synthesis, args[0]);
 
 /** Offline: returns the delivered report's own writing, so the pipeline can
  * be checked end to end without a provider. Re-running the reference this way must
@@ -615,6 +606,10 @@ export function replayWriter(delivered: AuditReport): ReportGenerator {
       priorities: delivered.priorities,
       observed_competitors: delivered.observed_competitors,
       details: delivered.details,
+      // Spec 021 Part B reports carry the new writer's block too.
+      ...(delivered.two_source_writing
+        ? { two_source_writing: delivered.two_source_writing }
+        : {}),
     } as ReportContent,
     requested_model: delivered.provenance.requested_report_model,
     returned_model: delivered.provenance.returned_report_model,
@@ -687,8 +682,13 @@ export function lunaWriter(
       stop: response.status ?? "",
       cut_off: response.incomplete_details?.reason === "max_output_tokens",
     });
-    const synthesis = structuredOutputOrThrow<ReportSynthesis>(
-      response.output_parsed,
+    // Spec 021 Part B: the answer is in whichever shape reportOutputSchema
+    // asked for.
+    const synthesis = structuredOutputOrThrow<
+      ReportSynthesis | TwoSourceWritingSynthesis
+    >(
+      response.output_parsed as
+        ReportSynthesis | TwoSourceWritingSynthesis | null,
       "Report generation",
       response,
     );
@@ -830,7 +830,10 @@ export function claudeWriter(
       ]);
     }
     return {
-      content: contentOf(parsed.data as ReportSynthesis, args),
+      content: contentOf(
+        parsed.data as ReportSynthesis | TwoSourceWritingSynthesis,
+        args,
+      ),
       requested_model: model,
       returned_model: response.model,
       response_id: response.id,
@@ -1060,6 +1063,7 @@ export function writerText(report: AuditReport) {
     key_findings: report.key_findings,
     priorities: report.priorities,
     details: report.details,
+    two_source_writing: report.two_source_writing,
   };
 }
 

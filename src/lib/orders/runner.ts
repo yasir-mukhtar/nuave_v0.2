@@ -83,6 +83,7 @@ import {
   twoSourceSetup,
   type TwoSourceSetup,
   twoSourceReportFacts,
+  twoSourceWriterFacts,
 } from "./two-source";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "../audit/types";
 import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
@@ -284,12 +285,22 @@ export async function orderReportInput(order: {
     ...(setup
       ? {
           two_source: true,
-          two_source_facts: twoSourceReportFacts({
-            rows,
-            prompts: intake.prompts,
-            subject: setup.subject,
-            names: setup.names,
-          }),
+          two_source_facts: {
+            ...twoSourceReportFacts({
+              rows,
+              prompts: intake.prompts,
+              subject: setup.subject,
+              names: setup.names,
+            }),
+            // Spec 021 B-01: the new writer also reads Google's words, the
+            // topics and the businesses each answer names.
+            writer: twoSourceWriterFacts({
+              rows,
+              prompts: intake.prompts,
+              observations,
+              setup,
+            }),
+          },
         }
       : {}),
   };

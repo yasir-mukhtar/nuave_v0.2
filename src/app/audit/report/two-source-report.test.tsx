@@ -927,3 +927,160 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
     expect(row).toHaveTextContent("KL");
   });
 });
+
+describe("the new writer's block (Spec 021 Part B)", () => {
+  function partB() {
+    const fixture = twoSourceFixture();
+    const q = fixture.report.two_source!.questions;
+    const report: AuditReport = {
+      ...fixture.report,
+      two_source: {
+        ...fixture.report.two_source!,
+        competitors: {
+          others: [
+            {
+              name: "Kopi Lain",
+              chatgpt: [q[1]!.prompt_id],
+              google: [],
+              cards: [],
+              website: null,
+              rating: null,
+              reviews: null,
+            },
+          ],
+          own: { cards: [], website: null, rating: null, reviews: null },
+        },
+        // Saved before topic names: the row's topic is its whole question.
+        topics_missing: [
+          {
+            prompt_id: q[4]!.prompt_id,
+            ordinal: 5,
+            topic: q[4]!.question,
+            volume: null,
+            data_month: "2026-09",
+            domains: ["source.example"],
+          },
+        ],
+      },
+      key_findings: fixture.report.key_findings.map((finding, i) =>
+        i === 0
+          ? {
+              ...finding,
+              headline: {
+                number: "0 dari 2",
+                caption: "pertanyaan kopi",
+                basis: "chatgpt_named",
+              },
+            }
+          : finding,
+      ),
+      // The new writer's recommendations: a title and one paragraph only.
+      priorities: fixture.report.priorities.map((priority) => ({
+        order: priority.order,
+        action: priority.action,
+        why: priority.why,
+        evidence_prompt_ids: priority.evidence_prompt_ids,
+      })),
+      two_source_writing: {
+        version: "nuave-two-source-writing-v1",
+        verdict:
+          "Di ChatGPT, Kedai Fiksi belum disebut; Google menyebutnya sekali.",
+        competitor_reasons: [
+          { name: "Kopi Lain", reason: "ChatGPT menyebut menu kopi susunya." },
+        ],
+        takeaways: [
+          {
+            title: "Menu jelas menang",
+            text: "Bisnis yang disebut menulis menunya.",
+          },
+          { title: "Ulasan dikutip", text: "Google mengutip situs ulasan." },
+        ],
+        plan: [
+          {
+            weeks: "Minggu 1–2",
+            title: "Tulis menu",
+            text: "Satu halaman menu.",
+          },
+          {
+            weeks: "Minggu 3–4",
+            title: "Minta ulasan",
+            text: "Dari pelanggan.",
+          },
+          {
+            weeks: "Minggu 5–8",
+            title: "Audit ulang",
+            text: "Pertanyaan sama.",
+          },
+        ],
+        topic_names: [{ prompt_id: q[4]!.prompt_id, topic: "Kopi susu murah" }],
+        google_readings: [{ prompt_id: q[0]!.prompt_id, recommended: true }],
+      },
+    };
+    return { ...fixture, report };
+  }
+
+  const page = (fixture: ReturnType<typeof partB>) =>
+    render(
+      <DirectTenReportPage
+        report={fixture.report}
+        brief={brief}
+        observations={fixture.observations}
+        onDownloadJson={() => {}}
+      />,
+    ).container;
+
+  it("a report with the block passes the evidence check and shows every new field", () => {
+    const container = page(partB());
+    expect(container.querySelector("[role=alert]")).toBeNull();
+    expect(container.querySelector("[data-verdict]")).toHaveTextContent(
+      "Di ChatGPT, Kedai Fiksi belum disebut; Google menyebutnya sekali.",
+    );
+    const stat = container.querySelector("[data-finding-stat]")!;
+    expect(stat).toHaveTextContent("0 dari 2");
+    expect(stat).toHaveTextContent("pertanyaan kopi");
+    // Other findings have no number.
+    expect(container.querySelectorAll("[data-finding-stat]")).toHaveLength(1);
+    expect(
+      container.querySelector("[data-competitor-reason]"),
+    ).toHaveTextContent(
+      "Disebut AI karena: ChatGPT menyebut menu kopi susunya.",
+    );
+    const takeaways = container.querySelector("[data-takeaways]")!;
+    expect(takeaways.querySelectorAll("li")).toHaveLength(2);
+    expect(takeaways).toHaveTextContent("Menu jelas menang");
+    const plan = container.querySelector("[data-plan]")!;
+    expect(plan.querySelectorAll("li")).toHaveLength(3);
+    expect(plan).toHaveTextContent("Minggu 1–2");
+    expect(plan).toHaveTextContent("Tulis menu");
+    // The topic row saved with its whole question takes the writer's name.
+    expect(container.querySelector("[data-topics-missing]")).toHaveTextContent(
+      "Kopi susu murah",
+    );
+    // The writer read the first AI Overview as recommending the business.
+    const google = container.querySelector('[data-source-card="google"]')!;
+    expect(google.querySelector("[data-mention]")).toHaveAttribute(
+      "data-mention",
+      "recommended",
+    );
+    // No removed labels on the short recommendations.
+    expect(container).not.toHaveTextContent("Penanggung jawab");
+    expect(container).not.toHaveTextContent("Selesai ketika");
+  });
+
+  it("without the block, the same report shows none of them and hides the unnamed topic", () => {
+    const fixture = partB();
+    const { two_source_writing, ...report } = fixture.report;
+    void two_source_writing;
+    const container = page({ ...fixture, report: report as AuditReport });
+    expect(container.querySelector("[data-finding-stat]")).not.toBeNull();
+    expect(container.querySelector("[data-competitor-reason]")).toBeNull();
+    expect(container.querySelector("[data-takeaways]")).toBeNull();
+    expect(container.querySelector("[data-plan]")).toBeNull();
+    expect(container.querySelector("[data-topics-missing]")).toBeNull();
+    const google = container.querySelector('[data-source-card="google"]')!;
+    expect(google.querySelector("[data-mention]")).toHaveAttribute(
+      "data-mention",
+      "mentioned",
+    );
+  });
+});

@@ -1,433 +1,684 @@
 import { describe, expect, it } from "vitest";
-import {
-  countSentence,
-  googleNamedSentence,
-  repairTwoSourceWriting,
-  reportSubjectForCategory,
-  twoSourceCountSentence,
-  twoSourceMethodSentence,
-  twoSourceWritingViolations,
-  type TwoSourceReportFacts,
+import type {
+  TwoSourceReportFacts,
+  TwoSourceWriterFacts,
 } from "./two-source-report";
+import {
+  captionFitsBasis,
+  cutVerdict,
+  finishTwoSourceWriting,
+  saveableTwoSourceWriting,
+  headlineConfirmed,
+  partBWritingViolations,
+} from "./two-source-writing";
+import {
+  TWO_SOURCE_WRITING_VERSION,
+  twoSourceWritingSynthesisSchema,
+  reportSynthesisSchema,
+  type AuditObservation,
+  type HeadlineBasis,
+  type ReportContent,
+} from "./types";
+import { zodTextFormat } from "openai/helpers/zod";
 
-// Spec 018 R-28 and the Report layout: the written conclusion and findings
-// name their source and never contradict the code counts.
+/* Four questions:
+ * q1: ChatGPT named and recommended; Google named (cited reference a.example).
+ * q2: ChatGPT absent (cites b.example, c.example, names Klinik Satu, Klinik
+ *     Dua); Google summary without the name (cites d.example).
+ * q3: ChatGPT absent; Google cited the site only. Answer says "75+ cabang".
+ * q4: ChatGPT failed; Google showed no AI Overview. */
+const ids = ["q1", "q2", "q3", "q4"];
 
-const facts = (
-  chatgptNamed: number,
-  googleNamed: number,
-): TwoSourceReportFacts => ({
+function observation(
+  id: string,
+  raw: string,
+  sources: string[],
+  run: "completed" | "failed" = "completed",
+): AuditObservation {
+  return {
+    prompt_id: id,
+    question: `Pertanyaan ${id}?`,
+    raw_answer: raw,
+    run_status: run,
+    sources: sources.map((url) => ({ url, title: url })),
+  } as unknown as AuditObservation;
+}
+
+const observations = [
+  observation("q1", "Klinik Fiksi direkomendasikan.", ["https://a.example/x"]),
+  observation("q2", "Klinik Satu dan Klinik Dua.", [
+    "https://b.example/1",
+    "https://www.c.example/2",
+  ]),
+  observation("q3", "Klinik Satu punya 75+ cabang.", []),
+  observation("q4", "", [], "failed"),
+];
+
+const facts: TwoSourceReportFacts & { writer: TwoSourceWriterFacts } = {
+  subject: "klinik",
+  names: ["Klinik Fiksi"],
   counts: {
-    chatgpt: { completed: 9, named: chatgptNamed },
-    google: { completed: 10, summaries: 8, named: googleNamed },
+    chatgpt: { completed: 3, named: 1 },
+    google: { completed: 3, summaries: 3, named: 1 },
   },
-  google: [],
-});
-
-const finding = (title: string, explanation = "") => ({ title, explanation });
-
-describe("two-source writing checks", () => {
-  it("accepts a conclusion and findings that name their source and agree with the counts", () => {
-    expect(
-      twoSourceWritingViolations(
-        {
-          conclusion:
-            "Di ChatGPT, bisnis Anda tidak disebut di pertanyaan yang diuji. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan.",
-          key_findings: [
-            finding("Di Google AI Overview, Anda disebut untuk harga"),
-            finding(
-              "Belum muncul di ChatGPT",
-              "Di ChatGPT, klinik lain dipilih.",
-            ),
-          ],
-        },
-        facts(0, 3),
-      ),
-    ).toEqual([]);
-  });
-
-  it("asks for the source when the conclusion or a finding names none", () => {
-    const violations = twoSourceWritingViolations(
+  google: [
+    {
+      prompt_id: "q1",
+      outcome: "summary",
+      business_named: true,
+      cited_domains: ["a.example"],
+    },
+    {
+      prompt_id: "q2",
+      outcome: "summary",
+      business_named: false,
+      cited_domains: ["d.example"],
+    },
+    {
+      prompt_id: "q3",
+      outcome: "summary",
+      business_named: false,
+      cited_domains: ["fiksi.example"],
+    },
+    {
+      prompt_id: "q4",
+      outcome: "not_shown",
+      business_named: null,
+      cited_domains: [],
+    },
+  ],
+  writer: {
+    questions: [
       {
-        conclusion: "Bisnis Anda jarang disebut.",
-        key_findings: [finding("Harga sering ditanyakan", "Banyak jawaban.")],
+        prompt_id: "q1",
+        ordinal: 1,
+        topic: "botox",
+        volume: 900,
+        named: { chatgpt: "named", google: "named" },
+        google_text: "Klinik Fiksi.",
+        businesses: { chatgpt: [], google: [] },
       },
-      facts(1, 1),
-    );
-    expect(violations).toHaveLength(2);
-    expect(violations[0]).toMatch(/conclusion must name its source/);
-    expect(violations[1]).toMatch(/Key finding 1/);
-  });
-
-  it("rejects a sentence that says a source did not name the business when its count is above zero", () => {
-    expect(
-      twoSourceWritingViolations(
-        {
-          conclusion:
-            "Di Google AI Overview, bisnis Anda tidak disebut sama sekali.",
-          key_findings: [finding("Di ChatGPT, Anda belum muncul")],
-        },
-        facts(0, 3),
-      ),
-    ).toEqual([
-      expect.stringContaining("Google AI Overview named the business in 3"),
-    ]);
-    expect(
-      twoSourceWritingViolations(
-        {
-          conclusion:
-            "Ini uji sintetis. Bisnis tidak disebut dalam jawaban mana pun di ChatGPT dan Google AI Overview.",
-          key_findings: [
-            finding("Di ChatGPT dan Google AI Overview, semua sintetis"),
-          ],
-        },
-        facts(0, 3),
-      ),
-    ).toEqual([expect.stringContaining("named in at least one answer")]);
-  });
-
-  it("B-4: keeps true sentences that are partial, counted or about recommendation", () => {
-    expect(
-      twoSourceWritingViolations(
-        {
-          conclusion:
-            "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak direkomendasikan. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5 ringkasan lainnya.",
-          key_findings: [
-            finding(
-              "Di ChatGPT, bisnis Anda tidak muncul untuk pertanyaan tentang harga.",
-            ),
-            finding("Di ChatGPT, Sozo tidak muncul pada kebutuhan lain"),
-          ],
-        },
-        facts(3, 3),
-      ),
-    ).toEqual([]);
-  });
-
-  it("B-4: code replaces a contradicting sentence and marks a finding without a source", () => {
-    const { content, changed } = repairTwoSourceWriting(
       {
-        conclusion:
-          "Di Google AI Overview, bisnis Anda tidak disebut sama sekali. Di ChatGPT, klinik lain lebih sering dipilih.",
-        key_findings: [finding("Harga sering ditanyakan", "Banyak jawaban.")],
+        prompt_id: "q2",
+        ordinal: 2,
+        topic: null,
+        volume: null,
+        named: { chatgpt: "absent", google: "absent" },
+        google_text: "Klinik Dua.",
+        businesses: {
+          chatgpt: ["Klinik Satu", "Klinik Dua"],
+          google: ["Klinik Dua"],
+        },
       },
-      facts(1, 3),
-    );
-    expect(changed).toBe(true);
-    expect(content.conclusion).toBe(
-      "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan. Di ChatGPT, klinik lain lebih sering dipilih.",
-    );
-    expect(content.key_findings[0]!.explanation).toBe(
-      "Di ChatGPT: Banyak jawaban.",
-    );
-    expect(twoSourceWritingViolations(content, facts(1, 3))).toEqual([]);
-  });
-
-  it("B-4: a conclusion with no source gets both count sentences in front", () => {
-    const { content } = repairTwoSourceWriting(
-      { conclusion: "Bisnis Anda jarang disebut.", key_findings: [] },
-      facts(2, 1),
-    );
-    expect(content.conclusion).toBe(
-      "Di ChatGPT, bisnis Anda disebut di 2 dari 9 jawaban; di Google AI Overview, bisnis Anda disebut di 1 dari 8 ringkasan. Bisnis Anda jarang disebut.",
-    );
-  });
-
-  it("the method sentence counts both sources and names no internal system", () => {
-    const sentence = twoSourceMethodSentence({
-      counts: {
-        chatgpt: { completed: 9, named: 0, recommended: 0, failed: 1 },
-        google: { completed: 8, summaries: 6, named: 2, failed: 2 },
-        failed: 3,
+      {
+        prompt_id: "q3",
+        ordinal: 3,
+        topic: null,
+        volume: null,
+        named: { chatgpt: "absent", google: "source_only" },
+        google_text: "Ringkasan.",
+        businesses: { chatgpt: ["Klinik Satu"], google: [] },
       },
-    });
-    expect(sentence).toBe(
-      "Audit ini menanyakan 10 pertanyaan yang sama ke aplikasi ChatGPT dan ke Google AI Overview melalui DataForSEO. 9 dari 10 pemeriksaan ChatGPT dan 8 dari 10 pemeriksaan Google selesai; 3 pemeriksaan tidak dapat diuji.",
-    );
-    expect(sentence).not.toMatch(/LLM Scraper/);
+      {
+        prompt_id: "q4",
+        ordinal: 4,
+        topic: "flek",
+        volume: null,
+        named: { chatgpt: null, google: null },
+        google_text: "",
+        businesses: { chatgpt: [], google: [] },
+      },
+    ],
+    businesses: ["Klinik Satu", "Klinik Dua"],
+  },
+};
+
+function detail(
+  id: string,
+  appearance: string,
+  recommendation: string,
+  run = "completed",
+) {
+  return {
+    prompt_id: id,
+    run,
+    appearance,
+    recommendation,
+    comparison: "not_observed",
+    information: "not_assessed",
+    finding: "",
+    answer_excerpt: "",
+    evidence_note: "",
+    source_urls: [],
+  };
+}
+
+function content(overrides: Partial<ReportContent> = {}): ReportContent {
+  return {
+    conclusion: "Di ChatGPT, klinik Anda disebut di 1 dari 3 jawaban.",
+    accuracy_status: "could_not_assess",
+    observed_competitors: [],
+    key_findings: [
+      {
+        title: "Google memakai situs Anda tanpa nama",
+        explanation: "Di Google AI Overview, situs Anda dikutip tanpa nama.",
+        evidence_prompt_ids: ["q2", "q3"],
+      },
+    ],
+    priorities: [
+      {
+        order: 1,
+        action: "Tulis halaman botox",
+        why: "Satu halaman per treatment.",
+        evidence_prompt_ids: ["q2"],
+      },
+      {
+        order: 2,
+        action: "Minta ulasan pasien",
+        why: "Ulasan membantu.",
+        evidence_prompt_ids: ["q3"],
+      },
+    ],
+    details: [
+      detail("q1", "mentioned", "recommended"),
+      detail("q2", "absent", "not_assessed"),
+      detail("q3", "absent", "not_assessed"),
+      detail("q4", "not_assessed", "not_assessed", "failed"),
+    ],
+    two_source_writing: {
+      version: TWO_SOURCE_WRITING_VERSION,
+      verdict: "Di ChatGPT, klinik Anda disebut di 1 dari 3 jawaban.",
+      competitor_reasons: [],
+      takeaways: [],
+      plan: [
+        {
+          weeks: "Minggu 1–2",
+          title: "Tulis halaman",
+          text: "Mulai dari botox.",
+        },
+        { weeks: "Minggu 3–4", title: "Minta ulasan", text: "Dari pasien." },
+        { weeks: "Minggu 5–8", title: "Audit ulang", text: "Sama." },
+      ],
+      topic_names: [],
+      google_readings: [{ prompt_id: "q1", recommended: true }],
+    },
+    ...overrides,
+  } as ReportContent;
+}
+
+const confirmed = (
+  number: string,
+  basis: HeadlineBasis,
+  cited = ["q2", "q3"],
+) =>
+  headlineConfirmed({ number, basis }, cited, content(), facts, observations);
+
+describe("headline numbers, checked by their basis (B-05)", () => {
+  it("'X dari Y' over the cited questions counts only the named fact", () => {
+    // q2 and q3: ChatGPT named neither; Google cited the site only in q3.
+    expect(confirmed("0 dari 2", "chatgpt_named")).toBe(true);
+    expect(confirmed("2 dari 2", "chatgpt_not_named")).toBe(true);
+    expect(confirmed("1 dari 2", "google_cited_only")).toBe(true);
+    // The complement of a fact is not that fact.
+    expect(confirmed("2 dari 2", "chatgpt_named")).toBe(false);
+    expect(confirmed("0 dari 2", "chatgpt_not_named")).toBe(false);
+    expect(confirmed("1 dari 4", "chatgpt_named")).toBe(false);
   });
 
-  it("B-5: rejects a plain negation about a source that named the business, and a wrong count", () => {
-    const ok = finding(
-      "Di ChatGPT, klinik lain dipilih",
-      "Di ChatGPT, tiga klinik lain disebut.",
-    );
-    const cases: [string, "conclusion" | "title"][] = [
-      ["Di Google AI Overview, bisnis Anda tidak disebut.", "conclusion"],
-      ["Di ChatGPT, bisnis Anda tidak muncul", "title"],
-      ["Di ChatGPT, jawaban tidak menyebut bisnis Anda.", "conclusion"],
-      [
-        "Di ChatGPT, bisnis Anda sama sekali tidak disebut (0 dari 9 jawaban).",
-        "conclusion",
-      ],
-      [
-        "Kopi Nuave tidak disebut di ChatGPT maupun Google AI Overview.",
-        "conclusion",
-      ],
+  it("'X dari Y' over a source's completed checks", () => {
+    // ChatGPT named the business in 1 of 3 answers; Google in 1 of 3
+    // summaries; Google showed an AI Overview for 3 of 3 checks.
+    expect(confirmed("1 dari 3", "chatgpt_named")).toBe(true);
+    expect(confirmed("2 dari 3", "chatgpt_not_named")).toBe(true);
+    expect(confirmed("1 dari 3", "google_named")).toBe(true);
+    expect(confirmed("3 dari 3", "google_shown")).toBe(true);
+    expect(confirmed("2 dari 3", "chatgpt_named")).toBe(false);
+    expect(confirmed("7 dari 10", "google_named")).toBe(false);
+  });
+
+  it("'N' or 'N×' for the cited questions with the fact", () => {
+    expect(confirmed("2×", "chatgpt_not_named")).toBe(true);
+    expect(confirmed("1×", "google_cited_only")).toBe(true);
+    expect(confirmed("2×", "google_cited_only")).toBe(false);
+    expect(confirmed("0", "chatgpt_named")).toBe(false);
+  });
+
+  it("domains and businesses in the cited answers, per source or both", () => {
+    expect(confirmed("2", "chatgpt_cited_domains")).toBe(true); // b, c
+    expect(confirmed("2", "google_cited_domains")).toBe(true); // d, fiksi
+    expect(confirmed("4", "cited_domains")).toBe(true);
+    expect(confirmed("4", "chatgpt_cited_domains")).toBe(false);
+    expect(confirmed("2", "chatgpt_named_businesses")).toBe(true);
+    expect(confirmed("1", "google_named_businesses")).toBe(true);
+    expect(confirmed("2", "named_businesses")).toBe(true);
+    expect(confirmed("3", "named_businesses")).toBe(false);
+  });
+
+  it("verbatim: a whole token of a cited answer, never part of a longer number", () => {
+    expect(confirmed("75+", "verbatim")).toBe(true);
+    expect(confirmed("75+", "verbatim", ["q1"])).toBe(false);
+    expect(confirmed("75", "verbatim")).toBe(true);
+    expect(confirmed("7", "verbatim")).toBe(false);
+    const priced = [
+      observation("q2", "Harga mulai Rp 250.000 per sesi.", []),
+      ...observations.slice(2),
     ];
-    for (const [sentence, where] of cases) {
-      const content =
-        where === "conclusion"
-          ? { conclusion: sentence, key_findings: [ok] }
-          : {
-              conclusion:
-                "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban.",
-              key_findings: [
-                finding(
-                  sentence,
-                  "Di ChatGPT, klinik lain lebih sering dipilih.",
-                ),
-              ],
-            };
-      expect(
-        twoSourceWritingViolations(content, facts(3, 3)),
-        sentence,
-      ).not.toEqual([]);
-    }
+    const check = (number: string) =>
+      headlineConfirmed(
+        { number, basis: "verbatim" },
+        ["q2"],
+        content(),
+        facts,
+        priced,
+      );
+    expect(check("250.000")).toBe(true);
+    expect(check("2")).toBe(false);
+    expect(check("000")).toBe(false);
+    expect(check("250")).toBe(false);
   });
 
-  it("B-5: keeps a negation that carries the source's correct count or is limited", () => {
+  it("verbatim: two figures side by side, each a token of a cited answer", () => {
+    expect(confirmed("2 vs 75+", "verbatim")).toBe(false);
+    const two = [
+      observation("q2", "Ada 70 cabang.", []),
+      observation("q3", "Klinik Satu punya 75+ cabang.", []),
+    ];
     expect(
-      twoSourceWritingViolations(
-        {
-          conclusion:
-            "Di ChatGPT, bisnis Anda tidak disebut di 6 dari 9 jawaban. Di Google AI Overview, bisnis Anda tidak muncul di 5 dari 8 ringkasan.",
-          key_findings: [
-            finding("Di ChatGPT, bisnis Anda tidak muncul pada kebutuhan lain"),
-            finding(
-              "Di Google AI Overview, bisnis Anda belum disebut untuk pertanyaan tentang botox",
-            ),
-            finding("Di ChatGPT, Anda disebut tetapi tidak direkomendasikan"),
-          ],
-        },
-        facts(3, 3),
+      headlineConfirmed(
+        { number: "70 vs 75+", basis: "verbatim" },
+        ["q2", "q3"],
+        content(),
+        facts,
+        two,
       ),
-    ).toEqual([]);
-  });
-
-  it("B-5: code repairs a plain negation and keeps the sentence's place", () => {
-    const { content } = repairTwoSourceWriting(
-      {
-        conclusion:
-          "Di ChatGPT, bisnis Anda tidak disebut; di Google AI Overview, klinik lain lebih sering muncul.",
-        key_findings: [
-          finding(
-            "Di ChatGPT, bisnis Anda tidak muncul",
-            "Di ChatGPT, klinik lain lebih sering dipilih.",
-          ),
-          finding("Ringkasan AI Overview lebih sering menyebut klinik lain"),
-        ],
-      },
-      facts(3, 3),
-    );
-    expect(content.conclusion).toBe(
-      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban; di Google AI Overview, klinik lain lebih sering muncul.",
-    );
-    expect(content.key_findings[0]!.title).toBe(
-      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban",
-    );
-    // "AI Overview" alone names Google (N-26): no "Di ChatGPT:" prefix.
-    expect(content.key_findings[1]!.explanation).toBe("");
-    expect(twoSourceWritingViolations(content, facts(3, 3))).toEqual([]);
-  });
-
-  it("N-26: a source with nothing to count says so instead of 0 dari 0", () => {
-    const none: TwoSourceReportFacts = {
-      counts: {
-        chatgpt: { completed: 9, named: 2 },
-        google: { completed: 6, summaries: 0, named: 0 },
-      },
-      google: [],
-    };
-    const { content } = repairTwoSourceWriting(
-      { conclusion: "Bisnis Anda jarang disebut.", key_findings: [] },
-      none,
-    );
-    expect(content.conclusion).toBe(
-      "Di ChatGPT, bisnis Anda disebut di 2 dari 9 jawaban; di Google AI Overview, Google tidak menampilkan AI Overview untuk pertanyaan yang diuji. Bisnis Anda jarang disebut.",
-    );
-    expect(content.conclusion).not.toMatch(/0 dari 0/);
+    ).toBe(true);
+    expect(confirmed("banyak", "verbatim")).toBe(false);
   });
 });
 
-describe("round-4 notes: counts, limits, abbreviations and details", () => {
-  const sentenceFlagged = (sentence: string, f: TwoSourceReportFacts) =>
-    twoSourceWritingViolations(
-      { conclusion: sentence, key_findings: [] },
-      f,
-    ).some((v) => v.includes("contradicts the counts"));
-
-  it("N-32: checks every count against its own source, in positive sentences too", () => {
-    // ChatGPT named the business 0 of 9; Google 3 of 8.
-    const f = facts(0, 3);
-    for (const sentence of [
-      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban; di Google AI Overview, di 3 dari 8 ringkasan.",
-      "Di ChatGPT, bisnis Anda disebut di 3 dari 8 jawaban.",
-      "Di Google AI Overview, bisnis Anda disebut di 0 dari 9 ringkasan.",
-      "Di ChatGPT dan Google AI Overview, bisnis Anda disebut.",
-      "Di Google AI Overview, bisnis Anda disebut di semua ringkasan.",
-      "Di Google AI Overview, bisnis Anda tidak disebut di 3 dari 8 ringkasan.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(true);
-    for (const sentence of [
-      "Di ChatGPT, bisnis Anda tidak disebut di 9 dari 9 jawaban; di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan.",
-      "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan dan tidak disebut di 5 ringkasan lainnya.",
-      "Di Google AI Overview, AI Overview tidak muncul untuk 2 dari 10 pertanyaan.",
-      "Google menampilkan AI Overview di 8 dari 10 pertanyaan.",
-      "Di ChatGPT, bisnis Anda tidak disebut, tetapi Google AI Overview menyebutnya di 3 ringkasan.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
-  });
-
-  it("N-31: only a limit about questions exempts a negation; one source's count never exempts the other", () => {
-    const f = facts(3, 3);
-    for (const sentence of [
-      "Di Google AI Overview, bisnis Anda tidak disebut, sementara klinik lain lebih sering muncul.",
-      "Di ChatGPT, bisnis Anda tidak muncul, klinik lain yang dipilih.",
-      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban, tetapi tidak muncul di Google AI Overview.",
-      "Di ChatGPT, bisnis Anda tak pernah disebut.",
-      "Di ChatGPT, nama bisnis Anda tidak pernah sekali pun disebut.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(true);
-    for (const sentence of [
-      "Di ChatGPT, enam dari sembilan jawaban tidak menyebut bisnis Anda.",
-      "Di ChatGPT, bisnis Anda tidak disebut di 6 jawaban.",
-      "Di ChatGPT, bisnis Anda tidak disebut sebagai pilihan utama.",
-      "Di ChatGPT, bisnis Anda tidak disebut dalam jawaban pertanyaan 5, 6 dan 7.",
-      "Di ChatGPT, bisnis Anda tidak muncul untuk kebutuhan implan gigi.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
-  });
-
-  it("N-37: an absolute negation is never excused by a question word", () => {
-    const f = facts(3, 3);
-    for (const sentence of [
-      "Di ChatGPT, bisnis Anda tidak disebut di pertanyaan mana pun.",
-      "Di ChatGPT, bisnis Anda tidak muncul pada pertanyaan yang diuji.",
-      "Di Google AI Overview, bisnis Anda tidak disebut untuk topik mana pun.",
-      "Di ChatGPT, bisnis Anda sama sekali tidak muncul dalam pencarian.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(true);
-    for (const sentence of [
-      "Di ChatGPT, bisnis Anda tidak muncul untuk kebutuhan implan gigi.",
-      "Di ChatGPT, bisnis Anda tidak disebut di 6 jawaban.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
-  });
-
-  it("N-34: a sentence about a detail or other businesses is not about the business being named", () => {
-    const f = facts(3, 3);
-    for (const sentence of [
-      "Di ChatGPT, harga layanan Anda tidak disebut.",
-      "Di ChatGPT, jawaban tidak menyebut alamat cabang Anda.",
-      "Di ChatGPT, tiga klinik lain disebut.",
-    ])
-      expect(sentenceFlagged(sentence, f), sentence).toBe(false);
-    // A replaced title keeps its finding's body, and never ends in "." or "?".
-    const { content } = repairTwoSourceWriting(
-      {
-        conclusion: "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban.",
-        key_findings: [
-          finding(
-            "Di ChatGPT, bisnis Anda tidak muncul?",
-            "Di ChatGPT, informasi harga belum lengkap. Pelanggan perlu menghubungi klinik.",
-          ),
-        ],
-      },
-      f,
-    );
-    expect(content.key_findings[0]!.title).toBe(
-      "Di ChatGPT, bisnis Anda disebut di 3 dari 9 jawaban",
-    );
-    expect(content.key_findings[0]!.explanation).toBe(
-      "Di ChatGPT, informasi harga belum lengkap. Pelanggan perlu menghubungi klinik.",
-    );
-  });
-
-  it("N-33: a sentence is not split after drg., dr., Jl. or an initial, and a repair replaces it whole", () => {
-    // ChatGPT named the business 0 times: a true sentence with "drg." passes.
-    expect(
-      twoSourceWritingViolations(
+describe("the one revision is asked to fix the new fields (B-04, B-06)", () => {
+  it("a clean draft has no violation; a report without the block is not checked", () => {
+    expect(partBWritingViolations(content())).toEqual([]);
+    const { two_source_writing, ...old } = content({
+      key_findings: [
         {
-          conclusion:
-            "Di ChatGPT, drg. Linda Dental tidak disebut. Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan.",
-          key_findings: [],
+          title: "Pastikan profil",
+          explanation: "x",
+          evidence_prompt_ids: ["q1"],
         },
-        facts(0, 3),
-      ),
-    ).toEqual([]);
-    // Google named it 3 times: the false sentence is replaced whole.
-    const clinic = { ...facts(0, 3), names: ["Linda Dental"] };
-    const { content } = repairTwoSourceWriting(
-      {
-        conclusion:
-          "Di Google AI Overview, drg. Linda Dental di Jl. Sudirman No. 5 tidak disebut. Di ChatGPT, klinik lain dipilih.",
-        key_findings: [],
-      },
-      clinic,
-    );
-    expect(content.conclusion).toBe(
-      "Di Google AI Overview, bisnis Anda disebut di 3 dari 8 ringkasan. Di ChatGPT, klinik lain dipilih.",
-    );
-    expect(content.conclusion).not.toMatch(/drg\. Di/);
+      ],
+    });
+    void two_source_writing;
+    expect(partBWritingViolations(old as ReportContent)).toEqual([]);
   });
 
-  it("N-33: the business name or an alias counts as the business", () => {
-    const f = { ...facts(3, 0), names: ["Linda Dental", "Klinik Linda"] };
-    expect(sentenceFlagged("Di ChatGPT, Linda Dental tidak disebut.", f)).toBe(
+  it("names each banned title start, the over-long verdict and a label", () => {
+    const draft = content({
+      key_findings: [
+        {
+          title: "Periksa profil Google",
+          explanation: "Mengapa: karena.",
+          evidence_prompt_ids: ["q2"],
+        },
+      ],
+      priorities: [
+        {
+          order: 1,
+          action: "Pastikan profil lengkap",
+          why: "x",
+          evidence_prompt_ids: ["q2"],
+        },
+        {
+          order: 2,
+          action: "pertimbangkan iklan",
+          why: "x",
+          evidence_prompt_ids: ["q2"],
+        },
+      ],
+    });
+    draft.two_source_writing!.verdict = "Satu. Dua. Tiga.";
+    draft.two_source_writing!.plan[0]!.title = "Pertahankan ulasan";
+    const violations = partBWritingViolations(draft).join("\n");
+    expect(violations).toMatch(/Finding 1 title starts with/);
+    expect(violations).toMatch(/Recommendation 1 title starts with/);
+    expect(violations).toMatch(/Recommendation 2 title starts with/);
+    expect(violations).toMatch(/Plan step 1 title starts with/);
+    expect(violations).toMatch(/verdict must be at most 2 sentences/);
+    expect(violations).toMatch(/"Mengapa:" or "Berdasarkan:" label/);
+  });
+
+  it("names a paragraph over its word limit", () => {
+    const long = Array.from({ length: 101 }, () => "kata").join(" ");
+    const violations = partBWritingViolations(
+      content({
+        priorities: [
+          {
+            order: 1,
+            action: "Tulis halaman",
+            why: long,
+            evidence_prompt_ids: ["q2"],
+          },
+        ],
+      }),
+    );
+    expect(violations).toContain(
+      "Recommendation 1 paragraph has 101 words; the limit is 100.",
+    );
+  });
+});
+
+describe("after the revision, code finishes the block (B-04 to B-06)", () => {
+  it("removes a banned start, drops an unconfirmed headline and cuts the verdict", () => {
+    const draft = content({
+      key_findings: [
+        {
+          title: "Periksa situs Anda",
+          explanation: "Di Google AI Overview, situs Anda dikutip.",
+          evidence_prompt_ids: ["q2", "q3"],
+          headline: {
+            number: "9 dari 2",
+            caption: "salah",
+            basis: "chatgpt_named",
+          },
+        },
+        {
+          title: "Klinik lain disebut",
+          explanation: "Di ChatGPT, dua klinik lain disebut.",
+          evidence_prompt_ids: ["q2", "q3"],
+          headline: {
+            number: "2",
+            caption: "klinik lain",
+            basis: "chatgpt_named_businesses",
+          },
+        },
+      ],
+      priorities: [
+        {
+          order: 1,
+          action: "Pastikan: profil Google lengkap",
+          why: "Berdasarkan: ulasan.",
+          evidence_prompt_ids: ["q2"],
+        },
+      ],
+    });
+    draft.two_source_writing!.verdict = `Satu kalimat. Dua kalimat. Tiga kalimat.`;
+    const { content: out, diagnostics } = finishTwoSourceWriting(
+      draft,
+      facts,
+      observations,
+    );
+    expect(out.key_findings[0]!.title).toBe("Situs Anda");
+    expect(out.key_findings[0]!.headline).toBeUndefined();
+    expect(out.key_findings[1]!.headline).toEqual({
+      number: "2",
+      caption: "klinik lain",
+      basis: "chatgpt_named_businesses",
+    });
+    expect(out.priorities[0]!.action).toBe("Profil Google lengkap");
+    expect(out.priorities[0]!.why).toBe("ulasan.");
+    expect(out.two_source_writing!.verdict).toBe("Satu kalimat. Dua kalimat.");
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        "banned_title_repaired",
+        "headline_dropped",
+        "verdict_cut",
+      ]),
+    );
+  });
+
+  it("keeps only reasons, topic names and readings it can place", () => {
+    const draft = content();
+    draft.two_source_writing = {
+      ...draft.two_source_writing!,
+      competitor_reasons: [
+        { name: "klinik  satu", reason: "ChatGPT menyebut dokternya." },
+        { name: "Klinik Satu", reason: "dua kali" },
+        { name: "Klinik Hantu", reason: "tidak ada di daftar" },
+      ],
+      topic_names: [
+        { prompt_id: "q2", topic: "Bekas jerawat" },
+        { prompt_id: "q1", topic: "Sudah punya topik" },
+        { prompt_id: "q3", topic: "Pertanyaan q3?" },
+        { prompt_id: "q9", topic: "Tidak ada" },
+      ],
+      google_readings: [
+        { prompt_id: "q1", recommended: true },
+        { prompt_id: "q2", recommended: true },
+      ],
+    };
+    const { content: out } = finishTwoSourceWriting(draft, facts, observations);
+    expect(out.two_source_writing!.competitor_reasons).toEqual([
+      { name: "Klinik Satu", reason: "ChatGPT menyebut dokternya." },
+    ]);
+    expect(out.two_source_writing!.topic_names).toEqual([
+      { prompt_id: "q2", topic: "Bekas jerawat" },
+    ]);
+    expect(out.two_source_writing!.google_readings).toEqual([
+      { prompt_id: "q1", recommended: true },
+    ]);
+  });
+
+  it("drops a recommendation that cites no gap, and renumbers; with no gap anywhere, any question passes", () => {
+    const draft = content({
+      priorities: [
+        {
+          order: 1,
+          action: "Tulis halaman",
+          why: "x",
+          evidence_prompt_ids: ["q1"],
+        },
+        {
+          order: 2,
+          action: "Minta ulasan",
+          why: "x",
+          evidence_prompt_ids: ["q3"],
+        },
+      ],
+    });
+    const { content: out } = finishTwoSourceWriting(draft, facts, observations);
+    // q1: named and recommended by both sources, so not a gap.
+    expect(out.priorities.map((p) => [p.order, p.action])).toEqual([
+      [1, "Minta ulasan"],
+    ]);
+
+    const allNamed: typeof facts = {
+      ...facts,
+      google: facts.google.map((g) => ({
+        ...g,
+        outcome: "not_shown",
+        business_named: null,
+      })),
+    };
+    const noGaps = content({
+      details: ids.map((id) =>
+        detail(id, "mentioned", "recommended"),
+      ) as ReportContent["details"],
+      priorities: [
+        {
+          order: 1,
+          action: "Tulis halaman",
+          why: "x",
+          evidence_prompt_ids: ["q1"],
+        },
+      ],
+    });
+    expect(
+      finishTwoSourceWriting(noGaps, allNamed, observations).content.priorities,
+    ).toHaveLength(1);
+  });
+
+  it("drops a headline outside the saved bounds, so the page never refuses the report", () => {
+    const draft = content({
+      key_findings: [
+        {
+          title: "Dua klinik lain",
+          explanation: "Di ChatGPT, dua klinik lain disebut.",
+          evidence_prompt_ids: ["q2", "q3"],
+          headline: {
+            number: "2",
+            caption: "  ",
+            basis: "chatgpt_named_businesses",
+          },
+        },
+        {
+          title: "Dua klinik lain lagi",
+          explanation: "Di ChatGPT, dua klinik lain disebut.",
+          evidence_prompt_ids: ["q2", "q3"],
+          headline: {
+            number: "2",
+            caption: "k".repeat(161),
+            basis: "chatgpt_named_businesses",
+          },
+        },
+      ],
+    });
+    const { content: out } = finishTwoSourceWriting(draft, facts, observations);
+    expect(out.key_findings.map((f) => f.headline)).toEqual([
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("keeps the writer's recommendations whole rather than leave none", () => {
+    const draft = content({
+      priorities: [
+        {
+          order: 1,
+          action: "Tulis halaman",
+          why: "x",
+          evidence_prompt_ids: ["q1"],
+        },
+      ],
+    });
+    const { content: out, diagnostics } = finishTwoSourceWriting(
+      draft,
+      facts,
+      observations,
+    );
+    expect(out.priorities).toHaveLength(1);
+    expect(diagnostics).not.toContain("unsupported_priority_removed");
+  });
+
+  it("a caption must say what its basis counts", () => {
+    const fits = (caption: string, basis: HeadlineBasis) =>
+      captionFitsBasis({ caption, basis });
+    expect(fits("pertanyaan yang menyebut Klinik Anda", "chatgpt_named")).toBe(
       true,
     );
     expect(
-      sentenceFlagged("Di Google AI Overview, Linda Dental tidak disebut.", f),
+      fits("pertanyaan yang menyebut Klinik Anda", "chatgpt_not_named"),
     ).toBe(false);
+    expect(
+      fits("jawaban yang tidak menyebut Klinik Anda", "chatgpt_not_named"),
+    ).toBe(true);
+    expect(
+      fits("jawaban yang tidak menyebut Klinik Anda", "chatgpt_named"),
+    ).toBe(false);
+    expect(fits("pertanyaan tanpa AI Overview", "google_not_shown")).toBe(true);
+    expect(fits("belum disebut sumber mana pun", "named_by_neither")).toBe(
+      true,
+    );
+    // A cited-only caption may say "tanpa menyebut nama".
+    expect(
+      fits(
+        "blog Anda dikutip Google, tanpa menyebut nama",
+        "google_cited_only",
+      ),
+    ).toBe(true);
+    // Counts of domains or businesses, and verbatim figures, are not checked.
+    expect(fits("sumber pihak ketiga", "cited_domains")).toBe(true);
+    expect(fits("cabang, belum termasuk mitra", "verbatim")).toBe(true);
+
+    const draft = content({
+      key_findings: [
+        {
+          title: "Dua jawaban",
+          explanation: "Di ChatGPT, dua jawaban.",
+          evidence_prompt_ids: ["q2", "q3"],
+          headline: {
+            number: "2 dari 2",
+            caption: "jawaban yang menyebut Klinik Anda",
+            basis: "chatgpt_not_named",
+          },
+        },
+      ],
+    });
+    expect(
+      finishTwoSourceWriting(draft, facts, observations).content
+        .key_findings[0]!.headline,
+    ).toBeUndefined();
+  });
+
+  it("a report that would fail the saved schema is saved without the new block", () => {
+    // A saved report holds ten answers.
+    const ten = [
+      ...content().details,
+      ...["q5", "q6", "q7", "q8", "q9", "q10"].map((id) =>
+        detail(id, "absent", "not_assessed"),
+      ),
+    ] as ReportContent["details"];
+    const fine = content({ details: ten });
+    expect(saveableTwoSourceWriting(fine)).toEqual({
+      content: fine,
+      dropped: false,
+    });
+    const broken = content({
+      details: ten,
+      key_findings: [
+        {
+          title: "x",
+          explanation: "y",
+          evidence_prompt_ids: ["q2"],
+          headline: { number: "", caption: "", basis: "verbatim" },
+        },
+      ],
+    });
+    const { content: out, dropped } = saveableTwoSourceWriting(broken);
+    expect(dropped).toBe(true);
+    expect(out.two_source_writing).toBeUndefined();
+    expect(out.key_findings[0]).not.toHaveProperty("headline");
+    expect(out.conclusion).toBe(broken.conclusion);
+  });
+
+  it("cuts a verdict to two sentences and 220 characters", () => {
+    expect(cutVerdict("Satu. Dua. Tiga.")).toBe("Satu. Dua.");
+    const long = `${"kata ".repeat(60).trim()}.`;
+    expect(cutVerdict(long).length).toBeLessThanOrEqual(220);
+    expect(cutVerdict(long).endsWith("…")).toBe(true);
   });
 });
 
-describe("AC-20: Klinik Anda for a clinic", () => {
-  it("decides a clinic from the confirmed category", () => {
-    expect(reportSubjectForCategory("Klinik kecantikan")).toBe("klinik");
-    expect(reportSubjectForCategory("klinik gigi")).toBe("klinik");
-    expect(reportSubjectForCategory("Fisioterapi (klinik)")).toBe("klinik");
-    expect(reportSubjectForCategory("kedai kopi")).toBe("bisnis");
-    expect(reportSubjectForCategory("Poliklinik")).toBe("bisnis");
-    expect(reportSubjectForCategory("")).toBe("bisnis");
+describe("answer shapes (B-04)", () => {
+  it("the new writer's schema is valid for OpenAI strict mode: every field required", () => {
+    const format = zodTextFormat(
+      twoSourceWritingSynthesisSchema,
+      "nuave_audit_report",
+    );
+    const walk = (node: unknown): void => {
+      if (!node || typeof node !== "object") return;
+      const schema = node as {
+        type?: string;
+        properties?: Record<string, unknown>;
+        required?: string[];
+      };
+      if (schema.type === "object" && schema.properties)
+        expect(new Set(schema.required)).toEqual(
+          new Set(Object.keys(schema.properties)),
+        );
+      Object.values(schema).forEach(walk);
+    };
+    walk(format.schema);
   });
 
-  it("the count sentences and code repairs say klinik Anda", () => {
-    expect(countSentence("muncul", 3, 9, "klinik")).toBe(
-      "Klinik Anda muncul di 3 dari 9 pertanyaan",
-    );
-    expect(countSentence("muncul", 3, 9)).toBe(
-      "Bisnis Anda muncul di 3 dari 9 pertanyaan",
-    );
-    expect(googleNamedSentence(1, 7, "klinik")).toBe(
-      "Klinik Anda muncul di 1 dari 7 pertanyaan",
-    );
-    const clinic = { ...facts(2, 3), subject: "klinik" as const };
-    expect(twoSourceCountSentence(clinic)).toBe(
-      "Di ChatGPT, klinik Anda disebut di 2 dari 9 jawaban; di Google AI Overview, klinik Anda disebut di 3 dari 8 ringkasan.",
-    );
-    const { content } = repairTwoSourceWriting(
-      {
-        conclusion: "Di Google AI Overview, klinik Anda tidak disebut.",
-        key_findings: [],
-      },
-      clinic,
-    );
-    expect(content.conclusion).toBe(
-      "Di Google AI Overview, klinik Anda disebut di 3 dari 8 ringkasan.",
-    );
-  });
-
-  it("flags a false negation about klinik Anda like one about bisnis Anda", () => {
+  it("older writers' answer shape still requires every priority field", () => {
+    const priority = reportSynthesisSchema.shape.priorities.element;
     expect(
-      twoSourceWritingViolations(
-        {
-          conclusion: "Di ChatGPT, klinik Anda tidak muncul.",
-          key_findings: [],
-        },
-        { ...facts(2, 0), subject: "klinik" },
-      ),
-    ).toHaveLength(1);
+      priority.safeParse({
+        order: 1,
+        action: "a",
+        why: "b",
+        evidence_prompt_ids: ["q1"],
+      }).success,
+    ).toBe(false);
   });
 });

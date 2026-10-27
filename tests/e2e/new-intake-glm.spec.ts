@@ -429,6 +429,20 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   await expect(competitor).toContainText("Rating 4,6 · 131 ulasan");
   await expect(competitor).toContainText("kartu ChatGPT 9×");
   await expect(fresh.locator("[data-competitor-logo]")).toHaveCount(0);
+  // Spec 021 Part B: the new writer's block, from the labelled synthetic
+  // writer: verdict, a confirmed headline number, the reason on the
+  // competitor's row, the takeaways and the three-step plan.
+  await expect(fresh.locator("[data-verdict]")).toContainText(
+    "Uji alur sintetis",
+  );
+  await expect(fresh.locator("[data-finding-stat]").first()).toContainText(
+    /\d+ dari \d+/,
+  );
+  await expect(competitor.locator("[data-competitor-reason]")).toContainText(
+    "Disebut AI karena:",
+  );
+  await expect(fresh.locator("[data-takeaways] li")).toHaveCount(2);
+  await expect(fresh.locator("[data-plan] li")).toHaveCount(3);
   await expect(fresh.locator("header#stage-5")).toContainText("Kedai Fiksi");
   await expect(fresh.locator("[data-report-checked]")).toContainText(
     "ChatGPT dan Google AI Overview",
@@ -917,12 +931,15 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   }
   await checkContentsNavigation();
   // Spec 021 A-01, AC-A3: the chips follow the page; no Ringkasan chip.
-  // The synthetic questions' saved topics equal the questions, so Celah
-  // Topik has no rows and is left out with its chip (A-05).
-  await expect(fresh.locator("#topik")).toHaveCount(0);
+  // The synthetic questions are saved without topic names; Part B's writer
+  // names them, so Celah Topik shows its rows and its chip (A-05).
+  await expect(fresh.locator("#topik [data-topics-missing]")).toContainText(
+    "Topik contoh sintetis",
+  );
   await expect(contents.getByRole("link")).toHaveText([
     "Temuan Utama",
     "Peta Pesaing",
+    "Celah Topik",
     "Rekomendasi",
     "Penutup",
     "Jawaban AI",

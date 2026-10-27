@@ -128,48 +128,49 @@ describe("test B harness", () => {
       expect(result.report![key]).toEqual(delivered[key]);
   });
 
-  it("gives new-input writers Google's words and the instruction, and today's writer neither", async () => {
+  it("with Spec 021 Part B the production prompt carries Google's words, so the harness adds none", async () => {
     const exported = await deliveredOrderExport();
     const evidence = evidenceFromD1(exported.order, exported.questions);
     const today = await entryInput(evidence, REFERENCE);
     const fresh = await entryInput(evidence, ENTRIES[1]!);
 
-    const todayGoogle = today.input.two_source_facts!.google;
-    const freshGoogle = fresh.input.two_source_facts!.google as {
-      outcome: string;
-      ai_overview_text?: string;
-    }[];
-    expect(todayGoogle.some((fact) => "ai_overview_text" in fact)).toBe(false);
-    const summaries = freshGoogle.filter((fact) => fact.outcome === "summary");
+    // Neither input gets the harness's own field: production sends the words.
+    for (const input of [today.input, fresh.input])
+      expect(
+        input.two_source_facts!.google.some(
+          (fact) => "ai_overview_text" in fact,
+        ),
+      ).toBe(false);
+    const questions = fresh.input.two_source_facts!.writer!.questions;
+    const summaries = fresh.input.two_source_facts!.google.filter(
+      (fact) => fact.outcome === "summary",
+    );
     expect(summaries.length).toBeGreaterThan(0);
     for (const fact of summaries) {
-      expect(fact.ai_overview_text?.length).toBeGreaterThan(0);
-      expect(containsPhoneNumber(fact.ai_overview_text!)).toBe(false);
+      const text = questions.find(
+        (q) => q.prompt_id === fact.prompt_id,
+      )!.google_text;
+      expect(text.length).toBeGreaterThan(0);
+      expect(containsPhoneNumber(text)).toBe(false);
     }
-    expect(
-      freshGoogle
-        .filter((fact) => fact.outcome !== "summary")
-        .every((fact) => !fact.ai_overview_text),
-    ).toBe(true);
     // The counts the source checks use do not change.
     expect(fresh.input.two_source_facts!.counts).toEqual(
       today.input.two_source_facts!.counts,
     );
 
-    // A writer sees the words in its user text and the instruction in its
-    // developer text.
+    // A writer sees the words in its user text, with no harness instruction.
     const seen: string[] = [];
     const spy =
       (): ReportGenerator =>
       async (...args) => {
         const { reportRequest } = await import("../src/lib/audit/openai");
         const request = reportRequest(args[0] as never, args[1]);
-        seen.push(request.input[1].content);
+        seen.push(request.input[0].content, request.input[1].content);
         return generateSyntheticLocalReport(...args);
       };
     await runEntry(evidence, ENTRIES[1]!, spy, new Ledger(join(dir, "s.json")));
-    expect(seen[0]).toContain("ai_overview_text");
-    expect(NEW_INPUT_INSTRUCTIONS).toContain("ai_overview_text");
+    expect(seen[1]).toContain('"google_text"');
+    expect(seen[0]).not.toContain(NEW_INPUT_INSTRUCTIONS);
   });
 
   it("compares the delivered writing only when today's writer version wrote it", async () => {
@@ -206,15 +207,24 @@ describe("test B harness", () => {
     const exported = await deliveredOrderExport();
     const evidence = evidenceFromD1(exported.order, exported.questions);
     const today = await entryInput(evidence, REFERENCE);
-    const fresh = await entryInput(evidence, ENTRIES[1]!);
-    const texts = (
-      fresh.input.two_source_facts!.google as { ai_overview_text?: string }[]
-    ).flatMap((fact) => (fact.ai_overview_text ? [fact.ai_overview_text] : []));
+    const texts = evidence.rows.flatMap((row) => {
+      const check = row.g_result_json
+        ? (JSON.parse(row.g_result_json) as { outcome: string; text: string })
+        : null;
+      return row.g_status === "done" && check?.outcome === "summary"
+        ? [trimGoogleText(check.text)]
+        : [];
+    });
+    expect(texts.length).toBeGreaterThan(0);
 
-    // Today's production prompt carries no Google words.
-    expect(productionSendsGoogleWords(today.input, texts)).toBe(false);
-    // A prompt that already carries them (as Part B's will) is left alone.
-    expect(productionSendsGoogleWords(fresh.input, texts)).toBe(true);
+    // Spec 021 Part B's production prompt carries them: nothing is added.
+    expect(productionSendsGoogleWords(today.input, texts)).toBe(true);
+    // A prompt without them (the writer before Part B) would get them.
+    const before = {
+      ...today.input,
+      two_source_facts: { ...today.input.two_source_facts!, writer: undefined },
+    };
+    expect(productionSendsGoogleWords(before, texts)).toBe(false);
   });
 
   it("tells writers apart by their instructions, not by model or effort", async () => {
@@ -228,8 +238,15 @@ describe("test B harness", () => {
       ENTRIES.map((entry) => writerFingerprint(entry, fresh.input)),
     );
     expect(prints.size).toBe(1);
-    // Other instructions (here without Google's words) are another writer.
-    expect(writerFingerprint(REFERENCE, today.input)).not.toBe([...prints][0]);
+    // The reference is written by the same production writer.
+    expect(writerFingerprint(REFERENCE, today.input)).toBe([...prints][0]);
+    // Other instructions (the writer before Spec 021 Part B) are another
+    // writer.
+    const before = {
+      ...today.input,
+      two_source_facts: { ...today.input.two_source_facts!, writer: undefined },
+    };
+    expect(writerFingerprint(REFERENCE, before)).not.toBe([...prints][0]);
   });
 
   it("refuses an order approved before Spec 018", async () => {
@@ -462,7 +479,10 @@ describe("the GLM writer (Cheaper Inference)", () => {
       max_tokens: 16_000,
     });
     expect(body.messages[0]!.content).toContain("JSON Schema");
-    expect(body.messages[0]!.content).toContain("ai_overview_text");
+    // Spec 021 Part B: the production prompt carries Google's words itself.
+    expect(body.messages.map((m) => m.content).join("\n")).toContain(
+      '"google_text"',
+    );
     // "{}" is not a report: a failed entry, settled at the billed cost.
     expect(result.status).toBe("failed");
     expect(result.failure).toMatch(/did not match the report schema/);
