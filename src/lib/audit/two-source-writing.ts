@@ -347,10 +347,20 @@ export function headlineConfirmed(
   }));
 
   if (basis === "verbatim") {
-    const texts = cited.flatMap(({ observation, question }) => [
-      observation?.run_status === "completed" ? observation.raw_answer : "",
-      question?.google_text ?? "",
-    ]);
+    const texts = [
+      ...cited.flatMap(({ observation, question }) => [
+        observation?.run_status === "completed" ? observation.raw_answer : "",
+        question?.google_text ?? "",
+      ]),
+      // The reading test: the business's own pages, and the pages the cited
+      // questions' answers cited.
+      ...(facts.writer.pages ?? [])
+        .filter(
+          (page) =>
+            page.kind === "own" || page.cited_in.some((id) => ids.includes(id)),
+        )
+        .map((page) => page.text),
+    ];
     return value
       .split(/\s+vs\.?\s+/i)
       .every(

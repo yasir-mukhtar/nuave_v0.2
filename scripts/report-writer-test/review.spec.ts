@@ -24,22 +24,29 @@ const ORIGIN = `http://localhost:${PORT}`;
 
 function pages(): { file: string; pdf: string }[] {
   const out: { file: string; pdf: string }[] = [];
-  const review = join(EVIDENCE_DIR, "review");
-  if (!existsSync(review)) return out;
-  for (const order of readdirSync(review))
-    for (const name of readdirSync(join(review, order)).filter((n) =>
-      n.endsWith(".json"),
+  // The blind set, and the reading test's blind pairs.
+  for (const root of ["review", "review-pages"]) {
+    const review = join(EVIDENCE_DIR, root);
+    if (!existsSync(review)) continue;
+    for (const order of readdirSync(review).filter(
+      (name) => !name.endsWith(".json"),
     ))
-      out.push({
-        file: join(review, order, name),
-        pdf: join(
-          review,
-          order,
-          name === "reference.json"
-            ? "Referensi - laporan yang dikirim.pdf"
-            : `Laporan ${name.replace(/\.json$/, "")}.pdf`,
-        ),
-      });
+      for (const name of readdirSync(join(review, order)).filter((n) =>
+        n.endsWith(".json"),
+      ))
+        out.push({
+          file: join(review, order, name),
+          pdf: join(
+            review,
+            order,
+            name === "reference.json"
+              ? "Referensi - laporan yang dikirim.pdf"
+              : root === "review-pages"
+                ? name.replace(/\.json$/, ".pdf")
+                : `Laporan ${name.replace(/\.json$/, "")}.pdf`,
+          ),
+        });
+  }
   return out;
 }
 

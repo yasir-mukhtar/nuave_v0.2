@@ -46,6 +46,7 @@ import {
 import type { TwoSourceReportFacts } from "../../src/lib/audit/two-source-report";
 import {
   type AuditCallTelemetry,
+  type AuditObservation,
   type AuditReport,
   type ReportContent,
   type ReportSynthesis,
@@ -61,6 +62,11 @@ import {
 } from "../../src/lib/intake/glm-local";
 import { z } from "zod";
 import type { GoogleCheck } from "../../src/lib/checks/google";
+import {
+  readPagesForReport,
+  type PageFetcher,
+  type ReadPage,
+} from "../../src/lib/reading/page-reader";
 import {
   orderReportInput,
   parseIntake,
@@ -170,7 +176,11 @@ export type EntryId =
   | "haiku-medium"
   | "glm-low"
   | "opus-low"
-  | "opus-medium";
+  | "opus-medium"
+  // The reading test (founder decision 2026-10-27): the same writer, also
+  // given the pages Firecrawl read. Compared with their twin, not blind.
+  | "luna-high-pages"
+  | "opus-medium-pages";
 
 export type EntryKey = EntryId | "reference";
 
@@ -180,7 +190,8 @@ export type Entry = {
   provider: "openai" | "anthropic" | "cheaper-inference" | null;
   model: string | null;
   effort: "low" | "medium" | "high" | null;
-  input: "today" | "new";
+  /** "pages": the new input plus the pages read for the order. */
+  input: "today" | "new" | "pages";
 };
 
 /** The report the customer received, shown beside the blind reports as a
@@ -266,6 +277,100 @@ export const ENTRIES: readonly Entry[] = [
   },
 ];
 
+/**
+ * The reading test (founder decision 2026-10-27): each writer here is its
+ * twin above, also given the pages Firecrawl read for the order (the
+ * business's own site and the pages the answers cited most). They are not
+ * in the blind set: the founder compares each with its twin, labelled.
+ */
+export const PAGE_ENTRIES: readonly (Entry & { twin: EntryId })[] = [
+  {
+    id: "luna-high-pages",
+    twin: "luna-high",
+    label: "GPT-5.6 Luna, high effort, new input and pages read",
+    provider: "openai",
+    model: "gpt-5.6-luna",
+    effort: "high",
+    input: "pages",
+  },
+  {
+    id: "opus-medium-pages",
+    twin: "opus-medium",
+    label: "Claude Opus 5.5, medium effort, new input and pages read",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
+    effort: "medium",
+    input: "pages",
+  },
+];
+
+/** Where an order's read pages are kept, so a re-run never reads again. */
+export const pagesPath = (order: string, dir = EVIDENCE_DIR) =>
+  join(dir, "pages", `${order}.json`);
+
+export type OrderPages = {
+  read_at: string;
+  pages: ReadPage[];
+  unread: string[];
+  /** Firecrawl requests made (one per page tried, one site map). */
+  firecrawl_requests: number;
+};
+
+/** Reads an order's pages with Firecrawl: its own site (unless it is an
+ * Instagram profile) and the pages its ChatGPT and Google answers cited. */
+export async function readOrderPages(
+  evidence: OrderEvidence,
+  fetcher: PageFetcher,
+): Promise<OrderPages> {
+  const intake = parseIntake(evidence.order)!;
+  const context = intake.context as { identity?: { source?: string } };
+  const sources = evidence.rows.flatMap((row) => {
+    const observation = row.observation_json
+      ? (JSON.parse(row.observation_json) as AuditObservation)
+      : null;
+    const check =
+      row.g_status === "done" && row.g_result_json
+        ? (JSON.parse(row.g_result_json) as GoogleCheck)
+        : null;
+    return [
+      ...(observation?.run_status === "completed"
+        ? observation.sources.map((source) => ({
+            prompt_id: row.prompt_id,
+            url: source.url,
+          }))
+        : []),
+      ...(check?.outcome === "summary"
+        ? check.references.map((reference) => ({
+            prompt_id: row.prompt_id,
+            url: reference.url,
+          }))
+        : []),
+    ];
+  });
+  let requests = 0;
+  const counted: PageFetcher = {
+    scrape: (url) => {
+      requests += 1;
+      return fetcher.scrape(url);
+    },
+    map: (url) => {
+      requests += 1;
+      return fetcher.map(url);
+    },
+  };
+  const { pages, unread } = await readPagesForReport({
+    ownSite: context.identity?.source ?? null,
+    sources,
+    fetcher: counted,
+  });
+  return {
+    read_at: new Date().toISOString(),
+    pages,
+    unread,
+    firecrawl_requests: requests,
+  };
+}
+
 /** Google's answers are shortened by the production writer's own rule
  * (Spec 021 B-01), so the harness and production never differ. */
 export {
@@ -289,7 +394,7 @@ type FactsWithText = TwoSourceReportFacts & {
 };
 
 /** Today's report input, plus Google's words for the "new input" entries. */
-export async function entryInput(evidence: OrderEvidence, entry: Entry) {
+async function baseInput(evidence: OrderEvidence, entry: Entry) {
   const intake = parseIntake(evidence.order)!;
   const built = await orderReportInput({
     orderId: evidence.order.id,
@@ -330,6 +435,44 @@ export async function entryInput(evidence: OrderEvidence, entry: Entry) {
     intake,
     input: { ...built.input, two_source_facts: withText },
   };
+}
+
+/** An entry's report input: today's, the new one, or (the reading test)
+ * the twin's new input plus the pages read for the order. */
+export async function entryInput(
+  evidence: OrderEvidence,
+  entry: Entry,
+  dir = EVIDENCE_DIR,
+) {
+  if (entry.input === "pages") {
+    // The twin's own input, plus the pages: the pair differs only by them.
+    const pageEntry = PAGE_ENTRIES.find((item) => item.id === entry.id);
+    const twin = ENTRIES.find((item) => item.id === pageEntry?.twin);
+    if (!twin) throw new Error(`${entry.id} has no twin writer.`);
+    const path = pagesPath(evidence.order.order_number, dir);
+    const read = existsSync(path)
+      ? (JSON.parse(readFileSync(path, "utf8")) as OrderPages)
+      : null;
+    if (!read?.pages.length)
+      throw new Error(
+        `${evidence.order.order_number}: no pages read (${path}); a live run that names a page writer reads them first.`,
+      );
+    const base = await baseInput(evidence, twin);
+    const writer = base.input.two_source_facts?.writer;
+    if (!writer)
+      throw new Error(`${entry.id}: the twin's input has no writer facts.`);
+    return {
+      ...base,
+      input: {
+        ...base.input,
+        two_source_facts: {
+          ...base.input.two_source_facts!,
+          writer: { ...writer, pages: read.pages },
+        },
+      },
+    };
+  }
+  return baseInput(evidence, entry);
 }
 
 /** True when the production writer's own prompt already carries Google's
@@ -510,11 +653,15 @@ export function entryPrompt(entry: Entry, ...args: WriterArgs) {
  * mistaken for results of the new writer. */
 export function writerFingerprint(entry: Entry, input: WriterArgs[0]): string {
   const { request, developer } = entryPrompt(entry, input);
-  return createHash("sha256")
+  const hash = createHash("sha256")
     .update(developer)
-    .update(JSON.stringify(request.text.format))
-    .digest("hex")
-    .slice(0, 12);
+    .update(JSON.stringify(request.text.format));
+  // The reading test: pages read again make a new writer, so its earlier
+  // result is set aside and written again. Other writers are unchanged.
+  const pages = input.two_source_facts?.writer?.pages;
+  if (pages?.length)
+    hash.update(JSON.stringify(pages.map((page) => [page.url, page.text])));
+  return hash.digest("hex").slice(0, 12);
 }
 
 function harnessAddedGoogleWords(input: WriterArgs[0]): boolean {
@@ -1169,6 +1316,73 @@ export function assignLetters(
     key[order] = Object.fromEntries(ids.map((id, i) => [LETTERS[i]!, id]));
   }
   return key;
+}
+
+/** The blind set's writer for an order: every blind entry shares it, so it
+ * is known whichever entries a run names. */
+export async function blindWriterFingerprint(
+  evidence: OrderEvidence,
+  dir = EVIDENCE_DIR,
+): Promise<string> {
+  const first = ENTRIES[0]!;
+  return writerFingerprint(
+    first,
+    (await entryInput(evidence, first, dir)).input,
+  );
+}
+
+/** One reading-test pair, blind: its two reports are "1" and "2". */
+export type PagePairKey = {
+  /** The page writer's and its twin's writers when the pair was drawn. */
+  writers: [string, string];
+  entry: EntryId;
+  twin: EntryId;
+  /** Which number is the report written with pages. */
+  with_pages: "1" | "2";
+};
+
+/**
+ * The reading test's pairs for one order, each blind: "Pasangan A" holds a
+ * page writer's report and its twin's as "1" and "2" in random order, and
+ * the pairs' letters are drawn at random too. A pair is made only when both
+ * reports come from today's writers. An existing draw is kept while its
+ * writers stay the same.
+ */
+export function drawPagePairs(
+  ready: readonly {
+    entry: EntryId;
+    twin: EntryId;
+    writers: [string, string];
+  }[],
+  previous: Record<string, PagePairKey> | undefined,
+  pick: (n: number) => number = (n) => randomInt(n),
+): Record<string, PagePairKey> {
+  const same = (key: PagePairKey) =>
+    ready.some(
+      (pair) =>
+        pair.entry === key.entry &&
+        pair.writers[0] === key.writers[0] &&
+        pair.writers[1] === key.writers[1],
+    );
+  const kept = Object.entries(previous ?? {}).filter(([, key]) => same(key));
+  const out: Record<string, PagePairKey> = Object.fromEntries(kept);
+  const free = LETTERS.filter((letter) => !(letter in out));
+  const fresh = ready.filter(
+    (pair) => !kept.some(([, key]) => key.entry === pair.entry),
+  );
+  for (let i = fresh.length - 1; i > 0; i -= 1) {
+    const j = pick(i + 1);
+    [fresh[i], fresh[j]] = [fresh[j]!, fresh[i]!];
+  }
+  fresh.forEach((pair, i) => {
+    out[free[i]!] = {
+      writers: pair.writers,
+      entry: pair.entry,
+      twin: pair.twin,
+      with_pages: pick(2) === 0 ? "1" : "2",
+    };
+  });
+  return out;
 }
 
 /** Letters for entries added after an order's letters were drawn (and

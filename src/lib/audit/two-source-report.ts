@@ -24,6 +24,8 @@ export type TwoSourceReportVersion =
 export const TWO_SOURCE_EXPORT_VERSION =
   "nuave-evidence-two-source-v1" as const;
 
+import type { ReadPage } from "../reading/page-reader";
+
 export type NamedFact = "named" | "source_only" | "absent";
 
 /** How the report names the customer's business: "Klinik Anda" for a clinic,
@@ -302,6 +304,10 @@ export type TwoSourceWriterFacts = {
   /** Every other business the answers name: a "disebut karena" reason may
    * name only these. */
   businesses: string[];
+  /** The reading test (founder decision 2026-10-27): pages Nuave read, the
+   * business's own site and the pages the answers cited most. Absent in
+   * production until the founder judges the test. */
+  pages?: ReadPage[];
 };
 
 export const SOURCE_CHATGPT = "ChatGPT";

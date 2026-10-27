@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-26
+> Updated: 2026-10-27
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -66,8 +66,11 @@
   `NUAVE_ANTHROPIC_API_KEY`, so Claude Code does not use it). Still needed:
   two more founder-run live orders (two businesses, two cities, one at a
   time), best run after Spec 021 PR 5 (competitor data) is deployed so they
-  carry everything the new writer reads. The reading test (Firecrawl,
-  Cloudflare, Apify) follows G1.
+  carry everything the new writer reads. The reading test (Firecrawl) moved
+  before G1 on 2026-10-27, for the report writer: does reading the
+  business's own site and the pages AI cited make the report deeper
+  ([decision](./DECISION_LOG.md#2026-10-27--reading-test-before-g1-the-writer-may-use-pages-read)).
+  Cloudflare and Apify follow G1.
 
 - **Question writing fixed** (2026-10-26): orders with a search city failed
   to get their ten questions; four causes fixed and a live check added
