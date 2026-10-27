@@ -1,10 +1,11 @@
 # Verification: Spec 021 — Report v2
 
-> Result: **Pending** (Part A built; Parts D, P, C and B to come)
+> Result: **Pending** (Parts A and D built; Parts P, C and B to come; not
+> Verified until the founder's AC-A7 and AC-D2 checks are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
-> Implementation version or commit: Part A, PR 2 (this file's first entry)
+> Implementation version or commit: Part A (PR #173), Part D (PR #175)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7 and AC-B4 readings.
@@ -123,10 +124,10 @@ stack.
 
 ### Acceptance results
 
-| Criterion | Result     | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-D1     | Pass       | unit "AC-D1, D-02" (a row, a summary dot and a P reference open the panel on that question and source; Escape and the close button return focus to the opener); e2e "Spec 012 on the saved report" (row, tabs, Berikutnya, P reference by pointer and keyboard, Escape, address unchanged)                                                                                                                                                                                                                                   |
-| AC-D2     | Partly met | Frame timing on the production build (Chromium, 1280×860, no CPU slow-down): every frame while the panel opens and closes is at most 16.8 ms, three runs each. A Chromium performance trace (not attached to the PR) shows one longer task on the first open, 29 to 41 ms in this container, which has no GPU; later opens stay at or under 14.5 ms. With the CPU slowed 2× one 33 ms frame appears, at 4× frames of 50 to 100 ms. The slide itself runs on the compositor. Left to the founder's judgement on a real phone. |
+| Criterion | Result     | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-D1     | Pass       | unit "AC-D1, D-02" (a row, a summary dot and a P reference open the panel on that question and source; Escape and the close button return focus to the opener); e2e "Spec 012 on the saved report" (row, tabs, Berikutnya, P reference by pointer and keyboard, Escape, address unchanged)                                                                                                                                                                                                                                                                                                                                                                                                |
+| AC-D2     | Partly met | Production build, Chromium at 1280×860, no CPU slow-down, frame intervals from `requestAnimationFrame`: **the first open of a fresh page drops one or two frames of about 33 ms** (one 29 to 41 ms task in the Chromium trace); after that, opens and closes stay at or under 16.8 ms per frame, with an occasional single 33 ms frame. With the CPU slowed 2× the first open shows frames of 50 to 70 ms. This container has no GPU, so it cannot stand in for a real device; the slide itself is a compositor transform. The trace is not attached. **The founder checks it on a mid-range laptop and on a phone**; Spec 021 is not marked Verified until that result is recorded here. |
 
 ### Checks run
 
@@ -177,8 +178,9 @@ is a compositor transform.
 [Round 2 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6430529047).
 All seven round-1 findings confirmed fixed. New:
 
-- Long links and words in an answer wrap again (`overflow-wrap: anywhere` on
-  the panel and the print appendix; source chips may shrink). The e2e test now
+- Long links and words in an answer wrap again on screen (`overflow-wrap:
+anywhere` on the panel and the print appendix; source chips may shrink). The
+  print overlap round 2 also saw had another cause, fixed in round 3 below. The e2e test now
   adds a long plain-text link to every answer and checks, at 320px, every
   question on both tabs; it fails without the fix.
 - Each question opens at its top when paging; the e2e test scrolls to the end
@@ -187,3 +189,21 @@ All seven round-1 findings confirmed fixed. New:
 - Paging is announced to screen readers; the title follows the shown
   question; the panel is full width below 640px; a unit test covers focus when
   "Sebelumnya" reaches question 1; the reduced-motion wording is corrected.
+
+### Review round 3 (ALMOST) and fixes
+
+[Round 3 comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175#issuecomment-6430879466).
+All round-2 findings confirmed fixed on screen. New:
+
+- **Print overlap fixed.** When a table in an answer crossed a page break,
+  Chromium repeated its header on the next page and pushed the answer under
+  the source chips and time that follow it in the appendix grid. The table
+  header now prints once (`.appendix thead { display: table-row-group }` in
+  print). Checked by printing the reviewer's report with a 9-row table in
+  every answer (14 A4 pages): the chips sit below each answer, where before
+  "source.example" printed over the last sentence.
+- AC-D2 is worded accurately above (the first open's dropped frames, a
+  mid-range laptop and a phone for the founder's check).
+- Smaller: the panel opens at the top even when reopening the question last
+  read; the scroll reset runs before paint; a long source domain ends with
+  "…"; the unused reduced-motion fade is removed (the panel appears in place).

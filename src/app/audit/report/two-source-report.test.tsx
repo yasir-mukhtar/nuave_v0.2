@@ -565,6 +565,22 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     );
   });
 
+  it("reopening the question last read starts at its top", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    const row = document.querySelector<HTMLElement>('[data-answer-row="2"]')!;
+    await user.click(row);
+    await screen.findByRole("dialog", { name: "Pertanyaan 2 dari 10" });
+    const body = document.querySelector<HTMLElement>("[data-panel-body]")!;
+    body.scrollTop = 186;
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await user.click(row);
+    await screen.findByRole("dialog", { name: "Pertanyaan 2 dari 10" });
+    expect(body.scrollTop).toBe(0);
+  });
+
   it("a copied note does not carry over to the next question", async () => {
     const user = userEvent.setup();
     Object.defineProperty(navigator, "clipboard", {

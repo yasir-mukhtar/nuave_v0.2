@@ -158,14 +158,10 @@
   transform: translate3d(100%, 0, 0);
 }
 @media (prefers-reduced-motion: reduce) {
-  /* No slide: the panel fades instead. */
-  .panel.panel {
-    transition-property: opacity;
-    transition-duration: 150ms;
-  }
+  /* No slide: the panel appears in place (the site-wide reduced-motion rule
+     already shortens the transition itself). */
   .panel.panel[data-starting-style],
   .panel.panel[data-ending-style] {
-    opacity: 0;
     transform: none;
   }
 }
@@ -368,11 +364,12 @@
   list-style: none;
 }
 .src {
-  display: inline-flex;
-  align-items: center;
+  /* inline-block, so a long domain ends with "…" (ellipsis does not apply to
+     a flex container). */
+  display: inline-block;
   max-width: 100%;
   min-height: 28px;
-  padding: 3px 10px;
+  padding: 5px 10px;
   overflow: hidden;
   border: 1px solid var(--line-200);
   border-radius: var(--radius-token-full);
@@ -449,6 +446,12 @@ a.src:hover {
   }
   .appendixQuestion h4 {
     break-after: avoid;
+  }
+  /* A table that crosses a page break would repeat its header on the next
+     page, pushing the answer down under the sources and time that follow in
+     the grid. Print the header once, where the table starts. */
+  .appendix thead {
+    display: table-row-group;
   }
   /* An open panel never prints over the report (Ctrl/Cmd+P). */
   .panel,

@@ -6,7 +6,7 @@ import {
   useCallback,
   useContext,
   useDeferredValue,
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -208,6 +208,8 @@ export function AnswerPanelProvider({
       setOrdinal(next);
       setSource(nextSource);
       setAnnouncement("");
+      // Every opening starts at the top, even of the question last read.
+      if (body.current) body.current.scrollTop = 0;
       setOpen(true);
     },
     [],
@@ -222,7 +224,7 @@ export function AnswerPanelProvider({
   const shownQuestion = questionAt(useDeferredValue(ordinal));
   const answer = answers.find((a) => a.id === shownQuestion.prompt_id);
   // Each question starts at its top, with its bubble in view.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (body.current) body.current.scrollTop = 0;
   }, [shownQuestion.ordinal]);
   const page = (next: number) => {
