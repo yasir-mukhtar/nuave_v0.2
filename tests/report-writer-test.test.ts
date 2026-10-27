@@ -33,6 +33,7 @@ import {
   evidenceFromD1,
   Ledger,
   NEW_INPUT_INSTRUCTIONS,
+  outputAllowance,
   productionSendsGoogleWords,
   replayDelivered,
   runEntry,
@@ -376,6 +377,42 @@ describe("a Claude answer that breaks the report format", () => {
     expect(result.failure).toMatch(/did not match the report schema: .+/);
     expect(result.calls).toHaveLength(1);
     expect(ledger.spentUsd()).toBe(0.004);
+  });
+});
+
+describe("the output allowance", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("is production's unless a run sets one, and the worst case follows it", () => {
+    expect(outputAllowance()).toBe(16_000);
+    vi.stubEnv("REPORT_TEST_MAX_OUTPUT_TOKENS", "32000");
+    expect(outputAllowance()).toBe(32_000);
+    vi.stubEnv("REPORT_TEST_MAX_OUTPUT_TOKENS", "lots");
+    expect(() => outputAllowance()).toThrow(/whole number/);
+  });
+
+  it("is what a Claude call asks for and what its result records", async () => {
+    vi.stubEnv("REPORT_TEST_MAX_OUTPUT_TOKENS", "32000");
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const create = vi.fn(async () => ({
+      id: "msg_test",
+      model: "claude-haiku-5-5",
+      stop_reason: "max_tokens",
+      content: [],
+      usage: { input_tokens: 30_000, output_tokens: 32_000 },
+    }));
+    const result = await runEntry(
+      evidence,
+      ENTRIES[4]!,
+      (ctx) =>
+        claudeWriter(ctx, { messages: { create } } as unknown as Anthropic),
+      new Ledger(join(dir, "spend.json")),
+    );
+    expect((create.mock.calls[0] as unknown[])[0]).toMatchObject({
+      max_tokens: 32_000,
+    });
+    expect(result.max_output_tokens).toBe(32_000);
   });
 });
 

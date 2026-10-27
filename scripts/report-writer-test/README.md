@@ -80,11 +80,15 @@ workspace. `ORDERS=NV-…` and
 `spend.json` at its worst case and is refused when that could take the total
 past **USD 5** (the hard stop for tests A and B together); it is then settled
 at its real cost. An entry already written by today's writer is never run
-again; delete its file under `runs/` to redo it.
+again; move its file out of `runs/` to redo it.
+`REPORT_TEST_MAX_OUTPUT_TOKENS=32000` gives that run a bigger output allowance
+than production's 16,000 (for a writer cut off at it); the allowance is
+recorded with the result.
 
 Once all five entries of an order exist from the same writer, letters A–E
 are drawn at random and kept in `key.json`. Do not open it until scoring is
-done.
+done. Scores in `scores.csv` are kept while the letters stay the same; a sheet
+whose letters are redrawn is kept aside as `scores-superseded-<time>.csv`.
 
 ## 4. Review
 

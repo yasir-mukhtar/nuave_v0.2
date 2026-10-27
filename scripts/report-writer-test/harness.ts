@@ -426,14 +426,24 @@ export function costUsd(
   );
 }
 
+/** The output allowance of each report call (answer plus thinking):
+ * production's, unless REPORT_TEST_MAX_OUTPUT_TOKENS gives a run another one
+ * (for a writer cut off at production's). Recorded with every result. */
+export function outputAllowance(): number {
+  const raw = process.env.REPORT_TEST_MAX_OUTPUT_TOKENS?.trim();
+  if (!raw) return AUDIT_CALL_LIMITS.report.max_output_tokens;
+  const tokens = Number(raw);
+  if (!Number.isInteger(tokens) || tokens < 1_000 || tokens > 64_000)
+    throw new Error(
+      "REPORT_TEST_MAX_OUTPUT_TOKENS must be a whole number from 1000 to 64000.",
+    );
+  return tokens;
+}
+
 /** A call's worst case before it is sent: every prompt character counted as a
  * token (the order guard's rule) and the whole output allowance used. */
 export function worstCaseUsd(model: string, promptChars: number) {
-  return costUsd(
-    model,
-    promptChars,
-    AUDIT_CALL_LIMITS.report.max_output_tokens,
-  );
+  return costUsd(model, promptChars, outputAllowance());
 }
 
 /* --------------------------------- writers -------------------------------- */
@@ -597,6 +607,7 @@ export function lunaWriter(
     const body = {
       ...request,
       reasoning: { effort: ctx.entry.effort! },
+      max_output_tokens: outputAllowance(),
       input: [{ ...request.input[0], content: developer }, request.input[1]],
     } as Request;
     const promptChars = developer.length + request.input[1].content.length;
@@ -704,7 +715,7 @@ export function claudeWriter(
       client.messages.create(
         {
           model,
-          max_tokens: AUDIT_CALL_LIMITS.report.max_output_tokens,
+          max_tokens: outputAllowance(),
           thinking: { type: "adaptive" },
           output_config: {
             effort: ctx.entry.effort!,
@@ -787,6 +798,8 @@ export type EntryResult = {
   };
   cost_usd: number;
   prompt_chars: number;
+  /** The output allowance per call (production's unless the run set one). */
+  max_output_tokens?: number;
   /** The writer fingerprint (see writerFingerprint); "delivered" for the
    * reference. */
   writer: string;
@@ -818,6 +831,7 @@ export async function runEntry(
     label: entry.label,
     prompt_chars: developer.length + user.length,
     writer: writer ? writerFingerprint(entry, built.input) : "delivered",
+    ...(writer ? { max_output_tokens: outputAllowance() } : {}),
   };
   try {
     const written = await createValidatedAuditReport(

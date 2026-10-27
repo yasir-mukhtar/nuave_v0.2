@@ -202,9 +202,22 @@ it.skipIf(orders.length === 0)(
       ? (JSON.parse(readFileSync(keyPath, "utf8")) as Record<string, unknown>)
       : {};
     const key: Record<string, OrderKey> = {};
-    const rows = [
-      "order,letter,report,evidence_1_5,specific_actions_1_5,natural_indonesian_1_5,clear_to_owner_1_5,send_to_paying_customer_yes_no,notes",
-    ];
+    const header =
+      "order,letter,report,evidence_1_5,specific_actions_1_5,natural_indonesian_1_5,clear_to_owner_1_5,send_to_paying_customer_yes_no,notes";
+    const rows = [header];
+    // The founder's scores are kept while an order's letters stay the same;
+    // a sheet whose letters are redrawn is kept aside, never overwritten.
+    const scoresPath = join(EVIDENCE_DIR, "scores.csv");
+    const scored = new Map<string, string>();
+    if (existsSync(scoresPath))
+      for (const line of readFileSync(scoresPath, "utf8")
+        .split("\n")
+        .slice(1)) {
+        const [order, letter, , ...rest] = line.split(",");
+        if (order && letter && rest.some((cell) => cell.trim()))
+          scored.set(`${order},${letter}`, rest.join(","));
+      }
+    let scoresDropped = false;
     for (const order of orders) {
       const evidence = loadEvidence(order);
       const intake = JSON.parse(evidence.order.intake_json) as {
@@ -229,7 +242,12 @@ it.skipIf(orders.length === 0)(
       const previous = stored[order] as OrderKey | undefined;
       const kept =
         previous?.writer === writer && previous.letters ? previous : null;
-      if (!kept) rmSync(dir, { recursive: true, force: true });
+      if (!kept) {
+        rmSync(dir, { recursive: true, force: true });
+        scoresDropped ||= [...scored.keys()].some((k) =>
+          k.startsWith(`${order},`),
+        );
+      }
       write(
         join(dir, "reference.json"),
         page(readResult(order, "reference")!.report!),
@@ -248,7 +266,7 @@ it.skipIf(orders.length === 0)(
       for (const [letter, id] of Object.entries(key[order]!.letters)) {
         const result = readResult(order, id)!;
         rows.push(
-          `${order},${letter},${result.report ? "ready" : "no report (writer failed)"},,,,,,`,
+          `${order},${letter},${result.report ? "ready" : "no report (writer failed)"},${(kept && scored.get(`${order},${letter}`)) || ",,,,,"}`,
         );
         if (!result.report) continue;
         const report = blindReport(result.report, deliveredAt);
@@ -260,6 +278,11 @@ it.skipIf(orders.length === 0)(
       }
     }
     write(keyPath, key);
-    writeFileSync(join(EVIDENCE_DIR, "scores.csv"), `${rows.join("\n")}\n`);
+    if (scoresDropped && existsSync(scoresPath))
+      renameSync(
+        scoresPath,
+        join(EVIDENCE_DIR, `scores-superseded-${Date.now()}.csv`),
+      );
+    writeFileSync(scoresPath, `${rows.join("\n")}\n`);
   },
 );
