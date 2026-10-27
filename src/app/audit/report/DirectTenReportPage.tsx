@@ -17,11 +17,7 @@ import type { AuditObservation, AuditReport } from "@/lib/audit/types";
 import { cn } from "@/lib/utils";
 import { formatObservationWindow, observationWindow } from "./report-header";
 import { DirectTenReportBody } from "./DirectTenReportBody";
-import {
-  TWO_SOURCE_ANSWERS_TITLE,
-  checkedLine,
-  placesText,
-} from "./TwoSourceSections";
+import { TwoSourceReportPage } from "./TwoSourceReport";
 import auditStyles from "../audit.module.css";
 
 const CONTENTS = [
@@ -33,15 +29,6 @@ const CONTENTS = [
 ] as const;
 
 type SectionId = (typeof CONTENTS)[number][0];
-
-/** Spec 018: the answers chip carries the two-source section's name. */
-function contentsFor(twoSource: boolean) {
-  return CONTENTS.map(([id, label]) =>
-    id === "detail" && twoSource
-      ? ([id, TWO_SOURCE_ANSWERS_TITLE] as const)
-      : ([id, label] as const),
-  );
-}
 
 /** The contents chips follow the reader down the report (scrollspy). */
 function useActiveSection(): [SectionId, (id: SectionId) => void] {
@@ -76,7 +63,20 @@ function useActiveSection(): [SectionId, (id: SectionId) => void] {
  * (the counts, then every answer in full), then Nuave's reading, the actions
  * and how the audit was run. The business name is marked inside the answers.
  */
-export function DirectTenReportPage({
+export function DirectTenReportPage(props: {
+  report: AuditReport;
+  brief: DirectTenAuditContext;
+  observations: AuditObservation[];
+  onDownloadJson: () => void;
+  previewNotice?: ReactNode;
+}) {
+  // Spec 021: two-source reports use the new layout; reports saved before
+  // Spec 018 keep this file's renderer exactly as it was.
+  if (props.report.two_source) return <TwoSourceReportPage {...props} />;
+  return <LegacyReportPage {...props} />;
+}
+
+function LegacyReportPage({
   report,
   brief,
   observations,
@@ -104,16 +104,9 @@ export function DirectTenReportPage({
   const presentation = buildReportPresentation(report, observations);
   const readyAnswers =
     presentation.status === "ready" ? presentation.answers : null;
-  const two = report.two_source;
-  // Spec 018: a two-source report's window is the first and last answered
-  // check of either source.
-  const observedWindow = two
-    ? two.checked_from && two.checked_to
-      ? observationWindow([two.checked_from, two.checked_to])
-      : null
-    : readyAnswers
-      ? observationWindow(readyAnswers.map((answer) => answer.observedAt))
-      : null;
+  const observedWindow = readyAnswers
+    ? observationWindow(readyAnswers.map((answer) => answer.observedAt))
+    : null;
   const distinct = (values: string[]) => [...new Set(values)].join(", ");
 
   // Keep the active chip in view inside the chip row (never the page).
@@ -171,16 +164,6 @@ export function DirectTenReportPage({
               {scopeLabel}
               {marketLabel ? ` · ${marketLabel}` : ""}
             </p>
-            {two ? (
-              <p
-                className="type-copy-sm col-span-2 row-start-4 m-0 text-ink-600"
-                data-report-checked
-              >
-                {checkedLine(two)}
-                <br />
-                {placesText(two.places)}
-              </p>
-            ) : null}
           </div>
           <dl
             className="m-0 grid grid-cols-2 gap-y-3 rounded-tile border border-line-200 px-4 py-3.5 [&>div]:grid [&>div]:content-start [&>div]:gap-[3px] [&>div:nth-child(even)]:border-l [&>div:nth-child(even)]:border-line-200 [&>div:nth-child(even)]:pl-3.5 [&>div:nth-child(odd)]:pr-3.5"
@@ -206,14 +189,7 @@ export function DirectTenReportPage({
                 {observations.length} pertanyaan independen
               </dd>
             </div>
-            {two ? (
-              <div>
-                <dt className="type-caption text-ink-500">Sumber jawaban</dt>
-                <dd className="type-label m-0 text-ink-900">
-                  ChatGPT dan Google AI Overview
-                </dd>
-              </div>
-            ) : readyAnswers ? (
+            {readyAnswers ? (
               <>
                 <div>
                   <dt className="type-caption text-ink-500">
@@ -255,7 +231,7 @@ export function DirectTenReportPage({
             ref={chips}
             className="m-0 flex list-none gap-2 overflow-x-auto px-6 [scrollbar-width:none]"
           >
-            {contentsFor(two !== undefined).map(([id, label]) => (
+            {CONTENTS.map(([id, label]) => (
               <li key={id} className="shrink-0">
                 <a
                   href={`#${id}`}

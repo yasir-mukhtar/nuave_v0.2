@@ -24,6 +24,11 @@
 //   npm run support -- norefund <order> <declined|delivered|settled>
 //                                                  close a refund case, no refund
 //
+// and (spec 021 A-08):
+//
+//   npm run support -- export <order>           the report's evidence JSON, saved
+//                                               to the git-ignored .local-evidence/
+//
 // It reads and writes the production D1 database through `wrangler d1 execute
 // --remote` (add `--local` to use the local development database instead), and
 // sends mail with the founder's Resend key, read from the git-ignored file
@@ -35,7 +40,7 @@
 // CLOUDFLARE_API_TOKEN with D1 edit permission, in the founder's own shell.
 
 import { execFile } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
@@ -141,6 +146,13 @@ try {
       siteOrigin: siteOrigin(),
       now: () => new Date(),
       out: (line) => console.log(line),
+      async saveEvidence(fileName, text) {
+        const folder = join(root, ".local-evidence");
+        mkdirSync(folder, { recursive: true });
+        const path = join(folder, fileName);
+        writeFileSync(path, text, { mode: 0o600 });
+        return path;
+      },
       async makeSender() {
         const apiKey = readSecretFile("resend-api-key");
         const from = readSecretFile("resend-from");

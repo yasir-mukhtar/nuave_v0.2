@@ -1,6 +1,6 @@
 ---
 name: verify-nuave
-description: Drive the Nuave web app's public audit journey (landing → /audit website step → free business check → business found → three steps → checkout with the Rp249.000 price → simulated payment → paid reading → intake → review → ten questions → start sheet → server audit → report opened by its emailed link, PDF and JSON downloads) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
+description: Drive the Nuave web app's public audit journey (landing → /audit website step → free business check → business found → three steps → checkout with the Rp249.000 price → simulated payment → paid reading → intake → review → ten questions → start sheet → server audit → report opened by its emailed link, PDF download) in a real browser, in synthetic mode, and save evidence. Use to prove a Nuave change works on the real user path, to reproduce a Nuave bug report, or to give an independent PASS/FAIL verdict on a Nuave PR.
 ---
 
 # verify-nuave
@@ -135,13 +135,12 @@ git-ignored. Never commit it.
     failure.png          only when the drive failed
   report-link/
     report-a4.headless.pdf   page.pdf() A4 in print media, labelled "headless, not native print"
-    download-evidence.json   the JSON the user downloads with "Unduh bukti JSON"
 ```
 
 - **Capture happens during each drive,** because a browser session cannot
   outlive one CLI call.
 - **`$V capture [--run <id>]`** then checks and indexes the run. It confirms
-  every step's screenshot and ARIA file, `network.json`, the PDF and the JSON
+  every step's screenshot and ARIA file, `network.json` and the PDF
   exist. It lists features not driven and failed drives. It writes
   `capture.json` with every file's size and sha256. The exit code is 1 on any
   problem.
@@ -149,7 +148,7 @@ git-ignored. Never commit it.
 Proof rules:
 
 - Use the real user path.
-- `Download PDF` is proved by the `window.print()` call it makes. Headless
+- `Unduh PDF` is proved by the `window.print()` call it makes. Headless
   Chromium cannot show the print dialog, so the drive counts the call. The PDF
   is `page.pdf()`, not the browser's own print output.
 

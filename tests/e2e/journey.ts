@@ -1458,24 +1458,10 @@ export function reportLocator(page: Page) {
   return page.locator("[data-direct-ten-report]");
 }
 
-/** The report's `Download PDF` buttons: the top bar's first, the one under
- * the report second. */
+/** The report's `Unduh PDF` buttons: the top bar's first, the one at the end
+ * of the report second (Spec 021). */
 export function downloadPdfButtons(page: Page) {
-  return page.getByRole("button", { name: "Download PDF", exact: true });
-}
-
-/** Presses the JSON export button and returns the parsed download. */
-export async function downloadEvidenceJson(
-  page: Page,
-  name: string | RegExp = "Unduh bukti JSON",
-) {
-  const download = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name, exact: typeof name === "string" })
-    .click();
-  const saved = await download;
-  const text = await readFile((await saved.path())!, "utf8");
-  return { download: saved, text, json: JSON.parse(text) };
+  return page.getByRole("button", { name: "Unduh PDF", exact: true });
 }
 
 /** The ready email the fake sender wrote (spec 016 R-28). */
