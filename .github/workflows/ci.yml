@@ -14,7 +14,12 @@ permissions:
   pull-requests: read
 
 jobs:
-  validate:
+  # The checks run as separate jobs at the same time, so a run takes about as
+  # long as the slowest one instead of all of them added together. `validate`
+  # at the bottom stays the single required check and passes only when every
+  # one of them passed.
+  checks:
+    name: Code checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -32,13 +37,44 @@ jobs:
       - name: Run non-mutating checks
         run: npm run check
 
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run unit tests (audit engine + fixture journey)
         run: npm run test:unit
 
-      - name: Build application
-        run: npm run build
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Build Cloudflare worker (build-only)
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # build:cf runs `npm run build` (the Next.js build) itself before
+      # packaging the worker, so one step covers both builds.
+      - name: Build application and Cloudflare worker (build-only)
         env:
           NUAVE_PROVIDER: openai
           NUAVE_QUESTION_PROVIDER: openai
@@ -58,11 +94,92 @@ jobs:
           EOF
           npm run build:cf
 
-      - name: Install Playwright browsers
+  browser-tests:
+    name: Browser tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The enabled suite holds most of the tests, so it is split by test
+        # into four parts that run on separate machines. The tests do not
+        # depend on running in order, so --fully-parallel lets Playwright
+        # split inside a file, not only between files.
+        include:
+          - name: enabled 1/4
+            suite: enabled
+            args: --fully-parallel --shard=1/4
+          - name: enabled 2/4
+            suite: enabled
+            args: --fully-parallel --shard=2/4
+          - name: enabled 3/4
+            suite: enabled
+            args: --fully-parallel --shard=3/4
+          - name: enabled 4/4
+            suite: enabled
+            args: --fully-parallel --shard=4/4
+          - name: disabled
+            suite: disabled
+            args: ""
+          - name: pixel
+            suite: pixel
+            args: ""
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The downloaded browser is kept between runs and only fetched again
+      # when the lockfile (and so the Playwright version) changes.
+      - name: Restore Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # Skips the download when the restored browser is already there, and
+      # always installs the system packages the browser needs.
+      - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
       - name: Run browser tests
-        run: npm run test:e2e
+        run: npm run test:e2e:${{ matrix.suite }} -- ${{ matrix.args }}
+
+      # Keeps the screenshot and trace of a failed test, so a failure that
+      # does not happen again locally can still be explained.
+      - name: Save failed-test screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ strategy.job-index }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  validate:
+    name: validate
+    if: always()
+    needs: [checks, unit-tests, build, browser-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every check to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Check results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            if [ "${result}" != "success" ]; then
+              echo "::error::At least one check did not pass (${result})."
+              exit 1
+            fi
+          done
 
   verify-main-origin:
     name: Verify main came from merged PR
