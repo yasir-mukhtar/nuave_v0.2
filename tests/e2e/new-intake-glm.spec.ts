@@ -417,6 +417,18 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   // synthetic run) and both sources named in the header.
   await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   await expect(report.locator("[data-failed-slot]")).toHaveCount(1);
+  // Spec 021 Part C: the fictional competitor's saved website and rating;
+  // a synthetic report requests no logo (C-03).
+  const competitor = fresh.locator('[data-competitor="other"]', {
+    hasText: "Klinik Sintesa Contoh",
+  });
+  await expect(competitor.locator("[data-competitor-site]")).toHaveAttribute(
+    "href",
+    "https://klinik-sintesa.test/",
+  );
+  await expect(competitor).toContainText("Rating 4,6 · 131 ulasan");
+  await expect(competitor).toContainText("kartu ChatGPT 9×");
+  await expect(fresh.locator("[data-competitor-logo]")).toHaveCount(0);
   await expect(fresh.locator("header#stage-5")).toContainText("Kedai Fiksi");
   await expect(fresh.locator("[data-report-checked]")).toContainText(
     "ChatGPT dan Google AI Overview",

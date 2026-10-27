@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent } from "@testing-library/react";
 import { presentationFixture } from "@/lib/audit/report-presentation.fixture";
 import {
   DIRECT_TEN_CONTEXT_VERSION,
@@ -786,5 +787,143 @@ describe("Unduh PDF (Part P)", () => {
     expect(
       [...container.querySelectorAll("[data-new-page]")].map((band) => band.id),
     ).toEqual(["temuan", "rekomendasi", "penutup"]);
+  });
+});
+
+/* -------------------- Spec 021 Part C, competitor data -------------------- */
+
+describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
+  const fact = (name: string, over = {}) => ({
+    name,
+    chatgpt: [] as string[],
+    google: [] as string[],
+    cards: [] as string[],
+    website: null,
+    rating: null,
+    reviews: null,
+    ...over,
+  });
+  const ids = (n: number) =>
+    Array.from(
+      { length: n },
+      (_, i) => `NUAVE-DT-${String(i + 1).padStart(2, "0")}`,
+    );
+  const others = [
+    fact("Kopi Lain", {
+      chatgpt: ids(3),
+      google: ids(1),
+      cards: ids(2),
+      website: "https://kopilain.example/menu",
+      rating: { value: 4.7, max: 5 },
+      reviews: 1200,
+    }),
+    fact("Kopi Tanpa Situs", { chatgpt: ids(2) }),
+    ...["Satu", "Dua", "Tiga", "Empat"].map((name, i) =>
+      fact(`Kopi ${name}`, {
+        chatgpt: ids(1),
+        // Ties sort by name, so "Kopi Tiga" is past the top five.
+        website: i === 2 ? "https://kopitiga.example/" : null,
+      }),
+    ),
+  ];
+  function page(showLogos: boolean) {
+    const fixture = twoSourceFixture({
+      other_businesses: {
+        chatgpt: others.map((item) => item.name),
+        google: [],
+      },
+      competitors: {
+        others,
+        own: {
+          cards: ids(1),
+          website: null,
+          rating: { value: 4.9, max: 5 },
+          reviews: 80,
+        },
+      },
+    });
+    return render(
+      <DirectTenReportPage
+        report={fixture.report}
+        brief={brief}
+        observations={fixture.observations}
+        onDownloadJson={() => {}}
+        showLogos={showLogos}
+      />,
+    ).container.querySelector<HTMLElement>("[data-other-businesses]")!;
+  }
+
+  it("shows saved counts, recommendations, a website link and the rating", () => {
+    const map = page(false);
+    const row = [
+      ...map.querySelectorAll<HTMLElement>("[data-competitor]"),
+    ].find((item) => item.textContent?.includes("Kopi Lain"))!;
+    expect(row).toHaveTextContent("4×");
+    // ChatGPT's cards, never called "direkomendasikan" for another business.
+    expect(row).toHaveTextContent("kartu ChatGPT 2×");
+    expect(row).not.toHaveTextContent("direkomendasikan");
+    expect(map.querySelector("[data-cards-note]")).toHaveTextContent(
+      "Kartu ChatGPT: berapa kali ChatGPT menampilkan bisnis itu",
+    );
+    expect(row).toHaveTextContent("ChatGPT 3 · Google 1");
+    expect(row).toHaveTextContent("Rating 4,7 · 1.200 ulasan");
+    const link = row.querySelector("a[data-competitor-site]")!;
+    expect(link).toHaveAttribute("href", "https://kopilain.example/menu");
+    expect(link).toHaveTextContent("kopilain.example");
+    expect(link).toHaveAccessibleName("kopilain.example (membuka tab baru)");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveAttribute("referrerpolicy", "no-referrer");
+    // No website saved: no link (C-04).
+    const plain = [...map.querySelectorAll("[data-competitor]")].find((item) =>
+      item.textContent?.includes("Kopi Tanpa Situs"),
+    )!;
+    expect(plain.querySelector("a")).toBeNull();
+    // The owner's row: its rating, and its own site from the profile.
+    const own = map.querySelector('[data-competitor="own"]')!;
+    expect(own).toHaveTextContent("Rating 4,9 · 80 ulasan");
+    // The owner keeps the writer's "direkomendasikan" (as in Ringkasan) and
+    // gets the same card count as every row.
+    expect(own).toHaveTextContent("kartu ChatGPT 1×");
+    expect(own.querySelector("a")).toHaveAttribute(
+      "href",
+      "https://kedai-fiksi.example/",
+    );
+  });
+
+  it("past the top five, a chip links when a website is saved, with a note; otherwise plain", () => {
+    const map = page(false);
+    const chips = map.querySelectorAll("li");
+    const linked = [...chips].filter((chip) => chip.querySelector("a"));
+    expect(linked).toHaveLength(1);
+    expect(linked[0]!.querySelector("a")).toHaveAttribute(
+      "href",
+      "https://kopitiga.example/",
+    );
+    expect(linked[0]!.querySelector("a")).toHaveAccessibleName(
+      "Kopi Tiga (kopitiga.example, membuka tab baru)",
+    );
+    expect(map).toHaveTextContent(
+      "Ikon panah menandai website yang bisa dibuka.",
+    );
+  });
+
+  it("logos come only from the business's own site, never in synthetic reports or print, and fall back to initials", () => {
+    expect(page(false).querySelectorAll("img")).toHaveLength(0);
+    cleanup();
+    const map = page(true);
+    const logos = [...map.querySelectorAll("img[data-competitor-logo]")];
+    expect(logos.map((img) => img.getAttribute("src"))).toEqual([
+      "https://kopilain.example/favicon.ico",
+      "https://kedai-fiksi.example/favicon.ico",
+    ]);
+    for (const img of logos)
+      expect(img).toHaveAttribute("referrerpolicy", "no-referrer");
+    fireEvent.error(logos[0]!);
+    const row = [...map.querySelectorAll("[data-competitor]")].find((item) =>
+      item.textContent?.includes("Kopi Lain"),
+    )!;
+    expect(row.querySelector("img")).toBeNull();
+    expect(row).toHaveTextContent("KL");
   });
 });

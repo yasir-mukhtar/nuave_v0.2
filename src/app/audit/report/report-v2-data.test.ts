@@ -11,6 +11,8 @@ import {
   competitorRows,
   displayHost,
   mentionState,
+  ratingLine,
+  siteIcon,
   topicGapRows,
   verdictFromConclusion,
 } from "./report-v2-data";
@@ -312,5 +314,114 @@ describe("display host", () => {
     expect(displayHost("https://www.instagram.com/sozo.clinic/")).toBe(
       "instagram.com/sozo.clinic",
     );
+  });
+});
+
+describe("competitor rows saved with the report (Spec 021 Part C, AC-C1)", () => {
+  const fact = (name: string, over = {}) => ({
+    name,
+    chatgpt: [] as string[],
+    google: [] as string[],
+    cards: [] as string[],
+    website: null,
+    rating: null,
+    reviews: null,
+    ...over,
+  });
+
+  it("uses the saved counts, recommendations and listing details instead of matching names again", () => {
+    const two = report([question(1), question(2)], {
+      // The saved names would match differently: the saved block wins.
+      other_businesses: { chatgpt: ["ZAP Clinic", "Kosong"], google: [] },
+      competitors: {
+        others: [
+          fact("ZAP Clinic", {
+            chatgpt: ["p1", "p2"],
+            google: ["p1"],
+            cards: ["p2"],
+            website: "https://zapclinic.example/",
+            rating: { value: 4.7, max: 5 },
+            reviews: 1200,
+          }),
+          fact("Kosong", { website: "https://kosong.example/" }),
+        ],
+        own: {
+          cards: [],
+          website: "https://saya.example/",
+          rating: { value: 4.9, max: 5 },
+          reviews: 80,
+        },
+      },
+    });
+    const { counted, uncounted } = competitorRows(
+      two,
+      [observation(1, "Tidak ada nama."), observation(2, "")],
+      ["Klinik Saya"],
+    );
+    expect(counted[0]).toEqual({
+      name: "ZAP Clinic",
+      chatgpt: 2,
+      google: 1,
+      cards: 1,
+      website: "https://zapclinic.example/",
+      rating: { value: 4.7, max: 5 },
+      reviews: 1200,
+    });
+    expect(uncounted).toEqual(["Kosong"]);
+    expect(counted.find((row) => row.own)).toMatchObject({
+      name: "Klinik Saya",
+      chatgpt: 1,
+      google: 0,
+      own: { cited: 0, recommended: 1 },
+      cards: 0,
+      website: "https://saya.example/",
+      rating: { value: 4.9, max: 5 },
+      reviews: 80,
+    });
+  });
+});
+
+describe("site icons (C-03)", () => {
+  it("is the business's own /favicon.ico, never a shared platform's", () => {
+    expect(siteIcon("https://www.zapclinic.example/treatment?a=1")).toBe(
+      "https://www.zapclinic.example/favicon.ico",
+    );
+    expect(siteIcon("http://klinik.example/")).toBe(
+      "https://klinik.example/favicon.ico",
+    );
+    for (const shared of [
+      "https://www.instagram.com/klinik",
+      "https://m.facebook.com/klinik",
+      "https://wa.me/628123",
+      "https://t.me/klinik",
+      "https://line.me/R/ti/p/@klinik",
+      "https://maps.google.com/?cid=1",
+      "https://klinik.business.site/",
+      "https://www.halodoc.com/klinik",
+      "https://linktr.ee/klinik",
+      "https://www.google.co.id/search?q=klinik",
+      "https://bit.ly/klinik",
+      "https://s.id/klinik",
+      "https://lynk.id/klinik",
+      "http://192.168.1.10/",
+      "https://[2001:db8::1]/",
+    ])
+      expect(siteIcon(shared), shared).toBeNull();
+    expect(siteIcon(null)).toBeNull();
+    expect(siteIcon("ftp://klinik.example/")).toBeNull();
+    expect(siteIcon("not a url")).toBeNull();
+  });
+});
+
+describe("rating line", () => {
+  it("writes Indonesian numbers, and says the scale when it is not 5", () => {
+    expect(ratingLine({ value: 4.7, max: 5 }, 1200)).toBe(
+      "Rating 4,7 · 1.200 ulasan",
+    );
+    expect(ratingLine({ value: 4, max: 5 }, null)).toBe("Rating 4");
+    expect(ratingLine({ value: 8.5, max: 10 }, 3)).toBe(
+      "Rating 8,5/10 · 3 ulasan",
+    );
+    expect(ratingLine(null, 40)).toBe("");
   });
 });

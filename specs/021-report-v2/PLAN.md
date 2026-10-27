@@ -242,9 +242,10 @@ record the time per PDF.
   name, website or Instagram, rating, review count. Never phone numbers or
   addresses. Stored in the existing JSON columns; no migration.
 - `src/lib/orders/two-source.ts`: a `competitors` block in the saved report:
-  per business, named per source, recommended (ChatGPT, from the saved
-  assessment), question ids, website, rating, reviews; the owner's row from
-  the same counts. New report version string. The renderer prefers this block
+  per business, named per source, ChatGPT business cards in answers that
+  name it (shown as "kartu ChatGPT N×", not "direkomendasikan"), question
+  ids, website, rating, reviews; the owner's row from the same counts, with
+  listing details only from listings under the owner's exact name. New report version string. The renderer prefers this block
   and falls back to PR 2's render-time counts.
 - **Logos:** the business's own `https://<domain>/favicon.ico`, loaded by the
   browser with `referrerPolicy="no-referrer"`; initials on error. No
@@ -338,11 +339,16 @@ report so the journey and snapshots cover it.
 
 ## Decisions the founder still owes
 
-1. Named approval for the B-07 live writer calls (before PR 6 step 7).
-2. An Anthropic API key, or comparing only models on the existing providers
-   (before PR 6 step 7).
-3. Approval of `PLAYBOOK.md` (before PR 6 runs live).
-4. Only if DataForSEO's schema is unclear: one live check in PR 5.
+All settled:
+
+1. Named approval for the B-07 live writer calls: given 2026-10-26 (audit
+   stack plan, point 2; up to USD 5 for tests A and B).
+2. An Anthropic API key: allowed 2026-10-26 (same decision); the key is set
+   for the test as `NUAVE_ANTHROPIC_API_KEY`.
+3. Approval of `PLAYBOOK.md`: approved 2026-10-27
+   ([decision](../../docs/DECISION_LOG.md#2026-10-27--report-playbook-approved)).
+4. DataForSEO's published schema names every field PR 5 keeps, so no live
+   check was needed (VERIFICATION.md, Part C).
 
 ## Risks
 

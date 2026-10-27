@@ -189,6 +189,7 @@ export default function ReportView({
   onDownloadJson,
   previewNotice,
   onDownloadPdf,
+  showLogos,
 }: {
   report: AuditReport;
   brief: AuditSubject;
@@ -197,6 +198,8 @@ export default function ReportView({
   previewNotice?: React.ReactNode;
   /** Spec 021 Part P: the server PDF, for two-source reports. */
   onDownloadPdf?: DownloadPdf;
+  /** Spec 021 C-03: competitors' site icons (off by default). */
+  showLogos?: boolean;
 }) {
   const isDirectTen = report.provenance?.question_method === "direct-ten";
   // The v2 report (J32–J35); the historical renderer below stays as it was.
@@ -209,6 +212,7 @@ export default function ReportView({
         onDownloadJson={onDownloadJson}
         previewNotice={previewNotice}
         onDownloadPdf={onDownloadPdf}
+        showLogos={showLogos}
       />
     );
   const brandName = subjectBrandName(brief);
