@@ -57,9 +57,9 @@
   [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
   [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
   report-writer test is Spec 021 B-07: five writers on Spec 021's new writer
-  (Luna low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5),
-  on three orders with ChatGPT and Google answers, with the delivered
-  NV-3WDSAY report as a labelled reference. The OpenAI, Anthropic and
+  (Luna low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5
+  medium), on three orders with ChatGPT and Google answers, with the
+  delivered NV-3WDSAY report as a labelled reference. The OpenAI, Anthropic and
   Firecrawl keys are in the cloud environment (seen 2026-10-27; Anthropic as
   `NUAVE_ANTHROPIC_API_KEY`, so Claude Code does not use it). Still needed:
   two more founder-run live orders (two businesses, two cities, one at a
