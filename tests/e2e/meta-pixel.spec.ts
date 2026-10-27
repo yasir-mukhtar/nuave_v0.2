@@ -303,7 +303,13 @@ test("back from Midtrans, the order number leaves the address before the Pixel s
   await expect.poll(() => tracked(page)).toEqual([["track", "PageView"]]);
   expect(new URL(page.url()).search).toBe("?utm_source=meta");
   // The queued PageView was made after the address was cleaned, and every
-  // call since sees the clean address.
+  // call since sees the clean address. Wait for the stand-in Meta script
+  // first: a call made before it runs only joins the queue.
+  await page.waitForFunction(() =>
+    Array.isArray(
+      (window as unknown as { __pixelHrefs?: unknown }).__pixelHrefs,
+    ),
+  );
   await page.evaluate(() =>
     (window as unknown as { fbq: (...args: unknown[]) => void }).fbq(
       "track",

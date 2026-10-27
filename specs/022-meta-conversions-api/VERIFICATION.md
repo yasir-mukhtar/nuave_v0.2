@@ -85,6 +85,18 @@ After these changes: unit tests 145 files, 2,616 pass; `npm run check`
 passes; Pixel browser suite 15 passed. The merged head needs a short
 re-check by the reviewer.
 
+## Main merged again (2026-10-27): PRs #173 and #175
+
+Main gained the Report v2 Parts A and D (`42dfe26..4cde47d`). No file is
+changed on both sides and the merge (`b093958`) applied cleanly; main did
+not touch migrations, `wrangler.jsonc`, CI, consent, payments, intake, the
+privacy page or `legal.ts`, and only added colour tokens. On the merged
+code: unit tests 146 files, 2,638 pass; `npm run check` passes; main
+browser suite 86 passed; Pixel suite 15 passed twice. One existing Spec 019
+browser test ("back from Midtrans…") could call the Pixel before the
+stand-in Meta script ran, and failed once on a slow first page load; it now
+waits for that script.
+
 ## Founder step 0 (2026-10-27)
 
 Yasir opened a page-visit entry (`$workers.eventType = "fetch"`) in
