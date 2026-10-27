@@ -304,6 +304,27 @@ export const PAGE_ENTRIES: readonly (Entry & { twin: EntryId })[] = [
   },
 ];
 
+/** A fetch for the test's Firecrawl reading that waits out Firecrawl's
+ * rate limit (429) instead of giving up: up to three waits, each as long as
+ * Firecrawl asks (Retry-After) or 30 seconds, at most 70. Any other answer,
+ * and a fourth 429, go to the page reader unchanged. */
+export function patientFetch(
+  fetchImpl: typeof fetch = fetch,
+  wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
+): typeof fetch {
+  return async (input, init) => {
+    for (let attempt = 0; ; attempt += 1) {
+      const response = await fetchImpl(input, init);
+      if (response.status !== 429 || attempt === 3) return response;
+      const asked = Number(response.headers.get("retry-after"));
+      await wait(Math.min(asked > 0 ? asked * 1000 : 30_000, 70_000));
+      // The reader's own time limit started with the first try; a retry
+      // gets a fresh one.
+      if (init?.signal) init = { ...init, signal: AbortSignal.timeout(90_000) };
+    }
+  };
+}
+
 /** Where an order's read pages are kept, so a re-run never reads again. */
 export const pagesPath = (order: string, dir = EVIDENCE_DIR) =>
   join(dir, "pages", `${order}.json`);

@@ -44,6 +44,7 @@ import {
   trimGoogleText,
   PAGE_ENTRIES,
   pagesPath,
+  patientFetch,
   readOrderPages,
   blindWriterFingerprint,
   drawPagePairs,
@@ -583,6 +584,43 @@ describe("blind review", () => {
 });
 
 describe("the reading test (founder decision 2026-10-27)", () => {
+  it("waits out Firecrawl's rate limit, then gives the reader the answer", async () => {
+    const answers = [429, 429, 200];
+    const calls: (RequestInit | undefined)[] = [];
+    const waits: number[] = [];
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      calls.push(init);
+      const status = answers.shift()!;
+      return new Response("{}", {
+        status,
+        headers: status === 429 ? { "retry-after": "5" } : {},
+      });
+    }) as typeof fetch;
+    const signal = AbortSignal.timeout(90_000);
+    const response = await patientFetch(fetchImpl, async (ms) => {
+      waits.push(ms);
+    })("https://api.firecrawl.dev/v2/scrape", { signal });
+    expect(response.status).toBe(200);
+    expect(waits).toEqual([5000, 5000]);
+    expect(calls[0]!.signal).toBe(signal);
+    expect(calls[1]!.signal).not.toBe(signal);
+  });
+
+  it("gives up after three waits, so a lasting limit still stops the reading", async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return new Response("{}", { status: 429 });
+    }) as typeof fetch;
+    const waits: number[] = [];
+    const response = await patientFetch(fetchImpl, async (ms) => {
+      waits.push(ms);
+    })("https://api.firecrawl.dev/v2/scrape");
+    expect(response.status).toBe(429);
+    expect(calls).toBe(4);
+    expect(waits).toEqual([30_000, 30_000, 30_000]);
+  });
+
   it("reads the order's own site and the pages its answers cited, and counts the Firecrawl requests", async () => {
     const exported = await deliveredOrderExport();
     const evidence = evidenceFromD1(exported.order, exported.questions);

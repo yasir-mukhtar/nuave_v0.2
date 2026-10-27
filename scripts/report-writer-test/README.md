@@ -116,7 +116,9 @@ REPORT_TEST_LIVE=1 ORDERS=NV-3WDSAY ENTRIES=luna-high,opus-medium,luna-high-page
 - The first live run that names a page writer reads the pages (needs
   `FIRECRAWL_API_KEY`): at most 16 Firecrawl requests, on the basic proxy.
   It keeps them in `pages/<order>.json`, so later runs never read again.
-- If Firecrawl cannot serve (a bad key, no credits, too many requests, an
+- When Firecrawl asks it to slow down (429), the reading waits as long as
+  asked (30 seconds if not said) and tries again, up to three times.
+- If Firecrawl cannot serve (a bad key, no credits, a lasting rate limit, an
   outage) or no page could be read, nothing is kept and no page writer runs,
   so a page writer never spends USD writing a copy of its twin.
 - The pages cost Firecrawl credits, not USD, and are not in the ledger; the

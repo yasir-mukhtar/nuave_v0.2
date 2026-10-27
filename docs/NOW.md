@@ -220,10 +220,11 @@
   provider dashboards show total spend.
 - **Audit stack tests allowance** (approved 2026-10-26; raised from USD 5 to
   USD 7 by the founder on 2026-10-27): agent-run live calls for the reading
-  test and the report-writer test together. USD 2.80 used as of 2026-10-27,
-  all on the report-writer test with order NV-3WDSAY: eight writers on the
-  earlier writer (USD 1.89), then Luna high and Opus medium on Spec 021's new
-  writer (USD 0.91). Public business pages and the founder's own test-order
+  test and the report-writer test together. USD 4.11 used as of 2026-10-27,
+  all with order NV-3WDSAY: eight writers on the earlier writer (USD 1.89),
+  Luna high and Opus medium on Spec 021's new writer (USD 0.91), then the
+  same two with pages read (USD 1.31; 16 Firecrawl requests, not in USD).
+  Public business pages and the founder's own test-order
   data only. The Anthropic key is not scoped to a workspace: runs need
   `NUAVE_ANTHROPIC_WORKSPACE_ID` (see `scripts/report-writer-test/README.md`).
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ

@@ -56,6 +56,7 @@ import {
   EVIDENCE_DIR,
   PAGE_ENTRIES,
   pagesPath,
+  patientFetch,
   readOrderPages,
   blindWriterFingerprint,
   drawPagePairs,
@@ -143,7 +144,10 @@ it.skipIf(orders.length === 0)(
         if (!key) throw new Error("FIRECRAWL_API_KEY is needed to read pages.");
         // Firecrawl unable to serve throws; no page at all is not kept
         // either, so a page writer never runs as a copy of its twin.
-        const read = await readOrderPages(evidence, firecrawlFetcher(key));
+        const read = await readOrderPages(
+          evidence,
+          firecrawlFetcher(key, patientFetch()),
+        );
         if (!read.pages.length)
           throw new Error(
             `${order}: Firecrawl read no page (${read.unread.length} tried); nothing kept.`,
