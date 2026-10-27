@@ -20,6 +20,7 @@
  * scores.csv. review.spec.ts shows the pack on the report page as PDFs.
  */
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -123,8 +124,21 @@ it.skipIf(orders.length === 0)(
         if (!live || done) continue;
         const writer = entry.provider === "openai" ? lunaWriter : claudeWriter;
         const result = await runEntry(evidence, entry, writer, ledger);
-        // An entry whose first request was turned away ran nothing: it is
-        // not saved, so the next run tries it again.
+        // Every attempt is logged (test output is not shown). An entry whose
+        // first request failed before an answer came back is not saved, so
+        // the next run tries it again.
+        appendFileSync(
+          join(EVIDENCE_DIR, "attempts.jsonl"),
+          `${JSON.stringify({
+            at: new Date().toISOString(),
+            order,
+            entry: entry.id,
+            status: result.status,
+            failure: result.failure,
+            calls: result.calls,
+            cost_usd: result.cost_usd,
+          })}\n`,
+        );
         if (result.status === "ok" || result.calls.length > 0)
           write(resultPath(order, entry.id), result);
         console.log(

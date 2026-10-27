@@ -592,6 +592,32 @@ export function lunaWriter(
   };
 }
 
+/** The JSON text of a Claude answer, checked against the report schema. */
+function parseAnswer(
+  content: readonly { type: string; text?: string }[],
+  schema: ReturnType<typeof reportSynthesisSchemaForMethod>,
+): { success: true; data: unknown } | { success: false; error: string } {
+  const text = content
+    .flatMap((block) => (block.type === "text" ? [block.text ?? ""] : []))
+    .join("");
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return { success: false, error: "the answer is not JSON" };
+  }
+  const result = schema.safeParse(json);
+  return result.success
+    ? { success: true, data: result.data }
+    : {
+        success: false,
+        error: result.error.issues
+          .slice(0, 5)
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join("; "),
+      };
+}
+
 /** Claude at the entry's effort, adaptive thinking, the same developer and
  * user text as production, and the report schema as structured output. No
  * refusal fallback: a fallback model would blur the comparison, so a refusal
@@ -621,18 +647,19 @@ export function claudeWriter(
       model,
       reserved_usd: worstCaseUsd(model, developer.length + user.length),
     });
+    // The answer is read and checked here, not by the SDK, so an answer that
+    // breaks the report format is still recorded with its cost and reason.
+    const schema = reportSynthesisSchemaForMethod(input.question_method);
     const startedAt = Date.now();
     const response = await sendHeld(hold, () =>
-      client.messages.parse(
+      client.messages.create(
         {
           model,
           max_tokens: AUDIT_CALL_LIMITS.report.max_output_tokens,
           thinking: { type: "adaptive" },
           output_config: {
             effort: ctx.entry.effort!,
-            format: zodOutputFormat(
-              reportSynthesisSchemaForMethod(input.question_method),
-            ),
+            format: zodOutputFormat(schema),
           },
           metadata: { user_id: hashSafetyIdentifier(input.safety_identifier) },
           system: developer,
@@ -669,19 +696,21 @@ export function claudeWriter(
       costUsd: cost,
       stop,
     };
-    if (stop !== "end_turn" || !response.parsed_output) {
+    const parsed =
+      stop === "end_turn" ? parseAnswer(response.content, schema) : null;
+    if (!parsed?.success) {
       const failure =
         stop === "max_tokens"
           ? "The answer was cut off at the output limit."
           : stop === "refusal"
             ? "The model declined the request."
-            : "The answer did not match the report schema.";
+            : `The answer did not match the report schema: ${parsed?.error ?? stop}`;
       throw new AuditCallExecutionError(failure, [
         telemetryOf({ ...base, status: "failed", failure }),
       ]);
     }
     return {
-      content: contentOf(response.parsed_output as ReportSynthesis, args),
+      content: contentOf(parsed.data as ReportSynthesis, args),
       requested_model: model,
       returned_model: response.model,
       response_id: response.id,

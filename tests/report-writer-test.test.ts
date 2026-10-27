@@ -211,8 +211,8 @@ describe("the USD 5 ledger", () => {
       exported.order,
       exported.questions,
     );
-    const parse = vi.fn();
-    const client = { messages: { parse } } as unknown as Anthropic;
+    const create = vi.fn();
+    const client = { messages: { create } } as unknown as Anthropic;
     await expect(
       runEntry(
         evidence,
@@ -221,7 +221,7 @@ describe("the USD 5 ledger", () => {
         new Ledger(join(dir, "spend.json"), 0.01),
       ),
     ).rejects.toThrow(SpendRefused);
-    expect(parse).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 
   it("releases the hold of a request the provider turned away, and keeps it for one that may have run", async () => {
@@ -230,7 +230,7 @@ describe("the USD 5 ledger", () => {
     const failing = (error: unknown) =>
       ({
         messages: {
-          parse: vi.fn(async () => {
+          create: vi.fn(async () => {
             throw error;
           }),
         },
@@ -259,11 +259,11 @@ describe("the USD 5 ledger", () => {
     const evidence = evidenceFromD1(exported.order, exported.questions);
     const client = {
       messages: {
-        parse: vi.fn(async () => ({
+        create: vi.fn(async () => ({
           id: "msg_test",
           model: "claude-sonnet-5-5",
           stop_reason: "max_tokens",
-          parsed_output: null,
+          content: [],
           usage: { input_tokens: 30_000, output_tokens: 16_000 },
         })),
       },
@@ -281,6 +281,37 @@ describe("the USD 5 ledger", () => {
     expect(result.checks.cut_off_answers).toBe(1);
     expect(result.cost_usd).toBe(0.22);
     expect(ledger.spentUsd()).toBe(0.22);
+  });
+});
+
+describe("a Claude answer that breaks the report format", () => {
+  it("is a failed entry with its cost settled and the reason recorded", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const client = {
+      messages: {
+        create: vi.fn(async () => ({
+          id: "msg_test",
+          model: "claude-haiku-5-5",
+          stop_reason: "end_turn",
+          content: [{ type: "text", text: '{"conclusion": 3}' }],
+          usage: { input_tokens: 30_000, output_tokens: 2_000 },
+        })),
+      },
+    } as unknown as Anthropic;
+    const ledger = new Ledger(join(dir, "spend.json"));
+
+    const result = await runEntry(
+      evidence,
+      ENTRIES[4]!,
+      (ctx) => claudeWriter(ctx, client),
+      ledger,
+    );
+
+    expect(result.status).toBe("failed");
+    expect(result.failure).toMatch(/did not match the report schema: .+/);
+    expect(result.calls).toHaveLength(1);
+    expect(ledger.spentUsd()).toBe(0.004);
   });
 });
 
