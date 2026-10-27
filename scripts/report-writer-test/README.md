@@ -1,0 +1,104 @@
+# Report-writer test (test B)
+
+Test B of the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
+(decision 2026-10-26, as fixed on 2026-10-27), which is Spec 021's
+side-by-side writer test (B-07): five writers on the same saved orders, each
+running today's production writer, judged blind by the founder.
+
+| Blind entry | Model | Effort |
+| --- | --- | --- |
+| `luna-low` | GPT-5.6 Luna | low |
+| `luna-high` | GPT-5.6 Luna | high |
+| `sonnet-medium` | Claude Sonnet 5.5 | medium |
+| `sonnet-high` | Claude Sonnet 5.5 | high |
+| `haiku-medium` | Claude Haiku 5.5 | medium |
+
+Every entry reads the new input: today's input plus the words of Google's AI
+Overview for each question (phone numbers removed, answers longer than 3,000
+characters shortened). Every entry goes through the order runner's own report
+code, so all reports get the same checks and repairs.
+
+The report the customer received is printed beside them as a labelled
+**reference**, never under a letter: it was written with the instructions of
+its day, so it does not compare models fairly.
+
+Everything the test reads and writes stays in the git-ignored
+`.local-evidence/report-writer-test/` folder.
+
+## With Spec 021 Part B
+
+This test is Spec 021's side-by-side writer test (B-07). It writes with
+whatever the production writer is at the time of the run, so once Part B is
+merged it writes Part B reports with no change here:
+
+- the prompt, output format and assembly come from `reportRequest`,
+  `reportOutputSchema` and `reportContentFromAnswer` in
+  `src/lib/audit/openai.ts`;
+- Google's answer texts are added only while the production prompt does not
+  already carry them (B-01);
+- each result records which writer wrote it (a fingerprint of the
+  instructions and answer format). A result from an earlier writer is moved to
+  `runs/<order>/superseded/` and written again, and letters are drawn only
+  for five results from the same writer;
+- the reference is compared with a replay of its own writing only when
+  today's writer version wrote it; an older one is shown as delivered;
+- the reports print from today's `/r` page.
+
+Run it on orders delivered after Part B for a like-for-like comparison.
+
+## 1. Save an order's evidence
+
+For each order (delivered, with ChatGPT and Google answers), save two
+read-only database answers. `harness.ts` (`exportQueries`) prints the exact
+queries; they read no email, payment or link column.
+
+```sh
+npx wrangler d1 execute SPEND_DB --remote --json --command "<order query>" > .local-evidence/report-writer-test/raw/NV-XXXXXX-order.json
+npx wrangler d1 execute SPEND_DB --remote --json --command "<questions query>" > .local-evidence/report-writer-test/raw/NV-XXXXXX-questions.json
+```
+
+## 2. Dry run (no provider call, free)
+
+```sh
+npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/run.spec.ts
+```
+
+It re-runs each delivered report from its evidence (it must come back
+unchanged), builds every other entry's prompt and writes `plan.json` with each
+call's worst case.
+
+## 3. Live run (founder approval first)
+
+```sh
+REPORT_TEST_LIVE=1 npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/run.spec.ts
+```
+
+Needs `OPENAI_API_KEY` and `NUAVE_ANTHROPIC_API_KEY`, plus
+`NUAVE_ANTHROPIC_WORKSPACE_ID` when the Anthropic key is not scoped to a
+workspace. `ORDERS=NV-…` and
+`ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
+`spend.json` at its worst case and is refused when that could take the total
+past **USD 5** (the hard stop for tests A and B together); it is then settled
+at its real cost. An entry already written by today's writer is never run
+again; delete its file under `runs/` to redo it.
+
+Once all five entries of an order exist from the same writer, letters A–E
+are drawn at random and kept in `key.json`. Do not open it until scoring is
+done.
+
+## 4. Review
+
+```sh
+npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/review.spec.ts
+```
+
+It starts the app locally and prints each report from the real report page:
+`review/<order>/Laporan A.pdf` … `Laporan E.pdf`, and the reference as
+`Referensi - laporan yang dikirim.pdf`. Score the lettered ones in `scores.csv`
+(1–5: sticks to the evidence, actions specific to this business, natural
+Indonesian per `docs/VOICE.md`, clear to an owner; and yes/no: would I send
+this to a paying customer?). Then open `key.json`. The `runs/` files give
+each entry's cost, calls, wording-fix call, code repairs and cut-off answers.
+
+Pass rule (plan): the writer with the most "yes"; on a tie, the cheaper one.
+If Luna high ties Sonnet, keep Luna.

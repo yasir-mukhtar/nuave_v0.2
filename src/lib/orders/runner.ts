@@ -243,13 +243,97 @@ type Intake = {
   question_origins?: unknown;
 };
 
+/** The report pipeline's input for an order, built from its saved intake and
+ * question rows. The report step uses it, and so does the report-writer test
+ * (scripts/report-writer-test), so a test writer reads exactly what the
+ * order's writer read. */
+export async function orderReportInput(order: {
+  orderId: string;
+  intake: Intake;
+  rows: readonly OrderQuestionRow[];
+  mode: OrderMode;
+  now: Date;
+}) {
+  const { intake, rows } = order;
+  const setup = setupOf(intake);
+  const observations = setup
+    ? twoSourceObservations({
+        rows,
+        prompts: intake.prompts,
+        synthetic: order.mode === "synthetic",
+        now: order.now,
+      })
+    : rows.flatMap((row) =>
+        row.observation_json
+          ? [JSON.parse(row.observation_json) as AuditObservation]
+          : [],
+      );
+  const input = {
+    brief: intake.context,
+    prompts: intake.prompts,
+    observations,
+    safety_identifier: await orderSafetyIdentifier(order.orderId),
+    budget: serverOwnedAuditBudget(),
+    language: "id" as const,
+    question_method: "direct-ten" as const,
+    // Server-internal: the labeled synthetic substitute's evidence is admitted
+    // only in synthetic mode, never by request.
+    ...(order.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
+    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
+    // the model reads code-built Google facts and both sources' counts.
+    ...(setup
+      ? {
+          two_source: true,
+          two_source_facts: twoSourceReportFacts({
+            rows,
+            prompts: intake.prompts,
+            subject: setup.subject,
+            names: setup.names,
+          }),
+        }
+      : {}),
+  };
+  return { setup, observations, input };
+}
+
+/** Spec 018: the code-built block, saved with a two-source report; the method
+ * sentence counts both sources and names no internal system (N-10). A
+ * one-source report is saved as written. */
+export function withTwoSourceBlock(
+  written: AuditReport,
+  order: {
+    rows: readonly OrderQuestionRow[];
+    prompts: AuditPrompt[];
+    observations: AuditObservation[];
+    setup: TwoSourceSetup | null;
+    orderNumber: string | null;
+  },
+): AuditReport {
+  if (!order.setup) return written;
+  const two = buildTwoSourceReport({
+    report: written,
+    rows: order.rows,
+    prompts: order.prompts,
+    observations: order.observations,
+    setup: order.setup,
+    orderNumber: order.orderNumber,
+  });
+  return {
+    ...written,
+    method_summary: twoSourceMethodSentence(two),
+    two_source: two,
+  };
+}
+
 function setupOf(intake: Intake | null): TwoSourceSetup | null {
   return intake
     ? twoSourceSetup(intake as Parameters<typeof twoSourceSetup>[0])
     : null;
 }
 
-function parseIntake(order: OrderRow): Intake | null {
+export function parseIntake(
+  order: Pick<OrderRow, "intake_json">,
+): Intake | null {
   try {
     const value = JSON.parse(order.intake_json ?? "null") as Partial<Intake>;
     return value &&
@@ -1318,44 +1402,13 @@ async function reportStep(
   }
 
   const rows = await listQuestions(deps.db, order.id);
-  const setup = setupOf(intake);
-  const observations = setup
-    ? twoSourceObservations({
-        rows,
-        prompts: intake.prompts,
-        synthetic: deps.mode === "synthetic",
-        now: deps.now(),
-      })
-    : rows.flatMap((row) =>
-        row.observation_json
-          ? [JSON.parse(row.observation_json) as AuditObservation]
-          : [],
-      );
-  const input = {
-    brief: intake.context,
-    prompts: intake.prompts,
-    observations,
-    safety_identifier: await orderSafetyIdentifier(order.id),
-    budget: serverOwnedAuditBudget(),
-    language: "id" as const,
-    question_method: "direct-ten" as const,
-    // Server-internal: the labeled synthetic substitute's evidence is admitted
-    // only in synthetic mode, never by request.
-    ...(deps.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
-    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
-    // the model reads code-built Google facts and both sources' counts.
-    ...(setup
-      ? {
-          two_source: true,
-          two_source_facts: twoSourceReportFacts({
-            rows,
-            prompts: intake.prompts,
-            subject: setup.subject,
-            names: setup.names,
-          }),
-        }
-      : {}),
-  };
+  const { setup, observations, input } = await orderReportInput({
+    orderId: order.id,
+    intake,
+    rows,
+    mode: deps.mode,
+    now: deps.now(),
+  });
 
   let code: ReportFailureCode;
   try {
@@ -1388,27 +1441,18 @@ async function reportStep(
           return deps.generateReport(...args);
         }),
     );
-    // Spec 018: the code-built block, saved with the report; the method
-    // sentence counts both sources and names no internal system (N-10).
-    const withTwoSourceBlock = (written: AuditReport) => {
-      const two = buildTwoSourceReport({
-        report: written,
-        rows,
-        prompts: intake.prompts,
-        observations,
-        setup: setup!,
-        orderNumber: order.order_number,
-      });
-      return {
-        ...written,
-        method_summary: twoSourceMethodSentence(two),
-        two_source: two,
-      };
-    };
     const saved = await saveReport(deps.db, {
       orderId: order.id,
       owner,
-      reportJson: JSON.stringify(setup ? withTwoSourceBlock(report) : report),
+      reportJson: JSON.stringify(
+        withTwoSourceBlock(report, {
+          rows,
+          prompts: intake.prompts,
+          observations,
+          setup,
+          orderNumber: order.order_number,
+        }),
+      ),
       now: deps.now(),
     });
     if (!saved) return "skipped";
