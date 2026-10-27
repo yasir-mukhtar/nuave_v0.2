@@ -306,6 +306,20 @@ afterwards. What this gives:
   PR).
 - `npm run check`, `next build`.
 
+### Independent review
+
+- **Round 1: PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/176#issuecomment-6434084965)),
+  nothing blocking. Its should-fix list was handled in 27ec9c5: a long name
+  with an emoji at the cut broke the file name header (now cut by whole
+  characters, made before Browser Run is asked); a print page test; private
+  headers on `/r/print`; the spinner and focus for screen readers and
+  keyboards; the secret checked before the Browser Run check; two risks
+  recorded below; doc fixes.
+- **Round 2: PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/176#issuecomment-6434222311))
+  on 27ec9c5, nothing open.
+
 ### Risks to check after merge
 
 - Browser Run is identified as a bot. Cloudflare does not block it by
