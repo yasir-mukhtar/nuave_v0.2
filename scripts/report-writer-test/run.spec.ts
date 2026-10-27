@@ -57,6 +57,9 @@ import {
   PAGE_ENTRIES,
   pagesPath,
   readOrderPages,
+  blindWriterFingerprint,
+  drawPagePairs,
+  type PagePairKey,
   entryPrompt,
   entryInput,
   Ledger,
@@ -138,12 +141,21 @@ it.skipIf(orders.length === 0)(
       ) {
         const key = process.env.FIRECRAWL_API_KEY;
         if (!key) throw new Error("FIRECRAWL_API_KEY is needed to read pages.");
+        // Firecrawl unable to serve throws; no page at all is not kept
+        // either, so a page writer never runs as a copy of its twin.
         const read = await readOrderPages(evidence, firecrawlFetcher(key));
+        if (!read.pages.length)
+          throw new Error(
+            `${order}: Firecrawl read no page (${read.unread.length} tried); nothing kept.`,
+          );
         write(pagesPath(order), read);
         console.log(
           `${order} pages: ${read.pages.length} read, ${read.unread.length} unread, ${read.firecrawl_requests} Firecrawl requests`,
         );
       }
+
+      // The blind set's writer, known whichever entries this run names.
+      writers.set(order, await blindWriterFingerprint(evidence));
 
       for (const entry of entries) {
         if (entry.input === "pages" && !existsSync(pagesPath(order))) {
@@ -160,9 +172,6 @@ it.skipIf(orders.length === 0)(
         const { developer, user } = entryPrompt(entry, input);
         const promptChars = developer.length + user.length;
         const writer = writerFingerprint(entry, input);
-        // The blind set's writer; the reading test's writers are compared
-        // apart.
-        if (entry.input !== "pages") writers.set(order, writer);
         const saved = readResult(order, entry.id);
         const done = saved?.writer === writer;
         plan.push({
@@ -322,24 +331,77 @@ it.skipIf(orders.length === 0)(
     }
     write(keyPath, key);
 
-    // The reading test, labelled (not blind): each page writer beside its
-    // twin, printed by review.spec.ts as "Bandingkan - <writer>.pdf".
+    // The reading test, blind within each pair: review-pages/<order>/
+    // "Pasangan A - 1.json" and "- 2.json" are a page writer's report and its
+    // twin's in random order; review-pages/key.json says which is which. A
+    // pair is made only when both come from today's writers. Its report
+    // without pages is also one of the blind set's letters: score the blind
+    // set first.
+    const pairsKeyPath = join(EVIDENCE_DIR, "review-pages", "key.json");
+    const pairsStored = existsSync(pairsKeyPath)
+      ? (JSON.parse(readFileSync(pairsKeyPath, "utf8")) as Record<
+          string,
+          Record<string, PagePairKey>
+        >)
+      : {};
+    const pairsKey: Record<string, Record<string, PagePairKey>> = {};
     for (const order of orders) {
       const evidence = loadEvidence(order);
+      const deliveredAt = (
+        JSON.parse(evidence.order.report_json) as AuditReport
+      ).generated_at;
+      const ready: {
+        entry: EntryId;
+        twin: EntryId;
+        writers: [string, string];
+      }[] = [];
+      const reports = new Map<EntryId, AuditReport>();
+      for (const pageEntry of PAGE_ENTRIES) {
+        if (!existsSync(pagesPath(order))) break;
+        const twin = ENTRIES.find((item) => item.id === pageEntry.twin)!;
+        const withPages = readResult(order, pageEntry.id);
+        const without = readResult(order, twin.id);
+        const writersNow: [string, string] = [
+          writerFingerprint(
+            pageEntry,
+            (await entryInput(evidence, pageEntry)).input,
+          ),
+          writerFingerprint(twin, (await entryInput(evidence, twin)).input),
+        ];
+        if (
+          !withPages?.report ||
+          !without?.report ||
+          withPages.writer !== writersNow[0] ||
+          without.writer !== writersNow[1]
+        )
+          continue;
+        ready.push({
+          entry: pageEntry.id as EntryId,
+          twin: twin.id as EntryId,
+          writers: writersNow,
+        });
+        reports.set(pageEntry.id as EntryId, withPages.report);
+        reports.set(twin.id as EntryId, without.report);
+      }
+      const dir = join(EVIDENCE_DIR, "review-pages", order);
+      rmSync(dir, { recursive: true, force: true });
+      if (!ready.length) continue;
+      pairsKey[order] = drawPagePairs(ready, pairsStored[order]);
       const intake = JSON.parse(evidence.order.intake_json) as {
         context: unknown;
         prompts: unknown;
         originals?: unknown;
       };
-      const deliveredAt = (
-        JSON.parse(evidence.order.report_json) as AuditReport
-      ).generated_at;
-      for (const entry of PAGE_ENTRIES) {
-        for (const id of [entry.twin, entry.id]) {
-          const result = readResult(order, id);
-          if (!result?.report) continue;
-          write(join(EVIDENCE_DIR, "review", order, `compare-${id}.json`), {
-            report: blindReport(result.report, deliveredAt),
+      for (const [letter, pair] of Object.entries(pairsKey[order]!)) {
+        const numbered = {
+          [pair.with_pages]: pair.entry,
+          [pair.with_pages === "1" ? "2" : "1"]: pair.twin,
+        };
+        for (const [number, id] of Object.entries(numbered)) {
+          const report = blindReport(reports.get(id)!, deliveredAt);
+          expect(telltaleIn(report), `${order} pair ${letter}`).toBeNull();
+          write(join(dir, `Pasangan ${letter} - ${number}.json`), {
+            report,
             context: intake.context,
             prompts: intake.prompts,
             originals: intake.originals ?? [],
@@ -351,6 +413,7 @@ it.skipIf(orders.length === 0)(
         }
       }
     }
+    write(pairsKeyPath, pairsKey);
     if (scoresDropped && existsSync(scoresPath))
       renameSync(
         scoresPath,

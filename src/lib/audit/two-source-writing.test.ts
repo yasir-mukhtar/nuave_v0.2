@@ -313,6 +313,16 @@ describe("headline numbers, checked by their basis (B-05)", () => {
     expect(check("120")).toBe(true);
     // A page cited only by a question the finding does not cite.
     expect(check("37")).toBe(false);
+    // The same page, when the finding cites the question that cited it.
+    expect(
+      headlineConfirmed(
+        { number: "37", basis: "verbatim" },
+        ["q2", "q4"],
+        content(),
+        withPages,
+        observations,
+      ),
+    ).toBe(true);
   });
 
   it("verbatim: two figures side by side, each a token of a cited answer", () => {

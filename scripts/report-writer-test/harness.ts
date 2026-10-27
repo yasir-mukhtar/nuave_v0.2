@@ -394,11 +394,7 @@ type FactsWithText = TwoSourceReportFacts & {
 };
 
 /** Today's report input, plus Google's words for the "new input" entries. */
-export async function entryInput(
-  evidence: OrderEvidence,
-  entry: Entry,
-  dir = EVIDENCE_DIR,
-) {
+async function baseInput(evidence: OrderEvidence, entry: Entry) {
   const intake = parseIntake(evidence.order)!;
   const built = await orderReportInput({
     orderId: evidence.order.id,
@@ -409,25 +405,6 @@ export async function entryInput(
   });
   const facts = built.input.two_source_facts;
   if (entry.input === "today" || !facts) return { ...built, intake };
-  if (entry.input === "pages") {
-    const path = pagesPath(evidence.order.order_number, dir);
-    if (!existsSync(path) || !facts.writer)
-      throw new Error(
-        `${evidence.order.order_number}: no pages read yet (${path}); a live run reads them first.`,
-      );
-    const read = JSON.parse(readFileSync(path, "utf8")) as OrderPages;
-    return {
-      ...built,
-      intake,
-      input: {
-        ...built.input,
-        two_source_facts: {
-          ...facts,
-          writer: { ...facts.writer, pages: read.pages },
-        },
-      },
-    };
-  }
   const texts = new Map(
     evidence.rows.map((row) => {
       const check = row.g_result_json
@@ -458,6 +435,44 @@ export async function entryInput(
     intake,
     input: { ...built.input, two_source_facts: withText },
   };
+}
+
+/** An entry's report input: today's, the new one, or (the reading test)
+ * the twin's new input plus the pages read for the order. */
+export async function entryInput(
+  evidence: OrderEvidence,
+  entry: Entry,
+  dir = EVIDENCE_DIR,
+) {
+  if (entry.input === "pages") {
+    // The twin's own input, plus the pages: the pair differs only by them.
+    const pageEntry = PAGE_ENTRIES.find((item) => item.id === entry.id);
+    const twin = ENTRIES.find((item) => item.id === pageEntry?.twin);
+    if (!twin) throw new Error(`${entry.id} has no twin writer.`);
+    const path = pagesPath(evidence.order.order_number, dir);
+    const read = existsSync(path)
+      ? (JSON.parse(readFileSync(path, "utf8")) as OrderPages)
+      : null;
+    if (!read?.pages.length)
+      throw new Error(
+        `${evidence.order.order_number}: no pages read (${path}); a live run that names a page writer reads them first.`,
+      );
+    const base = await baseInput(evidence, twin);
+    const writer = base.input.two_source_facts?.writer;
+    if (!writer)
+      throw new Error(`${entry.id}: the twin's input has no writer facts.`);
+    return {
+      ...base,
+      input: {
+        ...base.input,
+        two_source_facts: {
+          ...base.input.two_source_facts!,
+          writer: { ...writer, pages: read.pages },
+        },
+      },
+    };
+  }
+  return baseInput(evidence, entry);
 }
 
 /** True when the production writer's own prompt already carries Google's
@@ -1297,6 +1312,73 @@ export function assignLetters(
     key[order] = Object.fromEntries(ids.map((id, i) => [LETTERS[i]!, id]));
   }
   return key;
+}
+
+/** The blind set's writer for an order: every blind entry shares it, so it
+ * is known whichever entries a run names. */
+export async function blindWriterFingerprint(
+  evidence: OrderEvidence,
+  dir = EVIDENCE_DIR,
+): Promise<string> {
+  const first = ENTRIES[0]!;
+  return writerFingerprint(
+    first,
+    (await entryInput(evidence, first, dir)).input,
+  );
+}
+
+/** One reading-test pair, blind: its two reports are "1" and "2". */
+export type PagePairKey = {
+  /** The page writer's and its twin's writers when the pair was drawn. */
+  writers: [string, string];
+  entry: EntryId;
+  twin: EntryId;
+  /** Which number is the report written with pages. */
+  with_pages: "1" | "2";
+};
+
+/**
+ * The reading test's pairs for one order, each blind: "Pasangan A" holds a
+ * page writer's report and its twin's as "1" and "2" in random order, and
+ * the pairs' letters are drawn at random too. A pair is made only when both
+ * reports come from today's writers. An existing draw is kept while its
+ * writers stay the same.
+ */
+export function drawPagePairs(
+  ready: readonly {
+    entry: EntryId;
+    twin: EntryId;
+    writers: [string, string];
+  }[],
+  previous: Record<string, PagePairKey> | undefined,
+  pick: (n: number) => number = (n) => randomInt(n),
+): Record<string, PagePairKey> {
+  const same = (key: PagePairKey) =>
+    ready.some(
+      (pair) =>
+        pair.entry === key.entry &&
+        pair.writers[0] === key.writers[0] &&
+        pair.writers[1] === key.writers[1],
+    );
+  const kept = Object.entries(previous ?? {}).filter(([, key]) => same(key));
+  const out: Record<string, PagePairKey> = Object.fromEntries(kept);
+  const free = LETTERS.filter((letter) => !(letter in out));
+  const fresh = ready.filter(
+    (pair) => !kept.some(([, key]) => key.entry === pair.entry),
+  );
+  for (let i = fresh.length - 1; i > 0; i -= 1) {
+    const j = pick(i + 1);
+    [fresh[i], fresh[j]] = [fresh[j]!, fresh[i]!];
+  }
+  fresh.forEach((pair, i) => {
+    out[free[i]!] = {
+      writers: pair.writers,
+      entry: pair.entry,
+      twin: pair.twin,
+      with_pages: pick(2) === 0 ? "1" : "2",
+    };
+  });
+  return out;
 }
 
 /** Letters for entries added after an order's letters were drawn (and

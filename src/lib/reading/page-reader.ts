@@ -9,6 +9,7 @@
  * business pages only; phone numbers are removed from everything kept.
  */
 import { stripPhoneNumbers } from "../checks/phones";
+import { parseSourceInput } from "../audit/source-input";
 import { urlDomain } from "../audit/two-source-report";
 
 /** One page as the writer reads it. */
@@ -31,10 +32,11 @@ export const PAGE_TEXT_MAX_CHARS = 6_000;
 export const OWN_EXTRA_PAGES = 4;
 export const CITED_PAGES = 10;
 
-/** Hosts whose pages say nothing about a business's own offer, or that
- * Firecrawl cannot read without an account: never read. */
+/** Never read: social profiles and personal posts, forums and Q&A sites
+ * (people, not businesses), maps, search and link shorteners. Only public
+ * business pages are read. */
 const SKIPPED_HOSTS =
-  /(^|\.)(instagram\.com|facebook\.com|fb\.com|tiktok\.com|x\.com|twitter\.com|youtube\.com|youtu\.be|wa\.me|linktr\.ee|google\.[a-z.]+|goo\.gl|maps\.app\.goo\.gl|bing\.com)$/i;
+  /(^|\.)(instagram\.com|facebook\.com|fb\.com|tiktok\.com|x\.com|twitter\.com|threads\.net|youtube\.com|youtu\.be|wa\.me|linktr\.ee|reddit\.com|quora\.com|kaskus\.co\.id|google\.[a-z.]+|goo\.gl|maps\.app\.goo\.gl|bing\.com|bit\.ly|s\.id)$/i;
 
 /** Own-site pages worth reading, by words in their address or title. */
 const USEFUL_OWN_PAGE =
@@ -126,6 +128,16 @@ export function pageText(markdown: string, max = PAGE_TEXT_MAX_CHARS): string {
   return `${cut.slice(0, end > max * 0.6 ? end : max).trim()}\n…`;
 }
 
+/** Firecrawl itself cannot serve (a bad key, no credits, too many requests,
+ * an outage): the reading stops, and nothing is kept, so a later run reads
+ * again instead of writing "with pages" from no pages. */
+export class FirecrawlUnavailable extends Error {
+  constructor(readonly status: number) {
+    super(`Firecrawl answered ${status}; no pages were kept.`);
+    this.name = "FirecrawlUnavailable";
+  }
+}
+
 /** What the reader needs from Firecrawl (a real client or a test double). */
 export type PageFetcher = {
   scrape(url: string): Promise<{ title: string; markdown: string } | null>;
@@ -149,9 +161,20 @@ export function firecrawlFetcher(
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(90_000),
-    });
+    }).catch(() => null);
+    // A failed request or a page Firecrawl could not read is one unread
+    // page; Firecrawl being unable to serve at all stops the reading.
+    if (!response) return null;
+    if (
+      [401, 402, 403, 429].includes(response.status) ||
+      response.status >= 500
+    )
+      throw new FirecrawlUnavailable(response.status);
     if (!response.ok) return null;
-    return (await response.json()) as Record<string, unknown>;
+    return (await response.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
   };
   return {
     async scrape(url) {
@@ -161,9 +184,11 @@ export function firecrawlFetcher(
         onlyMainContent: true,
         timeout: 60_000,
         location: { country: "ID", languages: ["id-ID"] },
+        // The plain proxy: one credit per page, never the dearer kinds.
+        proxy: "basic",
         blockAds: true,
         removeBase64Images: true,
-      }).catch(() => null);
+      });
       const data = json?.success
         ? (json.data as {
             markdown?: string;
@@ -171,11 +196,20 @@ export function firecrawlFetcher(
           })
         : null;
       const status = data?.metadata?.statusCode ?? 200;
-      if (!data?.markdown?.trim() || status >= 400) return null;
-      return { title: data.metadata?.title ?? "", markdown: data.markdown };
+      if (
+        typeof data?.markdown !== "string" ||
+        !data.markdown.trim() ||
+        status >= 400
+      )
+        return null;
+      const title = data.metadata?.title;
+      return {
+        title: typeof title === "string" ? title : "",
+        markdown: data.markdown,
+      };
     },
     async map(url) {
-      const json = await post("map", { url, limit: 200 }).catch(() => null);
+      const json = await post("map", { url, limit: 200 });
       return json?.success && Array.isArray(json.links)
         ? (json.links as { url: string; title?: string }[]).filter(
             (link) => typeof link?.url === "string",
@@ -185,19 +219,29 @@ export function firecrawlFetcher(
   };
 }
 
+/** The most Firecrawl requests one order makes: one site map, the own start
+ * page and its useful pages, and the cited pages. */
+export const MAX_REQUESTS_PER_ORDER = 1 + 1 + OWN_EXTRA_PAGES + CITED_PAGES;
+
 /**
  * Reads the business's own site (its start page and up to four useful pages
- * from the site map) and the ten pages the answers cited most. Pages that
- * cannot be read are left out; the result says which.
+ * from the site map) and the ten pages the answers cited most, at most
+ * `MAX_REQUESTS_PER_ORDER` requests. Pages that cannot be read are left out;
+ * the result says which. Throws `FirecrawlUnavailable` when Firecrawl cannot
+ * serve at all.
  */
 export async function readPagesForReport(input: {
-  /** The address the audit started from; an Instagram profile is not read. */
+  /** The address the audit started from, as the owner gave it ("klinik.id",
+   * a full address or an Instagram profile, which is not read). */
   ownSite: string | null;
   sources: readonly CitedSource[];
   fetcher: PageFetcher;
 }): Promise<{ pages: ReadPage[]; unread: string[] }> {
+  const parsed = input.ownSite ? parseSourceInput(input.ownSite) : null;
   const own =
-    input.ownSite && readable(input.ownSite) ? canonical(input.ownSite) : null;
+    parsed?.sourceType === "website" && readable(parsed.normalizedUrl)
+      ? canonical(parsed.normalizedUrl)
+      : null;
   const ownDomain = own ? urlDomain(own) : null;
   const ownUrls = own
     ? [own, ...ownPagesToRead(own, await input.fetcher.map(own))]
@@ -210,7 +254,7 @@ export async function readPagesForReport(input: {
   const pages: ReadPage[] = [];
   const unread: string[] = [];
   for (const page of wanted) {
-    const read = await input.fetcher.scrape(page.url).catch(() => null);
+    const read = await input.fetcher.scrape(page.url);
     const text = read ? pageText(read.markdown) : "";
     if (!text) {
       unread.push(page.url);
@@ -219,7 +263,7 @@ export async function readPagesForReport(input: {
     pages.push({
       url: page.url,
       domain: urlDomain(page.url) ?? "",
-      title: stripPhoneNumbers(read!.title).slice(0, 200),
+      title: stripPhoneNumbers(String(read!.title ?? "")).slice(0, 200),
       kind: page.kind,
       cited_in: page.cited_in,
       text,

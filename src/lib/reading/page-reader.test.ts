@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { containsPhoneNumber } from "../checks/phones";
 import {
   citedPagesToRead,
+  FirecrawlUnavailable,
+  MAX_REQUESTS_PER_ORDER,
   firecrawlFetcher,
   ownPagesToRead,
   pageText,
@@ -103,6 +105,49 @@ describe("reading an order's pages", () => {
     expect(unread).toEqual(["https://alodokter.com/jerawat"]);
   });
 
+  it("an own site given as a bare domain is read; forums and Q&A sites are not", async () => {
+    const f = fetcher();
+    const { pages } = await readPagesForReport({
+      ownSite: "fiksi.example",
+      sources: [
+        { prompt_id: "q1", url: "https://www.reddit.com/r/skincare/x" },
+        { prompt_id: "q1", url: "https://id.quora.com/x" },
+        { prompt_id: "q1", url: "https://www.kaskus.co.id/thread/x" },
+      ],
+      fetcher: f,
+    });
+    expect(pages.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+      "https://fiksi.example/harga",
+    ]);
+  });
+
+  it("at most sixteen Firecrawl requests for one order", async () => {
+    let requests = 0;
+    const counting: PageFetcher = {
+      scrape: async (url) => {
+        requests += 1;
+        return { title: "", markdown: url };
+      },
+      map: async () => {
+        requests += 1;
+        return Array.from({ length: 30 }, (_, i) => ({
+          url: `https://fiksi.example/harga-${i}`,
+        }));
+      },
+    };
+    await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: Array.from({ length: 30 }, (_, i) => ({
+        prompt_id: "q1",
+        url: `https://situs${i}.example/`,
+      })),
+      fetcher: counting,
+    });
+    expect(MAX_REQUESTS_PER_ORDER).toBe(16);
+    expect(requests).toBe(MAX_REQUESTS_PER_ORDER);
+  });
+
   it("an Instagram profile as the own site is not read", async () => {
     const f = fetcher();
     const { pages } = await readPagesForReport({
@@ -146,7 +191,30 @@ describe("Firecrawl (v2)", () => {
       formats: ["markdown"],
       onlyMainContent: true,
       location: { country: "ID" },
+      proxy: "basic",
     });
+  });
+
+  it("a bad key, no credits, too many requests or an outage stops the reading", async () => {
+    for (const status of [401, 402, 403, 429, 500, 503]) {
+      const fetcher = firecrawlFetcher(
+        "k",
+        vi.fn(async () => new Response("{}", { status })),
+      );
+      await expect(fetcher.scrape("https://x.example/")).rejects.toThrow(
+        FirecrawlUnavailable,
+      );
+      await expect(fetcher.map("https://x.example/")).rejects.toThrow(
+        FirecrawlUnavailable,
+      );
+      await expect(
+        readPagesForReport({
+          ownSite: "https://x.example/",
+          sources: [],
+          fetcher,
+        }),
+      ).rejects.toThrow(FirecrawlUnavailable);
+    }
   });
 
   it("a page that answers 404, an empty page or a failed request gives nothing", async () => {
@@ -162,7 +230,14 @@ describe("Firecrawl (v2)", () => {
       }),
     ).toBeNull();
     expect(await answer({ success: true, data: { markdown: " " } })).toBeNull();
-    expect(await answer({ success: false }, 402)).toBeNull();
+    // Firecrawl could not read this one page.
+    expect(await answer({ success: false }, 400)).toBeNull();
+    expect(
+      await answer({
+        success: true,
+        data: { markdown: "x", metadata: { title: 42 } },
+      }),
+    ).toEqual({ title: "", markdown: "x" });
     expect(
       await firecrawlFetcher(
         "k",
