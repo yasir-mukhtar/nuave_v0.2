@@ -427,7 +427,7 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
     "https://klinik-sintesa.test/",
   );
   await expect(competitor).toContainText("Rating 4,6 · 131 ulasan");
-  await expect(competitor).toContainText("direkomendasikan 9×");
+  await expect(competitor).toContainText("kartu ChatGPT 9×");
   await expect(fresh.locator("[data-competitor-logo]")).toHaveCount(0);
   await expect(fresh.locator("header#stage-5")).toContainText("Kedai Fiksi");
   await expect(fresh.locator("[data-report-checked]")).toContainText(

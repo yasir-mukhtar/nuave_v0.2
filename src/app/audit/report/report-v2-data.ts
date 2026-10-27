@@ -78,8 +78,9 @@ export type CompetitorRow = {
   /** The owner's own row; its counts come from the saved facts. */
   own?: { cited: number; recommended: number };
   /** Spec 021 Part C, saved with reports made after it: ChatGPT answers that
-   * showed it as a business card, and what the sources' pages listed. */
-  recommended?: number;
+   * named it and showed it as a business card ("kartu ChatGPT"), and what
+   * the sources' pages listed. */
+  cards?: number;
   website?: string | null;
   rating?: { value: number; max: number } | null;
   reviews?: number | null;
@@ -153,7 +154,7 @@ function sortRows(rows: CompetitorRow[]): CompetitorRow[] {
     (a, b) =>
       b.chatgpt + b.google - (a.chatgpt + a.google) ||
       (a.own ? -1 : b.own ? 1 : 0) ||
-      (b.recommended ?? 0) - (a.recommended ?? 0) ||
+      (b.cards ?? 0) - (a.cards ?? 0) ||
       a.name.localeCompare(b.name),
   );
 }
@@ -168,7 +169,7 @@ function savedCompetitorRows(
     name: fact.name,
     chatgpt: fact.chatgpt.length,
     google: fact.google.length,
-    recommended: fact.recommended.length,
+    cards: fact.cards.length,
     website: fact.website,
     rating: fact.rating,
     reviews: fact.reviews,
@@ -177,7 +178,13 @@ function savedCompetitorRows(
   const uncounted = rows
     .filter((r) => r.chatgpt + r.google === 0)
     .map((r) => r.name);
-  counted.push({ ...ownRow(two, ownNames[0] ?? ""), ...saved.own });
+  counted.push({
+    ...ownRow(two, ownNames[0] ?? ""),
+    cards: saved.own.cards.length,
+    website: saved.own.website,
+    rating: saved.own.rating,
+    reviews: saved.own.reviews,
+  });
   return { counted: sortRows(counted), uncounted };
 }
 
@@ -301,8 +308,12 @@ const SHARED_HOSTS = [
   "youtube.com",
   "linktr.ee",
   "wa.me",
-  "google.com",
   "goo.gl",
+  "bit.ly",
+  "s.id",
+  "lynk.id",
+  "tinyurl.com",
+  "t.co",
   "g.page",
   "business.site",
   "tokopedia.com",
@@ -324,6 +335,11 @@ export function siteIcon(website: string | null | undefined): string | null {
     if (url.protocol !== "https:" && url.protocol !== "http:") return null;
     if (
       !host.includes(".") ||
+      // An IP address is no business's own site.
+      /^[\d.]+$/.test(host) ||
+      host.includes(":") ||
+      // Google on every country domain (google.co.id, maps.google.com).
+      /(^|\.)google\.[a-z.]+$/.test(host) ||
       SHARED_HOSTS.some(
         (shared) => host === shared || host.endsWith(`.${shared}`),
       )

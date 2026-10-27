@@ -101,8 +101,10 @@ export type CompetitorFact = {
   name: string;
   chatgpt: string[];
   google: string[];
-  /** ChatGPT answers that showed it as a business card (its own pick). */
-  recommended: string[];
+  /** ChatGPT answers that name it and showed it as one of ChatGPT's own
+   * business cards. Not "recommended": that word stays for the report
+   * writer's reading of the owner's answers. */
+  cards: string[];
   /** From the provider data only (C-04); null when none was given. */
   website: string | null;
   rating: { value: number; max: number } | null;
@@ -157,7 +159,7 @@ export type TwoSourceReport = {
    * counts are derived when the page opens. */
   competitors?: {
     others: CompetitorFact[];
-    own: Pick<CompetitorFact, "website" | "rating" | "reviews">;
+    own: Pick<CompetitorFact, "cards" | "website" | "rating" | "reviews">;
   };
 };
 

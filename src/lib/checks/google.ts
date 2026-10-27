@@ -256,7 +256,8 @@ export function readGoogleAttempt(input: {
     body,
     overviewReferences(overview),
     businesses,
-    googleListings(send.result, businesses),
+    // The owner's own map listing too, for its row's rating.
+    googleListings(send.result, [...businesses, ...input.names]),
   );
 }
 

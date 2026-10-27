@@ -322,7 +322,7 @@ describe("competitor rows saved with the report (Spec 021 Part C, AC-C1)", () =>
     name,
     chatgpt: [] as string[],
     google: [] as string[],
-    recommended: [] as string[],
+    cards: [] as string[],
     website: null,
     rating: null,
     reviews: null,
@@ -338,7 +338,7 @@ describe("competitor rows saved with the report (Spec 021 Part C, AC-C1)", () =>
           fact("ZAP Clinic", {
             chatgpt: ["p1", "p2"],
             google: ["p1"],
-            recommended: ["p2"],
+            cards: ["p2"],
             website: "https://zapclinic.example/",
             rating: { value: 4.7, max: 5 },
             reviews: 1200,
@@ -346,6 +346,7 @@ describe("competitor rows saved with the report (Spec 021 Part C, AC-C1)", () =>
           fact("Kosong", { website: "https://kosong.example/" }),
         ],
         own: {
+          cards: [],
           website: "https://saya.example/",
           rating: { value: 4.9, max: 5 },
           reviews: 80,
@@ -361,7 +362,7 @@ describe("competitor rows saved with the report (Spec 021 Part C, AC-C1)", () =>
       name: "ZAP Clinic",
       chatgpt: 2,
       google: 1,
-      recommended: 1,
+      cards: 1,
       website: "https://zapclinic.example/",
       rating: { value: 4.7, max: 5 },
       reviews: 1200,
@@ -372,6 +373,7 @@ describe("competitor rows saved with the report (Spec 021 Part C, AC-C1)", () =>
       chatgpt: 1,
       google: 0,
       own: { cited: 0, recommended: 1 },
+      cards: 0,
       website: "https://saya.example/",
       rating: { value: 4.9, max: 5 },
       reviews: 80,
@@ -395,6 +397,12 @@ describe("site icons (C-03)", () => {
       "https://klinik.business.site/",
       "https://www.halodoc.com/klinik",
       "https://linktr.ee/klinik",
+      "https://www.google.co.id/search?q=klinik",
+      "https://bit.ly/klinik",
+      "https://s.id/klinik",
+      "https://lynk.id/klinik",
+      "http://192.168.1.10/",
+      "https://[2001:db8::1]/",
     ])
       expect(siteIcon(shared), shared).toBeNull();
     expect(siteIcon(null)).toBeNull();

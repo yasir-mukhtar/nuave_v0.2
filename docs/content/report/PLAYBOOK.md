@@ -143,13 +143,14 @@ picks the items the answers make relevant and writes them for this clinic.
 - [OpenAI: Searching the web with ChatGPT][oa-search] and [ChatGPT search for
   Enterprise and Edu][oa-ent]. These name Bing and "specialized data
   providers". **Read through search results only:** the pages refused a
-  direct fetch from Nuave's build machine. Confirm before approval.
+  direct fetch from Nuave's build machine. Recheck at the yearly review.
 - [OpenAI: Publishers and developers FAQ][oa-pub]. Read through search
-  results only; confirm before approval.
+  results only; recheck at the yearly review.
 - [Permenkes 1787/MENKES/PER/XII/2010 tentang Iklan dan Publikasi Pelayanan
   Kesehatan][permenkes]. **The official text could not be opened from the
-  build machine**; the points above come from secondary summaries. Confirm
-  the wording, and that the regulation is still in force, before approval.
+  build machine**; the points above come from secondary summaries. Recheck
+  the wording, and that the regulation is still in force, at the yearly
+  review.
 
 [g-ai]: https://developers.google.com/search/docs/appearance/ai-features
 [g-helpful]: https://developers.google.com/search/docs/fundamentals/creating-helpful-content

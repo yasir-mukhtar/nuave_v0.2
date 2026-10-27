@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { chatgptListings, googleListings, listingRating } from "./listings";
+import {
+  chatgptListings,
+  googleListings,
+  listingRating,
+  listingWebsite,
+} from "./listings";
 import { containsPhoneNumber } from "./phones";
 
 // Spec 021 C-01, AC-C2: what the sources' own pages listed about each
@@ -134,6 +139,46 @@ describe("Google's own page (C-01)", () => {
         JSON.stringify(googleListings(result, ["Klinik Seroja"])),
       ),
     ).toBe(false);
+  });
+
+  it("a map result and an organic result for one business are merged, whichever comes first", () => {
+    const items = [
+      {
+        type: "organic",
+        website_name: "Klinik Seroja",
+        url: "https://klinikseroja.example/",
+      },
+      {
+        type: "local_pack",
+        title: "Klinik Seroja",
+        url: null,
+        rating: { value: 4.8, votes_count: 137, rating_max: 5 },
+      },
+    ];
+    const merged = {
+      name: "Klinik Seroja",
+      website: "https://klinikseroja.example/",
+      rating: { value: 4.8, max: 5 },
+      reviews: 137,
+      card: false,
+    };
+    expect(googleListings({ items }, ["Klinik Seroja"])).toEqual([merged]);
+    expect(
+      googleListings({ items: [...items].reverse() }, ["Klinik Seroja"]),
+    ).toEqual([merged]);
+  });
+
+  it("a map address is never kept as a website", () => {
+    for (const url of [
+      "https://www.google.com/maps/place/Jl.+Kenanga+5,+Bandung",
+      "https://maps.google.co.id/?q=Jl.+Kenanga+5",
+      "https://maps.app.goo.gl/abc123",
+      "https://goo.gl/maps/abc123",
+    ])
+      expect(listingWebsite(url), url).toBeNull();
+    expect(listingWebsite("https://www.google.com/search?q=x")).toBe(
+      "https://www.google.com/search?q=x",
+    );
   });
 
   it("a rating outside its scale is dropped; another scale is kept as it is", () => {

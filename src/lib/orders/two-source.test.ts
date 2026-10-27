@@ -762,7 +762,7 @@ describe("competitor data saved with the report (Spec 021 C-01, C-02, AC-C1, AC-
     )!;
     expect(fact.chatgpt).toHaveLength(9);
     expect(fact.google).toHaveLength(8);
-    expect(fact.recommended).toHaveLength(9);
+    expect(fact.cards).toHaveLength(9);
     expect(fact.chatgpt).not.toContain(two.questions[6]!.prompt_id);
     expect(fact).toMatchObject({
       website: "https://klinik-sintesa.test/",
@@ -771,6 +771,7 @@ describe("competitor data saved with the report (Spec 021 C-01, C-02, AC-C1, AC-
       reviews: 131,
     });
     expect(two.competitors!.own).toEqual({
+      cards: [],
       website: null,
       rating: null,
       reviews: null,
@@ -813,7 +814,7 @@ describe("competitorFacts (C-02)", () => {
   const own = ["Erha Clinic"];
   const isOwn = (name: string) => / erha clinic /i.test(` ${name} `);
 
-  it("counts answers once per source, longest name first, owner's names matched too; cards count as recommended once per answer", () => {
+  it("counts answers once per source, longest name first, owner's names matched too; a card counts once per answer that names the business", () => {
     const facts = competitorFacts({
       answers: [
         {
@@ -834,6 +835,13 @@ describe("competitorFacts (C-02)", () => {
                 rating: { value: 4.8, max: 5 },
                 reviews: 900,
               }),
+              // A branch: neither the owner nor a competitor.
+              card("Erha Clinic Surabaya", {
+                rating: { value: 3.1, max: 5 },
+                reviews: 5000,
+              }),
+              // A card for a business the answer does not name: no card.
+              card("Klinik Kosong"),
             ],
             google: [
               card("Natasha Skin Clinic", {
@@ -852,7 +860,7 @@ describe("competitorFacts (C-02)", () => {
           listings: { chatgpt: [], google: [] },
         },
       ],
-      names: ["Natasha Skin Clinic", "Natasha", "Klinik Kosong"],
+      names: ["Natasha Skin Clinic", "Natasha", "Klinik  Kosong"],
       ownNames: own,
       isOwn,
     });
@@ -861,7 +869,7 @@ describe("competitorFacts (C-02)", () => {
         name: "Natasha Skin Clinic",
         chatgpt: ["q1"],
         google: ["q1"],
-        recommended: ["q1"],
+        cards: ["q1"],
         website: "https://natasha.example/",
         rating: { value: 4.6, max: 5 },
         reviews: 300,
@@ -870,23 +878,25 @@ describe("competitorFacts (C-02)", () => {
         name: "Natasha",
         chatgpt: ["q2"],
         google: [],
-        recommended: [],
+        cards: [],
         website: null,
         rating: null,
         reviews: null,
       },
       {
-        name: "Klinik Kosong",
+        name: "Klinik  Kosong",
         chatgpt: [],
         google: [],
-        recommended: [],
+        cards: [],
         website: null,
         rating: null,
         reviews: null,
       },
     ]);
-    // The owner's own listing details come from the same pages.
+    // The owner's details come only from listings under its own name: the
+    // branch's 3.1 with 5,000 reviews is not the owner's rating.
     expect(facts.own).toEqual({
+      cards: ["q1"],
       website: "https://erha.example/",
       rating: { value: 4.8, max: 5 },
       reviews: 900,

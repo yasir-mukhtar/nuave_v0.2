@@ -242,9 +242,10 @@ record the time per PDF.
   name, website or Instagram, rating, review count. Never phone numbers or
   addresses. Stored in the existing JSON columns; no migration.
 - `src/lib/orders/two-source.ts`: a `competitors` block in the saved report:
-  per business, named per source, recommended (ChatGPT, from the saved
-  assessment), question ids, website, rating, reviews; the owner's row from
-  the same counts. New report version string. The renderer prefers this block
+  per business, named per source, ChatGPT business cards in answers that
+  name it (shown as "kartu ChatGPT N×", not "direkomendasikan"), question
+  ids, website, rating, reviews; the owner's row from the same counts, with
+  listing details only from listings under the owner's exact name. New report version string. The renderer prefers this block
   and falls back to PR 2's render-time counts.
 - **Logos:** the business's own `https://<domain>/favicon.ico`, loaded by the
   browser with `referrerPolicy="no-referrer"`; initials on error. No

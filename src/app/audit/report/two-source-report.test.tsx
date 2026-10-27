@@ -797,7 +797,7 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
     name,
     chatgpt: [] as string[],
     google: [] as string[],
-    recommended: [] as string[],
+    cards: [] as string[],
     website: null,
     rating: null,
     reviews: null,
@@ -812,7 +812,7 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
     fact("Kopi Lain", {
       chatgpt: ids(3),
       google: ids(1),
-      recommended: ids(2),
+      cards: ids(2),
       website: "https://kopilain.example/menu",
       rating: { value: 4.7, max: 5 },
       reviews: 1200,
@@ -834,7 +834,12 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
       },
       competitors: {
         others,
-        own: { website: null, rating: { value: 4.9, max: 5 }, reviews: 80 },
+        own: {
+          cards: ids(1),
+          website: null,
+          rating: { value: 4.9, max: 5 },
+          reviews: 80,
+        },
       },
     });
     return render(
@@ -854,12 +859,18 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
       ...map.querySelectorAll<HTMLElement>("[data-competitor]"),
     ].find((item) => item.textContent?.includes("Kopi Lain"))!;
     expect(row).toHaveTextContent("4×");
-    expect(row).toHaveTextContent("direkomendasikan 2×");
+    // ChatGPT's cards, never called "direkomendasikan" for another business.
+    expect(row).toHaveTextContent("kartu ChatGPT 2×");
+    expect(row).not.toHaveTextContent("direkomendasikan");
+    expect(map.querySelector("[data-cards-note]")).toHaveTextContent(
+      "Kartu ChatGPT: berapa kali ChatGPT menampilkan bisnis itu",
+    );
     expect(row).toHaveTextContent("ChatGPT 3 · Google 1");
     expect(row).toHaveTextContent("Rating 4,7 · 1.200 ulasan");
     const link = row.querySelector("a[data-competitor-site]")!;
     expect(link).toHaveAttribute("href", "https://kopilain.example/menu");
     expect(link).toHaveTextContent("kopilain.example");
+    expect(link).toHaveAccessibleName("kopilain.example (membuka tab baru)");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
     expect(link).toHaveAttribute("referrerpolicy", "no-referrer");
@@ -871,6 +882,9 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
     // The owner's row: its rating, and its own site from the profile.
     const own = map.querySelector('[data-competitor="own"]')!;
     expect(own).toHaveTextContent("Rating 4,9 · 80 ulasan");
+    // The owner keeps the writer's "direkomendasikan" (as in Ringkasan) and
+    // gets the same card count as every row.
+    expect(own).toHaveTextContent("kartu ChatGPT 1×");
     expect(own.querySelector("a")).toHaveAttribute(
       "href",
       "https://kedai-fiksi.example/",
@@ -886,8 +900,11 @@ describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
       "href",
       "https://kopitiga.example/",
     );
+    expect(linked[0]!.querySelector("a")).toHaveAccessibleName(
+      "Kopi Tiga (kopitiga.example, membuka tab baru)",
+    );
     expect(map).toHaveTextContent(
-      "Bisnis dengan ikon panah punya website; ketuk untuk membukanya.",
+      "Ikon panah menandai website yang bisa dibuka.",
     );
   });
 

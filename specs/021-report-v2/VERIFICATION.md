@@ -6,7 +6,7 @@
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
 > Implementation version or commit: Part A (PR #173), Part D (PR #175),
-> Part P (PR #176), Part C (PR 5)
+> Part P (PR #176), Part C (PR #179)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -335,7 +335,7 @@ afterwards. What this gives:
   browser's print without a note (by design: the customer still gets a PDF,
   and no browser time is used).
 
-## Part C, competitor data (PR 5)
+## Part C, competitor data (PR #179)
 
 ### Scope reviewed
 
@@ -344,13 +344,13 @@ afterwards. What this gives:
   review count (`listings`, inside the existing JSON columns; no migration).
 - `src/lib/orders/two-source.ts`: `competitorFacts` builds the report's
   `competitors` block (per business: the questions whose answers name it,
-  per source; the ChatGPT answers that showed it as a business card; website,
-  rating, reviews; the owner's listing details). Report version
+  per source; the ChatGPT answers that named it and showed it as a business
+  card; website, rating, reviews; the owner's listing details). Report version
   `nuave-two-source-v2`. `findNames` moved to `src/lib/audit/find-names.ts`
   so the server and the page count with one rule.
 - `src/app/audit/report/report-v2-data.ts`, `TwoSourceReport.tsx`,
   `report-v2.module.css`: the page prefers the saved block, shows the
-  website link, rating line, "direkomendasikan N×", site icons and linked
+  website link, rating line, "kartu ChatGPT N×", site icons and linked
   chips; older reports keep the render-time counts.
 - `src/app/r/SavedReport.tsx`, `ReportView.tsx`, `DirectTenReportPage.tsx`:
   `showLogos`, on only for the private link page of a live report.
@@ -370,27 +370,47 @@ kept, so the founder's one live check was not needed:
 
 ChatGPT's `brand_entities` carry no reliable website (`urls` is "relevant
 URLs" and often null), so they add names only. Websites pass
-`phoneSafeUrl` (no messaging links, no phone number in the address).
+`phoneSafeUrl` (no messaging links, no phone number in the address), and
+map addresses (Google Maps, `maps.app.goo.gl`) are refused: a map link is a
+place, not the business's site, and can spell out a street address. Google's
+map result and organic result for the same name are merged: the website from
+either, the rating and reviews from the map result. The owner's own names are
+looked up on Google's page too, so the owner's map listing is kept.
 
 ### Definitions
 
 - **Named N×:** answers that name the business, once per answer, per
   source; whole words, longest name first, the owner's names matched too
   (the rule the page highlights names with).
-- **Direkomendasikan N×** (other businesses): ChatGPT answers that showed the
-  business as one of its own business cards. The owner's figure is unchanged
-  (the report writer's assessment).
+- **Kartu ChatGPT N×:** ChatGPT answers that name the business and showed it
+  as one of ChatGPT's business cards (name, rating, address). A card whose
+  business the answer text never names is not counted. It is deliberately
+  not called "direkomendasikan": on the owner's row that word keeps its
+  meaning, the report writer's assessment of the answer, and a note under the
+  list explains the card figure.
+- **Owner's details:** only from a listing whose name is exactly one of the
+  owner's names. A branch ("Erha Clinic Surabaya" for "Erha Clinic") is
+  neither the owner's row nor another business, so its rating never shows as
+  the owner's.
 - **Rating and reviews:** from the listing with a rating and the most
   reviews across both sources.
 - **Logos:** `https://<host>/favicon.ico` of the saved website, never for a
-  shared platform (Instagram, Facebook, WhatsApp, Google, marketplaces,
-  health directories) and never on synthetic reports or the copy Browser Run
-  prints (no outside request from the PDF).
+  shared platform (Instagram, Facebook, WhatsApp, any Google domain, link
+  shorteners, marketplaces, health directories) or an IP address, and never
+  on synthetic reports or the copy Browser Run prints (no outside request
+  from the PDF).
+- **Owner's own link (exception to C-04):** the owner's row links the address
+  the audit started from (the website or Instagram the owner gave), not a
+  provider listing, when it is an http(s) address. It is the owner's own
+  address, so it carries no third-party risk; it opens the same way (new
+  tab, no referrer).
+- **New-tab links:** each link's accessible name says it opens a new tab
+  ("kopilain.example (membuka tab baru)").
 
 ### Acceptance results
 
 | Criterion | Result | Evidence |
 | --- | --- | --- |
-| AC-C1 | Pass | Unit: `competitorFacts` (counts per source, nested names, cards counted once per answer, owner's details); saved rows preferred over matching; page rows show counts, "direkomendasikan", website link (new tab, no referrer), rating line, owner's row; chips link only with a saved website; logos from the own site only, initials on error. Whole path: a synthetic order saves the block (9 ChatGPT, 8 Google, 9 recommended, website, rating 4.6, 131 reviews). E2e: the fictional competitor's link, rating and "direkomendasikan 9×" on the report, no logo request. |
+| AC-C1 | Pass | Unit: `competitorFacts` (counts per source, nested names, cards counted once per answer, owner's details); saved rows preferred over matching; page rows show counts, "kartu ChatGPT" with its note, website link (new tab, no referrer), rating line, owner's row; chips link only with a saved website; logos from the own site only, initials on error. Whole path: a synthetic order saves the block (9 ChatGPT, 8 Google, 9 cards, website, rating 4.6, 131 reviews; the map and organic results merged). Branch listings never reach the owner's row; a card without a mention is not counted; map addresses and Google, shortener and IP hosts get no icon. The printed copy and synthetic reports request no logo. E2e: the fictional competitor's link, "Rating 4,6 · 131 ulasan" and "kartu ChatGPT 9×" on the report, no logo request. |
 | AC-C2 | Pass | Unit: listings keep no phone, address or messaging link; the whole-path test finds no phone number or address in the saved block or in any saved check's listings. |
 

@@ -443,9 +443,10 @@ function details(
  * Spec 021 C-01/C-02: each other business counted by the answers that name
  * it (once per answer, whole words, longest name first, the owner's names
  * matched too; the rule the report highlights names with), the ChatGPT
- * answers that showed it as a business card, and what the sources' own
- * pages listed about it. The owner's listing details come from the same
- * pages.
+ * answers that showed it as a business card while naming it, and what the
+ * sources' own pages listed about it. The owner's card count and listing
+ * details come only from listings under one of its own names exactly; a
+ * branch ("Erha Clinic Surabaya") is neither the owner nor a competitor.
  */
 export function competitorFacts(input: {
   answers: readonly {
@@ -458,16 +459,18 @@ export function competitorFacts(input: {
   ownNames: readonly string[];
   isOwn: (name: string) => boolean;
 }): NonNullable<TwoSourceReport["competitors"]> {
-  const keyOf = (name: string) => name.trim().toLowerCase();
+  const keyOf = (name: string) =>
+    name.trim().replace(/\s+/g, " ").toLowerCase();
+  const ownKeys = new Set(input.ownNames.map(keyOf).filter(Boolean));
   const byKey = new Map<string, CompetitorFact>();
   for (const name of input.names) {
     const key = keyOf(name);
-    if (key && !byKey.has(key))
+    if (key && !byKey.has(key) && !ownKeys.has(key))
       byKey.set(key, {
         name: name.trim(),
         chatgpt: [],
         google: [],
-        recommended: [],
+        cards: [],
         website: null,
         rating: null,
         reviews: null,
@@ -476,6 +479,7 @@ export function competitorFacts(input: {
   const others = [...byKey.values()];
   const listed = new Map<string, BusinessListing[]>();
   const own: BusinessListing[] = [];
+  const ownCards: string[] = [];
   for (const answer of input.answers) {
     for (const source of ["chatgpt", "google"] as const) {
       const found = new Set(
@@ -486,16 +490,20 @@ export function competitorFacts(input: {
       );
       for (const key of found) byKey.get(key)?.[source].push(answer.id);
       for (const listing of answer.listings[source]) {
-        if (input.isOwn(listing.name)) {
+        const key = keyOf(listing.name);
+        // A card counts only in an answer that also names the business.
+        const carded = listing.card && found.has(key);
+        if (ownKeys.has(key)) {
           own.push(listing);
+          if (carded && !ownCards.includes(answer.id)) ownCards.push(answer.id);
           continue;
         }
-        const key = keyOf(listing.name);
+        if (input.isOwn(listing.name)) continue;
         const fact = byKey.get(key);
         if (!fact) continue;
         listed.set(key, [...(listed.get(key) ?? []), listing]);
-        if (listing.card && !fact.recommended.includes(answer.id))
-          fact.recommended.push(answer.id);
+        if (carded && !fact.cards.includes(answer.id))
+          fact.cards.push(answer.id);
       }
     }
   }
@@ -504,6 +512,6 @@ export function competitorFacts(input: {
       ...fact,
       ...details(listed.get(keyOf(fact.name)) ?? []),
     })),
-    own: details(own),
+    own: { ...details(own), cards: ownCards },
   };
 }

@@ -386,6 +386,7 @@ function SiteLink({ website }: { website: string }) {
       target="_blank"
       rel="noopener noreferrer"
       referrerPolicy="no-referrer"
+      aria-label={`${displayHost(website)} (membuka tab baru)`}
       data-competitor-site
     >
       {displayHost(website)}
@@ -404,7 +405,10 @@ function CompetitorLine({
   showLogos: boolean;
 }) {
   const total = row.chatgpt + row.google;
-  const recommended = row.own ? row.own.recommended : (row.recommended ?? 0);
+  // "direkomendasikan" is the report writer's reading of the owner's
+  // answers (as in Ringkasan); every row's card count is ChatGPT's own.
+  const recommended = row.own?.recommended ?? 0;
+  const cards = row.cards ?? 0;
   const split = [
     row.chatgpt ? `ChatGPT ${row.chatgpt}` : "",
     row.google ? `Google ${row.google}` : "",
@@ -439,6 +443,12 @@ function CompetitorLine({
         {recommended ? (
           <>
             direkomendasikan {recommended}×
+            <br />
+          </>
+        ) : null}
+        {cards ? (
+          <>
+            kartu ChatGPT {cards}×
             <br />
           </>
         ) : null}
@@ -485,7 +495,7 @@ function Competitors({
       website: saved.get(name)?.website ?? null,
     })),
   ];
-  const noun = two.subject === "klinik" ? "Klinik" : "Bisnis";
+  const anyCards = shown.some((row) => row.cards);
   return (
     <div className={styles.comp} data-other-businesses>
       {shown.map((row) => (
@@ -498,7 +508,7 @@ function Competitors({
       ))}
       {rest.length ? (
         <div className={styles.tail}>
-          <p>{noun} lain yang juga disebut AI:</p>
+          <p>Bisnis lain yang juga disebut AI:</p>
           <ul className={styles.chipList}>
             {rest.map(({ name, website }) => (
               <li key={name}>
@@ -510,6 +520,7 @@ function Competitors({
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
                     title={displayHost(website)}
+                    aria-label={`${name} (${displayHost(website)}, membuka tab baru)`}
                     data-competitor-site
                   >
                     {name}
@@ -523,9 +534,17 @@ function Competitors({
           </ul>
           {rest.some((item) => item.website) ? (
             <p className={styles.tailNote}>
-              {noun} dengan ikon panah punya website; ketuk untuk membukanya.
+              Ikon panah menandai website yang bisa dibuka.
             </p>
           ) : null}
+        </div>
+      ) : null}
+      {anyCards ? (
+        <div className={styles.tail}>
+          <p className={styles.tailNote} data-cards-note>
+            Kartu ChatGPT: berapa kali ChatGPT menampilkan bisnis itu sebagai
+            kartu tempat (nama, rating, alamat) dalam jawabannya.
+          </p>
         </div>
       ) : null}
       {!others.length && !uncounted.length ? (

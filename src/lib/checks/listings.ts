@@ -37,12 +37,31 @@ const list = (value: unknown): Json[] =>
 const text = (value: unknown): string =>
   typeof value === "string" ? value : "";
 
+/** A map address is a place, not the business's site, and may spell out a
+ * street address: never kept as a website. */
+function isMapAddress(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  const path = url.pathname.toLowerCase();
+  return (
+    /(^|\.)maps\.google\.[a-z.]+$/.test(host) ||
+    (/(^|\.)google\.[a-z.]+$/.test(host) && path.startsWith("/maps")) ||
+    host === "maps.app.goo.gl" ||
+    (host === "goo.gl" && path.startsWith("/maps"))
+  );
+}
+
 /** A provider address, kept only as plain http(s) with no phone number in
- * it (wa.me and similar are refused). */
+ * it (wa.me and similar are refused) and not a map address. */
 export function listingWebsite(value: unknown): string | null {
   const url = text(value).trim();
   if (!/^https?:\/\//i.test(url) || url.length > 2_000) return null;
-  return phoneSafeUrl(url);
+  const safe = phoneSafeUrl(url);
+  if (!safe) return null;
+  try {
+    return isMapAddress(new URL(safe)) ? null : safe;
+  } catch {
+    return null;
+  }
 }
 
 function count(value: unknown): number | null {
@@ -97,7 +116,9 @@ export function chatgptListings(result: Json): BusinessListing[] {
 }
 
 /** Google's map results and organic results for the given names (those its
- * AI Overview names; see `googleBusinesses`). Map results carry a rating. */
+ * AI Overview names, and the owner's own names; see `googleBusinesses`).
+ * Map results carry a rating; an organic result for the same name adds a
+ * website when the map result has none. */
 export function googleListings(
   result: Json,
   names: readonly string[],
@@ -109,15 +130,27 @@ export function googleListings(
     if (!local && item.type !== "organic") continue;
     const name = listingName(local ? item.title : item.website_name);
     const key = name.toLowerCase();
-    if (!name || !wanted.has(key) || found.has(key)) continue;
+    if (!name || !wanted.has(key)) continue;
     const rating = local ? listingRating(item.rating) : null;
-    found.set(key, {
+    const listing: BusinessListing = {
       name,
       website: listingWebsite(item.url),
       rating,
       reviews: rating ? count(record(item.rating)?.votes_count) : null,
       card: false,
-    });
+    };
+    const earlier = found.get(key);
+    found.set(
+      key,
+      earlier
+        ? {
+            ...earlier,
+            website: earlier.website ?? listing.website,
+            rating: earlier.rating ?? listing.rating,
+            reviews: earlier.rating ? earlier.reviews : listing.reviews,
+          }
+        : listing,
+    );
   }
   return [...found.values()];
 }
