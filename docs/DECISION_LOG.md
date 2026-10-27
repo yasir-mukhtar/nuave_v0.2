@@ -6,6 +6,28 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-27 — Reading test before G1; the writer may use pages read
+
+Yasir found every earlier NV-3WDSAY report shallow (all written before Spec
+021 Part B's writer) and suspected the input: the writer sees only what
+ChatGPT and Google said, never what is on the pages they cite. Approved
+("Yes and yes. Approved for 2."):
+
+1. **Baseline first.** Spec 021 Part B's writer is run on NV-3WDSAY with two
+   writers only (Luna high, Opus medium), within the test-B USD 5 limit.
+2. **The reading test moves before G1** (supersedes the timing in
+   [2026-10-26 — Audit stack plan](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+   point 1, for this test). Firecrawl reads the business's own site and the
+   ten pages the answers cited most; the same two writers write again with
+   those pages, and the founder compares each with its twin.
+3. **Facts may also come from pages read,** in the test: a sentence names
+   the page's site and cites the questions that cited it. Still never a
+   claimed cause (2026-10-26, point 2). Public business pages only; phone
+   numbers removed.
+
+The production writer reads no pages until the founder judges the test. The
+Firecrawl key is in the cloud environment (`FIRECRAWL_API_KEY`).
+
 ## 2026-10-27 — Report playbook approved
 
 Yasir approved the report writer's playbook,

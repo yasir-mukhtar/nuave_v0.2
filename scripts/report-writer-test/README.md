@@ -95,6 +95,28 @@ the next free letter, so the scored letters keep their meaning. Do not open it u
 done. Scores in `scores.csv` are kept while the letters stay the same; a sheet
 whose letters are redrawn is kept aside as `scores-superseded-<time>.csv`.
 
+## 3a. The reading test (founder decision 2026-10-27)
+
+Two more writers, `luna-high-pages` and `opus-medium-pages`, are their twins
+(`luna-high`, `opus-medium`) also given the pages Firecrawl read for the
+order:
+- the business's own site, plus up to four of its pages about prices,
+  doctors, treatments or the business, found by its site map;
+- the ten pages the ChatGPT and Google answers cited most.
+
+They run only when named:
+
+```sh
+REPORT_TEST_LIVE=1 ORDERS=NV-3WDSAY ENTRIES=luna-high,opus-medium,luna-high-pages,opus-medium-pages \
+  npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/run.spec.ts
+```
+
+The first live run reads the pages (needs `FIRECRAWL_API_KEY`) and keeps them
+in `pages/<order>.json`, so later runs never read again. The pages' cost is
+Firecrawl credits, not USD, and is not in the ledger; the file counts the
+requests. The page writers are not in the blind set: each is printed beside
+its twin, labelled, as `review/<order>/Bandingkan - <writer>.pdf`.
+
 ## 4. Review
 
 ```sh

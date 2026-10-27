@@ -46,6 +46,7 @@ import {
 import type { TwoSourceReportFacts } from "../../src/lib/audit/two-source-report";
 import {
   type AuditCallTelemetry,
+  type AuditObservation,
   type AuditReport,
   type ReportContent,
   type ReportSynthesis,
@@ -61,6 +62,11 @@ import {
 } from "../../src/lib/intake/glm-local";
 import { z } from "zod";
 import type { GoogleCheck } from "../../src/lib/checks/google";
+import {
+  readPagesForReport,
+  type PageFetcher,
+  type ReadPage,
+} from "../../src/lib/reading/page-reader";
 import {
   orderReportInput,
   parseIntake,
@@ -170,7 +176,11 @@ export type EntryId =
   | "haiku-medium"
   | "glm-low"
   | "opus-low"
-  | "opus-medium";
+  | "opus-medium"
+  // The reading test (founder decision 2026-10-27): the same writer, also
+  // given the pages Firecrawl read. Compared with their twin, not blind.
+  | "luna-high-pages"
+  | "opus-medium-pages";
 
 export type EntryKey = EntryId | "reference";
 
@@ -180,7 +190,8 @@ export type Entry = {
   provider: "openai" | "anthropic" | "cheaper-inference" | null;
   model: string | null;
   effort: "low" | "medium" | "high" | null;
-  input: "today" | "new";
+  /** "pages": the new input plus the pages read for the order. */
+  input: "today" | "new" | "pages";
 };
 
 /** The report the customer received, shown beside the blind reports as a
@@ -266,6 +277,100 @@ export const ENTRIES: readonly Entry[] = [
   },
 ];
 
+/**
+ * The reading test (founder decision 2026-10-27): each writer here is its
+ * twin above, also given the pages Firecrawl read for the order (the
+ * business's own site and the pages the answers cited most). They are not
+ * in the blind set: the founder compares each with its twin, labelled.
+ */
+export const PAGE_ENTRIES: readonly (Entry & { twin: EntryId })[] = [
+  {
+    id: "luna-high-pages",
+    twin: "luna-high",
+    label: "GPT-5.6 Luna, high effort, new input and pages read",
+    provider: "openai",
+    model: "gpt-5.6-luna",
+    effort: "high",
+    input: "pages",
+  },
+  {
+    id: "opus-medium-pages",
+    twin: "opus-medium",
+    label: "Claude Opus 5.5, medium effort, new input and pages read",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
+    effort: "medium",
+    input: "pages",
+  },
+];
+
+/** Where an order's read pages are kept, so a re-run never reads again. */
+export const pagesPath = (order: string, dir = EVIDENCE_DIR) =>
+  join(dir, "pages", `${order}.json`);
+
+export type OrderPages = {
+  read_at: string;
+  pages: ReadPage[];
+  unread: string[];
+  /** Firecrawl requests made (one per page tried, one site map). */
+  firecrawl_requests: number;
+};
+
+/** Reads an order's pages with Firecrawl: its own site (unless it is an
+ * Instagram profile) and the pages its ChatGPT and Google answers cited. */
+export async function readOrderPages(
+  evidence: OrderEvidence,
+  fetcher: PageFetcher,
+): Promise<OrderPages> {
+  const intake = parseIntake(evidence.order)!;
+  const context = intake.context as { identity?: { source?: string } };
+  const sources = evidence.rows.flatMap((row) => {
+    const observation = row.observation_json
+      ? (JSON.parse(row.observation_json) as AuditObservation)
+      : null;
+    const check =
+      row.g_status === "done" && row.g_result_json
+        ? (JSON.parse(row.g_result_json) as GoogleCheck)
+        : null;
+    return [
+      ...(observation?.run_status === "completed"
+        ? observation.sources.map((source) => ({
+            prompt_id: row.prompt_id,
+            url: source.url,
+          }))
+        : []),
+      ...(check?.outcome === "summary"
+        ? check.references.map((reference) => ({
+            prompt_id: row.prompt_id,
+            url: reference.url,
+          }))
+        : []),
+    ];
+  });
+  let requests = 0;
+  const counted: PageFetcher = {
+    scrape: (url) => {
+      requests += 1;
+      return fetcher.scrape(url);
+    },
+    map: (url) => {
+      requests += 1;
+      return fetcher.map(url);
+    },
+  };
+  const { pages, unread } = await readPagesForReport({
+    ownSite: context.identity?.source ?? null,
+    sources,
+    fetcher: counted,
+  });
+  return {
+    read_at: new Date().toISOString(),
+    pages,
+    unread,
+    firecrawl_requests: requests,
+  };
+}
+
 /** Google's answers are shortened by the production writer's own rule
  * (Spec 021 B-01), so the harness and production never differ. */
 export {
@@ -289,7 +394,11 @@ type FactsWithText = TwoSourceReportFacts & {
 };
 
 /** Today's report input, plus Google's words for the "new input" entries. */
-export async function entryInput(evidence: OrderEvidence, entry: Entry) {
+export async function entryInput(
+  evidence: OrderEvidence,
+  entry: Entry,
+  dir = EVIDENCE_DIR,
+) {
   const intake = parseIntake(evidence.order)!;
   const built = await orderReportInput({
     orderId: evidence.order.id,
@@ -300,6 +409,25 @@ export async function entryInput(evidence: OrderEvidence, entry: Entry) {
   });
   const facts = built.input.two_source_facts;
   if (entry.input === "today" || !facts) return { ...built, intake };
+  if (entry.input === "pages") {
+    const path = pagesPath(evidence.order.order_number, dir);
+    if (!existsSync(path) || !facts.writer)
+      throw new Error(
+        `${evidence.order.order_number}: no pages read yet (${path}); a live run reads them first.`,
+      );
+    const read = JSON.parse(readFileSync(path, "utf8")) as OrderPages;
+    return {
+      ...built,
+      intake,
+      input: {
+        ...built.input,
+        two_source_facts: {
+          ...facts,
+          writer: { ...facts.writer, pages: read.pages },
+        },
+      },
+    };
+  }
   const texts = new Map(
     evidence.rows.map((row) => {
       const check = row.g_result_json

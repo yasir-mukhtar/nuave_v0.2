@@ -59,6 +59,12 @@ function writerInstructions(
     "Rule 1, facts: every fact about this business, its competitors or the cited sites comes only from the answers and the counts. The playbook never supplies a fact about a business.",
     "Rule 2, advice: advice comes from the playbook. Where the playbook supports it, be confident and specific: say exactly what to do. Give no advice the playbook does not support. Never advise anything the playbook lists under what the writer never advises.",
     'Rule 3, no causes: never write why this business got its result (not "because your profile has few reviews"). Say what the answers show and what generally helps.',
+    ...(facts.writer?.pages?.length
+      ? [
+          'pages_read: pages Nuave read for this report, the business\'s own site (kind own) and the pages the AI answers cited most (kind cited; cited_in lists the questions whose answers cited it). A fact may also come from a page read: name its site ("di situs hadirr.com", "halaman Tentang Kami di situs Anda") and cite the questions that cited it. Never present a page\'s words as what ChatGPT or Google said, and never write that a page caused AI to name or skip the business.',
+          "With pages_read, also compare what the answers say with what the pages say: facts AI got wrong or missed that the business's own site states (prices, branches, doctors, treatments); what kind of pages AI relies on (a directory, a list article, a competitor's own page, the business's own blog) and whether the business appears on them; which treatment pages, prices or doctor details the favoured businesses' pages show and the business's own site lacks.",
+        ]
+      : []),
     "Analyse; do not recap the answers one by one. Useful angles: which sites AI relies on and whether the business appears on them; which kinds of questions name the business and which do not; what AI says about the business that is wrong or missing; how ChatGPT and Google AI Overview differ; what the businesses AI favours have in common.",
     `verdict: one or two sentences, at most ${limits.verdict_characters} characters: the big picture for the owner, with the per-source result.`,
     `conclusion: the full closing paragraph, at most ${limits.conclusion_words} words. Say, for each source, how often the business was named in this tested sample ("Di ${SOURCE_CHATGPT} …; di ${SOURCE_GOOGLE} …"). Do not imply a wider or permanent result.`,
@@ -160,6 +166,9 @@ export function twoSourceWriterMessages(
         google_ai_overview: facts.google,
         questions: facts.writer.questions,
         other_businesses: facts.writer.businesses,
+        ...(facts.writer.pages?.length
+          ? { pages_read: facts.writer.pages }
+          : {}),
         ...(revision
           ? {
               report_draft: revisionDraft(revision.draft),

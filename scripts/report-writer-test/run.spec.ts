@@ -54,6 +54,9 @@ import {
   replayDelivered,
   ENTRIES,
   EVIDENCE_DIR,
+  PAGE_ENTRIES,
+  pagesPath,
+  readOrderPages,
   entryPrompt,
   entryInput,
   Ledger,
@@ -68,6 +71,7 @@ import {
   type EntryResult,
 } from "./harness";
 import type { AuditReport } from "../../src/lib/audit/types";
+import { firecrawlFetcher } from "../../src/lib/reading/page-reader";
 
 const live = process.env.REPORT_TEST_LIVE === "1";
 const savedOrders = existsSync(join(EVIDENCE_DIR, "raw"))
@@ -80,7 +84,11 @@ const orders = process.env.ORDERS
   ? process.env.ORDERS.split(",").map((order) => order.trim())
   : savedOrders;
 const only = process.env.ENTRIES?.split(",").map((id) => id.trim());
-const entries = ENTRIES.filter((entry) => !only || only.includes(entry.id));
+// The reading test's writers run only when named in ENTRIES.
+const entries = [
+  ...ENTRIES.filter((entry) => !only || only.includes(entry.id)),
+  ...PAGE_ENTRIES.filter((entry) => only?.includes(entry.id)),
+];
 
 const resultPath = (order: string, entry: EntryKey) =>
   join(EVIDENCE_DIR, "runs", order, `${entry}.json`);
@@ -121,12 +129,40 @@ it.skipIf(orders.length === 0)(
       );
       console.log(`${order} reference (delivered report): ${replay.note}`);
 
+      // The reading test: Firecrawl reads the order's pages once, on the
+      // first live run that names a page writer; later runs reuse the file.
+      if (
+        live &&
+        entries.some((entry) => entry.input === "pages") &&
+        !existsSync(pagesPath(order))
+      ) {
+        const key = process.env.FIRECRAWL_API_KEY;
+        if (!key) throw new Error("FIRECRAWL_API_KEY is needed to read pages.");
+        const read = await readOrderPages(evidence, firecrawlFetcher(key));
+        write(pagesPath(order), read);
+        console.log(
+          `${order} pages: ${read.pages.length} read, ${read.unread.length} unread, ${read.firecrawl_requests} Firecrawl requests`,
+        );
+      }
+
       for (const entry of entries) {
+        if (entry.input === "pages" && !existsSync(pagesPath(order))) {
+          plan.push({
+            order,
+            entry: entry.id,
+            worst_case_usd_per_call: 0,
+            done: false,
+            note: "pages not read yet",
+          });
+          continue;
+        }
         const { input } = await entryInput(evidence, entry);
         const { developer, user } = entryPrompt(entry, input);
         const promptChars = developer.length + user.length;
         const writer = writerFingerprint(entry, input);
-        writers.set(order, writer);
+        // The blind set's writer; the reading test's writers are compared
+        // apart.
+        if (entry.input !== "pages") writers.set(order, writer);
         const saved = readResult(order, entry.id);
         const done = saved?.writer === writer;
         plan.push({
@@ -285,6 +321,36 @@ it.skipIf(orders.length === 0)(
       }
     }
     write(keyPath, key);
+
+    // The reading test, labelled (not blind): each page writer beside its
+    // twin, printed by review.spec.ts as "Bandingkan - <writer>.pdf".
+    for (const order of orders) {
+      const evidence = loadEvidence(order);
+      const intake = JSON.parse(evidence.order.intake_json) as {
+        context: unknown;
+        prompts: unknown;
+        originals?: unknown;
+      };
+      const deliveredAt = (
+        JSON.parse(evidence.order.report_json) as AuditReport
+      ).generated_at;
+      for (const entry of PAGE_ENTRIES) {
+        for (const id of [entry.twin, entry.id]) {
+          const result = readResult(order, id);
+          if (!result?.report) continue;
+          write(join(EVIDENCE_DIR, "review", order, `compare-${id}.json`), {
+            report: blindReport(result.report, deliveredAt),
+            context: intake.context,
+            prompts: intake.prompts,
+            originals: intake.originals ?? [],
+            observations: evidence.rows.flatMap((row) =>
+              row.observation_json ? [JSON.parse(row.observation_json)] : [],
+            ),
+            synthetic: false,
+          });
+        }
+      }
+    }
     if (scoresDropped && existsSync(scoresPath))
       renameSync(
         scoresPath,

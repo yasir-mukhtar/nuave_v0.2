@@ -42,8 +42,12 @@ import {
   SpendRefused,
   telltaleIn,
   trimGoogleText,
+  PAGE_ENTRIES,
+  pagesPath,
+  readOrderPages,
   type OrderEvidence,
 } from "../scripts/report-writer-test/harness";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 // The test B harness (scripts/report-writer-test), offline: a synthetic
 // two-source order is delivered by the real runner on the sqlite D1 helper,
@@ -573,5 +577,71 @@ describe("blind review", () => {
     expect(telltaleIn(blind)).toBeNull();
     expect(blind.generated_at).toBe("2026-10-26T02:59:26.100Z");
     expect(blind.conclusion).toBe(report.conclusion);
+  });
+});
+
+describe("the reading test (founder decision 2026-10-27)", () => {
+  it("reads the order's own site and the pages its answers cited, and counts the Firecrawl requests", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const scraped: string[] = [];
+    const read = await readOrderPages(evidence, {
+      scrape: async (url) => {
+        scraped.push(url);
+        return {
+          title: "Judul",
+          markdown: `Isi ${url}. Hubungi 0812-3456-7890.`,
+        };
+      },
+      map: async () => [],
+    });
+    expect(read.pages.length).toBeGreaterThan(0);
+    // The synthetic answers cite contoh.test; every page keeps the questions
+    // that cited it, and no phone number.
+    const cited = read.pages.filter((page) => page.kind === "cited");
+    expect(cited.length).toBeGreaterThan(0);
+    for (const page of cited) expect(page.cited_in.length).toBeGreaterThan(0);
+    for (const page of read.pages)
+      expect(containsPhoneNumber(page.text)).toBe(false);
+    expect(read.firecrawl_requests).toBe(scraped.length + 1);
+  });
+
+  it("a page writer reads the saved pages; without them it refuses; its writer differs from its twin's", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const entry = PAGE_ENTRIES[0]!;
+    const twin = ENTRIES.find((item) => item.id === entry.twin)!;
+    await expect(entryInput(evidence, entry, dir)).rejects.toThrow(
+      /no pages read yet/,
+    );
+    const path = pagesPath(evidence.order.order_number, dir);
+    mkdirSync(join(path, ".."), { recursive: true });
+    writeFileSync(
+      path,
+      JSON.stringify({
+        read_at: "2026-10-27T00:00:00.000Z",
+        pages: [
+          {
+            url: "https://hadirr.com/a",
+            domain: "hadirr.com",
+            title: "Daftar",
+            kind: "cited",
+            cited_in: [],
+            text: "Daftar klinik terbaik.",
+          },
+        ],
+        unread: [],
+        firecrawl_requests: 2,
+      }),
+    );
+    const withPages = await entryInput(evidence, entry, dir);
+    expect(withPages.input.two_source_facts!.writer!.pages).toHaveLength(1);
+    const plain = await entryInput(evidence, twin, dir);
+    expect(plain.input.two_source_facts!.writer!.pages).toBeUndefined();
+    expect(writerFingerprint(entry, withPages.input)).not.toBe(
+      writerFingerprint(twin, plain.input),
+    );
+    // The blind set is unchanged: the page writers are not in it.
+    expect(ENTRIES.some((item) => item.input === "pages")).toBe(false);
   });
 });

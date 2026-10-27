@@ -37,7 +37,9 @@ function pages(): { file: string; pdf: string }[] {
           order,
           name === "reference.json"
             ? "Referensi - laporan yang dikirim.pdf"
-            : `Laporan ${name.replace(/\.json$/, "")}.pdf`,
+            : name.startsWith("compare-")
+              ? `Bandingkan - ${name.replace(/^compare-|\.json$/g, "")}.pdf`
+              : `Laporan ${name.replace(/\.json$/, "")}.pdf`,
         ),
       });
   return out;
