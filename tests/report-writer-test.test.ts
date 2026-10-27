@@ -645,6 +645,25 @@ describe("the reading test (founder decision 2026-10-27)", () => {
     );
     // The blind set is unchanged: the page writers are not in it.
     expect(ENTRIES.some((item) => item.input === "pages")).toBe(false);
+    // Pages read again make a new writer, so the old result is redone.
+    const reread = {
+      ...withPages.input,
+      two_source_facts: {
+        ...withPages.input.two_source_facts!,
+        writer: {
+          ...withPages.input.two_source_facts!.writer!,
+          pages: [
+            {
+              ...withPages.input.two_source_facts!.writer!.pages![0]!,
+              text: "Daftar klinik, diperbarui.",
+            },
+          ],
+        },
+      },
+    };
+    expect(writerFingerprint(entry, reread)).not.toBe(
+      writerFingerprint(entry, withPages.input),
+    );
     // The pair differs only by the pages: the rest is the twin's input.
     const { pages, ...rest } = withPages.input.two_source_facts!.writer!;
     void pages;

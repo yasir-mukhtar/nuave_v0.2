@@ -252,7 +252,10 @@ it.skipIf(orders.length === 0)(
     const stored = existsSync(keyPath)
       ? (JSON.parse(readFileSync(keyPath, "utf8")) as Record<string, unknown>)
       : {};
-    const key: Record<string, OrderKey> = {};
+    // Orders this run does not name keep their letters and their scores.
+    const key: Record<string, OrderKey> = {
+      ...(stored as Record<string, OrderKey>),
+    };
     const header =
       "order,letter,report,evidence_1_5,specific_actions_1_5,natural_indonesian_1_5,clear_to_owner_1_5,send_to_paying_customer_yes_no,notes";
     const rows = [header];
@@ -260,11 +263,13 @@ it.skipIf(orders.length === 0)(
     // a sheet whose letters are redrawn is kept aside, never overwritten.
     const scoresPath = join(EVIDENCE_DIR, "scores.csv");
     const scored = new Map<string, string>();
+    const otherOrders: string[] = [];
     if (existsSync(scoresPath))
       for (const line of readFileSync(scoresPath, "utf8")
         .split("\n")
         .slice(1)) {
         const [order, letter, , ...rest] = line.split(",");
+        if (order && !orders.includes(order)) otherOrders.push(line);
         if (order && letter && rest.some((cell) => cell.trim()))
           scored.set(`${order},${letter}`, rest.join(","));
       }
@@ -303,7 +308,10 @@ it.skipIf(orders.length === 0)(
         join(dir, "reference.json"),
         page(readResult(order, "reference")!.report!),
       );
-      if (!complete && !kept) continue;
+      if (!complete && !kept) {
+        delete key[order];
+        continue;
+      }
       // An entry added after scoring gets the next free letter once it has
       // run; the scored letters keep their meaning.
       key[order] = kept
@@ -344,7 +352,9 @@ it.skipIf(orders.length === 0)(
           Record<string, PagePairKey>
         >)
       : {};
-    const pairsKey: Record<string, Record<string, PagePairKey>> = {};
+    const pairsKey: Record<string, Record<string, PagePairKey>> = {
+      ...pairsStored,
+    };
     for (const order of orders) {
       const evidence = loadEvidence(order);
       const deliveredAt = (
@@ -385,7 +395,10 @@ it.skipIf(orders.length === 0)(
       }
       const dir = join(EVIDENCE_DIR, "review-pages", order);
       rmSync(dir, { recursive: true, force: true });
-      if (!ready.length) continue;
+      if (!ready.length) {
+        delete pairsKey[order];
+        continue;
+      }
       pairsKey[order] = drawPagePairs(ready, pairsStored[order]);
       const intake = JSON.parse(evidence.order.intake_json) as {
         context: unknown;
@@ -419,6 +432,6 @@ it.skipIf(orders.length === 0)(
         scoresPath,
         join(EVIDENCE_DIR, `scores-superseded-${Date.now()}.csv`),
       );
-    writeFileSync(scoresPath, `${rows.join("\n")}\n`);
+    writeFileSync(scoresPath, `${[...rows, ...otherOrders].join("\n")}\n`);
   },
 );

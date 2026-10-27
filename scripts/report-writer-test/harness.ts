@@ -653,11 +653,15 @@ export function entryPrompt(entry: Entry, ...args: WriterArgs) {
  * mistaken for results of the new writer. */
 export function writerFingerprint(entry: Entry, input: WriterArgs[0]): string {
   const { request, developer } = entryPrompt(entry, input);
-  return createHash("sha256")
+  const hash = createHash("sha256")
     .update(developer)
-    .update(JSON.stringify(request.text.format))
-    .digest("hex")
-    .slice(0, 12);
+    .update(JSON.stringify(request.text.format));
+  // The reading test: pages read again make a new writer, so its earlier
+  // result is set aside and written again. Other writers are unchanged.
+  const pages = input.two_source_facts?.writer?.pages;
+  if (pages?.length)
+    hash.update(JSON.stringify(pages.map((page) => [page.url, page.text])));
+  return hash.digest("hex").slice(0, 12);
 }
 
 function harnessAddedGoogleWords(input: WriterArgs[0]): boolean {
