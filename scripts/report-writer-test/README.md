@@ -2,7 +2,7 @@
 
 Test B of the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
 (decision 2026-10-26, as fixed on 2026-10-27), which is Spec 021's
-side-by-side writer test (B-07): five writers on the same saved orders, each
+side-by-side writer test (B-07): six writers on the same saved orders, each
 running today's production writer, judged blind by the founder.
 
 | Blind entry | Model | Effort |
@@ -12,6 +12,7 @@ running today's production writer, judged blind by the founder.
 | `sonnet-medium` | Claude Sonnet 5.5 | medium |
 | `sonnet-high` | Claude Sonnet 5.5 | high |
 | `haiku-medium` | Claude Haiku 5.5 | medium |
+| `glm-low` | GLM 5.3 Flash (Cheaper Inference; added 2026-10-27) | low |
 
 Every entry reads the new input: today's input plus the words of Google's AI
 Overview for each question (phone numbers removed, answers longer than 3,000
@@ -39,7 +40,7 @@ merged it writes Part B reports with no change here:
 - each result records which writer wrote it (a fingerprint of the
   instructions and answer format). A result from an earlier writer is moved to
   `runs/<order>/superseded/` and written again, and letters are drawn only
-  for five results from the same writer;
+  for a full set of results from the same writer;
 - the reference is compared with a replay of its own writing only when
   today's writer version wrote it; an older one is shown as delivered;
 - the reports print from today's `/r` page.
@@ -73,7 +74,8 @@ call's worst case.
 REPORT_TEST_LIVE=1 npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/run.spec.ts
 ```
 
-Needs `OPENAI_API_KEY` and `NUAVE_ANTHROPIC_API_KEY`, plus
+Needs `OPENAI_API_KEY`, `NUAVE_ANTHROPIC_API_KEY` and
+`CHEAPERINFERENCE_API_KEY`, plus
 `NUAVE_ANTHROPIC_WORKSPACE_ID` when the Anthropic key is not scoped to a
 workspace. `ORDERS=NV-…` and
 `ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
@@ -85,8 +87,9 @@ again; move its file out of `runs/` to redo it.
 than production's 16,000 (for a writer cut off at it); the allowance is
 recorded with the result.
 
-Once all five entries of an order exist from the same writer, letters A–E
-are drawn at random and kept in `key.json`. Do not open it until scoring is
+Once every entry of an order exists from the same writer, letters (A, B, …)
+are drawn at random and kept in `key.json`; an entry added after scoring gets
+the next free letter, so the scored letters keep their meaning. Do not open it until scoring is
 done. Scores in `scores.csv` are kept while the letters stay the same; a sheet
 whose letters are redrawn is kept aside as `scores-superseded-<time>.csv`.
 
