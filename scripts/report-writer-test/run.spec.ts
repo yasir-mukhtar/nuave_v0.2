@@ -9,7 +9,7 @@
  * keeps each delivered report as the labelled reference (re-running its writing
  * through today's pipeline, which must give it back unchanged when today's
  * writer wrote it), builds every entry's prompt and prints each planned call's
- * worst case against the USD 5 hard stop.
+ * worst case against the hard stop (HARD_STOP_USD in harness.ts).
  *
  * Live (only with the founder's go-ahead): add REPORT_TEST_LIVE=1. Needs
  * OPENAI_API_KEY and NUAVE_ANTHROPIC_API_KEY. ORDERS=NV-…,NV-… and
@@ -56,9 +56,13 @@ import {
   EVIDENCE_DIR,
   PAGE_ENTRIES,
   pagesPath,
+  patientFetch,
   readOrderPages,
   blindWriterFingerprint,
   drawPagePairs,
+  drawPageSet,
+  PAGE_SET,
+  type PageSetKey,
   type PagePairKey,
   entryPrompt,
   entryInput,
@@ -143,7 +147,10 @@ it.skipIf(orders.length === 0)(
         if (!key) throw new Error("FIRECRAWL_API_KEY is needed to read pages.");
         // Firecrawl unable to serve throws; no page at all is not kept
         // either, so a page writer never runs as a copy of its twin.
-        const read = await readOrderPages(evidence, firecrawlFetcher(key));
+        const read = await readOrderPages(
+          evidence,
+          firecrawlFetcher(key, patientFetch()),
+        );
         if (!read.pages.length)
           throw new Error(
             `${order}: Firecrawl read no page (${read.unread.length} tried); nothing kept.`,
@@ -247,7 +254,7 @@ it.skipIf(orders.length === 0)(
     // The review pack. The reference is always written, labelled. An order's
     // letters are drawn only once every entry exists from today's writer,
     // so no partial or mixed pack can show which letter is which; they are
-    // kept until the writer changes, when the old pack is removed.
+    // kept until the writer changes, when the old pack is archived.
     const keyPath = join(EVIDENCE_DIR, "key.json");
     const stored = existsSync(keyPath)
       ? (JSON.parse(readFileSync(keyPath, "utf8")) as Record<string, unknown>)
@@ -299,7 +306,18 @@ it.skipIf(orders.length === 0)(
       const kept =
         previous?.writer === writer && previous.letters ? previous : null;
       if (!kept) {
-        rmSync(dir, { recursive: true, force: true });
+        // A pack from an earlier writer is archived with its letters, never
+        // deleted: the founder may still be scoring its PDFs.
+        if (previous && existsSync(dir)) {
+          const archive = join(
+            EVIDENCE_DIR,
+            "review-superseded",
+            `${order}-${previous.writer}-${Date.now()}`,
+          );
+          mkdirSync(join(archive, ".."), { recursive: true });
+          renameSync(dir, archive);
+          write(join(archive, "key.json"), previous);
+        }
         scoresDropped ||= [...scored.keys()].some((k) =>
           k.startsWith(`${order},`),
         );
@@ -427,6 +445,67 @@ it.skipIf(orders.length === 0)(
       }
     }
     write(pairsKeyPath, pairsKey);
+
+    // The page-reading set, blind: review-pages-set/<order>/<letter>.json
+    // for Opus medium and Sonnet medium and high, all with pages read;
+    // review-pages-set/key.json says which is which.
+    const setKeyPath = join(EVIDENCE_DIR, "review-pages-set", "key.json");
+    const setStored = existsSync(setKeyPath)
+      ? (JSON.parse(readFileSync(setKeyPath, "utf8")) as Record<
+          string,
+          PageSetKey
+        >)
+      : {};
+    const setKey: Record<string, PageSetKey> = { ...setStored };
+    for (const order of orders) {
+      const evidence = loadEvidence(order);
+      const deliveredAt = (
+        JSON.parse(evidence.order.report_json) as AuditReport
+      ).generated_at;
+      const writersNow: Partial<Record<EntryId, string>> = {};
+      const reports = new Map<EntryId, AuditReport>();
+      if (existsSync(pagesPath(order)))
+        for (const id of PAGE_SET) {
+          const entry = PAGE_ENTRIES.find((item) => item.id === id)!;
+          const result = readResult(order, id);
+          const writer = writerFingerprint(
+            entry,
+            (await entryInput(evidence, entry)).input,
+          );
+          if (result?.report && result.writer === writer) {
+            writersNow[id] = writer;
+            reports.set(id, result.report);
+          }
+        }
+      const dir = join(EVIDENCE_DIR, "review-pages-set", order);
+      rmSync(dir, { recursive: true, force: true });
+      const drawn = drawPageSet(writersNow, setStored[order]);
+      if (!drawn) {
+        delete setKey[order];
+        continue;
+      }
+      setKey[order] = drawn;
+      const intake = JSON.parse(evidence.order.intake_json) as {
+        context: unknown;
+        prompts: unknown;
+        originals?: unknown;
+      };
+      for (const [letter, id] of Object.entries(drawn.letters)) {
+        const report = blindReport(reports.get(id)!, deliveredAt);
+        expect(telltaleIn(report), `${order} set ${letter}`).toBeNull();
+        write(join(dir, `${letter}.json`), {
+          report,
+          context: intake.context,
+          prompts: intake.prompts,
+          originals: intake.originals ?? [],
+          observations: evidence.rows.flatMap((row) =>
+            row.observation_json ? [JSON.parse(row.observation_json)] : [],
+          ),
+          synthetic: false,
+        });
+      }
+    }
+    write(setKeyPath, setKey);
     if (scoresDropped && existsSync(scoresPath))
       renameSync(
         scoresPath,

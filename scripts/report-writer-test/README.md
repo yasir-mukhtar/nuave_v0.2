@@ -82,7 +82,8 @@ Needs `OPENAI_API_KEY`, `NUAVE_ANTHROPIC_API_KEY` and
 workspace. `ORDERS=NV-…` and
 `ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
 `spend.json` at its worst case and is refused when that could take the total
-past **USD 5** (the hard stop for tests A and B together); it is then settled
+past **USD 7** (the hard stop for tests A and B together, raised from USD 5 on
+2026-10-27); it is then settled
 at its real cost. An entry already written by today's writer is never run
 again; move its file out of `runs/` to redo it.
 `REPORT_TEST_MAX_OUTPUT_TOKENS=32000` gives that run a bigger output allowance
@@ -115,7 +116,9 @@ REPORT_TEST_LIVE=1 ORDERS=NV-3WDSAY ENTRIES=luna-high,opus-medium,luna-high-page
 - The first live run that names a page writer reads the pages (needs
   `FIRECRAWL_API_KEY`): at most 16 Firecrawl requests, on the basic proxy.
   It keeps them in `pages/<order>.json`, so later runs never read again.
-- If Firecrawl cannot serve (a bad key, no credits, too many requests, an
+- When Firecrawl asks it to slow down (429), the reading waits as long as
+  asked (30 seconds if not said) and tries again, up to three times.
+- If Firecrawl cannot serve (a bad key, no credits, a lasting rate limit, an
   outage) or no page could be read, nothing is kept and no page writer runs,
   so a page writer never spends USD writing a copy of its twin.
 - The pages cost Firecrawl credits, not USD, and are not in the ledger; the
@@ -130,6 +133,13 @@ The pairs are blind too: `review-pages/<order>/Pasangan A - 1.pdf` and
 come from today's writers. The report without pages in each pair is also one
 of the blind set's letters, so **score the blind set before opening the
 pairs**.
+
+After Opus medium with pages won the pairs (decision 2026-10-27), Sonnet
+5.5 medium and high also run with the same pages (`sonnet-medium-pages`,
+`sonnet-high-pages`; they have no pair). The three page reports by Opus
+medium and Sonnet medium and high are printed as one blind set,
+`review-pages-set/<order>/Laporan A.pdf` … `C.pdf`, once all three exist from
+today's writer; `review-pages-set/key.json` says which is which.
 
 ## 4. Review
 
