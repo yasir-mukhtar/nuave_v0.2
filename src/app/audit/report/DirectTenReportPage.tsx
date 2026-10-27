@@ -71,6 +71,7 @@ export function DirectTenReportPage(props: {
   onDownloadJson: () => void;
   previewNotice?: ReactNode;
   onDownloadPdf?: DownloadPdf;
+  showLogos?: boolean;
 }) {
   // Spec 021: two-source reports use the new layout; reports saved before
   // Spec 018 keep this file's renderer exactly as it was.

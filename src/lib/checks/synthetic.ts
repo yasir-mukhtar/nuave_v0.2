@@ -21,6 +21,9 @@ export const SYNTHETIC_FAILED_CHATGPT_ORDINAL = 7;
 
 export const SYNTHETIC_CHECK_LABEL = "[Jawaban sintetis berlabel]";
 const OTHER_BUSINESS = "Klinik Sintesa Contoh";
+/** Spec 021 Part C: the fictional business's site (a reserved .test name,
+ * never requested: synthetic reports show no logos). */
+const OTHER_BUSINESS_SITE = "https://klinik-sintesa.test/";
 
 function sent(input: {
   statusCode: number;
@@ -86,7 +89,15 @@ export function syntheticCheckSend(input: {
                 title: OTHER_BUSINESS,
                 address: "Jl. Contoh No. 1",
                 phone: "+62 812 3456 7890",
-                rating: { value: 4.6 },
+                url: OTHER_BUSINESS_SITE,
+                domain: "klinik-sintesa.test",
+                reviews_count: 128,
+                rating: {
+                  rating_type: "Max5",
+                  value: 4.6,
+                  votes_count: 128,
+                  rating_max: 5,
+                },
               },
             ],
           },
@@ -130,7 +141,19 @@ export function syntheticCheckSend(input: {
                 },
               ],
         },
-        { type: "local_pack", title: OTHER_BUSINESS },
+        {
+          type: "local_pack",
+          title: OTHER_BUSINESS,
+          phone: "+62 812 3456 7890",
+          url: OTHER_BUSINESS_SITE,
+          domain: "klinik-sintesa.test",
+          rating: {
+            rating_type: "Max5",
+            value: 4.6,
+            votes_count: 131,
+            rating_max: 5,
+          },
+        },
       ],
     },
   });

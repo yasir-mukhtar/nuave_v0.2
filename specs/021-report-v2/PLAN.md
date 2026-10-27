@@ -338,11 +338,16 @@ report so the journey and snapshots cover it.
 
 ## Decisions the founder still owes
 
-1. Named approval for the B-07 live writer calls (before PR 6 step 7).
-2. An Anthropic API key, or comparing only models on the existing providers
-   (before PR 6 step 7).
-3. Approval of `PLAYBOOK.md` (before PR 6 runs live).
-4. Only if DataForSEO's schema is unclear: one live check in PR 5.
+All settled:
+
+1. Named approval for the B-07 live writer calls: given 2026-10-26 (audit
+   stack plan, point 2; up to USD 5 for tests A and B).
+2. An Anthropic API key: allowed 2026-10-26 (same decision); the key is set
+   for the test as `NUAVE_ANTHROPIC_API_KEY`.
+3. Approval of `PLAYBOOK.md`: approved 2026-10-27
+   ([decision](../../docs/DECISION_LOG.md#2026-10-27--report-playbook-approved)).
+4. DataForSEO's published schema names every field PR 5 keeps, so no live
+   check was needed (VERIFICATION.md, Part C).
 
 ## Risks
 

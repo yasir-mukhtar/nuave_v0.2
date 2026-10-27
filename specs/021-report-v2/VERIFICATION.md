@@ -1,12 +1,12 @@
 # Verification: Spec 021 — Report v2
 
-> Result: **Pending** (Parts A, D and P built; Parts C and B to come; not
+> Result: **Pending** (Parts A, D, P and C built; Part B to come; not
 > Verified until the founder's AC-A7 and AC-D2 checks are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
 > Implementation version or commit: Part A (PR #173), Part D (PR #175),
-> Part P (PR #176)
+> Part P (PR #176), Part C (PR 5)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -334,3 +334,63 @@ afterwards. What this gives:
 - When a report's 20 PDFs for the day are used up, "Unduh PDF" opens the
   browser's print without a note (by design: the customer still gets a PDF,
   and no browser time is used).
+
+## Part C, competitor data (PR 5)
+
+### Scope reviewed
+
+- `src/lib/checks/listings.ts` (new), `chatgpt.ts`, `google.ts`: each saved
+  check keeps, per business its page listed, the name, website, rating and
+  review count (`listings`, inside the existing JSON columns; no migration).
+- `src/lib/orders/two-source.ts`: `competitorFacts` builds the report's
+  `competitors` block (per business: the questions whose answers name it,
+  per source; the ChatGPT answers that showed it as a business card; website,
+  rating, reviews; the owner's listing details). Report version
+  `nuave-two-source-v2`. `findNames` moved to `src/lib/audit/find-names.ts`
+  so the server and the page count with one rule.
+- `src/app/audit/report/report-v2-data.ts`, `TwoSourceReport.tsx`,
+  `report-v2.module.css`: the page prefers the saved block, shows the
+  website link, rating line, "direkomendasikan N×", site icons and linked
+  chips; older reports keep the render-time counts.
+- `src/app/r/SavedReport.tsx`, `ReportView.tsx`, `DirectTenReportPage.tsx`:
+  `showLogos`, on only for the private link page of a live report.
+- `src/lib/checks/synthetic.ts`: the fictional business has a `.test`
+  website, a rating and review counts.
+
+### Provider fields (no live check)
+
+DataForSEO's published response schemas (read 2026-10-27) name every field
+kept, so the founder's one live check was not needed:
+
+| Source | Element | Kept | Never kept |
+| --- | --- | --- | --- |
+| ChatGPT LLM Scraper | `chat_gpt_local_businesses` items | `title`, `url`, `rating.value`, `rating.rating_max`, `reviews_count` (else `rating.votes_count`) | `phone`, `address`, `description` |
+| Google Organic SERP | `local_pack` | `title`, `url`, `rating.value`, `rating.rating_max`, `rating.votes_count` | `phone` |
+| Google Organic SERP | `organic` | `website_name`, `url` | its `rating` (a page's stars, not the business's) |
+
+ChatGPT's `brand_entities` carry no reliable website (`urls` is "relevant
+URLs" and often null), so they add names only. Websites pass
+`phoneSafeUrl` (no messaging links, no phone number in the address).
+
+### Definitions
+
+- **Named N×:** answers that name the business, once per answer, per
+  source; whole words, longest name first, the owner's names matched too
+  (the rule the page highlights names with).
+- **Direkomendasikan N×** (other businesses): ChatGPT answers that showed the
+  business as one of its own business cards. The owner's figure is unchanged
+  (the report writer's assessment).
+- **Rating and reviews:** from the listing with a rating and the most
+  reviews across both sources.
+- **Logos:** `https://<host>/favicon.ico` of the saved website, never for a
+  shared platform (Instagram, Facebook, WhatsApp, Google, marketplaces,
+  health directories) and never on synthetic reports or the copy Browser Run
+  prints (no outside request from the PDF).
+
+### Acceptance results
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| AC-C1 | Pass | Unit: `competitorFacts` (counts per source, nested names, cards counted once per answer, owner's details); saved rows preferred over matching; page rows show counts, "direkomendasikan", website link (new tab, no referrer), rating line, owner's row; chips link only with a saved website; logos from the own site only, initials on error. Whole path: a synthetic order saves the block (9 ChatGPT, 8 Google, 9 recommended, website, rating 4.6, 131 reviews). E2e: the fictional competitor's link, rating and "direkomendasikan 9×" on the report, no logo request. |
+| AC-C2 | Pass | Unit: listings keep no phone, address or messaging link; the whole-path test finds no phone number or address in the saved block or in any saved check's listings. |
+

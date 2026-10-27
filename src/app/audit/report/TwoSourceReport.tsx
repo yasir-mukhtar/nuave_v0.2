@@ -2,7 +2,11 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { IconArrowRight, IconCheck } from "@tabler/icons-react";
+import {
+  IconArrowRight,
+  IconCheck,
+  IconExternalLink,
+} from "@tabler/icons-react";
 import { NuaveLogo } from "@/components/product/journey/NuaveLogo";
 import { SUPPORT_EMAIL } from "@/components/product/journey/JourneyBars";
 import { motionAllowedNow } from "@/components/motion/useMotionAllowed";
@@ -24,6 +28,8 @@ import {
   competitorRows,
   displayHost,
   mentionState,
+  ratingLine,
+  siteIcon,
   topicGapRows,
   verdictFromConclusion,
   type CompetitorRow,
@@ -333,14 +339,72 @@ function initials(name: string) {
     .join("");
 }
 
+/** Spec 021 C-03: the business's own site icon, loaded without a referrer;
+ * initials when there is none, when it fails, or when logos are off
+ * (synthetic reports and the printed copy). */
+function CompetitorLogo({
+  name,
+  website,
+  showLogos,
+}: {
+  name: string;
+  website: string | null | undefined;
+  showLogos: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+  const icon = showLogos ? siteIcon(website) : null;
+  return (
+    <span className={styles.initials} aria-hidden="true">
+      {icon && !failed ? (
+        // A plain image: the site's own icon, never an optimised copy.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className={styles.logo}
+          src={icon}
+          alt=""
+          width={22}
+          height={22}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+          data-competitor-logo
+        />
+      ) : (
+        initials(name)
+      )}
+    </span>
+  );
+}
+
+/** A provider address as a link that opens in a new tab with no referrer
+ * (C-04). */
+function SiteLink({ website }: { website: string }) {
+  return (
+    <a
+      className={styles.site}
+      href={website}
+      target="_blank"
+      rel="noopener noreferrer"
+      referrerPolicy="no-referrer"
+      data-competitor-site
+    >
+      {displayHost(website)}
+      <IconExternalLink aria-hidden="true" />
+    </a>
+  );
+}
+
 function CompetitorLine({
   row,
   ownLabel,
+  showLogos,
 }: {
   row: CompetitorRow;
   ownLabel: string;
+  showLogos: boolean;
 }) {
   const total = row.chatgpt + row.google;
+  const recommended = row.own ? row.own.recommended : (row.recommended ?? 0);
   const split = [
     row.chatgpt ? `ChatGPT ${row.chatgpt}` : "",
     row.google ? `Google ${row.google}` : "",
@@ -348,23 +412,33 @@ function CompetitorLine({
   ]
     .filter(Boolean)
     .join(" · ");
+  const rating = ratingLine(row.rating, row.reviews);
   return (
     <div
       className={cn(styles.compRow, row.own && styles.own)}
       data-competitor={row.own ? "own" : "other"}
     >
-      <span className={styles.initials} aria-hidden="true">
-        {initials(row.name)}
-      </span>
+      <CompetitorLogo
+        name={row.name}
+        website={row.website}
+        showLogos={showLogos}
+      />
       <p className={styles.name}>
         {row.name}
         {row.own ? <span className={styles.youPill}>{ownLabel}</span> : null}
+        {row.website || rating ? (
+          <span className={styles.metaLine}>
+            {row.website ? <SiteLink website={row.website} /> : null}
+            {row.website && rating ? " · " : null}
+            {rating ? <span data-competitor-rating>{rating}</span> : null}
+          </span>
+        ) : null}
       </p>
       <p className={styles.stats}>
         <strong>{total}×</strong>
-        {row.own?.recommended ? (
+        {recommended ? (
           <>
-            direkomendasikan {row.own.recommended}×
+            direkomendasikan {recommended}×
             <br />
           </>
         ) : null}
@@ -378,20 +452,40 @@ function Competitors({
   two,
   observations,
   ownNames,
+  ownWebsite,
+  showLogos,
 }: {
   two: TwoSourceReport;
   observations: readonly AuditObservation[];
   /** The owner's display name first, then its other names. */
   ownNames: readonly string[];
+  /** The owner's own site, when the saved listings have none. */
+  ownWebsite?: string;
+  showLogos: boolean;
 }) {
   const { counted, uncounted } = competitorRows(two, observations, ownNames);
   const others = counted.filter((row) => !row.own);
   const top = new Set(others.slice(0, 5));
-  const shown = counted.filter((row) => row.own || top.has(row));
+  const shown = counted
+    .filter((row) => row.own || top.has(row))
+    .map((row) =>
+      row.own && !row.website && ownWebsite
+        ? { ...row, website: ownWebsite }
+        : row,
+    );
+  const saved = new Map(
+    (two.competitors?.others ?? []).map((fact) => [fact.name, fact]),
+  );
   const rest = [
-    ...others.filter((row) => !top.has(row)).map((row) => row.name),
-    ...uncounted,
+    ...others
+      .filter((row) => !top.has(row))
+      .map((row) => ({ name: row.name, website: row.website ?? null })),
+    ...uncounted.map((name) => ({
+      name,
+      website: saved.get(name)?.website ?? null,
+    })),
   ];
+  const noun = two.subject === "klinik" ? "Klinik" : "Bisnis";
   return (
     <div className={styles.comp} data-other-businesses>
       {shown.map((row) => (
@@ -399,18 +493,39 @@ function Competitors({
           key={row.name}
           row={row}
           ownLabel={subjectNoun(two.subject)}
+          showLogos={showLogos}
         />
       ))}
       {rest.length ? (
         <div className={styles.tail}>
-          <p>Bisnis lain yang juga disebut AI:</p>
+          <p>{noun} lain yang juga disebut AI:</p>
           <ul className={styles.chipList}>
-            {rest.map((name) => (
+            {rest.map(({ name, website }) => (
               <li key={name}>
-                <span className={styles.plainChip}>{name}</span>
+                {website ? (
+                  <a
+                    className={styles.linkChip}
+                    href={website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    referrerPolicy="no-referrer"
+                    title={displayHost(website)}
+                    data-competitor-site
+                  >
+                    {name}
+                    <IconExternalLink aria-hidden="true" />
+                  </a>
+                ) : (
+                  <span className={styles.plainChip}>{name}</span>
+                )}
               </li>
             ))}
           </ul>
+          {rest.some((item) => item.website) ? (
+            <p className={styles.tailNote}>
+              {noun} dengan ikon panah punya website; ketuk untuk membukanya.
+            </p>
+          ) : null}
         </div>
       ) : null}
       {!others.length && !uncounted.length ? (
@@ -508,11 +623,18 @@ export function TwoSourceReportBody({
   observations,
   names = [],
   nav,
+  ownWebsite,
+  showLogos = false,
 }: {
   report: AuditReport;
   observations: AuditObservation[];
   names?: readonly string[];
   nav?: ReactNode;
+  /** The owner's own site, for its row in Peta Pesaing. */
+  ownWebsite?: string;
+  /** Spec 021 C-03: competitors' site icons; off in synthetic reports and in
+   * the copy Browser Run prints. */
+  showLogos?: boolean;
 }) {
   const two = report.two_source!;
   const presentation = buildReportPresentation(report, observations);
@@ -586,6 +708,8 @@ export function TwoSourceReportBody({
             two={two}
             observations={observations}
             ownNames={[ownName, ...names.slice(1)]}
+            ownWebsite={ownWebsite}
+            showLogos={showLogos}
           />
         </Band>
         {hasTopics ? (
@@ -660,6 +784,7 @@ export function TwoSourceReportPage({
   observations,
   previewNotice,
   onDownloadPdf,
+  showLogos = false,
 }: {
   report: AuditReport;
   brief: DirectTenAuditContext;
@@ -667,6 +792,8 @@ export function TwoSourceReportPage({
   previewNotice?: ReactNode;
   /** The server PDF (Part P); without it, "Unduh PDF" prints. */
   onDownloadPdf?: DownloadPdf;
+  /** Competitors' site icons (Part C); off unless the page turns them on. */
+  showLogos?: boolean;
 }) {
   const two = report.two_source!;
   const name = brief.identity.name;
@@ -712,6 +839,12 @@ export function TwoSourceReportPage({
         observations={observations}
         names={[name, ...brief.identity.aliases]}
         nav={<ContentsNav ids={ids} />}
+        ownWebsite={
+          /^https?:\/\//i.test(brief.identity.source)
+            ? brief.identity.source
+            : undefined
+        }
+        showLogos={showLogos}
       />
       <div className={styles.inner}>
         <div className={cn(styles.save, auditStyles.noPrint)}>

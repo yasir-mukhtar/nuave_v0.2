@@ -6,6 +6,7 @@
  * phone numbers), and never the raw response (R-28).
  */
 import { SOURCE_TITLE_MAX_LENGTH } from "../audit/types";
+import { googleListings, type BusinessListing } from "./listings";
 import { namedOutcome, type NamedOutcome, visibleAnswerText } from "./named";
 import { stripPhoneNumbers, phoneSafeUrl } from "./phones";
 import type { CheckSend } from "./send";
@@ -49,6 +50,9 @@ export type GoogleCheck = {
    * organic results) that its AI Overview text also names. Absent on checks
    * saved before this field. */
   businesses?: string[];
+  /** Spec 021 C-01: those businesses' website, rating and reviews from the
+   * same page. Absent on checks saved before Part C. */
+  listings?: BusinessListing[];
   task_id: string;
   cost_usd: number;
   call_ms: number;
@@ -178,6 +182,7 @@ export function readGoogleAttempt(input: {
     body = "",
     references: GoogleCheck["references"] = [],
     businesses: string[] = [],
+    listings: BusinessListing[] = [],
   ): GoogleAttempt => ({
     kind: "done",
     check: {
@@ -199,6 +204,7 @@ export function readGoogleAttempt(input: {
             })
           : "absent",
       businesses,
+      listings,
       task_id: send.taskId,
       cost_usd: send.costUsd,
       call_ms: Math.max(
@@ -244,11 +250,13 @@ export function readGoogleAttempt(input: {
   if (!overview) return done("not_shown");
   const body = stripPhoneNumbers(overviewText(overview));
   if (!body.trim()) return { kind: "empty", costUsd: send.costUsd };
+  const businesses = googleBusinesses(send.result, body, input.names);
   return done(
     "summary",
     body,
     overviewReferences(overview),
-    googleBusinesses(send.result, body, input.names),
+    businesses,
+    googleListings(send.result, businesses),
   );
 }
 
