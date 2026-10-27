@@ -185,12 +185,13 @@ export async function applySimulatedPayment(
   const result = await db
     .prepare(
       `UPDATE orders
-       SET payment_kind = 'simulated', paid_at = ?2, expires_at = ?3
+       SET payment_kind = 'simulated', paid_at = ?2, expires_at = ?3,
+           meta_event_id = ?4
        WHERE id = ?1 AND payment_kind = 'unpaid' AND replaced_by IS NULL
          AND paid_at IS NULL AND mode = 'synthetic' AND state = 'open'
          AND expires_at > ?2`,
     )
-    .bind(orderId, stamp, paidEnd)
+    .bind(orderId, stamp, paidEnd, crypto.randomUUID())
     .run();
   return result.meta?.changes === 1;
 }
@@ -234,7 +235,8 @@ async function applySettled(
     // not yet made anonymous (retention.ts): a payment for an anonymised order
     // becomes a refund case instead. The
     // hold goes on the UTC day of payment even if the cap is now full, and is
-    // written only if this write changed the order.
+    // written only if this write changed the order. Spec 022 R-07: the same
+    // write makes the order's Purchase event code.
     const paidEnd = new Date(now.getTime() + ORDER_PAID_MS).toISOString();
     const results = await db.batch([
       db
@@ -242,12 +244,19 @@ async function applySettled(
           `UPDATE orders
            SET payment_kind = 'midtrans', paid_at = ?2, paid_attempt_id = ?3,
                paid_transaction_id = ?4, state = 'open', expires_at = ?5,
-               ended_at = NULL, failure_code = NULL
+               ended_at = NULL, failure_code = NULL, meta_event_id = ?6
            WHERE id = ?1 AND payment_kind = 'unpaid' AND replaced_by IS NULL
              AND paid_at IS NULL AND mode = 'live'
              AND state IN ('open', 'expired') AND purged_at IS NULL`,
         )
-        .bind(order.id, stamp, attempt.id, status.transaction_id, paidEnd),
+        .bind(
+          order.id,
+          stamp,
+          attempt.id,
+          status.transaction_id,
+          paidEnd,
+          crypto.randomUUID(),
+        ),
       orderHoldStatement(db, {
         orderId: order.id,
         now,

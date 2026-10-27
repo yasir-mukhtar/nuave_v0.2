@@ -39,6 +39,15 @@ describe("wrangler.jsonc environments", () => {
     expect(previewDb.database_id).toBe("5613a4a7-7a86-432a-810c-7ccef7e80a25");
   });
 
+  it("production keeps no automatic per-request log (Spec 022 R-22, AC-14)", () => {
+    const observability = (
+      config as unknown as {
+        observability?: { logs?: { invocation_logs?: boolean } };
+      }
+    ).observability;
+    expect(observability?.logs?.invocation_logs).toBe(false);
+  });
+
   it("every environment applies the same migration folder", () => {
     for (const environment of [config, ...Object.values(config.env ?? {})]) {
       expect(environment.d1_databases?.[0]?.migrations_dir).toBe("migrations");
@@ -141,6 +150,15 @@ describe("workflows and the payment settings", () => {
       expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
       expect(preview).not.toContain(name);
     }
+  });
+
+  it("the deploy job writes the Meta token as a Worker secret; previews get none (Spec 022 AC-09)", () => {
+    const ci = read("ci.yml");
+    const preview = read("pr-preview.yml");
+    const name = "META_CAPI_ACCESS_TOKEN";
+    expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+    expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+    expect(preview).not.toContain("META_CAPI");
   });
 
   it("preview workers get no payment key, test code or alert address", () => {

@@ -154,7 +154,8 @@ export async function markPaidForTest(
   const now = options.now ?? T0;
   await db
     .prepare(
-      `UPDATE orders SET payment_kind = ?2, paid_at = ?3, expires_at = ?4
+      `UPDATE orders SET payment_kind = ?2, paid_at = ?3, expires_at = ?4,
+         meta_event_id = ?5
        WHERE id = ?1`,
     )
     .bind(
@@ -162,6 +163,7 @@ export async function markPaidForTest(
       options.kind ?? "midtrans",
       now.toISOString(),
       new Date(now.getTime() + ORDER_PAID_MS).toISOString(),
+      crypto.randomUUID(),
     )
     .run();
   if ((options.mode ?? "synthetic") === "live") {

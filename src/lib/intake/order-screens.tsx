@@ -42,6 +42,8 @@ export type OrderPayment = {
   order_number?: string;
   redirect_url?: string;
   last_try?: string;
+  /** Spec 022 R-08: shared by the Pixel and the server Purchase. */
+  purchase_event_id?: string;
 };
 
 const TRY_MESSAGE: Record<string, string> = {

@@ -103,6 +103,12 @@ export type OrderRow = {
   hold_until?: string | null;
   /** When `support email` last replaced a mistyped email. */
   email_changed_at?: string | null;
+  /** Spec 022 (migration 0015): the Purchase event code, made with the
+   * payment; and the one server send's time, consent version and outcome. */
+  meta_event_id?: string | null;
+  meta_sent_at?: string | null;
+  meta_consent_version?: string | null;
+  meta_outcome?: string | null;
 };
 
 /** R-18: SQL for "this order may run paid work": paid through Midtrans, a

@@ -303,6 +303,9 @@ export type PaymentView = {
   order_number?: string;
   redirect_url?: string;
   last_try?: "denied" | "cancelled" | "failed" | "expired";
+  /** Spec 022 R-08: the paid order's Purchase event code, shared by the
+   * browser Pixel and the server send. Absent for orders paid before it. */
+  purchase_event_id?: string;
 };
 
 const LAST_TRY: Record<string, NonNullable<PaymentView["last_try"]>> = {
@@ -327,7 +330,10 @@ export async function paymentView(
       order.state === "expired" ||
       order.state === "failed" ||
       (order.state === "open" && order.expires_at <= iso(now));
-    return { state: ended ? "paid_ended" : "paid", ...number };
+    const event = order.meta_event_id
+      ? { purchase_event_id: order.meta_event_id }
+      : {};
+    return { state: ended ? "paid_ended" : "paid", ...number, ...event };
   }
   const latest = await db
     .prepare(

@@ -344,6 +344,13 @@ export default function PrivacyPage() {
             berbahaya.
           </p>
           <p>
+            Singkatnya: kami tidak mengirim data Anda ke Meta kecuali Anda
+            memilih <strong>Allow</strong>. Email Anda tidak pernah dikirim ke
+            Meta dalam bentuk yang bisa dibaca. Laporan, pertanyaan, jawaban AI,
+            dan data bisnis Anda tidak pernah dikirim ke Meta. Kami tidak
+            menjual data Anda, dan Anda bisa mengubah pilihan kapan saja.
+          </p>
+          <p>
             Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai
             Meta Pixel di browser dan Meta Conversions API dari server kami.
             Keduanya hanya aktif jika Anda memilih <strong>Allow</strong> pada
@@ -362,9 +369,9 @@ export default function PrivacyPage() {
               berhasil, beserta nilai pembelian (Rp249.000);
             </li>
             <li>
-              untuk cek gratis dan pembelian, catatan yang sama dari server
-              kami, beserta alamat IP, jenis browser, dan kode cookie Meta Anda;
-              dan
+              untuk pembelian, catatan yang sama dari server kami, beserta
+              alamat IP, jenis browser, kode cookie Meta Anda, dan alamat
+              halaman pemesanan Nuave; dan
             </li>
             <li>
               untuk pembelian, email pesanan yang sudah diubah menjadi kode acak

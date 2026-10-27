@@ -252,21 +252,48 @@ function firstTime(key: string, now: number): boolean {
 export type JourneyEvent = "Lead" | "InitiateCheckout" | "Purchase";
 
 /** R-07..R-10: one journey event per `key` (a website or an order), carrying
- * only the value and currency, never who or what the order is. */
+ * only the value and currency, never who or what the order is. Spec 022: a
+ * Purchase with the order's event code also carries that code (R-09) and asks
+ * the server to send the same Purchase (R-01), under the same checks: Allow
+ * under the current privacy version, not `/r` or `/uji`, no test-pass code
+ * (R-05, R-19b). */
 export function trackJourneyEvent(
   event: JourneyEvent,
   key: string,
   now = Date.now(),
+  purchaseEventId?: string,
 ) {
   // The founder's test runs (a test-pass code in this tab) are not ad results.
   if (readTestPassCode()) return;
   if (!canSend() || !firstTime(`${event}:${key}`, now)) return;
-  if (event === "Lead") window.fbq!("track", "Lead");
-  else
-    window.fbq!("track", event, {
-      value: ORDER_GROSS_AMOUNT,
-      currency: "IDR",
-    });
+  if (event === "Lead") {
+    window.fbq!("track", "Lead");
+    return;
+  }
+  const params = { value: ORDER_GROSS_AMOUNT, currency: "IDR" };
+  if (event === "Purchase" && purchaseEventId) {
+    window.fbq!("track", event, params, { eventID: purchaseEventId });
+    askServerPurchase(key);
+  } else window.fbq!("track", event, params);
+}
+
+/** Spec 022 R-11: in the background, never waited for, its answer and any
+ * error ignored; `keepalive` so leaving the page does not cancel it. The Meta
+ * cookie codes go with it as the browser's own cookies. */
+function askServerPurchase(orderId: string) {
+  try {
+    void fetch("/api/meta/purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        order_id: orderId,
+        consent_version: PRIVACY_VERSION,
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // Nothing on screen depends on it.
+  }
 }
 
 /** For tests: forget this page's Allow. */
