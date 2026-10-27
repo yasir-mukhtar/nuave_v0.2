@@ -371,7 +371,10 @@ async function freshBrowserPage(
     const url = new URL(route.request().url());
     if (
       url.origin !== new URL(baseURL!).origin ||
-      (url.pathname.startsWith("/api/") && url.pathname !== "/api/report")
+      (url.pathname.startsWith("/api/") &&
+        // The report's data, and its PDF (Spec 021 Part P).
+        url.pathname !== "/api/report" &&
+        url.pathname !== "/api/report/pdf")
     )
       return route.abort();
     return route.continue();
@@ -454,9 +457,14 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   await downloadPdfButtons(fresh).first().click();
   const pdf = await pdfAnswer;
   expect(pdf.status()).toBe(501);
-  expect(await pdf.json()).toMatchObject({ code: "pdf_unavailable" });
   expect(pdf.request().url()).not.toContain(link.secret);
   expect(pdf.request().postDataJSON()).toEqual({ secret: link.secret });
+  const unavailable = await fresh.request.post("/api/report/pdf", {
+    data: { secret: link.secret },
+  });
+  expect(unavailable.status()).toBe(501);
+  expect(await unavailable.json()).toMatchObject({ code: "pdf_unavailable" });
+  expect(unavailable.headers()["cache-control"]).toBe("no-store");
   await expect.poll(printCalls).toBe(1);
   await downloadPdfButtons(fresh).last().click();
   await expect.poll(printCalls).toBe(2);
@@ -529,10 +537,7 @@ test("AC-15: a wrong or missing secret shows the same plain not-available page, 
   }
   expect(seen[0]!.status).toBe(404);
   for (const other of seen) expect(other).toEqual(seen[0]);
-  expect(Object.keys(calls)).toEqual([
-    "POST /api/report",
-    "POST /api/report/pdf",
-  ]);
+  expect(Object.keys(calls)).toEqual(["POST /api/report"]);
   await context.close();
 });
 

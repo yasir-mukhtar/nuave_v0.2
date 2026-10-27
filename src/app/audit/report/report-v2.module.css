@@ -703,8 +703,10 @@
     justify-items: end;
   }
 }
-/* Part P: "PDF belum bisa dibuat. Coba lagi." under the button pressed. */
-.pdfFailed {
+/* Part P: "PDF belum bisa dibuat. Coba lagi." under the button pressed
+   (also inside the save row, whose own paragraphs are body grey). */
+.pdfFailed,
+.save .pdfFailed {
   margin: 0;
   color: var(--red);
   font-size: var(--type-copy-sm-size);
