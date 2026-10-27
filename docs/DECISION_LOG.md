@@ -24,6 +24,12 @@ is reserved at its worst case first).
 The single order is one business; the plan's further test orders still
 apply.
 
+Sonnet result, same day, blind set of three with the same pages: Opus 5.5
+medium first again (USD 1.26), Sonnet 5.5 high second (USD 0.75, after an
+answer cut off at 16,000 output tokens and rerun at 32,000), Sonnet 5.5
+medium not good enough to send (USD 0.54). Yasir had already read the Opus
+report in the pairs, so this set was not fully blind for it.
+
 ## 2026-10-27 — Report-writer test allowance raised to USD 7
 
 Yasir raised the agent-run allowance for the audit stack tests (the reading
