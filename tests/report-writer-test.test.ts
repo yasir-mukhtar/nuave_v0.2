@@ -27,12 +27,15 @@ import {
   blindReport,
   claudeWriter,
   ENTRIES,
+  extendLetters,
+  glmWriter,
   REFERENCE,
   writerFingerprint,
   entryInput,
   evidenceFromD1,
   Ledger,
   NEW_INPUT_INSTRUCTIONS,
+  outputAllowance,
   productionSendsGoogleWords,
   replayDelivered,
   runEntry,
@@ -379,15 +382,157 @@ describe("a Claude answer that breaks the report format", () => {
   });
 });
 
+describe("the output allowance", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("is production's unless a run sets one, and the worst case follows it", () => {
+    expect(outputAllowance()).toBe(16_000);
+    vi.stubEnv("REPORT_TEST_MAX_OUTPUT_TOKENS", "32000");
+    expect(outputAllowance()).toBe(32_000);
+    vi.stubEnv("REPORT_TEST_MAX_OUTPUT_TOKENS", "lots");
+    expect(() => outputAllowance()).toThrow(/whole number/);
+  });
+
+  it("is what a Claude call asks for and what its result records", async () => {
+    vi.stubEnv("REPORT_TEST_MAX_OUTPUT_TOKENS", "32000");
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const create = vi.fn(async () => ({
+      id: "msg_test",
+      model: "claude-haiku-5-5",
+      stop_reason: "max_tokens",
+      content: [],
+      usage: { input_tokens: 30_000, output_tokens: 32_000 },
+    }));
+    const result = await runEntry(
+      evidence,
+      ENTRIES[4]!,
+      (ctx) =>
+        claudeWriter(ctx, { messages: { create } } as unknown as Anthropic),
+      new Ledger(join(dir, "spend.json")),
+    );
+    expect((create.mock.calls[0] as unknown[])[0]).toMatchObject({
+      max_tokens: 32_000,
+    });
+    expect(result.max_output_tokens).toBe(32_000);
+  });
+});
+
+describe("the GLM writer (Cheaper Inference)", () => {
+  const glmEntry = ENTRIES.find((entry) => entry.id === "glm-low")!;
+  const answering = (envelope: unknown) => {
+    const call = vi.fn(async (body: unknown) => {
+      void body;
+      return envelope as never;
+    });
+    return { call };
+  };
+
+  it("asks GLM for the report schema at its production effort, within the output allowance", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const transport = answering({
+      httpStatus: 200,
+      body: {
+        id: "chatcmpl-1",
+        model: "glm-5.3-flash",
+        choices: [{ finish_reason: "stop", message: { content: "{}" } }],
+        usage: { prompt_tokens: 30_000, completion_tokens: 2_000 },
+        billing: { billed_cost_usd: 0.004 },
+      },
+    });
+    const ledger = new Ledger(join(dir, "spend.json"));
+
+    const result = await runEntry(
+      evidence,
+      glmEntry,
+      (ctx) => glmWriter(ctx, transport),
+      ledger,
+    );
+
+    const body = transport.call.mock.calls[0]![0] as {
+      model: string;
+      reasoning_effort: string;
+      max_tokens: number;
+      messages: { role: string; content: string }[];
+    };
+    expect(body).toMatchObject({
+      model: "glm-5.3-flash",
+      reasoning_effort: "low",
+      max_tokens: 16_000,
+    });
+    expect(body.messages[0]!.content).toContain("JSON Schema");
+    expect(body.messages[0]!.content).toContain("ai_overview_text");
+    // "{}" is not a report: a failed entry, settled at the billed cost.
+    expect(result.status).toBe("failed");
+    expect(result.failure).toMatch(/did not match the report schema/);
+    expect(ledger.spentUsd()).toBe(0.004);
+  });
+
+  it("records a cut-off answer, and releases a request the provider turned away", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const ledger = new Ledger(join(dir, "spend.json"));
+    const cut = await runEntry(
+      evidence,
+      glmEntry,
+      (ctx) =>
+        glmWriter(
+          ctx,
+          answering({
+            httpStatus: 200,
+            body: {
+              model: "glm-5.3-flash",
+              choices: [{ finish_reason: "length", message: { content: "{" } }],
+              usage: { prompt_tokens: 30_000, completion_tokens: 16_000 },
+              billing: { billed_cost_usd: 0.01 },
+            },
+          }),
+        ),
+      ledger,
+    );
+    expect(cut.checks.cut_off_answers).toBe(1);
+    expect(ledger.spentUsd()).toBe(0.01);
+
+    await runEntry(
+      evidence,
+      glmEntry,
+      (ctx) => glmWriter(ctx, answering({ httpStatus: 429, body: null })),
+      ledger,
+    );
+    expect(ledger.spentUsd()).toBe(0.01);
+  });
+});
+
 describe("blind review", () => {
-  it("gives each order's five entries the letters A–E once each", () => {
+  it("gives each order's entries one letter each, from A", () => {
     const key = assignLetters(["NV-AAAAAA", "NV-BBBBBB"]);
     for (const letters of Object.values(key)) {
-      expect(Object.keys(letters)).toEqual(["A", "B", "C", "D", "E"]);
+      expect(Object.keys(letters)).toEqual(
+        ["A", "B", "C", "D", "E", "F", "G", "H"].slice(0, ENTRIES.length),
+      );
       expect(new Set(Object.values(letters))).toEqual(
         new Set(ENTRIES.map((entry) => entry.id)),
       );
     }
+  });
+
+  it("gives an entry added after scoring the next free letter, keeping the scored ones", () => {
+    const scored = {
+      A: "luna-low",
+      B: "sonnet-high",
+      C: "sonnet-medium",
+      D: "haiku-medium",
+      E: "luna-high",
+    } as const;
+    const extended = extendLetters({ ...scored });
+    expect(extended).toMatchObject(scored);
+    expect(new Set(Object.values(extended))).toEqual(
+      new Set(ENTRIES.map((entry) => entry.id)),
+    );
+    expect(Object.keys(extended).slice(5).sort()).toEqual(
+      ["F", "G", "H"].slice(0, ENTRIES.length - 5),
+    );
   });
 
   it("hides the writer and dates every entry like the delivered report", async () => {
