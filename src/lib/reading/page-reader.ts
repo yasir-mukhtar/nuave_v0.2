@@ -56,7 +56,6 @@ function readable(url: string): boolean {
   }
 }
 
-/** The address without its fragment, so one page cited twice counts once. */
 /** Tracking tags that change an address but not its page ("?utm_source=
  * chatgpt.com", which ChatGPT adds to links it cites). */
 const TRACKING_PARAM = /^(?:utm_.+|gclid|fbclid|srsltid|mc_cid|mc_eid)$/i;
@@ -67,8 +66,22 @@ function canonical(url: string): string {
   try {
     const parsed = new URL(url);
     parsed.hash = "";
-    for (const key of [...parsed.searchParams.keys()])
-      if (TRACKING_PARAM.test(key)) parsed.searchParams.delete(key);
+    // The raw query, filtered as it was written: rebuilding it would change
+    // the encoding of what stays ("%20" to "+").
+    const kept = parsed.search
+      .slice(1)
+      .split("&")
+      .filter((part) => {
+        const name = part.split("=")[0] ?? "";
+        let decoded = name;
+        try {
+          decoded = decodeURIComponent(name);
+        } catch {
+          // keep the name as written
+        }
+        return part !== "" && !TRACKING_PARAM.test(decoded);
+      });
+    parsed.search = kept.length ? `?${kept.join("&")}` : "";
     return parsed.toString();
   } catch {
     return url;

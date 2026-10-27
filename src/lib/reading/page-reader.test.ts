@@ -62,6 +62,23 @@ describe("which pages are read (the reading test)", () => {
       // A real query stays: it may be the page itself.
       { url: "https://klinik.example/harga?id=2", cited_in: ["q3"] },
     ]);
+    // What stays keeps its encoding, so the same page still matches.
+    expect(
+      citedPagesToRead(
+        [
+          {
+            prompt_id: "q1",
+            url: "https://a.example/cari?q=a%20b&utm_source=x",
+          },
+          { prompt_id: "q2", url: "https://a.example/cari?q=a%20b" },
+          { prompt_id: "q3", url: "https://b.example/p?flag&path=/x" },
+        ],
+        null,
+      ),
+    ).toEqual([
+      { url: "https://a.example/cari?q=a%20b", cited_in: ["q1", "q2"] },
+      { url: "https://b.example/p?flag&path=/x", cited_in: ["q3"] },
+    ]);
   });
 
   it("at most ten cited pages", () => {
