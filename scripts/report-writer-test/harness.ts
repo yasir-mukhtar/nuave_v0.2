@@ -50,6 +50,7 @@ import {
   type AuditReport,
   type ReportContent,
   type ReportSynthesis,
+  type TwoSourceWritingSynthesis,
 } from "../../src/lib/audit/types";
 import { stripPhoneNumbers } from "../../src/lib/checks/phones";
 import type { GoogleCheck } from "../../src/lib/checks/google";
@@ -540,8 +541,10 @@ function telemetryOf(input: {
 }
 
 /** The report content production builds from a writer's answer. */
-const contentOf = (synthesis: ReportSynthesis, args: WriterArgs) =>
-  reportContentFromAnswer(synthesis, args[0]);
+const contentOf = (
+  synthesis: ReportSynthesis | TwoSourceWritingSynthesis,
+  args: WriterArgs,
+) => reportContentFromAnswer(synthesis, args[0]);
 
 /** Offline: returns the delivered report's own writing, so the pipeline can
  * be checked end to end without a provider. Re-running the reference this way must
@@ -555,6 +558,10 @@ export function replayWriter(delivered: AuditReport): ReportGenerator {
       priorities: delivered.priorities,
       observed_competitors: delivered.observed_competitors,
       details: delivered.details,
+      // Spec 021 Part B reports carry the new writer's block too.
+      ...(delivered.two_source_writing
+        ? { two_source_writing: delivered.two_source_writing }
+        : {}),
     } as ReportContent,
     requested_model: delivered.provenance.requested_report_model,
     returned_model: delivered.provenance.returned_report_model,
@@ -626,8 +633,13 @@ export function lunaWriter(
       stop: response.status ?? "",
       cut_off: response.incomplete_details?.reason === "max_output_tokens",
     });
-    const synthesis = structuredOutputOrThrow<ReportSynthesis>(
-      response.output_parsed,
+    // Spec 021 Part B: the answer is in whichever shape reportOutputSchema
+    // asked for.
+    const synthesis = structuredOutputOrThrow<
+      ReportSynthesis | TwoSourceWritingSynthesis
+    >(
+      response.output_parsed as
+        ReportSynthesis | TwoSourceWritingSynthesis | null,
       "Report generation",
       response,
     );
@@ -759,7 +771,10 @@ export function claudeWriter(
       ]);
     }
     return {
-      content: contentOf(parsed.data as ReportSynthesis, args),
+      content: contentOf(
+        parsed.data as ReportSynthesis | TwoSourceWritingSynthesis,
+        args,
+      ),
       requested_model: model,
       returned_model: response.model,
       response_id: response.id,

@@ -15,6 +15,7 @@ import {
   type AuditSubject,
 } from "./direct-ten-context-v2";
 import { REPORT_WRITING_STANDARD_VERSION } from "./report-language";
+import { twoSourceWritingFields } from "./two-source-writing";
 import { summarizeAuditTelemetry } from "./telemetry";
 import {
   hasIndonesianComparisonRelation,
@@ -498,7 +499,12 @@ function deterministicDetailCopy(input: {
 }
 
 export function assembleReportContent(
-  synthesis: ReportSynthesis,
+  // Spec 021 Part B passes findings with headlines and short recommendations.
+  synthesis: Pick<
+    ReportSynthesis,
+    "conclusion" | "accuracy_status" | "assessments"
+  > &
+    Pick<ReportContent, "key_findings" | "priorities">,
   observations: AuditObservation[],
   brief: AuditSubject,
   historicalFixtureId?: HistoricalPromptPackId,
@@ -701,7 +707,8 @@ function authoredReportFields(content: ReportContent) {
       [`Detail ${index + 1} finding`, detail.finding],
       [`Detail ${index + 1} meaning`, detail.evidence_note],
     ]),
-  ] as [string, string][];
+    ...twoSourceWritingFields(content),
+  ].filter((field): field is [string, string] => field[1] !== undefined);
 }
 
 function prohibitedClaimErrors(content: ReportContent) {
@@ -1096,20 +1103,25 @@ export function validateReportContent(
     }
   });
 
-  content.priorities.forEach((priority) => {
-    const hasObservedGap = priority.evidence_prompt_ids.some((promptId) =>
-      detailShowsObservedGap({
-        promptId,
-        details: content.details,
-        observations,
-        historicalFixtureId,
-        questionMethod,
-      }),
-    );
-    if (!hasObservedGap) {
-      errors.push(`Priority ${priority.order} is not tied to an observed gap.`);
-    }
-  });
+  // Spec 021 Part B checks its own observed-gap rule with both sources'
+  // facts (`finishTwoSourceWriting`).
+  if (!content.two_source_writing)
+    content.priorities.forEach((priority) => {
+      const hasObservedGap = priority.evidence_prompt_ids.some((promptId) =>
+        detailShowsObservedGap({
+          promptId,
+          details: content.details,
+          observations,
+          historicalFixtureId,
+          questionMethod,
+        }),
+      );
+      if (!hasObservedGap) {
+        errors.push(
+          `Priority ${priority.order} is not tied to an observed gap.`,
+        );
+      }
+    });
 
   const clientIdentities = [subjectBrandName(brief), ...subjectAliases(brief)];
   content.observed_competitors.forEach((competitor) => {

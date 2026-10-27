@@ -7,6 +7,7 @@
 import { failedChatGptObservation, type ChatGptFacts } from "../checks/chatgpt";
 import type { GoogleCheck } from "../checks/google";
 import type { BusinessListing } from "../checks/listings";
+import { stripPhoneNumbers } from "../checks/phones";
 import { findNames } from "../audit/find-names";
 import {
   subjectAliases,
@@ -24,6 +25,7 @@ import {
   type TwoSourceQuestion,
   type TwoSourceReport,
   type TwoSourceReportFacts,
+  type TwoSourceWriterFacts,
 } from "../audit/two-source-report";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
@@ -244,9 +246,77 @@ function normalized(value: string): string {
     .trim();
 }
 
+/** The longest Google answer the writer reads (the longest in NV-3WDSAY is
+ * 4,227 characters, so most arrive whole); the report-writer test uses the
+ * same limit. */
+export const WRITER_GOOGLE_TEXT_MAX_CHARS = 3_000;
+
+/** A Google answer for the writer: phone numbers removed again (in case a
+ * saved answer predates the filter), and a long one shortened at the last
+ * sentence (or word) end that fits, ending with "…". */
+export function writerGoogleText(
+  text: string,
+  max = WRITER_GOOGLE_TEXT_MAX_CHARS,
+): string {
+  const clean = stripPhoneNumbers(text).trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const sentence = Math.max(
+    cut.lastIndexOf(". "),
+    cut.lastIndexOf(".\n"),
+    cut.lastIndexOf("\n"),
+  );
+  const end = sentence > max * 0.6 ? sentence + 1 : cut.lastIndexOf(" ");
+  return `${cut.slice(0, end > 0 ? end : max).trim()} …`;
+}
+
+/**
+ * Spec 021 B-01: what the new writer reads beside the counts, from the same
+ * code-built block the report saves (so the businesses per answer are
+ * counted by Part C's rule). Built before the report exists, so nothing here
+ * depends on the writer's own reading.
+ */
+export function twoSourceWriterFacts(input: {
+  rows: readonly OrderQuestionRow[];
+  prompts: readonly AuditPrompt[];
+  observations: readonly AuditObservation[];
+  setup: TwoSourceSetup;
+}): TwoSourceWriterFacts {
+  const two = buildTwoSourceReport({
+    ...input,
+    report: { details: [] },
+    orderNumber: null,
+  });
+  const others = (two.competitors?.others ?? []).filter(
+    (fact) => fact.chatgpt.length + fact.google.length > 0,
+  );
+  return {
+    questions: two.questions.map((question) => ({
+      prompt_id: question.prompt_id,
+      ordinal: question.ordinal,
+      topic: question.topic,
+      volume: question.volume,
+      named: { chatgpt: question.chatgpt.named, google: question.google.named },
+      google_text:
+        question.google.outcome === "summary"
+          ? writerGoogleText(question.google.text)
+          : "",
+      businesses: {
+        chatgpt: others
+          .filter((fact) => fact.chatgpt.includes(question.prompt_id))
+          .map((fact) => fact.name),
+        google: others
+          .filter((fact) => fact.google.includes(question.prompt_id))
+          .map((fact) => fact.name),
+      },
+    })),
+    businesses: others.map((fact) => fact.name),
+  };
+}
+
 /** The code-built block saved with a two-source report. */
 export function buildTwoSourceReport(input: {
-  report: AuditReport;
+  report: Pick<AuditReport, "details">;
   rows: readonly OrderQuestionRow[];
   prompts: readonly AuditPrompt[];
   observations: readonly AuditObservation[];

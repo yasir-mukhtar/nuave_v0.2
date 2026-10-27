@@ -228,7 +228,7 @@ export function DirectTenReportBody({
                   </div>
                   <div>
                     <dt>Penanggung jawab yang disarankan</dt>
-                    <dd>{owners[priority.owner]}</dd>
+                    <dd>{priority.owner ? owners[priority.owner] : ""}</dd>
                   </div>
                   <div>
                     <dt>Selesai ketika</dt>

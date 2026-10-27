@@ -271,6 +271,34 @@ export type TwoSourceReportFacts = {
     business_named: boolean | null;
     cited_domains: string[];
   }[];
+  /** Spec 021 B-01: present for the new writer (Part B) only. */
+  writer?: TwoSourceWriterFacts;
+};
+
+/**
+ * Spec 021 B-01 (Spec 018 R-28 as amended 2026-10-26): what the new writer
+ * reads beside the ChatGPT answers and the counts, built by code from the
+ * saved checks. Google's words reach the writer with phone numbers removed.
+ */
+export type TwoSourceWriterFacts = {
+  questions: {
+    prompt_id: string;
+    ordinal: number;
+    /** The search topic the question came from; null when none. */
+    topic: string | null;
+    /** Monthly searches, when known. */
+    volume: number | null;
+    /** Whether each source's answer named the business, cited its site
+     * only, or neither; null when the check failed or showed no summary. */
+    named: { chatgpt: NamedFact | null; google: NamedFact | null };
+    /** Google's AI Overview text; empty when none was shown. */
+    google_text: string;
+    /** The other businesses each source's answer names. */
+    businesses: { chatgpt: string[]; google: string[] };
+  }[];
+  /** Every other business the answers name: a "disebut karena" reason may
+   * name only these. */
+  businesses: string[];
 };
 
 export const SOURCE_CHATGPT = "ChatGPT";
@@ -584,6 +612,8 @@ export function repairTwoSourceWriting<
   T extends {
     conclusion: string;
     key_findings: { title: string; explanation: string }[];
+    /** Spec 021 Part B: the verdict and takeaways are checked too. */
+    two_source_writing?: { verdict: string; takeaways: string[] };
   },
 >(content: T, facts: TwoSourceReportFacts): { content: T; changed: boolean } {
   let changed = false;
@@ -625,7 +655,24 @@ export function repairTwoSourceWriting<
     }
     return { ...finding, title, explanation };
   });
-  return { content: { ...content, conclusion, key_findings }, changed };
+  const writing = content.two_source_writing;
+  return {
+    content: {
+      ...content,
+      conclusion,
+      key_findings,
+      ...(writing
+        ? {
+            two_source_writing: {
+              ...writing,
+              verdict: fix(writing.verdict),
+              takeaways: writing.takeaways.map((text) => fix(text)),
+            },
+          }
+        : {}),
+    },
+    changed,
+  };
 }
 
 /**
@@ -637,6 +684,7 @@ export function twoSourceWritingViolations(
   content: {
     conclusion: string;
     key_findings: { title: string; explanation: string }[];
+    two_source_writing?: { verdict: string; takeaways: string[] };
   },
   facts: TwoSourceReportFacts,
 ): string[] {
@@ -655,6 +703,12 @@ export function twoSourceWritingViolations(
   const texts = [
     content.conclusion,
     ...content.key_findings.flatMap((f) => [f.title, f.explanation]),
+    ...(content.two_source_writing
+      ? [
+          content.two_source_writing.verdict,
+          ...content.two_source_writing.takeaways,
+        ]
+      : []),
   ];
   for (const sentence of texts.flatMap(sentences)) {
     const source = contradictedSource(sentence, facts);

@@ -4,6 +4,11 @@ import {
   type TwoSourceReportFacts,
 } from "./two-source-report";
 import {
+  finishTwoSourceWriting,
+  partBWritingViolations,
+} from "./two-source-writing";
+import { hasWriterFacts } from "./two-source-writer";
+import {
   buildAuditReport,
   normalizeReportEvidence,
   REPORT_SYNTHESIS_PROMPT_VERSION_V2,
@@ -457,7 +462,13 @@ export async function createValidatedAuditReport(
   const isIndonesian = lockedInput.language === "id";
   const sourceFacts = lockedInput.two_source_facts;
   const sourceErrorsFor = (draft: typeof content) =>
-    sourceFacts ? twoSourceWritingViolations(draft, sourceFacts) : [];
+    sourceFacts
+      ? [
+          ...twoSourceWritingViolations(draft, sourceFacts),
+          // Spec 021 B-04/B-06: the new writer's own fields.
+          ...partBWritingViolations(draft),
+        ]
+      : [];
   const languageErrors = [
     ...languageErrorsFor(lockedInput, content),
     ...sourceErrorsFor(content),
@@ -561,6 +572,18 @@ export async function createValidatedAuditReport(
       content = repairedSources.content;
       diagnostics.add("source_sentence_replaced");
     }
+  }
+  // Spec 021 B-04 to B-06: past the revision, code drops a headline number
+  // it cannot confirm, a reason, topic name or reading it cannot place, and
+  // removes a banned title start the revision left. Never a failed order.
+  if (hasWriterFacts(sourceFacts) && content.two_source_writing) {
+    const finished = finishTwoSourceWriting(
+      content,
+      sourceFacts,
+      lockedInput.observations,
+    );
+    content = finished.content;
+    finished.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
   }
 
   // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and

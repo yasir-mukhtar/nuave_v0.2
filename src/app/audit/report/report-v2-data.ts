@@ -1,5 +1,4 @@
 import {
-  sentences,
   subjectNoun,
   type ReportSubject,
   type TwoSourceQuestion,
@@ -252,34 +251,11 @@ export function topicGapRows(
   });
 }
 
-export const VERDICT_MAX = 220;
-
-/**
- * Spec 021: the verdict for a report written before Part B is the saved
- * conclusion's first sentences up to 220 characters, cut at a sentence end.
- * A first sentence longer than that is cut at the last word with "…".
- */
-export function verdictFromConclusion(conclusion: string): string {
-  // A ";" ends a clause, not a sentence: keep it joined to what follows.
-  const parts = sentences(conclusion.trim()).reduce<string[]>((out, part) => {
-    const last = out.at(-1);
-    if (last?.endsWith(";")) out[out.length - 1] = `${last} ${part}`;
-    else out.push(part);
-    return out;
-  }, []);
-  if (!parts.length) return "";
-  let verdict = "";
-  for (const part of parts) {
-    const next = verdict ? `${verdict} ${part}` : part;
-    if (next.length > VERDICT_MAX) break;
-    verdict = next;
-  }
-  if (verdict) return verdict;
-  const first = parts[0]!;
-  const cut = first.slice(0, VERDICT_MAX - 1);
-  const space = cut.lastIndexOf(" ");
-  return `${(space > 0 ? cut.slice(0, space) : cut).replace(/[,;:]$/, "")}…`;
-}
+// Moved to the shared module so the writer's verdict is cut by the same rule.
+export {
+  VERDICT_MAX,
+  verdictFromConclusion,
+} from "@/lib/audit/two-source-writing";
 
 /** The address the audit started from, as a short host name. */
 export function displayHost(source: string): string {

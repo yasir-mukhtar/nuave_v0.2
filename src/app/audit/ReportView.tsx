@@ -614,7 +614,9 @@ export default function ReportView({
                         </div>
                         <div>
                           <dt>Penanggung jawab</dt>
-                          <dd>{ownerLabels[priority.owner]}</dd>
+                          <dd>
+                            {priority.owner ? ownerLabels[priority.owner] : ""}
+                          </dd>
                         </div>
                         <div>
                           <dt>Selesai ketika</dt>
