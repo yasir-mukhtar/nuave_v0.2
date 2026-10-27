@@ -128,7 +128,8 @@ export async function purgeOrder(
            email = '', business_name = '', website = '',
            intake_json = NULL, prepared_json = NULL, discovery_json = NULL,
            discovery_key = NULL, questions_json = NULL, report_json = NULL,
-           link_hash = NULL, link_off = 1, purged_at = ?1
+           link_hash = NULL, link_off = 1, meta_event_id = NULL,
+           purged_at = ?1
          WHERE o.id = ?4 AND ${PURGE_ELIGIBLE}`,
       )
       .bind(now, completedBefore, endedBefore, input.orderId),

@@ -528,7 +528,8 @@ export function twoSourceCountSentence(
 const ABBREVIATION =
   /(?:^|[\s(])(?:dr|drg|dra|drs|jl|jln|no|dll|dsb|dst|sp|pt|cv|hj|h|prof|st|tbk|ir|apt|bpk|sdr|tn|ny|kec|kab|kel|rt|rw|biomed|kes|ked|psi|gz|ft|gg|m|s|kk|ve|mm|tel|telp|hlm|vol|yth)\.$|(?:^|[\s(.])\p{Lu}\.$/iu;
 
-function sentences(text: string): string[] {
+/** Exported for Spec 021's verdict cut (abbreviation-aware). */
+export function sentences(text: string): string[] {
   const out: string[] = [];
   let start = 0;
   for (const m of text.matchAll(/[.!?;](?=\s+)/g)) {

@@ -1,0 +1,482 @@
+/* Spec 021 Part D: the Jawaban AI table and its side panel, from the approved
+   prototype (experiments/report-v2-poc). Typography uses whole --type-*
+   roles; light only. */
+
+/* ── Table: the header row sits inside the table ── */
+
+.table {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-token-tile);
+  background: var(--bg-page);
+  list-style: none;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+}
+.head {
+  padding-block: 10px;
+  background: var(--stone-100);
+  color: var(--text-body);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: var(--type-label-sm-strong-leading);
+  letter-spacing: var(--type-label-sm-strong-tracking);
+}
+.icons,
+.marks {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-token-sm);
+  color: var(--text-heading);
+}
+.icon svg {
+  width: 16px;
+  height: 16px;
+}
+.icon:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 1px;
+}
+.row {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line-200);
+  background: var(--bg-page);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.row:hover {
+  background: var(--stone-50);
+}
+.row:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: -2px;
+}
+.number {
+  color: var(--text-muted);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-leading);
+  letter-spacing: var(--type-label-tracking);
+  font-variant-numeric: tabular-nums;
+}
+.question {
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-copy-weight);
+  line-height: var(--type-copy-leading);
+  letter-spacing: var(--type-copy-tracking);
+}
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border: 1px solid var(--line-300);
+  border-radius: var(--radius-token-sm);
+  color: var(--text-muted);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+  letter-spacing: var(--type-label-sm-tracking);
+  white-space: nowrap;
+}
+.mark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+/* ── Tooltip ── */
+
+.tip {
+  padding: 5px 9px;
+  border-radius: var(--radius-token-sm);
+  background: var(--ink-900);
+  color: var(--bg-page);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+  letter-spacing: var(--type-label-sm-tracking);
+}
+
+/* ── Side panel: from the right on a laptop, full width on a phone ── */
+
+.overlay {
+  background: color-mix(in srgb, var(--ink-900) 42%, transparent);
+  transition-duration: 320ms;
+  transition-timing-function: var(--ease-in-out);
+}
+.panel {
+  display: grid;
+  /* One column that may shrink below the tab row's width (320px phones). */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 0;
+  width: 100%;
+  max-width: 580px;
+  /* Long links and words in an answer wrap instead of widening the panel. */
+  overflow-wrap: anywhere;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-left: 1px solid var(--line-200);
+  background: var(--bg-page);
+  color: var(--text-body);
+  box-shadow: var(--shadow-modal);
+  /* Transform only, with the founder's ease-in-out (Spec 021 D-03). */
+  transition-property: transform;
+  transition-duration: 420ms;
+  transition-timing-function: var(--ease-in-out);
+  will-change: transform;
+}
+@media (max-width: 639px) {
+  /* Full width on a phone (Spec 021). */
+  .panel.panel {
+    max-width: none;
+  }
+}
+.panel.panel[data-starting-style],
+.panel.panel[data-ending-style] {
+  opacity: 1;
+  transform: translate3d(100%, 0, 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* No slide: the panel appears in place (the site-wide reduced-motion rule
+     already shortens the transition itself). */
+  .panel.panel[data-starting-style],
+  .panel.panel[data-ending-style] {
+    transform: none;
+  }
+}
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-200);
+}
+.title {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: var(--type-label-strong-leading);
+  letter-spacing: var(--type-label-strong-tracking);
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line-200);
+}
+.tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 8px 12px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-leading);
+  letter-spacing: var(--type-label-tracking);
+  cursor: pointer;
+}
+@media (max-width: 380px) {
+  .tabs {
+    gap: 0;
+    padding-inline: 8px;
+  }
+  .tab.tab {
+    padding-inline: 8px;
+  }
+}
+.tab svg {
+  width: 16px;
+  height: 16px;
+}
+.tab[data-selected],
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--ink-900);
+  color: var(--text-heading);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: -2px;
+}
+.body {
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 16px 24px;
+  background: var(--stone-50);
+}
+.body:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: -2px;
+}
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line-200);
+}
+.foot > button {
+  min-width: 0;
+}
+@media (max-width: 380px) {
+  /* Both buttons share the width on the smallest phones. */
+  .foot > button {
+    flex: 1 1 0;
+    padding-inline: 10px;
+  }
+}
+
+/* ── Chat look ── */
+
+.chat {
+  display: grid;
+  /* Long answers (tables, links) scroll inside their own box, never widen
+     the panel. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.context {
+  margin: 0;
+  justify-self: end;
+  color: var(--text-muted);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-leading);
+  letter-spacing: var(--type-caption-tracking);
+  text-align: right;
+}
+.bubble {
+  max-width: 85%;
+  margin: 0;
+  justify-self: end;
+  padding: 10px 14px;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--stone-100);
+  color: var(--text-heading);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-copy-weight);
+  line-height: var(--type-copy-leading);
+  letter-spacing: var(--type-copy-tracking);
+}
+.ai {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line-200);
+  border-radius: 50%;
+  background: var(--bg-page);
+  color: var(--text-heading);
+}
+.avatar svg {
+  width: 16px;
+  height: 16px;
+}
+.reply {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+}
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-leading);
+  letter-spacing: var(--type-caption-tracking);
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-token-full);
+  background: var(--bg-page);
+  color: var(--text-heading);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: var(--type-label-sm-strong-leading);
+  letter-spacing: var(--type-label-sm-strong-tracking);
+}
+.empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+.srcs li {
+  min-width: 0;
+  max-width: 100%;
+}
+.srcs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.src {
+  /* inline-block, so a long domain ends with "…" (ellipsis does not apply to
+     a flex container). */
+  display: inline-block;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 5px 10px;
+  overflow: hidden;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-token-full);
+  background: var(--bg-page);
+  color: var(--text-body);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: var(--type-label-sm-leading);
+  letter-spacing: var(--type-label-sm-tracking);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.src:hover {
+  border-color: var(--ember-300);
+  color: var(--text-accent);
+}
+.time {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-leading);
+  letter-spacing: var(--type-caption-tracking);
+}
+
+/* ── Print appendix: every answer, print only ── */
+
+.appendix {
+  display: none;
+  overflow-wrap: anywhere;
+}
+.appendixQuestion {
+  display: grid;
+  gap: 12px;
+  padding-block: 16px;
+  border-top: 1px solid var(--line-200);
+}
+.appendixQuestion h4 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  letter-spacing: var(--type-title-sm-tracking);
+}
+.appendixQuestion > p {
+  margin: 0;
+}
+.appendixQuestion > .context {
+  justify-self: start;
+  text-align: left;
+}
+
+@media print {
+  .table {
+    display: none;
+  }
+  .appendix {
+    display: grid;
+    gap: 4px;
+  }
+  .appendix > h3 {
+    margin: 0;
+    break-after: avoid;
+    color: var(--text-heading);
+    font-size: var(--type-title-size);
+    font-weight: var(--type-title-weight);
+    line-height: var(--type-title-leading);
+    letter-spacing: var(--type-title-tracking);
+  }
+  .appendixQuestion {
+    break-inside: auto;
+  }
+  .appendixQuestion h4 {
+    break-after: avoid;
+  }
+  /* Grid rows are sized before the page is split, so an answer that grows
+     at a page break (a split line, a repeated table header) would run under
+     the sources and time after it. In print the appendix flows as blocks. */
+  .appendixQuestion,
+  .ai,
+  .reply {
+    display: block;
+  }
+  .appendix .appendixQuestion > * + * {
+    margin-top: 12px;
+  }
+  .appendix .reply > * + * {
+    margin-top: 10px;
+  }
+  .ai {
+    position: relative;
+    padding-left: 38px;
+  }
+  .ai > .avatar {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  /* A table's header prints once, where the table starts. */
+  .appendix thead {
+    display: table-row-group;
+  }
+  /* An open panel never prints over the report (Ctrl/Cmd+P). */
+  .panel,
+  .overlay {
+    display: none !important;
+  }
+}

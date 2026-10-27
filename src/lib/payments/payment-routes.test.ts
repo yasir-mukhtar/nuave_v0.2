@@ -576,7 +576,13 @@ describe("the Midtrans notification (R-08, R-09, R-11, AC-01, AC-02, AC-03)", ()
     expect(order(id).state).toBe("running");
     // The status says paid, with the order number.
     const answer = await (await status({ order_id: id })).json();
-    expect(answer.payment).toEqual({ state: "paid", order_number: number(id) });
+    // Spec 022 R-07/R-08: the payment write made the Purchase event code.
+    expect(answer.payment).toEqual({
+      state: "paid",
+      order_number: number(id),
+      purchase_event_id: order(id).meta_event_id,
+    });
+    expect(order(id).meta_event_id).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it("is idempotent: the same notification or a status check again changes nothing (AC-02)", async () => {
@@ -954,6 +960,48 @@ describe("the internal order ID never reaches a live AI provider request (R-03, 
   });
 });
 
+describe("Spec 022 Option A: only the browser's own call contacts Meta (R-23, AC-13)", () => {
+  it("the notification, a status check that records a payment and a cron run make no request to a Meta address", async () => {
+    vi.stubEnv("NEXT_PUBLIC_META_PIXEL_ID", "890453577390181");
+    vi.stubEnv("META_CAPI_ACCESS_TOKEN", "offline-test-meta-token");
+    vi.stubEnv("META_CAPI_TEST_EVENT_CODE", "TEST12345");
+    // Paid by the notification.
+    const id = await unpaidOrder();
+    const tx = await payFor(id);
+    await notify(fake.notification(tx.transaction_id));
+    expect(order(id).payment_kind).toBe("midtrans");
+    // Paid by a status check (the notification was lost).
+    const other = await unpaidOrder({ email: "other@example.com" });
+    await start(other);
+    fake.addTransaction({
+      orderId: `${number(other)}-1`,
+      transactionId: "tx-lost",
+      status: "settlement",
+    });
+    await status({ order_id: other });
+    expect(order(other).payment_kind).toBe("midtrans");
+    // And the cron.
+    await approve(d1.db, id, { mode: "live", now: new Date() });
+    const mail = mailbox();
+    await runOrders({
+      db: d1.db,
+      environment: "production",
+      mode: "live",
+      siteOrigin: "https://v2.nuave.test",
+      now: () => new Date(),
+      execute: liveExecuteAuditPrompt,
+      generateReport: liveGenerateReportContent,
+      sender: mail.sender,
+      sleep: async () => {},
+    });
+    expect(
+      fake.requests.filter((request) => /facebook\.com/.test(request.url)),
+    ).toEqual([]);
+    expect(order(id).meta_sent_at).toBeNull();
+    expect(order(other).meta_sent_at).toBeNull();
+  });
+});
+
 describe("the status answer (R-14, AC-12, AC-15; shapes for S4d)", () => {
   it("shows unpaid, then waiting with the Snap page, then a failed try with the same page", async () => {
     const id = await unpaidOrder();
@@ -991,7 +1039,13 @@ describe("the status answer (R-14, AC-12, AC-15; shapes for S4d)", () => {
       status: "settlement",
     });
     const answer = await (await status({ order_id: id })).json();
-    expect(answer.payment).toEqual({ state: "paid", order_number: number(id) });
+    // Spec 022 R-07/R-08: the payment write made the Purchase event code.
+    expect(answer.payment).toEqual({
+      state: "paid",
+      order_number: number(id),
+      purchase_event_id: order(id).meta_event_id,
+    });
+    expect(order(id).meta_event_id).toMatch(/^[0-9a-f-]{36}$/);
     expect(order(id).payment_kind).toBe("midtrans");
 
     // DANA: Midtrans answers by transaction_id only. A first check by order_id
