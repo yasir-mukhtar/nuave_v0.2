@@ -13,17 +13,7 @@ import {
 } from "@/components/product/report/TenBeads";
 import { ReportAnswer, observationTime } from "./ReportAnswer";
 import { ReportReferences } from "./ReportReferences";
-import {
-  OtherBusinesses,
-  profileQuestionsNote,
-  TWO_SOURCE_ANSWERS_TITLE,
-  TopicsMissing,
-  TwoSourceAnswers,
-  TwoSourceMethod,
-  TwoSourceSummary,
-  checkedDate,
-  placesText,
-} from "./TwoSourceSections";
+import { TwoSourceReportBody } from "./TwoSourceReport";
 import styles from "./report-body.module.css";
 
 const owners = {
@@ -49,6 +39,15 @@ export function DirectTenReportBody({
   /** The business's name and other names, marked inside the answers. */
   names?: readonly string[];
 }) {
+  // Spec 021: two-source reports use the new layout.
+  if (report.two_source)
+    return (
+      <TwoSourceReportBody
+        report={report}
+        observations={observations}
+        names={names}
+      />
+    );
   const presentation = buildReportPresentation(report, observations);
   if (presentation.status !== "ready")
     return (
@@ -65,9 +64,6 @@ export function DirectTenReportBody({
       </div>
     );
   const { answers, references, measures } = presentation;
-  // Spec 018: a two-source report (ChatGPT and Google AI Overview). Reports
-  // saved before it have no such block and render as before (R-29).
-  const two = report.two_source;
   // One bead per question, in the order they were asked.
   const beads = (held: (answer: (typeof answers)[number]) => boolean) =>
     Array.from({ length: measures.overall.total }, (_, index): BeadMark => {
@@ -87,99 +83,75 @@ export function DirectTenReportBody({
         <ReportSectionHeading number="01" className={styles.sectionHeading}>
           Hasil singkat
         </ReportSectionHeading>
-        {two ? (
-          <TwoSourceSummary two={two} />
-        ) : (
-          <div className={styles.resultCard}>
-            <p className={styles.bigNumber} aria-hidden="true">
-              <span>{measures.overall.appeared}</span>
-              <span>dari {measures.overall.total}</span>
-            </p>
-            <p className={styles.count}>
-              Bisnis Anda muncul di {measures.overall.appeared} dari{" "}
-              {measures.overall.total} pertanyaan
-            </p>
-            <TenBeads
-              marks={named}
-              tone="ember"
-              summary={
-                numbersOf(named).length
-                  ? `Disebut di pertanyaan ${questionList(numbersOf(named))}.`
-                  : "Tidak disebut di pertanyaan mana pun."
-              }
-            />
-            <div className={styles.cardRule} />
-            <p
-              className={`${styles.bigNumber} ${styles.bigNumberSmall}`}
-              aria-hidden="true"
-            >
-              <span>{measures.recommendation.recommended}</span>
-              <span>dari {measures.recommendation.assessed}</span>
-            </p>
-            <p className={styles.count}>
-              Bisnis Anda direkomendasikan di{" "}
-              {measures.recommendation.recommended} dari{" "}
-              {measures.recommendation.assessed} pertanyaan
-            </p>
-            <TenBeads
-              marks={recommended}
-              tone="ink"
-              summary={
-                numbersOf(recommended).length
-                  ? `Direkomendasikan di pertanyaan ${questionList(numbersOf(recommended))}.`
-                  : "Tidak direkomendasikan di pertanyaan mana pun."
-              }
-            />
-            <div className={styles.cardRule} />
-            <p className={styles.completion}>
-              <IconCircleCheck size={16} stroke={1.75} aria-hidden="true" />
-              {answers.length} dari {measures.overall.total} pertanyaan berhasil
-              diuji
-            </p>
-          </div>
-        )}
+        <div className={styles.resultCard}>
+          <p className={styles.bigNumber} aria-hidden="true">
+            <span>{measures.overall.appeared}</span>
+            <span>dari {measures.overall.total}</span>
+          </p>
+          <p className={styles.count}>
+            Bisnis Anda muncul di {measures.overall.appeared} dari{" "}
+            {measures.overall.total} pertanyaan
+          </p>
+          <TenBeads
+            marks={named}
+            tone="ember"
+            summary={
+              numbersOf(named).length
+                ? `Disebut di pertanyaan ${questionList(numbersOf(named))}.`
+                : "Tidak disebut di pertanyaan mana pun."
+            }
+          />
+          <div className={styles.cardRule} />
+          <p
+            className={`${styles.bigNumber} ${styles.bigNumberSmall}`}
+            aria-hidden="true"
+          >
+            <span>{measures.recommendation.recommended}</span>
+            <span>dari {measures.recommendation.assessed}</span>
+          </p>
+          <p className={styles.count}>
+            Bisnis Anda direkomendasikan di{" "}
+            {measures.recommendation.recommended} dari{" "}
+            {measures.recommendation.assessed} pertanyaan
+          </p>
+          <TenBeads
+            marks={recommended}
+            tone="ink"
+            summary={
+              numbersOf(recommended).length
+                ? `Direkomendasikan di pertanyaan ${questionList(numbersOf(recommended))}.`
+                : "Tidak direkomendasikan di pertanyaan mana pun."
+            }
+          />
+          <div className={styles.cardRule} />
+          <p className={styles.completion}>
+            <IconCircleCheck size={16} stroke={1.75} aria-hidden="true" />
+            {answers.length} dari {measures.overall.total} pertanyaan berhasil
+            diuji
+          </p>
+        </div>
         <p className={styles.conclusion}>{report.conclusion}</p>
         <p className={`${styles.supporting} ${styles.limit}`}>
           <IconClock size={16} stroke={1.75} aria-hidden="true" />
-          {two ? (
-            <span>
-              Hasil ini terbatas pada sepuluh pertanyaan yang disetujui dan
-              jawaban pada waktu pengamatan masing-masing (
-              {placesText(two.places)};{" "}
-              {checkedDate(two) ?? "tanggal tidak tersedia"}
-              ). Waktu, akun, atau lokasi berbeda dapat memberi jawaban berbeda.
-              Disebut bukan berarti direkomendasikan.
-            </span>
-          ) : (
-            <span>
-              Hasil ini terbatas pada sepuluh pertanyaan yang disetujui dan
-              jawaban pada waktu pengamatan masing-masing. Model, waktu, lokasi,
-              atau percakapan berbeda dapat memberi jawaban berbeda. Disebut
-              bukan berarti direkomendasikan.
-            </span>
-          )}
+          <span>
+            Hasil ini terbatas pada sepuluh pertanyaan yang disetujui dan
+            jawaban pada waktu pengamatan masing-masing. Model, waktu, lokasi,
+            atau percakapan berbeda dapat memberi jawaban berbeda. Disebut bukan
+            berarti direkomendasikan.
+          </span>
         </p>
-        {two && !two.search_data_available ? (
-          <p className={styles.supporting} data-profile-questions>
-            {profileQuestionsNote(two.subject)}
-          </p>
-        ) : null}
       </section>
       <section className={styles.section} id="detail" tabIndex={-1}>
         <ReportSectionHeading number="02" className={styles.sectionHeading}>
-          {two ? TWO_SOURCE_ANSWERS_TITLE : "Jawaban model AI"}
+          Jawaban model AI
         </ReportSectionHeading>
         <p className={styles.supporting}>
           Pertanyaan dan jawaban lengkap ditampilkan sesuai urutan pengujian.
           Teks jawaban adalah bukti yang diamati, bukan pendapat Nuave.
         </p>
-        {two ? (
-          <TwoSourceAnswers two={two} answers={answers} names={names} />
-        ) : (
-          answers.map((answer) => (
-            <ReportAnswer key={answer.id} answer={answer} names={names} />
-          ))
-        )}
+        {answers.map((answer) => (
+          <ReportAnswer key={answer.id} answer={answer} names={names} />
+        ))}
       </section>
       <section className={styles.section} id="findings" tabIndex={-1}>
         <ReportSectionHeading number="03" className={styles.sectionHeading}>
@@ -201,45 +173,30 @@ export function DirectTenReportBody({
               />
             </li>
           ))}
-          {two?.google_finding ? (
-            <li className={styles.card} data-google-finding>
-              <h3>
-                <span className={styles.ordinal} aria-hidden="true">
-                  {report.key_findings.length + 1}
-                </span>
-                Google AI Overview
-              </h3>
-              <p>{two.google_finding}</p>
-            </li>
-          ) : null}
         </ol>
-        {two ? (
-          <OtherBusinesses two={two} />
-        ) : (
-          report.observed_competitors.length > 0 && (
-            <div className={styles.comparators}>
-              <h3>Bisnis lain yang disebut</h3>
-              <p className={styles.supporting}>
-                Daftar ini terbatas pada catatan terstruktur yang tersimpan,
-                bukan seluruh nama dalam jawaban.
-              </p>
-              {report.observed_competitors.map((competitor, i) => (
-                <div key={i} className={styles.comparator}>
-                  <p>
-                    <strong>{competitor.name}</strong>
-                    <span className={styles.relation}>
-                      {" · "}
-                      {relationships[competitor.relationship]}
-                    </span>
-                  </p>
-                  <ReportReferences
-                    ids={competitor.evidence_prompt_ids}
-                    references={references}
-                  />
-                </div>
-              ))}
-            </div>
-          )
+        {report.observed_competitors.length > 0 && (
+          <div className={styles.comparators}>
+            <h3>Bisnis lain yang disebut</h3>
+            <p className={styles.supporting}>
+              Daftar ini terbatas pada catatan terstruktur yang tersimpan, bukan
+              seluruh nama dalam jawaban.
+            </p>
+            {report.observed_competitors.map((competitor, i) => (
+              <div key={i} className={styles.comparator}>
+                <p>
+                  <strong>{competitor.name}</strong>
+                  <span className={styles.relation}>
+                    {" · "}
+                    {relationships[competitor.relationship]}
+                  </span>
+                </p>
+                <ReportReferences
+                  ids={competitor.evidence_prompt_ids}
+                  references={references}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </section>
       <section className={styles.section} id="priorities" tabIndex={-1}>
@@ -295,7 +252,6 @@ export function DirectTenReportBody({
               </li>
             ))}
         </ol>
-        {two ? <TopicsMissing two={two} /> : null}
       </section>
       <section className={styles.section} id="method" tabIndex={-1}>
         <ReportSectionHeading number="05" className={styles.sectionHeading}>
@@ -309,24 +265,20 @@ export function DirectTenReportBody({
           </time>
           . Waktu dan model setiap pengamatan tercantum bersama jawabannya.
         </p>
-        {two ? (
-          <TwoSourceMethod two={two} />
-        ) : (
-          <ul className={styles.method}>
-            <li>
-              Ekspor bukti menyimpan pertanyaan, jawaban lengkap, sumber, waktu,
-              model, dan hasil dari laporan yang sama.
-            </li>
-            <li>
-              Jawaban dari API tidak mewakili seluruh aplikasi atau percakapan
-              model AI.
-            </li>
-            <li>
-              Laporan ini tidak membuktikan penyebab hasil, kualitas layanan
-              bisnis, atau menjamin rekomendasi pada masa depan.
-            </li>
-          </ul>
-        )}
+        <ul className={styles.method}>
+          <li>
+            Ekspor bukti menyimpan pertanyaan, jawaban lengkap, sumber, waktu,
+            model, dan hasil dari laporan yang sama.
+          </li>
+          <li>
+            Jawaban dari API tidak mewakili seluruh aplikasi atau percakapan
+            model AI.
+          </li>
+          <li>
+            Laporan ini tidak membuktikan penyebab hasil, kualitas layanan
+            bisnis, atau menjamin rekomendasi pada masa depan.
+          </li>
+        </ul>
       </section>
     </div>
   );

@@ -5,25 +5,9 @@ import { AuditNotice } from "@/components/product/AuditNotice";
 import { Button } from "@/components/ui/button";
 import ReportView from "@/app/audit/ReportView";
 import {
-  makeSmartCustomerEvidenceExport,
-  promptsWithOriginals,
+  savedReportEvidence,
+  type SavedReportData,
 } from "@/lib/audit/customer-evidence-export";
-import type { DirectTenAuditContext } from "@/lib/audit/direct-ten-context-v2";
-import type {
-  AuditObservation,
-  AuditPrompt,
-  AuditReport,
-} from "@/lib/audit/types";
-
-/** What the report-data route returns for a valid link (spec 016 R-26). */
-type SavedReportData = {
-  report: AuditReport;
-  context: DirectTenAuditContext;
-  prompts: AuditPrompt[];
-  originals: string[];
-  observations: AuditObservation[];
-  synthetic: boolean;
-};
 
 type View =
   | { kind: "loading" }
@@ -87,23 +71,7 @@ export default function SavedReport() {
   if (view.kind === "ready") {
     const { data } = view;
     const downloadJson = () => {
-      const originalByPromptId = new Map(
-        data.prompts.map((prompt, index) => [
-          prompt.prompt_id,
-          data.originals[index] ?? prompt.question,
-        ]),
-      );
-      const evidence = makeSmartCustomerEvidenceExport(
-        data.context,
-        promptsWithOriginals(data.prompts, originalByPromptId),
-        data.observations,
-        data.report,
-        {
-          report_context_version: data.context.version,
-          question_method: "direct-ten",
-          synthetic: data.synthetic,
-        },
-      );
+      const evidence = savedReportEvidence(data);
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(evidence, null, 2)], {
           type: "application/json",

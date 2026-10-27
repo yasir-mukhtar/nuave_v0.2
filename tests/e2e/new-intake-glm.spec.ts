@@ -2,7 +2,6 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   confirmBrand,
   confirmSummary,
-  downloadEvidenceJson,
   downloadPdfButtons,
   editQuestion,
   expectAuditDelivered,
@@ -380,7 +379,7 @@ async function freshBrowserPage(
   return { context, page };
 }
 
-test("AC-14: the emailed link opens the same report in a fresh browser; private headers, no provider call, PDF and JSON work", async ({
+test("AC-14: the emailed link opens the same report in a fresh browser; private headers, no provider call, PDF works and the data holds every answer", async ({
   page,
   browser,
   baseURL,
@@ -417,7 +416,7 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   await expect(report.locator("[data-failed-slot]")).toHaveCount(1);
   await expect(fresh.locator("header#stage-5")).toContainText("Kedai Fiksi");
   await expect(fresh.locator("[data-report-checked]")).toContainText(
-    "Diperiksa di ChatGPT dan Google AI Overview",
+    "ChatGPT dan Google AI Overview",
   );
   // Nothing but the report-data call; no cookie and nothing saved in the browser.
   // (`next dev` runs an effect twice, so the count is not fixed here.)
@@ -440,9 +439,8 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   expect(data.headers()["x-robots-tag"]).toContain("noindex");
   expect(data.headers()["referrer-policy"]).toBe("no-referrer");
 
-  // PDF is the browser's print, and JSON is the evidence download. The
-  // report has two Download PDF buttons (top bar and under the report); each
-  // prints once.
+  // PDF is the browser's print (until Spec 021 Part P). The report has two
+  // Unduh PDF buttons (top bar and at the end); each prints once.
   const printCalls = () =>
     fresh.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,
@@ -461,19 +459,20 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
     printBackground: true,
   });
   await fresh.emulateMedia({ media: "screen" });
-  const { json: evidence } = await downloadEvidenceJson(fresh);
-  expect(evidence.export_version).toBe("nuave-evidence-two-source-v1");
+  // Spec 021 A-08: a two-source report offers no JSON download; support
+  // exports it (`npm run support -- export`). The report's data, which the
+  // page renders, holds every answer and no email or secret.
+  await expect(
+    fresh.getByRole("button", { name: "Unduh bukti JSON" }),
+  ).toHaveCount(0);
+  const evidence = await data.json();
   expect(evidence.context).toMatchObject({
     version: "nuave-direct-ten-context-v2",
     identity: { name: "Kedai Fiksi" },
   });
-  expect(evidence).not.toHaveProperty("brief");
   expect(evidence.prompts).toHaveLength(10);
   expect(evidence.observations).toHaveLength(10);
-  expect(evidence.report).toBeTruthy();
-  expect(evidence.report).not.toHaveProperty("operational_telemetry");
-  expect(evidence.observations[0]).not.toHaveProperty("telemetry");
-  // The email and the secret are not in the customer's export.
+  expect(evidence.report.two_source).toBeTruthy();
   expect(JSON.stringify(evidence)).not.toContain(ORDER_EMAIL);
   expect(JSON.stringify(evidence)).not.toContain(link.secret);
   await context.close();
@@ -619,6 +618,21 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     }, state);
     await expect(report).toBeVisible();
   }
+  // Spec 021 AC-A1: on a 390×844 phone the verdict and the first card's ten
+  // dots show without scrolling.
+  const viewport = fresh.viewportSize();
+  await fresh.setViewportSize({ width: 390, height: 844 });
+  await fresh.evaluate(() => window.scrollTo(0, 0));
+  await expect(fresh.locator("[data-verdict]")).toBeInViewport();
+  const firstDots = fresh.locator(
+    '[data-source-card="chatgpt"] [data-mention]',
+  );
+  await expect(firstDots).toHaveCount(10);
+  await expect(firstDots.last()).toBeInViewport();
+  await fresh.screenshot({
+    path: info.outputPath("report-first-screen-390.png"),
+  });
+  if (viewport) await fresh.setViewportSize(viewport);
   // Spec 018: each question shows its ChatGPT answer and Google AI Overview.
   // The synthetic run's question 7 ChatGPT check failed every attempt, so its
   // slot says "Tidak dapat diuji" with "Minta bantuan" instead of an answer.
@@ -661,18 +675,18 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await expect(source).toHaveAttribute("referrerpolicy", "no-referrer");
   expect(external).toEqual([]);
 
-  const contents = fresh.getByRole("navigation", { name: "Report contents" });
+  const contents = fresh.getByRole("navigation", { name: "Isi laporan" });
   async function checkContentsNavigation() {
     const requestsBefore = Object.entries(calls);
     const urlBefore = fresh.url();
     const historyLength = await fresh.evaluate(() => history.length);
     for (const activation of ["mouse", "keyboard"] as const) {
       for (const id of [
-        "summary",
-        "findings",
-        "priorities",
-        "detail",
-        "method",
+        "temuan",
+        "pesaing",
+        "rekomendasi",
+        "penutup",
+        "jawaban",
       ]) {
         const anchor = contents.locator(`a[href="#${id}"]`);
         const target = fresh.locator(`#${id}`);
@@ -712,26 +726,34 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     }
   }
   await checkContentsNavigation();
-  // Spec 012 B1: final header and contents match the direct-ten body.
+  // Spec 021 A-01, AC-A3: the chips follow the page; no Ringkasan chip.
+  // The synthetic questions' saved topics equal the questions, so Celah
+  // Topik has no rows and is left out with its chip (A-05).
+  await expect(fresh.locator("#topik")).toHaveCount(0);
   await expect(contents.getByRole("link")).toHaveText([
-    "Hasil singkat",
-    "Jawaban ChatGPT dan Google AI Overview",
-    "Analisis Nuave",
-    "Yang dapat dilakukan",
-    "Tentang audit ini",
+    "Temuan Utama",
+    "Peta Pesaing",
+    "Rekomendasi",
+    "Penutup",
+    "Jawaban AI",
   ]);
   const hero = fresh.locator("header#stage-5");
-  await expect(hero).toContainText("AI Visibility Report");
+  await expect(hero).toContainText("Laporan Visibilitas AI");
   await expect(hero).not.toContainText("Dibuat oleh");
-  // Spec 018: the window spans the checks of both sources.
-  const earliest = patched!.report.two_source.checked_from;
-  await expect(hero.locator("[data-report-header-facts] time")).toHaveAttribute(
-    "datetime",
-    earliest!,
+  // AC-A1: the date and the source names once, in one line.
+  await expect(hero.locator("[data-report-checked]")).toHaveText(
+    /^Diperiksa \d{1,2} \S+ \d{4} · ChatGPT dan Google AI Overview$/,
   );
-  await expect(hero.locator("[data-report-header-facts]")).toContainText(
-    /Tanggal pengamatan.*UTC/,
-  );
+  await expect(fresh.locator("#summary [data-verdict]")).toBeVisible();
+  // AC-A4: none of the removed wording on a two-source report.
+  for (const removed of [
+    "Tidak ada data jumlah pencarian",
+    "Unduh bukti JSON",
+    "Tentang audit ini",
+    "Penanggung jawab",
+    "Selesai ketika",
+  ])
+    await expect(report).not.toContainText(removed);
   await fresh
     .getByRole("button", { name: "Teks asli pertanyaan 1", exact: true })
     .click();
@@ -750,7 +772,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   expect(copied).toContain(raw[0]!.question);
   expect(copied).toContain(raw[0]!.answer);
   const reference = fresh
-    .locator('#findings a[href="#report-question-2"]')
+    .locator('#temuan a[href="#report-question-2"]')
     .first();
   await reference.click();
   await expect(fresh.locator("#report-question-2")).toBeFocused();
@@ -762,7 +784,8 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       .locator("#report-question-2")
       .evaluate((el) => getComputedStyle(el).outlineStyle),
   ).not.toBe("none");
-  for (const width of [1440, 390, 320]) {
+  // AC-A6: no sideways scroll from 1920 down to 320 wide.
+  for (const width of [1920, 1280, 768, 390, 320]) {
     await fresh.setViewportSize({ width, height: 900 });
     await fresh.locator("#summary").scrollIntoViewIfNeeded();
     expect(
@@ -814,17 +837,6 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     printBackground: true,
   });
   await fresh.emulateMedia({ media: "screen" });
-  const { json: exported } = await downloadEvidenceJson(fresh);
-  expect(
-    exported.observations.map((o: { raw_answer: string }) => o.raw_answer),
-  ).toEqual(raw.map((o) => o.answer));
-  expect(exported.export_version).toBe("nuave-evidence-two-source-v1");
-  expect(exported.context).toEqual(patched!.context);
-  expect(exported.context).not.toHaveProperty("targetCustomer");
-  expect(exported).not.toHaveProperty("brief");
-  expect(exported.report.provenance).toEqual(patched!.report.provenance);
-  expect(exported.report).not.toHaveProperty("operational_telemetry");
-  expect(exported.observations[0]).not.toHaveProperty("telemetry");
   await fresh.reload();
   await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   await checkContentsNavigation();
