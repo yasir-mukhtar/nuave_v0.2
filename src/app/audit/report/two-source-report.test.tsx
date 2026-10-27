@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { presentationFixture } from "@/lib/audit/report-presentation.fixture";
 import {
@@ -378,15 +385,13 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     ).not.toBeNull();
   });
 
-  it("each question shows its label, topic line and both answers, stacked, with outcomes", () => {
+  it("the print appendix holds each question's context and both answers, with outcomes", () => {
     const container = body();
     const first = container.querySelector<HTMLElement>(
-      '[data-report-answer="1"]',
+      '[data-report-appendix] [data-report-answer="1"]',
     )!;
-    expect(first.querySelector("[data-origin-label]")).toHaveTextContent(
-      "Dicari di Google",
-    );
-    expect(first.querySelector("[data-topic-line]")).toHaveTextContent(
+    expect(first).toHaveTextContent("Dicari di Google");
+    expect(first).toHaveTextContent(
       "±12.100 pencarian/bulan di Google, seluruh Indonesia (data September 2026)",
     );
     expect(
@@ -403,8 +408,227 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
       container.querySelector(
         '[data-report-answer="3"] [data-source-answer="google"]',
       ),
-    ).toHaveTextContent("Dipakai sebagai sumber");
+    ).toHaveTextContent("Situs dikutip, nama tidak disebut");
     expect(container.querySelector("#jawaban")).toHaveTextContent("Jawaban AI");
+  });
+
+  it("Jawaban AI is a table: header row with labelled logos, one row per question with a dot per source (Part D)", () => {
+    const container = body();
+    const table = container.querySelector<HTMLElement>("[data-answers-table]")!;
+    expect(table).toHaveTextContent("#");
+    expect(table).toHaveTextContent("Pertanyaan");
+    expect(
+      [...table.querySelectorAll("[data-source-logo]")].map((el) =>
+        el.getAttribute("aria-label"),
+      ),
+    ).toEqual(["ChatGPT", "Google AI Overview"]);
+    const rows = table.querySelectorAll("[data-answer-row]");
+    expect(rows).toHaveLength(10);
+    const four = table.querySelector<HTMLElement>('[data-answer-row="4"]')!;
+    expect(
+      four
+        .querySelector('[data-source="google"]')
+        ?.getAttribute("data-mention"),
+    ).toBe("noaio");
+    // The row's name says each source's result in words.
+    expect(four.getAttribute("aria-label")).toContain(
+      "Google AI Overview: Tidak ada AI Overview.",
+    );
+    // The stacked answers are print only now.
+    expect(
+      container.querySelector("[data-report-appendix]")?.className,
+    ).toMatch(/appendix/);
+  });
+
+  it("AC-D1, D-02: a row, a summary dot and a P reference open the panel on that question and source; Escape closes it and focus returns", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    const row = document.querySelector<HTMLElement>('[data-answer-row="3"]')!;
+    expect(row).toHaveAccessibleName(
+      expect.stringMatching(
+        /^Pertanyaan 3: .+\. ChatGPT: .+\. Google AI Overview: .+\.$/,
+      ),
+    );
+    await user.click(row);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 3 dari 10",
+    });
+    expect(
+      within(dialog).getByRole("tab", { name: "ChatGPT" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(dialog).toHaveTextContent("Pertanyaan 3: café lokal");
+    // Tabs follow the arrow keys.
+    within(dialog).getByRole("tab", { name: "ChatGPT" }).focus();
+    await user.keyboard("{ArrowRight}");
+    expect(
+      within(dialog).getByRole("tab", { name: "Google AI Overview" }),
+    ).toHaveFocus();
+    await user.click(
+      within(dialog).getByRole("tab", { name: "Google AI Overview" }),
+    );
+    expect(
+      dialog.querySelector('[data-source-answer="google"]'),
+    ).not.toBeNull();
+    // Berikutnya moves to the next question.
+    await user.click(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pertanyaan 4 dari 10" }),
+    ).toHaveTextContent("Google tidak menampilkan AI Overview");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(row).toHaveFocus();
+
+    // A Google dot in the summary opens the Google tab.
+    const googleDot = within(
+      document.querySelector<HTMLElement>('[data-source-card="google"]')!,
+    ).getByRole("button", { name: /^Pertanyaan 1:/ });
+    await user.click(googleDot);
+    const second = await screen.findByRole("dialog", {
+      name: "Pertanyaan 1 dari 10",
+    });
+    expect(
+      within(second).getByRole("tab", { name: "Google AI Overview" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(
+      within(second).getByRole("button", { name: /Sebelumnya/ }),
+    ).toBeDisabled();
+    await user.click(within(second).getByRole("button", { name: "Tutup" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(googleDot).toHaveFocus();
+
+    // A P reference in a finding opens its question.
+    await user.click(
+      screen.getAllByRole("button", { name: "P2: pertanyaan 2" })[0]!,
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+    ).toBeInTheDocument();
+  });
+
+  it("a table dot opens its own source's tab; at the last question focus stays in the panel", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>(
+        '[data-answer-row="9"] [data-source="google"]',
+      )!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 9 dari 10",
+    });
+    expect(
+      within(dialog).getByRole("tab", { name: "Google AI Overview" }),
+    ).toHaveAttribute("aria-selected", "true");
+    // Berikutnya turns off at question 10; focus moves to Sebelumnya.
+    await user.click(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pertanyaan 10 dari 10" }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole("button", { name: /Sebelumnya/ }),
+    ).toHaveFocus();
+  });
+
+  it("paging back to question 1 keeps focus in the panel and tells screen readers the new question", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>('[data-answer-row="2"]')!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 2 dari 10",
+    });
+    await user.click(
+      within(dialog).getByRole("button", { name: /Sebelumnya/ }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Pertanyaan 1 dari 10" }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: /Sebelumnya/ }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    ).toHaveFocus();
+    expect(dialog.querySelector('[aria-live="polite"]')).toHaveTextContent(
+      "Pertanyaan 1 dari 10",
+    );
+  });
+
+  it("reopening the question last read starts at its top", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    const row = document.querySelector<HTMLElement>('[data-answer-row="2"]')!;
+    await user.click(row);
+    await screen.findByRole("dialog", { name: "Pertanyaan 2 dari 10" });
+    const body = document.querySelector<HTMLElement>("[data-panel-body]")!;
+    body.scrollTop = 186;
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await user.click(row);
+    await screen.findByRole("dialog", { name: "Pertanyaan 2 dari 10" });
+    expect(body.scrollTop).toBe(0);
+  });
+
+  it("a copied note does not carry over to the next question", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: async () => {} },
+    });
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>('[data-answer-row="1"]')!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 1 dari 10",
+    });
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Salin pertanyaan dan jawaban 1",
+      }),
+    );
+    expect(dialog).toHaveTextContent("tersalin");
+    await user.click(
+      within(dialog).getByRole("button", { name: /Berikutnya/ }),
+    );
+    await screen.findByRole("button", {
+      name: "Salin pertanyaan dan jawaban 2",
+    });
+    expect(dialog).not.toHaveTextContent("tersalin");
+  });
+
+  it("the panel shows a failed check with its help link, never an empty answer", async () => {
+    const user = userEvent.setup();
+    const fixture = twoSourceFixture();
+    render(<DirectTenReportBody {...fixture} names={["Kedai Fiksi"]} />);
+    await user.click(
+      document.querySelector<HTMLElement>('[data-answer-row="7"]')!,
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Pertanyaan 7 dari 10",
+    });
+    expect(dialog.querySelector("[data-failed-slot]")).toHaveTextContent(
+      "Tidak dapat diuji",
+    );
+    expect(
+      within(dialog).getByRole("link", { name: "Minta bantuan" }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringContaining("mailto:support@nuave.ai"),
+    );
   });
 
   it("the code-built Google finding, the competitor list and Celah Topik", () => {

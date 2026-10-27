@@ -183,6 +183,10 @@
   list-style: none;
 }
 .dotLink {
+  width: 100%;
+  border: 0;
+  background: none;
+  cursor: pointer;
   display: grid;
   justify-items: center;
   gap: 4px;
@@ -195,6 +199,14 @@
   font-weight: var(--type-caption-weight);
   line-height: var(--type-caption-leading);
   letter-spacing: var(--type-caption-tracking);
+}
+.dotLink:hover {
+  color: var(--text-body);
+}
+.dotLink:focus-visible,
+.ref:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
 }
 .legend {
   display: flex;
@@ -348,6 +360,8 @@
   vertical-align: 1px;
 }
 .ref {
+  border: 0;
+  cursor: pointer;
   display: inline-block;
   min-height: 24px;
   padding: 4px 8px;

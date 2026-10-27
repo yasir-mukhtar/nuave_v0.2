@@ -23,12 +23,20 @@ function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
-function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
+function SheetOverlay({
+  className,
+  blur = true,
+  ...props
+}: SheetPrimitive.Backdrop.Props & {
+  /** false: the overlay only fades (opacity), with no backdrop blur. */
+  blur?: boolean;
+}) {
   return (
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-50 bg-black/10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
+        blur && "supports-backdrop-filter:backdrop-blur-xs",
         className,
       )}
       {...props}
@@ -41,14 +49,21 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  overlayBlur = true,
+  overlayClassName,
+  keepMounted = false,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
+  overlayBlur?: boolean;
+  overlayClassName?: string;
+  /** Keep the closed sheet in the page, so opening it only shows it. */
+  keepMounted?: boolean;
 }) {
   return (
-    <SheetPortal>
-      <SheetOverlay />
+    <SheetPortal keepMounted={keepMounted}>
+      <SheetOverlay blur={overlayBlur} className={overlayClassName} />
       <SheetPrimitive.Popup
         data-slot="sheet-content"
         data-side={side}
