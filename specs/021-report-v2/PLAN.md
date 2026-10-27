@@ -302,6 +302,11 @@ Built and tested offline first; live steps wait for the founder.
    spend reservation as other providers.
 8. **Switch** to the founder's pick; record cost and time per report; confirm
    the per-order hold covers it.
+9. **Spec 018 R-28 wording:** state that the writer reads Google's AI
+   Overview text (phone numbers removed), as the founder approved on
+   2026-10-26 ([decision](../../docs/DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)),
+   and change SPEC B-01's "(within Spec 018 R-28)" to "(Spec 018 R-28 as
+   amended 2026-10-26)". B-07 runs the five writers that decision names.
 
 **Tests.** Unit: schema and presentation validation for old and new versions;
 headline number rule (each kind kept, others dropped); banned titles; repair

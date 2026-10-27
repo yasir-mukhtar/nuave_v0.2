@@ -50,9 +50,24 @@
   parts plus a server-made PDF. **Approved 2026-10-26** after four prototype
   rounds ([prototype](../experiments/report-v2-poc/),
   [decision](./DECISION_LOG.md#2026-10-26--approve-spec-021-server-pdf-now-re-audit-reminder-later)).
-  Next: the [build plan](../specs/021-report-v2/PLAN.md) passes independent
-  review, then six PRs in order (layout, answers, PDF, competitor data,
-  writing).
+  The [build plan](../specs/021-report-v2/PLAN.md) passed independent
+  review (round 3). Merged: layout (Part A,
+  [#173](https://github.com/yasir-mukhtar/nuave_v0.2/pull/173)) and answers
+  (Part D, [#175](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175));
+  next: PDF, competitor data, writing.
+- **Audit stack plan** (approved 2026-10-26,
+  [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+  [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
+  report-writer test is Spec 021 B-07: five writers on Spec 021's new writer
+  (Luna low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5
+  medium), on three orders with ChatGPT and Google answers, with the
+  delivered NV-3WDSAY report as a labelled reference. The OpenAI, Anthropic
+  and Firecrawl keys are in the cloud environment (seen 2026-10-27; Anthropic as
+  `NUAVE_ANTHROPIC_API_KEY`, so Claude Code does not use it). Still needed:
+  two more founder-run live orders (two businesses, two cities, one at a
+  time), best run after Spec 021 PR 5 (competitor data) is deployed so they
+  carry everything the new writer reads. The reading test (Firecrawl,
+  Cloudflare, Apify) follows G1.
 
 - **Question writing fixed** (2026-10-26): orders with a search city failed
   to get their ten questions; four causes fixed and a live check added
@@ -200,6 +215,10 @@
   allowance on 2026-09-27; update this line after each approved agent run.
   The founder's own test runs (plan §5, JZ) are not counted here; the
   provider dashboards show total spend.
+- **Audit stack tests allowance** (approved 2026-10-26): up to USD 5 of
+  agent-run live calls for the reading test and the report-writer test
+  together, USD 0 used so far. Public business pages and the founder's own
+  test-order data only.
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
   engagement only. This does not reset the separately dated September allowance
   usage above. Founder-run charges remain unknown; no new spending is authorized.
