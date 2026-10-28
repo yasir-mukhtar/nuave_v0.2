@@ -562,6 +562,9 @@ What does not change:
     (`AuditCallExecutionError`). The runner retries on a later run, with at
     most three report calls per order as today; then the order fails with its
     refund path.
+  - The language-fix call is different. If it fails, the pipeline keeps the
+    first draft and saves it with the existing repair, as today. Its attempt
+    is spent either way.
 - **Its own cost path.** `reserveAuditCall` and `completedCallTelemetry`
   accept only Luna (`telemetry.ts`), so the Claude path does not use them.
   - It keeps the shared stage-call limit and the request-budget check, moved
@@ -571,22 +574,36 @@ What does not change:
 
 ### 2. Time, spending and limits
 
-- **Measured in the reading test.** The test's records give, per Opus and
-  Sonnet call, the latency, the input and output tokens, and whether a
-  language fix followed. They are filled in here from the test-B session's
-  records before the code is written; the time limit and the allowance are
-  set from them.
+- **Measured in the reading test** (NV-3WDSAY, from the test-B session's
+  records; each time runs from the reservation to the next record).
+
+  | Writer and call | Time | Input → output tokens |
+  | --- | --- | --- |
+  | Opus medium with pages, call 1 | 107 s | 106,820 → 12,230 |
+  | Opus medium with pages, call 2 (language fix) | 48 s | 113,246 → 6,771 |
+  | Sonnet high with pages, call 1 (32k allowance) | 154 s | 106,820 → 23,901 |
+  | Sonnet high with pages, call 2 | 38 s | 113,065 → 7,166 |
+
+  Every report needed the language fix. Opus writes about 115 tokens a
+  second and Sonnet about 155, so even a whole allowance (Opus 24k, Sonnet
+  32k) takes about 210 seconds. Reading 16 pages one at a time took about 88
+  seconds; one earlier try hit a 429 about 68 seconds in. Firecrawl allows two
+  requests at a time on this account.
 - **Time.**
-  - A Claude report call gets `CLAUDE_REPORT_CALL_MS`. Planned at 300
-    seconds, and confirmed against the test's slowest call with room to
-    spare.
-  - The report step holds two calls, so 615 seconds.
-  - A longer run budget (690 seconds) applies only when the run's first
+  - A Claude report call gets `CLAUDE_REPORT_CALL_MS` = 240 seconds. That
+    is more than a whole allowance takes (about 210 seconds) and more than
+    twice the test's slowest Opus call.
+  - The report step holds two calls, so 495 seconds.
+  - A longer run budget (570 seconds) applies only when the run's first
     audit step is a Claude report step or a pages step. Nothing starts after
     it.
-  - The emails and notices after the loop stay well inside the cron's 15
-    minutes. Email-only retries and OpenAI-writer orders keep today's short
-    steps.
+  - The email work after the step can take about 165 seconds: the ready
+    email, the payment email, two notices and the failure email, each up to
+    about 36 seconds (`mail.ts`). The run then ends by about 735 seconds,
+    inside the cron's 900-second wall time.
+  - The design can carry a call limit up to about 320 seconds. Past that,
+    the language fix would need its own run.
+  - Email-only retries and OpenAI-writer orders keep today's short steps.
 - **Reservation from the real token count.**
   - Before each call, Anthropic's free token-count endpoint counts the
     request.
@@ -594,11 +611,13 @@ What does not change:
     output allowance at the output price. It reserves through
     `reserveProviderSpend` (provider `anthropic`, stage `report`) and the
     request's audit budget, before anything is sent.
-  - If the count fails, nothing is sent. The attempt is given back and a
-    later run tries again, as when the ledger is unavailable.
+  - The count follows the same error rules as the call (below).
 - **Input ceiling.** A request counted above 150,000 input tokens is rebuilt
-  first with half its pages, then with none, and counted again. The test's
-  request was about 107,000 tokens.
+  first with half its pages, then with none, and counted again. If it is
+  still over 150,000, nothing is sent and the report fails at once as
+  `REPORT_INTEGRITY_FAILURE`, with the refund path. The request would always
+  be too long, and sending it could pass the hold. The test's request was
+  about 107,000 tokens with pages and 58,600 without.
 - **Worst case fits the hold.**
   - Before the report, the order can hold USD 1.545 in reservations (AC-15,
     `spend-worst-case.test.ts`).
@@ -611,23 +630,30 @@ What does not change:
     counts the language fix as one.
 - **Settled from real usage.** Opus 5.5 is priced at USD 4/20 per million,
   Sonnet 5.5 at 2/10. Cache reads and writes are priced at their rates.
-- **Rejected before streaming costs nothing.**
-  - An Anthropic 429 or 529 received before the stream starts: the
-    reservation is released, the attempt is given back, and a later run
-    tries again.
-  - Any other 4xx (except 408) before the stream: the reservation is
-    released and the attempt counts.
+- **Errors from Anthropic** (the token count and the call). The check is
+  Claude's own, because `releaseIfRejectedUnrun` knows only OpenAI's error
+  class.
+  - **Retryable:** a 429, a 529, another 5xx, or a network error received
+    before the stream starts. The reservation is released and the call
+    throws `SpendCapError("unavailable")`. That is the runner's branch that
+    gives the attempt back (`runner.ts`), so a later run tries again.
+  - **Not retryable:** any other 4xx before the stream starts, such as a bad
+    or revoked key (401, 403) or "credit balance too low" (400). The
+    reservation is released and the attempt counts, so the order fails after
+    its three attempts, with its refund, as today.
   - Anything after the stream starts keeps its reservation.
-  - This is a Claude-specific check, because `releaseIfRejectedUnrun` knows
-    only OpenAI's error class.
+  - Every Anthropic error also records a founder notice, at most one a day
+    (`anthropic_error`, with the status), so a key, credit or outage problem
+    is seen at once.
 - **Limits.** `DEFAULT_ORDER_SPEND_LIMIT_USD` goes 2 → 5 and
   `DEFAULT_DAILY_SPEND_LIMIT_USD` 5 → 50, in code and in the production
   deploy.
 - **Expected cost per order.** Checks are about USD 0.20, plus Opus for two
   calls (as in the test). About USD 1.50.
 - **Firecrawl.** It is billed in credits on the founder's plan, not in the
-  USD ledger. Each order makes at most 24 Firecrawl requests, retries
-  included, and reads once.
+  USD ledger. One read makes at most 24 Firecrawl requests, retries
+  included, and an order has at most two tries (section 3), so 48 at
+  most.
 
 ### 3. Pages read for every live two-source order
 
@@ -652,26 +678,31 @@ What does not change:
     it.
 - **Errors.**
   - A 5xx, a timeout or a 4xx on one page makes that page unread.
-  - Only 401, 402 or 403, or a 429 after its three waits, stops the reading.
+  - A 403 is one unread page too: Firecrawl answers 403 for sites it does not
+    read, such as LinkedIn.
+  - Only 401 or 402 (bad key, no credits), or a 429 after its three waits,
+    stops the reading.
   - Pages already read are always kept.
 - **Saved.** Migration 0016 adds `orders.pages_json` (nullable).
   - A marker `{status: "reading", tries}` is written before reading. A run
     that dies mid-read is counted. After two tries the order goes on without
     pages (`gave_up`).
-  - The result is one of: `read` (with its pages, any number), `partial`
-    (stopped by 401/402/403/429, keeping the pages read so far), or `no_key`
-    (no `FIRECRAWL_API_KEY`).
+  - The result is one of:
+    - `read`, with its pages (any number);
+    - `partial`, stopped by 401, 402 or 429, keeping the pages read so far;
+    - `gave_up`, after two tries that never finished;
+    - `no_key`, with no `FIRECRAWL_API_KEY` set.
   - The writer gets the saved pages in `two_source_facts.writer.pages`.
   - With none, the report is written as today's new writer writes it: the
     request is byte-identical without pages.
-  - A stopped reading records one founder notice per day, so a Firecrawl
-    problem is not silent.
+  - `partial` and `gave_up` record a founder notice, at most one a day, so a
+    Firecrawl problem is not silent.
 - **Kept only while needed.** When the report is saved, `pages_json` keeps
   only the status and the page addresses, not the text. `purgeOrder` clears
   it with the rest of the order.
 - **Run meter.** The pages step costs `RUN_COST.pages` = 30: up to 24
-  requests plus its D1 queries. The token count adds 2 to the report step's
-  cost.
+  requests plus its D1 queries. The token counts add up to 6 to the report
+  step's cost (up to three counts for each of two calls).
 
 ### 4. The delivery promise: 30 minutes
 
@@ -679,8 +710,9 @@ What does not change:
 - `promise.ts` (the order screen and the payment email);
 - `Hero.tsx`, `HowItWorks.tsx` and `PriceReceipt.tsx`;
 - the running page's help notice (`DELAY_NOTICE_MS`);
-- `TERMS.md` and the terms page, with the terms version going 1.1 → 1.2;
-- `FAQ.md`;
+- `TERMS.md` and the terms page, with `LEGAL_VERSION` going 1.1 → 1.2;
+- `FAQ.md` and `specs/020-clinic-landing-page/COPY.md`;
+- Spec 018 R-23, with an amendment note dated 2026-10-28;
 - the tests that quote it.
 
 The founder's first live orders measure the real time.
@@ -708,7 +740,10 @@ founder approves this wording before it merges:
 - **New row:** "Penyedia pembaca halaman web" | "Membaca halaman website
   bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan
   laporan" | "Alamat website bisnis Anda dan alamat halaman yang dikutip".
-- **Section 6** (data from public sources) names the pages read the same way.
+- **Section 6, "Layanan AI dan pencarian",** names the page reader the same
+  way.
+- **Section 2's "Data audit" bullet** adds the public pages read for the
+  report.
 - **Version.** Privacy goes 1.4 → 1.5. This asks every visitor for their
   cookie choice again, as each new version does.
 - **Internal map.** `docs/content/website/PRIVACY.md` names Anthropic (AI)
@@ -728,15 +763,18 @@ founder approves this wording before it merges:
   - A new **B-08**: the writer may read the pages Firecrawl read, as section
     3 describes, with its **AC-B5**.
   - The data section says which page data is kept and for how long.
-- **Decision log.** `DECISION_LOG.md` gets the 2026-10-28 entry: writer,
-  pages, USD 5 and USD 50, 30 minutes, merging with no live order open.
-  Point 5 of 2026-10-26 (the USD 2 hold) is superseded. `NOW.md` is updated.
+- **Decision log.** `DECISION_LOG.md` has the 2026-10-28 entry (added with
+  this revision): writer, pages, USD 5 and USD 50, 30 minutes, merging with
+  no live order open. Point 5 of 2026-10-26 (the USD 2 hold) is superseded.
+  `NOW.md` is updated with the code.
 - **Tests.**
   - The writer request: system, user, schema, effort, allowance, metadata.
   - Every way an answer ends, and the abort of a stalled stream.
   - The reservation, the input ceiling, and a failed count giving the
     attempt back.
-  - Release and attempt rules for 429, 529 and other 4xx.
+  - Release and attempt rules for 429, 529, 5xx and other 4xx; the founder
+    notice; the over-ceiling request failing without a call; a failed
+    language fix keeping the first draft.
   - The routing: Claude only with writer facts, and fail closed on a bad
     setting.
   - The pages step: once, no report attempt, the marker and its two tries,
@@ -789,6 +827,22 @@ Its should-fixes are in too:
 - the run meter;
 - Sonnet needing a deploy;
 - CPU time.
+
+Round 2 (ALMOST,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6458966304)).
+Fixed in this revision:
+- a request still over the ceiling fails without a call;
+- only 429, 529, 5xx and network errors give the attempt back, with a
+  founder notice for every Anthropic error;
+- the call limit set from the test's timings (240 seconds), with the
+  wall-time sum;
+- 403 is one unread page;
+- a failed language fix keeps the first draft;
+- the request counts;
+- `gave_up` and its notice;
+- the 15-minute wording in Specs 018 and 020;
+- the privacy section names;
+- the decision recorded now.
 
 ## Cross-cutting rules
 
