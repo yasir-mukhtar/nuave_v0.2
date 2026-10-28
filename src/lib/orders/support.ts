@@ -616,8 +616,6 @@ type TransactionLine = {
   amount: string | null;
 };
 
-/** R-24: payment kind and paid time (`show` already prints the kind), and every
- * attempt with its transactions: status, refund and needs-refund states. */
 /** One line about the order's pages: the reading's status and counts. */
 export function pagesSummary(json: string): string {
   const saved = parseSavedPages(json);
@@ -636,6 +634,8 @@ export function pagesSummary(json: string): string {
   }
 }
 
+/** R-24: payment kind and paid time (`show` already prints the kind), and every
+ * attempt with its transactions: status, refund and needs-refund states. */
 async function showPayments(deps: SupportDeps, order: OrderRow) {
   const line = (label: string, value: unknown) =>
     deps.out(`${label}: ${value ?? "-"}`);
