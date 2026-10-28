@@ -1,6 +1,7 @@
 # Spec 023: Report writing quality (depth and natural Indonesian)
 
-> Status: **In review** (draft for the founder's approval; no code changed)
+> Status: **Approved** by the founder on 2026-10-28 with the recommended
+> answers to Q-1 to Q-7 (see "Founder answers" below)
 > Owner: founder; plan written by Claude Code on `ccr-88631259-0lhn0m`
 > Updated: 2026-10-28, revision 5. Independent review: round 1 FAIL,
 > rounds 2 and 3 narrow FAIL, round 4 PASS+NOTES (notes applied)
@@ -514,6 +515,20 @@ Two pull requests, so the free and safe part can merge first.
   finding's own questions or for a named competitor.
 - **Q-7 (founder)** An optional second Indonesian reader for the blind
   scoring.
+
+## Founder answers (2026-10-28)
+
+- **Q-1:** the competitor label is "Menurut jawaban AI:".
+- **Q-2:** the founder places one free test-pass order for a different
+  clinic before the live test.
+- **Q-3:** up to 16 Firecrawl requests per new test order.
+- **Q-4:** USD 10 for this round, counted in a fresh ledger.
+- **Q-5:** decided after the test.
+- **Q-6:** R-03 approved, with the behaviour in AC-03.
+- **Q-7:** a second Indonesian reader stays optional.
+
+Because this session pushes to one branch, PR 1 (the harness) rides on the
+spec's own pull request; PR 2 starts from `main` after it merges.
 
 ## Verification record
 

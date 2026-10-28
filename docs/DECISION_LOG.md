@@ -6,6 +6,28 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-28 — Spec 023 approved: report writing quality
+
+After four rounds of independent review (Opus, extra-high effort; the last
+PASS), Yasir approved [Spec 023](../specs/023-report-writing-quality/SPEC.md)
+with the recommended answers:
+
+1. Report prose uses the brand name the way an editor would, not "klinik
+   Anda" in every sentence.
+2. No hard sentence limit for the report writer: 3 to 30 words, about 14 on
+   average, with an occasional very short sentence.
+3. A writing guide in Indonesian sits next to the playbook; the writer reads
+   it with every report. The founder reads it before any paid test run.
+4. Em dashes are banned in report prose.
+5. The fact checker accepts a count that is true for a finding's own,
+   named group of questions, and checks competitor claims against the
+   answers; nothing false today becomes accepted.
+6. The competitor label becomes "Menurut jawaban AI:".
+7. The blind test (six Opus reports) runs on USD 10 for this round, in a
+   fresh ledger, with up to 16 Firecrawl requests per new order. The founder
+   places one free test-pass order for a different clinic first.
+8. A human editor's version of the Sozo report comes later (Phase 2).
+
 ## 2026-10-28 — Step 3 at medium effort, 20 branches, and an easy model switch
 
 After PR #189 merged, Yasir decided:
