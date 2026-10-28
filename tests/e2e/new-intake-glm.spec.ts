@@ -439,7 +439,7 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
     /\d+ dari \d+/,
   );
   await expect(competitor.locator("[data-competitor-reason]")).toContainText(
-    "Disebut AI karena:",
+    "Menurut jawaban AI:",
   );
   await expect(fresh.locator("[data-takeaways] li")).toHaveCount(2);
   await expect(fresh.locator("[data-plan] li")).toHaveCount(3);

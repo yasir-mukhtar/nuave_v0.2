@@ -419,7 +419,8 @@ function CompetitorLine({
   row: CompetitorRow;
   ownLabel: string;
   showLogos: boolean;
-  /** Spec 021 Part B: "Disebut AI karena: …", from the writer. */
+  /** Spec 021 Part B: what the answers say about a business, from the writer
+   * (labelled "Menurut jawaban AI:" since Spec 023 R-07). */
   reason?: string;
 }) {
   const total = row.chatgpt + row.google;
@@ -474,7 +475,7 @@ function CompetitorLine({
       </p>
       {reason ? (
         <p className={styles.why} data-competitor-reason>
-          <b>Disebut AI karena:</b> {reason}
+          <b>Menurut jawaban AI:</b> {reason}
         </p>
       ) : null}
     </div>

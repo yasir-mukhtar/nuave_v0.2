@@ -429,6 +429,26 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
     expect(report.conclusion).toContain("tidak disebut di 5 ringkasan lainnya");
   });
 
+  it("Spec 023 AC-02: a long sentence is neither sent back nor cut", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const long =
+      "Di ChatGPT, jawaban untuk pertanyaan umum tentang kota dan untuk pertanyaan yang lebih spesifik tentang layanan serta harga masih mengarah ke tempat lain yang menulis halamannya dengan lebih lengkap dan lebih jelas.";
+    expect(long.split(/\s+/).length).toBeGreaterThan(30);
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return { ...result, content: { ...result.content, conclusion: long } };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(0);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.conclusion).toBe(long);
+  });
+
   it("B-5: a plain negation the counts contradict is revised once, then repaired by code, and the order is delivered", async () => {
     const id = await makeOrder(d1.db, { now: clock });
     await approveTwoSource(d1.db, id, { now: clock });

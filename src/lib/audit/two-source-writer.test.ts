@@ -191,3 +191,49 @@ describe("the reading test: pages read (founder decision 2026-10-27)", () => {
     expect(plain.user).not.toContain("pages_read");
   });
 });
+
+describe("Spec 023: the writer's rules (AC-01)", () => {
+  const named = (): TwoSourceWriterInput => {
+    const base = input();
+    return {
+      ...base,
+      two_source_facts: {
+        ...base.two_source_facts,
+        names: ["Klinik Fiksi", "Fiksi"],
+      },
+    };
+  };
+
+  it("drops the rules that forced a stiff style", () => {
+    const { developer } = twoSourceWriterMessages(named());
+    expect(developer).not.toContain("25 words");
+    expect(developer).not.toContain("Pemenang");
+    expect(developer).not.toMatch(/write "Di ChatGPT"/);
+    expect(developer).not.toContain("with the per-source result");
+    expect(developer).not.toMatch(/Copy every "X dari Y"/);
+    expect(developer).not.toContain("why it suggested it");
+    // The conclusion carries no counts; the verdict at most one number.
+    expect(developer).toContain("No counts here");
+    expect(developer).toContain("add at most one number");
+  });
+
+  it("names the business by its confirmed name like an editor, and keeps the count rules", () => {
+    const { developer } = twoSourceWriterMessages(named());
+    expect(developer).toContain(
+      'Name the business by its exact confirmed name, "Klinik Fiksi" (or a listed alias: "Fiksi")',
+    );
+    expect(developer).toContain('"klinik ini"');
+    expect(developer).not.toContain('Call the audited business "klinik Anda"');
+    // The core of the negative rule stays.
+    expect(developer).toContain(
+      "never write that it did not name, mention or show the business",
+    );
+    expect(developer).toContain(
+      "unless the sentence names the group of questions",
+    );
+    expect(developer).toContain(
+      "a count may cover the finding's own cited questions",
+    );
+    expect(developer).toContain("questions[].businesses");
+  });
+});

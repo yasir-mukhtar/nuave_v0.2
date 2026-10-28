@@ -301,7 +301,7 @@ export type TwoSourceWriterFacts = {
     /** The other businesses each source's answer names. */
     businesses: { chatgpt: string[]; google: string[] };
   }[];
-  /** Every other business the answers name: a "disebut karena" reason may
+  /** Every other business the answers name: a "Menurut jawaban AI" line may
    * name only these. */
   businesses: string[];
   /** The reading test (founder decision 2026-10-27): pages Nuave read, the

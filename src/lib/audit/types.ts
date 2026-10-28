@@ -499,7 +499,7 @@ export const twoSourceWritingSchema = z.object({
   version: z.literal(TWO_SOURCE_WRITING_VERSION),
   /** One or two sentences for the header. */
   verdict: z.string(),
-  /** "Disebut AI karena: …", per business named in the answers. */
+  /** "Menurut jawaban AI: …" (Spec 023 R-07), per business named in the answers. */
   competitor_reasons: z
     .array(z.object({ name: z.string(), reason: z.string() }))
     .max(20),

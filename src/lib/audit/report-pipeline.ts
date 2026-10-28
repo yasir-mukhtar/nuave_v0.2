@@ -407,8 +407,14 @@ function normalizeAndRepairReport(
 }
 
 function languageErrorsFor(input: ReportPipelineInput, content: ReportContent) {
+  // Spec 023 R-01: the two-source writer has no hard sentence limit; a long
+  // sentence is neither sent back nor cut. The legacy writer keeps its rule.
   return input.language === "id"
-    ? validateIndonesianReportLanguage(content).errors
+    ? validateIndonesianReportLanguage(
+        content,
+        {},
+        !hasWriterFacts(input.two_source_facts),
+      ).errors
     : validateReportLanguage(content);
 }
 
