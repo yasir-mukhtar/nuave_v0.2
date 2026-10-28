@@ -1,17 +1,22 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
+  confirmBrand,
   confirmSummary,
-  downloadEvidenceJson,
+  downloadPdfButtons,
   editQuestion,
   expectAuditDelivered,
   expectAuditRunning,
   expectBrandConfirm,
+  expectCategoryScreen,
+  expectEmptyEntry,
   expectOfferingsScreen,
   expectQuestionReview,
   expectTenQuestions,
   fillEntry,
+  FICTIONAL_BUSINESS,
   INTAKE_SESSION_KEY,
   intakeSession,
+  openStartSheet,
   ORDER_EMAIL,
   orderScreen,
   pressLanjut,
@@ -30,7 +35,12 @@ import {
   toSummary,
   trackApiCalls as track,
   unavailableReport,
+  useTestPass,
+  websiteInput,
 } from "./journey";
+
+/** The ChatGPT answers of a two-source report (Spec 018). */
+const CHATGPT_BODIES = '[data-source-answer="chatgpt"] [data-answer-body]';
 
 // Spec 016 S3a: the order flow in synthetic mode against the local D1 database,
 // with the real routes, the real runner (started through the development
@@ -43,6 +53,7 @@ const allowed = new Set([
   "/api/audit/glm-questions",
   "/api/orders",
   "/api/orders/status",
+  "/api/payments/start",
   "/api/orders/approve",
   "/api/dev/run-cron",
   "/api/report",
@@ -90,13 +101,25 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   expect(calls["POST /api/orders"]).toBe(1);
   expect(calls["POST /api/audit/extract"]).toBe(1);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
-  const wording =
-    "Pilihan kedai kopi apa yang cocok untuk pekerja di Indonesia?";
+  // Spec 018 R-11a: an edit keeps the rules (at least 7 questions about
+  // choosing a place, at most 2 advice), so the edited question stays one.
+  const wording = "Rekomendasi kedai kopi yang cocok untuk pekerja kantoran?";
   await editQuestion(page, 1, wording);
   // AC-19: progress is kept in this browser, so a reload loses nothing.
   await page.reload();
   await expect(page.locator('[data-question-slot="1"]')).toContainText(wording);
 
+  // J27b: "Jalankan audit" only asks; "Kembali periksa" approves nothing.
+  const sheet = await openStartSheet(page);
+  await expect(sheet).toContainText(
+    "Setelah dimulai, informasi bisnis dan pertanyaan tidak dapat diubah.",
+  );
+  await sheet
+    .getByRole("button", { name: "Kembali periksa", exact: true })
+    .click();
+  await expect(sheet).toHaveCount(0);
+  await expectTenQuestions(page);
+  expect(calls["POST /api/orders/approve"]).toBeUndefined();
   await startAudit(page);
   await expectAuditRunning(page);
   // R-31: the intake progress is gone once the audit starts; only the order id
@@ -128,19 +151,30 @@ test("URL to approval, close the tab, the server finishes the audit and emails t
   await reopened.goto("/audit");
   await expectAuditRunning(reopened);
 
-  // The cron runs one audit step per order per run: ten questions, then the
-  // report, then the email.
+  // The cron runs one audit step per order per run: ten questions (Spec 018:
+  // plus the synthetic retries of question 3's Google check and question 7's
+  // ChatGPT check), then the report, then the email. Spec 018 R-15 lets two
+  // orders step in one run, so an order left running by an earlier test in
+  // the same local database may also step; this order is followed by its id.
+  const orderId = (JSON.parse(stored.order!) as { orderId: string }).orderId;
+  const orderStatus = async () =>
+    (await (
+      await reopened.request.post("/api/orders/status", {
+        data: { order_id: orderId },
+      })
+    ).json()) as { state: string; completed: number; total: number };
   const outcomes: string[] = [];
-  for (let run = 0; run < 14; run += 1) {
+  for (let run = 0; run < 18; run += 1) {
     const result = await runRunnerOnce(reopened);
     expect(result.ran).toBe(true);
     outcomes.push(...(result.outcomes ?? []));
-    if (outcomes.includes("delivered") || outcomes.includes("report_saved"))
-      break;
+    if ((await orderStatus()).state === "delivered") break;
   }
+  const final = await orderStatus();
+  expect(final).toMatchObject({ state: "delivered", completed: 10, total: 10 });
   expect(
-    outcomes.filter((outcome) => outcome === "question_done"),
-  ).toHaveLength(10);
+    outcomes.filter((outcome) => outcome === "question_done").length,
+  ).toBeGreaterThanOrEqual(10);
   expect(outcomes).toContain("report_saved");
 
   await reopened.reload();
@@ -177,11 +211,10 @@ test("a reload at an intake screen continues at the same screen with the same an
   await fillEntry(page);
   await pressPeriksa(page);
   await expectBrandConfirm(page);
-  await page.getByRole("button", { name: "Lanjut", exact: true }).click();
-  await submitOrder(page);
-  await expect(page.locator('[data-intake-screen="focus"]')).toBeVisible();
-  await pressLanjut(page); // category
-  await pressLanjut(page); // offerings
+  await confirmBrand(page); // pay → paid reading → cover → focus
+  await pressLanjut(page);
+  await expectCategoryScreen(page);
+  await pressLanjut(page);
   await expectOfferingsScreen(page);
   const before = { ...calls };
   const sessionBefore = await intakeSession(page);
@@ -197,11 +230,34 @@ test("a reload at an intake screen continues at the same screen with the same an
   expect(calls["POST /api/audit/glm-questions"]).toBeUndefined();
   expect(calls["POST /api/orders"]).toBe(1);
   expect(await allBrowserStorage(page)).not.toContain(ORDER_EMAIL);
+  // "Simpan & keluar" keeps the progress and leaves for the landing page,
+  // which offers it back; the journey resumes at the same screen.
+  await page
+    .getByRole("button", { name: "Simpan & keluar", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/$/);
+  const resume = page.getByRole("link", {
+    name: `Lanjutkan audit ${FICTIONAL_BUSINESS.name}`,
+  });
+  await expect(resume).toBeVisible();
+  await resume.click();
+  await expect(page).toHaveURL(/\/audit$/);
+  await expectOfferingsScreen(page);
+  expect((await intakeSession(page)).selection).toEqual(
+    sessionBefore.selection,
+  );
+  expect(calls["POST /api/audit/extract"]).toBe(
+    before["POST /api/audit/extract"],
+  );
+  expect(calls["POST /api/orders"]).toBe(1);
 });
 
 test("an ended order sends the customer back to the order screen; a new order continues with the answers and no new paid call", async ({
   page,
 }) => {
+  // A test-pass order: an ended PAID order never becomes a new one (spec 017
+  // R-19; see payment-screens.spec.ts).
+  await useTestPass(page);
   const calls = track(page);
   await toSummary(page);
   const sessionBefore = await intakeSession(page);
@@ -226,6 +282,8 @@ test("an ended order sends the customer back to the order screen; a new order co
   ).toBeVisible();
   // The email is asked again; nothing paid has run.
   await page.unroute("**/api/orders/status");
+  // The saved progress continues on the new order: straight back to the
+  // review, with no new reading.
   await submitOrder(page);
   await expect(page.locator('[data-smart-summary="ready"]')).toBeVisible();
   const sessionAfter = await intakeSession(page);
@@ -245,16 +303,15 @@ test("intake progress saved more than 7 days ago is removed", async ({
 }) => {
   await fillEntry(page);
   const stale = await intakeSession(page);
-  expect(stale.entry.name).toBe("Kedai Fiksi");
+  expect(stale.entry.source).toBe(FICTIONAL_BUSINESS.url);
   await page.evaluate((key) => {
     const saved = JSON.parse(localStorage.getItem(key)!);
     saved.savedAt = new Date(Date.now() - 8 * 24 * 3600_000).toISOString();
     localStorage.setItem(key, JSON.stringify(saved));
   }, INTAKE_SESSION_KEY);
   await page.reload();
-  await expect(
-    page.getByRole("textbox", { name: "Nama bisnis", exact: true }),
-  ).toHaveValue("");
+  await expectEmptyEntry(page);
+  await expect(websiteInput(page)).toHaveValue("");
   expect(
     await page.evaluate((key) => localStorage.getItem(key), INTAKE_SESSION_KEY),
   ).toBeNull();
@@ -276,6 +333,14 @@ test("question-writing failure is visible and never silently retried", async ({
     page.getByRole("alert").filter({ hasText: "synthetic timeout" }),
   ).toHaveCount(0);
   await expect(page.locator("[data-question-slot]")).toHaveCount(0);
+  // A retry is a new request, so it is only ever the owner's choice.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Pertanyaan belum diterima" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Coba siapkan pertanyaan", exact: true }),
+  ).toBeVisible();
+  await page.waitForTimeout(1_000);
   expect(calls["POST /api/audit/glm-questions"]).toBe(1);
   expect(calls["POST /api/orders/approve"]).toBeUndefined();
 });
@@ -306,7 +371,10 @@ async function freshBrowserPage(
     const url = new URL(route.request().url());
     if (
       url.origin !== new URL(baseURL!).origin ||
-      (url.pathname.startsWith("/api/") && url.pathname !== "/api/report")
+      (url.pathname.startsWith("/api/") &&
+        // The report's data, and its PDF (Spec 021 Part P).
+        url.pathname !== "/api/report" &&
+        url.pathname !== "/api/report/pdf")
     )
       return route.abort();
     return route.continue();
@@ -314,7 +382,7 @@ async function freshBrowserPage(
   return { context, page };
 }
 
-test("AC-14: the emailed link opens the same report in a fresh browser; private headers, no provider call, PDF and JSON work", async ({
+test("AC-14: the emailed link opens the same report in a fresh browser; private headers, no provider call, PDF works and the data holds every answer", async ({
   page,
   browser,
   baseURL,
@@ -345,8 +413,40 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
 
   await expect(savedReport(fresh)).toBeVisible({ timeout: 30_000 });
   const report = reportLocator(fresh);
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  // Spec 018: nine ChatGPT answers (question 7's check failed in the
+  // synthetic run) and both sources named in the header.
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
+  await expect(report.locator("[data-failed-slot]")).toHaveCount(1);
+  // Spec 021 Part C: the fictional competitor's saved website and rating;
+  // a synthetic report requests no logo (C-03).
+  const competitor = fresh.locator('[data-competitor="other"]', {
+    hasText: "Klinik Sintesa Contoh",
+  });
+  await expect(competitor.locator("[data-competitor-site]")).toHaveAttribute(
+    "href",
+    "https://klinik-sintesa.test/",
+  );
+  await expect(competitor).toContainText("Rating 4,6 · 131 ulasan");
+  await expect(competitor).toContainText("kartu ChatGPT 9×");
+  await expect(fresh.locator("[data-competitor-logo]")).toHaveCount(0);
+  // Spec 021 Part B: the new writer's block, from the labelled synthetic
+  // writer: verdict, a confirmed headline number, the reason on the
+  // competitor's row, the takeaways and the three-step plan.
+  await expect(fresh.locator("[data-verdict]")).toContainText(
+    "Uji alur sintetis",
+  );
+  await expect(fresh.locator("[data-finding-stat]").first()).toContainText(
+    /\d+ dari \d+/,
+  );
+  await expect(competitor.locator("[data-competitor-reason]")).toContainText(
+    "Disebut AI karena:",
+  );
+  await expect(fresh.locator("[data-takeaways] li")).toHaveCount(2);
+  await expect(fresh.locator("[data-plan] li")).toHaveCount(3);
   await expect(fresh.locator("header#stage-5")).toContainText("Kedai Fiksi");
+  await expect(fresh.locator("[data-report-checked]")).toContainText(
+    "ChatGPT dan Google AI Overview",
+  );
   // Nothing but the report-data call; no cookie and nothing saved in the browser.
   // (`next dev` runs an effect twice, so the count is not fixed here.)
   expect(Object.keys(calls)).toEqual(["POST /api/report"]);
@@ -368,15 +468,33 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
   expect(data.headers()["x-robots-tag"]).toContain("noindex");
   expect(data.headers()["referrer-policy"]).toBe("no-referrer");
 
-  // PDF is the browser's print, and JSON is the evidence download.
-  await fresh
-    .getByRole("button", { name: "Download PDF", exact: true })
-    .click();
-  expect(
-    await fresh.evaluate(
+  // Spec 021 Part P: the report has two Unduh PDF buttons (top bar and at
+  // the end). Each asks the PDF route with the secret in the body; local
+  // development has no Browser Run, so the route answers pdf_unavailable and
+  // the page prints, once per press (P-05).
+  const printCalls = () =>
+    fresh.evaluate(
       () => (window as unknown as { __printCalls: number }).__printCalls,
-    ),
-  ).toBe(1);
+    );
+  await expect(downloadPdfButtons(fresh)).toHaveCount(2);
+  const pdfAnswer = fresh.waitForResponse(
+    (answer) => new URL(answer.url()).pathname === "/api/report/pdf",
+  );
+  await downloadPdfButtons(fresh).first().click();
+  const pdf = await pdfAnswer;
+  expect(pdf.status()).toBe(501);
+  expect(pdf.request().url()).not.toContain(link.secret);
+  expect(pdf.request().postDataJSON()).toEqual({ secret: link.secret });
+  const unavailable = await fresh.request.post("/api/report/pdf", {
+    data: { secret: link.secret },
+  });
+  expect(unavailable.status()).toBe(501);
+  expect(await unavailable.json()).toMatchObject({ code: "pdf_unavailable" });
+  expect(unavailable.headers()["cache-control"]).toBe("no-store");
+  await expect.poll(printCalls).toBe(1);
+  await downloadPdfButtons(fresh).last().click();
+  await expect.poll(printCalls).toBe(2);
+  await expect(fresh.locator("[data-pdf-failed]")).toHaveCount(0);
   await fresh.emulateMedia({ media: "print" });
   for (const answer of await report.locator("[data-answer-body]").all())
     await expect(answer).toBeVisible();
@@ -386,19 +504,20 @@ test("AC-14: the emailed link opens the same report in a fresh browser; private 
     printBackground: true,
   });
   await fresh.emulateMedia({ media: "screen" });
-  const { json: evidence } = await downloadEvidenceJson(fresh);
-  expect(evidence.export_version).toBe("nuave-evidence-v5");
+  // Spec 021 A-08: a two-source report offers no JSON download; support
+  // exports it (`npm run support -- export`). The report's data, which the
+  // page renders, holds every answer and no email or secret.
+  await expect(
+    fresh.getByRole("button", { name: "Unduh bukti JSON" }),
+  ).toHaveCount(0);
+  const evidence = await data.json();
   expect(evidence.context).toMatchObject({
     version: "nuave-direct-ten-context-v2",
     identity: { name: "Kedai Fiksi" },
   });
-  expect(evidence).not.toHaveProperty("brief");
   expect(evidence.prompts).toHaveLength(10);
   expect(evidence.observations).toHaveLength(10);
-  expect(evidence.report).toBeTruthy();
-  expect(evidence.report).not.toHaveProperty("operational_telemetry");
-  expect(evidence.observations[0]).not.toHaveProperty("telemetry");
-  // The email and the secret are not in the customer's export.
+  expect(evidence.report.two_source).toBeTruthy();
   expect(JSON.stringify(evidence)).not.toContain(ORDER_EMAIL);
   expect(JSON.stringify(evidence)).not.toContain(link.secret);
   await context.close();
@@ -497,6 +616,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       provenance: unknown;
       key_findings: Array<{ evidence_prompt_ids: string[] }>;
       priorities: Array<{ evidence_prompt_ids: string[] }>;
+      two_source: { checked_from: string };
     };
   };
   let retained: Saved | null = null;
@@ -517,6 +637,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
             "panjang".repeat(28) +
             " |\r\n\r\n- satu\r\n  - anak pertama\r\n  - anak kedua\r\n- [x] penanda selesai\r\n- [ ] penanda belum selesai\r\n\r\n```text\r\nhttps://source.example/kode\r\n```\r\n\r\n[Label sumber](https://source.example/)\r\n\r\n![Gambar](https://source.example/tracker.png)\r\n\r\n<script>window.__unsafeReport = true</script>\r\n\r\n"
           : "") +
+        `Rujukan https://source.example/${"sangatpanjang".repeat(12)}\r\n\r\n` +
         `Namun, batas akhir jawaban ${i + 1} harus dibaca. AKHIR-JAWABAN-${i + 1}.`;
       o.sources = [
         { title: "Sumber fiktif tersimpan", url: "https://source.example/" },
@@ -543,14 +664,46 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     }, state);
     await expect(report).toBeVisible();
   }
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  // Spec 021 AC-A1: on a 390×844 phone the verdict and the first card's ten
+  // dots show without scrolling.
+  const viewport = fresh.viewportSize();
+  await fresh.setViewportSize({ width: 390, height: 844 });
+  await fresh.evaluate(() => window.scrollTo(0, 0));
+  await expect(fresh.locator("[data-verdict]")).toBeInViewport();
+  const firstDots = fresh.locator(
+    '[data-source-card="chatgpt"] [data-mention]',
+  );
+  await expect(firstDots).toHaveCount(10);
+  await expect(firstDots.last()).toBeInViewport();
+  await fresh.screenshot({
+    path: info.outputPath("report-first-screen-390.png"),
+  });
+  if (viewport) await fresh.setViewportSize(viewport);
+  // Spec 018: each question shows its ChatGPT answer and Google AI Overview.
+  // The synthetic run's question 7 ChatGPT check failed every attempt, so its
+  // slot says "Tidak dapat diuji" with "Minta bantuan" instead of an answer.
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   for (let i = 1; i <= 10; i++) {
     expect(await fresh.locator(`#report-question-${i}`).textContent()).toBe(
       raw[i - 1]!.question,
     );
-    await expect(
-      report.locator(`[data-report-answer="${i}"] [data-answer-body]`),
-    ).toContainText(`AKHIR-JAWABAN-${i}.`);
+    const chatgpt = report.locator(
+      `[data-report-answer="${i}"] [data-source-answer="chatgpt"]`,
+    );
+    if (i === 7) {
+      await expect(chatgpt.locator("[data-failed-slot]")).toContainText(
+        "Tidak dapat diuji",
+      );
+      // The print appendix holds every answer; on screen it is hidden.
+      await expect(chatgpt.locator("a[data-help-link]")).toHaveAttribute(
+        "href",
+        /^mailto:support@nuave\.ai\?subject=/,
+      );
+      continue;
+    }
+    await expect(chatgpt.locator("[data-answer-body]")).toContainText(
+      `AKHIR-JAWABAN-${i}.`,
+    );
   }
   await expect(
     report.locator(
@@ -562,26 +715,182 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       () => (window as unknown as { __unsafeReport?: boolean }).__unsafeReport,
     ),
   ).toBeUndefined();
-  const source = report
-    .getByRole("link", { name: /Sumber fiktif tersimpan/ })
-    .first();
+  // Spec 021 Part D: a row opens its answers in the side panel.
+  const urlBeforePanel = fresh.url();
+  const firstRow = fresh.locator('[data-answer-row="1"]');
+  await firstRow.click();
+  const panel = fresh.getByRole("dialog", { name: "Pertanyaan 1 dari 10" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("tab", { name: "ChatGPT" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(panel.locator("[data-answer-body]")).toContainText(
+    "AKHIR-JAWABAN-1.",
+  );
+  const source = panel.getByRole("link", { name: "source.example" }).first();
   await expect(source).toHaveAttribute("href", "https://source.example/");
+  await expect(source).toHaveAttribute("title", "Sumber fiktif tersimpan");
   await expect(source).toHaveAttribute("rel", "noopener noreferrer");
   await expect(source).toHaveAttribute("referrerpolicy", "no-referrer");
+  await panel.getByRole("tab", { name: "Google AI Overview" }).click();
+  await expect(panel.locator('[data-source-answer="google"]')).toBeVisible();
+  await panel.getByRole("tab", { name: "ChatGPT" }).click();
+  await panel.getByRole("button", { name: "Teks asli pertanyaan 1" }).click();
+  expect(await panel.locator("[data-raw-answer]").textContent()).toBe(
+    raw[0]!.answer,
+  );
+  const copyButton = panel.getByRole("button", {
+    name: "Salin pertanyaan dan jawaban 1",
+    exact: true,
+  });
+  expect(
+    await copyButton.evaluate((el) => el.getBoundingClientRect().height),
+  ).toBeGreaterThanOrEqual(44);
+  await copyButton.click();
+  const copied = await fresh.evaluate(
+    () => (window as unknown as { __copiedAnswer: string }).__copiedAnswer,
+  );
+  expect(copied).toContain(raw[0]!.question);
+  expect(copied).toContain(raw[0]!.answer);
+  await panel.getByRole("button", { name: /Berikutnya/ }).click();
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+  ).toBeVisible();
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  await expect(firstRow).toBeFocused();
+  // A "P" reference opens its question too, by pointer and by keyboard.
+  const reference = fresh.locator('#temuan [data-question-ref="2"]').first();
+  await reference.click();
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+  ).toBeVisible();
+  await fresh.keyboard.press("Escape");
+  await expect(reference).toBeFocused();
+  await fresh.keyboard.press("Enter");
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 2 dari 10" }),
+  ).toBeVisible();
+  await fresh.screenshot({ path: info.outputPath("answer-panel.png") });
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  // On a 320px phone the open panel fits the screen: nothing is cut off.
+  const desktop = fresh.viewportSize();
+  await fresh.setViewportSize({ width: 320, height: 700 });
+  await firstRow.scrollIntoViewIfNeeded();
+  await firstRow.click();
+  const narrow = fresh.getByRole("dialog", { name: "Pertanyaan 1 dari 10" });
+  await expect(narrow).toBeVisible();
+  await fresh.waitForTimeout(600);
+  const fit = await narrow.evaluate((el) => {
+    const right = (sel: string) =>
+      el.querySelector(sel)?.getBoundingClientRect().right ?? 0;
+    return {
+      width: el.getBoundingClientRect().width,
+      clipped: el.scrollWidth > el.clientWidth + 1,
+      close: right('[aria-label="Tutup"]'),
+      answer: right("[data-answer-body]"),
+      next: right("[data-panel-next]"),
+    };
+  });
+  expect(fit.width).toBeLessThanOrEqual(320);
+  expect(fit.clipped).toBe(false);
+  expect(fit.close).toBeLessThanOrEqual(320);
+  expect(fit.answer).toBeLessThanOrEqual(320);
+  expect(fit.next).toBeLessThanOrEqual(320);
+  await fresh.screenshot({ path: info.outputPath("answer-panel-320.png") });
+  // Every question, on both tabs, wraps inside the panel; each new question
+  // starts at its top.
+  const openPanel = fresh.locator("[data-answer-panel]");
+  const scroller = openPanel.locator("[data-panel-body]");
+  for (let n = 1; n <= 10; n++) {
+    for (const tab of ["ChatGPT", "Google AI Overview"]) {
+      await openPanel.getByRole("tab", { name: tab }).click();
+      const sizes = await scroller.evaluate((el) => ({
+        scroll: el.scrollWidth,
+        client: el.clientWidth,
+      }));
+      expect(sizes.scroll, `question ${n}, ${tab}`).toBeLessThanOrEqual(
+        sizes.client + 1,
+      );
+    }
+    await openPanel.getByRole("tab", { name: "ChatGPT" }).click();
+    if (n === 10) break;
+    await scroller.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    await openPanel.locator("[data-panel-next]").click();
+    await expect(
+      fresh.getByRole("dialog", { name: `Pertanyaan ${n + 1} dari 10` }),
+    ).toBeVisible();
+    await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
+  }
+  // Reopening the question last read starts at its top too (a real browser
+  // keeps the hidden panel's scroll position; jsdom cannot show this).
+  await scroller.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  expect(await scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  await fresh.locator('[data-answer-row="10"]').click();
+  await expect(
+    fresh.getByRole("dialog", { name: "Pertanyaan 10 dari 10" }),
+  ).toBeVisible();
+  await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
+  // Printing with the panel open prints the report, not the panel.
+  await fresh.emulateMedia({ media: "print" });
+  await expect(openPanel).toBeHidden();
+  await expect(
+    report.locator("[data-report-appendix] [data-answer-body]").first(),
+  ).toBeVisible();
+  await fresh.emulateMedia({ media: "screen" });
+  await fresh.keyboard.press("Escape");
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  if (desktop) await fresh.setViewportSize(desktop);
+  // Closing slides back without a snap: the left edge only moves right, and
+  // no extra offset (the sheet's 40px `translate`) jumps in first (D-03).
+  await firstRow.click();
+  await expect(panel).toBeVisible();
+  await fresh.waitForTimeout(600);
+  const closing = await fresh.evaluate(
+    () =>
+      new Promise<{ lefts: number[]; translates: string[] }>((resolve) => {
+        const el = document.querySelector("[data-answer-panel]")!;
+        const lefts = [el.getBoundingClientRect().left];
+        const translates: string[] = [];
+        const tick = () => {
+          lefts.push(el.getBoundingClientRect().left);
+          translates.push(getComputedStyle(el).translate);
+          if (lefts.length < 8) requestAnimationFrame(tick);
+          else resolve({ lefts, translates });
+        };
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+        requestAnimationFrame(tick);
+      }),
+  );
+  for (const value of closing.translates)
+    expect(["none", "0px"]).toContain(value);
+  for (let i = 1; i < closing.lefts.length; i++)
+    expect(closing.lefts[i]!).toBeGreaterThanOrEqual(
+      closing.lefts[i - 1]! - 0.5,
+    );
+  await expect(fresh.getByRole("dialog")).toHaveCount(0);
+  // Opening answers never changes the address (the link secret stays).
+  expect(fresh.url()).toBe(urlBeforePanel);
   expect(external).toEqual([]);
 
-  const contents = fresh.getByRole("navigation", { name: "Report contents" });
+  const contents = fresh.getByRole("navigation", { name: "Isi laporan" });
   async function checkContentsNavigation() {
     const requestsBefore = Object.entries(calls);
     const urlBefore = fresh.url();
     const historyLength = await fresh.evaluate(() => history.length);
     for (const activation of ["mouse", "keyboard"] as const) {
       for (const id of [
-        "summary",
-        "findings",
-        "priorities",
-        "detail",
-        "method",
+        "temuan",
+        "pesaing",
+        "rekomendasi",
+        "penutup",
+        "jawaban",
       ]) {
         const anchor = contents.locator(`a[href="#${id}"]`);
         const target = fresh.locator(`#${id}`);
@@ -598,14 +907,22 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
         await expect(
           target.getByRole("heading", { level: 2 }).first(),
         ).toBeInViewport();
+        // R-09 visible focus: the v2 report draws the section ring with
+        // `:focus-visible`, so a section reached from the keyboard shows it
+        // and one reached by a pointer click does not.
         expect(
-          await target.evaluate((el) => getComputedStyle(el).outlineStyle),
-        ).not.toBe("none");
-        expect(
-          await target.evaluate((el) =>
-            parseFloat(getComputedStyle(el).outlineWidth),
-          ),
-        ).toBeGreaterThan(0);
+          await target.evaluate((el) => el.matches(":focus-visible")),
+        ).toBe(activation === "keyboard");
+        if (activation === "keyboard") {
+          expect(
+            await target.evaluate((el) => getComputedStyle(el).outlineStyle),
+          ).not.toBe("none");
+          expect(
+            await target.evaluate((el) =>
+              parseFloat(getComputedStyle(el).outlineWidth),
+            ),
+          ).toBeGreaterThan(0);
+        }
         expect(fresh.url()).toBe(urlBefore); // the secret stays in the address
         expect(await fresh.evaluate(() => history.length)).toBe(historyLength);
         expect(Object.entries(calls)).toEqual(requestsBefore);
@@ -613,56 +930,39 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     }
   }
   await checkContentsNavigation();
-  // Spec 012 B1: final header and contents match the direct-ten body.
+  // Spec 021 A-01, AC-A3: the chips follow the page; no Ringkasan chip.
+  // The synthetic questions are saved without topic names; Part B's writer
+  // names them, so Celah Topik shows its rows and its chip (A-05).
+  await expect(fresh.locator("#topik [data-topics-missing]")).toContainText(
+    "Topik contoh sintetis",
+  );
   await expect(contents.getByRole("link")).toHaveText([
-    "Hasil singkat",
-    "Jawaban model AI",
-    "Analisis Nuave",
-    "Yang dapat dilakukan",
-    "Tentang audit ini",
+    "Temuan Utama",
+    "Peta Pesaing",
+    "Celah Topik",
+    "Rekomendasi",
+    "Penutup",
+    "Jawaban AI",
   ]);
   const hero = fresh.locator("header#stage-5");
-  await expect(hero).toContainText("AI Visibility Report");
+  await expect(hero).toContainText("Laporan Visibilitas AI");
   await expect(hero).not.toContainText("Dibuat oleh");
-  const earliest = patched!.observations.map((o) => o.observed_at).sort()[0];
-  await expect(hero.locator("[data-report-header-facts] time")).toHaveAttribute(
-    "datetime",
-    earliest!,
+  // AC-A1: the date and the source names once, in one line.
+  await expect(hero.locator("[data-report-checked]")).toHaveText(
+    /^Diperiksa \d{1,2} \S+ \d{4} · ChatGPT dan Google AI Overview$/,
   );
-  await expect(hero.locator("[data-report-header-facts]")).toContainText(
-    /Tanggal pengamatan.*UTC/,
-  );
-  await fresh
-    .getByRole("button", { name: "Teks asli pertanyaan 1", exact: true })
-    .click();
-  expect(await fresh.locator("[data-raw-answer]").textContent()).toBe(
-    raw[0]!.answer,
-  );
-  await fresh
-    .getByRole("button", {
-      name: "Salin pertanyaan dan jawaban 1",
-      exact: true,
-    })
-    .click();
-  const copied = await fresh.evaluate(
-    () => (window as unknown as { __copiedAnswer: string }).__copiedAnswer,
-  );
-  expect(copied).toContain(raw[0]!.question);
-  expect(copied).toContain(raw[0]!.answer);
-  const reference = fresh
-    .locator('#findings a[href="#report-question-2"]')
-    .first();
-  await reference.click();
-  await expect(fresh.locator("#report-question-2")).toBeFocused();
-  await reference.focus();
-  await fresh.keyboard.press("Enter");
-  await expect(fresh.locator("#report-question-2")).toBeFocused();
-  expect(
-    await fresh
-      .locator("#report-question-2")
-      .evaluate((el) => getComputedStyle(el).outlineStyle),
-  ).not.toBe("none");
-  for (const width of [1440, 390, 320]) {
+  await expect(fresh.locator("#summary [data-verdict]")).toBeVisible();
+  // AC-A4: none of the removed wording on a two-source report.
+  for (const removed of [
+    "Tidak ada data jumlah pencarian",
+    "Unduh bukti JSON",
+    "Tentang audit ini",
+    "Penanggung jawab",
+    "Selesai ketika",
+  ])
+    await expect(report).not.toContainText(removed);
+  // AC-A6: no sideways scroll from 1920 down to 320 wide.
+  for (const width of [1920, 1280, 768, 390, 320]) {
     await fresh.setViewportSize({ width, height: 900 });
     await fresh.locator("#summary").scrollIntoViewIfNeeded();
     expect(
@@ -671,7 +971,7 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
       ),
     ).toBe(true);
     await fresh.screenshot({ path: info.outputPath(`report-${width}.png`) });
-    await fresh.locator("#report-question-1").scrollIntoViewIfNeeded();
+    await fresh.locator("#jawaban").scrollIntoViewIfNeeded();
     await fresh.screenshot({ path: info.outputPath(`answer-${width}.png`) });
   }
   await fresh.setViewportSize({ width: 1440, height: 1000 });
@@ -688,26 +988,20 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
   await fresh.evaluate(() => {
     document.body.style.zoom = "";
   });
-  expect(
-    await fresh
-      .getByRole("button", {
-        name: "Salin pertanyaan dan jawaban 1",
-        exact: true,
-      })
-      .evaluate((el) => el.getBoundingClientRect().height),
-  ).toBeGreaterThanOrEqual(44);
-  // One print tree: the PDF button prints once, and every answer shows in print.
-  await fresh
-    .getByRole("button", { name: "Download PDF", exact: true })
-    .click();
-  expect(
-    await fresh.evaluate(
-      () => (window as unknown as { __printCalls: number }).__printCalls,
-    ),
-  ).toBe(1);
+  // One print tree: the PDF button prints once (no Browser Run locally), and
+  // every answer shows in print.
+  await downloadPdfButtons(fresh).first().click();
+  await expect
+    .poll(() =>
+      fresh.evaluate(
+        () => (window as unknown as { __printCalls: number }).__printCalls,
+      ),
+    )
+    .toBe(1);
   await fresh.emulateMedia({ media: "print" });
-  await expect(fresh.locator("[data-raw-answer]")).toBeHidden();
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  await expect(report.locator("[data-raw-answer]")).toHaveCount(0);
+  await expect(report.locator("[data-answers-table]")).toBeHidden();
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   for (const answer of await report.locator("[data-answer-body]").all())
     await expect(answer).toBeVisible();
   await fresh.pdf({
@@ -716,22 +1010,15 @@ test("Spec 012 on the saved report: retained Markdown answers, exact copy, refer
     printBackground: true,
   });
   await fresh.emulateMedia({ media: "screen" });
-  const { json: exported } = await downloadEvidenceJson(fresh);
-  expect(
-    exported.observations.map((o: { raw_answer: string }) => o.raw_answer),
-  ).toEqual(raw.map((o) => o.answer));
-  expect(exported.export_version).toBe("nuave-evidence-v5");
-  expect(exported.context).toEqual(patched!.context);
-  expect(exported.context).not.toHaveProperty("targetCustomer");
-  expect(exported).not.toHaveProperty("brief");
-  expect(exported.report.provenance).toEqual(patched!.report.provenance);
-  expect(exported.report).not.toHaveProperty("operational_telemetry");
-  expect(exported.observations[0]).not.toHaveProperty("telemetry");
   await fresh.reload();
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
+  await expect(report.locator(CHATGPT_BODIES)).toHaveCount(9);
   await checkContentsNavigation();
   expect(external).toEqual([]);
-  // Opening the report asked only the report-data route, every time.
-  expect(Object.keys(calls)).toEqual(["POST /api/report"]);
+  // Opening the report asked only the report-data route, every time; the
+  // PDF button asked the PDF route.
+  expect(Object.keys(calls)).toEqual([
+    "POST /api/report",
+    "POST /api/report/pdf",
+  ]);
   await context.close();
 });

@@ -3,6 +3,10 @@ import { parseSourceInput } from "./source-input";
 import { unsafeConfirmedContext } from "./sensitive-intake";
 import type { MinimizedIndonesianBrief } from "./questions-id";
 import type { BusinessBrief } from "./types";
+import {
+  INDONESIA_LOCATION_CODE,
+  resolveSearchPlace,
+} from "../discovery/places";
 
 export const DIRECT_TEN_CONTEXT_VERSION =
   "nuave-direct-ten-context-v2" as const;
@@ -18,6 +22,25 @@ const source = z
   .url()
   .max(2_000)
   .refine((url) => Boolean(parseSourceInput(url)), "Unsupported public source");
+/** Spec 018 R-01: "Kota untuk pencarian", a stored-list entry or the whole
+ * country. Optional so intakes confirmed before Spec 018 still parse. */
+const searchPlace = z
+  .discriminatedUnion("kind", [
+    z
+      .object({
+        kind: z.literal("place"),
+        code: z.number().int(),
+        display: value(160),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("indonesia"),
+        code: z.literal(INDONESIA_LOCATION_CODE),
+      })
+      .strict(),
+  ])
+  .refine((place) => resolveSearchPlace(place) !== null, "Unknown place");
 
 export const directTenContextSchema = z
   .object({
@@ -79,6 +102,7 @@ export const directTenContextSchema = z
     ),
     differentiator: meaning(value(1_000)).optional(),
     publicFact: meaning(value(500)).optional(),
+    searchPlace: meaning(searchPlace).optional(),
   })
   .strict()
   .superRefine((context, issue) => {

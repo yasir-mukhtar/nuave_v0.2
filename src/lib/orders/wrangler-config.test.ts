@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readWranglerConfig } from "./wrangler-config.test-helper";
 
@@ -37,6 +39,15 @@ describe("wrangler.jsonc environments", () => {
     expect(previewDb.database_id).toBe("5613a4a7-7a86-432a-810c-7ccef7e80a25");
   });
 
+  it("production keeps no automatic per-request log (Spec 022 R-22, AC-14)", () => {
+    const observability = (
+      config as unknown as {
+        observability?: { logs?: { invocation_logs?: boolean } };
+      }
+    ).observability;
+    expect(observability?.logs?.invocation_logs).toBe(false);
+  });
+
   it("every environment applies the same migration folder", () => {
     for (const environment of [config, ...Object.values(config.env ?? {})]) {
       expect(environment.d1_databases?.[0]?.migrations_dir).toBe("migrations");
@@ -53,8 +64,131 @@ describe("wrangler.jsonc environments", () => {
       "CHEAPERINFERENCE_API_KEY",
       "NUAVE_AUDIT_MODE",
       "NUAVE_NEW_AUDIT_ENABLED",
+      // Spec 017 R-17: payment settings are Worker secrets too.
+      "MIDTRANS_SERVER_KEY",
+      "MIDTRANS_IS_PRODUCTION",
+      "NUAVE_TEST_PASS_CODE",
+      "NUAVE_FOUNDER_ALERT_EMAIL",
+      // Spec 018 R-26.
+      "DATAFORSEO_LOGIN",
+      "DATAFORSEO_PASSWORD",
     ]) {
       expect(text).not.toContain(name);
+    }
+  });
+
+  it("every environment has the payment start rate limit, each with its own counter", () => {
+    const environments = [config, ...Object.values(config.env ?? {})];
+    const ids = environments.map(
+      (environment) =>
+        (
+          environment.ratelimits as
+            Array<{ name: string; namespace_id: string }> | undefined
+        )?.find((item) => item.name === "PAYMENT_START_CALLER_RATE_LIMITER")
+          ?.namespace_id,
+    );
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// Spec 021 Part P (P-02, P-05): Browser Run in production and PR previews,
+// never in local development, and its own tighter per-caller limit.
+describe("wrangler.jsonc and the report PDF", () => {
+  it("production and previews have the Browser Run binding; local development has none", () => {
+    expect(config.browser).toEqual({ binding: "BROWSER" });
+    expect(config.env?.preview?.browser).toEqual({ binding: "BROWSER" });
+    expect(config.env?.dev?.browser).toBeUndefined();
+    // Quick Actions through the binding need this date or later.
+    expect(config.compatibility_date! >= "2026-03-24").toBe(true);
+  });
+
+  it("every environment has the PDF rate limit, each with its own counter, 3 a minute where deployed", () => {
+    const environments = [config, ...Object.values(config.env ?? {})];
+    const limits = environments.map((environment) =>
+      environment.ratelimits?.find(
+        (item) => item.name === "REPORT_PDF_CALLER_RATE_LIMITER",
+      ),
+    );
+    expect(limits.every(Boolean)).toBe(true);
+    const ids = limits.map((item) => item!.namespace_id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(limits[0]!.simple).toEqual({ limit: 3, period: 60 });
+    expect(
+      config.env?.preview?.ratelimits?.find(
+        (item) => item.name === "REPORT_PDF_CALLER_RATE_LIMITER",
+      )?.simple,
+    ).toEqual({ limit: 3, period: 60 });
+  });
+});
+
+// Spec 017 R-17, AC-20: the deploy job writes the payment settings as Worker
+// secrets, and preview workers never get a real key.
+describe("workflows and the payment settings", () => {
+  const read = (name: string) =>
+    readFileSync(join(process.cwd(), ".github/workflows", name), "utf8");
+
+  it("the deploy job writes the payment settings as Worker secrets, with the production switch off", () => {
+    const ci = read("ci.yml");
+    for (const name of [
+      "MIDTRANS_SERVER_KEY",
+      "NUAVE_TEST_PASS_CODE",
+      "NUAVE_FOUNDER_ALERT_EMAIL",
+    ]) {
+      expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+      expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+    }
+    expect(ci).toContain('MIDTRANS_IS_PRODUCTION: "false"');
+    expect(ci).toMatch(/^\s+MIDTRANS_IS_PRODUCTION$/m);
+  });
+
+  it("the deploy job writes the DataForSEO login as Worker secrets; previews get none (Spec 018 R-26)", () => {
+    const ci = read("ci.yml");
+    const preview = read("pr-preview.yml");
+    for (const name of ["DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD"]) {
+      expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+      expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+      expect(preview).not.toContain(name);
+    }
+  });
+
+  it("the deploy job writes the Meta token as a Worker secret; previews get none (Spec 022 AC-09)", () => {
+    const ci = read("ci.yml");
+    const preview = read("pr-preview.yml");
+    const name = "META_CAPI_ACCESS_TOKEN";
+    expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+    expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+    expect(preview).not.toContain("META_CAPI");
+  });
+
+  it("the deploy job names the Claude writer, writes its key and Firecrawl's as Worker secrets, and sets USD 5 and USD 50; previews get none (Spec 021 PR 6b)", () => {
+    const ci = read("ci.yml");
+    const preview = read("pr-preview.yml");
+    for (const name of [
+      "NUAVE_ANTHROPIC_API_KEY",
+      "NUAVE_ANTHROPIC_WORKSPACE_ID",
+      "FIRECRAWL_API_KEY",
+    ]) {
+      expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+      expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+      expect(preview).not.toContain(name);
+    }
+    expect(ci).toContain("NUAVE_REPORT_WRITER: claude-opus-5-5");
+    expect(ci).toMatch(/^\s+NUAVE_REPORT_WRITER$/m);
+    expect(preview).not.toContain("NUAVE_REPORT_WRITER");
+    expect(ci).toContain('NUAVE_ORDER_SPEND_LIMIT_USD: "5"');
+    expect(ci).toContain('NUAVE_DAILY_SPEND_LIMIT_USD: "50"');
+  });
+
+  it("preview workers get no payment key, test code or alert address", () => {
+    const preview = read("pr-preview.yml");
+    for (const name of [
+      "MIDTRANS_SERVER_KEY",
+      "MIDTRANS_IS_PRODUCTION",
+      "NUAVE_TEST_PASS_CODE",
+      "NUAVE_FOUNDER_ALERT_EMAIL",
+    ]) {
+      expect(preview).not.toContain(name);
     }
   });
 });

@@ -1,0 +1,18 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-900);
+}
+
+.mark {
+  width: 24px;
+  height: auto;
+}
+
+.name {
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: 26px;
+  letter-spacing: -0.03em;
+}

@@ -19,6 +19,10 @@ const SAFE_INHERITED_ENV_KEYS = [
 const ALLOWED_SERVER_OVERRIDES = new Set([
   "NUAVE_NEW_AUDIT_ENABLED",
   "NUAVE_AUDIT_MODE",
+  // Spec 017: a fixed fake code, so the test pass can be driven offline.
+  "NUAVE_TEST_PASS_CODE",
+  // Spec 019: a fake Pixel ID for the Meta Pixel suite.
+  "NEXT_PUBLIC_META_PIXEL_ID",
 ]);
 
 /**
@@ -71,11 +75,25 @@ export function offlineE2EServerEnv(
     // Spec 016 R-25: the real mail sender is never configured offline.
     RESEND_API_KEY: "",
     NUAVE_MAIL_FROM: "",
+    // Spec 021 PR 6b: no Claude writer, Anthropic key or Firecrawl key
+    // offline; synthetic orders read no pages and call no writer.
+    NUAVE_REPORT_WRITER: "",
+    NUAVE_ANTHROPIC_API_KEY: "",
+    NUAVE_ANTHROPIC_WORKSPACE_ID: "",
+    FIRECRAWL_API_KEY: "",
+    // Spec 017 R-17: no Midtrans key, test-pass code or alert address offline;
+    // synthetic mode uses the labeled simulated payment.
+    MIDTRANS_SERVER_KEY: "",
+    MIDTRANS_IS_PRODUCTION: "",
+    NUAVE_TEST_PASS_CODE: overrides.NUAVE_TEST_PASS_CODE ?? "",
+    NUAVE_FOUNDER_ALERT_EMAIL: "",
     // Spec 010: the public audit journey stays switched off unless a suite
     // enables it; "synthetic" is the failure-safe default and the only mode
     // e2e may run — "live" requires real credentials, all blanked above.
     NUAVE_NEW_AUDIT_ENABLED: overrides.NUAVE_NEW_AUDIT_ENABLED ?? "false",
     NUAVE_AUDIT_MODE: overrides.NUAVE_AUDIT_MODE ?? "synthetic",
+    // Spec 019 R-01: no Pixel ID unless the Pixel suite sets its fake one.
+    NEXT_PUBLIC_META_PIXEL_ID: overrides.NEXT_PUBLIC_META_PIXEL_ID ?? "",
   };
 }
 

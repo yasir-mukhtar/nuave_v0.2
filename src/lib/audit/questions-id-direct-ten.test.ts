@@ -165,7 +165,7 @@ describe("buildDirectTenQuestionRequest", () => {
     expect(request).toMatchObject({
       model: "glm-5.3-flash",
       stream: false,
-      max_tokens: 4096,
+      max_tokens: 16384,
       reasoning_effort: "low",
     });
     expect(request.messages).toHaveLength(1);

@@ -593,7 +593,8 @@ describe("Spec 012 B1 final header and contents (AC-13)", () => {
       "Seluruh brand Kedai Fiksi · seluruh Indonesia",
     );
     expect(header).not.toHaveTextContent("Dibuat oleh");
-    expect(header.querySelector("img")).toBeNull();
+    // No agency logo: the only picture is the decorative kedai (J32).
+    expect(header.querySelector('img:not([aria-hidden="true"])')).toBeNull();
     const facts = header.querySelector("[data-report-header-facts]")!;
     expect(facts).toHaveTextContent(
       "Tanggal pengamatan21 September 2026, 23.05 – 22 September 2026, 10.45 UTC",
@@ -685,7 +686,7 @@ describe("Spec 012 B1 final header and contents (AC-13)", () => {
     const view = render(<ReportView {...location} onDownloadJson={() => {}} />);
     const locationHeader = view.container.querySelector("header")!;
     expect(locationHeader.querySelector("p:nth-of-type(2)")?.textContent).toBe(
-      "Lokasi: Kedai Fiksi Dago — Jl. Fiksi 1, Bandung",
+      "Lokasi: Kedai Fiksi Dago (Jl. Fiksi 1, Bandung)",
     );
     for (const invented of ["undefined", "null", "Pelanggan", "Pembanding"])
       expect(locationHeader).not.toHaveTextContent(invented);

@@ -5,6 +5,7 @@ import {
 } from "../audit/types";
 import { DIRECT_TEN_PROMPT_IDS } from "../audit/locked-question-pack";
 import type { GlmPackProvenance } from "./local-questions";
+import type { QuestionOrigin } from "../discovery/question-rules";
 import type { GenerationAttempt } from "./local-session";
 import {
   parseFrozenSmartIntake,
@@ -22,6 +23,8 @@ export type SmartQuestionPack = {
   revision: number;
   provenance: GlmPackProvenance;
   billedCostUsd: number | null;
+  /** Spec 018 R-07: the server's origin for each written question. */
+  origins?: QuestionOrigin[];
 };
 
 export type SmartStage = SmartSession["stage"];
@@ -32,6 +35,13 @@ export type SmartPreparedIdentity = {
   canonicalUrl: string;
   displayName: string | null;
   preparationMode: "synthetic-local" | "live";
+  /** The website's own short description, shown on the found card (J05). */
+  description?: string | null;
+  /** The website's icon as an image data URL, when small enough to keep. */
+  iconDataUrl?: string | null;
+  /** The free check did not finish (J04): the owner continued with a name
+   * guessed from the address, and nothing was read from the website yet. */
+  guessed?: true;
 };
 
 export type SmartSession = {
@@ -45,7 +55,9 @@ export type SmartSession = {
     | "entry"
     | "reading"
     | "brand"
+    | "steps"
     | "order"
+    | "intro-business"
     | "focus"
     | "location"
     | "product"
@@ -53,12 +65,11 @@ export type SmartSession = {
     | "offerings"
     | "target-customer"
     | "customer-needs"
-    | "decision-considerations"
     | "competitors"
     | "differentiator"
-    | "public-fact"
     | "service"
     | "market"
+    | "intro-review"
     | "summary"
     | "questions";
   entry: { name: string; source: string };
@@ -96,11 +107,31 @@ export type SmartSession = {
    * (R-31). `website` and `name` are what the order was made for: a different
    * website or brand needs a new order.
    */
-  order?: { id: string; website: string; name: string } | null;
+  order?: {
+    id: string;
+    website: string;
+    name: string;
+    /** Spec 017 R-19: set once the server said this order is paid. From then
+     * on the website and business are locked and the order is never sent as
+     * `previous_order_id`. */
+    paid?: boolean;
+    /** The order number the server showed once paid (R-01), so the page can
+     * still show it if the order later ends. */
+    number?: string;
+    /** Set when this browser starts the paid reading for this order. From
+     * then on the reading never starts by itself: a failed or interrupted
+     * reading waits for the customer's own Lanjut (Spec 013 R-04). */
+    readingStarted?: true;
+    /** Spec 018 R-07: set once the server said discovery ran twice for this
+     * order; "Kota untuk pencarian" can no longer change. */
+    searchPlaceLocked?: true;
+  } | null;
   /** An order the customer left by changing the website or the brand. It may
    * still be open; the next order tells the server to expire it, so it stops
    * holding part of the daily cap (spec 016 R-08). */
   supersededOrder?: string | null;
+  /** What that order was made for (website and business). */
+  supersededInfo?: { website: string; name: string } | null;
   /** Where to go once an order is made again (R-30: the saved progress
    * continues on the new order with no new paid call). */
   afterOrder?: SmartStage | null;
@@ -116,7 +147,9 @@ const SMART_STAGES: readonly SmartSession["stage"][] = [
   "entry",
   "reading",
   "brand",
+  "steps",
   "order",
+  "intro-business",
   "focus",
   "location",
   "product",
@@ -124,15 +157,36 @@ const SMART_STAGES: readonly SmartSession["stage"][] = [
   "offerings",
   "target-customer",
   "customer-needs",
-  "decision-considerations",
   "competitors",
   "differentiator",
-  "public-fact",
   "service",
   "market",
+  "intro-review",
   "summary",
   "questions",
 ];
+
+/**
+ * Screens the v2 journey folded into a neighbour: what customers compare now
+ * shares the needs screen (J17), and the often-wrong public fact sits inside
+ * the differentiator screen (J22). Progress saved on one of them reopens on
+ * the screen that now owns it.
+ */
+const FOLDED_STAGES: Readonly<Record<string, SmartSession["stage"]>> = {
+  "decision-considerations": "customer-needs",
+  "public-fact": "differentiator",
+};
+
+function knownStage(value: unknown): SmartSession["stage"] | null {
+  if (typeof value !== "string") return null;
+  if (SMART_STAGES.includes(value as SmartSession["stage"]))
+    return value as SmartSession["stage"];
+  return FOLDED_STAGES[value] ?? null;
+}
+
+/** The longest website description and icon a saved session keeps. */
+export const IDENTITY_DESCRIPTION_MAX = 300;
+export const IDENTITY_ICON_MAX = 60_000;
 
 export function freshSmartSession(): SmartSession {
   return {
@@ -162,7 +216,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     if (
       !isRecord(value) ||
       value.version !== 9 ||
-      !SMART_STAGES.includes(value.stage as SmartSession["stage"]) ||
+      !knownStage(value.stage) ||
       !isRecord(value.entry) ||
       typeof value.entry.name !== "string" ||
       typeof value.entry.source !== "string" ||
@@ -180,7 +234,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
           value.editBaseline.category.length > 300))
     )
       return null;
-    const stage = value.stage as SmartSession["stage"];
+    const stage = knownStage(value.stage)!;
     if (
       value.sourceExcerptStatus !== undefined &&
       !sourceExcerptStatusSchema.safeParse(value.sourceExcerptStatus).success
@@ -196,7 +250,16 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
           typeof value.identity.displayName !== "string") ||
         !["live", "synthetic-local"].includes(
           String(value.identity.preparationMode),
-        ))
+        ) ||
+        (value.identity.description != null &&
+          (typeof value.identity.description !== "string" ||
+            value.identity.description.length > IDENTITY_DESCRIPTION_MAX)) ||
+        (value.identity.iconDataUrl != null &&
+          (typeof value.identity.iconDataUrl !== "string" ||
+            value.identity.iconDataUrl.length > IDENTITY_ICON_MAX ||
+            !value.identity.iconDataUrl.startsWith("data:image/"))) ||
+        (value.identity.guessed !== undefined &&
+          value.identity.guessed !== true))
     )
       return null;
     // Spec 013 J3: a prepared record must carry the R-24 lists; anything
@@ -278,7 +341,7 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
     // Spec 016: before the paid reading there is no prepared understanding —
     // the free brand screen and the order screen run on the identity alone.
     const beforeReading =
-      ["entry", "reading", "order"].includes(stage) ||
+      ["entry", "reading", "steps", "order"].includes(stage) ||
       (stage === "brand" && value.prepared == null && value.identity != null);
     if (
       (!beforeReading &&
@@ -308,7 +371,24 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         typeof value.order.website !== "string" ||
         value.order.website.length > 2_000 ||
         typeof value.order.name !== "string" ||
-        value.order.name.length > 160)
+        value.order.name.length > 160 ||
+        (value.order.paid !== undefined && value.order.paid !== true) ||
+        (value.order.readingStarted !== undefined &&
+          value.order.readingStarted !== true) ||
+        (value.order.searchPlaceLocked !== undefined &&
+          value.order.searchPlaceLocked !== true) ||
+        (value.order.number !== undefined &&
+          (typeof value.order.number !== "string" ||
+            !/^NV-[A-Z0-9]{6}$/.test(value.order.number))))
+    )
+      return null;
+    if (
+      value.supersededInfo != null &&
+      (!isRecord(value.supersededInfo) ||
+        typeof value.supersededInfo.website !== "string" ||
+        value.supersededInfo.website.length > 2_000 ||
+        typeof value.supersededInfo.name !== "string" ||
+        value.supersededInfo.name.length > 160)
     )
       return null;
     if (
@@ -319,13 +399,12 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
       return null;
     if (
       value.afterOrder != null &&
-      (typeof value.afterOrder !== "string" ||
-        value.afterOrder === "order" ||
-        !SMART_STAGES.includes(value.afterOrder as SmartSession["stage"]))
+      (value.afterOrder === "order" || !knownStage(value.afterOrder))
     )
       return null;
-    // The order screen runs on the identity (and the brand chosen on it).
-    if (stage === "order" && value.identity == null) return null;
+    // The order screens run on the identity (and the brand chosen on it).
+    if ((stage === "order" || stage === "steps") && value.identity == null)
+      return null;
     if (value.savedAt !== undefined && typeof value.savedAt !== "string")
       return null;
     const pack = value.pack;
@@ -342,12 +421,18 @@ export function parseSmartSession(raw: string | null): SmartSession | null {
         !pack.originals.every((item) => typeof item === "string") ||
         !pack.approved.every((item) => typeof item === "string") ||
         !Number.isInteger(pack.revision) ||
-        !isRecord(pack.provenance)
+        !isRecord(pack.provenance) ||
+        (pack.origins !== undefined &&
+          (!Array.isArray(pack.origins) || pack.origins.length !== 10))
       )
         return null;
     }
     return {
       ...value,
+      stage,
+      ...(value.afterOrder != null
+        ? { afterOrder: knownStage(value.afterOrder) }
+        : {}),
       identity: (value.identity ?? null) as SmartPreparedIdentity | null,
       frozen,
       pack: (pack ?? null) as SmartQuestionPack | null,

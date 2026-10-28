@@ -1,28 +1,73 @@
 :root {
+  /* ── v2 palette (Figma page 11 "Hi-fi v2 · mobile journey (violet)") ──
+     Cool ink neutrals, one violet accent. Figma keeps the kit's variable
+     names, so the accent ramp is still called "ember" here: ember-* is
+     violet. It appears at most once per screen outside the 3D art: the
+     commit button, an accent word or "you" in the data. Small violet text
+     uses ember-700. Values are the "Nuave v2" collection's Violet mode;
+     ink-800 is the one step Figma does not define. */
+  --ink-900: #16161d;
+  --ink-800: #26252f; /* not in Figma: between ink-900 and ink-700 */
+  --ink-700: #3b3a4a;
+  --ink-600: #52516a; /* 7.6:1 on #ffffff */
+  --ink-500: #6b6a85; /* 5.2:1 on #ffffff */
+  --ink-400: #a2a1b6;
+  --line-300: #d3d2de;
+  --line-200: #e7e6ee;
+  --stone-100: #f1f1f6; /* Figma surface/sunken */
+  --stone-50: #f8f8fb; /* Figma surface/stone */
+  --cream: #f5f3ff; /* Figma surface/cream: the pale violet band */
+  --ember-50: #f3f0ff;
+  --ember-100: #e5e0ff;
+  --ember-200: #ccc3ff;
+  --ember-300: #a99bff;
+  --ember-400: #7f6cfe;
+  --ember-500: #533afd;
+  --ember-600: #4129e0;
+  /* The commit buttons' fill. White labels read 8.0:1 on ember-600, so it
+     no longer needs the darker step the orange palette had. */
+  --ember-650: var(--ember-600);
+  --ember-700: #3620b8;
+  --ember-800: #2a1a8f;
+  --ember-900: #1b1464;
+
   /* ── Colors: Canvas & Surfaces ── */
   --bg-page: #ffffff;
-  --bg-surface: #fafafa;
-  --bg-surface-raised: #f4f4f5;
-  --bg-neutral: #f4f4f5;
-  --bg-muted: #f4f4f5;
+  --bg-surface: var(--stone-50);
+  --bg-surface-raised: var(--stone-100);
+  --bg-neutral: var(--stone-100);
+  --bg-muted: var(--stone-100);
   --surface-muted: var(--bg-muted);
+  --surface-cream: var(--cream);
+  /* The paid moment (J09): the one full-violet screen. */
+  --surface-ember: linear-gradient(
+    180deg,
+    #6650fd 0%,
+    var(--ember-500) 55%,
+    #3a22cc 100%
+  );
 
   /* ── Colors: Hairlines & Borders ── */
-  --border-default: #e5e7eb;
-  --border-light: #ececec;
-  --border-strong: #d1d5db;
+  --border-default: var(--line-200);
+  --border-light: var(--line-200);
+  --border-strong: var(--line-300);
 
   /* ── Colors: Typography ── */
-  --text-heading: #18181b;
-  --text-body: #3f3f46;
-  --text-muted: #52525b; /* 7.4:1 on #ffffff */
-  --text-placeholder: #a1a1aa;
+  --text-heading: var(--ink-900);
+  --text-body: var(--ink-700);
+  --text-muted: var(--ink-600);
+  --text-subtle: var(--ink-500);
+  --text-placeholder: var(--ink-500);
+  --text-accent: var(--ember-700);
 
-  /* ── Colors: BeUI light action accent and compatibility aliases ── */
-  --action: #18181b;
-  --action-hover: #27272a;
-  --action-soft: #f4f4f5;
+  /* ── Colors: action (near-black) and commit (ember) ── */
+  --action: var(--ink-900);
+  --action-hover: var(--ink-800);
+  --action-soft: var(--stone-100);
   --action-foreground: #ffffff;
+  --commit: var(--ember-650);
+  --commit-hover: var(--ember-700);
+  --commit-foreground: #ffffff;
   --purple: var(--action);
   --purple-dark: var(--action-hover);
   --purple-light: var(--action-soft);
@@ -31,9 +76,14 @@
   --green: #16a34a;
   --green-light: #dcfce7;
   --green-border: #86efac;
-  --red: #dc2626;
-  --red-light: #fee2e2;
-  --red-border: #fca5a5;
+  /* Errors use Jeton red (Figma page 09's "JETON" study: #f73b20 / #e02e14),
+     never the violet accent, so a mistake never reads as a highlight.
+     Jeton's ember-600 #e02e14 draws error edges and icons (4.6:1); small
+     error text takes its ember-700 #bc2410 (6.2:1 on white, 5.6:1 on the
+     light red fill). The fill is ours; Figma has no error box. */
+  --red: #bc2410;
+  --red-edge: #e02e14;
+  --red-light: #fff1ee;
   --amber: #f59e0b;
   --amber-light: #fef3c7;
   --amber-border: #fde68a;
@@ -62,8 +112,8 @@
   /* ── Productive and expressive semantic roles ── */
   --type-display-size: clamp(2.25rem, 5vw, 4rem);
   --type-display-weight: 600;
-  --type-display-leading: 1;
-  --type-display-tracking: -0.04em;
+  --type-display-leading: 1.08;
+  --type-display-tracking: -0.03em;
 
   --type-heading-xl-size: clamp(2rem, 4vw, 3rem);
   --type-heading-xl-weight: 600;
@@ -72,23 +122,23 @@
 
   --type-heading-lg-size: var(--type-size-3xl);
   --type-heading-lg-weight: 600;
-  --type-heading-lg-leading: 1.15;
-  --type-heading-lg-tracking: -0.03em;
+  --type-heading-lg-leading: 1.1875;
+  --type-heading-lg-tracking: -0.02em;
 
   --type-heading-md-size: var(--type-size-2xl);
   --type-heading-md-weight: 600;
   --type-heading-md-leading: 1.25;
-  --type-heading-md-tracking: -0.025em;
+  --type-heading-md-tracking: -0.015em;
 
   --type-heading-sm-size: var(--type-size-xl);
   --type-heading-sm-weight: 600;
   --type-heading-sm-leading: 1.3;
-  --type-heading-sm-tracking: -0.02em;
+  --type-heading-sm-tracking: -0.01em;
 
   --type-copy-lg-size: var(--type-size-lg);
   --type-copy-lg-weight: 400;
-  --type-copy-lg-leading: 1.5;
-  --type-copy-lg-tracking: -0.01em;
+  --type-copy-lg-leading: 1.5556;
+  --type-copy-lg-tracking: normal;
 
   --type-copy-size: var(--type-size-base);
   --type-copy-weight: 400;
@@ -97,8 +147,13 @@
 
   --type-copy-sm-size: var(--type-size-sm);
   --type-copy-sm-weight: 400;
-  --type-copy-sm-leading: 1.5;
+  --type-copy-sm-leading: 1.4286;
   --type-copy-sm-tracking: normal;
+
+  --type-label-lg-size: var(--type-size-base);
+  --type-label-lg-weight: 500;
+  --type-label-lg-leading: 1.375;
+  --type-label-lg-tracking: normal;
 
   --type-label-size: var(--type-size-sm);
   --type-label-weight: 500;
@@ -107,8 +162,41 @@
 
   --type-label-sm-size: var(--type-size-xs);
   --type-label-sm-weight: 500;
-  --type-label-sm-leading: 1.35;
+  --type-label-sm-leading: 1.3333;
   --type-label-sm-tracking: normal;
+
+  /* v2 strong labels: text links and eyebrows (semibold). */
+  --type-label-strong-size: var(--type-size-sm);
+  --type-label-strong-weight: 600;
+  --type-label-strong-leading: 1.4;
+  --type-label-strong-tracking: normal;
+
+  --type-label-sm-strong-size: var(--type-size-xs);
+  --type-label-sm-strong-weight: 600;
+  --type-label-sm-strong-leading: 1.3333;
+  --type-label-sm-strong-tracking: normal;
+
+  /* v2 small print: notes, consent lines and illustration captions. */
+  --type-caption-size: var(--type-size-xs);
+  --type-caption-weight: 400;
+  --type-caption-leading: 1.5;
+  --type-caption-tracking: normal;
+
+  /* v2 product roles: row and step titles, and the big report numbers. */
+  --type-title-size: var(--type-size-lg);
+  --type-title-weight: 600;
+  --type-title-leading: 1.3333;
+  --type-title-tracking: normal;
+
+  --type-title-sm-size: var(--type-size-base);
+  --type-title-sm-weight: 600;
+  --type-title-sm-leading: 1.25;
+  --type-title-sm-tracking: normal;
+
+  --type-number-size: var(--type-size-5xl);
+  --type-number-weight: 600;
+  --type-number-leading: 1;
+  --type-number-tracking: -0.03em;
 
   --type-mono-size: var(--type-size-sm);
   --type-mono-weight: 400;
@@ -160,6 +248,15 @@
   --radius-token-3xl: 24px;
   --radius-token-full: 9999px;
 
+  /* v2 shape: chips full, buttons and inputs 14, tiles and rows 16, cards
+     20, sheets 28. */
+  --radius-token-chip: var(--radius-token-full);
+  --radius-token-button: 14px;
+  --radius-token-input: 14px;
+  --radius-token-tile: var(--radius-token-xl);
+  --radius-token-card: var(--radius-token-2xl);
+  --radius-token-sheet: 28px;
+
   /* ── Icons ── */
   --icon-stroke: 1.6;
 
@@ -169,6 +266,10 @@
   --motion-duration-slow: 400ms;
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Press feedback and quick state changes (v2). */
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-press-scale: 0.97;
 
   --transition-fast: var(--motion-duration-fast) var(--motion-ease-out);
   --transition-base: var(--motion-duration-base) var(--motion-ease-out);
@@ -177,8 +278,54 @@
   /* ── Shadows ── */
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-focus: 0 0 0 3px rgb(24 24 27 / 0.18);
+  --shadow-focus: 0 0 0 3px rgb(22 22 29 / 0.18);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+  /* v2 elevations: two only, ink-tinted, no borders on raised things. */
+  --elevation-card:
+    0 1px 2px rgb(22 22 29 / 0.05), 0 6px 18px rgb(22 22 29 / 0.07);
+  --elevation-float:
+    0 2px 6px rgb(22 22 29 / 0.06), 0 14px 36px rgb(22 22 29 / 0.12);
+  /* Clinic landing (Spec 020): the website field's soft lift and the
+     violet commit pill's tinted shadow. */
+  --elevation-search:
+    0 1px 2px rgb(22 22 29 / 0.04), 0 6px 20px rgb(22 22 29 / 0.08);
+  --elevation-commit:
+    0 1px 2px rgb(27 20 100 / 0.25), 0 6px 16px rgb(65 41 224 / 0.22);
+  /* The paid reading (J09) floats its pill and card on violet, so its two
+     elevations are tinted deep violet instead of ink. */
+  --elevation-ember-pill: 0 6px 16px rgb(27 20 100 / 0.12);
+  --elevation-ember-card: 0 12px 32px rgb(27 20 100 / 0.16);
+  /* J09's soft light behind the reading art. */
+  --glow-reading: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.28),
+    rgb(255 255 255 / 0)
+  );
+  /* Selection and focus: the 2px edge is a 1px border plus this inset. */
+  --edge-ink: inset 0 0 0 1px var(--ink-900);
+  --edge-error: inset 0 0 0 1px var(--red-edge);
+  /* Report beads (J32): a lit ball for a hit, violet or ink. */
+  --bead-ember: radial-gradient(
+    circle at 35% 30%,
+    var(--ember-300),
+    var(--ember-600)
+  );
+  --bead-ink: radial-gradient(
+    circle at 35% 30%,
+    var(--ink-500),
+    var(--ink-900)
+  );
+  --bead-ember-shadow: 0 2px 4px rgb(54 32 184 / 0.25);
+  --bead-ink-shadow: 0 2px 4px rgb(22 22 29 / 0.25);
+
+  /* Report v2 (Spec 021): mention dots (Figma "Legends" 2011:24) and the
+     section bands. The ring grey keeps 3:1 on white; light only. */
+  --mention-ring: #8f8ea6;
+  --mention-on: var(--ember-500);
+  --report-band-glow: var(--ember-100);
+  --report-own-border: var(--ember-200);
+  --report-card-shadow:
+    0 1px 2px rgb(22 22 29 / 0.04), 0 6px 16px -10px rgb(22 22 29 / 0.12);
 
   /* ── Accessibility Foundations (R-07) ── */
   --focus-ring: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--action);
@@ -228,7 +375,7 @@
   /* Destructive */
   --btn-destructive-bg: var(--red);
   --btn-destructive-text: #ffffff;
-  --btn-destructive-bg-hover: #b91c1c;
+  --btn-destructive-bg-hover: #a51d0c;
 
   /* ── Landing page aliases (mapped to foundation) ── */
   --lp-bg: var(--bg-surface);

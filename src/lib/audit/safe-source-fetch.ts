@@ -3,8 +3,8 @@ import { promises as dns } from "node:dns";
 
 export const MAX_SOURCE_RESPONSE_BYTES = 512 * 1024;
 export const MAX_SOURCE_REDIRECT_HOPS = 3;
-export const SOURCE_REQUEST_TIMEOUT_MS = 5_000;
-export const SOURCE_TOTAL_TIMEOUT_MS = 10_000;
+export const SOURCE_REQUEST_TIMEOUT_MS = 10_000;
+export const SOURCE_TOTAL_TIMEOUT_MS = 12_000;
 
 export type SourceResourceKind = "html" | "image";
 

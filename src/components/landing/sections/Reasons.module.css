@@ -1,0 +1,201 @@
+/* S2 · Pasien pilih lewat AI (Figma 288:228, 289:225). A ledger of three
+   figures. Phone: figure over sentence. From 768px: two equal columns
+   around a 48px gap on the page's centre axis, figures right-aligned. */
+
+.ledger {
+  margin-top: 40px;
+}
+
+.row {
+  padding: 28px 0 30px;
+  border-top: 1px solid var(--line-200);
+}
+
+.figure {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--ink-900);
+  white-space: nowrap;
+}
+
+.figureUnit {
+  align-items: baseline;
+}
+
+.pct {
+  margin: 5px 0 0 5px;
+  font-size: var(--type-size-3xl);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.unit {
+  margin-left: 7px;
+  font-size: var(--type-size-2xl);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.text {
+  min-width: 0;
+}
+
+.say {
+  margin: 12px 0 0;
+  color: var(--ink-700);
+  font-size: var(--type-copy-lg-size);
+  line-height: var(--type-copy-lg-leading);
+  letter-spacing: -0.01em;
+}
+
+.say b {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
+.ref {
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+/* 100 dots as two 10 x 5 halves: "nearly half" reads at a glance. */
+.dots {
+  display: flex;
+  gap: 16px;
+  margin: 20px 0 7px;
+}
+
+.half {
+  display: grid;
+  grid-template-columns: repeat(10, 10px);
+  grid-auto-rows: 10px;
+  gap: 6px;
+}
+
+.dot,
+.dotOn {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line-200);
+}
+
+.dotOn {
+  background: var(--ember-600);
+}
+
+/* The two halves need 324px, plus the 48px of gutters: below 372px the
+   dots get smaller. */
+@media (max-width: 371px) {
+  .dots {
+    gap: 12px;
+  }
+
+  .half {
+    grid-template-columns: repeat(10, 8px);
+    grid-auto-rows: 8px;
+    gap: 5px;
+  }
+
+  .dot,
+  .dotOn {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* Sources: one per line, the marker in a hanging column. */
+.notes {
+  padding: 32px 0 0;
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  line-height: var(--type-caption-leading);
+}
+
+.notesLabel {
+  margin: 0;
+  color: var(--ink-600);
+  font-weight: 500;
+}
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notesList li {
+  padding-left: 9px;
+}
+
+.mark {
+  display: inline-block;
+  width: 9px;
+  margin-left: -9px;
+  font-weight: 500;
+}
+
+.src {
+  color: var(--ink-700);
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .ledger {
+    width: 100%;
+    max-width: 720px;
+    margin: 64px auto 0;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 48px;
+    padding: 32px 0;
+  }
+
+  .figure {
+    justify-self: end;
+  }
+
+  .say {
+    margin-top: 6px;
+  }
+
+  .dots {
+    margin: 22px 0 14px;
+  }
+
+  .notes {
+    padding-top: 40px;
+  }
+
+  .notesLabel {
+    justify-self: end;
+  }
+
+  .notesList {
+    margin-top: 0;
+  }
+
+  .notesList li {
+    padding-left: 10px;
+  }
+
+  .mark {
+    width: 10px;
+    margin-left: -10px;
+  }
+}
+
+/* At 768–775px a column is under 324px: the halves sit a little closer. */
+@media (min-width: 768px) and (max-width: 775px) {
+  .dots {
+    gap: 12px;
+  }
+}

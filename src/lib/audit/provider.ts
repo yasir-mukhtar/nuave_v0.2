@@ -25,6 +25,11 @@ import {
 import { protectedObservationAttemptErrors } from "./production-observation-method";
 import { executeAbortableProtectedObservation } from "./protected-observation-provider";
 import { isDirectTenAuditContext } from "./direct-ten-context-v2";
+import {
+  configuredReportWriter,
+  generateClaudeReportContent,
+} from "./anthropic-report";
+import { hasWriterFacts } from "./two-source-writer";
 
 export { OPENCODEGO_BASE_URL, OPENCODEGO_SYSTEM } from "./opencodego";
 
@@ -182,6 +187,15 @@ export const liveGenerateReportContent: typeof openaiGenerate = async (
     );
   }
   assertLiveProviderCredentialsConfigured();
+  // Spec 021 PR 6b: the new two-source writer runs on Claude when the deploy
+  // names a Claude writer; everything else keeps today's writer.
+  if (
+    isDirectTenAuditContext(input.brief) &&
+    hasWriterFacts(input.two_source_facts) &&
+    configuredReportWriter()
+  ) {
+    return generateClaudeReportContent(input, revision);
+  }
   if (isDirectTenAuditContext(input.brief)) {
     return openaiGenerate(input, revision);
   }

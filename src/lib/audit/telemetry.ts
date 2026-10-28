@@ -164,18 +164,16 @@ function requestInputTokenUpperBound(request: unknown) {
   return new TextEncoder().encode(JSON.stringify(request)).length;
 }
 
-export function reserveAuditCall(input: {
+/**
+ * The checks every report-stage reservation shares, whatever the provider:
+ * the stage still makes paid calls, has calls left, and the call's reserved
+ * cost fits the request's audit budget. Throws `AuditBudgetError` otherwise.
+ */
+export function checkAuditBudget(input: {
   budget: AuditBudget;
   stage: AuditStage;
-  request: unknown;
-  requested_model: string;
-  has_web_search: boolean;
+  reservedCost: number;
 }) {
-  if (input.requested_model !== AUDIT_MODEL) {
-    throw new AuditBudgetError(
-      `The private cost guard supports only ${AUDIT_MODEL}; received ${input.requested_model}.`,
-    );
-  }
   if (AUDIT_STAGE_CALL_LIMITS[input.stage] === 0) {
     throw new AuditBudgetError(
       `The ${input.stage} stage no longer makes a paid provider call in the private audit.`,
@@ -189,6 +187,32 @@ export function reserveAuditCall(input: {
       `The ${input.stage} stage has reached its ${AUDIT_STAGE_CALL_LIMITS[input.stage]}-call private audit limit.`,
     );
   }
+  const accounted =
+    effectiveAuditCarryoverCostUsd(input.budget) +
+    input.budget.calls.reduce(
+      (total, call) => total + call.accounted_cost_usd,
+      0,
+    );
+
+  if (accounted + input.reservedCost > input.budget.limit_usd) {
+    throw new AuditBudgetError(
+      `The next ${input.stage} call could exceed the USD ${input.budget.limit_usd.toFixed(2)} audit limit. USD ${accounted.toFixed(4)} is already accounted for and USD ${input.reservedCost.toFixed(4)} must be reserved.`,
+    );
+  }
+}
+
+export function reserveAuditCall(input: {
+  budget: AuditBudget;
+  stage: AuditStage;
+  request: unknown;
+  requested_model: string;
+  has_web_search: boolean;
+}) {
+  if (input.requested_model !== AUDIT_MODEL) {
+    throw new AuditBudgetError(
+      `The private cost guard supports only ${AUDIT_MODEL}; received ${input.requested_model}.`,
+    );
+  }
   const limits = AUDIT_CALL_LIMITS[input.stage];
   const inputTokenUpperBound = input.has_web_search
     ? LUNA_MAX_INPUT_TOKENS
@@ -197,19 +221,11 @@ export function reserveAuditCall(input: {
     tokenCost(inputTokenUpperBound, 0, 0, limits.max_output_tokens) +
       (input.has_web_search ? WEB_SEARCH_USD_PER_CALL : 0),
   );
-  const accounted =
-    effectiveAuditCarryoverCostUsd(input.budget) +
-    input.budget.calls.reduce(
-      (total, call) => total + call.accounted_cost_usd,
-      0,
-    );
-
-  if (accounted + reservedCost > input.budget.limit_usd) {
-    throw new AuditBudgetError(
-      `The next ${input.stage} call could exceed the USD ${input.budget.limit_usd.toFixed(2)} audit limit. USD ${accounted.toFixed(4)} is already accounted for and USD ${reservedCost.toFixed(4)} must be reserved.`,
-    );
-  }
-
+  checkAuditBudget({
+    budget: input.budget,
+    stage: input.stage,
+    reservedCost,
+  });
   return reservedCost;
 }
 

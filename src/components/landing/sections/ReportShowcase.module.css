@@ -1,0 +1,882 @@
+/* S5 · Laporan (Figma 291:118, 291:439; other tabs 294:2). The page's one
+   dark moment: the report is the light, with a pool of light under it.
+   Phone: segmented tabs over the card. From 1024px: a contents list (400)
+   beside the card (720), 80 apart at 1440. */
+
+.section {
+  overflow: hidden;
+  background: radial-gradient(
+    90% 46% at 50% 62%,
+    #27262f 0%,
+    #1d1c24 42%,
+    #16161d 72%,
+    #16161d 100%
+  );
+  color: #ffffff;
+}
+
+.h2 {
+  color: #ffffff;
+}
+
+.h2 .h2Line {
+  display: block;
+}
+
+.line {
+  color: var(--ink-400);
+}
+
+.split {
+  display: flex;
+  flex-direction: column;
+  margin-top: 32px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Tabs: a segmented control on a phone ── */
+
+.tabs {
+  display: flex;
+  overflow-x: auto;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-400);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.tab:hover {
+  color: #ffffff;
+}
+
+.tab[data-active] {
+  background: #ffffff;
+  color: var(--ink-900);
+  font-weight: 600;
+}
+
+.tab:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.rail,
+.tabDescription {
+  display: none;
+}
+
+.segDescription {
+  margin: 14px 0 0;
+  color: var(--ink-400);
+  font-size: var(--type-copy-sm-size);
+  line-height: 22px;
+}
+
+.promise {
+  display: none;
+}
+
+/* ── The report card ── */
+
+.right {
+  position: relative;
+  margin-top: 20px;
+}
+
+.pool {
+  position: absolute;
+  right: -48px;
+  bottom: -60px;
+  left: -48px;
+  height: 120px;
+  background: radial-gradient(
+    closest-side,
+    rgb(255 255 255 / 0.19),
+    rgb(255 255 255 / 0.07) 55%,
+    rgb(255 255 255 / 0)
+  );
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  padding: 20px 20px 22px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.05),
+    0 0 24px rgb(255 255 255 / 0.1),
+    0 0 72px rgb(255 255 255 / 0.07);
+  color: var(--ink-900);
+}
+
+.cardTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.reportLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-500);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.reportMark {
+  width: 15px;
+  height: auto;
+}
+
+.pdfButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--line-300);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-900);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.clinicName {
+  margin: 12px 0 0;
+  font-size: var(--type-heading-md-size);
+  font-weight: var(--type-heading-md-weight);
+  line-height: 30px;
+  letter-spacing: -0.025em;
+}
+
+.clinicName span {
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.meta {
+  margin: 6px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 20px;
+}
+
+.metaSoft {
+  margin-top: 2px;
+  color: var(--ink-500);
+}
+
+.rule {
+  height: 1px;
+  margin: 18px 0;
+  border: 0;
+  background: var(--line-200);
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.view:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.narrowBreak {
+  display: inline;
+}
+
+/* Skor */
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel {
+  padding: 16px 16px 18px;
+  border-radius: 16px;
+  background: var(--stone-50);
+}
+
+.source {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: 22px;
+  letter-spacing: -0.005em;
+}
+
+.metric {
+  margin-top: 12px;
+}
+
+.metric + .metric {
+  padding-top: 12px;
+  border-top: 1px solid var(--line-200);
+}
+
+.metric p {
+  margin: 0;
+  color: var(--ink-700);
+  font-size: var(--type-copy-sm-size);
+  line-height: 21px;
+}
+
+.metric b {
+  color: var(--ink-900);
+  font-weight: 600;
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: repeat(10, 12px);
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #e3e2ec;
+}
+
+.dotOn {
+  background: var(--ember-600);
+}
+
+.dotSoft {
+  background: var(--ember-300);
+}
+
+/* Jawaban AI */
+.title {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: 24px;
+  letter-spacing: -0.01em;
+}
+
+.question {
+  margin-top: 14px;
+}
+
+.questionNumber {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: 16px;
+}
+
+.questionText {
+  margin: 4px 0 0;
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: 26px;
+  letter-spacing: -0.02em;
+}
+
+.questionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 10px 0 0;
+}
+
+.questionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--line-300);
+  border-radius: 999px;
+  color: var(--ink-700);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.questionNote {
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  line-height: 16px;
+}
+
+.answer {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-200);
+}
+
+.answerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+}
+
+.where {
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  line-height: 16px;
+}
+
+.quote {
+  margin: 10px 0 0;
+  padding: 14px 16px 15px;
+  border-radius: 14px;
+  background: var(--stone-50);
+  color: var(--ink-700);
+  font-size: var(--type-copy-sm-size);
+  line-height: 22px;
+}
+
+.quote b {
+  color: var(--ember-700);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--line-200);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-600);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.chipYou {
+  border-color: var(--ember-300);
+  background: var(--ember-50);
+  color: var(--ember-700);
+  font-weight: 600;
+}
+
+.chipDark {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Klinik lain */
+.list {
+  margin-top: 14px;
+}
+
+.listHead {
+  margin: 0;
+  padding-bottom: 6px;
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: 18px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 11px 0;
+  border-top: 1px solid var(--line-200);
+}
+
+.rowName {
+  color: var(--ink-900);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 20px;
+}
+
+.rowQuestions {
+  color: var(--ink-500);
+  font-size: var(--type-copy-sm-size);
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--stone-50);
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 19px;
+}
+
+.note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* Perbaikan */
+.fix {
+  margin-top: 14px;
+  padding: 16px 16px 18px;
+  border-radius: 16px;
+  background: var(--stone-50);
+}
+
+.tag {
+  display: inline-flex;
+  margin: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--ember-50);
+  color: var(--ember-700);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: 16px;
+}
+
+.fixTitle {
+  margin: 10px 0 0;
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: 24px;
+  letter-spacing: -0.01em;
+}
+
+.kvs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 20px;
+}
+
+.kvs dt,
+.kvs dd {
+  display: inline;
+  margin: 0;
+}
+
+.kvs dt {
+  color: var(--ink-900);
+  font-weight: 600;
+}
+
+.subTitle {
+  margin-top: 22px;
+}
+
+.topics {
+  margin-top: 8px;
+}
+
+.topic {
+  padding: 12px 0;
+  border-top: 1px solid var(--line-200);
+}
+
+.topicName {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: 20px;
+}
+
+.topicVolume {
+  margin: 2px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 18px;
+}
+
+.topicCited {
+  margin: 2px 0 0;
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  line-height: 16px;
+}
+
+/* ── The PDF line (under the card on a phone, beside it from 1024px) ── */
+
+.under {
+  margin-top: 28px;
+}
+
+.under .promiseIcon {
+  display: none;
+}
+
+.pdfLine {
+  margin: 0;
+  color: var(--line-200);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 22px;
+}
+
+.pdfCaption {
+  margin: 6px 0 0;
+  color: var(--ink-400);
+  font-size: var(--type-caption-size);
+  line-height: 16px;
+}
+
+@media (min-width: 768px) {
+  .h2 .h2Line {
+    display: inline;
+  }
+
+  .narrowBreak {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    background: radial-gradient(
+      52% 50% at 67% 58%,
+      #27262f 0%,
+      #1d1c24 40%,
+      #16161d 68%,
+      #16161d 100%
+    );
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: minmax(260px, 400px) minmax(0, 720px);
+    justify-content: center;
+    align-items: start;
+    column-gap: clamp(32px, 5.5vw, 80px);
+    margin-top: 64px;
+  }
+
+  /* Contents list with a light rail. */
+  .tabs {
+    flex-direction: column;
+    overflow: visible;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .tab {
+    display: block;
+    height: auto;
+    padding: 18px 24px 20px 26px;
+    border-radius: 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .tab[data-active] {
+    background: none;
+    color: inherit;
+  }
+
+  .rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    width: 2px;
+    background: rgb(255 255 255 / 0.1);
+    transition: background-color var(--transition-fast);
+  }
+
+  .tab[data-active] .rail {
+    background: #ffffff;
+  }
+
+  .tabLabel {
+    display: block;
+    color: var(--ink-400);
+    font-size: var(--type-title-size);
+    font-weight: var(--type-title-weight);
+    line-height: 26px;
+    letter-spacing: -0.01em;
+  }
+
+  .tabDescription {
+    display: block;
+    margin-top: 4px;
+    color: var(--ink-400);
+    font-size: var(--type-copy-sm-size);
+    font-weight: 400;
+    line-height: 22px;
+    text-wrap: pretty;
+  }
+
+  .tab:hover .tabLabel,
+  .tab[data-active] .tabLabel {
+    color: #ffffff;
+  }
+
+  .tab[data-active] .tabDescription {
+    color: var(--line-300);
+  }
+
+  .tab:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .segDescription,
+  .under {
+    display: none;
+  }
+
+  .promise {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    align-items: start;
+    column-gap: 10px;
+    margin: 36px 0 0 26px;
+    padding-top: 24px;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+  }
+
+  .promiseIcon {
+    margin-top: 2px;
+    color: var(--line-300);
+  }
+
+  .promise .pdfCaption {
+    grid-column: 2;
+    margin-top: 4px;
+  }
+
+  .right {
+    margin-top: 0;
+  }
+
+  .pool {
+    right: -140px;
+    bottom: -104px;
+    left: -140px;
+    height: 208px;
+  }
+
+  .card {
+    padding: 36px 40px 40px;
+    border-radius: 28px;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.05),
+      0 0 36px rgb(255 255 255 / 0.1),
+      0 0 120px rgb(255 255 255 / 0.07);
+  }
+
+  .reportLabel {
+    gap: 7px;
+  }
+
+  .pdfButton {
+    gap: 7px;
+    height: 36px;
+    padding: 0 15px 0 12px;
+  }
+
+  .clinicName {
+    line-height: 32px;
+  }
+
+  .meta {
+    margin-top: 8px;
+  }
+
+  .metaSoft {
+    margin-top: 2px;
+  }
+
+  .rule {
+    margin: 28px 0;
+  }
+
+  .panels {
+    gap: 14px;
+  }
+
+  .panel {
+    padding: 22px 26px 24px;
+    border-radius: 20px;
+  }
+
+  .metric {
+    margin-top: 14px;
+  }
+
+  .metric + .metric {
+    padding-top: 14px;
+  }
+
+  .dots {
+    grid-template-columns: repeat(10, 14px);
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+  }
+
+  .title {
+    line-height: 26px;
+  }
+
+  .question {
+    margin-top: 18px;
+  }
+
+  .questionMeta {
+    gap: 8px 12px;
+    margin-top: 12px;
+  }
+
+  .questionChip {
+    height: 26px;
+  }
+
+  .answer {
+    margin-top: 22px;
+    padding-top: 22px;
+  }
+
+  .quote {
+    margin-top: 12px;
+    padding: 16px 20px 18px;
+    border-radius: 16px;
+    line-height: 24px;
+  }
+
+  .chips {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .chip {
+    height: 28px;
+    padding: 0 12px;
+  }
+
+  .list {
+    margin-top: 18px;
+  }
+
+  .listHead {
+    padding-bottom: 8px;
+  }
+
+  .row {
+    padding: 12px 0;
+  }
+
+  .note {
+    gap: 10px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    line-height: 20px;
+  }
+
+  .fix {
+    margin-top: 16px;
+    padding: 22px 24px 24px;
+    border-radius: 20px;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    line-height: 18px;
+  }
+
+  .fixTitle {
+    margin-top: 12px;
+    line-height: 26px;
+  }
+
+  .kvs {
+    gap: 10px;
+    margin-top: 14px;
+    line-height: 21px;
+  }
+
+  .subTitle {
+    margin-top: 28px;
+  }
+
+  .topics {
+    margin-top: 10px;
+  }
+
+  .topic {
+    padding: 14px 0;
+  }
+}

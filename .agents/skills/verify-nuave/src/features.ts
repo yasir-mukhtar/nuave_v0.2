@@ -6,14 +6,24 @@ import {
   addCompetitor,
   addConsideration,
   addCustomerNeed,
+  addProduct,
   brandScreen,
-  chooseCompetitorMode,
-  chooseFocus,
+  changeBusinessLink,
+  competitorRow,
+  competitorsScreen,
   confirmBrand,
   confirmFocus,
   confirmSummary,
-  downloadEvidenceJson,
+  considerationsGroup,
+  continueToOrder,
+  customerChips,
+  customerNeedsScreen,
+  differentiatorInput,
+  differentiatorScreen,
+  downloadPdfButtons,
+  editFocusFromReview,
   editQuestion,
+  emailInput,
   ENTRY_INVALID_NOTICE,
   expectAuditDelivered,
   expectAuditRunning,
@@ -21,54 +31,61 @@ import {
   expectCategoryScreen,
   expectCompetitorsScreen,
   expectCustomerNeedsScreen,
-  expectDecisionConsiderationsScreen,
   expectDifferentiatorScreen,
   expectEmptyEntry,
-  expectFocusScreen,
-  expectLocationScreen,
+  expectIntroBusiness,
+  expectIntroReview,
   expectOfferingsScreen,
-  expectPublicFactScreen,
-  expectProductScreen,
+  expectOrderSummaryPrice,
   expectQuestionReview,
   expectServiceScreen,
+  expectSummary,
   expectTargetCustomerScreen,
   expectTenQuestions,
-  expectSummary,
+  FICTIONAL_BUSINESS,
   fillDifferentiator,
   fillEntry,
   fillPublicFact,
   fillTargetCustomer,
+  fillWebsite,
+  focusCard,
+  focusScreen,
   INTAKE_SESSION_KEY,
-  competitorsScreen,
-  customerNeedsScreen,
-  decisionConsiderationsScreen,
-  differentiatorScreen,
+  locationRow,
   locationScreen,
+  LOOKUP_HEADING,
   marketScreen,
+  needsGroup,
   openAliasEditor,
   openAuditFromLanding,
-  ORDER_EMAIL,
-  ORDER_HEADING,
-  orderScreen,
+  openFocusTarget,
+  openStartSheet,
+  paidReadingScreen,
+  payOrder,
   pressLanjut,
+  pressMulai,
   pressPeriksa,
+  READ_HEADING,
+  READING_HEADING,
   readingScreen,
   readyLinkFromMail,
   reportLocator,
-  reviewRow,
+  reviewFact,
   RICH_PREPARATION_DRAFT,
   runServerAuditToDelivery,
+  saveReviewSheet,
   savedReport,
   SENSITIVE_INPUT_NOTICE,
-  startAudit,
+  START_AUDIT,
   stubPreparationDraft,
-  submitOrder,
+  SYNTHETIC_LABEL,
   targetCustomerScreen,
+  throughDetailScreens,
   toggleConsideration,
   toggleCustomerNeed,
-  throughDetailScreens,
   toQuestions,
   unavailableReport,
+  websiteInput,
 } from "../../../../tests/e2e/journey";
 
 const expect = baseExpect.configure({ timeout: 10_000 });
@@ -90,6 +107,16 @@ export type Step = {
   screenshot: string;
   aria: string;
 };
+
+/** The paid-path request counts, without the free saved-order status checks
+ * (a reload asks the server whether the saved order is still open). */
+function journeyCalls(ctx: { calls: Record<string, number> }) {
+  return Object.fromEntries(
+    Object.entries(ctx.calls).filter(
+      ([key]) => key !== "POST /api/orders/status",
+    ),
+  );
+}
 
 export type DriveContext = {
   /** The page the next `step` captures. A recipe may point it at another tab. */
@@ -187,15 +214,15 @@ async function countPrintCalls(page: Page) {
 
 async function auditEntry(ctx: DriveContext) {
   const { page } = ctx;
-  await ctx.step("landing", async () => {
-    await page.goto("/");
-  });
-  await ctx.step("landing-cta-to-audit", async () => {
-    await openAuditFromLanding(page);
+  await ctx.step("audit-entry-empty", async () => {
+    await page.goto("/audit");
     await expectEmptyEntry(page);
+    await expect(
+      page.getByText(SYNTHETIC_LABEL, { exact: true }),
+    ).toBeVisible();
   });
   ctx.check(
-    "Landing CTA `Cek bisnis saya di AI` opens /audit on an empty entry step",
+    "`/audit` opens on the empty website step (J01) with its heading focused and the synthetic-mode label",
   );
   await ctx.step("empty-submit-rejected", async () => {
     await pressPeriksa(page);
@@ -203,52 +230,76 @@ async function auditEntry(ctx: DriveContext) {
       page.getByRole("alert").filter({ hasText: ENTRY_INVALID_NOTICE }),
     ).toBeVisible();
   });
-  ctx.check(`Periksa with empty fields shows "${ENTRY_INVALID_NOTICE}"`);
+  ctx.check(
+    `\`Cek bisnis saya di AI\` with the field empty shows "${ENTRY_INVALID_NOTICE}"`,
+  );
   await ctx.step("invalid-url-rejected", async () => {
-    await fillEntry(page, { url: "bukan alamat web" });
+    await fillWebsite(page, "bukan alamat web");
     await pressPeriksa(page);
     await expect(
       page.getByRole("alert").filter({ hasText: ENTRY_INVALID_NOTICE }),
     ).toBeVisible();
   });
-  ctx.check("Periksa with a non-URL source shows the same validation alert");
+  ctx.check("A non-URL website shows the same validation alert");
   await ctx.step("sensitive-url-blocked", async () => {
-    await fillEntry(page, {
-      url: "https://kedai-fiksi.example/?token=private",
-    });
+    await fillWebsite(page, FICTIONAL_BUSINESS.url);
+    await fillWebsite(page, "https://kedai-fiksi.example/?token=private");
     await expect(
       page.getByText(SENSITIVE_INPUT_NOTICE, { exact: true }),
     ).toBeVisible();
+    await expect(websiteInput(page)).toHaveValue(FICTIONAL_BUSINESS.url);
   });
   const saved = JSON.stringify(await sessionValue(page, INTAKE_SESSION_KEY));
   expect(saved).not.toContain("token=private");
-  expect(saved).toContain("Kedai Fiksi");
+  expect(saved).toContain("kedai-fiksi.example");
   ctx.check(
-    "A token-like URL shows the sensitive-input notice and is not saved",
+    "A token-like URL shows the sensitive-input notice; the field and the saved session keep the last safe website",
   );
   expect(ctx.calls).toEqual({});
   ctx.check("No /api request was made during entry and validation");
+  await ctx.step("landing", async () => {
+    await page.goto("/");
+  });
+  await ctx.step("landing-cta-to-audit", async () => {
+    await openAuditFromLanding(page);
+    // J02 → J05: `/audit` checks the handed-over website at once.
+    await expectBrandConfirm(page, "Example");
+  });
+  ctx.check(
+    'The landing website form (`Cek bisnis saya di AI`) opens /audit, which checks `example.com` at once and shows "Kami menemukan bisnis Anda" with the name read from the website ("Example")',
+  );
+  expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
+  ctx.check(
+    "The landing hand-over made exactly one free `GET /api/audit/identity`, and nothing else",
+  );
+  await ctx.step("change-business-link", async () => {
+    await changeBusinessLink(page);
+    await expect(websiteInput(page)).toHaveValue("https://example.com/");
+  });
+  ctx.check(
+    "`Ganti tautan bisnis` returns to the entry with the website kept for correction",
+  );
 }
 
 async function smartIntakeSummary(ctx: DriveContext) {
   const { page } = ctx;
   await ctx.step("entry-filled", async () => {
     await fillEntry(page);
+    await expect(
+      page.getByText(SYNTHETIC_LABEL, { exact: true }),
+    ).toBeVisible();
   });
-  await ctx.step("reading", async () => {
-    // A short same-origin delay keeps the reading screen up long enough to
-    // verify it; the response itself stays the real synthetic route answer.
-    await page.route("**/api/audit/extract", async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  await ctx.step("free-check-to-business-found", async () => {
+    // A short same-origin delay keeps the free check (J02) up long enough to
+    // verify it; the answer itself stays the real synthetic route answer.
+    await page.route("**/api/audit/identity?**", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 800));
       await route.continue();
     });
     await pressPeriksa(page);
     await expect(readingScreen(page)).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Sebentar, Nuave sedang membaca" }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Mode uji lokal menggunakan pengganti sintetis berlabel."),
+      page.getByRole("heading", { level: 1, name: LOOKUP_HEADING }),
     ).toBeVisible();
     await expectBrandConfirm(page);
     await expect(brandScreen(page)).toContainText("kedai-fiksi.example");
@@ -256,36 +307,34 @@ async function smartIntakeSummary(ctx: DriveContext) {
       page.getByRole("button", { name: "Kembali", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Lanjut", exact: true }),
-    ).toBeVisible();
+      page.getByRole("button", { name: "Ya, ini bisnis saya", exact: true }),
+    ).toBeEnabled();
   });
   ctx.check(
-    '`Periksa` shows the labelled reading screen, then the "Ini brand yang ingin Anda audit?" check with name, source and Kembali/Lanjut',
+    '`Cek bisnis saya di AI` shows the free check "Sebentar, kami cari bisnis Anda", then "Kami menemukan bisnis Anda" with the name read from the website, the source, Kembali and `Ya, ini bisnis saya`',
   );
-  await ctx.step("brand-confirm-to-focus", async () => {
+  await ctx.step("steps-payment-reading-to-focus", async () => {
     await confirmBrand(page);
-    // The synthetic reading publishes no locations, so the location scope is
-    // a manual-entry link, not a card.
-    await expect(page.getByRole("radio", { name: "Satu lokasi" })).toHaveCount(
-      0,
-    );
+    // The synthetic reading publishes no branches, so the branch card names
+    // none; whole brand is Nuave's labelled proposal.
+    await expect(focusCard(page, "Satu cabang")).toBeVisible();
+    await expect(focusCard(page, "Satu cabang")).not.toContainText("misalnya");
     await expect(
-      page.getByRole("button", { name: "Isi lokasi secara manual" }),
+      focusScreen(page).getByText("Saran Nuave", { exact: true }),
     ).toBeVisible();
-    await expect(page.getByText("Saran Nuave", { exact: true })).toBeVisible();
   });
   ctx.check(
-    '`Lanjut` on the brand check reaches "Apa yang ingin Anda audit?" with the labelled whole-brand suggestion',
+    '`Ya, ini bisnis saya` → "Tinggal 3 langkah" → checkout → simulated payment; the paid reading starts by itself, and the Step 2 cover\'s `Mulai` opens "Apa yang ingin Anda audit?" with the labelled whole-brand suggestion',
   );
   await ctx.step("detail-screens", async () => {
     // Whole-brand `Lanjut` lands on the category screen; the synthetic
     // reading found nothing, so each gated screen takes the smallest owner
-    // answer before the chain reaches the summary.
+    // answer before the chain reaches the Step 3 cover and the review.
     await confirmFocus(page);
     await throughDetailScreens(page);
   });
   ctx.check(
-    "Category, offerings, service-channel and market screens each gate Lanjut; the JQ customer screens and J6 optional answers stay optional and competitors default to unknown",
+    "Category, offerings, service and market each gate Lanjut; target customer, needs and considerations (one screen), competitors and the differentiator with its folded public fact stay optional; the Step 3 cover's `Mulai` opens the review",
   );
   const optionalSelection = await sessionValue(page, INTAKE_SESSION_KEY);
   expect(optionalSelection.selection).toMatchObject({
@@ -299,44 +348,37 @@ async function smartIntakeSummary(ctx: DriveContext) {
     publicFact: "",
   });
   ctx.check(
-    "Empty optional JQ and J6 answers, empty aliases and the unknown comparator default persist",
+    "Empty optional answers, empty aliases and the unknown comparator default persist",
   );
   await ctx.step("focus-one-offering", async () => {
-    // The focus row is read-back; `Ubah` re-opens the dedicated screens.
-    // A product focus turns the offerings screen into read-only catalogue
-    // context, so this step runs after the owner-filled first pass.
-    await page
-      .locator('section[aria-label="Fokus audit"]')
-      .getByRole("button", { name: "Ubah" })
-      .click();
-    await expectFocusScreen(page);
-    await chooseFocus(page, "Satu produk atau layanan");
+    // The review's Bisnis sheet re-opens the focus screen; a product focus
+    // turns the offerings into read-only context, so this runs after the
+    // owner-filled first pass.
+    await editFocusFromReview(page);
+    await openFocusTarget(page, "Satu produk");
+    // The synthetic reading proposes no products: the owner adds the target.
+    await addProduct(page, "kopi susu");
     await pressLanjut(page);
-    await expectProductScreen(page);
-    // Synthetic reading proposes no offerings, so there is no radio to pick;
-    // the owner types the product target instead.
-    await page
-      .getByRole("textbox", { name: "Nama produk atau layanan" })
-      .fill("kopi susu");
-    await pressLanjut(page);
-    // The changed focus must pass the category checkpoint; its Lanjut then
+    // The changed focus passes the category checkpoint, whose Lanjut then
     // exits the detour straight back to the review.
     await expectCategoryScreen(page);
     await pressLanjut(page);
-    await expect(
-      page
-        .locator('section[aria-label="Fokus audit"]')
-        .getByText("Satu produk atau layanan"),
-    ).toBeVisible();
+    await expectSummary(page);
+    await expect(reviewFact(page, "Fokus audit")).toHaveText(
+      "Satu produk: kopi susu",
+    );
   });
   ctx.check(
-    "`Ubah` on the read-back focus row re-opens the focus screen; the product target accepts the typed offering and the detour returns to the summary",
+    "`Ganti fokus audit` in the review's Bisnis sheet re-opens the focus screen; the product list takes an added target (`Tambah produk`) and the detour returns to the review",
   );
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
     await expectQuestionReview(page);
     await expectTenQuestions(page);
   });
+  ctx.check(
+    '`Buat pertanyaan audit` stays disabled until the confirmation is ticked, then "10 pertanyaan untuk AI" shows ten questions',
+  );
   const intake = await sessionValue(page, INTAKE_SESSION_KEY);
   expect(intake.frozen.context).toMatchObject({
     category: { value: "kedai kopi", origin: "owner" },
@@ -350,26 +392,29 @@ async function smartIntakeSummary(ctx: DriveContext) {
   expect(intake.frozen.context).not.toHaveProperty("differentiator");
   expect(intake.frozen.context).not.toHaveProperty("publicFact");
   ctx.check(
-    "Frozen context keeps unknown competitors and omits empty optional JQ/J6 values alongside the edited category, product focus and nationwide reach",
+    "Frozen context keeps unknown competitors and omits empty optional values alongside the typed category, product focus and nationwide reach",
   );
-  expect(ctx.calls).toEqual({
+  expect(journeyCalls(ctx)).toEqual({
     "GET /api/audit/identity": 1,
     "POST /api/orders": 1,
+    "POST /api/payments/start": 1,
     "POST /api/audit/extract": 1,
+    // Spec 018: the search-data request that the questions are chosen from.
+    "POST /api/audit/discovery": 1,
     "POST /api/audit/glm-questions": 1,
   });
   ctx.check(
-    "Exactly one identity, one order, one extract and one question request",
+    "Exactly one identity, one order, one simulated payment, one extract, one discovery and one question request",
   );
 }
 
 /**
  * Spec 013 R-29: the labelled rich fictional preparation, served through the
  * stubbed identity/extract routes. This drive proves UI and session handling
- * of the J3 prepared values, the J6 customer context and the JQ retained
- * customer-meaning screens — never live extraction quality. The default
- * synthetic preparation ("no facts extracted") stays the other feature's
- * path and is unchanged.
+ * of the J3 prepared values and the customer screens (J16, J17 with needs and
+ * considerations, J20, J22 with the folded public fact) — never live
+ * extraction quality. The default synthetic preparation ("no facts
+ * extracted") stays the other feature's path and is unchanged.
  */
 async function richPreparation(ctx: DriveContext) {
   const { page } = ctx;
@@ -381,87 +426,82 @@ async function richPreparation(ctx: DriveContext) {
     await pressPeriksa(page);
     await expectBrandConfirm(page);
     await confirmBrand(page);
-    // The fixture publishes two locations on the canonical host, so the
-    // `Satu lokasi` card is offered.
-    await chooseFocus(page, "Satu lokasi");
+    // The fixture publishes two branches on the canonical host: the branch
+    // list names them, stated once as found on the website.
+    await openFocusTarget(page, "Satu cabang");
+    await expect(locationScreen(page)).toContainText("Ditemukan di website");
+    for (const name of ["Kedai Fiksi Dago", "Kedai Fiksi Cimahi"])
+      await expect(locationRow(page, new RegExp(`^${name}`))).toBeVisible();
+    await locationRow(page, /^Kedai Fiksi Dago/).click();
     await pressLanjut(page);
-    await expectLocationScreen(page);
-    for (const name of ["Kedai Fiksi Dago", "Kedai Fiksi Cimahi"]) {
-      const row = locationScreen(page).getByRole("radio", { name });
-      await expect(row).toBeVisible();
-      await expect(row).toContainText("Dari website Anda");
-    }
-    await locationScreen(page)
-      .getByRole("radio", { name: "Kedai Fiksi Dago" })
-      .click();
-    await pressLanjut(page);
-    // Category and offerings still appear with prepared picks; a location
-    // focus skips market. The JQ customer screens show prepared values with
-    // their Nuave label, then take the specified owner edits.
+    // Category and offerings keep their prepared picks; a branch focus
+    // skips market. The customer screens show the prepared meanings, then
+    // take the owner's edits.
     await expectCategoryScreen(page);
     await pressLanjut(page);
     await expectOfferingsScreen(page);
     await pressLanjut(page);
     await expectTargetCustomerScreen(page);
-    await expect(targetCustomerScreen(page)).toContainText("Saran Nuave");
+    const target = targetCustomerScreen(page);
+    await expect(target).toContainText("Saran Nuave");
     await expect(
-      targetCustomerScreen(page).getByRole("textbox", {
-        name: /Pelanggan sasaran/,
+      customerChips(target).getByRole("button", {
+        name: "pekerja kantoran sekitar",
+        exact: true,
       }),
-    ).toHaveValue("pekerja kantoran sekitar");
-    await fillTargetCustomer(page, "keluarga sekitar");
+    ).toHaveAttribute("aria-pressed", "true");
+    await fillTargetCustomer(target, "keluarga sekitar");
     await pressLanjut(page);
     await expectCustomerNeedsScreen(page);
+    const needs = customerNeedsScreen(page);
     await expect(
-      customerNeedsScreen(page).getByRole("button", {
+      needsGroup(needs).getByRole("button", {
         name: "minuman dekat kantor",
+        exact: true,
       }),
     ).toHaveAttribute("aria-pressed", "true");
-    await toggleCustomerNeed(page, "minuman dekat kantor");
-    await toggleCustomerNeed(page, "minuman dekat kantor");
-    await addCustomerNeed(page, "sarapan sebelum kerja");
-    await pressLanjut(page);
-    await expectDecisionConsiderationsScreen(page);
-    await expect(decisionConsiderationsScreen(page)).toContainText(
-      "Saran Nuave",
-    );
-    await expect(
-      decisionConsiderationsScreen(page).getByRole("button", {
-        name: "lokasi",
-      }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await toggleConsideration(page, "lokasi");
-    await addConsideration(page, "jam buka");
+    await toggleCustomerNeed(needs, "minuman dekat kantor");
+    await toggleCustomerNeed(needs, "minuman dekat kantor");
+    await addCustomerNeed(needs, "sarapan sebelum kerja");
+    const lokasi = considerationsGroup(needs).getByRole("button", {
+      name: "lokasi",
+      exact: true,
+    });
+    await expect(lokasi).toHaveAttribute("aria-pressed", "true");
+    await toggleConsideration(needs, "lokasi");
+    await expect(lokasi).toHaveAttribute("aria-pressed", "false");
+    await addConsideration(needs, "jam buka");
     await pressLanjut(page);
     await expectServiceScreen(page);
     await pressLanjut(page);
     await expectCompetitorsScreen(page);
-    await expect(competitorsScreen(page)).toContainText("Saran Nuave");
-    await expect(
-      competitorsScreen(page).getByRole("radio", {
-        name: "Bisnis yang saya pilih",
-      }),
-    ).toBeChecked();
-    await chooseCompetitorMode(page, "Bisnis yang saya pilih");
-    await addCompetitor(page, "Warung Fiksi");
+    const competitors = competitorsScreen(page);
+    const prepared = competitorRow(competitors, "Kedai Tetangga");
+    await expect(prepared).toBeChecked();
+    await expect(prepared).toHaveAccessibleDescription("Saran Nuave");
+    await addCompetitor(competitors, "Warung Fiksi");
     await pressLanjut(page);
     await expectDifferentiatorScreen(page);
-    await expect(differentiatorScreen(page)).toContainText("Saran Nuave");
+    const differentiator = differentiatorScreen(page);
     await expect(
-      differentiatorScreen(page).getByRole("textbox", {
-        name: /Pembeda bisnis/,
-      }),
-    ).toHaveValue("Racikan kopi rumahan fiktif");
-    await fillDifferentiator(page, "Pilihan roti rumahan fiktif");
-    await pressLanjut(page);
-    await expectPublicFactScreen(page);
-    await fillPublicFact(page, "Buka setiap hari sampai pukul 21.00.");
+      differentiator.getByText("Saran Nuave", { exact: true }),
+    ).toBeVisible();
+    await expect(differentiatorInput(differentiator)).toHaveValue(
+      "Racikan kopi rumahan fiktif",
+    );
+    await fillDifferentiator(differentiator, "Pilihan roti rumahan fiktif");
+    await fillPublicFact(
+      differentiator,
+      "Buka setiap hari sampai pukul 21.00.",
+    );
     await pressLanjut(page);
     await expect(marketScreen(page)).toHaveCount(0);
+    await expectIntroReview(page);
+    await pressMulai(page);
     await expectSummary(page);
   });
   ctx.check(
-    "The rich fixture offers published locations labelled `Dari website Anda`, shows the prepared JQ meanings with their Nuave label, accepts the owner JQ and J6 edits and skips market for a location focus",
+    "The rich fixture offers published branches stated once as `Ditemukan di website`, shows the prepared customer meanings with their Nuave label, accepts the owner's edits on J16, J17 (needs and considerations), J20 and J22 (with the folded public fact), and skips market for a branch focus",
   );
   const prepared = (
     (await sessionValue(page, INTAKE_SESSION_KEY)) as {
@@ -520,7 +560,7 @@ async function richPreparation(ctx: DriveContext) {
     origin: "nuave",
   });
   ctx.check(
-    "Prepared JQ meanings carry their `nuave` origin in the stored session",
+    "Prepared customer meanings carry their `nuave` origin in the stored session",
   );
   await ctx.step("summary-after-reload", async () => {
     await page.reload();
@@ -532,17 +572,19 @@ async function richPreparation(ctx: DriveContext) {
   expect(restored?.prepared).toEqual(prepared);
   ctx.check("A reload restores the same prepared values — session version 9");
   await ctx.step("alias-edit", async () => {
-    const row = reviewRow(page, "Nama lain");
-    // The fixture publishes one brand variant; the owner adds a second.
-    await expect(row).toContainText("Kedai Fiksi Bandung");
-    await expect(row).toContainText("Dari website Anda");
+    const name = reviewFact(page, "Nama");
+    // The fixture publishes one brand variant; the owner adds a second in
+    // the review's Bisnis sheet.
+    await expect(name).toContainText("Juga disebut: Kedai Fiksi Bandung");
     await openAliasEditor(page);
     await addAlias(page, "Kedai Fiksi Pusat");
-    await expect(row).toContainText("Kedai Fiksi Pusat");
-    await expect(row).toContainText("Dari Anda");
+    await saveReviewSheet(page, "Bisnis");
+    await expect(name).toContainText(
+      "Juga disebut: Kedai Fiksi Bandung, Kedai Fiksi Pusat",
+    );
   });
   ctx.check(
-    "`Nama lain` keeps the prepared website alias and accepts one owner alias",
+    "The Bisnis sheet keeps the prepared website alias and saves one owner alias with `Simpan`",
   );
   await ctx.step("questions-created", async () => {
     await confirmSummary(page);
@@ -578,33 +620,32 @@ async function richPreparation(ctx: DriveContext) {
     },
   });
   ctx.check(
-    "JQ and J6 owner answers and the edited aliases freeze with exact values and origins, and confirmation produces ten questions",
+    "The owner's customer answers and the edited aliases freeze with exact values and origins, and confirmation produces ten questions",
   );
-  // A reload asks the server, for free, whether the saved order is still open.
-  const paid = Object.fromEntries(
-    Object.entries(ctx.calls).filter(
-      ([key]) => key !== "POST /api/orders/status",
-    ),
-  );
-  expect(paid).toEqual({
+  expect(journeyCalls(ctx)).toEqual({
     "GET /api/audit/identity": 1,
     "POST /api/orders": 1,
+    "POST /api/payments/start": 1,
     "POST /api/audit/extract": 1,
+    // Spec 018: the search-data request that the questions are chosen from.
+    "POST /api/audit/discovery": 1,
     "POST /api/audit/glm-questions": 1,
   });
   ctx.check(
-    "Exactly one identity, one order, one extract and one question request (the free saved-order checks on reload are not counted)",
+    "Exactly one identity, one order, one simulated payment, one extract, one discovery and one question request (the free saved-order status checks are not counted)",
   );
 }
 
 /**
  * Spec 016 AC-20: the whole path, in synthetic mode against the local
- * database. The customer types a website, confirms the business (free lookup),
- * gives an email (order), waits for the paid reading (preparing), answers the
- * intake and approves ten questions. The server runs the audit, so the tab is
- * closed and reopened. The cron is started through the development trigger (it
- * stands in for the one-minute cron). The report opens only from the emailed
- * link, in a browser with no cookies and no saved data.
+ * database. The customer types a website, confirms the business found by
+ * the free check, sees the three steps and checkout, pays with the labelled
+ * simulated payment (the paid reading then starts by itself), answers the
+ * intake and approves ten questions in the start sheet. The server runs the
+ * audit, so the tab is closed and reopened. The cron is started through the
+ * development trigger (it stands in for the one-minute cron). The report
+ * opens only from the emailed link, in a browser with no cookies and no
+ * saved data.
  */
 async function deliverAudit(ctx: DriveContext) {
   const { page } = ctx;
@@ -618,54 +659,75 @@ async function deliverAudit(ctx: DriveContext) {
   });
   expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
   ctx.check(
-    "Brand confirm (free lookup only) is reached with no order and no paid request",
+    "The business found (free lookup only) is reached with no order and no paid request",
   );
   await ctx.step("order-summary", async () => {
-    await pressLanjut(page);
-    await expect(orderScreen(page)).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: ORDER_HEADING }),
-    ).toBeVisible();
+    await continueToOrder(page);
+    await expectOrderSummaryPrice(page);
+    await expect(emailInput(page)).toBeVisible();
   });
   expect(ctx.calls).toEqual({ "GET /api/audit/identity": 1 });
   ctx.check(
-    "The order summary asks for an email; still no order and no paid request",
+    '"Tinggal 3 langkah" then checkout ("Konfirmasi dan bayar"): AI Visibility Report, Total Rp249.000, "Sekali bayar…", the delivery promise, the email field, and in the bottom bar `Bayar Rp249.000` over the Terms and Privacy consent; still no order and no paid request',
   );
-  await ctx.step("order-made-preparing", async () => {
-    // A short same-origin delay keeps the paid reading screen up long enough
-    // to see it; the answer itself stays the real synthetic route answer.
+  let orderNumber = "";
+  await ctx.step("simulated-payment-paid-reading", async () => {
+    // A short same-origin delay keeps the paid reading (J09) up long enough
+    // to see it reading; the answer itself stays the real synthetic answer.
     await page.route("**/api/audit/extract", async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       await route.continue();
     });
-    await submitOrder(page);
-    await expect(readingScreen(page)).toBeVisible();
+    orderNumber = await payOrder(page);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: new RegExp(`^(${READING_HEADING}|${READ_HEADING})$`),
+      }),
+    ).toBeVisible();
+    await expect(paidReadingScreen(page)).toContainText(
+      "Yang sudah kami temukan",
+    );
   });
-  await expectFocusScreen(page);
+  ctx.check(
+    `The labelled simulated payment (no Midtrans) leads straight to the paid reading, "Pembayaran diterima · ${orderNumber}", with no Lanjut pressed`,
+  );
+  await ctx.step("reading-done-cover", async () => {
+    await expectIntroBusiness(page);
+  });
   expect(ctx.calls["POST /api/orders"]).toBe(1);
+  expect(ctx.calls["POST /api/payments/start"]).toBe(1);
   expect(ctx.calls["POST /api/audit/extract"]).toBe(1);
   ctx.check(
-    "`Lanjut` with an email makes one order, then the paid reading runs once",
+    'The paid reading ran once by itself, under the same single order, then the Step 2 cover "Ceritakan bisnis Anda" shows',
   );
   await ctx.step("intake-to-questions", async () => {
+    await pressMulai(page);
     await confirmFocus(page);
     await throughDetailScreens(page);
     await confirmSummary(page);
     await expectQuestionReview(page);
     await expectTenQuestions(page);
   });
+  await ctx.step("start-sheet", async () => {
+    await openStartSheet(page);
+  });
+  expect(ctx.calls["POST /api/orders/approve"]).toBeUndefined();
+  ctx.check(
+    '`Jalankan audit` opens "Mulai audit sekarang?" and approves nothing by itself',
+  );
   await ctx.step("audit-started", async () => {
-    await startAudit(page);
+    await page.getByRole("button", { name: START_AUDIT, exact: true }).click();
     await expectAuditRunning(page);
   });
   ctx.check(
-    'Approving the questions shows "Anda boleh menutup halaman ini. Kami akan mengirim link laporan ke email Anda."',
+    '`Mulai audit sekarang` shows "Anda boleh menutup halaman ini. Audit akan tetap berjalan, dan link laporan dikirim ke email Anda."',
   );
   expect(ctx.calls["POST /api/orders/approve"]).toBe(1);
   expect(ctx.calls["POST /api/audit/run"]).toBeUndefined();
   expect(ctx.calls["POST /api/audit/report"]).toBeUndefined();
   ctx.check(
-    "The retired browser-driven /api/audit/run and /api/audit/report were never called",
+    "One approval; the retired browser-driven /api/audit/run and /api/audit/report were never called",
   );
   await ctx.step("tab-closed-and-reopened", async () => {
     await page.close();
@@ -679,11 +741,13 @@ async function deliverAudit(ctx: DriveContext) {
   await ctx.step("server-finishes-audit", async () => {
     // Stands in for the production cron, one audit step per order per run.
     await runServerAuditToDelivery(ctx.page);
-    await ctx.page.reload();
-    await expectAuditDelivered(ctx.page);
+    // N-11: no reload. The page's own status poll (every 5 s) shows the
+    // delivered state and then clears the saved order (Spec 016 R-31); a
+    // reload racing that poll could land on the entry screen.
+    await expectAuditDelivered(ctx.page, 30_000);
   });
   ctx.check(
-    "The server ran ten questions and the report, then the tab says the report was emailed (and does not show it)",
+    'The server ran ten questions and the report; the tab says "Laporan Anda sudah siap" (and does not show the report)',
   );
   const link = await readyLinkFromMail(startedAt);
   ctx.check("The fake mailbox holds a ready email with a private link");
@@ -713,7 +777,9 @@ async function openLinkInFreshBrowser(
 
 async function questionReview(ctx: DriveContext) {
   const { page } = ctx;
-  const wording = "Kedai kopi apa yang cocok untuk pekerja di Indonesia?";
+  // Spec 018 R-11a: an edit keeps the rules (at least 7 questions about
+  // choosing a place), so the edited question stays one.
+  const wording = "Rekomendasi kedai kopi yang cocok untuk pekerja kantoran?";
   await ctx.step("question-review", async () => {
     await toQuestions(page);
   });
@@ -732,12 +798,15 @@ async function questionReview(ctx: DriveContext) {
   });
   ctx.check("An edited question keeps its wording after a reload");
   const startedAt = Date.now() - 1_000;
+  await ctx.step("start-sheet", async () => {
+    await openStartSheet(page);
+  });
   await ctx.step("audit-started", async () => {
-    await startAudit(page);
+    await page.getByRole("button", { name: START_AUDIT, exact: true }).click();
     await expectAuditRunning(page);
   });
   ctx.check(
-    "`Mulai audit` approves the questions and shows that the audit runs on the server",
+    "`Jalankan audit` opens the start sheet; `Mulai audit sekarang` approves the questions and shows that the audit runs on the server",
   );
   await runServerAuditToDelivery(page);
   const link = await readyLinkFromMail(startedAt);
@@ -750,8 +819,27 @@ async function auditRun(ctx: DriveContext) {
   const link = await deliverAudit(ctx);
   const fresh = await openLinkInFreshBrowser(ctx, link);
   const report = reportLocator(fresh);
-  await expect(report.locator("[data-answer-body]")).toHaveCount(10);
-  ctx.check("The saved report shows ten answers");
+  // Spec 018 (AC-16): ChatGPT and Google AI Overview per question. The
+  // synthetic run fails question 7's ChatGPT check every time, shows an empty
+  // AI Overview twice for question 3 and none for question 5.
+  await expect(
+    report.locator('[data-source-answer="chatgpt"] [data-answer-body]'),
+  ).toHaveCount(9);
+  await expect(report.locator("[data-source-card]")).toHaveCount(2);
+  await expect(report.locator("[data-failed-slot]")).toHaveCount(1);
+  await expect(
+    report.locator('[data-report-answer="7"] [data-failed-slot]'),
+  ).toContainText("Tidak dapat diuji");
+  await expect(
+    report.locator('[data-report-answer="7"] a[data-help-link]'),
+  ).toHaveAttribute("href", /^mailto:support@nuave\.ai\?subject=/);
+  await expect(report.locator("[data-not-shown]")).toHaveCount(2);
+  await expect(report.locator("[data-failed-count]")).toContainText(
+    "1 pemeriksaan tidak dapat diuji",
+  );
+  ctx.check(
+    "The saved report shows both sources per question: nine ChatGPT answers, question 7's failed check as Tidak dapat diuji with Minta bantuan, and no AI Overview for questions 3 (empty twice) and 5",
+  );
   await expect(
     fresh.getByText("Audit uji — jawaban sintetis", { exact: true }),
   ).toBeVisible();
@@ -780,20 +868,28 @@ async function reportLink(ctx: DriveContext) {
     expect(headers["referrer-policy"]).toBe("no-referrer");
     await expect(savedReport(fresh)).toBeVisible({ timeout: 60_000 });
     await expect(
-      fresh.getByRole("navigation", { name: "Report contents" }),
+      fresh.getByRole("navigation", { name: "Isi laporan" }),
     ).toBeVisible();
   });
   ctx.check(
     "The emailed link opens the report in a browser with no cookies; the page is noindex and sends no referrer",
   );
   await ctx.step("download-pdf-pressed", async () => {
-    await fresh
-      .getByRole("button", { name: "Download PDF", exact: true })
-      .click();
-    expect(await printCalls()).toBe(1);
+    // The report has two: in the top bar and at the end. Each asks the PDF
+    // route first (Spec 021 Part P); a local run has no Browser Run, so the
+    // route answers pdf_unavailable and the page prints.
+    await expect(downloadPdfButtons(fresh)).toHaveCount(2);
+    const answer = fresh.waitForResponse(
+      (response) => new URL(response.url()).pathname === "/api/report/pdf",
+    );
+    await downloadPdfButtons(fresh).first().click();
+    expect((await answer).status()).toBe(501);
+    await expect.poll(printCalls).toBe(1);
+    await downloadPdfButtons(fresh).last().click();
+    await expect.poll(printCalls).toBe(2);
   });
   ctx.check(
-    "`Download PDF` opens the browser print dialog once (window.print)",
+    "Each `Unduh PDF` (top bar and at the end) asks the PDF route (pdf_unavailable locally) and then opens the browser print dialog once (window.print)",
   );
   await fresh.emulateMedia({ media: "print" });
   for (const answer of await reportLocator(fresh)
@@ -811,18 +907,13 @@ async function reportLink(ctx: DriveContext) {
     (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length,
   );
   await fresh.emulateMedia({ media: "screen" });
-  ctx.check("All ten answers are visible in print media; A4 PDF saved");
-  const { download, json } = await downloadEvidenceJson(fresh);
-  await download.saveAs(join(ctx.dir, "download-evidence.json"));
-  ctx.artifacts.json = "download-evidence.json";
-  ctx.artifacts.jsonSuggestedName = download.suggestedFilename();
-  expect(json.export_version).toBe("nuave-evidence-v5");
-  expect(json.observations).toHaveLength(10);
-  expect(json.report).toBeTruthy();
-  expect(JSON.stringify(json)).not.toContain(ORDER_EMAIL);
-  ctx.check(
-    "`Unduh bukti JSON` downloads nuave-evidence-v5 with ten observations and a report, and no email",
-  );
+  ctx.check("Every answer is visible in print media; A4 PDF saved");
+  // Spec 021 A-08: no JSON download on a two-source report (support exports
+  // it with `npm run support -- export`).
+  await expect(
+    fresh.getByRole("button", { name: "Unduh bukti JSON" }),
+  ).toHaveCount(0);
+  ctx.check("The report offers no `Unduh bukti JSON` button");
   // A wrong secret gets the plain not-available page and nothing else.
   const wrong = await ctx.freshBrowserPage();
   await ctx.step("wrong-link-not-available", async () => {

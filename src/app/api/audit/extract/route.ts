@@ -15,6 +15,7 @@ import {
   SensitiveSourceExcerptError,
 } from "@/lib/audit/source-excerpt";
 import { SafeSourceFetchError } from "@/lib/audit/safe-source-fetch";
+import { retryTransientSourceRead } from "@/lib/audit/retry-transient-read";
 import {
   auditLiveCredentialsResponse,
   auditMode,
@@ -197,11 +198,13 @@ export async function POST(request: Request) {
       ) {
         return extractionRateLimitResponse(503, "rate-unavailable");
       }
-      sourceData = await fetchWebsiteExcerpt(input.website_url, {
-        destinationRateLimiter: bindings.identityDestination ?? {
-          limit: async () => ({ success: true }),
-        },
-      });
+      sourceData = await retryTransientSourceRead(() =>
+        fetchWebsiteExcerpt(input.website_url, {
+          destinationRateLimiter: bindings.identityDestination ?? {
+            limit: async () => ({ success: true }),
+          },
+        }),
+      );
       sourceStatus = sourceData ? "included" : "no-usable-text";
     }
     const draft = await withOrderSpend(

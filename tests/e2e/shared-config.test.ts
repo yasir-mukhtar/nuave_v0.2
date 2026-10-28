@@ -50,6 +50,20 @@ describe("offlineE2EServerEnv", () => {
     expect(
       offlineE2EServerEnv({ NUAVE_AUDIT_MODE: "synthetic" }).NUAVE_AUDIT_MODE,
     ).toBe("synthetic");
+    // Spec 017: no test-pass code unless a suite sets its own fake one; the
+    // payment keys and the alert address are never set offline.
+    vi.stubEnv("NUAVE_TEST_PASS_CODE", "real-looking-test-pass-code-0001");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "real-looking-midtrans-key");
+    expect(offlineE2EServerEnv()).toMatchObject({
+      NUAVE_TEST_PASS_CODE: "",
+      MIDTRANS_SERVER_KEY: "",
+      NUAVE_FOUNDER_ALERT_EMAIL: "",
+    });
+    expect(
+      offlineE2EServerEnv({
+        NUAVE_TEST_PASS_CODE: "fake-code-of-24-or-more-chars",
+      }).NUAVE_TEST_PASS_CODE,
+    ).toBe("fake-code-of-24-or-more-chars");
     expect(() => offlineE2EServerEnv({ NUAVE_PROVIDER: "gemini" })).toThrow(
       "Unsupported Playwright server env override",
     );

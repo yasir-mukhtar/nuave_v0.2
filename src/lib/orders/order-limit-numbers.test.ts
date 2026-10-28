@@ -69,6 +69,8 @@ describe("what one order can hold (R-12)", () => {
         d1.db,
         {
           id,
+          orderNumber: "NV-AAAAAA",
+          paymentKind: "test",
           email: "owner@example.com",
           businessName: "Toko",
           website: "https://example.com/",

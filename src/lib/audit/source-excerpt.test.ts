@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  SOURCE_REQUEST_TIMEOUT_MS,
+  SOURCE_TOTAL_TIMEOUT_MS,
+} from "./safe-source-fetch";
+import {
   fetchWebsiteExcerpt,
   selectSourceExcerpt,
   SensitiveSourceExcerptError,
@@ -326,8 +330,11 @@ describe("bounded public website excerpt", () => {
         timeoutSignal,
       }),
     ).rejects.toMatchObject({ code: "TIMEOUT" });
-    expect(timeoutSignal).toHaveBeenCalledWith(5000);
-    const now = vi.fn().mockReturnValueOnce(0).mockReturnValue(10001);
+    expect(timeoutSignal).toHaveBeenCalledWith(SOURCE_REQUEST_TIMEOUT_MS);
+    const now = vi
+      .fn()
+      .mockReturnValueOnce(0)
+      .mockReturnValue(SOURCE_TOTAL_TIMEOUT_MS + 1);
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(null, {
         status: 302,

@@ -21,7 +21,25 @@ import {
   orderRuntime,
   orderUnavailableResponse,
 } from "@/lib/orders/http";
-import { approveOrder, getOrder, isOrderId } from "@/lib/orders/store";
+import {
+  approveOrder,
+  getOrder,
+  isOrderId,
+  orderMayRunPaidWork,
+  type OrderRow,
+} from "@/lib/orders/store";
+import { brandInputFor } from "@/lib/discovery/discover";
+import {
+  contextSearchPlace,
+  parseSavedPool,
+} from "@/lib/discovery/order-discovery";
+import {
+  originsForApproved,
+  validateSearchGroundedPack,
+  type QuestionOrigin,
+} from "@/lib/discovery/question-rules";
+import type { DirectTenAuditContext } from "@/lib/audit/direct-ten-context-v2";
+import { TWO_SOURCE_CHECKS } from "@/lib/orders/two-source";
 
 export const runtime = "nodejs";
 
@@ -40,8 +58,63 @@ const approveSchema = z
     prompts: z.array(promptSchema).length(10),
     /** The wording the question writer produced, before the owner's edits. */
     originals: z.array(z.string().trim().min(1).max(700)).length(10),
+    /** Spec 018: the origins the browser showed. Only compared with the
+     * server's own (R-07, AC-04); never trusted. */
+    question_origins: z.array(z.unknown()).length(10).optional(),
   })
   .strict();
+
+type SavedQuestions = {
+  mode: "grounded" | "fallback";
+  questions: string[];
+  origins: QuestionOrigin[];
+};
+
+/** Spec 018 R-07, R-11 and R-11a: the server derives each approved
+ * question's origin from what it saved when the questions were written, and
+ * runs the search checks on the approved texts. Returns the origins, or the
+ * issue messages. */
+function searchGroundedApproval(
+  order: OrderRow,
+  context: DirectTenAuditContext,
+  approved: string[],
+  shown: unknown[] | undefined,
+):
+  | { origins: QuestionOrigin[]; mode: "grounded" | "fallback" }
+  | { errors: string[] }
+  | null {
+  const place = contextSearchPlace(context);
+  if (!place) return null;
+  let saved: SavedQuestions | null = null;
+  try {
+    saved = order.questions_json
+      ? (JSON.parse(order.questions_json) as SavedQuestions)
+      : null;
+  } catch {
+    saved = null;
+  }
+  if (!saved || saved.questions?.length !== 10 || saved.origins?.length !== 10)
+    return { errors: ["Buat ulang pertanyaan audit, lalu coba lagi."] };
+  const origins = originsForApproved({
+    approved,
+    generated: saved.questions,
+    generatedOrigins: saved.origins,
+  });
+  if (shown && JSON.stringify(shown) !== JSON.stringify(origins))
+    return { errors: ["Asal pertanyaan tidak sesuai. Muat ulang halaman."] };
+  const pool = parseSavedPool(order.discovery_json);
+  const issues = validateSearchGroundedPack({
+    questions: approved,
+    origins,
+    place,
+    pool: saved.mode === "fallback" && pool ? { ...pool, thin: true } : pool,
+    brand: brandInputFor(context),
+    allowEdited: true,
+  });
+  return issues.length
+    ? { errors: [...new Set(issues.map((issue) => issue.message))] }
+    : { origins, mode: saved.mode === "grounded" ? "grounded" : "fallback" };
+}
 
 /**
  * Spec 016 R-17: approving the ten questions. Today's checks from the old run
@@ -141,6 +214,26 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+    // R-18: an unpaid or replaced order is refused with the same answer as an
+    // order that cannot continue, before anything is written.
+    if (!orderMayRunPaidWork(order)) {
+      return NextResponse.json(
+        { error: "Pesanan ini tidak dapat dilanjutkan.", code: "ORDER_STATE" },
+        { status: 409 },
+      );
+    }
+    const search = searchGroundedApproval(
+      order,
+      input.context,
+      locked.prompts.map((prompt) => prompt.question),
+      input.question_origins,
+    );
+    if (search && "errors" in search) {
+      return NextResponse.json(
+        { error: search.errors.join(" "), code: "QUESTION_RULES" },
+        { status: 422 },
+      );
+    }
     // Approving twice is harmless: the saved questions never change.
     if (order.state !== "open") {
       return order.started_at
@@ -163,7 +256,16 @@ export async function POST(request: Request) {
         context: input.context,
         prompts: locked.prompts,
         originals: input.originals,
+        // Spec 018: an intake with a search place asks ChatGPT and Google.
+        ...(search
+          ? {
+              question_origins: search.origins,
+              question_mode: search.mode,
+              checks: TWO_SOURCE_CHECKS,
+            }
+          : {}),
       }),
+      twoSource: Boolean(search),
       now,
     });
     if (!approved) {

@@ -1,0 +1,457 @@
+/* S4 · Cara kerja (Figma 288:554, 289:548). Phone: a vertical track with
+   ringed numbers on the left. From 1024px: three equal columns joined by a
+   horizontal track, the pictures aligned at the foot. */
+
+.steps {
+  position: relative;
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1px 0 40px 44px;
+}
+
+.step:last-child {
+  padding-bottom: 0;
+}
+
+/* The vertical track, from under one ring to the next. */
+.step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: 0;
+  left: 13.5px;
+  width: 1px;
+  background: var(--line-300);
+}
+
+.num {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--ink-900);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  box-shadow: 0 0 0 6px #ffffff;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: 26px;
+  letter-spacing: -0.015em;
+}
+
+.tag {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--ember-50);
+  color: var(--ember-700);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.text {
+  margin: 6px 0 0;
+  color: var(--ink-600);
+  text-wrap: pretty;
+  font-size: var(--type-copy-size);
+  line-height: var(--type-copy-leading);
+}
+
+.text b {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
+.sketch {
+  margin-top: 16px;
+}
+
+.card {
+  position: relative;
+  border: 1px solid var(--line-200);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--elevation-card);
+  color: var(--ink-900);
+}
+
+/* Step 1: the website, then the clinic Nuave found. */
+.webCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px solid var(--line-300);
+  border-radius: 999px;
+  font-size: var(--type-copy-size);
+  line-height: 24px;
+}
+
+.fieldIcon {
+  flex: none;
+  color: var(--ink-500);
+}
+
+.caret {
+  flex: none;
+  width: 1.5px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 1px;
+  background: var(--ink-900);
+}
+
+.found {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 8px 6px 6px;
+  border-radius: 12px;
+  background: var(--stone-50);
+}
+
+.thumb {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(160deg, #fbf8f1 0%, #f1ede3 100%);
+}
+
+.thumb img {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+.foundName {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: 18px;
+}
+
+.foundName b {
+  color: var(--ink-900);
+  font-weight: 600;
+}
+
+.check {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--ink-900);
+  color: #ffffff;
+}
+
+/* Step 2: a question card on a short pile of the other nine. */
+.stack {
+  position: relative;
+}
+
+.pile1,
+.pile2 {
+  position: absolute;
+  left: 50%;
+  height: 24px;
+  border: 1px solid var(--line-200);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+  background: #ffffff;
+  transform: translateX(-50%);
+}
+
+.pile1 {
+  bottom: -6px;
+  width: 94%;
+}
+
+.pile2 {
+  bottom: -12px;
+  width: 88%;
+  background: var(--stone-50);
+}
+
+.questionCard {
+  z-index: 1;
+  padding: 16px 18px 18px;
+}
+
+.qTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  color: var(--ink-600);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: 20px;
+}
+
+.qExample {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--stone-100);
+  line-height: 16px;
+}
+
+.qChip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  height: 24px;
+  margin: 12px 0 0;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--line-300);
+  border-radius: 999px;
+  color: var(--ink-700);
+  font-size: var(--type-label-sm-size);
+  font-weight: var(--type-label-sm-weight);
+  line-height: 16px;
+}
+
+.qQuery {
+  margin: 10px 0 0;
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: 22px;
+  letter-spacing: -0.01em;
+}
+
+.qMeta {
+  margin: 6px 0 0;
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  line-height: 18px;
+}
+
+/* Step 3: the report email. */
+.mail {
+  padding: 16px 18px 18px;
+}
+
+.mailFrom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  margin: 0;
+}
+
+.mailAvatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--ember-50);
+}
+
+.mailMark {
+  width: 15px;
+  height: auto;
+}
+
+.mailName {
+  flex: 1;
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: 20px;
+}
+
+.unread {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ember-600);
+}
+
+.mailSubject {
+  margin: 10px 0 0;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 21px;
+}
+
+.mailButton {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  margin-top: 14px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--ink-900);
+  color: #ffffff;
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: 18px;
+}
+
+.caption {
+  margin-top: 32px;
+}
+
+@media (min-width: 768px) {
+  .caption {
+    text-align: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .steps {
+    --gap: clamp(24px, 3.33vw, 48px);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--gap);
+    margin-top: 72px;
+  }
+
+  /* One horizontal track from the first ring's centre to the last: two
+     columns and two gaps. */
+  .steps::before {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: calc(66.667% + var(--gap) * 2 / 3);
+    height: 1px;
+    background: var(--line-300);
+  }
+
+  .step {
+    padding: 0;
+  }
+
+  .step:not(:last-child)::before {
+    display: none;
+  }
+
+  .num {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    box-shadow: 0 0 0 8px #ffffff;
+  }
+
+  .titleRow {
+    margin-top: 24px;
+  }
+
+  .title {
+    line-height: 28px;
+  }
+
+  .text {
+    margin-top: 8px;
+  }
+
+  .sketch {
+    margin-top: auto;
+    padding-top: 32px;
+  }
+
+  .card {
+    height: 168px;
+  }
+
+  .webCard {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .field {
+    gap: 12px;
+    padding: 0 18px;
+  }
+
+  .caret {
+    height: 20px;
+    margin-left: -11px;
+  }
+
+  .found {
+    gap: 12px;
+    padding: 8px 12px 8px 8px;
+    border-radius: 14px;
+  }
+
+  .thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .thumb img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .foundName {
+    line-height: 22px;
+  }
+
+  .check {
+    width: 22px;
+    height: 22px;
+  }
+
+  .caption {
+    margin-top: 48px;
+  }
+}

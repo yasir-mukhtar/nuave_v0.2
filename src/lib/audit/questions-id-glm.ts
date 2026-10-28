@@ -49,7 +49,16 @@ export const INDONESIAN_QUESTION_GLM_ENDPOINT =
 export const INDONESIAN_QUESTION_GLM_MODEL = "glm-5.3-flash" as const;
 export const INDONESIAN_QUESTION_GLM_SYSTEM =
   "Cheaper Inference chat completions" as const;
-export const INDONESIAN_QUESTION_GLM_MAX_OUTPUT_TOKENS = 4_096 as const;
+/** The model's thinking and its answer share this limit. With the Spec 018
+ * search brief, low-effort thinking alone ran 1,500 to 4,000+ tokens and
+ * varied call to call (the marketplace routes each call to a different
+ * host); at 4,096 one call in five or so ended "length" with the answer cut
+ * off (live replay, 2026-10-26). 16,384 leaves the answer room even when the
+ * thinking runs long; a typical call still uses 2,000 to 3,500 and costs
+ * about 0.001 USD. The question-writer canary
+ * (scripts/canary/question-writer.spec.ts) fails when a call uses more than
+ * half of it. */
+export const INDONESIAN_QUESTION_GLM_MAX_OUTPUT_TOKENS = 16_384 as const;
 export const INDONESIAN_QUESTION_GLM_REASONING_EFFORT = "low" as const;
 export const INDONESIAN_QUESTION_GLM_INSTRUCTION_VERSION =
   "glm-writer-2026-09-17" as const;
@@ -243,14 +252,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * read reported `null` for a real settled cost. Both representations parse
  * to the settled amount; malformed, negative, non-finite or empty values
  * stay `null`. The raw body is never altered.
+ *
+ * Where the provider puts it has moved: replies up to mid-October 2026 carried
+ * `cheaper_inference.billing`; replies from at least 2026-10-25 carry a
+ * top-level `billing` (and `usage.cost`). An unread cost leaves the call's
+ * 0.05 USD reservation held for good, which fills the order's 0.25 USD
+ * question allowance after five calls, so every known place is read: the
+ * settled `billing` first, then the older place, then `usage.cost`.
  */
 export function cheaperInferenceBilledCostUsd(body: unknown): number | null {
-  const billing =
-    isRecord(body) && isRecord(body.cheaper_inference)
-      ? body.cheaper_inference.billing
-      : null;
-  if (!isRecord(billing)) return null;
-  const value = billing.billed_cost_usd;
+  if (!isRecord(body)) return null;
+  const legacy = isRecord(body.cheaper_inference)
+    ? body.cheaper_inference.billing
+    : null;
+  for (const billing of [body.billing, legacy]) {
+    if (!isRecord(billing)) continue;
+    const billed = costValue(billing.billed_cost_usd);
+    if (billed !== null) return billed;
+  }
+  return isRecord(body.usage) ? costValue(body.usage.cost) : null;
+}
+
+function costValue(value: unknown): number | null {
   if (typeof value === "number") {
     return Number.isFinite(value) && value >= 0 ? value : null;
   }

@@ -1,0 +1,106 @@
+/* The clinic landing page's shared section shell (Spec 020).
+   Gutter: 24px on a phone, 40px from 768px; content is at most 1200px wide,
+   so at 1440 the edges sit at 120px as in Figma. */
+
+.page {
+  --gutter: 24px;
+  min-height: 100svh;
+  background: #ffffff;
+  color: var(--ink-900);
+}
+
+@media (min-width: 768px) {
+  .page {
+    --gutter: 40px;
+  }
+}
+
+/* The sticky bar covers the bottom 69px of a phone screen (plus the home-bar
+   inset) and the top 65px from 768px. The browser keeps a focused element,
+   and every scroll to one, clear of it. */
+:global(html):has(.page) {
+  scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+.section {
+  scroll-margin-top: 16px;
+  padding: 80px 0;
+  background: #ffffff;
+}
+
+.band {
+  background: var(--stone-50);
+}
+
+.container {
+  width: 100%;
+  max-width: calc(1200px + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* Heading block: left on a phone (the content under it starts at the same
+   edge), centred from 768px. */
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.headCenter {
+  align-items: center;
+  text-align: center;
+}
+
+.h2 {
+  margin: 0;
+  color: var(--ink-900);
+}
+
+.h2 span {
+  display: block;
+}
+
+.line {
+  margin: 12px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-lg-size);
+  font-weight: var(--type-copy-lg-weight);
+  line-height: var(--type-copy-lg-leading);
+}
+
+.caption {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-leading);
+}
+
+@media (min-width: 768px) {
+  :global(html):has(.page) {
+    scroll-padding-top: 72px;
+    scroll-padding-bottom: 0;
+  }
+
+  /* The scroll padding above already leaves room for the bar. */
+  .section {
+    scroll-margin-top: 0;
+  }
+
+  .head {
+    align-items: center;
+    text-align: center;
+  }
+
+  .line {
+    margin-top: 16px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .section {
+    padding: 128px 0 120px;
+  }
+}

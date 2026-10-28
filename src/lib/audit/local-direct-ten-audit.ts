@@ -1,3 +1,8 @@
+import type {
+  TwoSourceReportFacts,
+  TwoSourceWriterFacts,
+} from "./two-source-report";
+import { assembleTwoSourceWriting, hasWriterFacts } from "./two-source-writer";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -26,6 +31,7 @@ import {
   type BusinessBrief,
   type ExtractionDraft,
   type ReportSynthesis,
+  type TwoSourceWritingSynthesis,
 } from "./types";
 
 /**
@@ -394,16 +400,23 @@ export async function executeSyntheticLocalObservation(
 function syntheticDirectTenSynthesis(
   observations: AuditObservation[],
   brandName: string,
+  facts?: TwoSourceReportFacts,
 ): ReportSynthesis {
   const ids = observations.map((observation) => observation.prompt_id);
+  // Spec 018: a two-source synthetic report speaks per source and agrees with
+  // the code counts, as a live one must.
+  const conclusion = facts
+    ? `Ini adalah uji alur lokal dengan jawaban sintetis berlabel, bukan bukti visibilitas. Di ChatGPT, jawaban sintetis menyebut ${brandName} di ${facts.counts.chatgpt.named} dari ${facts.counts.chatgpt.completed} pertanyaan; di Google AI Overview, di ${facts.counts.google.named} dari ${facts.counts.google.summaries} ringkasan. Hasil ini tidak menunjukkan apa pun tentang visibilitas ${brandName} yang sebenarnya.`
+    : `Ini adalah uji alur lokal dengan jawaban sintetis berlabel, bukan bukti visibilitas. ${brandName} tidak disebut dalam jawaban sintetis mana pun, sebagaimana dirancang; hasil ini tidak menunjukkan apa pun tentang visibilitas ${brandName} yang sebenarnya.`;
   return {
-    conclusion: `Ini adalah uji alur lokal dengan jawaban sintetis berlabel, bukan bukti visibilitas. ${brandName} tidak disebut dalam jawaban sintetis mana pun, sebagaimana dirancang; hasil ini tidak menunjukkan apa pun tentang visibilitas ${brandName} yang sebenarnya.`,
+    conclusion,
     accuracy_status: "could_not_assess",
     key_findings: [
       {
         title: "Seluruh jawaban pada sesi ini sintetis",
-        explanation:
-          "Sepuluh pertanyaan dijalankan melalui jalur audit lokal dengan jawaban contoh berlabel. Tidak ada respons model atau penelusuran web, sehingga tidak ada temuan visibilitas yang dapat ditarik.",
+        explanation: facts
+          ? "Di ChatGPT dan Google AI Overview, sepuluh pertanyaan dijalankan melalui jalur audit lokal dengan jawaban contoh berlabel. Tidak ada respons nyata atau penelusuran web, sehingga tidak ada temuan visibilitas yang dapat ditarik."
+          : "Sepuluh pertanyaan dijalankan melalui jalur audit lokal dengan jawaban contoh berlabel. Tidak ada respons model atau penelusuran web, sehingga tidak ada temuan visibilitas yang dapat ditarik.",
         evidence_prompt_ids: ids,
       },
     ],
@@ -414,8 +427,9 @@ function syntheticDirectTenSynthesis(
         action:
           "Jalankan audit dengan jawaban nyata yang disetujui sebelum mengambil keputusan apa pun.",
         why: "Setiap pertanyaan dalam sesi ini menghasilkan jawaban sintetis tanpa penelusuran, jadi tidak ada celah visibilitas yang benar-benar teramati.",
-        basis:
-          "Sepuluh dari sepuluh jawaban berlabel sintetis dan tidak menyebut bisnis.",
+        basis: facts
+          ? "Sepuluh dari sepuluh jawaban berlabel sintetis."
+          : "Sepuluh dari sepuluh jawaban berlabel sintetis dan tidak menyebut bisnis.",
         owner: "business_owner",
         done_when:
           "Satu audit dengan jawaban provider nyata selesai dan lolos validasi.",
@@ -433,19 +447,153 @@ function syntheticDirectTenSynthesis(
   };
 }
 
+/**
+ * Spec 021 Part B: the labelled synthetic writer's answer in the new shape,
+ * so the journey, the e2e tests and the PDF show every new field. Every
+ * number is one code can confirm; nothing claims real visibility.
+ */
+export function syntheticTwoSourceWriting(
+  observations: AuditObservation[],
+  brandName: string,
+  facts: TwoSourceReportFacts & { writer: TwoSourceWriterFacts },
+): TwoSourceWritingSynthesis {
+  const base = syntheticDirectTenSynthesis(observations, brandName, facts);
+  const ids = observations.map((observation) => observation.prompt_id);
+  const { chatgpt, google } = facts.counts;
+  const businesses = new Set(
+    facts.writer.questions.flatMap((q) =>
+      [...q.businesses.chatgpt, ...q.businesses.google].map((name) =>
+        name.toLocaleLowerCase("id-ID"),
+      ),
+    ),
+  );
+  const first = facts.writer.businesses[0];
+  return {
+    verdict: `Uji alur sintetis: di ChatGPT, ${brandName} disebut di ${chatgpt.named} dari ${chatgpt.completed} jawaban; ini bukan bukti visibilitas.`,
+    conclusion: base.conclusion,
+    accuracy_status: base.accuracy_status,
+    key_findings: [
+      {
+        ...base.key_findings[0]!,
+        headline:
+          chatgpt.completed > 0
+            ? {
+                number: `${chatgpt.named} dari ${chatgpt.completed}`,
+                caption: `jawaban ChatGPT sintetis yang menyebut ${brandName}`,
+                basis: "chatgpt_named",
+              }
+            : null,
+      },
+      {
+        title: "Bisnis lain muncul di jawaban sintetis",
+        explanation:
+          "Di ChatGPT dan Google AI Overview, jawaban contoh menyebut beberapa bisnis lain. Nama ini fiktif dan hanya menguji tampilan laporan.",
+        evidence_prompt_ids: ids,
+        headline:
+          businesses.size > 0
+            ? {
+                number: String(businesses.size),
+                caption: "bisnis lain yang disebut di jawaban sintetis",
+                basis: "named_businesses",
+              }
+            : null,
+      },
+      {
+        title: "Ringkasan Google sintetis berbeda per pertanyaan",
+        explanation: `Google menampilkan AI Overview sintetis di ${google.summaries} dari ${google.completed} pertanyaan. Ini hanya menguji tampilan.`,
+        evidence_prompt_ids: ids,
+        headline: null,
+      },
+    ],
+    priorities: [
+      {
+        order: 1,
+        action: "Jalankan audit dengan jawaban nyata",
+        why: "Jawaban di sesi ini sintetis dan tanpa penelusuran. Jalankan satu audit nyata yang disetujui, lalu baca hasilnya sebelum mengambil keputusan.",
+        evidence_prompt_ids: [ids[0]!],
+      },
+      {
+        order: 2,
+        action: "Lengkapi profil bisnis contoh",
+        why: "Langkah ini hanya menguji tampilan rekomendasi. Pada audit nyata, saran datang dari playbook Nuave yang disetujui.",
+        evidence_prompt_ids: [ids[1] ?? ids[0]!],
+      },
+      {
+        order: 3,
+        action: "Bandingkan hasil setelah audit ulang",
+        why: "Audit ulang dengan sepuluh pertanyaan yang sama membuat hasilnya bisa dibandingkan.",
+        evidence_prompt_ids: [ids[2] ?? ids[0]!],
+      },
+    ],
+    assessments: base.assessments,
+    competitor_reasons: first
+      ? [
+          {
+            name: first,
+            reason: "jawaban sintetis menyebutnya sebagai contoh pilihan lain.",
+          },
+        ]
+      : [],
+    takeaways: [
+      {
+        title: "Semua nama di sini fiktif",
+        text: "Jawaban sintetis menyebut bisnis fiktif; tidak ada pola nyata yang bisa dibaca.",
+      },
+      {
+        title: "Bagian ini merangkum kesamaan",
+        text: "Pada audit nyata, bagian ini merangkum kesamaan bisnis yang disebut AI.",
+      },
+    ],
+    plan: [
+      {
+        weeks: "Minggu 1–2",
+        title: "Jalankan audit nyata",
+        text: "Pesan satu audit dengan jawaban nyata yang disetujui.",
+      },
+      {
+        weeks: "Minggu 3–4",
+        title: "Baca rekomendasinya",
+        text: "Kerjakan saran yang paling jelas lebih dulu.",
+      },
+      {
+        weeks: "Minggu 5–8",
+        title: "Audit ulang",
+        text: "Ulangi sepuluh pertanyaan yang sama untuk membandingkan hasil.",
+      },
+    ],
+    topic_names: facts.writer.questions
+      .filter((q) => q.topic === null)
+      .map((q) => ({ prompt_id: q.prompt_id, topic: "Topik contoh sintetis" })),
+    google_readings: facts.google
+      .filter((item) => item.business_named === true)
+      .map((item) => ({ prompt_id: item.prompt_id, recommended: false })),
+  };
+}
+
 export const generateSyntheticLocalReport: ReportGenerator = async (input) => {
-  const synthesis = syntheticDirectTenSynthesis(
-    input.observations,
-    subjectBrandName(input.brief),
-  );
-  const content = assembleReportContent(
-    synthesis,
-    input.observations,
-    input.brief,
-    undefined,
-    "direct-ten",
-    "id",
-  );
+  const facts = input.two_source_facts;
+  const content = hasWriterFacts(facts)
+    ? assembleTwoSourceWriting(
+        syntheticTwoSourceWriting(
+          input.observations,
+          subjectBrandName(input.brief),
+          facts,
+        ),
+        input.observations,
+        input.brief,
+      )
+    : assembleReportContent(
+        syntheticDirectTenSynthesis(
+          input.observations,
+          subjectBrandName(input.brief),
+          facts,
+        ),
+        input.observations,
+        input.brief,
+        undefined,
+        "direct-ten",
+        "id",
+      );
   const responseId = "synthetic-local-report-1";
   return {
     content,

@@ -6,6 +6,10 @@ import {
   type OrderState,
   type SpendDb,
 } from "../spending/spend-ledger";
+import {
+  isOrderNumberCollision,
+  newOrderNumber as makeOrderNumber,
+} from "./order-number";
 
 /**
  * D1 access for orders (spec 016). Every state change is one conditional
@@ -15,6 +19,9 @@ import {
 
 export const ORDER_OPEN_MS = 2 * 60 * 60 * 1000; // Q2: 2 hours
 export const ORDER_DEADLINE_MS = 24 * 60 * 60 * 1000; // D2: start + 24 hours
+/** Spec 017 R-11/R-13: a paid order waits this long, from payment, for its
+ * questions to be approved. */
+export const ORDER_PAID_MS = 7 * 24 * 60 * 60 * 1000;
 export const FAILURE_EMAIL_WINDOW_MS = 24 * 60 * 60 * 1000; // R-25
 /** Email retries back off: after the first failed attempt wait 2 minutes, then
  * 4, 8, 16 and 32, and at most 60 minutes between attempts from then on. */
@@ -33,6 +40,9 @@ export const MAX_REPORT_ATTEMPTS = 3; // R-19, as classifyReportRecovery
 export type OrderMode = "live" | "synthetic";
 export type OrderEnvironment = "production" | "preview";
 
+/** Spec 017 R-23. NULL in the database means `legacy`: made by S3 code. */
+export type PaymentKind = "unpaid" | "test" | "midtrans" | "simulated";
+
 export const ORDER_ID_PATTERN = /^[0-9a-f]{32}$/;
 
 /** R-02: 128 random bits, made by the server. */
@@ -49,6 +59,7 @@ export function isOrderId(value: unknown): value is string {
 
 export type OrderRow = {
   id: string;
+  /** Emptied when the order is made anonymous (retention.ts). */
   email: string;
   business_name: string;
   website: string;
@@ -72,10 +83,95 @@ export type OrderRow = {
   ended_at: string | null;
   failure_code: string | null;
   overrun: number;
+  /** Spec 017 (migration 6). */
+  order_number: string | null;
+  paid_at: string | null;
+  /** NULL = legacy (R-23). */
+  payment_kind: PaymentKind | null;
+  replaced_by: string | null;
+  paid_attempt_id: string | null;
+  paid_transaction_id: string | null;
+  refunded_at: string | null;
+  /** Spec 018 R-07 (migration 9). */
+  discovery_json: string | null;
+  discovery_key: string | null;
+  discovery_runs: number;
+  questions_json: string | null;
+  /** Set when the hourly cleanup made the order anonymous (migration 0011). */
+  purged_at?: string | null;
+  /** A support hold keeps the order past its lifetime until then. */
+  hold_until?: string | null;
+  /** When `support email` last replaced a mistyped email. */
+  email_changed_at?: string | null;
+  /** Spec 022 (migration 0015): the Purchase event code, made with the
+   * payment; and the one server send's time, consent version and outcome. */
+  meta_event_id?: string | null;
+  /** Spec 021 B-08 (migration 0016): the pages read for the report
+   * (`SavedPages` in pages.ts). */
+  pages_json?: string | null;
+  meta_sent_at?: string | null;
+  meta_consent_version?: string | null;
+  meta_outcome?: string | null;
 };
+
+/** R-18: SQL for "this order may run paid work": paid through Midtrans, a
+ * founder test pass, legacy (NULL), or the synthetic-mode simulated payment (in
+ * a synthetic order only), and not replaced. An `unpaid` order never passes. */
+export const PAID_GATE_SQL = `(payment_kind IS NULL
+  OR payment_kind IN ('midtrans', 'test')
+  OR (payment_kind = 'simulated' AND mode = 'synthetic'))
+  AND replaced_by IS NULL`;
+
+/** R-18: the same rule on a row already read. */
+export function orderMayRunPaidWork(
+  order: Pick<OrderRow, "payment_kind" | "mode" | "replaced_by">,
+): boolean {
+  if (order.replaced_by !== null) return false;
+  switch (order.payment_kind) {
+    case null:
+    case "midtrans":
+    case "test":
+      return true;
+    case "simulated":
+      return order.mode === "synthetic";
+    default:
+      return false;
+  }
+}
 
 const ACTIVE_STATES = `'running', 'reporting'`;
 const iso = (at: Date) => at.toISOString();
+
+/** R-07: one rule for "the order's end time has passed". `expires_at` is the end
+ * time: created + 2 hours; pushed out to the attempt's window end + grace when a
+ * payment attempt starts; paid time + 7 days once paid (R-11, R-13). An order
+ * with an open payment attempt never ends. `now` is a SQL parameter (`?2`). */
+export const orderPastEndSql = (now: string) =>
+  `(expires_at <= ${now} AND NOT EXISTS (SELECT 1 FROM payment_attempts a
+                                         WHERE a.order_id = orders.id AND a.status = 'open'))`;
+
+/** R-07 on a row already read. */
+export async function orderPastEnd(
+  db: SpendDb,
+  order: Pick<OrderRow, "id" | "state" | "expires_at">,
+  now: Date,
+): Promise<boolean> {
+  if (order.state !== "open" || order.expires_at > iso(now)) return false;
+  return !(await hasOpenAttempt(db, order.id));
+}
+
+export async function hasOpenAttempt(
+  db: SpendDb,
+  orderId: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT 1 AS open FROM payment_attempts WHERE order_id = ?1 AND status = 'open' LIMIT 1",
+    )
+    .bind(orderId)
+    .first<{ open: number }>();
+  return row !== null;
+}
 
 export async function getOrder(
   db: SpendDb,
@@ -106,15 +202,30 @@ export async function orderInState(
     !order ||
     order.environment !== input.environment ||
     order.mode !== input.mode ||
-    !input.states.includes(order.state)
+    !input.states.includes(order.state) ||
+    // R-18: an unpaid or replaced order is refused like a missing one.
+    !orderMayRunPaidWork(order)
   ) {
     return null;
   }
-  // An open order past its time is as good as expired (R-22).
-  if (order.state === "open" && order.expires_at <= iso(input.now)) return null;
+  // An open order past its end time is as good as expired (R-22, R-07).
+  if (await orderPastEnd(db, order, input.now)) return null;
   return order;
 }
 
+/** How many times a new order number is drawn when the unique index says it is
+ * taken (R-01). 31^6 numbers make even one retry very unlikely. */
+const ORDER_NUMBER_TRIES = 5;
+
+/**
+ * Spec 017: make one order. `unpaid` (the customer's order) holds nothing
+ * (R-10, AC-10); `test` (the founder test pass, R-20) reserves its hold now,
+ * live mode only and only if the daily cap has room. The order number is made
+ * here, and a collision with an existing one is retried (R-01). With
+ * `previousOrderId` the older order is replaced in the same write (R-19): the
+ * result is "previous_active" when it is paid, has an open payment attempt or
+ * (Q14) an attempt closed as unknown.
+ */
 export async function createOrder(
   db: SpendDb,
   input: {
@@ -123,33 +234,126 @@ export async function createOrder(
     website: string;
     mode: OrderMode;
     environment: OrderEnvironment;
-    /** Live orders: the limit held against the daily cap (R-08). */
+    paymentKind: "unpaid" | "test";
+    /** The test pass's hold, against the daily cap (R-08, R-10). */
     limitUsd: number;
     dailyLimitUsd: number;
+    previousOrderId?: unknown;
     now: Date;
+    /** Tests only: where order numbers come from. */
+    newOrderNumber?: () => string;
   },
-): Promise<{ result: CreateOrderResult; orderId: string }> {
+): Promise<{
+  result: CreateOrderResult;
+  orderId: string;
+  orderNumber: string;
+  /** With "previous_active": why the older order could not be replaced. */
+  previousState?: "paid" | "payment_open" | "payment_unknown";
+}> {
   const orderId = newOrderId();
-  const result = await createOrderWithHold(
-    db,
-    {
-      id: orderId,
-      email: input.email,
-      businessName: input.businessName,
-      website: input.website,
-      mode: input.mode,
-      environment: input.environment,
-      createdAt: input.now,
-      expiresAt: new Date(input.now.getTime() + ORDER_OPEN_MS),
-    },
-    input.mode === "live"
-      ? {
-          limitUnits: usdToUnits(input.limitUsd),
-          dailyLimitUnits: usdToUnits(input.dailyLimitUsd),
-        }
-      : null,
-  );
-  return { result, orderId };
+  const draw = input.newOrderNumber ?? makeOrderNumber;
+  for (let tries = 1; ; tries += 1) {
+    const orderNumber = draw();
+    try {
+      const result = await createOrderWithHold(
+        db,
+        {
+          id: orderId,
+          orderNumber,
+          paymentKind: input.paymentKind,
+          email: input.email,
+          businessName: input.businessName,
+          website: input.website,
+          mode: input.mode,
+          environment: input.environment,
+          createdAt: input.now,
+          expiresAt: new Date(input.now.getTime() + ORDER_OPEN_MS),
+          ...(isOrderId(input.previousOrderId)
+            ? { replacing: { orderId: input.previousOrderId } }
+            : {}),
+        },
+        input.paymentKind === "test" && input.mode === "live"
+          ? {
+              limitUnits: usdToUnits(input.limitUsd),
+              dailyLimitUnits: usdToUnits(input.dailyLimitUsd),
+            }
+          : null,
+      );
+      return {
+        result,
+        orderId,
+        orderNumber,
+        ...(result === "previous_active"
+          ? {
+              previousState: await previousOrderState(
+                db,
+                input.previousOrderId as string,
+              ),
+            }
+          : {}),
+      };
+    } catch (error) {
+      if (!isOrderNumberCollision(error) || tries >= ORDER_NUMBER_TRIES) {
+        throw error;
+      }
+    }
+  }
+}
+
+async function previousOrderState(
+  db: SpendDb,
+  orderId: string,
+): Promise<"paid" | "payment_open" | "payment_unknown"> {
+  const row = await db
+    .prepare(
+      `SELECT payment_kind,
+              EXISTS (SELECT 1 FROM payment_attempts
+                      WHERE order_id = ?1 AND status = 'closed_unknown') AS unknown
+       FROM orders WHERE id = ?1`,
+    )
+    .bind(orderId)
+    .first<{ payment_kind: PaymentKind | null; unknown: number }>();
+  if (row?.payment_kind === "midtrans" || row?.payment_kind === "simulated") {
+    return "paid";
+  }
+  // Q14: only an attempt still closed as unknown says so; anything else (an
+  // open attempt, or one that changed since the refusal) stays "payment_open".
+  return row?.unknown ? "payment_unknown" : "payment_open";
+}
+
+/** R-23: an order made by S3 code has no number. Give it one before its next
+ * email (the S3 ready and failure emails do). Returns the order's number,
+ * whoever wrote it; a collision with another order's number draws again. */
+export async function ensureOrderNumber(
+  db: SpendDb,
+  order: Pick<OrderRow, "id" | "order_number">,
+  draw: () => string = makeOrderNumber,
+): Promise<string> {
+  if (order.order_number) return order.order_number;
+  for (let tries = 1; ; tries += 1) {
+    const candidate = draw();
+    try {
+      const result = await db
+        .prepare(
+          `UPDATE orders SET order_number = ?2
+           WHERE id = ?1 AND order_number IS NULL`,
+        )
+        .bind(order.id, candidate)
+        .run();
+      if (result.meta?.changes === 1) return candidate;
+      // Another run gave it a number first: use that one.
+      const row = await db
+        .prepare("SELECT order_number FROM orders WHERE id = ?1")
+        .bind(order.id)
+        .first<{ order_number: string | null }>();
+      if (row?.order_number) return row.order_number;
+      throw new Error("order number could not be assigned");
+    } catch (error) {
+      if (!isOrderNumberCollision(error) || tries >= ORDER_NUMBER_TRIES) {
+        throw error;
+      }
+    }
+  }
 }
 
 export type OrderQuestionRow = {
@@ -164,13 +368,23 @@ export type OrderQuestionRow = {
   last_failure: string | null;
   attempts_json: string;
   observation_json: string | null;
+  /** Spec 018 (migration 10): the Google check. NULL g_status = an order
+   * approved before Spec 018 (one source). */
+  g_status: "pending" | "done" | "exhausted" | null;
+  g_attempts: number;
+  g_next_attempt_at: string | null;
+  g_last_failure: string | null;
+  g_empty: number;
+  g_result_json: string | null;
+  c_facts_json: string | null;
 };
 
 /**
  * R-17: move the order to `running` and save, unchanged from then on, the
  * confirmed business details, the approved and original questions, the start
  * time (the D2 clock) and the deadline. One batch; only an `open` order that
- * has not passed its time can be approved.
+ * has not passed its time, and that is paid, a test pass or legacy (R-18), can
+ * be approved.
  */
 export async function approveOrder(
   db: SpendDb,
@@ -182,6 +396,8 @@ export async function approveOrder(
     businessName: string;
     promptIds: readonly string[];
     now: Date;
+    /** Spec 018: each question is also asked to Google (migration 10). */
+    twoSource?: boolean;
   },
 ): Promise<boolean> {
   const startedAt = iso(input.now);
@@ -192,8 +408,8 @@ export async function approveOrder(
         `UPDATE orders
          SET state = 'running', started_at = ?2, deadline_at = ?3,
              intake_json = ?4, business_name = ?5
-         WHERE id = ?1 AND state = 'open' AND expires_at > ?2
-           AND environment = ?6 AND mode = ?7`,
+         WHERE id = ?1 AND state = 'open' AND NOT ${orderPastEndSql("?2")}
+           AND environment = ?6 AND mode = ?7 AND ${PAID_GATE_SQL}`,
       )
       .bind(
         input.orderId,
@@ -207,12 +423,18 @@ export async function approveOrder(
     ...input.promptIds.map((promptId, position) =>
       db
         .prepare(
-          `INSERT INTO order_questions (order_id, prompt_id, position)
-           SELECT ?1, ?2, ?3
+          `INSERT INTO order_questions (order_id, prompt_id, position, g_status)
+           SELECT ?1, ?2, ?3, ?5
            WHERE EXISTS (SELECT 1 FROM orders
                          WHERE id = ?1 AND state = 'running' AND started_at = ?4)`,
         )
-        .bind(input.orderId, promptId, position, startedAt),
+        .bind(
+          input.orderId,
+          promptId,
+          position,
+          startedAt,
+          input.twoSource ? "pending" : null,
+        ),
     ),
   ]);
   return results[0]?.meta?.changes === 1;
@@ -235,12 +457,14 @@ export type QuestionProgress =
   "pending" | "running" | "retrying" | "completed" | "failed";
 
 /** R-21: what the tab may see: the state and question progress only. Never
- * the report, the email or the link secret. */
+ * the report, the email or the link secret. `started_at` (S5) lets a reloaded
+ * page tell when the audit passed the 30-minute promise. */
 export type OrderStatus = {
   state: OrderState;
   completed: number;
   total: number;
   questions: Array<{ prompt_id: string; status: QuestionProgress }>;
+  started_at: string | null;
 };
 
 export async function orderStatus(
@@ -254,27 +478,48 @@ export async function orderStatus(
   const now = iso(input.now);
   const mapped = questions.map((question) => ({
     prompt_id: question.prompt_id,
-    status: (question.status === "done"
-      ? "completed"
-      : question.status === "exhausted"
-        ? "failed"
-        : question.claim_until && question.claim_until > now
-          ? "running"
-          : question.attempts > 0
-            ? "retrying"
-            : "pending") as QuestionProgress,
+    status: (question.g_status !== null
+      ? twoSourceProgress(question, now)
+      : question.status === "done"
+        ? "completed"
+        : question.status === "exhausted"
+          ? "failed"
+          : question.claim_until && question.claim_until > now
+            ? "running"
+            : question.attempts > 0
+              ? "retrying"
+              : "pending") as QuestionProgress,
   }));
   return {
-    // An open order past its time reads as expired even before the cron
-    // settles it, so a returning customer is sent back to the order screen.
-    state:
-      order.state === "open" && order.expires_at <= now
-        ? "expired"
-        : order.state,
+    // An open order past its end time reads as expired even before the cron
+    // settles it, so a returning customer is sent back to the order screen. An
+    // order with an open payment attempt never does (R-07): its `payment` shows
+    // "checking".
+    state: (await orderPastEnd(db, order, input.now)) ? "expired" : order.state,
     completed: mapped.filter((item) => item.status === "completed").length,
     total: 10,
     questions: mapped,
+    started_at: order.started_at,
   };
+}
+
+/** Spec 018: a question counts as completed once both checks have their
+ * final outcome (a failed check is shown in the report, R-20); "failed" only
+ * when neither source answered. */
+function twoSourceProgress(
+  question: OrderQuestionRow,
+  now: string,
+): QuestionProgress {
+  const final = (status: string | null) =>
+    status === "done" || status === "exhausted";
+  if (final(question.status) && final(question.g_status))
+    return question.status === "exhausted" && question.g_status === "exhausted"
+      ? "failed"
+      : "completed";
+  if (question.claim_until && question.claim_until > now) return "running";
+  return question.attempts > 0 || question.g_attempts > 0
+    ? "retrying"
+    : "pending";
 }
 
 /* ---------------------------- runner statements --------------------------- */
@@ -290,7 +535,7 @@ export async function expireOpenOrders(
 ): Promise<string[]> {
   const ids = await orderIds(
     db,
-    `SELECT id FROM orders WHERE state = 'open' AND expires_at <= ?1
+    `SELECT id FROM orders WHERE state = 'open' AND paid_at IS NULL AND ${orderPastEndSql("?1")}
        AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
     [iso(input.now), input.environment, input.mode, input.limit],
   );
@@ -301,6 +546,8 @@ export async function expireOpenOrders(
         orderId: id,
         from: ["open"],
         to: "expired",
+        // R-07: re-checked inside the ending write itself.
+        onlyIfUnpaidPastEnd: true,
         now: () => input.now,
       })
     ) {
@@ -331,6 +578,28 @@ export async function ordersPastDeadline(
   );
 }
 
+/** R-13: paid orders whose questions were not approved within 7 days of payment
+ * (`expires_at` is paid time + 7 days, R-11). A founder test pass is never in
+ * this list: it keeps the 2-hour rule. */
+export async function paidNotStartedOrders(
+  db: SpendDb,
+  input: {
+    environment: OrderEnvironment;
+    mode: OrderMode;
+    now: Date;
+    limit: number;
+  },
+): Promise<string[]> {
+  return orderIds(
+    db,
+    `SELECT id FROM orders
+     WHERE state = 'open' AND payment_kind IN ('midtrans', 'simulated')
+       AND paid_at IS NOT NULL AND expires_at <= ?1
+       AND environment = ?2 AND mode = ?3 ORDER BY expires_at LIMIT ?4`,
+    [iso(input.now), input.environment, input.mode, input.limit],
+  );
+}
+
 export async function activeOrders(
   db: SpendDb,
   input: {
@@ -348,6 +617,7 @@ export async function activeOrders(
     db,
     `SELECT id FROM orders WHERE state IN (${ACTIVE_STATES})
        AND environment = ?1 AND mode = ?2
+       AND ${PAID_GATE_SQL}
        AND deadline_at > ?3
        AND (lease_owner IS NULL OR lease_until <= ?3)
      ORDER BY last_step_at IS NOT NULL, last_step_at, created_at LIMIT ?4`,
@@ -382,6 +652,8 @@ export async function failedOrdersNeedingEmail(
            WHERE e.order_id = orders.id AND e.kind = 'failure') AS last_at
        FROM orders
        WHERE state = 'failed' AND environment = ?1 AND mode = ?2 AND ended_at > ?3
+         -- R-15: a refund ended this order; the customer already has their money.
+         AND (failure_code IS NULL OR failure_code != 'refunded')
          AND NOT EXISTS (SELECT 1 FROM order_emails e
                          WHERE e.order_id = orders.id AND e.kind = 'failure'
                            AND e.result = 'accepted'))
@@ -426,6 +698,7 @@ export async function claimOrderLease(
     .prepare(
       `UPDATE orders SET lease_owner = ?2, lease_until = ?3, last_step_at = ?4
        WHERE id = ?1 AND state IN (${ACTIVE_STATES})
+         AND ${PAID_GATE_SQL}
          AND deadline_at > ?4
          AND (lease_owner IS NULL OR lease_until <= ?4)`,
     )
@@ -586,6 +859,193 @@ export async function exhaustSpentQuestions(
   return result.meta?.changes ?? 0;
 }
 
+/* ------------------------- Spec 018: two sources ------------------------- */
+
+/** Which checks of a question are due now: pending, attempts left, its
+ * back-off passed (R-14). */
+export function dueSources(
+  question: OrderQuestionRow,
+  now: string,
+): { chatgpt: boolean; google: boolean } {
+  const due = (status: string | null, attempts: number, next: string | null) =>
+    status === "pending" &&
+    attempts < MAX_ATTEMPTS_PER_QUESTION &&
+    (!next || next <= now);
+  return {
+    chatgpt: due(question.status, question.attempts, question.next_attempt_at),
+    google: due(
+      question.g_status,
+      question.g_attempts,
+      question.g_next_attempt_at,
+    ),
+  };
+}
+
+/** R-14/R-15: claim one question for the checks that are due. Each claimed
+ * source counts its attempt now, so a call cut off mid-flight still counts.
+ * Returns the new attempt numbers, or null. */
+export async function claimQuestionSources(
+  db: SpendDb,
+  input: {
+    orderId: string;
+    promptId: string;
+    owner: string;
+    now: Date;
+    claimMs: number;
+    chatgpt: boolean;
+    google: boolean;
+  },
+): Promise<{ attempts: number; g_attempts: number } | null> {
+  const c = input.chatgpt ? 1 : 0;
+  const g = input.google ? 1 : 0;
+  if (c + g === 0) return null;
+  return db
+    .prepare(
+      `UPDATE order_questions
+       SET claim_owner = ?3, claim_until = ?4,
+           attempts = attempts + ?6, g_attempts = g_attempts + ?7
+       WHERE order_id = ?1 AND prompt_id = ?2
+         AND (claim_owner IS NULL OR claim_until <= ?5)
+         AND (?6 = 0 OR (status = 'pending'
+              AND attempts < ${MAX_ATTEMPTS_PER_QUESTION}
+              AND (next_attempt_at IS NULL OR next_attempt_at <= ?5)))
+         AND (?7 = 0 OR (g_status = 'pending'
+              AND g_attempts < ${MAX_ATTEMPTS_PER_QUESTION}
+              AND (g_next_attempt_at IS NULL OR g_next_attempt_at <= ?5)))
+         AND EXISTS (SELECT 1 FROM orders
+                     WHERE id = ?1 AND state = 'running' AND lease_owner = ?3)
+       RETURNING attempts, g_attempts`,
+    )
+    .bind(
+      input.orderId,
+      input.promptId,
+      input.owner,
+      iso(new Date(input.now.getTime() + input.claimMs)),
+      iso(input.now),
+      c,
+      g,
+    )
+    .first<{ attempts: number; g_attempts: number }>();
+}
+
+/** What one step decided for one source. `refund` gives the attempt back
+ * (nothing was sent: the ledger refused or was unavailable). */
+export type ChatGptSave = {
+  status: "pending" | "done" | "exhausted";
+  nextAttemptAt: Date | null;
+  failure: string | null;
+  attemptsJson: string;
+  observationJson: string | null;
+  factsJson: string | null;
+  refund?: boolean;
+};
+export type GoogleSave = {
+  status: "pending" | "done" | "exhausted";
+  nextAttemptAt: Date | null;
+  failure: string | null;
+  empty: number;
+  resultJson: string | null;
+  refund?: boolean;
+};
+
+/** R-14/R-15: save the step's results for the sources it asked, and free the
+ * claim, in one write. A source not asked keeps its columns. */
+export async function saveSourceResults(
+  db: SpendDb,
+  input: {
+    orderId: string;
+    promptId: string;
+    owner: string;
+    chatgpt: ChatGptSave | null;
+    google: GoogleSave | null;
+  },
+): Promise<boolean> {
+  const c = input.chatgpt;
+  const g = input.google;
+  const result = await db
+    .prepare(
+      `UPDATE order_questions SET
+         status = CASE WHEN ?4 = 1 THEN ?5 ELSE status END,
+         next_attempt_at = CASE WHEN ?4 = 1 THEN ?6 ELSE next_attempt_at END,
+         last_failure = CASE WHEN ?4 = 1 THEN ?7 ELSE last_failure END,
+         attempts_json = CASE WHEN ?4 = 1 THEN ?8 ELSE attempts_json END,
+         observation_json = CASE WHEN ?4 = 1 THEN ?9 ELSE observation_json END,
+         c_facts_json = CASE WHEN ?4 = 1 THEN ?10 ELSE c_facts_json END,
+         attempts = attempts - CASE WHEN ?4 = 1 THEN ?11 ELSE 0 END,
+         g_status = CASE WHEN ?12 = 1 THEN ?13 ELSE g_status END,
+         g_next_attempt_at = CASE WHEN ?12 = 1 THEN ?14 ELSE g_next_attempt_at END,
+         g_last_failure = CASE WHEN ?12 = 1 THEN ?15 ELSE g_last_failure END,
+         g_empty = CASE WHEN ?12 = 1 THEN ?16 ELSE g_empty END,
+         g_result_json = CASE WHEN ?12 = 1 THEN ?17 ELSE g_result_json END,
+         g_attempts = g_attempts - CASE WHEN ?12 = 1 THEN ?18 ELSE 0 END,
+         claim_owner = NULL, claim_until = NULL
+       WHERE order_id = ?1 AND prompt_id = ?2 AND claim_owner = ?3`,
+    )
+    .bind(
+      input.orderId,
+      input.promptId,
+      input.owner,
+      c ? 1 : 0,
+      c?.status ?? null,
+      c?.nextAttemptAt ? iso(c.nextAttemptAt) : null,
+      c?.failure ?? null,
+      c?.attemptsJson ?? "[]",
+      c?.observationJson ?? null,
+      c?.factsJson ?? null,
+      c?.refund ? 1 : 0,
+      g ? 1 : 0,
+      g?.status ?? null,
+      g?.nextAttemptAt ? iso(g.nextAttemptAt) : null,
+      g?.failure ?? null,
+      g?.empty ?? 0,
+      g?.resultJson ?? null,
+      g?.refund ? 1 : 0,
+    )
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** A pending check whose attempts are all used (its last call was cut off)
+ * can never finish: it is failed (R-20). One write for both sources. */
+export async function exhaustSpentSources(
+  db: SpendDb,
+  input: { orderId: string; now: Date },
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `UPDATE order_questions SET
+         status = CASE WHEN status = 'pending'
+           AND attempts >= ${MAX_ATTEMPTS_PER_QUESTION} THEN 'exhausted' ELSE status END,
+         g_status = CASE WHEN g_status = 'pending'
+           AND g_attempts >= ${MAX_ATTEMPTS_PER_QUESTION} THEN 'exhausted' ELSE g_status END
+       WHERE order_id = ?1 AND (claim_owner IS NULL OR claim_until <= ?2)
+         AND ((status = 'pending' AND attempts >= ${MAX_ATTEMPTS_PER_QUESTION})
+           OR (g_status = 'pending' AND g_attempts >= ${MAX_ATTEMPTS_PER_QUESTION}))`,
+    )
+    .bind(input.orderId, iso(input.now))
+    .run();
+  return result.meta?.changes ?? 0;
+}
+
+/** Spec 018: once every check of all ten questions has its final outcome,
+ * the order moves to `reporting` (the R-19 gate is checked first). */
+export async function moveTwoSourceToReporting(
+  db: SpendDb,
+  orderId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE orders SET state = 'reporting'
+       WHERE id = ?1 AND state = 'running'
+         AND (SELECT COUNT(*) FROM order_questions
+              WHERE order_id = ?1 AND status IN ('done', 'exhausted')
+                AND g_status IN ('done', 'exhausted')) = 10`,
+    )
+    .bind(orderId)
+    .run();
+  return result.meta?.changes === 1;
+}
+
 /** R-20: after ten saved results the order moves to `reporting`. */
 export async function moveToReporting(
   db: SpendDb,
@@ -639,14 +1099,23 @@ export async function refundReportAttempt(
  * saved (R-23); the link works 12 months after it. */
 export async function saveReport(
   db: SpendDb,
-  input: { orderId: string; owner: string; reportJson: string; now: Date },
+  input: {
+    orderId: string;
+    owner: string;
+    reportJson: string;
+    now: Date;
+    /** Spec 021 B-08: the pages kept once the report is saved (addresses
+     * only); null leaves the column as it is. */
+    pagesJson?: string | null;
+  },
 ): Promise<boolean> {
   const completed = new Date(input.now);
   const linkEnds = new Date(completed);
   linkEnds.setUTCMonth(linkEnds.getUTCMonth() + 12);
   const result = await db
     .prepare(
-      `UPDATE orders SET report_json = ?3, completed_at = ?4, link_expires_at = ?5
+      `UPDATE orders SET report_json = ?3, completed_at = ?4, link_expires_at = ?5,
+         pages_json = COALESCE(?6, pages_json)
        WHERE id = ?1 AND state = 'reporting' AND lease_owner = ?2
          AND report_json IS NULL`,
     )
@@ -656,7 +1125,26 @@ export async function saveReport(
       input.reportJson,
       iso(completed),
       iso(linkEnds),
+      input.pagesJson ?? null,
     )
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** Spec 021 B-08: saves the order's pages (a reading's marker or its
+ * result) while the order is still reporting, has no report, and the lease
+ * is ours. */
+export async function savePages(
+  db: SpendDb,
+  input: { orderId: string; owner: string; pagesJson: string },
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE orders SET pages_json = ?3
+       WHERE id = ?1 AND state = 'reporting' AND lease_owner = ?2
+         AND report_json IS NULL`,
+    )
+    .bind(input.orderId, input.owner, input.pagesJson)
     .run();
   return result.meta?.changes === 1;
 }
@@ -754,25 +1242,47 @@ export function emailBackingOff(
   );
 }
 
+/** A saved report as the report page reads it, with its order's id. */
+export type SavedReportRow = {
+  order_id: string;
+  report_json: string;
+  intake_json: string;
+  observations: string[];
+  mode: OrderMode;
+};
+
 /** R-24/R-26: the saved report behind a link secret. Only the secret's hash is
  * compared. A wrong, expired or switched-off secret all give null, so the
  * caller cannot tell them apart. No provider is involved. */
 export async function reportForLink(
   db: SpendDb,
   input: { linkHash: string; environment: OrderEnvironment; now: Date },
-): Promise<{
-  report_json: string;
-  intake_json: string;
-  observations: string[];
-  mode: OrderMode;
-} | null> {
+): Promise<SavedReportRow | null> {
+  return savedReport(db, "link_hash = ?1", input.linkHash, input);
+}
+
+/** Spec 021 P-02: the same saved report by order id, for a spent print code.
+ * The link must still work (not expired, not switched off). */
+export async function reportForOrder(
+  db: SpendDb,
+  input: { orderId: string; environment: OrderEnvironment; now: Date },
+): Promise<SavedReportRow | null> {
+  return savedReport(db, "id = ?1", input.orderId, input);
+}
+
+async function savedReport(
+  db: SpendDb,
+  match: "link_hash = ?1" | "id = ?1",
+  key: string,
+  input: { environment: OrderEnvironment; now: Date },
+): Promise<SavedReportRow | null> {
   const order = await db
     .prepare(
       `SELECT id, report_json, intake_json, mode FROM orders
-       WHERE link_hash = ?1 AND link_off = 0 AND report_json IS NOT NULL
+       WHERE ${match} AND link_off = 0 AND report_json IS NOT NULL
          AND link_expires_at > ?2 AND environment = ?3`,
     )
-    .bind(input.linkHash, iso(input.now), input.environment)
+    .bind(key, iso(input.now), input.environment)
     .first<{
       id: string;
       report_json: string;
@@ -782,6 +1292,7 @@ export async function reportForLink(
   if (!order) return null;
   const questions = await listQuestions(db, order.id);
   return {
+    order_id: order.id,
     report_json: order.report_json,
     intake_json: order.intake_json,
     observations: questions.flatMap((question) =>
@@ -814,11 +1325,14 @@ export async function replaceLinkHashForSupport(
   const result = await db
     .prepare(
       `UPDATE orders SET link_hash = ?2, link_off = 0
-       WHERE id = ?1 AND report_json IS NOT NULL AND link_expires_at > ?3`,
+       WHERE id = ?1 AND report_json IS NOT NULL AND link_expires_at > ?3
+       RETURNING id`,
     )
     .bind(input.orderId, input.linkHash, iso(input.now))
-    .run();
-  return result.meta?.changes === 1;
+    .first<{ id: string }>();
+  // RETURNING, not meta.changes: `wrangler d1 execute --local` reports no
+  // change count.
+  return result !== null;
 }
 
 /** Spec 016 R-08: the prepared website reading is saved on the order the first
@@ -836,26 +1350,38 @@ export async function savePreparedReading(
     .run();
 }
 
-/** A customer who changed the website or the brand makes a replacement order;
- * the old one, if still `open` and of this environment, expires now and its
- * hold goes back to the daily cap in the same request. Any other id is ignored. */
-export async function expireSupersededOrder(
+/** Spec 018 R-07: discovery runs at most twice per order. */
+export const MAX_DISCOVERY_RUNS = 2;
+
+/** Spec 018 R-07: saves a discovery pool on an open order and counts the
+ * run. False when the order is not open or has used both runs. */
+export async function saveDiscoveryPool(
   db: SpendDb,
-  input: {
-    orderId: unknown;
-    environment: OrderEnvironment;
-    now: Date;
-  },
+  input: { orderId: string; poolJson: string; key: string },
 ): Promise<boolean> {
-  if (!isOrderId(input.orderId)) return false;
-  const old = await getOrder(db, input.orderId);
-  if (!old || old.environment !== input.environment || old.state !== "open") {
-    return false;
-  }
-  return endOrder(db, {
-    orderId: old.id,
-    from: ["open"],
-    to: "expired",
-    now: () => input.now,
-  });
+  const result = await db
+    .prepare(
+      `UPDATE orders
+       SET discovery_json = ?2, discovery_key = ?3,
+           discovery_runs = discovery_runs + 1
+       WHERE id = ?1 AND state = 'open' AND discovery_runs < ?4`,
+    )
+    .bind(input.orderId, input.poolJson, input.key, MAX_DISCOVERY_RUNS)
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** Spec 018 R-07: the ten questions the writer returned and their
+ * server-owned origins, re-checked when the customer approves. */
+export async function saveGeneratedQuestions(
+  db: SpendDb,
+  input: { orderId: string; questionsJson: string },
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE orders SET questions_json = ?2
+       WHERE id = ?1 AND state = 'open'`,
+    )
+    .bind(input.orderId, input.questionsJson)
+    .run();
 }

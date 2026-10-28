@@ -1,0 +1,148 @@
+/* The landing's website form (Figma: "Website form", "Website field",
+   "Primary button"). Phone: a 56px pill field over a 56px violet button.
+   From 768px the `auto` form joins them: one 72px pill with the button
+   inside on the right. */
+
+.form {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.shell {
+  display: grid;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 56px;
+  padding: 0 20px;
+  border: 1px solid var(--line-200);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: var(--elevation-search);
+  cursor: text;
+  transition: border-color var(--transition-fast);
+}
+
+.field:focus-within {
+  border-color: var(--ink-900);
+}
+
+.field:has(.input[aria-invalid="true"]) {
+  border-color: var(--red-edge);
+}
+
+.globe {
+  flex: none;
+  color: var(--ink-500);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-900);
+  font-size: var(--type-copy-size);
+  font-weight: var(--type-copy-weight);
+  line-height: 1.25;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--ink-500);
+  opacity: 1;
+}
+
+.button {
+  height: 56px;
+  padding: 0 26px;
+  border-radius: 999px;
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  letter-spacing: -0.01em;
+  box-shadow: var(--elevation-commit);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+}
+
+.error {
+  margin: 0;
+  padding: 0 4px;
+  color: var(--red);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.stacked .button,
+.auto .button {
+  width: 100%;
+}
+
+/* Narrow phones: less side padding, and below 360px no globe, so the
+   field's whole prompt stays readable. */
+@media (max-width: 389px) {
+  .field {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 359px) {
+  .globe {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .auto .shell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 72px;
+    padding: 8px 8px 8px 26px;
+    border: 1px solid var(--line-200);
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: var(--elevation-search);
+    transition: border-color var(--transition-fast);
+  }
+
+  .auto .shell:focus-within {
+    border-color: var(--ink-900);
+  }
+
+  .auto .shell:has(.input[aria-invalid="true"]) {
+    border-color: var(--red-edge);
+  }
+
+  .auto .field {
+    flex: 1;
+    gap: 12px;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .auto .button {
+    flex: none;
+    width: auto;
+  }
+}

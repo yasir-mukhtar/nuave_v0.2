@@ -1,5 +1,6 @@
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { markNames } from "./mark-names";
 import styles from "./report-body.module.css";
 
 // Small structural view of mdast: no new parser/plugin dependency. Transform
@@ -104,13 +105,23 @@ const allowedElements = [
   "td",
   "br",
   "hr",
+  // The business's own names, marked by `markNames` (text unchanged).
+  "mark",
 ];
 
-export function AnswerMarkdown({ raw }: { raw: string }) {
+export function AnswerMarkdown({
+  raw,
+  names = [],
+}: {
+  raw: string;
+  /** The business's name and other names, marked where they appear. */
+  names?: readonly string[];
+}) {
   return (
     <div className={styles.markdown} data-answer-body>
       <Markdown
         remarkPlugins={[remarkGfm, inertEvidenceMarkdown]}
+        rehypePlugins={[markNames(names)]}
         allowedElements={allowedElements}
         unwrapDisallowed
         components={{

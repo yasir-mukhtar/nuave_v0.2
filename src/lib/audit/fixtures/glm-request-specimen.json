@@ -4,6 +4,7 @@
     "created": "2026-09-17",
     "purpose": "Adapted production-shape request for the GLM-5.3 Flash question-writer integration draft (INTEGRATION_DRAFT.md). Review artifact only.",
     "fixtureOnly": true,
+    "revised": "2026-10-26: max_tokens 4096 -> 16384; the model's thinking used the whole limit and cut the answer off (live replay)",
     "isTheCapturedRequest": false,
     "capturedRequestNote": "The frozen captured request (docs/checkpoints/2026-09-17-winning-prompt-glm/request.json, sha256 7fc69cc31cd2287a0e134bae51b2c02671eeb1b0e0b17039743851832c309fc9) asked for twelve unnamed candidates on fictional ContohInvoice. This specimen differs in fixture, instruction, output contract, and count. It is not evidence and was never sent.",
     "transport": {
@@ -26,7 +27,7 @@
   "request": {
     "model": "glm-5.3-flash",
     "stream": false,
-    "max_tokens": 4096,
+    "max_tokens": 16384,
     "reasoning_effort": "low",
     "messages": [
       {

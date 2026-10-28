@@ -1,6 +1,6 @@
 # Spec 016: Order, saved report and private link (S3)
 
-> Status: **Implementing** — approved by the founder on 2026-10-12 (revision 6, `a006048`; [decision](../../docs/DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). S3a and S3b are built on [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129); see [VERIFICATION.md](./VERIFICATION.md).
+> Status: **Verified** (2026-10-13) — approved by the founder on 2026-10-12 (revision 6, `a006048`; [decision](../../docs/DECISION_LOG.md#2026-10-12--approve-spec-016-s3)). Built in [PR #129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129), merged `d641701`; AC-21 live run passed; see [VERIFICATION.md](./VERIFICATION.md).
 > Owner: orchestrator
 > Updated: 2026-10-12 (revision 6: plan re-review notes 1–10 applied)
 > Implements: S3 of [`docs/PAYING_CUSTOMER_PLAN.md`](../../docs/PAYING_CUSTOMER_PLAN.md),
@@ -10,6 +10,13 @@
 > "Founder decisions" below
 > Number: 015 is taken by the held, unadopted paid-report draft on
 > `docs/stage2-paid-report-spec`. This spec does not use or adopt it.
+
+> **Changed by Spec 018 (2026-10-24):** for Spec 018 two-source orders the
+> report gate is "each source completed at least 5 of its 10 checks" (R-19),
+> not ten evaluable observations. A delivered order with failed checks shows
+> them as "Tidak dapat diuji" with "Minta bantuan" and sends the founder one
+> `checks_failed` notice (R-20, R-21); an order that fails the gate follows
+> this spec's failure path. See [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md).
 
 ## Required context
 
@@ -323,6 +330,10 @@ is made.
 
   The founder first confirms through the order email (D7). The script never
   sends to another email. Its database and sender can be replaced in tests.
+  (Changed 2026-10-25, see `docs/DECISION_LOG.md`: `email` replaces a
+  mistyped order email after the founder checks the receipt, and the address
+  reaches the SQL only as a hex literal; `norefund` closes a refund case
+  without a refund.)
 
 ### Tests and local development
 
@@ -511,4 +522,4 @@ Both go live in **one** merge to `main`, because every merge deploys.
 ## Verification record
 
 - Verification artifact: [`VERIFICATION.md`](./VERIFICATION.md)
-- Result: offline criteria reviewed PASS+NOTES; AC-21 (live run) pending
+- Result: Verified. Offline criteria reviewed PASS+NOTES; AC-21 live run PASS (2026-10-13, USD 0.1372)

@@ -1,0 +1,1490 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuave · Landing page v1 (desktop 1440 + mobile 390)</title>
+<style>
+@font-face { font-family: "Geist"; src: url(assets/fonts/Geist-Regular.woff2) format("woff2"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Geist"; src: url(assets/fonts/Geist-Medium.woff2) format("woff2"); font-weight: 500; font-style: normal; }
+@font-face { font-family: "Geist"; src: url(assets/fonts/Geist-SemiBold.woff2) format("woff2"); font-weight: 600; font-style: normal; }
+@font-face { font-family: "Geist"; src: url(assets/fonts/Geist-Bold.woff2) format("woff2"); font-weight: 700; font-style: normal; }
+
+/* design canvas only */
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+
+/* Shared tokens, base, section shell, heading, hero form, footer: shared/sections.css */
+/* =====================================================================
+   Nuave clinic landing page · shared section styles (S2 onward)
+   One stylesheet for the whole page. Section-specific parts keep their own
+   prefix (s2-, s3-, ...) in the section's template.
+
+   Design boards render each section twice: .sec--desktop (1440 wide) and
+   .sec--mobile (390 wide). In the page build, every ".sec--mobile X" rule
+   becomes "@media (max-width: 767px) { X }" and ".sec--desktop" is the default.
+   The hero (hero/template.html) predates this file; it uses the same tokens.
+   ===================================================================== */
+
+:root {
+  /* Nuave v2 tokens (src/styles/tokens.css) */
+  --ink-900: #16161d; --ink-800: #26252f; --ink-700: #3b3a4a; --ink-600: #52516a; --ink-500: #6b6a85; --ink-400: #a2a1b6;
+  --line-300: #d3d2de; --line-200: #e7e6ee;
+  --stone-100: #f1f1f6; --stone-50: #f8f8fb; --cream: #f5f3ff;
+  --v-50: #f3f0ff; --v-100: #e5e0ff; --v-200: #ccc3ff; --v-300: #a99bff; --v-500: #533afd; --v-600: #4129e0; --v-700: #3620b8;
+  --e-card: 0 1px 2px rgb(22 22 29 / 0.05), 0 6px 18px rgb(22 22 29 / 0.07);
+  --e-float: 0 2px 6px rgb(22 22 29 / 0.06), 0 14px 36px rgb(22 22 29 / 0.12);
+  --e-search: 0 1px 2px rgb(22 22 29 / 0.04), 0 6px 20px rgb(22 22 29 / 0.08);
+  --stage: linear-gradient(160deg, #fbf8f1 0%, #f1ede3 100%); /* backdrop behind 3D miniatures */
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+img { display: block; }
+ol, ul { list-style: none; }
+.artboard { position: relative; overflow: hidden; background: #ffffff; flex: none; } /* design boards only */
+
+/* ---------- section shell ---------- */
+.sec { color: var(--ink-900); background: #ffffff; font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.sec--band { background: var(--stone-50); }          /* quiet band, used sparingly between white sections */
+.sec--desktop { width: 1440px; padding: 128px 120px 120px; }
+.sec--mobile { width: 390px; padding: 80px 24px 80px; }
+
+/* ---------- heading block ----------
+   RULE for every section (lead, S3 round 1):
+   - Desktop: section H2 and line are centred on the page axis (x=720).
+   - Mobile (S2 to S8): H2 and line are left-aligned on the 24px edge, like the content under them.
+   - A centred band on mobile (e.g. the final CTA, S9) may stay centred: add .sec-head--center. */
+.sec-head { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.sec--mobile .sec-head { align-items: flex-start; text-align: left; }
+.sec--mobile .sec-head.sec-head--center { align-items: center; text-align: center; }
+.sec-h2 { font-weight: 600; color: var(--ink-900); }
+.sec--desktop .sec-h2 { font-size: 48px; line-height: 52px; letter-spacing: -0.04em; }
+.sec--mobile .sec-h2 { font-size: 32px; line-height: 36px; letter-spacing: -0.04em; }  /* -4% on mobile too (lead, S3 round 1) */
+.sec-line { color: var(--ink-600); }
+.sec--desktop .sec-line { margin-top: 16px; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; }
+.sec--mobile .sec-line { margin-top: 12px; font-size: 16px; line-height: 24px; }
+
+/* ---------- running text ---------- */
+.say { color: var(--ink-700); letter-spacing: -0.01em; }
+.say b { font-weight: 500; color: var(--ink-900); }     /* the one emphasis per sentence */
+.ref { color: var(--ink-500); font-weight: 500; }       /* footnote marker: use the real glyphs ¹ ² ³ */
+
+/* ---------- ledger: rows on one centre axis, hairlines between ----------
+   Desktop: two equal columns around a 48px gap centred on x=720 (left side right-aligned).
+   Rhythm: the first ink of every block sits ~45px (desktop) / ~37px (mobile) under its hairline. */
+.hairline { height: 1px; background: var(--line-200); }
+.ledger { width: var(--ledger, 720px); margin: 64px auto 0; }
+.ledger-row { display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; padding: 32px 0; border-top: 1px solid var(--line-200); }
+.ledger-row > :first-child { justify-self: end; }
+.sec--mobile .ledger { width: auto; margin-top: 40px; }
+.sec--mobile .ledger-row { display: block; padding: 28px 0 30px; }
+.sec--mobile .ledger-row > :first-child { justify-self: auto; }   /* Chromium applies justify-self in block layout too */
+
+/* ---------- source notes ("Sumber:") ----------
+   One source per line, marker in a hanging column (both lines of a wrapped source share one edge). */
+.notes { color: var(--ink-500); }
+.notes-label { font-weight: 500; color: var(--ink-600); }
+.notes-list { display: flex; flex-direction: column; gap: 6px; }
+.notes-list li { padding-left: var(--mark); }
+.notes-list .ref { display: inline-block; width: var(--mark); margin-left: calc(-1 * var(--mark)); }
+.notes .src { font-weight: 500; color: var(--ink-700); }
+.sec--desktop .notes { --mark: 10px; font-size: 13px; line-height: 20px; }
+.sec--mobile .notes { --mark: 9px; font-size: 12px; line-height: 18px; }
+.ledger-notes { display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; padding-top: 40px; border-top: 1px solid var(--line-200); }
+.ledger-notes .notes-label { justify-self: end; }
+.sec--mobile .ledger-notes { display: block; padding-top: 32px; }
+.sec--mobile .ledger-notes .notes-label { justify-self: auto; }
+.sec--mobile .ledger-notes .notes-list { margin-top: 6px; }
+
+/* ---------- caption under a mock ("Contoh. Nama klinik fiktif.") ---------- */
+.caption { color: var(--ink-500); font-size: 12px; line-height: 16px; }
+
+/* ---------- small UI pieces shared with the hero ---------- */
+.slot { display: flex; align-items: center; border: 1.5px dashed var(--v-300); background: var(--v-50); }  /* the empty "Klinik Anda?" slot */
+.slot-thumb { flex: none; display: flex; align-items: center; justify-content: center; border: 1.5px dashed var(--v-300); background: #fff; color: var(--v-600); font-weight: 600; }
+.slot-label { font-weight: 600; color: var(--v-700); }
+
+/* ---------- report dots (the hero's report-card dot: 10px, grey / violet) ---------- */
+.dot { flex: none; width: 10px; height: 10px; border-radius: 999px; background: var(--line-200); }
+.dot.on { background: var(--v-600); }
+.dots-halves { display: flex; gap: 16px; }   /* 100 dots as two 10x5 halves: "nearly half" reads at a glance */
+.dots-halves .half { display: grid; grid-template-columns: repeat(10, 10px); grid-auto-rows: 10px; gap: 6px; }
+
+/* ---------- the hero's form, stacked (mobile hero; S7 price card; S9) ----------
+   Same component as the hero: a white pill field with the globe icon, then the solid violet button.
+   Values copied from hero/template.html (.search, .btn-commit, mobile sizes). */
+.hform { display: flex; flex-direction: column; gap: 10px; }
+.hform-field { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 20px; background: #fff;
+  border: 1px solid var(--line-200); border-radius: 999px; box-shadow: var(--e-search); }
+.hform-placeholder { font-size: 16px; line-height: 20px; color: var(--ink-500); white-space: nowrap; }
+.hform-btn { display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 999px; background: var(--v-600); color: #fff;
+  font-size: 16px; line-height: 20px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(27 20 100 / 0.25), 0 6px 16px rgb(65 41 224 / 0.22); }
+
+/* ---------- calm lavender band (S5 report; S9 closing band) ---------- */
+.sec--cream { background: var(--cream); }
+
+/* ---------- the hero's form, joined (desktop hero; S9) ----------
+   The desktop hero's search pill: globe and placeholder in a white pill, the violet button inside on the right.
+   Values copied from hero/template.html (.search, .btn-commit, desktop sizes). On mobile use the stacked .hform. */
+.hsearch { display: flex; align-items: center; gap: 12px; width: 560px; height: 72px; padding: 8px 8px 8px 26px; background: #fff;
+  border: 1px solid var(--line-200); border-radius: 999px; box-shadow: var(--e-search); }
+.hsearch-field { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.hsearch .hform-btn { flex: none; padding: 0 26px; }
+/* the price line under the form (hero .micro): "gratis" in 600 */
+.hmicro { font-size: 14px; line-height: 21px; color: var(--ink-600); }
+.hmicro b { font-weight: 600; color: var(--ink-800); }
+.sec--mobile .hmicro { font-size: 13px; line-height: 19px; }
+
+/* ---------- footer (end of the page) ----------
+   Logo, four links, ©. .foot--desktop / .foot--mobile follow the same rule as .sec--desktop / .sec--mobile
+   (in the page build, ".foot--mobile X" goes into the mobile media query). FAQ links to #faq. */
+.foot { color: var(--ink-900); background: #ffffff; font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.foot-brand { display: flex; align-items: center; gap: 8px; color: var(--ink-900); text-decoration: none; }
+.foot-name { font-weight: 600; letter-spacing: -0.03em; }
+.foot-links { display: flex; }
+.foot-link { color: var(--ink-700); text-decoration: none; white-space: nowrap; }
+.foot-copy { color: var(--ink-500); white-space: nowrap; }
+.foot--desktop { width: 1440px; padding: 0 120px; }
+.foot--desktop .foot-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 96px; }
+.foot--desktop .foot-name { font-size: 20px; line-height: 24px; }
+.foot--desktop .foot-brand { justify-self: start; }   /* the logo link hugs its content */
+.foot--desktop .foot-links { gap: 32px; }
+.foot--desktop .foot-link { font-size: 15px; line-height: 20px; }
+.foot--desktop .foot-copy { justify-self: end; font-size: 14px; line-height: 20px; }
+.foot--mobile { width: 390px; padding: 32px 24px 40px; }
+.foot--mobile .foot-name { font-size: 20px; line-height: 24px; }
+.foot--mobile .foot-links { display: grid; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+.foot--mobile .foot-link { display: flex; align-items: center; height: 44px; font-size: 16px; line-height: 20px; }   /* 44px tap rows */
+.foot--mobile .foot-copy { margin-top: 12px; font-size: 13px; line-height: 18px; }
+.foot-row--rule { border-top: 1px solid var(--line-200); }   /* when the footer follows white content */
+.foot--mobile .foot-row { display: block; }
+.foot--mobile .foot-row--rule { padding-top: 28px; }
+
+
+/* ===== S1 · Hero · hero/template.html ===== */
+.hero }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+:root { --ink-900: #16161d; --ink-800: #26252f; --ink-700: #3b3a4a; --ink-600: #52516a; --ink-500: #6b6a85; --ink-400: #a2a1b6;
+  --line-300: #d3d2de; --line-200: #e7e6ee;
+  --stone-100: #f1f1f6; --stone-50: #f8f8fb; --cream: #f5f3ff;
+  --v-50: #f3f0ff; --v-100: #e5e0ff; --v-200: #ccc3ff; --v-300: #a99bff; --v-500: #533afd; --v-600: #4129e0; --v-700: #3620b8;
+  --e-card: 0 1px 2px rgb(22 22 29 / 0.05), 0 6px 18px rgb(22 22 29 / 0.07);
+  --e-float: 0 2px 6px rgb(22 22 29 / 0.06), 0 14px 36px rgb(22 22 29 / 0.12);
+  --e-search: 0 1px 2px rgb(22 22 29 / 0.04), 0 6px 20px rgb(22 22 29 / 0.08);
+  --commit-fill: var(--v-600); }
+.hero .brand { display: flex; align-items: center; gap: 8px; color: var(--ink-900); text-decoration: none; }
+.hero .brand-name { font-weight: 600; letter-spacing: -0.03em; }
+.hero .btn-outline { display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-300); border-radius: 999px; background: #fff;
+  font-weight: 600; color: var(--ink-900); white-space: nowrap; }
+.hero .btn-commit { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 999px; background: var(--commit-fill); color: #fff;
+  font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(27 20 100 / 0.25), 0 6px 16px rgb(65 41 224 / 0.22); }
+.hero .search { display: flex; align-items: center; background: #fff;
+  border: 1px solid var(--line-200); border-radius: 999px; box-shadow: var(--e-search); }
+.hero .search-field { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.hero .search-placeholder { color: var(--ink-500); white-space: nowrap; }
+.hero .ticks li { display: flex; align-items: center; gap: 8px; color: var(--ink-700); font-weight: 500; white-space: nowrap; }
+.hero .tick { width: 20px; height: 20px; border-radius: 999px; background: var(--stone-100); display: flex; align-items: center; justify-content: center; flex: none; }
+.hero .tabs { display: flex; }
+.hero .tab { display: flex; flex-direction: column; align-items: center; flex: none; }
+.hero .tab-label { color: var(--ink-500); font-weight: 500; white-space: nowrap; }
+.hero .tab.is-active .tab-label { color: var(--ink-900); font-weight: 600; }
+.hero .tab-bar { height: 2px; border-radius: 2px; background: transparent; align-self: stretch; }
+.hero .tab.is-active .tab-bar { background: var(--ink-900); }
+.hero .phone { position: absolute; border-radius: 60px; padding: 11px;
+  background: linear-gradient(150deg, #4a4a55 0%, #1d1d23 22%, #101014 60%, #2b2b33 100%);
+  box-shadow: 0 40px 80px -30px rgb(22 22 29 / 0.45), 0 20px 40px -24px rgb(22 22 29 / 0.35), inset 0 0 0 1.5px rgb(255 255 255 / 0.10); }
+.hero .phone-key { position: absolute; width: 4px; border-radius: 2px; background: #26262d; }
+.hero .screen { position: relative; width: 100%; height: 100%; border-radius: 49px; background: #fff; overflow: hidden; }
+.hero .island { position: absolute; left: 50%; transform: translateX(-50%); background: #0b0b0e; border-radius: 999px; }
+.hero .status { display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: var(--ink-900); }
+.hero .status-icons { display: flex; align-items: center; gap: 6px; }
+.hero .appbar { display: flex; align-items: center; justify-content: space-between; }
+.hero .appbar-mid { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink-900); }
+.hero .ai-dot { border-radius: 999px; background: linear-gradient(140deg, #7f6cfe 0%, #4129e0 100%); display: flex; align-items: center; justify-content: center; }
+.hero .thread { display: flex; flex-direction: column; }
+.hero .bubble-user { align-self: flex-end; background: var(--stone-100); color: var(--ink-900); }
+.hero .ai-lead { color: var(--ink-900); }
+.hero .results { background: #fff; border: 1px solid var(--line-200); box-shadow: 0 1px 2px rgb(22 22 29 / 0.04); }
+.hero .result { display: flex; align-items: center; }
+.hero .result + .result { border-top: 1px solid var(--line-200); }
+.hero .thumb { flex: none; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #fbf8f1 0%, #f1ede3 100%); overflow: hidden; }
+.hero .result-name { font-weight: 600; color: var(--ink-900); }
+.hero .result-why { color: var(--ink-600); }
+.hero .slot { display: flex; align-items: center; border: 1.5px dashed var(--v-300); background: var(--v-50); }
+.hero .slot-thumb { flex: none; border: 1.5px dashed var(--v-300); display: flex; align-items: center; justify-content: center; color: var(--v-600); font-weight: 600; background: #fff; }
+.hero .slot-label { font-weight: 600; color: var(--v-700); }
+.hero .report { position: absolute; background: #fff; box-shadow: var(--e-float); }
+.hero .report-title { font-weight: 600; color: var(--ink-500); letter-spacing: 0; }
+.hero .report-row { display: flex; align-items: baseline; justify-content: space-between; }
+.hero .report-name { font-weight: 600; color: var(--ink-900); }
+.hero .report-score { font-weight: 600; color: var(--ink-900); }
+.hero .dots { display: flex; }
+.hero .dot { border-radius: 999px; background: var(--line-200); flex: none; }
+.hero .dot.on { background: var(--v-600); }
+.hero .report-divider { height: 1px; background: var(--line-200); }
+.hero .caption { position: absolute; color: var(--ink-500); }
+.hero.desktop { width: 1440px; height: 900px; }
+.hero.desktop .wash { position: absolute; left: 520px; top: 60px; width: 860px; height: 940px;
+  background: radial-gradient(closest-side, rgb(243 240 255 / 0.95) 0%, rgb(243 240 255 / 0.55) 45%, rgb(255 255 255 / 0) 100%); }
+.hero.desktop .nav { position: absolute; left: 0; top: 0; width: 1440px; height: 80px; padding: 0 120px; display: flex; align-items: center; justify-content: space-between; }
+.hero.desktop .brand-name { font-size: 22px; }
+.hero.desktop .links { position: absolute; left: 50%; transform: translateX(-50%); display: flex; gap: 36px; }
+.hero.desktop .links a { font-size: 15px; font-weight: 500; color: var(--ink-700); text-decoration: none; }
+.hero.desktop .nav .btn-outline { height: 42px; padding: 0 20px; font-size: 15px; }
+.hero.desktop .copy { position: absolute; left: 120px; top: 232px; width: 560px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.hero.desktop h1 { font-size: 60px; line-height: 64px; font-weight: 600; letter-spacing: -0.045em; color: var(--ink-900); }
+.hero.desktop h1 span { display: block; }
+.hero.desktop .lede { margin-top: 22px; max-width: 470px; font-size: 20px; line-height: 30px; color: var(--ink-600); letter-spacing: -0.005em; }
+.hero.desktop .search { margin-top: 36px; width: 560px; height: 72px; padding: 8px 8px 8px 26px; gap: 12px; }
+.hero.desktop .search-placeholder { font-size: 16px; }
+.hero.desktop .search .btn-commit { height: 56px; padding: 0 26px; font-size: 16px; }
+.hero.desktop .micro { margin-top: 18px; max-width: 440px; font-size: 14px; line-height: 21px; color: var(--ink-600); }
+.hero.desktop .micro b { font-weight: 600; color: var(--ink-800); }
+.hero.desktop .ticks { margin-top: 22px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; max-width: 520px; }
+.hero.desktop .ticks li { font-size: 14px; line-height: 20px; }
+.hero.desktop .demo { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; }
+.hero.desktop .tabs { position: absolute; left: 706px; top: 108px; width: 420px; justify-content: center; gap: 26px; }
+.hero.desktop .tab { gap: 8px; }
+.hero.desktop .tab-icon { width: 54px; height: 54px; display: flex; align-items: flex-end; justify-content: center; }
+.hero.desktop .tab-label { font-size: 14px; line-height: 18px; }
+.hero.desktop .tab-bar { margin-top: 10px; }
+.hero.desktop .phone { left: 740px; top: 232px; width: 352px; height: 720px; }
+.hero.desktop .phone-key.k1 { left: -3px; top: 150px; height: 34px; }
+.hero.desktop .phone-key.k2 { left: -3px; top: 200px; height: 58px; }
+.hero.desktop .phone-key.k3 { left: -3px; top: 270px; height: 58px; }
+.hero.desktop .phone-key.k4 { right: -3px; left: auto; top: 220px; height: 86px; }
+.hero.desktop .island { top: 11px; width: 104px; height: 30px; }
+.hero.desktop .status { height: 50px; padding: 15px 28px 0 32px; font-size: 16px; }
+.hero.desktop .appbar { height: 42px; padding: 0 16px; }
+.hero.desktop .appbar-mid { font-size: 15px; }
+.hero.desktop .ai-dot { width: 24px; height: 24px; }
+.hero.desktop .thread { padding: 6px 16px 0; gap: 13px; }
+.hero.desktop .bubble-user { max-width: 268px; padding: 11px 15px; border-radius: 22px 22px 6px 22px; font-size: 15px; line-height: 21px; }
+.hero.desktop .ai-lead { font-size: 15px; line-height: 21px; padding: 0 2px; }
+.hero.desktop .results { border-radius: 18px; padding: 0 12px; }
+.hero.desktop .result { gap: 12px; padding: 10px 0; }
+.hero.desktop .thumb { width: 50px; height: 50px; border-radius: 13px; }
+.hero.desktop .thumb img { width: 46px; height: 46px; }
+.hero.desktop .result-name { font-size: 15px; line-height: 20px; }
+.hero.desktop .result-why { font-size: 14px; line-height: 19px; }
+.hero.desktop .slot { border-radius: 16px; padding: 10px 12px; gap: 12px; }
+.hero.desktop .slot-thumb { width: 50px; height: 50px; border-radius: 13px; font-size: 20px; }
+.hero.desktop .slot-label { font-size: 15px; }
+.hero.desktop .fade { position: absolute; left: 0; top: 826px; width: 1440px; height: 74px; background: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.9) 60%, #fff 100%); }
+.hero.desktop .report { left: 1068px; top: 622px; width: 300px; border-radius: 22px; padding: 18px 20px 20px; }
+.hero.desktop .report-head { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+.hero.desktop .report-title { font-size: 13px; line-height: 16px; }
+.hero.desktop .report-name { font-size: 14px; }
+.hero.desktop .report-score { font-size: 13px; }
+.hero.desktop .dots { gap: 6px; margin-top: 9px; }
+.hero.desktop .dot { width: 10px; height: 10px; }
+.hero.desktop .report-divider { margin: 14px 0; }
+.hero.desktop .caption { left: 1106px; top: 809px; font-size: 12px; line-height: 16px; }
+.hero.mobile { width: 390px; height: 1420px; }
+.hero.mobile .wash { position: absolute; left: -160px; top: 660px; width: 710px; height: 760px;
+  background: radial-gradient(closest-side, rgb(243 240 255 / 0.95) 0%, rgb(243 240 255 / 0.5) 50%, rgb(255 255 255 / 0) 100%); }
+.hero.mobile .nav { position: absolute; left: 0; top: 0; width: 390px; height: 56px; padding: 0 16px 0 20px; display: flex; align-items: center; justify-content: space-between; }
+.hero.mobile .brand-name { font-size: 20px; }
+.hero.mobile .nav-right { display: flex; align-items: center; gap: 8px; }
+.hero.mobile .nav .btn-outline { height: 36px; padding: 0 14px; font-size: 14px; }
+.hero.mobile .menu { width: 36px; height: 36px; border-radius: 999px; background: var(--stone-100); display: flex; align-items: center; justify-content: center; }
+.hero.mobile .copy { position: absolute; left: 24px; top: 80px; width: 342px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.hero.mobile h1 { font-size: 38px; line-height: 41px; font-weight: 600; letter-spacing: -0.045em; }
+.hero.mobile h1 span { display: block; }
+.hero.mobile .lede { margin-top: 14px; max-width: 300px; font-size: 16px; line-height: 24px; color: var(--ink-600); }
+.hero.mobile .search { margin-top: 24px; width: 342px; height: 56px; padding: 0 20px; gap: 10px; }
+.hero.mobile .search-placeholder { font-size: 16px; }
+.hero.mobile .btn-commit.full { margin-top: 10px; width: 342px; height: 56px; font-size: 16px; }
+.hero.mobile .micro { margin-top: 14px; max-width: 310px; font-size: 13px; line-height: 19px; color: var(--ink-600); }
+.hero.mobile .micro b { font-weight: 600; color: var(--ink-800); }
+.hero.mobile .ticks { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.hero.mobile .ticks li { font-size: 14px; line-height: 20px; }
+.hero.mobile .demo { position: absolute; left: 0; top: 0; width: 390px; height: 100%; }
+.hero.mobile .tabs { position: absolute; left: 0; top: 628px; width: 390px; padding: 0 24px; justify-content: space-between; }
+.hero.mobile .tab { gap: 6px; }
+.hero.mobile .tab-icon { width: 46px; height: 46px; display: flex; align-items: flex-end; justify-content: center; }
+.hero.mobile .tab-label { font-size: 13px; line-height: 16px; }
+.hero.mobile .tab-bar { margin-top: 9px; }
+.hero.mobile .tabs-rule { position: absolute; left: 0; top: 708px; width: 390px; height: 1px; background: var(--line-200); }
+.hero.mobile .phone { left: 36px; top: 736px; width: 318px; height: 700px; border-radius: 52px; padding: 9px; }
+.hero.mobile .phone-key.k1 { left: -3px; top: 120px; height: 28px; }
+.hero.mobile .phone-key.k2 { left: -3px; top: 160px; height: 48px; }
+.hero.mobile .phone-key.k4 { right: -3px; left: auto; top: 180px; height: 70px; }
+.hero.mobile .screen { border-radius: 43px; }
+.hero.mobile .island { top: 9px; width: 90px; height: 26px; }
+.hero.mobile .status { height: 44px; padding: 13px 24px 0 28px; font-size: 14px; }
+.hero.mobile .appbar { height: 38px; padding: 0 14px; }
+.hero.mobile .appbar-mid { font-size: 14px; }
+.hero.mobile .ai-dot { width: 22px; height: 22px; }
+.hero.mobile .thread { padding: 4px 13px 0; gap: 11px; }
+.hero.mobile .bubble-user { max-width: 238px; padding: 10px 13px; border-radius: 19px 19px 5px 19px; font-size: 13.5px; line-height: 19px; }
+.hero.mobile .ai-lead { font-size: 13.5px; line-height: 19px; padding: 0 2px; }
+.hero.mobile .results { border-radius: 16px; padding: 0 10px; }
+.hero.mobile .result { gap: 10px; padding: 8px 0; }
+.hero.mobile .thumb { width: 42px; height: 42px; border-radius: 11px; }
+.hero.mobile .thumb img { width: 39px; height: 39px; }
+.hero.mobile .result-name { font-size: 13.5px; line-height: 18px; }
+.hero.mobile .result-why { font-size: 12.5px; line-height: 17px; }
+.hero.mobile .slot { border-radius: 14px; padding: 8px 10px; gap: 10px; }
+.hero.mobile .slot-thumb { width: 42px; height: 42px; border-radius: 11px; font-size: 18px; }
+.hero.mobile .slot-label { font-size: 13.5px; }
+.hero.mobile .fade { position: absolute; left: 0; top: 1250px; width: 390px; height: 170px; background: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.94) 50%, #fff 75%); }
+.hero.mobile .report { left: 92px; top: 1226px; width: 276px; border-radius: 20px; padding: 16px 18px 18px; }
+.hero.mobile .report-head { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.hero.mobile .report-title { font-size: 12px; line-height: 15px; }
+.hero.mobile .report-name { font-size: 13px; }
+.hero.mobile .report-score { font-size: 12.5px; }
+.hero.mobile .dots { gap: 6px; margin-top: 8px; }
+.hero.mobile .dot { width: 9px; height: 9px; }
+.hero.mobile .report-divider { margin: 12px 0; }
+.hero.mobile .caption { left: 92px; width: 276px; text-align: left; top: 1384px; font-size: 12px; line-height: 16px; }
+
+/* ===== S2 · Pasien pilih lewat AI · sections/S2/template.html ===== */
+.s2v2 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s2 { color: var(--ink-900); }
+.s2-head { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.s2-h2 { font-weight: 600; color: var(--ink-900); }
+.s2-line { color: var(--ink-600); }
+.s2-fig { display: flex; font-weight: 600; color: var(--ink-900); white-space: nowrap; }
+.s2-fig .num { display: block; }
+.s2-fig--pct { align-items: flex-start; }
+.s2-fig--unit { align-items: baseline; }
+.s2-fig .pct { display: block; }
+.s2-fig .unit { display: block; }
+.s2-say { color: var(--ink-700); }
+.s2-say b { font-weight: 500; color: var(--ink-900); }
+.s2-say .ref, .s2-notes .ref { color: var(--ink-500); font-weight: 500; }
+.s2-dots { display: grid; grid-auto-flow: column; }
+.s2-notes { color: var(--ink-500); }
+.s2-notes-label { font-weight: 500; color: var(--ink-600); }
+.s2-notes li { list-style: none; }
+.s2-notes .src { font-weight: 500; color: var(--ink-700); }
+.s2v2 .a-desktop { width: 1440px; padding: 128px 120px 120px; }
+.a-desktop .s2-h2 { font-size: 48px; line-height: 52px; letter-spacing: -0.04em; }
+.a-desktop .s2-line { margin-top: 16px; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; }
+.s2v2 .a-desktop .ledger { width: 720px; margin: 64px auto 0; }
+.s2v2 .a-desktop .row { display: grid; grid-template-columns: 240px 432px; column-gap: 48px; padding: 32px 0; border-top: 1px solid var(--line-200); }
+.a-desktop .s2-fig { justify-self: end; font-size: 96px; line-height: 96px; letter-spacing: -0.05em; }
+.a-desktop .s2-fig .pct { font-size: 46px; line-height: 46px; margin: 8px 0 0 7px; letter-spacing: 0; }
+.a-desktop .s2-fig .unit { font-size: 36px; line-height: 36px; margin-left: 10px; letter-spacing: -0.03em; }
+.a-desktop .s2-say { margin-top: 6px; font-size: 20px; line-height: 30px; letter-spacing: -0.01em; }
+.a-desktop .s2-dots { margin-top: 24px; grid-template-rows: repeat(4, 10px); grid-auto-columns: 10px; gap: 6px; }
+.s2v2 .a-desktop .notes-row { display: grid; grid-template-columns: 240px 432px; column-gap: 48px; padding-top: 24px; border-top: 1px solid var(--line-200); }
+.a-desktop .s2-notes-label { justify-self: end; font-size: 13px; line-height: 20px; }
+.a-desktop .s2-notes ol { display: flex; flex-direction: column; gap: 2px; }
+.a-desktop .s2-notes li { font-size: 13px; line-height: 20px; text-indent: -10px; padding-left: 10px; }
+.s2v2 .a-mobile { width: 390px; padding: 80px 24px 80px; }
+.a-mobile .s2-h2 { font-size: 32px; line-height: 36px; letter-spacing: -0.035em; }
+.a-mobile .s2-line { margin-top: 12px; font-size: 16px; line-height: 24px; }
+.s2v2 .a-mobile .ledger { margin-top: 40px; }
+.s2v2 .a-mobile .row { padding: 28px 0 30px; border-top: 1px solid var(--line-200); }
+.s2v2 .a-mobile .row:last-of-type { border-bottom: 1px solid var(--line-200); }
+.a-mobile .s2-fig { font-size: 64px; line-height: 64px; letter-spacing: -0.05em; }
+.a-mobile .s2-fig .pct { font-size: 31px; line-height: 31px; margin: 5px 0 0 5px; letter-spacing: 0; }
+.a-mobile .s2-fig .unit { font-size: 26px; line-height: 26px; margin-left: 7px; letter-spacing: -0.03em; }
+.a-mobile .s2-say { margin-top: 12px; font-size: 17px; line-height: 26px; letter-spacing: -0.01em; }
+.a-mobile .s2-dots { margin-top: 20px; grid-template-rows: repeat(5, 10px); grid-auto-columns: 10px; gap: 6px; }
+.s2v2 .a-mobile .notes-row { padding-top: 24px; }
+.a-mobile .s2-notes-label { font-size: 12px; line-height: 18px; }
+.a-mobile .s2-notes ol { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.a-mobile .s2-notes li { font-size: 12px; line-height: 18px; text-indent: -9px; padding-left: 9px; }
+.s2v2 .b-desktop { width: 1440px; padding: 128px 120px 120px; }
+.b-desktop .s2-h2 { font-size: 48px; line-height: 52px; letter-spacing: -0.04em; }
+.b-desktop .s2-line { margin-top: 16px; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; }
+.s2v2 .b-desktop .cards { margin-top: 64px; display: grid; grid-template-columns: 568px 284px 284px; column-gap: 32px; }
+.s2v2 .b-desktop .stage { height: 280px; border-radius: 24px; background: var(--stage); display: flex; align-items: center; justify-content: center; }
+.b-desktop .s2-fig { margin-top: 48px; font-size: 72px; line-height: 72px; letter-spacing: -0.05em; }
+.b-desktop .s2-fig .pct { font-size: 35px; line-height: 35px; margin: 6px 0 0 5px; letter-spacing: 0; }
+.b-desktop .s2-fig .unit { font-size: 28px; line-height: 28px; margin-left: 8px; letter-spacing: -0.03em; }
+.b-desktop .s2-say { margin-top: 12px; font-size: 18px; line-height: 28px; letter-spacing: -0.01em; }
+.b-desktop .card--lead .s2-fig { margin-top: 28px; font-size: 96px; line-height: 96px; }
+.b-desktop .card--lead .s2-say { margin-top: 10px; font-size: 20px; line-height: 30px; }
+.s2v2 .b-desktop .credits { margin-top: 48px; border-top: 1px solid var(--line-200); padding-top: 20px; display: grid; grid-template-columns: 568px 284px 284px; column-gap: 32px; }
+.s2v2 .b-desktop .credits p { font-size: 13px; line-height: 20px; }
+.s2v2 .b-mobile { width: 390px; padding: 80px 24px 80px; }
+.b-mobile .s2-h2 { font-size: 32px; line-height: 36px; letter-spacing: -0.035em; }
+.b-mobile .s2-line { margin-top: 12px; font-size: 16px; line-height: 24px; }
+.s2v2 .b-mobile .lead { margin-top: 40px; }
+.s2v2 .b-mobile .lead .stage { height: 196px; border-radius: 20px; background: var(--stage); display: flex; align-items: center; justify-content: center; }
+.b-mobile .lead .s2-fig { margin-top: 20px; font-size: 64px; line-height: 64px; letter-spacing: -0.05em; }
+.b-mobile .lead .s2-say { margin-top: 10px; font-size: 17px; line-height: 26px; letter-spacing: -0.01em; }
+.s2v2 .b-mobile .list { margin-top: 32px; display: flex; flex-direction: column; gap: 24px; }
+.s2v2 .b-mobile .item { display: grid; grid-template-columns: 88px 1fr; column-gap: 16px; align-items: start; }
+.s2v2 .b-mobile .item .stage { width: 88px; height: 88px; border-radius: 16px; background: var(--stage); display: flex; align-items: center; justify-content: center; }
+.b-mobile .item .s2-fig { font-size: 48px; line-height: 48px; letter-spacing: -0.05em; margin-top: -2px; }
+.b-mobile .item .s2-fig .pct { font-size: 23px; line-height: 23px; margin: 4px 0 0 4px; letter-spacing: 0; }
+.b-mobile .item .s2-fig .unit { font-size: 20px; line-height: 20px; margin-left: 6px; letter-spacing: -0.03em; }
+.b-mobile .item .s2-say { margin-top: 8px; font-size: 15px; line-height: 22px; letter-spacing: -0.005em; }
+.s2v2 .b-mobile .notes-row { margin-top: 36px; border-top: 1px solid var(--line-200); padding-top: 20px; }
+.b-mobile .s2-notes-label { font-size: 12px; line-height: 18px; }
+.b-mobile .s2-notes ol { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.b-mobile .s2-notes li { font-size: 12px; line-height: 18px; text-indent: -9px; padding-left: 9px; }
+.s2v2.sec--desktop .s2-fig { font-size: 96px; line-height: 96px; letter-spacing: -0.05em; }
+.s2v2.sec--desktop .s2-fig .pct { font-size: 46px; line-height: 46px; margin: 8px 0 0 7px; letter-spacing: 0; }
+.s2v2.sec--desktop .s2-fig .unit { font-size: 36px; line-height: 36px; margin-left: 10px; letter-spacing: -0.03em; }
+.s2v2.sec--desktop .say { margin-top: 6px; font-size: 18px; line-height: 28px; }
+.s2v2.sec--desktop .dots-halves { margin: 22px 0 14px; }
+.s2v2.sec--mobile .s2-fig { font-size: 64px; line-height: 64px; letter-spacing: -0.05em; }
+.s2v2.sec--mobile .s2-fig .pct { font-size: 31px; line-height: 31px; margin: 5px 0 0 5px; letter-spacing: 0; }
+.s2v2.sec--mobile .s2-fig .unit { font-size: 26px; line-height: 26px; margin-left: 7px; letter-spacing: -0.03em; }
+.s2v2.sec--mobile .say { margin-top: 12px; font-size: 17px; line-height: 26px; }
+.s2v2.sec--mobile .dots-halves { margin: 20px 0 7px; }
+
+/* ===== S3 · Dua jawaban AI · sections/S3/template.html ===== */
+.s3 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s3 .sec-line .q { color: var(--ink-900); font-weight: 500; }
+.s3-pair { position: relative; display: grid; grid-template-columns: 560px 560px; column-gap: 80px; margin-top: 64px; }
+.s3-pair > .is-cg { grid-column: 1; grid-row: 1; }
+.s3-pair > .is-g { grid-column: 2; grid-row: 1; }
+.s3-surface { display: flex; flex-direction: column; }
+.s3-label { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; margin-bottom: 14px; }
+.s3-card { position: relative; flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 24px; padding: 20px 24px 24px;
+  box-shadow: 0 1px 2px rgb(22 22 29 / 0.05), 0 10px 28px rgb(22 22 29 / 0.07); }
+.s3-top { height: 28px; display: flex; align-items: center; justify-content: space-between; }
+.s3-q { position: relative; height: 44px; margin-top: 12px; display: flex; align-items: center; }
+.s3-head { height: 153px; display: flex; flex-direction: column; justify-content: flex-end; }
+.s3-top-icons { display: flex; gap: 14px; }
+.s3-bubble { margin-left: auto; position: relative; background: var(--stone-100); color: var(--ink-900); font-size: 15px; line-height: 22px; padding: 11px 16px; border-radius: 22px 22px 6px 22px; white-space: nowrap; }
+.s3-avatar { width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--line-200); display: flex; align-items: center; justify-content: center; background: #fff; }
+.s3-lead { margin-top: 12px; font-size: 15px; line-height: 22px; color: var(--ink-900); }
+.s3-list { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+.s3-li { position: relative; display: flex; gap: 10px; font-size: 15px; line-height: 22px; color: var(--ink-700); padding: 6px 12px; margin: 0 -12px; border-radius: 10px; }
+.s3-li b { font-weight: 600; color: var(--ink-900); }
+.s3-li .bul { color: var(--ink-400); }
+.s3-li.is-shared { background: var(--stone-100); }
+.s3-card .slot { position: relative; margin-top: 10px; height: 44px; border-radius: 12px; padding: 0 14px; gap: 10px; }
+.s3-card .slot-label { font-size: 15px; }
+.s3-composer { margin-top: auto; height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 16px; border: 1px solid var(--line-200); border-radius: 999px; box-shadow: var(--e-search); }
+.s3-composer .ph { flex: 1; font-size: 15px; color: var(--ink-500); }
+.s3-send { width: 36px; height: 36px; border-radius: 999px; background: var(--ink-900); display: flex; align-items: center; justify-content: center; }
+.s3 .is-cg .slot { margin-bottom: 28px; }
+.s3-word { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink-900); }
+.s3-search { flex: 1; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 18px; border: 1px solid var(--line-300); border-radius: 999px; font-size: 15px; color: var(--ink-900); white-space: nowrap; }
+.s3-search .txt { flex: 1; }
+.s3-tabs { position: relative; height: 36px; margin-top: 10px; display: flex; gap: 22px; border-bottom: 1px solid var(--line-200); }
+.s3-tab { font-size: 14px; line-height: 20px; color: var(--ink-500); padding-top: 6px; }
+.s3-tab.is-on { color: var(--ink-900); font-weight: 500; box-shadow: inset 0 -2px 0 var(--ink-900); }
+.s3-aio { margin-top: 14px; background: #fff; border: 1px solid var(--line-200); border-radius: 16px; padding: 14px 16px 16px; }
+.s3-aio-head { height: 24px; display: flex; align-items: center; justify-content: space-between; }
+.s3-aio-title { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink-900); }
+.s3-chips { display: flex; gap: 6px; }
+.s3-chip { height: 24px; display: flex; align-items: center; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line-200); font-size: 12px; color: var(--ink-600); }
+.is-g .s3-lead { margin-top: 10px; }
+.s3-results { margin-top: 18px; display: flex; flex-direction: column; gap: 16px; padding: 0 2px; }
+.s3-res { display: flex; flex-direction: column; gap: 7px; }
+.s3-res-src { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 16px; color: var(--ink-500); }
+.s3-fav { width: 16px; height: 16px; border-radius: 999px; background: var(--stone-100); border: 1px solid var(--line-200); }
+.s3-bar { height: 8px; border-radius: 4px; background: var(--stone-100); }
+.s3-bridge { position: absolute; top: 50%; left: 100%; height: 0; z-index: 2; }
+.s3-bridge i { position: absolute; top: 0; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 999px; }
+.s3-bridge i:first-child { left: -3.5px; }
+.s3-bridge i:last-child { right: -3.5px; }
+.s3-bridge--q { width: 128px; border-top: 1px solid var(--ink-400); }
+.s3-bridge--q i { background: var(--ink-400); width: 5px; height: 5px; margin-top: -2.5px; }
+.s3-bridge--q i:first-child { left: -2.5px; }
+.s3-bridge--q i:last-child { right: -2.5px; }
+.s3-bridge--a { width: 121px; border-top: 1.5px solid var(--ink-900); margin-top: -0.75px; }
+.s3-bridge--a i { background: var(--ink-900); }
+.s3-bridge--slot { left: calc(100% + 1.5px); width: 144.5px; border-top: 1.5px dashed var(--v-300); margin-top: -0.75px; }
+.s3-bridge--slot i { background: #fff; border: 1.5px solid var(--v-300); width: 9px; height: 9px; margin-top: -4.5px; }
+.s3-bridge--slot i:first-child { left: -4.5px; }
+.s3-bridge--slot i:last-child { right: -4.5px; }
+.s3-caption { margin-top: 32px; text-align: center; }
+.sec--mobile.s3 .s3-pair { display: flex; flex-direction: column; gap: 40px; margin-top: 40px; }
+.sec--mobile .s3-label { margin-bottom: 12px; }
+.sec--mobile .s3-card { padding: 16px 16px 18px; border-radius: 20px; }
+.sec--mobile .s3-top { height: 24px; }
+.sec--mobile .s3-q { height: auto; margin-top: 10px; }
+.sec--mobile .s3-head { height: auto; }
+.sec--mobile .s3-bubble { white-space: normal; max-width: 250px; font-size: 14px; line-height: 20px; padding: 10px 14px; border-radius: 20px 20px 6px 20px; }
+.sec--mobile .s3-avatar { margin-top: 18px; }
+.sec--mobile .s3-lead, .sec--mobile .s3-li, .sec--mobile .s3-card .slot-label, .sec--mobile .s3-composer .ph { font-size: 14px; line-height: 21px; }
+.sec--mobile .s3-li { padding: 5px 10px; margin: 0 -10px; gap: 8px; }
+.sec--mobile .s3-card .slot { height: 42px; }
+.sec--mobile.s3 .is-cg .slot { margin-bottom: 18px; }
+.sec--mobile .s3-composer { height: 48px; }
+.sec--mobile .s3-send { width: 32px; height: 32px; }
+.sec--mobile .s3-word { font-size: 20px; line-height: 24px; }
+.sec--mobile .s3-search { height: auto; min-height: 44px; padding: 10px 14px 10px 16px; white-space: normal; font-size: 14px; line-height: 20px; border-radius: 22px; }
+.sec--mobile .s3-tabs { gap: 18px; }
+.sec--mobile .s3-aio { padding: 12px 12px 14px; }
+.sec--mobile .s3-aio-head { height: auto; display: block; }
+.sec--mobile .s3-chips { margin-top: 8px; }
+.sec--mobile .s3-caption { margin-top: 24px; text-align: left; }
+.s3-thread, .s3-thread-end { position: absolute; top: 50%; z-index: 2; }
+.s3-thread i, .s3-thread-end i { position: absolute; width: 7px; height: 7px; border-radius: 999px; }
+.s3-thread--a { left: -18px; width: 18px; height: 598px; border-top: 1.5px solid var(--ink-900); border-left: 1.5px solid var(--ink-900); border-top-left-radius: 10px; margin-top: -0.75px; }
+.s3-thread--a i { right: -3.5px; top: -4.25px; background: var(--ink-900); }
+.s3-thread-end--a { left: -31px; width: 31px; height: 10px; margin-top: -9.25px; border-bottom: 1.5px solid var(--ink-900); border-left: 1.5px solid var(--ink-900); border-bottom-left-radius: 10px; }
+.s3-thread-end--a i { right: -3.5px; bottom: -4.25px; background: var(--ink-900); }
+.s3-thread--slot { left: calc(100% + 1.5px); width: 28px; height: 598px; border-top: 1.5px dashed var(--v-300); border-right: 1.5px dashed var(--v-300); border-top-right-radius: 10px; margin-top: -0.75px; }
+.s3-thread--slot i { left: -4.5px; top: -5.25px; width: 9px; height: 9px; background: #fff; border: 1.5px solid var(--v-300); }
+.s3-thread-end--slot { left: calc(100% + 1.5px); width: 41px; height: 10px; margin-top: -9.25px; border-bottom: 1.5px dashed var(--v-300); border-right: 1.5px dashed var(--v-300); border-bottom-right-radius: 10px; }
+.s3-thread-end--slot i { left: -4.5px; bottom: -5.25px; width: 9px; height: 9px; background: #fff; border: 1.5px solid var(--v-300); }
+.s3v2.sec--desktop .is-cg .s3-convo { height: 209px; display: flex; flex-direction: column; justify-content: flex-end; }
+.s3v2 .is-cg .s3-q { height: auto; margin-top: 0; }
+.s3v2 .is-cg .s3-head { height: auto; justify-content: flex-start; }
+.s3v2 .is-cg .s3-avatar { margin-top: 24px; }
+.s3v2 .s3-results { margin-top: 16px; gap: 14px; }
+.s3v2 .s3-res { gap: 6px; }
+.s3-qcurve { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 2; }
+.sec--mobile.s3v2 .s3-pair { gap: 32px; }
+.sec--mobile.s3v2 .is-cg .s3-q { margin-top: 10px; }
+.sec--mobile.s3v2 .is-cg .s3-avatar { margin-top: 16px; }
+.sec--mobile.s3v2 .is-cg .slot { margin-bottom: 16px; }
+.sec--mobile.s3v2 .s3-card { padding-bottom: 16px; }
+.s3-m-tie { position: absolute; left: 100%; bottom: 50%; width: 10.75px; height: var(--tie, 596px); margin-bottom: -0.75px;
+  border-right: 1.5px solid var(--ink-900); border-bottom: 1.5px solid var(--ink-900); border-bottom-right-radius: 8px; z-index: 2; }
+.s3-m-tie i { position: absolute; width: 7px; height: 7px; border-radius: 999px; background: var(--ink-900); }
+.s3-m-tie i:first-child { right: -4.25px; top: -3.5px; }
+.s3-m-tie i:last-child { left: -3.5px; bottom: -4.25px; }
+
+/* ===== S4 · Cara kerja · sections/S4/template.html ===== */
+.s4 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s4-steps { position: relative; display: grid; grid-template-columns: repeat(3, 368px); column-gap: 48px; }
+.s4-step { position: relative; display: flex; flex-direction: column; }
+.s4-num { position: relative; z-index: 1; flex: none; width: 32px; height: 32px; border-radius: 999px; background: var(--ink-900); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; line-height: 14px; font-weight: 600; font-feature-settings: "tnum"; }
+.s4-head { display: flex; align-items: center; gap: 10px; }
+.s4-title { font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; color: var(--ink-900); white-space: nowrap; }
+.s4-tag { flex: none; font-size: 13px; line-height: 18px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--v-50); color: var(--v-700); white-space: nowrap; }
+.s4-line { margin-top: 8px; font-size: 16px; line-height: 24px; color: var(--ink-600); }
+.s4-line b { font-weight: 500; color: var(--ink-900); }
+.s4-sketch { margin-top: auto; padding-top: 32px; }
+.s4-caption { margin-top: 48px; text-align: center; }
+.s4-card { position: relative; background: #fff; border: 1px solid var(--line-200); border-radius: 16px; box-shadow: var(--e-card); }
+.sec--desktop .s4-card { height: var(--sk, 168px); }
+.s4-webcard { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 16px; }
+.s4-field { height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #fff; border: 1px solid var(--line-300);
+  border-radius: 999px; font-size: 16px; line-height: 24px; color: var(--ink-900); }
+.s4-caret { flex: none; width: 1.5px; height: 20px; margin-left: -11px; background: var(--ink-900); border-radius: 1px; }
+.s4-found { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; background: var(--stone-50); border-radius: 14px; }
+.s4-thumb { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--stage); display: flex; align-items: center; justify-content: center; }
+.s4-thumb img { width: 36px; height: 36px; }
+.s4-found-name { flex: 1; font-size: 15px; line-height: 22px; color: var(--ink-600); white-space: nowrap; }
+.s4-found-name b { font-weight: 600; color: var(--ink-900); }
+.s4-check { flex: none; width: 22px; height: 22px; border-radius: 999px; background: var(--ink-900); display: flex; align-items: center; justify-content: center; }
+.s4-stack { position: relative; }
+.s4-stack i { position: absolute; left: 50%; height: 24px; border-radius: 0 0 14px 14px; background: #fff; border: 1px solid var(--line-200); border-top: 0; }
+.s4-stack .s4-pile-2 { bottom: -12px; width: 88%; margin-left: -44%; background: var(--stone-50); }
+.s4-stack .s4-pile-1 { bottom: -6px; width: 94%; margin-left: -47%; }
+.s4-qcard { z-index: 1; padding: 16px 18px 18px; }
+.s4-q-top { display: flex; align-items: center; justify-content: space-between; height: 20px; }
+.s4-q-n { font-size: 13px; line-height: 20px; font-weight: 600; color: var(--ink-600); }
+.s4-q-ex { font-size: 11px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--ink-900); color: #fff; }
+.s4-q-chip { margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 999px; border: 1px solid var(--line-300);
+  font-size: 12px; line-height: 16px; font-weight: 500; color: var(--ink-700); }
+.s4-q-query { margin-top: 10px; font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-900); }
+.s4-q-meta { margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--ink-500); }
+.s4-mail { padding: 16px 18px 18px; }
+.s4-mail-from { display: flex; align-items: center; gap: 10px; height: 28px; }
+.s4-mail-av { flex: none; width: 28px; height: 28px; border-radius: 999px; background: var(--v-50); display: flex; align-items: center; justify-content: center; }
+.s4-mail-name { flex: 1; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink-900); }
+.s4-mail-dot { flex: none; width: 8px; height: 8px; border-radius: 999px; background: var(--v-600); }
+.s4-mail-subj { margin-top: 10px; font-size: 15px; line-height: 22px; font-weight: 500; color: var(--ink-900); }
+.s4-mail-btn { margin-top: 14px; display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--ink-900); color: #fff;
+  font-size: 13px; line-height: 18px; font-weight: 600; }
+.s4a .s4-steps { margin-top: 72px; }
+.s4a .s4-track { position: absolute; left: 16px; top: 16px; width: 832px; height: 1px; background: var(--line-300); }
+.s4a .s4-num { box-shadow: 0 0 0 8px #fff; }
+.s4a .s4-head { margin-top: 24px; }
+.s4b .s4-steps { margin-top: 64px; }
+.s4-tile { position: relative; width: 88px; height: 88px; border-radius: 22px; background: var(--stage); display: flex; align-items: center; justify-content: center; }
+.s4-tile img { display: block; }
+.s4-tile .s4-num { position: absolute; left: -8px; top: -8px; width: 28px; height: 28px; font-size: 13px; box-shadow: 0 0 0 3px #fff; }
+.s4b .s4-head { margin-top: 24px; }
+.sec--mobile .s4-steps { display: block; }
+.sec--mobile .s4-step { display: block; }
+.sec--mobile .s4-title { font-size: 18px; line-height: 26px; }
+.sec--mobile .s4-line { margin-top: 6px; font-size: 15px; line-height: 22px; }
+.sec--mobile .s4-sketch { margin-top: 16px; padding-top: 0; }
+.sec--mobile .s4-caption { margin-top: 32px; text-align: left; }
+.sec--mobile .s4-field { height: 48px; padding: 0 16px; gap: 10px; font-size: 15px; }
+.sec--mobile .s4-caret { margin-left: -9px; height: 18px; }
+.sec--mobile .s4-webcard { padding: 12px; gap: 10px; }
+.sec--mobile .s4-found { gap: 8px; padding: 6px 8px 6px 6px; border-radius: 12px; }
+.sec--mobile .s4-found-name { font-size: 13px; line-height: 18px; }
+.sec--mobile .s4-thumb { width: 32px; height: 32px; border-radius: 9px; }
+.sec--mobile .s4-thumb img { width: 26px; height: 26px; }
+.sec--mobile .s4-check { width: 18px; height: 18px; }
+.sec--mobile .s4-q-query { font-size: 16px; line-height: 22px; }
+.sec--mobile .s4-mail-subj { font-size: 14px; line-height: 21px; }
+.sec--mobile.s4a .s4-steps { margin-top: 40px; }
+.sec--mobile.s4a .s4-step { padding: 0 0 40px 44px; }
+.sec--mobile.s4a .s4-step:last-child { padding-bottom: 0; }
+.sec--mobile.s4a .s4-num { position: absolute; left: 0; top: 0; width: 28px; height: 28px; font-size: 13px; box-shadow: 0 0 0 6px #fff; }
+.sec--mobile.s4a .s4-head { margin-top: 1px; }
+.sec--mobile.s4a .s4-vtrack { position: absolute; left: 13.5px; top: 28px; bottom: 0; width: 1px; background: var(--line-300); }
+.sec--mobile.s4b .s4-steps { margin-top: 40px; }
+.sec--mobile.s4b .s4-step { display: grid; grid-template-columns: 64px 1fr; column-gap: 16px; padding-bottom: 40px; }
+.sec--mobile.s4b .s4-step:last-child { padding-bottom: 0; }
+.sec--mobile.s4b .s4-tile { grid-column: 1; grid-row: 1; width: 64px; height: 64px; border-radius: 18px; }
+.sec--mobile.s4b .s4-tile .s4-num { left: -6px; top: -6px; width: 24px; height: 24px; font-size: 12px; }
+.sec--mobile.s4b .s4-words { grid-column: 2; grid-row: 1; align-self: center; }
+.sec--mobile.s4b .s4-head { margin-top: 0; }
+.sec--mobile.s4b .s4-sketch { grid-column: 1 / -1; grid-row: 2; }
+.s4a2 .s4-q-ex { background: var(--stone-100); color: var(--ink-600); }
+.mk-ring .s4-num { background: #fff; color: var(--ink-900); border: 1.5px solid var(--ink-900); }
+.mk-stone .s4-num { background: var(--stone-100); color: var(--ink-900); }
+
+/* ===== S5 · Laporan · sections/S5/template.html ===== */
+.s5 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s5 { background: var(--cream); }
+.s5-split { margin-top: 64px; display: grid; grid-template-columns: 400px 720px; column-gap: 80px; align-items: start; }
+.s5-toc { display: flex; flex-direction: column; gap: 4px; }
+.s5-toc-item { padding: 20px 24px 22px; border-radius: 20px; }
+.s5-toc-t { font-size: 18px; line-height: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-600); }
+.s5-toc-d { margin-top: 4px; font-size: 15px; line-height: 22px; color: var(--ink-500); }
+.s5-toc-item.is-on { background: #fff; box-shadow: var(--e-card); }
+.s5-toc-item.is-on .s5-toc-t { color: var(--ink-900); }
+.s5-toc-item.is-on .s5-toc-d { color: var(--ink-600); }
+.s5-seg { display: inline-flex; padding: 4px; border-radius: 999px; background: rgb(22 22 29 / 0.055); }
+.s5-seg-tab { display: flex; align-items: center; justify-content: center; border-radius: 999px; font-weight: 500; color: var(--ink-600); white-space: nowrap; }
+.s5-seg-tab.is-on { background: #fff; color: var(--ink-900); font-weight: 600; box-shadow: 0 1px 2px rgb(22 22 29 / 0.08), 0 2px 8px rgb(22 22 29 / 0.06); }
+.s5-seg-desc { color: var(--ink-600); }
+.sec--desktop .s5-seg-wrap { margin-top: 48px; display: flex; flex-direction: column; align-items: center; }
+.sec--desktop .s5-seg-tab { height: 40px; padding: 0 22px; font-size: 15px; line-height: 20px; }
+.sec--desktop .s5-seg-desc { margin-top: 16px; font-size: 15px; line-height: 22px; text-align: center; }
+.sec--mobile .s5-seg-wrap { margin-top: 32px; }
+.sec--mobile .s5-seg { display: flex; width: 100%; padding: 3px; }
+.sec--mobile .s5-seg-tab { flex: 1 1 auto; height: 38px; padding: 0 8px; font-size: 14px; line-height: 18px; }
+.sec--mobile .s5-seg-desc { margin-top: 14px; font-size: 15px; line-height: 22px; }
+.s5-card { background: #fff; border-radius: 28px; box-shadow: var(--e-float); }
+.sec--desktop .s5-card { padding: 36px 40px 40px; }
+.s5b .s5-card { width: 1040px; margin: 32px auto 0; padding: 40px 48px 44px; }
+.sec--mobile .s5-card { margin-top: 20px; padding: 20px 20px 22px; border-radius: 24px; }
+.s5-rh-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.s5-rh-label { display: flex; align-items: center; gap: 7px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-500); white-space: nowrap; }
+.s5-pdf { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 15px 0 12px; border-radius: 999px; border: 1px solid var(--line-300); background: #fff;
+  font-size: 14px; line-height: 20px; font-weight: 500; color: var(--ink-900); white-space: nowrap; }
+.s5-rh-name { margin-top: 12px; font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -0.025em; color: var(--ink-900); }
+.s5-rh-name span { font-weight: 500; color: var(--ink-500); }
+.s5-rh-meta { font-size: 14px; line-height: 20px; color: var(--ink-600); }
+.s5-rh-name + .s5-rh-meta { margin-top: 8px; }
+.s5-rh-meta + .s5-rh-meta { margin-top: 2px; color: var(--ink-500); }
+.s5-rule { height: 1px; background: var(--line-200); margin: 28px 0; }
+.sec--mobile .s5-rh-label { font-size: 12px; line-height: 16px; gap: 6px; }
+.sec--mobile .s5-pdf { height: 32px; padding: 0 12px 0 10px; gap: 6px; font-size: 13px; line-height: 18px; }
+.sec--mobile .s5-rh-name { margin-top: 12px; font-size: 20px; line-height: 26px; letter-spacing: -0.02em; }
+.sec--mobile .s5-rh-name + .s5-rh-meta { margin-top: 6px; }
+.sec--mobile .s5-rh-meta { font-size: 13px; line-height: 19px; }
+.sec--mobile .s5-rule { margin: 18px 0; }
+.s5-h3 { font-size: 18px; line-height: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-900); }
+.s5-src { font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: -0.005em; color: var(--ink-900); }
+.sec--mobile .s5-h3 { font-size: 17px; line-height: 24px; }
+.sec--mobile .s5-src { font-size: 15px; line-height: 22px; }
+.s5-panels { display: flex; flex-direction: column; gap: 14px; }
+.s5-panel { border-radius: 20px; background: var(--stone-50); padding: 22px 26px 24px; }
+.s5-metric { margin-top: 14px; }
+.s5-metric + .s5-metric { padding-top: 14px; border-top: 1px solid var(--line-200); }
+.s5-metric p { font-size: 15px; line-height: 22px; color: var(--ink-700); }
+.s5-metric b { font-weight: 600; color: var(--ink-900); }
+.s5-dots { margin-top: 12px; display: grid; grid-template-columns: repeat(10, 14px); gap: 8px; }
+.s5-dots .dot { width: 14px; height: 14px; background: #e3e2ec; }
+.s5-dots .dot.on { background: var(--v-600); }
+.s5-dots.is-soft .dot.on { background: var(--v-300); }
+.s5b .s5-panels { flex-direction: row; gap: 16px; }
+.s5b .s5-panel { flex: 1 1 0; }
+.s5b .s5-metric.is-first { min-height: 48px; }
+.sec--mobile .s5-panels { gap: 12px; }
+.sec--mobile .s5-panel { border-radius: 16px; padding: 16px 16px 18px; }
+.sec--mobile .s5-metric { margin-top: 12px; }
+.sec--mobile .s5-metric + .s5-metric { padding-top: 12px; }
+.sec--mobile .s5-metric p { font-size: 14px; line-height: 21px; }
+.sec--mobile .s5-dots { margin-top: 10px; grid-template-columns: repeat(10, 12px); gap: 7px; }
+.sec--mobile .s5-dots .dot { width: 12px; height: 12px; }
+.s5-q { margin-top: 18px; }
+.s5-q-n { font-size: 13px; line-height: 18px; font-weight: 600; color: var(--ink-600); }
+.s5-q-text { margin-top: 4px; font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink-900); }
+.s5-q-meta { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.s5-q-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: 999px; border: 1px solid var(--line-300);
+  font-size: 13px; line-height: 18px; font-weight: 500; color: var(--ink-700); white-space: nowrap; }
+.s5-q-note { font-size: 13px; line-height: 18px; color: var(--ink-500); }
+.s5-ans { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line-200); }
+.s5-ans-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.s5-ans-where { font-size: 13px; line-height: 18px; color: var(--ink-500); }
+.s5-quote { margin-top: 12px; padding: 16px 20px 18px; border-radius: 16px; background: var(--stone-50); font-size: 15px; line-height: 24px; color: var(--ink-700); }
+.s5-quote b { font-weight: 600; color: var(--v-700); white-space: nowrap; }
+.s5-chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.s5-chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-200); background: #fff;
+  font-size: 13px; line-height: 18px; font-weight: 500; color: var(--ink-600); white-space: nowrap; }
+.s5-chip.is-you { border-color: var(--v-300); background: var(--v-50); color: var(--v-700); font-weight: 600; }
+.s5-chip.is-dark { border-color: var(--ink-900); background: var(--ink-900); color: #fff; font-weight: 600; }
+.sec--mobile .s5-q { margin-top: 14px; }
+.sec--mobile .s5-q-n { font-size: 12px; line-height: 16px; }
+.sec--mobile .s5-q-text { font-size: 19px; line-height: 26px; }
+.sec--mobile .s5-q-meta { margin-top: 10px; gap: 6px 10px; }
+.sec--mobile .s5-q-chip { height: 24px; font-size: 12px; line-height: 16px; }
+.sec--mobile .s5-q-note { font-size: 12px; line-height: 16px; }
+.sec--mobile .s5-ans { margin-top: 18px; padding-top: 18px; }
+.sec--mobile .s5-ans-where { font-size: 12px; line-height: 16px; }
+.sec--mobile .s5-quote { margin-top: 10px; padding: 14px 16px 15px; border-radius: 14px; font-size: 14px; line-height: 22px; }
+.sec--mobile .s5-chips { margin-top: 10px; gap: 6px; }
+.sec--mobile .s5-chip { height: 26px; padding: 0 8px; font-size: 11.5px; line-height: 16px; }
+.s5-list { margin-top: 18px; }
+.s5-list-h { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink-900); padding-bottom: 8px; }
+.s5-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line-200); }
+.s5-row-name { font-size: 15px; line-height: 22px; font-weight: 500; color: var(--ink-900); }
+.s5-row-q { font-size: 14px; line-height: 20px; color: var(--ink-500); white-space: nowrap; }
+.s5-note { margin-top: 18px; display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--stone-50);
+  font-size: 14px; line-height: 20px; color: var(--ink-600); }
+.s5-note svg { flex: none; margin-top: 1px; }
+.sec--mobile .s5-list { margin-top: 14px; }
+.sec--mobile .s5-list-h { font-size: 13px; line-height: 18px; padding-bottom: 6px; }
+.sec--mobile .s5-row { padding: 11px 0; }
+.sec--mobile .s5-row-name { font-size: 14px; line-height: 20px; }
+.sec--mobile .s5-row-q { font-size: 13px; line-height: 18px; }
+.sec--mobile .s5-note { margin-top: 14px; padding: 12px 14px; font-size: 13px; line-height: 19px; gap: 8px; }
+.s5-fix { margin-top: 16px; padding: 22px 24px 24px; border-radius: 20px; background: var(--stone-50); }
+.s5-tag { display: inline-flex; font-size: 13px; line-height: 18px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--v-50); color: var(--v-700); }
+.s5-fix-t { margin-top: 12px; font-size: 18px; line-height: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-900); }
+.s5-kvs { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.s5-kv { font-size: 14px; line-height: 21px; color: var(--ink-600); }
+.s5-kv b { font-weight: 600; color: var(--ink-900); }
+.s5-sub { margin-top: 28px; }
+.s5-topics { margin-top: 10px; }
+.s5-topic { padding: 14px 0; border-top: 1px solid var(--line-200); }
+.s5-topic-t { font-size: 15px; line-height: 22px; font-weight: 600; color: var(--ink-900); }
+.s5-topic-v { margin-top: 2px; font-size: 14px; line-height: 20px; color: var(--ink-600); }
+.s5-topic-s { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--ink-500); }
+.sec--mobile .s5-fix { margin-top: 14px; padding: 16px 16px 18px; border-radius: 16px; }
+.sec--mobile .s5-tag { font-size: 12px; line-height: 16px; padding: 3px 9px; }
+.sec--mobile .s5-fix-t { margin-top: 10px; font-size: 16px; line-height: 23px; }
+.sec--mobile .s5-kvs { margin-top: 10px; gap: 8px; }
+.sec--mobile .s5-kv { font-size: 13px; line-height: 19px; }
+.sec--mobile .s5-sub { margin-top: 22px; }
+.sec--mobile .s5-topics { margin-top: 8px; }
+.sec--mobile .s5-topic { padding: 12px 0; }
+.sec--mobile .s5-topic-t { font-size: 14px; line-height: 20px; }
+.sec--mobile .s5-topic-v { font-size: 13px; line-height: 18px; }
+.sec--mobile .s5-topic-s { font-size: 12px; line-height: 16px; }
+.s5-2col { display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; align-items: start; }
+.s5b .s5-2col .s5-ans { margin-top: 24px; }
+.s5b .s5-2col .s5-list { margin-top: 18px; }
+.s5b .s5-2col .s5-sub { margin-top: 0; }
+.s5a2 .s5-left { display: flex; flex-direction: column; }
+.s5-promise { margin: 28px 24px 0; padding-top: 24px; border-top: 1px solid var(--line-200); display: grid; grid-template-columns: 18px 1fr; column-gap: 10px; align-items: start; }
+.s5-promise svg { margin-top: 2px; }
+.s5-promise .s5-pdfline { font-size: 15px; line-height: 22px; font-weight: 500; color: var(--ink-700); }
+.s5-promise .caption { grid-column: 2; margin-top: 4px; }
+.s5-under { text-align: center; }
+.sec--desktop .s5-under { margin-top: 24px; }
+.s5-pdfline { font-size: 15px; line-height: 22px; font-weight: 500; color: var(--ink-700); }
+.s5-under .caption { margin-top: 6px; }
+.sec--mobile .s5-under { margin-top: 20px; text-align: left; }
+.sec--mobile .s5-pdfline { font-size: 15px; line-height: 22px; }
+.s5-viewport { position: relative; overflow: hidden; background: var(--cream); }
+.s5-viewport > .sec { position: absolute; left: 0; }
+.s5-strong { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--v-600); color: #fff;
+  font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; box-shadow: 0 1px 2px rgb(27 20 100 / 0.25), 0 6px 16px rgb(65 41 224 / 0.22); }
+.s5-bar-price { white-space: nowrap; color: var(--ink-700); font-weight: 500; }
+.s5-bar-price b { font-weight: 600; color: var(--ink-900); }
+.s5-mbar { position: absolute; left: 0; bottom: 0; width: 390px; background: #fff; box-shadow: 0 -1px 0 var(--line-200), 0 -8px 24px rgb(22 22 29 / 0.06); }
+.s5-mbar-row { height: 64px; padding: 0 16px 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.s5-mbar .s5-bar-price { font-size: 13px; line-height: 18px; }
+.s5-mbar .s5-strong { height: 44px; padding: 0 20px; font-size: 15px; line-height: 20px; }
+.s5-safe { position: relative; height: 34px; }
+.s5-home { position: absolute; left: 128px; bottom: 8px; width: 134px; height: 5px; border-radius: 3px; background: var(--ink-900); }
+.s5-dbar { position: absolute; left: 0; top: 0; width: 1440px; height: 72px; padding: 0 120px; display: flex; align-items: center; justify-content: space-between;
+  background: #fff; box-shadow: 0 1px 0 var(--line-200), 0 6px 20px rgb(22 22 29 / 0.05); }
+.s5-brand { display: flex; align-items: center; gap: 8px; color: var(--ink-900); }
+.s5-brand-name { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.03em; }
+.s5-links { position: absolute; left: 50%; transform: translateX(-50%); display: flex; gap: 36px; }
+.s5-links a { font-size: 15px; line-height: 20px; font-weight: 500; color: var(--ink-600); }
+.s5-links a.is-here { color: var(--ink-900); }
+.s5-dbar-right { display: flex; align-items: center; gap: 20px; }
+.s5-dbar .s5-bar-price { font-size: 14px; line-height: 20px; }
+.s5-dbar .s5-strong { height: 44px; padding: 0 22px; font-size: 15px; line-height: 20px; }
+
+/* ===== S6 · Bukti, bukan janji · sections/S6/template.html ===== */
+.s6 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s6-obj { display: flex; align-items: flex-end; justify-content: center; }
+.s6-obj img { display: block; }
+.s6-title { font-weight: 600; color: var(--ink-900); letter-spacing: -0.015em; }
+.s6-line { color: var(--ink-600); }
+.sec--desktop.s6a .s6-items { margin-top: 72px; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 48px; }
+.sec--desktop.s6a .s6-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.sec--desktop.s6a .s6-obj { height: 164px; width: 100%; }
+.sec--desktop.s6a .s6-title { margin-top: 28px; font-size: 20px; line-height: 28px; }
+.sec--desktop.s6a .s6-line { margin-top: 8px; font-size: 16px; line-height: 24px; }
+.sec--mobile.s6a .s6-items { margin-top: 32px; }
+.sec--mobile.s6a .s6-item { display: grid; grid-template-columns: 84px 1fr; column-gap: 18px; align-items: center; padding: 20px 0; }
+.sec--mobile.s6a .s6-item + .s6-item { border-top: 1px solid var(--line-200); }
+.sec--mobile.s6a .s6-item:first-child { padding-top: 0; }
+.sec--mobile.s6a .s6-item:last-child { padding-bottom: 0; }
+.sec--mobile.s6a .s6-obj { width: 84px; height: 84px; align-items: center; }
+.sec--mobile.s6a .s6-title { font-size: 17px; line-height: 24px; }
+.sec--mobile.s6a .s6-line { margin-top: 4px; font-size: 15px; line-height: 22px; }
+.sec--desktop.s6a.v2 .s6-items { column-gap: 24px; }
+.s6b .s6-item { background: var(--stone-50); border-radius: 24px; }
+.sec--desktop.s6b .s6-items { margin-top: 64px; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 24px; }
+.sec--desktop.s6b .s6-item { padding: 28px 28px 32px; }
+.sec--desktop.s6b .s6-obj { width: 96px; height: 96px; justify-content: flex-start; }
+.sec--desktop.s6b .s6-title { margin-top: 24px; font-size: 20px; line-height: 28px; }
+.sec--desktop.s6b .s6-line { margin-top: 8px; font-size: 16px; line-height: 24px; }
+.sec--mobile.s6b .s6-items { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sec--mobile.s6b .s6-item { padding: 18px 16px 20px; border-radius: 20px; }
+.sec--mobile.s6b .s6-obj { width: 64px; height: 64px; justify-content: flex-start; }
+.sec--mobile.s6b .s6-title { margin-top: 14px; font-size: 16px; line-height: 22px; }
+.sec--mobile.s6b .s6-line { margin-top: 6px; font-size: 14px; line-height: 20px; }
+
+/* ===== S7 · Yang Anda dapat + harga · sections/S7/template.html ===== */
+.s7 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s7 { background: var(--stone-50); }
+.s7-label { display: flex; align-items: center; gap: 7px; font-size: 13px; line-height: 16px; font-weight: 600; color: var(--ink-500); }
+.s7-sub { margin-top: 6px; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; color: var(--ink-900); }
+.s7-rows { margin-top: 20px; }
+.s7-row { display: grid; grid-template-columns: 48px 1fr 18px; column-gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line-200); }
+.s7-rt { font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: -0.005em; color: var(--ink-900); }
+.s7-rl { margin-top: 2px; font-size: 15px; line-height: 22px; color: var(--ink-600); }
+.s7-tick { display: flex; align-items: center; justify-content: center; }
+.s7-ib { position: relative; width: 48px; height: 48px; border-radius: 12px; background: var(--stone-100); flex: none; }
+.s7 .g { position: absolute; display: block; }
+.s7 .g-card { background: #fff; border: 1px solid var(--line-300); border-radius: 5px; }
+.s7 .g-r7 { border-radius: 7px; }
+.s7 .g-r4 { border-radius: 4px; }
+.s7 .g-tail { background: #fff; border-left: 1px solid var(--line-300); border-bottom: 1px solid var(--line-300); border-radius: 0 0 0 3px; }
+.s7 .g-line { background: var(--line-300); border-radius: 1px; }
+.s7 .g-ink { background: var(--ink-400); border-radius: 2px; }
+.s7 .g-ring { border: 1.5px solid var(--ink-400); border-radius: 999px; }
+.s7 .g-bar { background: var(--line-300); border-radius: 2px; }
+.s7 .g-bar.g-ink { background: var(--ink-400); }
+.s7 .g-violet { background: var(--v-600); border-radius: 1px; }
+.s7 .g-chip { background: #fff; border: 1px solid var(--line-300); border-radius: 999px; }
+.s7 .g-chip.g-you { background: var(--v-50); border-color: var(--v-300); }
+.s7 .g-dot { background: var(--line-300); border-radius: 999px; }
+.s7 .g-dot.g-on { background: var(--v-600); }
+.s7 .g-dot.g-ink { background: var(--ink-400); }
+.s7 .g-slot { background: var(--v-50); border: 1px dashed var(--v-300); border-radius: 999px; }
+.s7 .g-tag { background: var(--v-100); border-radius: 999px; }
+.s7-price { font-size: 56px; line-height: 60px; font-weight: 600; letter-spacing: -0.04em; color: var(--ink-900); }
+.s7-terms { margin-top: 14px; font-size: 16px; line-height: 24px; font-weight: 500; color: var(--ink-700); }
+.s7-rule { height: 1px; background: var(--line-200); margin: 28px 0 24px; }
+.s7-pay { font-size: 16px; line-height: 24px; font-weight: 600; color: var(--ink-900); }
+.s7-chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.s7-chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-300); background: #fff;
+  font-size: 13px; line-height: 18px; font-weight: 500; color: var(--ink-600); white-space: nowrap; }
+.s7-price-block .hform { margin-top: 24px; }
+.s7-ready { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--ink-600); text-align: center; }
+.s7a .s7-card { background: #fff; border: 1px solid var(--line-200); border-radius: 28px; box-shadow: var(--e-card); overflow: hidden; }
+.sec--desktop.s7a .s7-card { margin-top: 64px; display: grid; grid-template-columns: 1fr 440px; }
+.sec--desktop.s7a .s7-list { padding: 40px 44px 26px; }
+.s7a .s7-pane { background: var(--cream); }
+.sec--desktop.s7a .s7-pane { padding: 40px; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--line-200); }
+.sec--mobile.s7a .s7-card { margin-top: 32px; border-radius: 24px; }
+.sec--mobile.s7a .s7-list { padding: 22px 16px 10px; }
+.sec--mobile.s7a .s7-pane { padding: 28px 16px 22px; border-top: 1px solid var(--line-200); }
+.sec--desktop.s7b .s7-split { margin-top: 64px; display: grid; grid-template-columns: 1fr 440px; column-gap: 72px; align-items: start; }
+.s7b .s7-ib { background: #fff; border: 1px solid var(--line-200); display: flex; align-items: center; justify-content: center;
+  font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink-700); font-feature-settings: "tnum"; letter-spacing: 0.02em; }
+.s7b .s7-reserve { background: #fff; border: 1px solid var(--line-200); border-radius: 24px; box-shadow: var(--e-float); padding: 36px 36px 30px; }
+.sec--mobile.s7b .s7-split { margin-top: 32px; }
+.sec--mobile.s7b .s7-reserve { margin-top: 28px; padding: 26px 20px 22px; border-radius: 22px; }
+.sec--mobile .s7-sub { font-size: 18px; line-height: 25px; }
+.sec--mobile .s7-rows { margin-top: 16px; }
+.sec--mobile .s7-row { grid-template-columns: 48px 1fr 16px; column-gap: 12px; align-items: start; padding: 14px 0; }
+.sec--mobile .s7-rt { font-size: 15px; line-height: 21px; }
+.sec--mobile .s7-rl { font-size: 14px; line-height: 20px; }
+.sec--mobile .s7-tick { margin-top: 3px; }
+.sec--mobile .s7-price { font-size: 48px; line-height: 52px; }
+.sec--mobile .s7-rule { margin: 24px 0 20px; }
+.sec--mobile .s7-chip { height: 26px; padding: 0 10px; font-size: 12.5px; }
+
+/* ===== S8 · Yang sering ditanyakan · sections/S8/template.html ===== */
+.s8 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s8-list { border-top: 1px solid var(--line-200); }
+.s8-row { border-bottom: 1px solid var(--line-200); }
+.s8-q { position: relative; display: flex; align-items: flex-start; column-gap: 24px; padding: 19px 0; }
+.s8-qt { flex: 1; font-size: 18px; line-height: 26px; font-weight: 500; letter-spacing: -0.01em; color: var(--ink-900); }
+.s8-mark { position: relative; flex: none; width: 24px; height: 24px; margin-top: 1px; }
+.s8-bar { position: absolute; display: block; background: var(--ink-500); border-radius: 1px; }
+.s8-bar--h { left: 5px; top: 11.25px; width: 14px; height: 1.5px; }
+.s8-bar--v { left: 11.25px; top: 5px; width: 1.5px; height: 14px; }
+.s8-row.is-open .s8-q { padding-bottom: 6px; }
+.s8-row.is-open .s8-bar { background: var(--ink-900); }
+.s8-a { max-width: var(--measure, 560px); padding-bottom: 32px; }
+.s8-a p { font-size: var(--a-size, 17px); line-height: var(--a-lh, 28px); letter-spacing: -0.005em; color: var(--ink-700); text-wrap: pretty; }
+.s8-a p + p { margin-top: 12px; }
+.sec--desktop .s8-list { width: 720px; margin: 56px auto 0; }
+.sec--mobile .s8-list { margin-top: 32px; }
+.sec--mobile .s8-q { column-gap: 16px; padding: 20px 0; }
+.sec--mobile .s8-qt { font-size: 17px; line-height: 24px; }
+.sec--mobile .s8-mark { margin-top: 0; }
+.sec--mobile .s8-row.is-open .s8-q { padding-bottom: 8px; }
+.sec--mobile .s8-a { max-width: none; padding-bottom: 28px; }
+.sec--mobile .s8-a p { font-size: 16px; line-height: 26px; }
+.sec--desktop.s8b { display: grid; grid-template-columns: 1fr 720px; column-gap: 96px; align-items: start; }
+.sec--desktop.s8b .sec-head { align-items: flex-start; text-align: left; }
+.sec--desktop.s8b .s8-list { width: auto; margin: 8px 0 0; }
+.s8-spec { width: 816px; padding: 48px 48px 56px; background: #fff; font-family: "Geist", sans-serif; color: var(--ink-900); }
+.s8-spec-title { font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; }
+.s8-spec-sub { margin-top: 4px; font-size: 14px; line-height: 20px; color: var(--ink-600); }
+.s8-spec-item { margin-top: 32px; }
+.s8-spec-label { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--ink-500); margin-bottom: 10px; }
+.sec--desktop.s8-spec .s8-list { width: 720px; margin: 0; }
+.s8-hover-disc { position: absolute; left: -4px; top: -4px; width: 32px; height: 32px; border-radius: 999px; background: var(--stone-100); }
+.s8-spec .is-hover .s8-bar { background: var(--ink-900); }
+.s8-ring { position: absolute; left: -12px; right: -12px; top: 4px; bottom: 4px; border: 2px solid var(--ink-900); border-radius: 12px; }
+.s8-morph { display: flex; gap: 32px; align-items: flex-end; }
+.s8-morph-step { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.s8-morph-step svg { display: block; }
+.s8-morph-t { font-size: 12px; line-height: 16px; color: var(--ink-500); font-variant-numeric: tabular-nums; }
+.s8-spec-notes { margin-top: 14px; font-size: 13px; line-height: 20px; color: var(--ink-600); }
+.s8-spec-notes b { font-weight: 500; color: var(--ink-900); }
+
+/* ===== S9 · CTA akhir · sections/S9/template.html ===== */
+.s9 }) format("woff2"); font-weight: 400; font-style: normal; }
+}) format("woff2"); font-weight: 500; font-style: normal; }
+}) format("woff2"); font-weight: 600; font-style: normal; }
+}) format("woff2"); font-weight: 700; font-style: normal; }
+
+
+
+
+
+body { font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink-900); background: #ecebf1;
+  padding: 48px; display: flex; gap: 96px; align-items: flex-start; width: max-content; }
+.s9-body { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.s9-founder { color: var(--ink-700); letter-spacing: -0.005em; }
+.s9-founder b { font-weight: 500; color: var(--ink-900); }
+.s9-mail { font-weight: 500; color: var(--ink-900); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.sec--desktop.s9 .hsearch { margin-top: 40px; }
+.sec--desktop.s9 .hmicro { margin-top: 18px; }
+.sec--desktop .s9-founder { font-size: 16px; line-height: 24px; }
+.sec--mobile.s9 .hform { margin-top: 28px; width: 100%; }
+.sec--mobile.s9 .hmicro { margin-top: 14px; }
+.sec--mobile .s9-founder { font-size: 15px; line-height: 23px; }
+.s9-slot { display: inline-flex; border-radius: 14px; background: #fff; }
+.sec--desktop .s9-slot { margin-bottom: 28px; padding: 6px 16px 6px 6px; gap: 10px; }
+.sec--desktop .s9-slot .slot-thumb { width: 34px; height: 34px; border-radius: 9px; font-size: 16px; }
+.sec--desktop .s9-slot .slot-label { font-size: 15px; line-height: 20px; }
+.sec--mobile .s9-slot { margin-bottom: 24px; padding: 5px 14px 5px 5px; gap: 9px; border-radius: 13px; }
+.sec--mobile .s9-slot .slot-thumb { width: 30px; height: 30px; border-radius: 8px; font-size: 15px; }
+.sec--mobile .s9-slot .slot-label { font-size: 14px; line-height: 18px; }
+.s9-rule { width: 40px; height: 1px; background: var(--line-300); }
+.sec--desktop .s9-rule { margin: 40px 0 36px; }
+.sec--mobile .s9-rule { margin: 32px 0 28px; }
+.sec--desktop.s9b { padding: 80px 120px 88px; }
+.s9b .s9-panel { background: var(--cream); }
+.sec--desktop.s9b .s9-panel { border-radius: 32px; padding: 104px 0 96px; }
+.sec--desktop.s9b .s9-founder { margin-top: 48px; font-size: 18px; line-height: 28px; }
+.sec--mobile.s9b { padding: 56px 16px 48px; }
+.sec--mobile.s9b .s9-panel { border-radius: 28px; padding: 64px 20px 48px; }
+.sec--mobile.s9b .s9-founder { margin-top: 32px; padding: 0 8px; font-size: 16px; line-height: 25px; }
+
+/* =====================================================================
+   Page seams (page/build_page.py). Everything above this block is the approved section CSS, unchanged.
+   ===================================================================== */
+.page { position: relative; background: #ffffff; flex: none; }
+.page--desktop { width: 1440px; }
+.page--mobile { width: 390px; }
+.page > section, .page > footer { display: block; }
+.hero { position: relative; overflow: hidden; background: #ffffff; --commit-fill: var(--v-600); }  /* was .artboard + :root in the hero template */
+/* S8 -> S9: the only join where two white sections meet with padding on both sides. The FAQ already ends with
+   120px (mobile 80px) of white, so S9 drops its own top padding: the cream panel's edge then sits one gap under
+   the last FAQ row, the same distance as content-to-band-edge at every other join (was 200 / 136px). */
+.page .sec--desktop.s9b { padding-top: 0; }
+.page .sec--mobile.s9b { padding-top: 0; }
+</style>
+</head>
+<body>
+
+<div class="artboard page page--desktop" id="landing-desktop" data-name="Landing · Desktop 1440">
+<section class="hero desktop" id="top" data-name="S1 · Hero">
+  <div class="wash"></div>
+  <header class="nav" data-name="Nav">
+    <a class="brand" data-name="Logo"><svg data-name="Icon · mark · 28 · #16161d" width="28" height="28" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><span class="brand-name">Nuave</span></a>
+    <nav class="links" data-name="Links"><a href="#cara-kerja">Cara kerja</a><a href="#laporan">Laporan</a><a href="#harga">Harga</a><a href="#faq">FAQ</a></nav>
+    <a class="btn-outline" data-name="Nav button">Cek klinik saya</a>
+  </header>
+  <div class="copy" data-name="Copy">
+    <h1 data-name="H1"><span>Pasien sekarang</span><span>tanya AI dulu,</span><span>baru pilih klinik.</span></h1>
+    <p class="lede" data-name="Line">Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang perlu dibenahi.</p>
+    <div class="search" data-name="Website form">
+      <div class="search-field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="search-placeholder">Website atau Instagram klinik</span></div>
+      <a class="btn-commit" data-name="Primary button">Cek klinik saya di AI</a>
+    </div>
+    <p class="micro" data-name="Price line">Cek dulu apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br>Auditnya Rp249.000, sekali bayar.</p>
+    <ul class="ticks" data-name="Ticks">
+      <li><span class="tick"><svg data-name="Icon · check · 12 · #16161d" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>10 pertanyaan berdasarkan pencarian Google</li>
+      <li><span class="tick"><svg data-name="Icon · check · 12 · #16161d" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>ChatGPT dan Google AI Overview</li>
+      <li><span class="tick"><svg data-name="Icon · check · 12 · #16161d" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>Tanpa data pasien</li>
+    </ul>
+  </div>
+  <div class="demo" data-name="Demo">
+    <div class="tabs" data-name="Clinic tabs">
+      <div class="tab is-active" data-name="Tab Gigi"><span class="tab-icon"><img src="assets/hero/tab-gigi.png" alt="" style="width:50px;height:50px"></span><span class="tab-label">Gigi</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kecantikan"><span class="tab-icon"><img src="assets/hero/tab-kecantikan.png" alt="" style="width:56px;height:56px"></span><span class="tab-label">Kecantikan</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kulit"><span class="tab-icon"><img src="assets/hero/tab-kulit.png" alt="" style="width:54px;height:54px"></span><span class="tab-label">Kulit</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Anak"><span class="tab-icon"><img src="assets/hero/tab-anak.png" alt="" style="width:50px;height:50px"></span><span class="tab-label">Anak</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Lainnya"><span class="tab-icon"><img src="assets/hero/tab-lainnya.png" alt="" style="width:52px;height:52px"></span><span class="tab-label">Lainnya</span><span class="tab-bar"></span></div>
+    </div>
+    <div class="phone" data-name="Phone">
+      <span class="phone-key k1"></span><span class="phone-key k2"></span><span class="phone-key k3"></span><span class="phone-key k4"></span>
+      <div class="screen" data-name="Screen">
+        <div class="island"></div>
+        <div class="status"><span>9:41</span><span class="status-icons"><svg data-name="Icon · signal · 18 · #16161d" width="18" height="12" viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg" fill="#16161d"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg data-name="Icon · wifi · 16 · #16161d" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 18l.01 0"/><path d="M9.172 15.172a4 4 0 0 1 5.656 0"/><path d="M6.343 12.343a8 8 0 0 1 11.314 0"/><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0"/></svg><svg data-name="Icon · battery · 26 · #16161d" width="26" height="12.5185" viewBox="0 0 27 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="23" height="12" rx="3.6" stroke="#16161d" stroke-opacity="0.38"/><rect x="2" y="2" width="20" height="9" rx="2.2" fill="#16161d"/><path d="M25 4.5C25.9 4.8 26.4 5.6 26.4 6.5C26.4 7.4 25.9 8.2 25 8.5V4.5Z" fill="#16161d" fill-opacity="0.45"/></svg></span></div>
+        <div class="appbar"><svg data-name="Icon · chevron · 22 · #52516a" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M15 6l-6 6l6 6"/></svg><span class="appbar-mid"><span class="ai-dot"><svg data-name="Icon · sparkle · 13 · #ffffff" width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#ffffff"/></svg></span>AI</span><svg data-name="Icon · edit · 21 · #52516a" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg></div>
+        <div class="thread" data-name="Chat">
+          <p class="bubble-user" data-name="Patient question">Klinik gigi di Depok yang bisa cicil behel dan buka Sabtu, ada rekomendasi?</p>
+          <p class="ai-lead" data-name="AI answer">Beberapa klinik yang bisa dipertimbangkan:</p>
+          <div class="results" data-name="Clinics named">
+            <div class="result"><span class="thumb"><img src="assets/hero/clinic-a.png" alt=""></span><span><span class="result-name">Klinik A:</span><br><span class="result-why">behel bisa dicicil</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/hero/clinic-b.png" alt=""></span><span><span class="result-name">Klinik B:</span><br><span class="result-why">buka Sabtu sampai sore</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/hero/clinic-c.png" alt=""></span><span><span class="result-name">Klinik C:</span><br><span class="result-why">dokter sabar untuk pasien takut</span></span></div>
+          </div>
+          <div class="slot" data-name="Your clinic slot"><span class="slot-thumb">?</span><span class="slot-label">Klinik Anda?</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fade"></div>
+    <div class="report" data-name="Report card">
+      <div class="report-head"><svg data-name="Icon · mark · 15 · #16161d" width="15" height="15" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><p class="report-title">AI Visibility Report</p></div>
+      <div class="report-row"><span class="report-name">ChatGPT</span><span class="report-score">muncul di 3 dari 10</span></div>
+      <div class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></div>
+      <div class="report-divider"></div>
+      <div class="report-row"><span class="report-name">Google AI Overview</span><span class="report-score">muncul di 1 dari 6</span></div>
+      <div class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+    </div>
+    <p class="caption" data-name="Caption">Contoh. Nama klinik fiktif.</p>
+  </div>
+</section>
+<section class="v2 sec sec--desktop s2v2" data-name="S2 · Pasien pilih lewat AI">
+  <header class="sec-head" data-name="Heading">
+    <h2 class="sec-h2" data-name="H2">Makin banyak pasien<br>pilih dokter lewat AI.</h2>
+    <p class="sec-line" data-name="Line">Di AS, saran AI sekarang lebih diikuti pasien daripada hasil Google.</p>
+  </header>
+  <div class="ledger" data-name="Figures">
+    <div class="ledger-row" data-name="Row · 2024 · Indonesia">
+      <div class="s2-fig" data-name="Figure 2024"><span class="num">2024</span></div>
+      <div data-name="Text column">
+        <p class="say" data-name="Sentence · Indonesia">Google AI Overview mulai muncul di<br>pencarian <b>di Indonesia</b>.<span class="ref">¹</span></p>
+      </div>
+    </div>
+    <div class="ledger-row" data-name="Row · 47% · AS">
+      <div class="s2-fig s2-fig--pct" data-name="Figure 47%"><span class="num">47</span><span class="pct">%</span></div>
+      <div data-name="Text column">
+        <p class="say" data-name="Sentence · AS"><b>warga AS</b> cari dokter lewat AI seperti<br>ChatGPT atau Google AI Overview.<span class="ref">²</span></p>
+        <div class="dots-halves" data-name="Dots · 47 of 100"><div class="half"><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><div class="half"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div>
+      </div>
+    </div>
+    <div class="ledger-row" data-name="Row · 40 juta · dunia">
+      <div class="s2-fig s2-fig--unit" data-name="Figure 40 juta"><span class="num">40</span><span class="unit">juta</span></div>
+      <div data-name="Text column">
+        <p class="say" data-name="Sentence · dunia">orang <b>di dunia</b> tanya soal kesehatan<br>ke ChatGPT tiap hari.<span class="ref">³</span></p>
+      </div>
+    </div>
+    <div class="ledger-notes notes" data-name="Sources">
+      <p class="notes-label" data-name="Sources label">Sumber:</p>
+      <ol class="notes-list" data-name="Source list">
+        <li><span class="ref">¹</span><span class="src">Google Indonesia</span>, 2024;</li>
+        <li><span class="ref">²</span><span class="src">rater8 Patient Choice Report 2026</span>,<br>survei 992 orang dewasa di AS, April 2026;</li>
+        <li><span class="ref">³</span><span class="src">OpenAI</span>, Januari 2026.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+<section class="v2 sec sec--desktop sec--band s3 s3v2" data-name="S3 · Dua jawaban AI">
+  <header class="sec-head" data-name="Heading">
+    <h2 class="sec-h2" data-name="H2">Satu pertanyaan pasien,<br>dua jawaban AI.</h2>
+    <p class="sec-line" data-name="Line">ChatGPT dan Google AI Overview cuma menyebut beberapa klinik.<br><span class="q">Klinik Anda termasuk?</span></p>
+  </header>
+
+  <div class="s3-pair" data-name="Two answers">
+    <!-- Google first in the DOM (column 2), so ChatGPT's bridges paint above it -->
+    <figure class="s3-surface is-g" data-name="Google AI Overview">
+      <figcaption class="s3-label" data-name="Label">Google AI Overview</figcaption>
+      <div class="s3-card" data-name="Google results page">
+        <div class="s3-top" data-name="Wordmark"><span class="s3-word">Google</span></div>
+        <div class="s3-q" data-name="Search bar">
+          <div class="s3-search"><span class="txt">rekomendasi klinik behel di Depok yang bisa dicicil</span><svg data-name="Icon · search · 18 · #6b6a85" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21L15 15"/></svg></div>
+        </div>
+        <div class="s3-tabs" data-name="Tabs"><span class="s3-tab is-on">Semua</span><span class="s3-tab">Maps</span><span class="s3-tab">Gambar</span><span class="s3-tab">Berita</span></div>
+        <div class="s3-aio" data-name="AI Overview box">
+          <div class="s3-aio-head" data-name="AI Overview head">
+            <span class="s3-aio-title"><svg data-name="Icon · sparkle · 14 · #16161d" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#16161d"/></svg>AI Overview</span>
+            <span class="s3-chips" data-name="Source chips"><span class="s3-chip">klinik-a.contoh</span><span class="s3-chip">direktori.contoh</span></span>
+          </div>
+          <p class="s3-lead" data-name="Answer">Ada beberapa klinik gigi di Depok yang menawarkan<br>cicilan behel, misalnya:</p>
+          <ul class="s3-list" data-name="Clinics named">
+            <li class="s3-li is-shared" data-name="Klinik A (in both)"><span class="bul">•</span><span><b>Klinik A:</b> cicilan tanpa kartu kredit</span></li>
+            <li class="s3-li" data-name="Klinik D"><span class="bul">•</span><span><b>Klinik D:</b> konsultasi awal sebelum pasang</span></li>
+            <li class="s3-li" data-name="Klinik E"><span class="bul">•</span><span><b>Klinik E:</b> dekat stasiun, parkir luas</span></li>
+          </ul>
+          <div class="slot" data-name="Your clinic slot"><span class="slot-label">Klinik Anda?</span></div>
+        </div>
+        <div class="s3-results" data-name="Results (greyed)">
+          <div class="s3-res" data-name="Result 1"><span class="s3-res-src"><i class="s3-fav"></i>klinik-a.contoh</span><i class="s3-bar" style="width:70%"></i></div>
+          <div class="s3-res" data-name="Result 2"><span class="s3-res-src"><i class="s3-fav"></i>direktori.contoh</span><i class="s3-bar" style="width:58%"></i></div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="s3-surface is-cg" data-name="ChatGPT">
+      <figcaption class="s3-label" data-name="Label">ChatGPT</figcaption>
+      <div class="s3-card" data-name="ChatGPT chat">
+        <div class="s3-top" data-name="Top bar"><span class="s3-top-icons" data-name="Menu"><svg data-name="Icon · menu · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></span><svg data-name="Icon · edit · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg></div>
+        <div class="s3-convo" data-name="Conversation">
+          <div class="s3-q" data-name="Patient question">
+            <p class="s3-bubble">rekomendasi klinik behel di Depok yang bisa dicicil</p>
+          </div>
+          <div class="s3-head" data-name="Answer head">
+            <span class="s3-avatar" data-name="AI"><svg data-name="Icon · sparkle · 13 · #3b3a4a" width="13" height="13" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#3b3a4a"/></svg></span>
+            <p class="s3-lead" data-name="Answer">Beberapa klinik gigi di Depok<br>yang bisa dipertimbangkan:</p>
+          </div>
+        </div>
+        <ul class="s3-list" data-name="Clinics named">
+          <li class="s3-li is-shared" data-name="Klinik A (in both)"><span class="bul">•</span><span><b>Klinik A:</b> behel bisa dicicil</span><span class="s3-bridge s3-bridge--a" data-name="Bridge · Klinik A in both"><i></i><i></i></span></li>
+          <li class="s3-li" data-name="Klinik B"><span class="bul">•</span><span><b>Klinik B:</b> buka Sabtu sampai sore</span></li>
+          <li class="s3-li" data-name="Klinik C"><span class="bul">•</span><span><b>Klinik C:</b> ada dokter spesialis ortodonti</span></li>
+        </ul>
+        <div class="slot" data-name="Your clinic slot"><span class="slot-label">Klinik Anda?</span><span class="s3-bridge s3-bridge--slot" data-name="Bridge · Klinik Anda? in neither"><i></i><i></i></span></div>
+        <div class="s3-composer" data-name="Input bar"><svg data-name="Icon · plus · 20 · #52516a" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 5L12 19"/><path d="M5 12L19 12"/></svg><span class="ph">Tanyakan apa saja</span><span class="s3-send" data-name="Send button"><svg data-name="Icon · arrow-up · 18 · #ffffff" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 19L12 5"/><path d="M6 11L12 5L18 11"/></svg></span></div>
+      </div>
+    </figure>
+  </div>
+  <p class="caption s3-caption" data-name="Caption">Contoh. Nama klinik fiktif. Google tidak selalu menampilkan AI Overview.</p>
+</section>
+<section class="v2 mk-ring sec sec--desktop s4 s4a s4a2" id="cara-kerja" data-name="S4 · Cara kerja">
+  <header class="sec-head" data-name="Heading">
+    <h2 class="sec-h2" data-name="H2">Kami tanya AI persis<br>seperti pasien Anda.</h2>
+  </header>
+  <ol class="s4-steps" data-name="Steps">
+    <li class="s4-track" data-name="Track" aria-hidden="true"></li>
+    <li class="s4-step" data-name="Step 1">
+      <span class="s4-num" data-name="Number">1</span>
+      <div class="s4-head" data-name="Title row"><h3 class="s4-title">Masukkan website</h3><span class="s4-tag" data-name="Tag · Gratis">Gratis</span></div>
+      <p class="s4-line" data-name="Line">Bisa juga Instagram.<br>Nuave cari kliniknya.</p>
+      <div class="s4-sketch" data-name="Sketch · website field">
+        <div class="s4-card s4-webcard" data-name="Website check">
+        <div class="s4-field" data-name="Website field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span>klinikgigifiksi.contoh</span><i class="s4-caret" data-name="Caret"></i></div>
+        <div class="s4-found" data-name="Clinic found"><span class="s4-thumb" data-name="Thumb"><img src="assets/s4/tab-gigi.png" alt=""></span><span class="s4-found-name"><b>Klinik Gigi Fiksi</b> · Surabaya</span><span class="s4-check" data-name="Found"><svg data-name="Icon · check · 12 · #ffffff" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></div>
+        </div>
+      </div>
+    </li>
+    <li class="s4-step" data-name="Step 2">
+      <span class="s4-num" data-name="Number">2</span>
+      <div class="s4-head" data-name="Title row"><h3 class="s4-title">Bayar dan cek</h3><span class="s4-tag" data-name="Tag · Rp249.000">Rp249.000</span></div>
+      <p class="s4-line" data-name="Line">Nuave siapkan 10 pertanyaan<br><b>dari data pencarian Google.</b><br>Anda tinggal cek.</p>
+      <div class="s4-sketch" data-name="Sketch · question card">
+        <div class="s4-stack" data-name="Question stack"><i class="s4-pile-2" data-name="Pile"></i><i class="s4-pile-1" data-name="Pile"></i>
+          <div class="s4-card s4-qcard" data-name="Question card">
+            <div class="s4-q-top"><span class="s4-q-n">Pertanyaan 3</span><span class="s4-q-ex" data-name="Tag · Contoh">Contoh</span></div>
+            <span class="s4-q-chip" data-name="Chip · Dicari di Google"><svg data-name="Icon · search · 12 · #52516a" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21L15 15"/></svg>Dicari di Google</span>
+            <p class="s4-q-query" data-name="Query">implan gigi surabaya harga</p>
+            <p class="s4-q-meta" data-name="Topic">Topik: harga implan gigi · ±4.400 pencarian/bulan di Google,<br>seluruh Indonesia (data September 2026)</p>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li class="s4-step" data-name="Step 3">
+      <span class="s4-num" data-name="Number">3</span>
+      <div class="s4-head" data-name="Title row"><h3 class="s4-title">Terima laporan</h3></div>
+      <p class="s4-line" data-name="Line">Kami tanyakan ke ChatGPT dan<br>Google AI Overview.<br>Laporan siap dalam <b>15 menit.</b></p>
+      <div class="s4-sketch" data-name="Sketch · report email">
+        <div class="s4-card s4-mail" data-name="Email">
+          <div class="s4-mail-from"><span class="s4-mail-av" data-name="Avatar"><svg data-name="Icon · mark · 15 · #16161d" width="15" height="15" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg></span><span class="s4-mail-name">Tim Nuave</span><i class="s4-mail-dot" data-name="Unread"></i></div>
+          <p class="s4-mail-subj" data-name="Subject">AI Visibility Report untuk<br>Klinik Gigi Fiksi sudah siap</p>
+          <span class="s4-mail-btn" data-name="Button · Buka laporan">Buka laporan</span>
+        </div>
+      </div>
+    </li>
+  </ol>
+  <p class="caption s4-caption" data-name="Caption">Contoh. Nama klinik fiktif.</p>
+</section>
+<section class="v2 sec sec--desktop s5 s5a s5a2" id="laporan" data-name="S5 · Laporan"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Lihat apa kata AI tentang klinik Anda.</h2><p class="sec-line" data-name="Line">Sekalian tahu apa yang perlu dibenahi duluan.</p></header><div class="s5-split" data-name="Report showcase"><div class="s5-left" data-name="Contents"><ul class="s5-toc" data-name="Tabs"><li class="s5-toc-item is-on" data-name="Tab · Skor"><p class="s5-toc-t">Skor</p><p class="s5-toc-d">Muncul di berapa pertanyaan, di ChatGPT dan Google AI Overview.</p></li><li class="s5-toc-item" data-name="Tab · Jawaban AI"><p class="s5-toc-t">Jawaban AI</p><p class="s5-toc-d">Jawaban ChatGPT dan Google AI Overview, utuh, dengan sumbernya.</p></li><li class="s5-toc-item" data-name="Tab · Klinik lain"><p class="s5-toc-t">Klinik lain</p><p class="s5-toc-d">Siapa saja yang disebut, di masing-masing tempat.</p></li><li class="s5-toc-item" data-name="Tab · Perbaikan"><p class="s5-toc-t">Perbaikan</p><p class="s5-toc-d">Yang dikerjakan duluan, plus topik yang belum menyebut Anda.</p></li></ul><div class="s5-promise" data-name="PDF promise"><svg data-name="Icon · download · 18 · #52516a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 17V19A2 2 0 0 0 6 21H18A2 2 0 0 0 20 19V17"/><path d="M7 11L12 16L17 11"/><path d="M12 4L12 16"/></svg><p class="s5-pdfline" data-name="PDF line">Download PDF, siap dibawa ke rapat.</p><p class="caption" data-name="Caption">Contoh. Nama klinik fiktif.</p></div></div><div class="s5-right" data-name="Report"><article class="s5-card" data-name="Report card"><header class="s5-rh" data-name="Report header"><div class="s5-rh-top" data-name="Top row"><p class="s5-rh-label" data-name="Label"><svg data-name="Icon · mark · 16 · #16161d" width="16" height="16" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg>AI Visibility Report</p><span class="s5-pdf" data-name="Button · Download PDF"><svg data-name="Icon · download · 16 · #16161d" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 17V19A2 2 0 0 0 6 21H18A2 2 0 0 0 20 19V17"/><path d="M7 11L12 16L17 11"/><path d="M12 4L12 16"/></svg>Download PDF</span></div><p class="s5-rh-name" data-name="Clinic">Klinik Gigi Fiksi <span>· Surabaya</span></p><p class="s5-rh-meta" data-name="Checked">Diperiksa di ChatGPT dan Google AI Overview · 20 Oktober 2026</p><p class="s5-rh-meta" data-name="Places">Google: Surabaya · ChatGPT: Indonesia</p></header><div class="s5-rule" data-name="Rule"></div><div class="s5-tab" data-name="Tab content · Skor"><div class="s5-panels" data-name="Panels"><section class="s5-panel" data-name="Panel · ChatGPT"><h4 class="s5-src">ChatGPT</h4><div class="s5-metric is-first" data-name="Muncul"><p>Klinik Anda muncul di <b>3 dari 10</b> pertanyaan</p><div class="s5-dots" data-name="Dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></div></div><div class="s5-metric" data-name="Direkomendasikan"><p>Klinik Anda direkomendasikan di <b>1 dari 10</b> pertanyaan</p><div class="s5-dots is-soft" data-name="Dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div></section><section class="s5-panel" data-name="Panel · Google AI Overview"><h4 class="s5-src">Google AI Overview</h4><div class="s5-metric is-first" data-name="AI Overview shown"><p>Google menampilkan AI Overview di <b>6 dari 10</b> pertanyaan</p></div><div class="s5-metric" data-name="Muncul"><p>Klinik Anda muncul di <b>1 dari 6</b> pertanyaan</p><div class="s5-dots" data-name="Dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div></section></div></div></article></div></div></section>
+<section class="sec sec--desktop s6 s6a v2" data-name="S6 · Bukti, bukan janji"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Bukti, bukan janji.</h2></header><ul class="s6-items" data-name="Items"><li class="s6-item" data-name="Apa adanya"><span class="s6-obj" data-name="Object · answer under a loupe"><img src="assets/s6/3d-bubble-loupe.png" alt="" style="width:148px;height:128px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Apa adanya</h3><p class="s6-line" data-name="Line">Jawaban AI ditampilkan utuh,<br>dengan sumbernya.</p></div></li><li class="s6-item" data-name="Bahasa pasien"><span class="s6-obj" data-name="Object · phone, someone typing"><img src="assets/s6/3d-phone-typing.png" alt="" style="width:101px;height:161px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Bahasa pasien</h3><p class="s6-line" data-name="Line">10 pertanyaan,<br>seperti yang biasa diketik pasien.</p></div></li><li class="s6-item" data-name="Data publik"><span class="s6-obj" data-name="Object · the clinic’s public website"><img src="assets/s6/3d-website-card-v2.png" alt="" style="width:146px;height:118px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Data publik</h3><p class="s6-line" data-name="Line">Cuma informasi publik klinik.<br>Tanpa data pasien.</p></div></li><li class="s6-item" data-name="Batasnya jelas"><span class="s6-obj" data-name="Object · calendar, one day circled"><img src="assets/s6/3d-calendar.png" alt="" style="width:134px;height:133px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Batasnya jelas</h3><p class="s6-line" data-name="Line">Hasil cek hari ini,<br>bukan peringkat tetap.<br>Cek ulang setelah 6 sampai 8 minggu.</p></div></li></ul></section>
+<section class="sec sec--desktop s7 s7a" id="harga" data-name="S7 · Yang Anda dapat + harga"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Yang Anda dapat dari satu audit.</h2><p class="sec-line s7-line" data-name="Line">Rp249.000, sekali bayar.<br>Bandingkan dengan harga satu tindakan di klinik Anda.</p></header><article class="s7-card" data-name="Receipt"><div class="s7-list" data-name="What you get"><p class="s7-label" data-name="Label"><svg data-name="Icon · mark · 16 · #16161d" width="16" height="16" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg>AI Visibility Report</p><p class="s7-sub" data-name="Sub">Diperiksa di ChatGPT dan Google AI Overview</p><ul class="s7-rows" data-name="Rows"><li class="s7-row" data-name="10 pertanyaan pasien"><span class="s7-ib s7-glimpse" data-name="Glimpse · pertanyaan"><i class="g g-card" style="left:13px;top:22px;width:22px;height:18px"></i><i class="g g-card" style="left:11px;top:18px;width:26px;height:18px"></i><i class="g g-card" style="left:9px;top:11px;width:30px;height:22px"></i><i class="g g-ring" style="left:14px;top:16px;width:6px;height:6px"></i><i class="g g-line" style="left:23px;top:18px;width:11px;height:2px"></i><i class="g g-line" style="left:14px;top:26px;width:18px;height:2px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">10 pertanyaan pasien</p><p class="s7-rl" data-name="Line">Berdasarkan pencarian Google untuk jenis klinik dan kota Anda.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Jumlah pencarian"><span class="s7-ib s7-glimpse" data-name="Glimpse · pencarian"><i class="g g-bar" style="left:13px;top:26px;width:4px;height:9px"></i><i class="g g-bar" style="left:19px;top:22px;width:4px;height:13px"></i><i class="g g-bar" style="left:25px;top:17px;width:4px;height:18px"></i><i class="g g-bar g-ink" style="left:31px;top:12px;width:4px;height:23px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Jumlah pencarian</p><p class="s7-rl" data-name="Line">Berapa kali topiknya dicari per bulan, kalau datanya ada.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Jawaban ChatGPT"><span class="s7-ib s7-glimpse" data-name="Glimpse · chatgpt"><i class="g g-card g-r7" style="left:8px;top:10px;width:32px;height:23px"></i><i class="g g-tail" style="left:11px;top:30px;width:7px;height:7px"></i><i class="g g-line" style="left:13px;top:16px;width:22px;height:2px"></i><i class="g g-line" style="left:13px;top:21px;width:9px;height:2px"></i><i class="g g-violet" style="left:23px;top:21px;width:12px;height:2px"></i><i class="g g-line" style="left:13px;top:26px;width:16px;height:2px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Jawaban ChatGPT</p><p class="s7-rl" data-name="Line">Ditanyakan langsung ke ChatGPT, dijawab utuh dengan sumbernya.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Google AI Overview"><span class="s7-ib s7-glimpse" data-name="Glimpse · aio"><i class="g g-card" style="left:8px;top:9px;width:32px;height:30px"></i><i class="g g-ink" style="left:12px;top:14px;width:10px;height:3px"></i><i class="g g-line" style="left:12px;top:20px;width:23px;height:2px"></i><i class="g g-line" style="left:12px;top:24px;width:18px;height:2px"></i><i class="g g-chip" style="left:12px;top:30px;width:9px;height:5px"></i><i class="g g-chip g-you" style="left:23px;top:30px;width:11px;height:5px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Google AI Overview</p><p class="s7-rl" data-name="Line">Dicek dari kota Anda, plus seberapa sering Google menampilkannya.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Skor"><span class="s7-ib s7-glimpse" data-name="Glimpse · skor"><i class="g g-dot" style="left:6px;top:17px;width:5px;height:5px"></i><i class="g g-dot g-on" style="left:14px;top:17px;width:5px;height:5px"></i><i class="g g-dot" style="left:22px;top:17px;width:5px;height:5px"></i><i class="g g-dot" style="left:30px;top:17px;width:5px;height:5px"></i><i class="g g-dot" style="left:38px;top:17px;width:5px;height:5px"></i><i class="g g-dot g-on" style="left:6px;top:26px;width:5px;height:5px"></i><i class="g g-dot" style="left:14px;top:26px;width:5px;height:5px"></i><i class="g g-dot g-on" style="left:22px;top:26px;width:5px;height:5px"></i><i class="g g-dot" style="left:30px;top:26px;width:5px;height:5px"></i><i class="g g-dot" style="left:38px;top:26px;width:5px;height:5px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Skor</p><p class="s7-rl" data-name="Line">Muncul di berapa pertanyaan, di masing-masing tempat.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Klinik lain"><span class="s7-ib s7-glimpse" data-name="Glimpse · klinik"><i class="g g-dot g-ink" style="left:11px;top:13px;width:5px;height:5px"></i><i class="g g-line" style="left:19px;top:14px;width:18px;height:3px"></i><i class="g g-dot g-ink" style="left:11px;top:21px;width:5px;height:5px"></i><i class="g g-line" style="left:19px;top:22px;width:15px;height:3px"></i><i class="g g-dot g-ink" style="left:11px;top:29px;width:5px;height:5px"></i><i class="g g-line" style="left:19px;top:30px;width:12px;height:3px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Klinik lain</p><p class="s7-rl" data-name="Line">Klinik lain yang disebut, dan di pertanyaan mana.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Sumber AI"><span class="s7-ib s7-glimpse" data-name="Glimpse · sumber"><i class="g g-chip" style="left:8px;top:13px;width:18px;height:7px"></i><i class="g g-chip" style="left:28px;top:13px;width:12px;height:7px"></i><i class="g g-chip" style="left:8px;top:24px;width:14px;height:7px"></i><i class="g g-chip g-you" style="left:24px;top:24px;width:16px;height:7px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Sumber AI</p><p class="s7-rl" data-name="Line">Situs yang dibaca AI, dan apakah situs Anda salah satunya.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Topik terlewat"><span class="s7-ib s7-glimpse" data-name="Glimpse · topik"><i class="g g-line" style="left:10px;top:13px;width:26px;height:2px"></i><i class="g g-line" style="left:10px;top:19px;width:20px;height:2px"></i><i class="g g-slot" style="left:10px;top:27px;width:28px;height:9px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Topik terlewat</p><p class="s7-rl" data-name="Line">Topik yang dicari orang, tapi belum menyebut klinik Anda.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Perbaikan dan PDF"><span class="s7-ib s7-glimpse" data-name="Glimpse · pdf"><i class="g g-card g-r4" style="left:12px;top:8px;width:24px;height:32px"></i><i class="g g-tag" style="left:16px;top:13px;width:13px;height:5px"></i><i class="g g-line" style="left:16px;top:22px;width:16px;height:2px"></i><i class="g g-line" style="left:16px;top:27px;width:12px;height:2px"></i><i class="g g-line" style="left:16px;top:32px;width:14px;height:2px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Perbaikan dan PDF</p><p class="s7-rl" data-name="Line">Yang dikerjakan duluan, siap dibawa ke rapat.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 18 · #a2a1b6" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li></ul></div><div class="s7-pane" data-name="Price pane"><div class="s7-price-block" data-name="Price block"><p class="s7-price" data-name="Price">Rp249.000</p><p class="s7-terms" data-name="Terms">Sekali bayar.<br>Tanpa langganan.<br>Tanpa biaya tambahan.</p><div class="s7-rule" data-name="Rule"></div><p class="s7-pay" data-name="Pay after">Bayar setelah klinik Anda ketemu.</p><div class="s7-chips" data-name="Payment methods"><span class="s7-chip" data-name="Chip · QRIS">QRIS</span><span class="s7-chip" data-name="Chip · Transfer bank">Transfer bank</span><span class="s7-chip" data-name="Chip · GoPay">GoPay</span><span class="s7-chip" data-name="Chip · DANA">DANA</span></div><div class="hform" data-name="Form"><div class="hform-field" data-name="Website field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="hform-placeholder">Website atau Instagram klinik</span></div><span class="hform-btn" data-name="Primary button">Cek klinik saya di AI</span></div><p class="s7-ready" data-name="Ready in 15 minutes">Laporan siap dalam 15 menit setelah audit dimulai.</p></div></div></article></section>
+<section class="sec sec--desktop s8 s8a" id="faq" data-name="S8 · Yang sering ditanyakan"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Yang sering ditanyakan</h2></header><div class="s8-list" data-name="Questions"><div class="s8-row is-open" data-name="Row 1 · open"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Bagaimana cara klinik muncul di Google AI Overview?</p><span class="s8-mark" data-name="Marker −"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i></span></div><div class="s8-a" data-name="Answer"><p data-name="Paragraph">Tidak ada yang bisa menjamin, karena Google memilih sendiri sumbernya dan sering tidak menampilkan AI Overview untuk pencarian lokal.</p><p data-name="Paragraph">Yang pertama, tahu dulu posisi klinik Anda sekarang: pertanyaan mana yang memunculkan AI Overview, klinik dan situs apa yang disebut, dan informasi apa yang perlu dibenahi.</p></div></div><div class="s8-row" data-name="Row 2"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Bedanya dengan SEO?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 3"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Bisa cek sendiri di ChatGPT?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 4"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">AI apa yang diuji?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 5"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Dari mana pertanyaannya?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 6"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Apa yang gratis?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 7"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Jawaban AI kan berubah-ubah?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 8"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Berapa lama?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 9"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Klinik saya punya beberapa cabang.</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 10"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Aman soal aturan iklan kesehatan?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 11"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Kalau ada masalah?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div></div></section>
+<section class="sec sec--desktop s9 s9b" data-name="S9 · CTA akhir"><div class="s9-panel s9-body" data-name="Panel"><header class="sec-head sec-head--center" data-name="Heading"><h2 class="sec-h2" data-name="H2">Cek klinik Anda sebelum<br>pasien berikutnya bertanya.</h2><p class="sec-line" data-name="Line">Mulai dari website atau Instagram klinik Anda.</p></header><div class="hsearch" data-name="Website form"><div class="hsearch-field" data-name="Field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="hform-placeholder" data-name="Placeholder">Website atau Instagram klinik</span></div><span class="hform-btn" data-name="Primary button">Cek klinik saya di AI</span></div><p class="hmicro" data-name="Price line">Cek dulu apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br>Auditnya Rp249.000, sekali bayar.</p></div><div class="s9-body" data-name="Postscript"><p class="s9-founder" data-name="Founder line">Ada pertanyaan lain? Hubungi kami di <a class="s9-mail" href="mailto:support@nuave.ai" data-name="Email">support@nuave.ai</a>.</p></div></section><footer class="foot foot--desktop" data-name="Footer"><div class="foot-row foot-row--rule" data-name="Footer row"><a class="foot-brand" data-name="Logo"><svg data-name="Icon · mark · 24 · #16161d" width="24" height="24" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><span class="foot-name" data-name="Wordmark">Nuave</span></a><nav class="foot-links" data-name="Links"><a class="foot-link" href="#faq" data-name="Link · FAQ">FAQ</a><a class="foot-link" href="#" data-name="Link · Syarat Penggunaan">Syarat Penggunaan</a><a class="foot-link" href="#" data-name="Link · Kebijakan Privasi">Kebijakan Privasi</a><a class="foot-link" href="mailto:support@nuave.ai" data-name="Link · Kontak">Kontak</a></nav><p class="foot-copy" data-name="Copyright">© 2026 Nuave</p></div></footer>
+</div>
+
+<div class="artboard page page--mobile" id="landing-mobile" data-name="Landing · Mobile 390">
+<section class="hero mobile" id="top-m" data-name="S1 · Hero">
+  <div class="wash"></div>
+  <header class="nav" data-name="Nav">
+    <a class="brand" data-name="Logo"><svg data-name="Icon · mark · 24 · #16161d" width="24" height="24" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><span class="brand-name">Nuave</span></a>
+    <div class="nav-right">
+      <a class="btn-outline" data-name="Nav button">Cek klinik saya</a>
+      <span class="menu" data-name="Menu"><svg data-name="Icon · menu · 18 · #16161d" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></span>
+    </div>
+  </header>
+  <div class="copy" data-name="Copy">
+    <h1 data-name="H1"><span>Pasien sekarang</span><span>tanya AI dulu,</span><span>baru pilih klinik.</span></h1>
+    <p class="lede" data-name="Line">Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview, dan apa yang perlu dibenahi.</p>
+    <div class="search" data-name="Website field"><div class="search-field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="search-placeholder">Website atau Instagram klinik</span></div></div>
+    <a class="btn-commit full" data-name="Primary button">Cek klinik saya di AI</a>
+    <p class="micro" data-name="Price line">Cek dulu apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br>Auditnya Rp249.000, sekali bayar.</p>
+    <ul class="ticks" data-name="Ticks">
+      <li><span class="tick"><svg data-name="Icon · check · 12 · #16161d" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>10 pertanyaan berdasarkan pencarian Google</li>
+      <li><span class="tick"><svg data-name="Icon · check · 12 · #16161d" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>ChatGPT dan Google AI Overview</li>
+      <li><span class="tick"><svg data-name="Icon · check · 12 · #16161d" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span>Tanpa data pasien</li>
+    </ul>
+  </div>
+  <div class="demo" data-name="Demo">
+    <div class="tabs" data-name="Clinic tabs">
+      <div class="tab is-active" data-name="Tab Gigi"><span class="tab-icon"><img src="assets/hero/tab-gigi.png" alt="" style="width:43px;height:43px"></span><span class="tab-label">Gigi</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kecantikan"><span class="tab-icon"><img src="assets/hero/tab-kecantikan.png" alt="" style="width:47px;height:47px"></span><span class="tab-label">Kecantikan</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Kulit"><span class="tab-icon"><img src="assets/hero/tab-kulit.png" alt="" style="width:46px;height:46px"></span><span class="tab-label">Kulit</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Anak"><span class="tab-icon"><img src="assets/hero/tab-anak.png" alt="" style="width:43px;height:43px"></span><span class="tab-label">Anak</span><span class="tab-bar"></span></div>
+      <div class="tab" data-name="Tab Lainnya"><span class="tab-icon"><img src="assets/hero/tab-lainnya.png" alt="" style="width:44px;height:44px"></span><span class="tab-label">Lainnya</span><span class="tab-bar"></span></div>
+    </div>
+    <div class="tabs-rule"></div>
+    <div class="phone" data-name="Phone">
+      <span class="phone-key k1"></span><span class="phone-key k2"></span><span class="phone-key k4"></span>
+      <div class="screen" data-name="Screen">
+        <div class="island"></div>
+        <div class="status"><span>9:41</span><span class="status-icons"><svg data-name="Icon · signal · 16 · #16161d" width="16" height="10.6667" viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg" fill="#16161d"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg data-name="Icon · wifi · 14 · #16161d" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 18l.01 0"/><path d="M9.172 15.172a4 4 0 0 1 5.656 0"/><path d="M6.343 12.343a8 8 0 0 1 11.314 0"/><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0"/></svg><svg data-name="Icon · battery · 23 · #16161d" width="23" height="11.0741" viewBox="0 0 27 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="23" height="12" rx="3.6" stroke="#16161d" stroke-opacity="0.38"/><rect x="2" y="2" width="20" height="9" rx="2.2" fill="#16161d"/><path d="M25 4.5C25.9 4.8 26.4 5.6 26.4 6.5C26.4 7.4 25.9 8.2 25 8.5V4.5Z" fill="#16161d" fill-opacity="0.45"/></svg></span></div>
+        <div class="appbar"><svg data-name="Icon · chevron · 20 · #52516a" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M15 6l-6 6l6 6"/></svg><span class="appbar-mid"><span class="ai-dot"><svg data-name="Icon · sparkle · 12 · #ffffff" width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#ffffff"/></svg></span>AI</span><svg data-name="Icon · edit · 19 · #52516a" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg></div>
+        <div class="thread" data-name="Chat">
+          <p class="bubble-user" data-name="Patient question">Klinik gigi di Depok yang bisa cicil behel dan buka Sabtu, ada rekomendasi?</p>
+          <p class="ai-lead" data-name="AI answer">Beberapa klinik yang bisa dipertimbangkan:</p>
+          <div class="results" data-name="Clinics named">
+            <div class="result"><span class="thumb"><img src="assets/hero/clinic-a.png" alt=""></span><span><span class="result-name">Klinik A:</span><br><span class="result-why">behel bisa dicicil</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/hero/clinic-b.png" alt=""></span><span><span class="result-name">Klinik B:</span><br><span class="result-why">buka Sabtu sampai sore</span></span></div>
+            <div class="result"><span class="thumb"><img src="assets/hero/clinic-c.png" alt=""></span><span><span class="result-name">Klinik C:</span><br><span class="result-why">dokter sabar untuk pasien takut</span></span></div>
+          </div>
+          <div class="slot" data-name="Your clinic slot"><span class="slot-thumb">?</span><span class="slot-label">Klinik Anda?</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fade"></div>
+    <div class="report" data-name="Report card">
+      <div class="report-head"><svg data-name="Icon · mark · 14 · #16161d" width="14" height="14" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><p class="report-title">AI Visibility Report</p></div>
+      <div class="report-row"><span class="report-name">ChatGPT</span><span class="report-score">muncul di 3 dari 10</span></div>
+      <div class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></div>
+      <div class="report-divider"></div>
+      <div class="report-row"><span class="report-name">Google AI Overview</span><span class="report-score">muncul di 1 dari 6</span></div>
+      <div class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+    </div>
+    <p class="caption" data-name="Caption">Contoh. Nama klinik fiktif.</p>
+  </div>
+</section>
+<section class="v2 sec sec--mobile s2v2" data-name="S2 · Pasien pilih lewat AI">
+  <header class="sec-head" data-name="Heading">
+    <h2 class="sec-h2" data-name="H2">Makin banyak pasien<br>pilih dokter lewat AI.</h2>
+    <p class="sec-line" data-name="Line">Di AS, saran AI sekarang lebih diikuti<br>pasien daripada hasil Google.</p>
+  </header>
+  <div class="ledger" data-name="Figures">
+    <div class="ledger-row" data-name="Row · 2024 · Indonesia">
+      <div class="s2-fig" data-name="Figure 2024"><span class="num">2024</span></div>
+      <p class="say" data-name="Sentence · Indonesia">Google AI Overview mulai muncul di<br>pencarian <b>di Indonesia</b>.<span class="ref">¹</span></p>
+    </div>
+    <div class="ledger-row" data-name="Row · 47% · AS">
+      <div class="s2-fig s2-fig--pct" data-name="Figure 47%"><span class="num">47</span><span class="pct">%</span></div>
+      <p class="say" data-name="Sentence · AS"><b>warga AS</b> cari dokter lewat AI seperti<br>ChatGPT atau Google AI Overview.<span class="ref">²</span></p>
+      <div class="dots-halves" data-name="Dots · 47 of 100"><div class="half"><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><div class="half"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div>
+    </div>
+    <div class="ledger-row" data-name="Row · 40 juta · dunia">
+      <div class="s2-fig s2-fig--unit" data-name="Figure 40 juta"><span class="num">40</span><span class="unit">juta</span></div>
+      <p class="say" data-name="Sentence · dunia">orang <b>di dunia</b> tanya soal kesehatan<br>ke ChatGPT tiap hari.<span class="ref">³</span></p>
+    </div>
+    <div class="ledger-notes notes" data-name="Sources">
+      <p class="notes-label" data-name="Sources label">Sumber:</p>
+      <ol class="notes-list" data-name="Source list">
+        <li><span class="ref">¹</span><span class="src">Google Indonesia</span>, 2024;</li>
+        <li><span class="ref">²</span><span class="src">rater8 Patient Choice Report 2026</span>,<br>survei 992 orang dewasa di AS, April 2026;</li>
+        <li><span class="ref">³</span><span class="src">OpenAI</span>, Januari 2026.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+<section class="v2 sec sec--mobile sec--band s3 s3v2" data-name="S3 · Dua jawaban AI">
+  <header class="sec-head" data-name="Heading">
+    <h2 class="sec-h2" data-name="H2">Satu pertanyaan pasien,<br>dua jawaban AI.</h2>
+    <p class="sec-line" data-name="Line">ChatGPT dan Google AI Overview cuma menyebut beberapa klinik.<br><span class="q">Klinik Anda termasuk?</span></p>
+  </header>
+
+  <div class="s3-pair" data-name="Two answers">
+    <figure class="s3-surface is-cg" data-name="ChatGPT">
+      <figcaption class="s3-label" data-name="Label">ChatGPT</figcaption>
+      <div class="s3-card" data-name="ChatGPT chat">
+        <div class="s3-top" data-name="Top bar"><span class="s3-top-icons" data-name="Menu"><svg data-name="Icon · menu · 18 · #6b6a85" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></span><svg data-name="Icon · edit · 18 · #6b6a85" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg></div>
+        <div class="s3-convo" data-name="Conversation">
+          <div class="s3-q" data-name="Patient question">
+            <p class="s3-bubble">rekomendasi klinik behel di<br>Depok yang bisa dicicil</p>
+          </div>
+          <div class="s3-head" data-name="Answer head">
+            <span class="s3-avatar" data-name="AI"><svg data-name="Icon · sparkle · 12 · #3b3a4a" width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#3b3a4a"/></svg></span>
+            <p class="s3-lead" data-name="Answer">Beberapa klinik gigi di Depok<br>yang bisa dipertimbangkan:</p>
+          </div>
+        </div>
+        <ul class="s3-list" data-name="Clinics named">
+          <li class="s3-li is-shared" data-name="Klinik A (in both)"><span class="bul">•</span><span><b>Klinik A:</b> behel bisa dicicil</span></li>
+          <li class="s3-li" data-name="Klinik B"><span class="bul">•</span><span><b>Klinik B:</b> buka Sabtu sampai sore</span></li>
+          <li class="s3-li" data-name="Klinik C"><span class="bul">•</span><span><b>Klinik C:</b> ada dokter spesialis ortodonti</span></li>
+        </ul>
+        <div class="slot" data-name="Your clinic slot"><span class="slot-label">Klinik Anda?</span></div>
+        <div class="s3-composer" data-name="Input bar"><svg data-name="Icon · plus · 18 · #52516a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 5L12 19"/><path d="M5 12L19 12"/></svg><span class="ph">Tanyakan apa saja</span><span class="s3-send" data-name="Send button"><svg data-name="Icon · arrow-up · 16 · #ffffff" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 19L12 5"/><path d="M6 11L12 5L18 11"/></svg></span></div>
+      </div>
+    </figure>
+
+    <figure class="s3-surface is-g" data-name="Google AI Overview">
+      <figcaption class="s3-label" data-name="Label">Google AI Overview</figcaption>
+      <div class="s3-card" data-name="Google results page">
+        <div class="s3-top" data-name="Wordmark"><span class="s3-word">Google</span></div>
+        <div class="s3-q" data-name="Search bar">
+          <div class="s3-search"><span class="txt">rekomendasi klinik behel di<br>Depok yang bisa dicicil</span><svg data-name="Icon · search · 18 · #6b6a85" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21L15 15"/></svg></div>
+        </div>
+        <div class="s3-tabs" data-name="Tabs"><span class="s3-tab is-on">Semua</span><span class="s3-tab">Maps</span><span class="s3-tab">Gambar</span><span class="s3-tab">Berita</span></div>
+        <div class="s3-aio" data-name="AI Overview box">
+          <div class="s3-aio-head" data-name="AI Overview head">
+            <span class="s3-aio-title"><svg data-name="Icon · sparkle · 14 · #16161d" width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5C12.7 8.3 15.7 11.3 21.5 12C15.7 12.7 12.7 15.7 12 21.5C11.3 15.7 8.3 12.7 2.5 12C8.3 11.3 11.3 8.3 12 2.5Z" fill="#16161d"/></svg>AI Overview</span>
+            <span class="s3-chips" data-name="Source chips"><span class="s3-chip">klinik-a.contoh</span><span class="s3-chip">direktori.contoh</span></span>
+          </div>
+          <p class="s3-lead" data-name="Answer">Ada beberapa klinik gigi di Depok yang<br>menawarkan cicilan behel, misalnya:</p>
+          <ul class="s3-list" data-name="Clinics named">
+            <li class="s3-li is-shared" data-name="Klinik A (in both)"><span class="bul">•</span><span><b>Klinik A:</b> cicilan tanpa kartu kredit</span></li>
+            <li class="s3-li" data-name="Klinik D"><span class="bul">•</span><span><b>Klinik D:</b> konsultasi awal sebelum pasang</span></li>
+            <li class="s3-li" data-name="Klinik E"><span class="bul">•</span><span><b>Klinik E:</b> dekat stasiun, parkir luas</span></li>
+          </ul>
+          <div class="slot" data-name="Your clinic slot"><span class="slot-label">Klinik Anda?</span></div>
+        </div>
+        <div class="s3-results" data-name="Results (greyed)">
+          <div class="s3-res" data-name="Result 1"><span class="s3-res-src"><i class="s3-fav"></i>klinik-a.contoh</span><i class="s3-bar" style="width:70%"></i></div>
+          <div class="s3-res" data-name="Result 2"><span class="s3-res-src"><i class="s3-fav"></i>direktori.contoh</span><i class="s3-bar" style="width:58%"></i></div>
+        </div>
+      </div>
+    </figure>
+  </div>
+  <p class="caption s3-caption" data-name="Caption">Contoh. Nama klinik fiktif.<br>Google tidak selalu menampilkan AI Overview.</p>
+</section>
+<section class="v2 mk-ring sec sec--mobile s4 s4a s4a2" id="cara-kerja-m" data-name="S4 · Cara kerja">
+  <header class="sec-head" data-name="Heading">
+    <h2 class="sec-h2" data-name="H2">Kami tanya AI persis<br>seperti pasien Anda.</h2>
+  </header>
+  <ol class="s4-steps" data-name="Steps">
+    <li class="s4-step" data-name="Step 1">
+      <i class="s4-vtrack" data-name="Track"></i>
+      <span class="s4-num" data-name="Number">1</span>
+      <div class="s4-head" data-name="Title row"><h3 class="s4-title">Masukkan website</h3><span class="s4-tag" data-name="Tag · Gratis">Gratis</span></div>
+      <p class="s4-line" data-name="Line">Bisa juga Instagram.<br>Nuave cari kliniknya.</p>
+      <div class="s4-sketch" data-name="Sketch · website field">
+        <div class="s4-card s4-webcard" data-name="Website check">
+        <div class="s4-field" data-name="Website field"><svg data-name="Icon · world · 18 · #6b6a85" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span>klinikgigifiksi.contoh</span><i class="s4-caret" data-name="Caret"></i></div>
+        <div class="s4-found" data-name="Clinic found"><span class="s4-thumb" data-name="Thumb"><img src="assets/s4/tab-gigi.png" alt=""></span><span class="s4-found-name"><b>Klinik Gigi Fiksi</b> · Surabaya</span><span class="s4-check" data-name="Found"><svg data-name="Icon · check · 12 · #ffffff" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></div>
+        </div>
+      </div>
+    </li>
+    <li class="s4-step" data-name="Step 2">
+      <i class="s4-vtrack" data-name="Track"></i>
+      <span class="s4-num" data-name="Number">2</span>
+      <div class="s4-head" data-name="Title row"><h3 class="s4-title">Bayar dan cek</h3><span class="s4-tag" data-name="Tag · Rp249.000">Rp249.000</span></div>
+      <p class="s4-line" data-name="Line">Nuave siapkan 10 pertanyaan<br><b>dari data pencarian Google.</b><br>Anda tinggal cek.</p>
+      <div class="s4-sketch" data-name="Sketch · question card">
+        <div class="s4-stack" data-name="Question stack"><i class="s4-pile-2" data-name="Pile"></i><i class="s4-pile-1" data-name="Pile"></i>
+          <div class="s4-card s4-qcard" data-name="Question card">
+            <div class="s4-q-top"><span class="s4-q-n">Pertanyaan 3</span><span class="s4-q-ex" data-name="Tag · Contoh">Contoh</span></div>
+            <span class="s4-q-chip" data-name="Chip · Dicari di Google"><svg data-name="Icon · search · 12 · #52516a" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52516a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21L15 15"/></svg>Dicari di Google</span>
+            <p class="s4-q-query" data-name="Query">implan gigi surabaya harga</p>
+            <p class="s4-q-meta" data-name="Topic">Topik: harga implan gigi ·<br>±4.400 pencarian/bulan di Google,<br>seluruh Indonesia (data September 2026)</p>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li class="s4-step" data-name="Step 3">
+      <span class="s4-num" data-name="Number">3</span>
+      <div class="s4-head" data-name="Title row"><h3 class="s4-title">Terima laporan</h3></div>
+      <p class="s4-line" data-name="Line">Kami tanyakan ke ChatGPT dan<br>Google AI Overview.<br>Laporan siap dalam <b>15 menit.</b></p>
+      <div class="s4-sketch" data-name="Sketch · report email">
+        <div class="s4-card s4-mail" data-name="Email">
+          <div class="s4-mail-from"><span class="s4-mail-av" data-name="Avatar"><svg data-name="Icon · mark · 15 · #16161d" width="15" height="15" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg></span><span class="s4-mail-name">Tim Nuave</span><i class="s4-mail-dot" data-name="Unread"></i></div>
+          <p class="s4-mail-subj" data-name="Subject">AI Visibility Report untuk<br>Klinik Gigi Fiksi sudah siap</p>
+          <span class="s4-mail-btn" data-name="Button · Buka laporan">Buka laporan</span>
+        </div>
+      </div>
+    </li>
+  </ol>
+  <p class="caption s4-caption" data-name="Caption">Contoh. Nama klinik fiktif.</p>
+</section>
+<section class="sec sec--mobile s5" id="laporan-m" data-name="S5 · Laporan"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Lihat apa kata AI<br>tentang klinik Anda.</h2><p class="sec-line" data-name="Line">Sekalian tahu apa yang perlu dibenahi duluan.</p></header><div class="s5-seg-wrap" data-name="Tabs and line"><div class="s5-seg" data-name="Tabs"><span class="s5-seg-tab is-on" data-name="Tab · Skor">Skor</span><span class="s5-seg-tab" data-name="Tab · Jawaban AI">Jawaban AI</span><span class="s5-seg-tab" data-name="Tab · Klinik lain">Klinik lain</span><span class="s5-seg-tab" data-name="Tab · Perbaikan">Perbaikan</span></div><p class="s5-seg-desc" data-name="Tab line">Muncul di berapa pertanyaan, di ChatGPT dan Google AI Overview.</p></div><article class="s5-card" data-name="Report card"><header class="s5-rh" data-name="Report header"><div class="s5-rh-top" data-name="Top row"><p class="s5-rh-label" data-name="Label"><svg data-name="Icon · mark · 16 · #16161d" width="16" height="16" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg>AI Visibility Report</p><span class="s5-pdf" data-name="Button · Download PDF"><svg data-name="Icon · download · 16 · #16161d" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16161d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 17V19A2 2 0 0 0 6 21H18A2 2 0 0 0 20 19V17"/><path d="M7 11L12 16L17 11"/><path d="M12 4L12 16"/></svg>Download PDF</span></div><p class="s5-rh-name" data-name="Clinic">Klinik Gigi Fiksi <span>· Surabaya</span></p><p class="s5-rh-meta" data-name="Checked">Diperiksa di ChatGPT dan<br>Google AI Overview · 20 Oktober 2026</p><p class="s5-rh-meta" data-name="Places">Google: Surabaya · ChatGPT: Indonesia</p></header><div class="s5-rule" data-name="Rule"></div><div class="s5-tab" data-name="Tab content · Skor"><div class="s5-panels" data-name="Panels"><section class="s5-panel" data-name="Panel · ChatGPT"><h4 class="s5-src">ChatGPT</h4><div class="s5-metric is-first" data-name="Muncul"><p>Klinik Anda muncul di<br><b>3 dari 10</b> pertanyaan</p><div class="s5-dots" data-name="Dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></div></div><div class="s5-metric" data-name="Direkomendasikan"><p>Klinik Anda direkomendasikan di<br><b>1 dari 10</b> pertanyaan</p><div class="s5-dots is-soft" data-name="Dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div></section><section class="s5-panel" data-name="Panel · Google AI Overview"><h4 class="s5-src">Google AI Overview</h4><div class="s5-metric is-first" data-name="AI Overview shown"><p>Google menampilkan AI Overview di<br><b>6 dari 10</b> pertanyaan</p></div><div class="s5-metric" data-name="Muncul"><p>Klinik Anda muncul di<br><b>1 dari 6</b> pertanyaan</p><div class="s5-dots" data-name="Dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div></section></div></div></article><div class="s5-under" data-name="Under the card"><p class="s5-pdfline" data-name="PDF line">Download PDF, siap dibawa ke rapat.</p><p class="caption" data-name="Caption">Contoh. Nama klinik fiktif.</p></div></section>
+<section class="sec sec--mobile s6 s6a v2" data-name="S6 · Bukti, bukan janji"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Bukti, bukan janji.</h2></header><ul class="s6-items" data-name="Items"><li class="s6-item" data-name="Apa adanya"><span class="s6-obj" data-name="Object · answer under a loupe"><img src="assets/s6/3d-bubble-loupe.png" alt="" style="width:82px;height:71px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Apa adanya</h3><p class="s6-line" data-name="Line">Jawaban AI ditampilkan utuh,<br>dengan sumbernya.</p></div></li><li class="s6-item" data-name="Bahasa pasien"><span class="s6-obj" data-name="Object · phone, someone typing"><img src="assets/s6/3d-phone-typing.png" alt="" style="width:52px;height:84px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Bahasa pasien</h3><p class="s6-line" data-name="Line">10 pertanyaan,<br>seperti yang biasa diketik pasien.</p></div></li><li class="s6-item" data-name="Data publik"><span class="s6-obj" data-name="Object · the clinic’s public website"><img src="assets/s6/3d-website-card-v2.png" alt="" style="width:81px;height:65px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Data publik</h3><p class="s6-line" data-name="Line">Cuma informasi publik klinik.<br>Tanpa data pasien.</p></div></li><li class="s6-item" data-name="Batasnya jelas"><span class="s6-obj" data-name="Object · calendar, one day circled"><img src="assets/s6/3d-calendar.png" alt="" style="width:74px;height:74px"></span><div class="s6-text" data-name="Text"><h3 class="s6-title">Batasnya jelas</h3><p class="s6-line" data-name="Line">Hasil cek hari ini,<br>bukan peringkat tetap.<br>Cek ulang setelah<br>6 sampai 8 minggu.</p></div></li></ul></section>
+<section class="sec sec--mobile s7 s7a" id="harga-m" data-name="S7 · Yang Anda dapat + harga"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Yang Anda dapat<br>dari satu audit.</h2><p class="sec-line s7-line" data-name="Line">Rp249.000, sekali bayar.<br>Bandingkan dengan<br>harga satu tindakan di klinik Anda.</p></header><article class="s7-card" data-name="Receipt"><div class="s7-list" data-name="What you get"><p class="s7-label" data-name="Label"><svg data-name="Icon · mark · 16 · #16161d" width="16" height="16" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg>AI Visibility Report</p><p class="s7-sub" data-name="Sub">Diperiksa di ChatGPT dan<br>Google AI Overview</p><ul class="s7-rows" data-name="Rows"><li class="s7-row" data-name="10 pertanyaan pasien"><span class="s7-ib s7-glimpse" data-name="Glimpse · pertanyaan"><i class="g g-card" style="left:13px;top:22px;width:22px;height:18px"></i><i class="g g-card" style="left:11px;top:18px;width:26px;height:18px"></i><i class="g g-card" style="left:9px;top:11px;width:30px;height:22px"></i><i class="g g-ring" style="left:14px;top:16px;width:6px;height:6px"></i><i class="g g-line" style="left:23px;top:18px;width:11px;height:2px"></i><i class="g g-line" style="left:14px;top:26px;width:18px;height:2px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">10 pertanyaan pasien</p><p class="s7-rl" data-name="Line">Berdasarkan pencarian Google<br>untuk jenis klinik dan kota Anda.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Jumlah pencarian"><span class="s7-ib s7-glimpse" data-name="Glimpse · pencarian"><i class="g g-bar" style="left:13px;top:26px;width:4px;height:9px"></i><i class="g g-bar" style="left:19px;top:22px;width:4px;height:13px"></i><i class="g g-bar" style="left:25px;top:17px;width:4px;height:18px"></i><i class="g g-bar g-ink" style="left:31px;top:12px;width:4px;height:23px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Jumlah pencarian</p><p class="s7-rl" data-name="Line">Berapa kali topiknya dicari<br>per bulan, kalau datanya ada.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Jawaban ChatGPT"><span class="s7-ib s7-glimpse" data-name="Glimpse · chatgpt"><i class="g g-card g-r7" style="left:8px;top:10px;width:32px;height:23px"></i><i class="g g-tail" style="left:11px;top:30px;width:7px;height:7px"></i><i class="g g-line" style="left:13px;top:16px;width:22px;height:2px"></i><i class="g g-line" style="left:13px;top:21px;width:9px;height:2px"></i><i class="g g-violet" style="left:23px;top:21px;width:12px;height:2px"></i><i class="g g-line" style="left:13px;top:26px;width:16px;height:2px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Jawaban ChatGPT</p><p class="s7-rl" data-name="Line">Ditanyakan langsung ke ChatGPT,<br>dijawab utuh dengan sumbernya.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Google AI Overview"><span class="s7-ib s7-glimpse" data-name="Glimpse · aio"><i class="g g-card" style="left:8px;top:9px;width:32px;height:30px"></i><i class="g g-ink" style="left:12px;top:14px;width:10px;height:3px"></i><i class="g g-line" style="left:12px;top:20px;width:23px;height:2px"></i><i class="g g-line" style="left:12px;top:24px;width:18px;height:2px"></i><i class="g g-chip" style="left:12px;top:30px;width:9px;height:5px"></i><i class="g g-chip g-you" style="left:23px;top:30px;width:11px;height:5px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Google AI Overview</p><p class="s7-rl" data-name="Line">Dicek dari kota Anda,<br>plus seberapa sering<br>Google menampilkannya.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Skor"><span class="s7-ib s7-glimpse" data-name="Glimpse · skor"><i class="g g-dot" style="left:6px;top:17px;width:5px;height:5px"></i><i class="g g-dot g-on" style="left:14px;top:17px;width:5px;height:5px"></i><i class="g g-dot" style="left:22px;top:17px;width:5px;height:5px"></i><i class="g g-dot" style="left:30px;top:17px;width:5px;height:5px"></i><i class="g g-dot" style="left:38px;top:17px;width:5px;height:5px"></i><i class="g g-dot g-on" style="left:6px;top:26px;width:5px;height:5px"></i><i class="g g-dot" style="left:14px;top:26px;width:5px;height:5px"></i><i class="g g-dot g-on" style="left:22px;top:26px;width:5px;height:5px"></i><i class="g g-dot" style="left:30px;top:26px;width:5px;height:5px"></i><i class="g g-dot" style="left:38px;top:26px;width:5px;height:5px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Skor</p><p class="s7-rl" data-name="Line">Muncul di berapa pertanyaan,<br>di masing-masing tempat.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Klinik lain"><span class="s7-ib s7-glimpse" data-name="Glimpse · klinik"><i class="g g-dot g-ink" style="left:11px;top:13px;width:5px;height:5px"></i><i class="g g-line" style="left:19px;top:14px;width:18px;height:3px"></i><i class="g g-dot g-ink" style="left:11px;top:21px;width:5px;height:5px"></i><i class="g g-line" style="left:19px;top:22px;width:15px;height:3px"></i><i class="g g-dot g-ink" style="left:11px;top:29px;width:5px;height:5px"></i><i class="g g-line" style="left:19px;top:30px;width:12px;height:3px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Klinik lain</p><p class="s7-rl" data-name="Line">Klinik lain yang disebut,<br>dan di pertanyaan mana.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Sumber AI"><span class="s7-ib s7-glimpse" data-name="Glimpse · sumber"><i class="g g-chip" style="left:8px;top:13px;width:18px;height:7px"></i><i class="g g-chip" style="left:28px;top:13px;width:12px;height:7px"></i><i class="g g-chip" style="left:8px;top:24px;width:14px;height:7px"></i><i class="g g-chip g-you" style="left:24px;top:24px;width:16px;height:7px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Sumber AI</p><p class="s7-rl" data-name="Line">Situs yang dibaca AI,<br>dan apakah situs Anda<br>salah satunya.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Topik terlewat"><span class="s7-ib s7-glimpse" data-name="Glimpse · topik"><i class="g g-line" style="left:10px;top:13px;width:26px;height:2px"></i><i class="g g-line" style="left:10px;top:19px;width:20px;height:2px"></i><i class="g g-slot" style="left:10px;top:27px;width:28px;height:9px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Topik terlewat</p><p class="s7-rl" data-name="Line">Topik yang dicari orang,<br>tapi belum menyebut klinik Anda.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li><li class="s7-row" data-name="Perbaikan dan PDF"><span class="s7-ib s7-glimpse" data-name="Glimpse · pdf"><i class="g g-card g-r4" style="left:12px;top:8px;width:24px;height:32px"></i><i class="g g-tag" style="left:16px;top:13px;width:13px;height:5px"></i><i class="g g-line" style="left:16px;top:22px;width:16px;height:2px"></i><i class="g g-line" style="left:16px;top:27px;width:12px;height:2px"></i><i class="g g-line" style="left:16px;top:32px;width:14px;height:2px"></i></span><div class="s7-rtext" data-name="Text block"><p class="s7-rt">Perbaikan dan PDF</p><p class="s7-rl" data-name="Line">Yang dikerjakan duluan,<br>siap dibawa ke rapat.</p></div><span class="s7-tick" data-name="Tick"><svg data-name="Icon · check · 16 · #a2a1b6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a2a1b6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12L10 17L20 7"/></svg></span></li></ul></div><div class="s7-pane" data-name="Price pane"><div class="s7-price-block" data-name="Price block"><p class="s7-price" data-name="Price">Rp249.000</p><p class="s7-terms" data-name="Terms">Sekali bayar.<br>Tanpa langganan.<br>Tanpa biaya tambahan.</p><div class="s7-rule" data-name="Rule"></div><p class="s7-pay" data-name="Pay after">Bayar setelah klinik Anda ketemu.</p><div class="s7-chips" data-name="Payment methods"><span class="s7-chip" data-name="Chip · QRIS">QRIS</span><span class="s7-chip" data-name="Chip · Transfer bank">Transfer bank</span><span class="s7-chip" data-name="Chip · GoPay">GoPay</span><span class="s7-chip" data-name="Chip · DANA">DANA</span></div><div class="hform" data-name="Form"><div class="hform-field" data-name="Website field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="hform-placeholder">Website atau Instagram klinik</span></div><span class="hform-btn" data-name="Primary button">Cek klinik saya di AI</span></div><p class="s7-ready" data-name="Ready in 15 minutes">Laporan siap dalam 15 menit setelah audit dimulai.</p></div></div></article></section>
+<section class="sec sec--mobile s8 s8a" id="faq-m" data-name="S8 · Yang sering ditanyakan"><header class="sec-head" data-name="Heading"><h2 class="sec-h2" data-name="H2">Yang sering ditanyakan</h2></header><div class="s8-list" data-name="Questions"><div class="s8-row is-open" data-name="Row 1 · open"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Bagaimana cara klinik muncul di<br>Google AI Overview?</p><span class="s8-mark" data-name="Marker −"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i></span></div><div class="s8-a" data-name="Answer"><p data-name="Paragraph">Tidak ada yang bisa menjamin, karena<br>Google memilih sendiri sumbernya dan<br>sering tidak menampilkan AI Overview untuk<br>pencarian lokal.</p><p data-name="Paragraph">Yang pertama, tahu dulu posisi klinik Anda<br>sekarang: pertanyaan mana yang<br>memunculkan AI Overview, klinik dan situs<br>apa yang disebut, dan informasi apa yang<br>perlu dibenahi.</p></div></div><div class="s8-row" data-name="Row 2"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Bedanya dengan SEO?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 3"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Bisa cek sendiri di ChatGPT?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 4"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">AI apa yang diuji?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 5"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Dari mana pertanyaannya?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 6"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Apa yang gratis?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 7"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Jawaban AI kan berubah-ubah?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 8"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Berapa lama?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 9"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Klinik saya punya beberapa cabang.</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 10"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Aman soal aturan iklan kesehatan?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div><div class="s8-row" data-name="Row 11"><div class="s8-q" data-name="Question button"><p class="s8-qt" data-name="Question">Kalau ada masalah?</p><span class="s8-mark" data-name="Marker +"><i class="s8-bar s8-bar--h" data-name="Bar · horizontal"></i><i class="s8-bar s8-bar--v" data-name="Bar · vertical"></i></span></div></div></div></section>
+<section class="sec sec--mobile s9 s9b" data-name="S9 · CTA akhir"><div class="s9-panel s9-body" data-name="Panel"><header class="sec-head sec-head--center" data-name="Heading"><h2 class="sec-h2" data-name="H2">Cek klinik Anda<br>sebelum pasien<br>berikutnya bertanya.</h2><p class="sec-line" data-name="Line">Mulai dari website atau<br>Instagram klinik Anda.</p></header><div class="hform" data-name="Website form"><div class="hform-field" data-name="Website field"><svg data-name="Icon · world · 20 · #6b6a85" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6a85" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/></svg><span class="hform-placeholder" data-name="Placeholder">Website atau Instagram klinik</span></div><span class="hform-btn" data-name="Primary button">Cek klinik saya di AI</span></div><p class="hmicro" data-name="Price line">Cek dulu apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br>Auditnya Rp249.000, sekali bayar.</p></div><div class="s9-body" data-name="Postscript"><p class="s9-founder" data-name="Founder line">Ada pertanyaan lain? Hubungi kami di<br><a class="s9-mail" href="mailto:support@nuave.ai" data-name="Email">support@nuave.ai</a>.</p></div></section><footer class="foot foot--mobile" data-name="Footer"><div class="foot-row foot-row--rule" data-name="Footer row"><a class="foot-brand" data-name="Logo"><svg data-name="Icon · mark · 24 · #16161d" width="24" height="24" viewBox="0 0 262 262" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M172.197 202.668L130.999 131.02L89.1807 206H8L89.8027 59.332L130.999 130.98L172.818 56H254L172.197 202.668Z" fill="#533AFD"/></svg><span class="foot-name" data-name="Wordmark">Nuave</span></a><nav class="foot-links" data-name="Links"><a class="foot-link" href="#faq-m" data-name="Link · FAQ">FAQ</a><a class="foot-link" href="#" data-name="Link · Syarat Penggunaan">Syarat Penggunaan</a><a class="foot-link" href="#" data-name="Link · Kebijakan Privasi">Kebijakan Privasi</a><a class="foot-link" href="mailto:support@nuave.ai" data-name="Link · Kontak">Kontak</a></nav><p class="foot-copy" data-name="Copyright">© 2026 Nuave</p></div></footer>
+</div>
+
+</body>
+</html>

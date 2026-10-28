@@ -1,5 +1,7 @@
 import type { AuditSubject } from "../audit/direct-ten-context-v2";
+import { readyEmailDetails } from "./ready-email-details";
 import {
+  CLAUDE_REPORT_CALL_MS,
   OBSERVATION_CALL_TIMEOUT_MS,
   REPORT_CALL_TIMEOUT_MS,
 } from "../audit/call-timeouts";
@@ -28,13 +30,70 @@ import {
   AuditCallExecutionError,
   serverOwnedAuditBudget,
 } from "../audit/telemetry";
+import { twoSourceMethodSentence } from "../audit/two-source-report";
 import type {
   AuditCallTelemetry,
   AuditObservation,
   AuditPrompt,
+  AuditReport,
 } from "../audit/types";
 import { SpendCapError, withOrderSpend } from "../spending/provider-spend";
-import { endOrder, type SpendDb } from "../spending/spend-ledger";
+import {
+  endOrder,
+  type OrderState,
+  type SpendDb,
+} from "../spending/spend-ledger";
+import { reconcileDueAttempts } from "../payments/check";
+import {
+  MAX_PURGED_PER_RUN,
+  MAX_SPEND_ROWS_PER_RUN,
+  RETENTION_MINUTE,
+  ordersDueForPurge,
+  purgeOldSpendRows,
+  purgeOrder,
+} from "./retention";
+import {
+  dueFounderNotices,
+  isRefundNotice,
+  recordCapAlerts,
+  sendFounderNotice,
+  type NoticeRow,
+} from "../payments/founder-notices";
+import type { MidtransConfig } from "../payments/midtrans";
+import { recordFounderNotice, utcDayOf } from "../payments/notices";
+import {
+  chatgptCheckBody,
+  failedChatGptObservation,
+  readChatGptAttempt,
+} from "../checks/chatgpt";
+import {
+  googleCheckBody,
+  notShownAfterEmpty,
+  readGoogleAttempt,
+} from "../checks/google";
+import {
+  CHATGPT_CHECK_TIMEOUT_MS,
+  GOOGLE_CHECK_TIMEOUT_MS,
+  type CheckSend,
+  type CheckSource,
+} from "../checks/send";
+import {
+  buildTwoSourceReport,
+  twoSourceGate,
+  twoSourceObservations,
+  twoSourceSetup,
+  type TwoSourceSetup,
+  twoSourceReportFacts,
+  twoSourceWriterFacts,
+} from "./two-source";
+import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "../audit/types";
+import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
+import { orderFailedNoticeStatement } from "../payments/notices";
+import {
+  duePaymentEmail,
+  sendPaymentEmail,
+  type DuePaymentEmail,
+} from "../payments/payment-email";
 import {
   failureEmail,
   readyEmail,
@@ -43,12 +102,36 @@ import {
 } from "./mail";
 import { newLinkSecret, orderSafetyIdentifier, sha256Hex } from "./config";
 import {
+  addressesOnly,
+  MAX_READING_TRIES,
+  orderCitedSources,
+  orderOwnSite,
+  pagesForWriter,
+  parseSavedPages,
+  type SavedPages,
+} from "./pages";
+import {
+  READ_DEADLINE_MS,
+  type CitedSource,
+  type PagesRead,
+  type ReadPage,
+} from "../reading/page-reader";
+import {
   activeOrders,
   claimOrderLease,
   claimQuestion,
+  claimQuestionSources,
+  dueSources,
+  exhaustSpentSources,
+  moveTwoSourceToReporting,
+  saveSourceResults,
+  type ChatGptSave,
+  type GoogleSave,
+  type OrderQuestionRow,
   claimReportAttempt,
   emailBackingOff,
   emailHistory,
+  ensureOrderNumber,
   exhaustSpentQuestions,
   expireOpenOrders,
   failedOrdersNeedingEmail,
@@ -56,6 +139,7 @@ import {
   listQuestions,
   moveToReporting,
   ordersPastDeadline,
+  paidNotStartedOrders,
   recordEmail,
   refundReportAttempt,
   releaseOrderLease,
@@ -63,6 +147,7 @@ import {
   replaceLinkHash,
   saveQuestionDone,
   saveQuestionFailure,
+  savePages,
   saveReport,
   type OrderEnvironment,
   type OrderMode,
@@ -81,11 +166,26 @@ import {
  * report and its language fix). The margin covers D1 writes around the call. */
 const STEP_MARGIN_MS = 15_000;
 export const OBSERVATION_STEP_MS = OBSERVATION_CALL_TIMEOUT_MS + STEP_MARGIN_MS;
+/** Spec 018 R-15: on the first attempt one step asks both sources, in
+ * parallel; the longer timeout decides the step. */
+export const TWO_SOURCE_STEP_MS =
+  Math.max(CHATGPT_CHECK_TIMEOUT_MS, GOOGLE_CHECK_TIMEOUT_MS) + STEP_MARGIN_MS;
 export const REPORT_STEP_MS = 2 * REPORT_CALL_TIMEOUT_MS + STEP_MARGIN_MS;
+/** Spec 021 PR 6b: a report step written by Claude (two calls, each with its
+ * own time limit over the token count and the whole stream). */
+export const CLAUDE_REPORT_STEP_MS = 2 * CLAUDE_REPORT_CALL_MS + STEP_MARGIN_MS;
+/** Spec 021 B-08: the pages step, one reading with its deadline. */
+export const PAGES_STEP_MS = READ_DEADLINE_MS + STEP_MARGIN_MS;
 /** The lease and the question claim last longer than the call timeout (R-18). */
 const LEASE_SLACK_MS = 30_000;
 /** No new step starts unless it can finish inside this budget. */
 export const RUN_BUDGET_MS = 300_000;
+/** Spec 021 PR 6b: a Claude report step or a pages step is longer than the
+ * usual budget allows. It may start only as a run's first audit step, inside
+ * this longer budget, and nothing starts after it. With the email work after
+ * the loop (about 165 seconds at most) a run still ends well inside the
+ * cron's 15 minutes. */
+export const LONG_RUN_BUDGET_MS = 570_000;
 
 export type RunnerDeps = {
   db: SpendDb;
@@ -97,12 +197,57 @@ export type RunnerDeps = {
   now: () => Date;
   /** One observation call. Throws or returns a failed observation on failure. */
   execute: (input: QuestionExecuteInput) => Promise<AuditObservation>;
+  /** Spec 018: one ChatGPT or Google check call for a two-source order (live:
+   * DataForSEO; synthetic: labelled answers). Absent: two-source orders wait. */
+  checks?: {
+    send: (input: CheckCallInput) => Promise<CheckSend>;
+  };
   generateReport: ReportGenerator;
+  /** Spec 021 PR 6b: true when the report writer is Claude, whose report
+   * step takes `CLAUDE_REPORT_STEP_MS` for a two-source order. */
+  claudeReports?: boolean;
+  /** Spec 021 B-08: the pages read before a two-source order's report.
+   * Absent (synthetic mode, tests): no pages step. `reader` null: live but no
+   * Firecrawl key, so the order goes on without pages. */
+  pages?: {
+    reader:
+      | ((input: {
+          ownSite: string | null;
+          sources: readonly CitedSource[];
+        }) => Promise<PagesRead & { requests: number }>)
+      | null;
+  };
   /** Pause between email tries (tests pass a no-op). */
   sleep?: (ms: number) => Promise<void>;
   /** Null when no sender is configured: no email can be accepted. */
   sender: MailSender | null;
   runBudgetMs?: number;
+  /** Spec 017 R-23: false when the emergency switch is off or the AI settings
+   * are missing. Only audit steps (and the deadline sweep, which needs them)
+   * stop; every other task still runs. Default true. */
+  auditEnabled?: boolean;
+  /** Spec 017 tasks that need settings. Absent: no reconciliation, no cap
+   * alerts, no founder notices. */
+  payments?: {
+    /** Null in synthetic mode or when the key is missing: no reconciliation. */
+    midtrans: MidtransConfig | null;
+    /** Null when the cap settings are not valid: no reconciliation (it applies
+     * payments) and no cap alerts; notices and emails still go out. */
+    limitUnits: number | null;
+    dailyLimitUnits: number | null;
+    /** Null: no founder notice can be sent. */
+    founderEmail: string | null;
+  };
+};
+
+export type CheckCallInput = {
+  source: CheckSource;
+  body: Record<string, unknown>;
+  /** The question's position (1–10); synthetic answers use it. */
+  ordinal: number;
+  attempt: number;
+  /** The business name and confirmed aliases. */
+  names: readonly string[];
 };
 
 export type StepOutcome =
@@ -115,12 +260,19 @@ export type StepOutcome =
   | "question_failed"
   | "to_reporting"
   | "report_saved"
+  | "pages_read"
   | "report_retry"
   | "report_failed"
   | "delivered"
   | "email_pending"
   | "failed"
-  | "failure_email";
+  | "failure_email"
+  | "reconciled"
+  | "paid_not_started"
+  | "payment_email"
+  | "notice"
+  | "purged"
+  | "spend_rows_removed";
 
 export type RunSummary = {
   /** One entry per thing done. No ids, emails or secrets. */
@@ -130,9 +282,118 @@ export type RunSummary = {
 type Intake = {
   context: AuditSubject;
   prompts: AuditPrompt[];
+  /** Spec 018: "chatgpt-google-v1" when the order asks both sources. */
+  checks?: unknown;
+  question_origins?: unknown;
 };
 
-function parseIntake(order: OrderRow): Intake | null {
+/** The report pipeline's input for an order, built from its saved intake and
+ * question rows. The report step uses it, and so does the report-writer test
+ * (scripts/report-writer-test), so a test writer reads exactly what the
+ * order's writer read. */
+export async function orderReportInput(order: {
+  orderId: string;
+  intake: Intake;
+  rows: readonly OrderQuestionRow[];
+  mode: OrderMode;
+  now: Date;
+  /** Spec 021 B-08: the pages read for the order (none: the writer's input
+   * is exactly as without the reading). */
+  pages?: ReadPage[];
+}) {
+  const { intake, rows } = order;
+  const setup = setupOf(intake);
+  const observations = setup
+    ? twoSourceObservations({
+        rows,
+        prompts: intake.prompts,
+        synthetic: order.mode === "synthetic",
+        now: order.now,
+      })
+    : rows.flatMap((row) =>
+        row.observation_json
+          ? [JSON.parse(row.observation_json) as AuditObservation]
+          : [],
+      );
+  const input = {
+    brief: intake.context,
+    prompts: intake.prompts,
+    observations,
+    safety_identifier: await orderSafetyIdentifier(order.orderId),
+    budget: serverOwnedAuditBudget(),
+    language: "id" as const,
+    question_method: "direct-ten" as const,
+    // Server-internal: the labeled synthetic substitute's evidence is admitted
+    // only in synthetic mode, never by request.
+    ...(order.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
+    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
+    // the model reads code-built Google facts and both sources' counts.
+    ...(setup
+      ? {
+          two_source: true,
+          two_source_facts: {
+            ...twoSourceReportFacts({
+              rows,
+              prompts: intake.prompts,
+              subject: setup.subject,
+              names: setup.names,
+            }),
+            // Spec 021 B-01: the new writer also reads Google's words, the
+            // topics and the businesses each answer names.
+            writer: {
+              ...twoSourceWriterFacts({
+                rows,
+                prompts: intake.prompts,
+                observations,
+                setup,
+              }),
+              ...(order.pages?.length ? { pages: order.pages } : {}),
+            },
+          },
+        }
+      : {}),
+  };
+  return { setup, observations, input };
+}
+
+/** Spec 018: the code-built block, saved with a two-source report; the method
+ * sentence counts both sources and names no internal system (N-10). A
+ * one-source report is saved as written. */
+export function withTwoSourceBlock(
+  written: AuditReport,
+  order: {
+    rows: readonly OrderQuestionRow[];
+    prompts: AuditPrompt[];
+    observations: AuditObservation[];
+    setup: TwoSourceSetup | null;
+    orderNumber: string | null;
+  },
+): AuditReport {
+  if (!order.setup) return written;
+  const two = buildTwoSourceReport({
+    report: written,
+    rows: order.rows,
+    prompts: order.prompts,
+    observations: order.observations,
+    setup: order.setup,
+    orderNumber: order.orderNumber,
+  });
+  return {
+    ...written,
+    method_summary: twoSourceMethodSentence(two),
+    two_source: two,
+  };
+}
+
+function setupOf(intake: Intake | null): TwoSourceSetup | null {
+  return intake
+    ? twoSourceSetup(intake as Parameters<typeof twoSourceSetup>[0])
+    : null;
+}
+
+export function parseIntake(
+  order: Pick<OrderRow, "intake_json">,
+): Intake | null {
   try {
     const value = JSON.parse(order.intake_json ?? "null") as Partial<Intake>;
     return value &&
@@ -154,26 +415,58 @@ export { orderSafetyIdentifier, sha256Hex };
  * invocation shared with outbound requests (paid provider calls and Resend
  * sends). A run therefore keeps a meter of D1 queries plus outbound requests
  * and starts a piece of work only if its measured worst typical cost still
- * fits under RUN_UNIT_LIMIT (40, a margin under 50). Measured in
- * runner-worst-case.test.ts. */
+ * fits under RUN_UNIT_LIMIT (first 40, a margin under 50). Measured in
+ * runner-worst-case.test.ts.
+ *
+ * Spec 017 R-23: Cloudflare's limits pages (read 2026-10-14) list "Subrequests per
+ * invocation" (Free 50, Paid 10,000) and "Subrequests to internal services"
+ * (Free 1,000, Paid default 10,000) but do not say which one D1 queries count
+ * toward, so separate counting is not confirmed and the 40-unit meter stayed.
+ *
+ * Spec 018 R-15: production now runs on Workers Paid (founder, 2026-10-24),
+ * where an invocation may make 10,000 subrequests and 1,000 D1 queries. A
+ * two-source question step (two paid calls in parallel, each with its ledger
+ * writes) measures 23 units, so two orders' steps no longer fit in 40. The
+ * meter is raised to 80, still far under the Paid limits, and stays as the
+ * check that one run cannot grow without bound. */
 export const MAX_ORDERS_PER_RUN = 2;
 export const MAX_EXPIRED_PER_RUN = 3;
 export const MAX_FAILURE_EMAILS_PER_RUN = 1;
 export const MAX_DEADLINE_FAILURES_PER_RUN = 1;
-export const RUN_UNIT_LIMIT = 40;
+export const RUN_UNIT_LIMIT = 80;
 /** Each piece of work, in D1 queries + outbound requests (with a small margin):
  * an expiry; a deadline failure with its failure email (three tries); a
- * question step with its paid call; an email-only retry of a ready email; a
+ * question step with its paid calls (spec 018: both sources, measured 23); an email-only retry of a ready email; a
  * report step with up to two paid calls and the ready email; one failure-email
  * retry (three tries). */
 export const RUN_COST = {
   expiry: 2,
   deadline: 12,
-  question: 18,
+  question: 24,
   light: 9,
-  heavy: 27,
+  // Spec 021 PR 6b: 27 measured, plus up to six Claude token counts (three
+  // for each of the step's two calls, which the meter does not see).
+  heavy: 33,
   retry: 7,
+  /** One payment-received email (getting its number, three tries, the record). */
+  paymentEmail: 6,
+  /** One founder notice (the claim, three tries, the mark). */
+  notice: 6,
+  /** Spec 021 B-08: a pages step (up to 24 Firecrawl requests, the marker,
+   * the question rows, the result and a notice). */
+  pages: 30,
 } as const;
+/** R-23: reconciliation may spend the meter up to here. The rest is kept for the
+ * queries that follow it and cannot be skipped: the expiry, 7-day, deadline,
+ * cap-alert (a select and a batch), payment-email, notice, active-order and
+ * failure-email lists, and the two order reads of the audit loop (11).
+ * Spec 018 kept it at the size measured for the 40-unit meter: the larger
+ * meter is room for the two-source question steps, not for more Midtrans
+ * checks in one run. */
+export const RECONCILE_UNIT_LIMIT = 40 - 11;
+/** R-23: a payment email or notice that is due and has existed this long has
+ * already waited a run (runs are a minute apart): it goes before audit steps. */
+export const RUN_INTERVAL_MS = 60_000;
 
 /** The same dependencies, counting every D1 query and outbound request. */
 function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
@@ -199,6 +492,16 @@ function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
         return deps.db.batch(statements.map((item) => raw.get(item) ?? item));
       },
     },
+    payments: deps.payments && {
+      ...deps.payments,
+      midtrans: deps.payments.midtrans && {
+        ...deps.payments.midtrans,
+        fetch: (...args: Parameters<typeof fetch>) => {
+          meter.n += 1;
+          return (deps.payments!.midtrans!.fetch ?? fetch)(...args);
+        },
+      },
+    },
     sender: deps.sender
       ? (message) => {
           meter.n += 1;
@@ -209,10 +512,26 @@ function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
       meter.n += 1;
       return deps.execute(input);
     },
+    checks: deps.checks && {
+      send: (input) => {
+        meter.n += 1;
+        return deps.checks!.send(input);
+      },
+    },
     generateReport: ((...args: Parameters<RunnerDeps["generateReport"]>) => {
       meter.n += 1;
       return deps.generateReport(...args);
     }) as RunnerDeps["generateReport"],
+    // Spec 021 B-08: every Firecrawl request a reading made.
+    pages: deps.pages && {
+      reader:
+        deps.pages.reader &&
+        (async (input) => {
+          const read = await deps.pages!.reader!(input);
+          meter.n += read.requests;
+          return read;
+        }),
+    },
   };
 }
 
@@ -226,6 +545,32 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   const owner = crypto.randomUUID();
   const scope = { environment: deps.environment, mode: deps.mode };
   const failedNow = new Set<string>();
+  const audit = deps.auditEnabled !== false;
+  const payments = deps.payments;
+
+  // R-14, R-23: reconciliation comes first (at most 2 attempts), inside the
+  // run's meter. It runs with the emergency switch off too.
+  if (
+    payments?.midtrans &&
+    payments.limitUnits !== null &&
+    payments.dailyLimitUnits !== null
+  ) {
+    try {
+      const checked = await reconcileDueAttempts({
+        db: deps.db,
+        now: deps.now(),
+        midtrans: payments.midtrans,
+        limitUnits: payments.limitUnits,
+        dailyLimitUnits: payments.dailyLimitUnits,
+        hasRoom: (units) => meter.n + units <= RECONCILE_UNIT_LIMIT,
+      });
+      outcomes.push(
+        ...Array.from({ length: checked }, (): StepOutcome => "reconciled"),
+      );
+    } catch {
+      // A failing check never stops the rest of the run.
+    }
+  }
 
   // R-22: an `open` order past its time becomes `expired`, which settles it.
   const expired = await expireOpenOrders(deps.db, {
@@ -238,13 +583,29 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   });
   outcomes.push(...expired.map((): StepOutcome => "expired"));
 
-  // R-23: at the deadline an order not yet delivered becomes `failed` (once)
-  // and sends the failure email.
-  for (const id of await ordersPastDeadline(deps.db, {
+  // R-13: a paid order whose questions were not approved within 7 days becomes
+  // `failed` (code paid_not_started): hold returned, failure email, founder notice.
+  for (const id of await paidNotStartedOrders(deps.db, {
     ...scope,
     now: deps.now(),
-    limit: MAX_DEADLINE_FAILURES_PER_RUN,
+    limit: 1,
   })) {
+    if (!fits(RUN_COST.deadline)) break; // it comes back on a later run
+    if (await failOrder(deps, id, "paid_not_started", ["open"])) {
+      failedNow.add(id);
+      outcomes.push("paid_not_started");
+    }
+  }
+
+  // R-23: at the deadline an order not yet delivered becomes `failed` (once)
+  // and sends the failure email.
+  for (const id of audit
+    ? await ordersPastDeadline(deps.db, {
+        ...scope,
+        now: deps.now(),
+        limit: MAX_DEADLINE_FAILURES_PER_RUN,
+      })
+    : []) {
     if (!fits(RUN_COST.deadline)) break; // it comes back on a later run
     if (await failOrder(deps, id, "deadline")) {
       failedNow.add(id);
@@ -252,11 +613,122 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     }
   }
 
-  for (const id of await activeOrders(deps.db, {
-    ...scope,
-    now: deps.now(),
-    limit: MAX_ORDERS_PER_RUN,
-  })) {
+  // Record lifetimes (privacy page section 9): once an hour, in the run that
+  // started at the retention minute, orders past their lifetime are made
+  // anonymous and old cost records removed. It runs with the emergency switch
+  // off too, only when the meter has room for more than its first query, and
+  // never stops the rest of the run.
+  if (new Date(startedAt).getUTCMinutes() === RETENTION_MINUTE && fits(2)) {
+    try {
+      const due = await ordersDueForPurge(deps.db, {
+        ...scope,
+        now: deps.now(),
+        limit: MAX_PURGED_PER_RUN,
+      });
+      for (const id of due) {
+        if (!fits(1)) break; // it comes back next hour
+        if (await purgeOrder(deps.db, { orderId: id, now: deps.now() })) {
+          outcomes.push("purged");
+        }
+      }
+      if (fits(1)) {
+        const removed = await purgeOldSpendRows(deps.db, {
+          now: deps.now(),
+          limit: MAX_SPEND_ROWS_PER_RUN,
+        });
+        if (removed > 0) outcomes.push("spend_rows_removed");
+      }
+    } catch {
+      // A failing cleanup is tried again next hour.
+    }
+  }
+
+  // R-21: the day's cap use, then what is due to send. A payment email or a
+  // refund notice that already waited a run goes before the audit steps.
+  const founderEmail = payments?.founderEmail ?? null;
+  if (
+    founderEmail &&
+    payments?.dailyLimitUnits != null &&
+    deps.mode === "live"
+  ) {
+    await recordCapAlerts(deps.db, {
+      now: deps.now(),
+      dailyLimitUnits: payments.dailyLimitUnits,
+    });
+  }
+  let email: DuePaymentEmail | null = deps.sender
+    ? await duePaymentEmail(deps.db, { ...scope, now: deps.now() })
+    : null;
+  let notices: NoticeRow[] =
+    deps.sender && founderEmail
+      ? await dueFounderNotices(deps.db, deps.now())
+      : [];
+  const waited = (at: string) =>
+    deps.now().getTime() - new Date(at).getTime() >= RUN_INTERVAL_MS;
+  const sendEmail = async () => {
+    if (!email || !deps.sender || !fits(RUN_COST.paymentEmail)) return;
+    const due = email;
+    email = null;
+    try {
+      if (
+        await sendPaymentEmail(
+          {
+            db: deps.db,
+            sender: deps.sender,
+            now: deps.now(),
+            sleep: deps.sleep,
+          },
+          due,
+        )
+      ) {
+        outcomes.push("payment_email");
+      }
+    } catch {
+      // Tried again on a later run; never stops the audit steps.
+    }
+  };
+  const sendNotice = async (row: NoticeRow | undefined) => {
+    if (!row || !deps.sender || !founderEmail || !fits(RUN_COST.notice)) return;
+    notices = notices.filter((item) => item.id !== row.id);
+    try {
+      const sent = await sendFounderNotice(
+        {
+          db: deps.db,
+          sender: deps.sender,
+          to: founderEmail,
+          now: deps.now(),
+          sleep: deps.sleep,
+        },
+        row,
+      );
+      if (sent) outcomes.push("notice");
+    } catch {
+      // Tried again on a later run; never stops the audit steps.
+    }
+  };
+  const refundNotice = () => notices.find((row) => isRefundNotice(row.kind));
+  const otherNotice = () => notices.find((row) => !isRefundNotice(row.kind));
+  if (email && waited(email.paid_at)) await sendEmail();
+  const firstRefund = refundNotice();
+  if (firstRefund && waited(firstRefund.created_at))
+    await sendNotice(firstRefund);
+
+  // The room kept for one payment email and one refund notice that are due but
+  // have not waited yet. The first audit step needs only to fit on its own (a
+  // report step is 33 of RUN_UNIT_LIMIT); later ones must leave this room (R-23).
+  let reserve = 0;
+  if (email) reserve += RUN_COST.paymentEmail;
+  if (refundNotice()) reserve += RUN_COST.notice;
+  let stepsStarted = 0;
+  let longStepRan = false;
+
+  for (const id of audit
+    ? await activeOrders(deps.db, {
+        ...scope,
+        now: deps.now(),
+        limit: MAX_ORDERS_PER_RUN,
+      })
+    : []) {
     const order = await getOrder(deps.db, id);
     if (
       !order ||
@@ -265,21 +737,24 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     ) {
       continue;
     }
-    // Start a step only if its cost still fits the run's meter; a heavy report
-    // step goes first on a later run (rotation by last step).
-    const cost =
-      order.state === "running"
-        ? RUN_COST.question
-        : order.report_json
-          ? RUN_COST.light
-          : RUN_COST.heavy;
-    if (!fits(cost)) {
+    // A long step ran: nothing starts after it.
+    if (longStepRan) {
       outcomes.push("waiting");
       continue;
     }
-    const stepMs =
-      order.state === "reporting" ? REPORT_STEP_MS : OBSERVATION_STEP_MS;
-    if (deps.now().getTime() - startedAt + stepMs > budgetMs) {
+    const { cost, long, stepMs } = stepPlan(deps, order);
+    // Start a step only if its cost still fits the run's meter; a heavy report
+    // step goes first on a later run (rotation by last step).
+    if (!fits(stepsStarted === 0 ? cost : cost + reserve)) {
+      outcomes.push("waiting");
+      continue;
+    }
+    // Spec 021 PR 6b: a long step only as the run's first audit step.
+    const stepBudgetMs =
+      long && stepsStarted === 0
+        ? Math.max(budgetMs, LONG_RUN_BUDGET_MS)
+        : budgetMs;
+    if (deps.now().getTime() - startedAt + stepMs > stepBudgetMs) {
       outcomes.push("waiting");
       continue;
     }
@@ -294,6 +769,8 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
       outcomes.push("skipped"); // another runner has it
       continue;
     }
+    stepsStarted += 1;
+    if (long) longStepRan = true;
     try {
       // Read the order again now that the lease is ours: another runner may have
       // moved it on between the first read and the claim.
@@ -305,6 +782,15 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
         (current.state !== "running" && current.state !== "reporting")
       ) {
         outcomes.push("skipped");
+        continue;
+      }
+      // The step was sized from the first read. If another runner moved the
+      // order on since (it read the pages, or saved the last answer), this
+      // step's lease and budget may be too short for what is now next: leave
+      // it to a later run, which sizes it again.
+      const now = stepPlan(deps, current);
+      if (now.stepMs !== stepMs || now.long !== long) {
+        outcomes.push("waiting");
         continue;
       }
       const outcome =
@@ -324,6 +810,11 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     }
   }
 
+  // R-23: then the emails and notices that had not waited yet.
+  await sendEmail();
+  await sendNotice(refundNotice());
+  await sendNotice(otherNotice());
+
   // R-25: the failure email is retried for 24 hours after the failure.
   for (const id of await failedOrdersNeedingEmail(deps.db, {
     ...scope,
@@ -337,20 +828,32 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
   return { outcomes };
 }
 
-/** Becoming `failed` happens once and sends the failure email. */
+/** Becoming `failed` happens once and sends the failure email. A paid order
+ * (not a test pass, not a legacy order) that fails also records one founder
+ * notice in the same write (R-21): `paid_not_started` for the 7-day sweep,
+ * `paid_order_failed` for any other code. */
 async function failOrder(
   deps: RunnerDeps,
   orderId: string,
   code: string,
+  from: readonly OrderState[] = ["running", "reporting"],
 ): Promise<boolean> {
   const ended = await endOrder(deps.db, {
     orderId,
-    from: ["running", "reporting"],
+    from,
     to: "failed",
     failureCode: code,
     // No accepted ready email: a link that may have got through stops working.
     clearUndeliveredLink: true,
     now: deps.now,
+    alsoRun: [
+      orderFailedNoticeStatement(deps.db, {
+        orderId,
+        code,
+        amount: ORDER_GROSS_AMOUNT_TEXT,
+        now: deps.now(),
+      }),
+    ],
   });
   if (ended) await sendFailureEmail(deps, orderId);
   return ended;
@@ -367,8 +870,14 @@ async function sendFailureEmail(
   // are still waiting, so this only guards a direct call.
   if (emailBackingOff(history, deps.now())) return false;
   const attempt = history.next;
-  const idempotencyKey = `nuave-order-${orderId}-failure-${attempt}`;
-  const mail = failureEmail({ businessName: order.business_name });
+  // R-03: the key names the order number, never the internal order ID. An order
+  // made by S3 code gets its number now (R-23).
+  const orderNumber = await ensureOrderNumber(deps.db, order);
+  const idempotencyKey = `nuave-order-${orderNumber}-failure-${attempt}`;
+  const mail = failureEmail({
+    businessName: order.business_name,
+    orderNumber,
+  });
   const result = await sendWithinAttempt(
     deps.sender,
     { to: order.email, ...mail, idempotencyKey },
@@ -399,6 +908,8 @@ async function questionStep(
     await failOrder(deps, order.id, "intake_invalid");
     return "failed";
   }
+  const setup = setupOf(intake);
+  if (setup) return twoSourceStep(deps, order, intake, setup, owner, stepMs);
   await exhaustSpentQuestions(deps.db, { orderId: order.id, now: deps.now() });
   const questions = await listQuestions(deps.db, order.id);
   // R-23: an order that cannot finish (attempts used) becomes `failed`.
@@ -563,6 +1074,351 @@ async function questionStep(
   return "question_retry";
 }
 
+/* ------------------------- Spec 018: two sources ------------------------- */
+
+type Settled<T> = { ok: true; value: T } | { ok: false; error: unknown };
+const settle = <T>(promise: Promise<T>): Promise<Settled<T>> =>
+  promise.then(
+    (value) => ({ ok: true as const, value }),
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+
+/** R-12..R-15, R-19: one step of a two-source order. On the first attempt
+ * both sources are asked in parallel; a retry asks only the source that
+ * failed (R-14). Once every check is final, the R-19 gate decides between the
+ * report and the order failing as today. */
+/** R-27: synthetic checks cost nothing and answer at once, so a synthetic
+ * retry waits for no backoff; the journey reaches its report in one sitting. */
+function checkBackoff(mode: OrderMode) {
+  return (...args: Parameters<typeof retryBackoffMs>) =>
+    mode === "synthetic" ? 0 : retryBackoffMs(...args);
+}
+
+async function twoSourceStep(
+  deps: RunnerDeps,
+  order: OrderRow,
+  intake: Intake,
+  setup: TwoSourceSetup,
+  owner: string,
+  stepMs: number,
+): Promise<StepOutcome> {
+  if (!deps.checks) return "waiting";
+  const backoff = checkBackoff(deps.mode);
+  await exhaustSpentSources(deps.db, { orderId: order.id, now: deps.now() });
+  const rows = await listQuestions(deps.db, order.id);
+  const settled = await settleTwoSourceGate(deps, order.id, rows);
+  if (settled) return settled;
+  const nowIso = iso(deps.now());
+  let next: OrderQuestionRow | null = null;
+  let due = { chatgpt: false, google: false };
+  for (const row of rows) {
+    if (row.claim_until && row.claim_until > nowIso) continue;
+    const sources = dueSources(row, nowIso);
+    if (sources.chatgpt || sources.google) {
+      next = row;
+      due = sources;
+      break;
+    }
+  }
+  if (!next) return "waiting";
+  const prompt = intake.prompts.find(
+    (item) => item.prompt_id === next.prompt_id,
+  );
+  if (!prompt) {
+    await failOrder(deps, order.id, "intake_invalid");
+    return "failed";
+  }
+  const leaseMs = stepMs + LEASE_SLACK_MS;
+  const renew = () =>
+    renewOrderLease(deps.db, {
+      orderId: order.id,
+      owner,
+      now: deps.now(),
+      leaseMs,
+    });
+  if (!(await renew())) return "skipped";
+  const claimed = await claimQuestionSources(deps.db, {
+    orderId: order.id,
+    promptId: next.prompt_id,
+    owner,
+    now: deps.now(),
+    claimMs: leaseMs,
+    ...due,
+  });
+  if (!claimed) return "skipped";
+  if (!(await renew())) return "skipped";
+
+  const ordinal = intake.prompts.indexOf(prompt) + 1;
+  const scope = { db: deps.db, orderId: order.id, now: deps.now };
+  const ask = (source: CheckSource, attempt: number) =>
+    settle(
+      withOrderSpend(scope, () =>
+        deps.checks!.send({
+          source,
+          // R-13: both sources receive the approved text, byte for byte.
+          body:
+            source === "chatgpt"
+              ? chatgptCheckBody(prompt.question)
+              : googleCheckBody(prompt.question, setup.google.code),
+          ordinal,
+          attempt,
+          names: setup.names,
+        }),
+      ),
+    );
+  const [chatgptCall, googleCall] = await Promise.all([
+    due.chatgpt ? ask("chatgpt", claimed.attempts) : null,
+    due.google ? ask("google", claimed.g_attempts) : null,
+  ]);
+
+  // The order's own hold would be passed: nothing more is sent (R-09).
+  const spendError = (call: Settled<CheckSend> | null) =>
+    call && !call.ok && call.error instanceof SpendCapError
+      ? call.error.reason
+      : null;
+  const reasons = [spendError(chatgptCall), spendError(googleCall)];
+  if (reasons.includes("order_limit")) {
+    await saveSourceResults(deps.db, {
+      orderId: order.id,
+      promptId: next.prompt_id,
+      owner,
+      chatgpt: due.chatgpt
+        ? {
+            status: "exhausted",
+            nextAttemptAt: null,
+            failure: "order_limit",
+            attemptsJson: next.attempts_json,
+            observationJson: null,
+            factsJson: null,
+          }
+        : null,
+      google: due.google
+        ? {
+            status: "exhausted",
+            nextAttemptAt: null,
+            failure: "order_limit",
+            empty: next.g_empty,
+            resultJson: null,
+          }
+        : null,
+    });
+    await failOrder(deps, order.id, "order_limit");
+    return "failed";
+  }
+  if (reasons.includes("order_refused")) return "skipped";
+
+  const now = deps.now();
+  let unavailable = false;
+  const chatgpt: ChatGptSave | null = chatgptCall
+    ? (() => {
+        const earlier = JSON.parse(next.attempts_json) as AuditCallTelemetry[];
+        if (!chatgptCall.ok) {
+          if (chatgptCall.error instanceof SpendCapError)
+            // The ledger refused or was unavailable: nothing was sent, so the
+            // attempt is given back and tried again on a later run.
+            return {
+              status: "pending",
+              nextAttemptAt: null,
+              failure: "ledger_unavailable",
+              attemptsJson: next.attempts_json,
+              observationJson: null,
+              factsJson: null,
+              refund: true,
+            };
+        }
+        const read = chatgptCall.ok
+          ? readChatGptAttempt({
+              send: chatgptCall.value,
+              prompt,
+              attempt: claimed.attempts,
+              names: setup.names,
+            })
+          : null;
+        if (read?.kind === "answered") {
+          const observation =
+            deps.mode === "synthetic"
+              ? {
+                  ...read.observation,
+                  system: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+                  requested_model: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+                  returned_model: SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+                }
+              : read.observation;
+          return {
+            status: "done",
+            nextAttemptAt: null,
+            failure: null,
+            attemptsJson: next.attempts_json,
+            observationJson: JSON.stringify({
+              ...observation,
+              telemetry: [...earlier, ...observation.telemetry],
+            }),
+            factsJson: JSON.stringify(read.facts),
+          };
+        }
+        const reason =
+          read?.kind === "failed"
+            ? read.reason
+            : "The ChatGPT check could not be sent.";
+        const telemetry =
+          read?.kind === "failed" ? [...earlier, read.telemetry] : earlier;
+        if (read?.kind === "failed" && read.unavailable) unavailable = true;
+        const exhausted =
+          (read?.kind === "failed" && !read.retry) ||
+          claimed.attempts >= MAX_ATTEMPTS_PER_QUESTION;
+        return {
+          status: exhausted ? "exhausted" : "pending",
+          nextAttemptAt: exhausted
+            ? null
+            : new Date(now.getTime() + backoff("temporary", claimed.attempts)),
+          failure: reason,
+          attemptsJson: JSON.stringify(telemetry),
+          // R-20: the honest failed record the report shows.
+          observationJson: exhausted
+            ? JSON.stringify(
+                failedChatGptObservation({
+                  prompt,
+                  reason,
+                  telemetry,
+                  at: now,
+                }),
+              )
+            : null,
+          factsJson: null,
+        };
+      })()
+    : null;
+
+  const google: GoogleSave | null = googleCall
+    ? (() => {
+        if (!googleCall.ok && googleCall.error instanceof SpendCapError)
+          return {
+            status: "pending",
+            nextAttemptAt: null,
+            failure: "ledger_unavailable",
+            empty: next.g_empty,
+            resultJson: null,
+            refund: true,
+          };
+        const where = {
+          promptId: prompt.prompt_id,
+          question: prompt.question,
+          locationCode: setup.google.code,
+          locationName: setup.google.name,
+        };
+        const read = googleCall.ok
+          ? readGoogleAttempt({
+              send: googleCall.value,
+              ...where,
+              names: setup.names,
+            })
+          : null;
+        if (read?.kind === "done")
+          return {
+            status: "done",
+            nextAttemptAt: null,
+            failure: null,
+            empty: next.g_empty,
+            resultJson: JSON.stringify(read.check),
+          };
+        if (read?.kind === "empty") {
+          // R-17: an empty element is retried once, then counted as not shown.
+          if (
+            next.g_empty >= 1 ||
+            claimed.g_attempts >= MAX_ATTEMPTS_PER_QUESTION
+          )
+            return {
+              status: "done",
+              nextAttemptAt: null,
+              failure: null,
+              empty: next.g_empty + 1,
+              resultJson: JSON.stringify(
+                notShownAfterEmpty({
+                  send: (googleCall as { value: CheckSend }).value,
+                  ...where,
+                }),
+              ),
+            };
+          return {
+            status: "pending",
+            nextAttemptAt: new Date(
+              now.getTime() + backoff("empty_or_unusable", claimed.g_attempts),
+            ),
+            failure: "empty_overview",
+            empty: next.g_empty + 1,
+            resultJson: null,
+          };
+        }
+        if (read?.kind === "failed" && read.unavailable) unavailable = true;
+        const exhausted =
+          (read?.kind === "failed" && !read.retry) ||
+          claimed.g_attempts >= MAX_ATTEMPTS_PER_QUESTION;
+        return {
+          status: exhausted ? "exhausted" : "pending",
+          nextAttemptAt: exhausted
+            ? null
+            : new Date(
+                now.getTime() + backoff("temporary", claimed.g_attempts),
+              ),
+          failure:
+            read?.kind === "failed"
+              ? read.reason
+              : "The Google check could not be sent.",
+          empty: next.g_empty,
+          resultJson: null,
+        };
+      })()
+    : null;
+
+  const saved = await saveSourceResults(deps.db, {
+    orderId: order.id,
+    promptId: next.prompt_id,
+    owner,
+    chatgpt,
+    google,
+  });
+  if (!saved) return "skipped";
+  if (unavailable) {
+    // R-21: credentials, access, balance or cost limit; at most once a day.
+    await recordFounderNotice(deps.db, {
+      kind: "dataforseo_unavailable",
+      subject: utcDayOf(now),
+      now,
+    }).catch(() => false);
+  }
+  const final = (status: string | null | undefined) =>
+    status === "done" || status === "exhausted";
+  const questionFinal =
+    final(chatgpt?.status ?? next.status) &&
+    final(google?.status ?? next.g_status);
+  if (!questionFinal) return "question_retry";
+  const after = await listQuestions(deps.db, order.id);
+  // As the one-source step: the step that finishes a question is
+  // "question_done", also when it moves the order on to its report.
+  const ended = await settleTwoSourceGate(deps, order.id, after);
+  return ended === null || ended === "to_reporting" ? "question_done" : ended;
+}
+
+/** R-19: once every check is final, the gate decides. Returns the step's
+ * outcome, or null while checks are still open. */
+async function settleTwoSourceGate(
+  deps: RunnerDeps,
+  orderId: string,
+  rows: OrderQuestionRow[],
+): Promise<StepOutcome | null> {
+  const gate = twoSourceGate(rows);
+  if (!gate.allFinal) return null;
+  if (!gate.passes) {
+    // Fewer than 5 of 10 checks for a source: no report, the order fails as
+    // today (failure email, paid_order_failed notice).
+    await failOrder(deps, orderId, "checks_below_gate");
+    return "question_failed";
+  }
+  return (await moveTwoSourceToReporting(deps.db, orderId))
+    ? "to_reporting"
+    : "skipped";
+}
+
 function failedObservation(
   prompt: AuditPrompt,
   error: unknown,
@@ -603,6 +1459,11 @@ async function reportStep(
     await failOrder(deps, order.id, "intake_invalid");
     return "failed";
   }
+  // Spec 021 B-08: a two-source order's pages are read first, in their own
+  // step, which takes no report attempt.
+  if (setupOf(intake) && needsPagesStep(deps, order))
+    return pagesStep(deps, order, intake, owner);
+  const savedPages = parseSavedPages(order.pages_json ?? null);
   const leaseMs = stepMs + LEASE_SLACK_MS;
   const attempt = await claimReportAttempt(deps.db, {
     orderId: order.id,
@@ -631,23 +1492,14 @@ async function reportStep(
   }
 
   const rows = await listQuestions(deps.db, order.id);
-  const observations = rows.flatMap((row) =>
-    row.observation_json
-      ? [JSON.parse(row.observation_json) as AuditObservation]
-      : [],
-  );
-  const input = {
-    brief: intake.context,
-    prompts: intake.prompts,
-    observations,
-    safety_identifier: await orderSafetyIdentifier(order.id),
-    budget: serverOwnedAuditBudget(),
-    language: "id" as const,
-    question_method: "direct-ten" as const,
-    // Server-internal: the labeled synthetic substitute's evidence is admitted
-    // only in synthetic mode, never by request.
-    ...(deps.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
-  };
+  const { setup, observations, input } = await orderReportInput({
+    orderId: order.id,
+    intake,
+    rows,
+    mode: deps.mode,
+    now: deps.now(),
+    pages: pagesForWriter(savedPages),
+  });
 
   let code: ReportFailureCode;
   try {
@@ -683,8 +1535,22 @@ async function reportStep(
     const saved = await saveReport(deps.db, {
       orderId: order.id,
       owner,
-      reportJson: JSON.stringify(report),
+      reportJson: JSON.stringify(
+        withTwoSourceBlock(report, {
+          rows,
+          prompts: intake.prompts,
+          observations,
+          setup,
+          orderNumber: order.order_number,
+        }),
+      ),
       now: deps.now(),
+      // Spec 021 B-08: once the report is saved, only the page addresses
+      // stay, not their text.
+      pagesJson:
+        savedPages && addressesOnly(savedPages) !== savedPages
+          ? JSON.stringify(addressesOnly(savedPages))
+          : null,
     });
     if (!saved) return "skipped";
     // Send the ready email now; `delivered` needs Resend to accept it. A
@@ -731,6 +1597,110 @@ async function reportStep(
   return "report_retry";
 }
 
+/** What an order's next audit step is and needs: its cost on the run's
+ * meter, its time (the lease and the budget are built from it), and whether
+ * it is a long step (a page reading or a Claude report). */
+function stepPlan(
+  deps: RunnerDeps,
+  order: OrderRow,
+): { cost: number; long: boolean; stepMs: number } {
+  const twoSource = setupOf(parseIntake(order)) !== null;
+  const writing = order.state === "reporting" && !order.report_json;
+  const readsPages = writing && twoSource && needsPagesStep(deps, order);
+  const long =
+    readsPages || (writing && twoSource && deps.claudeReports === true);
+  return {
+    cost:
+      order.state === "running"
+        ? RUN_COST.question
+        : readsPages
+          ? RUN_COST.pages
+          : order.report_json
+            ? RUN_COST.light
+            : RUN_COST.heavy,
+    long,
+    stepMs:
+      order.state === "reporting"
+        ? readsPages
+          ? PAGES_STEP_MS
+          : long
+            ? CLAUDE_REPORT_STEP_MS
+            : REPORT_STEP_MS
+        : twoSource
+          ? TWO_SOURCE_STEP_MS
+          : OBSERVATION_STEP_MS,
+  };
+}
+
+/** Spec 021 B-08: true when the order's pages still need a pages step: the
+ * runner reads pages (live), and the order has none saved, or a reading
+ * started that may still be tried or must be given up. */
+function needsPagesStep(deps: RunnerDeps, order: OrderRow): boolean {
+  if (!deps.pages) return false;
+  const saved = parseSavedPages(order.pages_json ?? null);
+  return saved === null || saved.status === "reading";
+}
+
+/** Spec 021 B-08: one reading of the order's pages, saved for its report.
+ * A marker is saved first, so a run that dies mid-read is counted; after
+ * `MAX_READING_TRIES` the order goes on without pages. A stopped or given-up
+ * reading records one founder notice a day. */
+async function pagesStep(
+  deps: RunnerDeps,
+  order: OrderRow,
+  intake: Intake,
+  owner: string,
+): Promise<StepOutcome> {
+  const saved = parseSavedPages(order.pages_json ?? null);
+  const tries = saved?.status === "reading" ? saved.tries : 0;
+  const save = (pages: SavedPages) =>
+    savePages(deps.db, {
+      orderId: order.id,
+      owner,
+      pagesJson: JSON.stringify(pages),
+    });
+  const notice = (status: number | null) =>
+    recordFounderNotice(deps.db, {
+      kind: "pages_unread",
+      subject: utcDayOf(deps.now()),
+      detail: { status, order_number: order.order_number },
+      now: deps.now(),
+    }).catch(() => false);
+  const reader = deps.pages?.reader ?? null;
+  if (!reader) {
+    return (await save({ status: "no_key" })) ? "pages_read" : "skipped";
+  }
+  if (tries >= MAX_READING_TRIES) {
+    if (!(await save({ status: "gave_up", tries }))) return "skipped";
+    await notice(null);
+    return "pages_read";
+  }
+  if (!(await save({ status: "reading", tries: tries + 1 }))) return "skipped";
+  try {
+    const rows = await listQuestions(deps.db, order.id);
+    const read = await reader({
+      ownSite: orderOwnSite(intake),
+      sources: orderCitedSources(rows),
+    });
+    const stopped = read.stopped !== undefined;
+    if (
+      !(await save({
+        status: stopped ? "partial" : "read",
+        tries: tries + 1,
+        pages: read.pages,
+        unread: read.unread,
+        ...(stopped ? { stopped: read.stopped } : {}),
+        requests: read.requests,
+      }))
+    )
+      return "skipped";
+    if (stopped) await notice(read.stopped!);
+  } catch {
+    // The marker stays: a later run tries again, or gives up.
+  }
+  return "pages_read";
+}
+
 /** R-23/R-24: each send of the ready email makes a new link secret and
  * replaces the stored hash in the same write; `delivered` follows only when the
  * sender has accepted the email. */
@@ -754,6 +1724,8 @@ async function readyEmailStep(
       to: "delivered",
       now: deps.now,
     });
+    if (finished && order.order_number)
+      await recordChecksFailed(deps, order, order.order_number);
     return finished ? "delivered" : "skipped";
   }
   if (emailBackingOff(history, deps.now())) return "email_pending";
@@ -765,13 +1737,18 @@ async function readyEmailStep(
   });
   if (!replaced) return "email_pending"; // link switched off, or order moved on
   const attempt = history.next;
+  // R-03: the order number, never the internal order ID (R-23: an order made by
+  // S3 code gets its number now).
+  const orderNumber = await ensureOrderNumber(deps.db, order);
   // The key names this secret: if a crash lost the record of an accepted send,
   // the next try has another secret and so another key, and is never refused
   // by Resend as the same key with a different body.
-  const idempotencyKey = `nuave-order-${order.id}-ready-${attempt}-${linkHash.slice(0, 12)}`;
+  const idempotencyKey = `nuave-order-${orderNumber}-ready-${attempt}-${linkHash.slice(0, 12)}`;
   const mail = readyEmail({
     businessName: order.business_name,
     link: `${deps.siteOrigin}/r#${secret}`,
+    orderNumber,
+    ...(await readyEmailDetails(deps.db, order)),
   });
   const result = await sendWithinAttempt(
     deps.sender,
@@ -794,5 +1771,44 @@ async function readyEmailStep(
     to: "delivered",
     now: deps.now,
   });
+  if (delivered) await recordChecksFailed(deps, order, orderNumber);
   return delivered ? "delivered" : "skipped";
+}
+
+/** Spec 018 R-21: one `checks_failed` notice per delivered order with at
+ * least one failed check, naming the order number and the failed checks. */
+async function recordChecksFailed(
+  deps: RunnerDeps,
+  order: OrderRow,
+  orderNumber: string,
+): Promise<void> {
+  let failed: string[] = [];
+  try {
+    const report = JSON.parse(order.report_json ?? "null") as {
+      two_source?: {
+        questions: {
+          ordinal: number;
+          chatgpt: { outcome: string };
+          google: { outcome: string };
+        }[];
+      };
+    } | null;
+    failed = (report?.two_source?.questions ?? []).flatMap((question) => [
+      ...(question.chatgpt.outcome === "failed"
+        ? [`pertanyaan ${question.ordinal} ChatGPT`]
+        : []),
+      ...(question.google.outcome === "failed"
+        ? [`pertanyaan ${question.ordinal} Google`]
+        : []),
+    ]);
+  } catch {
+    return;
+  }
+  if (!failed.length) return;
+  await recordFounderNotice(deps.db, {
+    kind: "checks_failed",
+    subject: orderNumber,
+    detail: { order_number: orderNumber, failed: failed.join(", ") },
+    now: deps.now(),
+  }).catch(() => false);
 }

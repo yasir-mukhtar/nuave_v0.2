@@ -1,93 +1,64 @@
-# Kontak dan Bantuan — agent handoff and implementation draft
+# Kontak dan Bantuan
 
-> Route: `/support`
-> Status: founder draft
+> Route: `/support` (`src/app/support/page.tsx`)
+> Status: S5 wording, approved by the founder on 2026-10-25 (PR #159). The page and this file say the same thing; change
+> both together.
 > Language: Indonesian
+> Shared facts: `src/lib/legal.ts` (support email, reply time, operator).
 
-## Instructions for the implementation agent
-
-Implement the public copy below. Replace all bracketed fields. A form is optional;
-a monitored email is sufficient for the first version. If a form is built, add
-success, failure, spam protection, and a fallback email. Never request passwords,
-payment credentials, customer records, or sensitive data.
-
-Use categories that map to real actions: pre-sale, payment/order, report access,
-correction/refund, privacy/data, and other complaint. Link `/terms` and `/privacy`.
+Support and privacy requests share support@nuave.ai (founder, 2026-10-24).
+The reply time is S0 D4: one business day, Monday to Friday, Jakarta time.
 
 ---
 
 ## Public page copy
 
-### Metadata
-
 **Page title:** Kontak dan Bantuan | Nuave
 
-**Meta description:** Hubungi Nuave untuk pertanyaan sebelum membeli, masalah
-pembayaran, akses laporan, koreksi, pengembalian dana, atau permintaan data.
+**Meta description:** Hubungi Nuave soal pembayaran, link laporan, pemeriksaan
+yang gagal, pengembalian dana, atau data Anda.
 
 # Kontak dan bantuan
 
-Punya pertanyaan atau mengalami masalah? Hubungi kami melalui
-`support@nuave.ai`. Nuave adalah layanan independen yang dioperasikan oleh
-`[NAMA PENGELOLA]` di `[KOTA]`, Indonesia.
+Ada pertanyaan atau masalah? Tulis ke support@nuave.ai. Kami balas dalam 1 hari
+kerja, Senin sampai Jumat (WIB).
 
-Kami mengonfirmasi pesan paling lambat `[TARGET RESPONS]` pada hari kerja. Masalah
-yang memerlukan pemeriksaan dapat membutuhkan waktu lebih lama, tetapi kami akan
-memberi tahu langkah berikutnya.
+Nuave adalah layanan independen yang dijalankan oleh PT Nuave Arah Baru
+di Jakarta Selatan, Indonesia.
 
-## Agar kami dapat membantu lebih cepat
+## Agar kami bisa cepat membantu
 
 Sertakan:
 
-- nama Anda;
-- email yang digunakan saat memesan;
-- nomor pesanan, jika ada;
-- nama bisnis yang diaudit;
-- jenis masalah; dan
-- penjelasan singkat tentang hasil yang Anda harapkan.
+- email yang Anda pakai saat memesan;
+- nomor pesanan, jika ada (contoh: NV-ABC123);
+- nama bisnis yang diaudit; dan
+- masalahnya, dan apa yang Anda harapkan dari kami.
 
-Jangan mengirim kata sandi, PIN, OTP, nomor kartu, data pelanggan, dokumen identitas,
-atau informasi sensitif lain.
+Jangan kirim kata sandi, PIN, kode OTP, nomor kartu, data pasien, atau data
+pelanggan.
 
-## Pilih jenis bantuan
+## Yang bisa kami bantu
 
-### Pertanyaan sebelum membeli
+- **Sebelum membeli:** isi audit, harga, cara kerja, atau apakah audit cocok
+  untuk bisnis Anda.
+- **Pembayaran atau pesanan:** pembayaran gagal atau tertagih dua kali, status
+  pesanan, atau pembatalan sebelum audit dimulai.
+- **Link laporan:** email laporan belum masuk, link tidak bisa dibuka, atau link
+  terlanjur tersebar dan perlu diganti.
+- **Pemeriksaan gagal atau pengembalian dana:** ada pertanyaan bertanda Tidak
+  dapat diuji, laporan belum siap, atau Anda ingin uang kembali sesuai syarat.
+- **Data Anda:** minta salinan, perbaikan, atau penghapusan data. Kirim dari
+  email pesanan Anda.
 
-Untuk ruang lingkup audit, harga, proses, atau kecocokan bisnis Anda.
+## Hati-hati penipuan
 
-### Pembayaran atau pesanan
+Nuave hanya membalas dari alamat @nuave.ai dan tidak pernah meminta kata sandi,
+PIN, atau kode OTP. Pembayaran hanya lewat halaman Midtrans dari situs ini. Jika
+ada pesan mencurigakan atas nama Nuave, jangan dibalas. Kirim tangkapan layarnya
+ke support@nuave.ai.
 
-Untuk pembayaran gagal atau ganda, status pesanan, konfirmasi, dan pembatalan
-sebelum audit dimulai.
+## Dokumen terkait
 
-### Akses laporan
-
-Untuk email yang tidak diterima, tautan yang tidak dapat dibuka, atau kebutuhan
-mengganti tautan yang diduga tersebar.
-
-### Koreksi, kegagalan, atau pengembalian dana
-
-Jelaskan bagian yang tidak sesuai dan sertakan nomor pesanan. Kami akan memeriksa
-permintaan berdasarkan [Syarat dan Ketentuan](/terms).
-
-### Privasi dan data
-
-Untuk meminta akses, koreksi, penghapusan, atau penjelasan tentang data, email
-`[EMAIL PRIVASI]`. Baca [Kebijakan Privasi dan Data](/privacy) untuk mengetahui
-informasi yang perlu disertakan.
-
-### Keluhan lain
-
-Kami lebih suka menyelesaikan masalah secara langsung dan wajar. Jelaskan masalah,
-waktu kejadian, serta penyelesaian yang Anda harapkan. Kami akan mengonfirmasi
-penerimaan dan memberi tahu langkah selanjutnya.
-
-## Kanal resmi
-
-**Dukungan:** `support@nuave.ai`
-**Privasi:** `[EMAIL PRIVASI]`  
-**Jam pemantauan:** `[HARI/JAM, WIB]`
-
-Kami tidak memberikan dukungan pembayaran atau meminta data rahasia melalui akun
-sosial pribadi. Jika Anda menerima pesan mencurigakan yang mengatasnamakan Nuave,
-kirim tangkapan layar ke `support@nuave.ai` tanpa membalas pesan tersebut.
+Baca [Syarat dan ketentuan](/terms), [Kebijakan privasi dan data](/privacy), dan
+[FAQ](/faq).

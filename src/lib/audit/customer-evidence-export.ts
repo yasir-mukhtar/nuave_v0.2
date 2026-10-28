@@ -1,3 +1,4 @@
+import { TWO_SOURCE_EXPORT_VERSION } from "./two-source-report";
 import { makeEvidenceExport } from "./contracts";
 import type { DirectTenAuditContext } from "./direct-ten-context-v2";
 import {
@@ -147,6 +148,9 @@ export function makeCustomerEvidenceExport(
 }
 
 /** New sessions export the saved confirmed meaning, without a compatibility brief. */
+const TWO_SOURCE_DISCLOSURE =
+  "ChatGPT answers come from the ChatGPT app, asked from Indonesia, and Google answers from Google's AI Overview for the stated place, both through DataForSEO. Answers vary by time, account and place.";
+
 export function makeSmartCustomerEvidenceExport(
   context: DirectTenAuditContext,
   prompts: AuditPrompt[],
@@ -161,10 +165,16 @@ export function makeSmartCustomerEvidenceExport(
     operational_telemetry: _telemetry,
     ...validatedReport
   } = evidence.report;
+  // Spec 018 R-29: a two-source report exports under its own version, with
+  // its own disclosure. It holds only what the report shows (R-28): no raw
+  // DataForSEO response, phone numbers already removed.
+  const twoSource = report.two_source !== undefined;
   return {
-    export_version: "nuave-evidence-v5" as const,
+    export_version: twoSource
+      ? TWO_SOURCE_EXPORT_VERSION
+      : ("nuave-evidence-v5" as const),
     exported_at: evidence.exported_at,
-    disclosure: evidence.disclosure,
+    disclosure: twoSource ? TWO_SOURCE_DISCLOSURE : evidence.disclosure,
     context,
     prompts,
     observations: evidence.observations.map(
@@ -177,4 +187,37 @@ export function makeSmartCustomerEvidenceExport(
     report: validatedReport,
     ...(provenance ? { provenance } : {}),
   };
+}
+
+/** What the report-data route returns for a valid link (spec 016 R-26). */
+export type SavedReportData = {
+  report: AuditReport;
+  context: DirectTenAuditContext;
+  prompts: AuditPrompt[];
+  originals: string[];
+  observations: AuditObservation[];
+  synthetic: boolean;
+};
+
+/** The evidence JSON of a saved order. The report page's "Unduh bukti JSON"
+ * (reports saved before Spec 018) and `npm run support -- export` (Spec 021
+ * A-08) both build it here, so the two files are the same. */
+export function savedReportEvidence(data: SavedReportData) {
+  const originalByPromptId = new Map(
+    data.prompts.map((prompt, index) => [
+      prompt.prompt_id,
+      data.originals[index] ?? prompt.question,
+    ]),
+  );
+  return makeSmartCustomerEvidenceExport(
+    data.context,
+    promptsWithOriginals(data.prompts, originalByPromptId),
+    data.observations,
+    data.report,
+    {
+      report_context_version: data.context.version,
+      question_method: "direct-ten",
+      synthetic: data.synthetic,
+    },
+  );
 }

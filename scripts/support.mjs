@@ -1,9 +1,33 @@
 #!/usr/bin/env node
 // Founder support commands for orders (spec 016 R-32):
 //
-//   npm run support -- resend <order-id>        a new link, old one stops
-//   npm run support -- off <order-id>           switch the link off
-//   npm run support -- show <order-id> [--email]
+//   npm run support -- resend <order>           a new link, old one stops
+//   npm run support -- off <order>              switch the link off
+//   npm run support -- show <order> [--email]
+//
+// <order> is the internal order ID, the order number (NV-7K3Q9P) or a Midtrans
+// order_id (NV-7K3Q9P-2). Spec 017 (R-24) adds:
+//
+//   npm run support -- refunds                  every open refund case
+//   npm run support -- refunded <transaction-id>  a refund made outside Midtrans
+//   npm run support -- close <midtrans-order-id> <unknown|unpaid>
+//
+// and, for the record cleanup (orders/retention.ts):
+//
+//   npm run support -- hold <order> <days>      keep it past its lifetime (0 releases)
+//
+// and (founder decision 2026-10-25):
+//
+//   npm run support -- email <order> <new-email>   fix a mistyped email (after
+//                                                  checking the receipt); a new
+//                                                  link goes to the new address
+//   npm run support -- norefund <order> <declined|delivered|settled>
+//                                                  close a refund case, no refund
+//
+// and (spec 021 A-08):
+//
+//   npm run support -- export <order>           the report's evidence JSON, saved
+//                                               to the git-ignored .local-evidence/
 //
 // It reads and writes the production D1 database through `wrangler d1 execute
 // --remote` (add `--local` to use the local development database instead), and
@@ -16,7 +40,7 @@
 // CLOUDFLARE_API_TOKEN with D1 edit permission, in the founder's own shell.
 
 import { execFile } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
@@ -50,7 +74,9 @@ await require("esbuild").build({
   packages: "external",
   logLevel: "error",
 });
-const { runSupport, d1ThroughWrangler } = await import(pathToFileURL(outfile).href);
+const { runSupport, d1ThroughWrangler } = await import(
+  pathToFileURL(outfile).href
+);
 const { resendMailSender } = await import(pathToFileURL(mailOutfile).href);
 
 function wranglerExecute(sql) {
@@ -73,7 +99,11 @@ function wranglerExecute(sql) {
         if (error) {
           // The statement holds no email and no secret, but print only a
           // short reason, never the command line.
-          rejectRun(new Error(`wrangler d1 execute failed: ${String(stderr).split("\n")[0]}`));
+          rejectRun(
+            new Error(
+              `wrangler d1 execute failed: ${String(stderr).split("\n")[0]}`,
+            ),
+          );
           return;
         }
         try {
@@ -102,7 +132,9 @@ function siteOrigin() {
       .replace(/,\s*([}\]])/g, "$1"),
   );
   return new URL(
-    local ? (config.env?.dev?.vars?.NUAVE_SITE_URL ?? "") : (config.vars?.NUAVE_SITE_URL ?? ""),
+    local
+      ? (config.env?.dev?.vars?.NUAVE_SITE_URL ?? "")
+      : (config.vars?.NUAVE_SITE_URL ?? ""),
   ).origin;
 }
 
@@ -114,6 +146,13 @@ try {
       siteOrigin: siteOrigin(),
       now: () => new Date(),
       out: (line) => console.log(line),
+      async saveEvidence(fileName, text) {
+        const folder = join(root, ".local-evidence");
+        mkdirSync(folder, { recursive: true });
+        const path = join(folder, fileName);
+        writeFileSync(path, text, { mode: 0o600 });
+        return path;
+      },
       async makeSender() {
         const apiKey = readSecretFile("resend-api-key");
         const from = readSecretFile("resend-from");

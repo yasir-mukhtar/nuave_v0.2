@@ -1,6 +1,9 @@
 import { DEFAULT_OBSERVATION_INSTRUCTION_VERSION } from "./contracts";
 import { OPENCODEGO_AUDIT_MODEL, OPENCODEGO_SYSTEM } from "./opencodego";
-import { APPROVED_LIVE_SYSTEMS } from "./approved-live-providers";
+import {
+  APPROVED_LIVE_SYSTEMS,
+  DATAFORSEO_CHATGPT_SYSTEM,
+} from "./approved-live-providers";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM, type AuditObservation } from "./types";
 
 export const PRODUCTION_OBSERVATION_SYSTEM = OPENCODEGO_SYSTEM;
@@ -219,6 +222,60 @@ export function syntheticLocalObservationMethodErrors(
         );
       }
     }
+  }
+  return errors;
+}
+
+/**
+ * Spec 018 R-12: the evidence check for the ChatGPT app through DataForSEO.
+ * Every record must carry the scraper's system label; a completed one must
+ * positively hold an answer, DataForSEO's task id and a completed
+ * observation-stage attempt with that id. A failed record (R-20) is allowed:
+ * the report gate counts how many completed (R-19).
+ */
+export function chatgptScraperObservationErrors(
+  observations: AuditObservation[],
+): string[] {
+  const errors: string[] = [];
+  const owners = new Map<string, string>();
+  for (const observation of observations) {
+    if (observation.system !== DATAFORSEO_CHATGPT_SYSTEM) {
+      errors.push(
+        prefix(
+          observation,
+          `recorded system ${observation.system}; expected ${DATAFORSEO_CHATGPT_SYSTEM}.`,
+        ),
+      );
+      continue;
+    }
+    if (observation.run_status !== "completed") continue;
+    if (!observation.raw_answer.trim())
+      errors.push(
+        prefix(observation, "completed observation has no usable answer."),
+      );
+    if (!observation.response_id.trim())
+      errors.push(
+        prefix(observation, "completed observation is missing response_id."),
+      );
+    const matching = observation.telemetry.filter(
+      (call) =>
+        call.stage === "observation" &&
+        call.status === "completed" &&
+        call.response_id === observation.response_id,
+    );
+    if (matching.length !== 1)
+      errors.push(
+        prefix(
+          observation,
+          "has no single completed attempt matching its response_id.",
+        ),
+      );
+    const prior = owners.get(observation.response_id);
+    if (prior && prior !== observation.prompt_id)
+      errors.push(
+        `${observation.prompt_id}: accepted response_id ${observation.response_id} is already bound to ${prior}.`,
+      );
+    else owners.set(observation.response_id, observation.prompt_id);
   }
   return errors;
 }

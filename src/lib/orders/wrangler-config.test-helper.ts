@@ -10,6 +10,7 @@ export type WranglerEnvironment = {
   triggers?: { crons?: string[] };
   vars?: Record<string, string>;
   ratelimits?: WranglerLimiter[];
+  browser?: { binding: string };
   d1_databases?: Array<{
     binding: string;
     database_name: string;
@@ -19,6 +20,7 @@ export type WranglerEnvironment = {
 };
 export type WranglerConfig = WranglerEnvironment & {
   main?: string;
+  compatibility_date?: string;
   env?: Record<string, WranglerEnvironment>;
 };
 

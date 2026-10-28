@@ -11,6 +11,7 @@ import {
   type NewOrderRecord,
   type SpendDb,
 } from "./spend-ledger";
+import { newOrderNumber } from "../orders/order-number";
 import { openFileD1 } from "./sqlite-d1.test-helper";
 
 // Spec 016 R-08..R-13, AC-05..AC-09 against the real ledger code and the real
@@ -43,6 +44,9 @@ function orderRecord(
   counter += 1;
   return {
     id: counter.toString(16).padStart(32, "0"),
+    orderNumber: newOrderNumber(),
+    // Spec 017: only a founder test pass reserves its hold at creation.
+    paymentKind: "test",
     email: "owner@example.com",
     businessName: "Toko Uji",
     website: "https://example.com/",

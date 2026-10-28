@@ -43,9 +43,9 @@ done.
 | S0 | Decision: how to save and email reports (§4.2) | Founder represented by Fox; Pac records | Done — scoped private policy approved | — | [Fox APPROVE; packet PASS+NOTES](./DECISION_LOG.md#2026-10-05--s0-private-report-delivery-and-recovery-approved) |
 | S1 | Security patches | Worker | Done; pulled forward, merged | [#110](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110) | [PASS](https://github.com/yasir-mukhtar/nuave_v0.2/pull/110#issuecomment-5956716058) (`9cca862`; production audit clean, dev-only findings disclosed) |
 | S2 | Spending cap on the server | Worker | Done; merged `2d2c4ec` | [#127](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127) (supersedes #123) | [PASS+NOTES](https://github.com/yasir-mukhtar/nuave_v0.2/pull/127#issuecomment-6118211608) (`8c9d6a6`; notes fixed) |
-| S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Spec 016 approved; S3a building | [#129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129) | Plan review PASS+NOTES (rev. 5; notes applied) |
-| S4 | Real payment + founder test pass | Worker | Not started | — | — |
-| S5 | Terms, price and promise wording | Worker | Not started | — | — |
+| S3 | Create the order (with email); save and deliver reports; audit survives tab close (shape set by S0) | Worker | Done; merged `d641701`, deployed; AC-21 live run passed 2026-10-13 | [#129](https://github.com/yasir-mukhtar/nuave_v0.2/pull/129) | [Verified](../specs/016-order-and-saved-report/VERIFICATION.md) (PASS+NOTES on `ae2b711`; AC-20 evidence exception; AC-21 USD 0.1372) |
+| S4 | Real payment + founder test pass | Worker | Done; merged and deployed (#137, #138, #139); AC-25 live run passed 2026-10-18 | [#136](https://github.com/yasir-mukhtar/nuave_v0.2/pull/136) (spec), [#137](https://github.com/yasir-mukhtar/nuave_v0.2/pull/137), [#138](https://github.com/yasir-mukhtar/nuave_v0.2/pull/138), [#139](https://github.com/yasir-mukhtar/nuave_v0.2/pull/139) | [Verified](../specs/017-payment-and-test-pass/VERIFICATION.md) (AC-25 USD 0.4048; refund checks moved to G1) |
+| S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
 | **Stage 3** | **Go live** | | | | |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
@@ -60,7 +60,7 @@ the founder stepping in:
 1. Open `v2.nuave.ai` and enter their business website. Nuave reads the
    site's public name and details to show "is this your business?" This step
    is free and uses no AI.
-2. See the price (Rp99.000) and what they get, and pay through Midtrans.
+2. See the price (Rp249.000) and what they get, and pay through Midtrans.
 3. Go through the Airbnb-style intake: Nuave shows what it understood, and the
    owner confirms, corrects, or answers a few quiz-like choices.
 4. Review and approve the ten questions.
@@ -521,7 +521,7 @@ These come from the original plan's Phase 4 exit gate
 
 - Add payment to the order summary that S3 built (it already collects the
   email, which delivery and support D3, D5, D7, D8 depend on). The summary now
-  also shows the Rp99.000 total, the delivery promise, and links to Terms and
+  also shows the Rp249.000 total, the delivery promise, and links to Terms and
   Privacy. It sits right after the free "is this your business?" result.
   Payment comes **before** the intake asks for or prepares any business
   details.
@@ -587,7 +587,7 @@ only if asked.
    evidence in the PR.
 2. Founder switches Midtrans to production keys.
 3. Founder buys one real audit for a business they own or have permission for
-   (Rp99.000), reaches the report on a phone, and refunds it from the Midtrans
+   (Rp249.000), reaches the report on a phone, and refunds it from the Midtrans
    dashboard.
 4. Founder records "open for paying customers" in `DECISION_LOG.md`.
 
@@ -599,7 +599,7 @@ three questions. **Approved by the founder on 2026-09-27** (recorded in
 
 1. Did this report tell you something you didn't know about your business?
 2. Would you do anything differently because of it? What?
-3. Would you pay Rp99.000 for a report like this about your own business?
+3. Would you pay Rp249.000 for a report like this about your own business?
 
 Record each owner's answers in one short note. Findings go to the parking lot
 unless they show the report is unsellable. In that case, stop and re-plan.
@@ -615,7 +615,8 @@ founder moves it into a milestone.
 - Remaining English JSX in `/audit/fixture`; product-wide design pass (Spec
   006 P2–P7).
 - Native-speaker review of emails and all copy beyond the founder's review.
-- Server-side PDF generation (the browser PDF path stays for now).
+- ~~Server-side PDF generation~~: moved into Spec 021 (Report v2) on
+  2026-10-26.
 
 **Question generation and engine**
 - GLM model name and billing field (copied from the former `NOW.md`,
@@ -629,10 +630,26 @@ founder moves it into a milestone.
 - Spec 008 G2P and remaining guard findings; run-to-run variation study.
 - Structured-output failures: provider limit or call bug.
 
+**ChatGPT and Google checks** (found in the AC-14 live run, 2026-10-26)
+- Google AI Overview "not shown" when the founder's browser shows one: check
+  again once when it is missing, and word "not shown" as "Google did not show
+  an AI Overview when we checked".
+- Ask from the customer's city instead of all of Indonesia: with no city,
+  ChatGPT picks one from the asking connection (Batam, Malang and others in
+  NV-3WDSAY), and Google's place changes too.
+- Handle DataForSEO status 40101 (look up its meaning; retry or mark failed
+  on purpose).
+- Show the reading's guesses (target customer, needs, competitors) back to
+  the owner, and let the report recommend, within Spec 012's evidence rule.
+- ~~Compare report writing by Claude Sonnet with GPT-5.6 Luna~~: moved into
+  Spec 021 Part B (2026-10-26). Try a page scraper (for example Firecrawl) for the website
+  reading. *The reading test stays here until after G1
+  ([decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)).*
+
 **Open questions** (from the former `NOW.md`; Track V starts on the first
 three)
 - Will Indonesian small-business owners pay for one audit at all, and at
-  Rp99.000?
+  Rp249.000?
 - Does an owner act on the report, or read it, agree, and do nothing?
 - Will owners buy a re-check, and at what interval?
 - How much does ordinary run-to-run variation move the count out of ten?
@@ -652,6 +669,12 @@ three)
 - 30-day unpaid quote expiry and refresh.
 - Funnel analytics and monitoring alerts.
 - Comparable re-check (Phase 9).
+- Re-audit reminder (founder wishlist, 2026-10-26): from the report's closing
+  section, the owner picks a date (6, 8 or 12 weeks); Nuave emails a link to
+  re-run the same ten questions and compares the result with the first
+  report, question by question. Needs a re-audit price, keeping the order
+  email for the reminder (privacy page update), and a scheduled email. The
+  look is in the Spec 021 prototype (`experiments/report-v2-poc/`).
 - Unit economics with payment fees, retries, and support time.
 - Launch wedge (one city, one category): needed before outreach, not before
   launch.

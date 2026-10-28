@@ -41,14 +41,14 @@ verbatim, even when it does not follow the general prose rules.
 | Meaning | Prefer (customer-facing) | Avoid |
 |---|---|---|
 | Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**) | brand Anda (except **Seluruh brand**, see the notes) |
-| Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari 10 pertanyaan** · **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan** · **Tidak diuji** · **Download PDF** | any paraphrase or spelling variant of these six |
+| Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari N pertanyaan** · **Bisnis Anda direkomendasikan di Y dari N pertanyaan** (N is the source's completed checks, 10 when all completed; Spec 018) · **Tidak diuji** · **Download PDF**. In a Spec 018 report for a clinic (confirmed category contains "klinik") the two count labels read **Klinik Anda muncul di X dari N pertanyaan** and **Klinik Anda direkomendasikan di Y dari N pertanyaan** (founder, 2026-10-24) | any paraphrase or spelling variant of these six |
 | Prospective customer | **calon pelanggan** | calon klien, calon customer, customer potensial, bare "customer" |
 | Existing customer | **pelanggan** | klien, customer |
 | The AI model as the answering/deciding actor, in the report and intake | **model AI** | bare "AI" where it means the model ("disebut oleh model AI", "diuji ke model AI") |
 | AI in marketing copy (landing, ads, order preview) | plain **AI** (tanya AI, jawaban AI, disebut AI) | model AI, mesin AI |
 | AI as a category/concept | **AI** (era AI, pencarian AI, jawaban AI) | mesin AI, semua AI, "the AI" |
-| The tested system | the system and model exactly as the report records them; in marketing, **AI buatan OpenAI** | semua AI, mesin AI, **ChatGPT** as the tested system |
-| ChatGPT | the customer's habit and what AI does (**pelanggan tanya ChatGPT**, **ChatGPT biasanya cuma menyebut beberapa nama**) | Nuave's own answers called ChatGPT's (**jawaban asli ChatGPT**) |
+| The tested system | the system and model exactly as the report records them. Since Spec 018 the answers come from the ChatGPT app and Google's AI Overview (through DataForSEO), so the report and marketing say **ChatGPT** and **Google AI Overview** (**ChatGPT dan Google AI Overview**). Keep **AI buatan OpenAI** only for answers from the OpenAI API, such as reports saved before Spec 018 | semua AI, mesin AI, **ChatGPT** for answers that came from the OpenAI API |
+| ChatGPT | the customer's habit and what AI does (**pelanggan tanya ChatGPT**, **ChatGPT biasanya cuma menyebut beberapa nama**); since Spec 018, the answers a two-source report shows under the **ChatGPT** heading | OpenAI API answers called ChatGPT's (**jawaban asli ChatGPT** in a report saved before Spec 018) |
 | Data consistency | **sinkron** / **samakan** / **konsisten** | seragam |
 | Competitor (when a competitor is verified) | **pesaing** | kompetitor |
 | Other named businesses in the report | **bisnis lain yang disebut** | daftar kompetitor (unless the context verifies competitors) |
@@ -57,7 +57,7 @@ verbatim, even when it does not follow the general prose rules.
 | Re-check | **cek ulang** | monitoring, pemantauan real-time |
 | Finding | **temuan** | insight |
 | Non-appearance | **tidak muncul dalam jawaban ini** | tidak terlihat di AI, tidak dikenal AI |
-| Failed test | **tidak dapat diuji** / **belum berhasil diuji** | visibilitas nol, "tidak muncul" for a technical failure |
+| Failed test | **tidak dapat diuji** / **belum berhasil diuji**; a failed check slot shows **Tidak dapat diuji** with **Minta bantuan** (Spec 018) | visibilitas nol, "tidak muncul" for a technical failure |
 | Mention | **disebut** | terekspos |
 | Recommend | **direkomendasikan** / **disarankan** | menang, peringkat teratas |
 | Download action (exact) | **Download PDF** | di-download, didownload, "Unduh laporan" as the button label |
@@ -125,10 +125,12 @@ alarmist or all-knowing.** Apply these invariants to every surface:
 
 ### 4. Numerals, dates, and currency
 
-- **Money:** `Rp99.000` — no space after `Rp`; thousands separated by a full
-  stop. One audit is **Rp99.000**, with no tax or fee added at checkout.
-- **Quote validity:** the unpaid Order Preview keeps the `Rp99.000` total for
-  **30 days**; after expiry the customer must refresh the preview before paying.
+- **Money:** `Rp249.000` — no space after `Rp`; thousands separated by a full
+  stop. One audit is **Rp249.000** (Spec 018), with no tax or fee added at
+  checkout.
+- **Quote validity:** none is promised. The checkout no longer says the
+  summary holds for 30 days (founder, 2026-10-24, S5): an unpaid order ends
+  after 2 hours (Spec 016 Q2).
 - **Dates:** `17 Agustus 2026` — day, spelled month, year; no leading zero, no
   slash form (`17/08/26`).
 - **Time:** `10.00` and `08.00–21.00` (24-hour, period separator). In prose,
@@ -195,9 +197,10 @@ The voice is constant; the register and vocabulary shift per surface.
 - No conversion/ROI statistics, no `Pertama`, no guarantee, no `5x`/`67%`/`73%`
   figures, and no unsourced market percentages.
 - The settled primary CTA is **Cek bisnis saya di AI**; the priced action is
-  **Bayar Rp99.000**; an upper non-charging action is **Lanjut ke pembayaran**.
-- State the one-audit nature, the `Rp99.000` total, no extra tax/fee, and the
-  30-day quote validity.
+  **Bayar Rp249.000**; an upper non-charging action is **Lanjut ke pembayaran**.
+- State the one-audit nature, the `Rp249.000` total, that the audit checks
+  **ChatGPT dan Google AI Overview**, and no extra tax/fee. Do not promise
+  how long the quote holds (S5).
 - Distinguish the free identity preview from the paid audit; never imply the
   business has appeared in AI before observations run.
 
@@ -222,6 +225,16 @@ The voice is constant; the register and vocabulary shift per surface.
   **Menyebut bisnis Anda**.
 - Primary actions: **Jalankan audit** and **Mulai audit sekarang**. Never
   credits, token-spending, or "prompt" language.
+- Spec 018 question origin labels are exact: **Dicari di Google**, **Orang
+  lain juga bertanya**, **Disusun dari topik yang dicari**, **Disusun dari
+  profil bisnis**, **Diubah oleh Anda**. The topic line is "Topik: <topik> ·
+  ±12.100 pencarian/bulan di Google, seluruh Indonesia (data <bulan tahun>)";
+  without a number, **Tidak ada data jumlah pencarian**; an edited question
+  shows **Topik awal: …**.
+- The **Kota untuk pencarian** helper text: "Google kami tanya seolah-olah dari
+  kota ini. ChatGPT hanya bisa diatur per negara, jadi ChatGPT ditanya dari
+  Indonesia. Karena itu, pertanyaan tentang memilih tempat akan menyebut kota
+  ini."
 
 #### 7.4 Report (evidence-led register)
 
@@ -229,9 +242,25 @@ The voice is constant; the register and vocabulary shift per surface.
   and **Bisnis Anda direkomendasikan di Y dari 10 pertanyaan**. Do not repeat
   the same unnamed count or add untested named/comparison/information tiles.
   Historical methods retain their own composition measures and denominators.
+- Spec 018 two-source reports keep those two sentences word for word with the
+  ChatGPT denominator N (completed ChatGPT answers), and add for Google:
+  **Google menampilkan AI Overview di Z dari M pertanyaan** and **Bisnis Anda
+  muncul di W dari Z pertanyaan** (no "direkomendasikan" line for Google).
+  A denominator of 0 shows **Tidak diuji**. Other exact strings: **Google
+  tidak menampilkan AI Overview**, **Google tidak menampilkan AI Overview
+  untuk X dari M pertanyaan ini.**, **K pemeriksaan tidak dapat diuji**,
+  **Tidak ada data jumlah pencarian**, **dipakai sebagai sumber** (shown as
+  **Dipakai sebagai sumber**), **Topik yang belum menyebut Anda**.
+- For a clinic (confirmed category contains "klinik"), a Spec 018 report says
+  **Klinik Anda** wherever it would say **Bisnis Anda**: **Klinik Anda muncul
+  di X dari N pertanyaan**, **Klinik Anda direkomendasikan di Y dari N
+  pertanyaan**, "profil **klinik Anda**", and the code-built count sentences
+  ("Di ChatGPT, **klinik Anda** disebut di …"). Other businesses keep
+  **Bisnis Anda**; reports saved before Spec 018 are unchanged.
 - For direct-ten, use this section order on screen and PDF: **Hasil singkat**,
   **Jawaban model AI**, **Analisis Nuave**, **Yang dapat dilakukan**,
-  **Tentang audit ini**. The three evidence layers stay distinct; historical
+  **Tentang audit ini**. In a Spec 018 two-source report the second section
+  is **Jawaban ChatGPT dan Google AI Overview**. The three evidence layers stay distinct; historical
   reports may retain **Yang ditemukan** / **Artinya bagi Anda**.
 - Exact composition/status/export labels remain **Tanpa menyebut bisnis Anda**,
   **Menyebut bisnis Anda**, **Tidak diuji**, and **Download PDF**. The PDF label
