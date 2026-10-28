@@ -574,7 +574,13 @@ export async function createValidatedAuditReport(
     const repairedSources = repairTwoSourceWriting(content, sourceFacts);
     if (repairedSources.changed) {
       content = repairedSources.content;
-      diagnostics.add("source_sentence_replaced");
+      if (repairedSources.sentencesReplaced)
+        diagnostics.add("source_sentence_replaced");
+      // Spec 023 R-03: a false count about a group of questions or another
+      // business is dropped, and a finding it empties goes with it.
+      if (repairedSources.sentencesDropped)
+        diagnostics.add("source_sentence_dropped");
+      if (repairedSources.findingsDropped) diagnostics.add("finding_dropped");
     }
   }
   // Spec 021 B-04 to B-06: past the revision, code drops a headline number

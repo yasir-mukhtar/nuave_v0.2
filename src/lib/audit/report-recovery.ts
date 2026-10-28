@@ -28,6 +28,10 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "writing_item_dropped",
   "writing_block_dropped",
   "verdict_cut",
+  // Spec 023 R-03 and R-11.
+  "source_sentence_dropped",
+  "finding_dropped",
+  "dash_replaced",
 ] as const;
 
 export type ReportDiagnosticCode = (typeof REPORT_DIAGNOSTIC_CODES)[number];
