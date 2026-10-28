@@ -50,6 +50,12 @@ verification is against its acceptance criteria.
 any, and the active milestone. The entries below record each package's
 latest status.
 
+- [`023-report-writing-quality/SPEC.md`](./023-report-writing-quality/SPEC.md)
+  — **Approved** (2026-10-28, revision 5). The report writer's depth and
+  natural Indonesian: rules that fight good writing removed, a precise
+  count checker, a storyline step, a writing guide, and a blind
+  before/after test. Four independent review rounds; the last PASS.
+
 - [`018-search-grounded-chatgpt-google-audit/SPEC.md`](./018-search-grounded-chatgpt-google-audit/SPEC.md)
   — **Approved** (2026-10-24, revision 7). Questions from real Google search
   data, each answered by the real ChatGPT app and Google AI Overview; price

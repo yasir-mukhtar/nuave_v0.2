@@ -200,6 +200,58 @@ describe("which pages are read (the reading test)", () => {
     expect(text.match(/BUAT JADWAL LIHAT MAPS >/g)).toHaveLength(1);
   });
 
+  it("an image with a long address goes whole and keeps the link after it", () => {
+    const image = `https://fiksi.example/_next/image/?url=${"https%3A%2F%2Fcdn.fiksi.example%2F".repeat(3)}behel.webp&w=828&q=75`;
+    const text = pageText(
+      [
+        "Layanan kami",
+        `![Behel Gigi](${image})`,
+        "[Behel Gigi](https://fiksi.example/services/behel-gigi/)",
+        "Gigi rapi dengan ortodontis.",
+        `![Bleaching Gigi](${image})`,
+        "[Bleaching Gigi](https://fiksi.example/services/bleaching-gigi/)",
+        "[",
+        "Ulasan pasien",
+        `](https://fiksi.example/ulasan/${"a".repeat(100)})`,
+      ].join("\n"),
+    );
+    expect(text).toContain(
+      "[Behel Gigi](https://fiksi.example/services/behel-gigi/)",
+    );
+    expect(text).toContain(
+      "[Bleaching Gigi](https://fiksi.example/services/bleaching-gigi/)",
+    );
+    expect(text).toContain("Gigi rapi dengan ortodontis.");
+    expect(text).not.toContain("_next/image");
+    expect(text.split("\n").filter((line) => /^[[\]()]+$/.test(line))).toEqual(
+      [],
+    );
+  });
+
+  it("an image address with brackets two deep goes whole; bare long addresses keep their brackets", () => {
+    const image = `https://fiksi.example/_next/image/?url=${"https%3A%2F%2Fcdn.fiksi.example%2F".repeat(3)}((Landscape))%20behel&w=828`;
+    const wiki = `https://fiksi.example/wiki/${"Klinik_gigi_".repeat(8)}(disambiguasi)`;
+    const text = pageText(
+      [
+        `![Behel Gigi](${image})`,
+        "[Behel Gigi](https://fiksi.example/services/behel-gigi/)",
+        `Lihat ${wiki} di sini`,
+        "![Satu](https://fiksi.example/satu.png) Rp 100.000 per gigi",
+        "![Dua](https://fiksi.example/dua.png) Rp 100.000 per gigi",
+        "Info: [https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/](https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/)",
+      ].join("\n"),
+    );
+    expect(text).toBe(
+      [
+        "[Behel Gigi](https://fiksi.example/services/behel-gigi/)",
+        "Lihat  di sini",
+        "Rp 100.000 per gigi",
+        "Rp 100.000 per gigi",
+        "Info: [https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/](https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/)",
+      ].join("\n"),
+    );
+  });
+
   it("a phone form's country list is dropped when a page has five or more", () => {
     const codes = [
       "- United States+1",
