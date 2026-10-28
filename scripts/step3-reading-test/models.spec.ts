@@ -21,6 +21,10 @@
  * - GPT-5.6 Luna medium and GPT-6 Luna low and medium, straight from
  *   OpenAI (founder request, third round).
  *
+ * - DeepSeek-V4.1-Flash-1017 low, straight from DeepSeek (founder request,
+ *   fourth round). Its id is "deepseek-flash" (GET /models, 2026-10-28,
+ *   which lists effort low, high and max, default high).
+ *
  * STEP3_MODELS (comma-separated keys) runs only those models;
  * STEP3_PAGES=saved reuses the pages an earlier run saved (no Firecrawl
  * credit); STEP3_PAGES=reread reads again, with the live reader, the sites
@@ -53,6 +57,7 @@ import OpenAI from "openai";
 const LIVE = process.env.STEP3_MODELS_LIVE === "1";
 const OUT = join(process.cwd(), ".local-evidence", "step3-reading-test");
 const CHEAPER = "https://api.cheaperinference.com/v1/chat/completions";
+const DEEPSEEK = "https://api.deepseek.com/chat/completions";
 const RUNS = 2;
 
 const SITES = [
@@ -108,6 +113,12 @@ const MODELS = [
     effort,
   })),
   {
+    key: "deepseek-v4.1-flash-1017-low (DeepSeek)",
+    via: "deepseek-direct",
+    model: "deepseek-flash",
+    effort: "low",
+  },
+  {
     key: "haiku-5.5-low",
     via: "anthropic",
     model: "claude-haiku-5-5",
@@ -138,6 +149,22 @@ const rereadFile = (site: Site) =>
  * million tokens). GPT-6 Luna has no price in Nuave's code: its tokens are
  * recorded instead. */
 const LUNA_PRICE = { input: 0.2, cachedInput: 0.02, output: 1.2 };
+
+/** deepseek-flash (DeepSeek-V4.1-Flash-1017), USD per million tokens, from
+ * https://api-docs.deepseek.com/quick_start/pricing/ (read 2026-10-28).
+ * Peak hours (01:00-04:00 and 06:00-10:00 UTC, Monday to Friday) cost
+ * these; all other hours cost half. Chinese public holidays are off-peak
+ * too and are not modelled here. */
+const DEEPSEEK_PEAK_PRICE = { cacheHit: 0.006, cacheMiss: 0.3, output: 1.2 };
+const deepseekPeak = (at: Date) => {
+  const day = at.getUTCDay();
+  const hour = at.getUTCHours();
+  return (
+    day >= 1 &&
+    day <= 5 &&
+    ((hour >= 1 && hour < 4) || (hour >= 6 && hour < 10))
+  );
+};
 
 /** USD per million tokens (claude-api skill table, cached 2026-10-06). */
 const CLAUDE_PRICE: Record<string, { input: number; output: number }> = {
@@ -355,6 +382,98 @@ async function viaCheaper(
   };
 }
 
+/** The same request as viaCheaper, straight to DeepSeek's own API. DeepSeek
+ * documents only json_object, so a refused schema falls back to it. */
+async function viaDeepSeek(
+  model: string,
+  effort: Effort,
+  site: Site,
+  own: OwnPages,
+): Promise<Partial<Result>> {
+  const { developer, user } = requestFor(site, own, model);
+  const call = async (format: "schema" | "object") => {
+    const response = await fetch(DEEPSEEK, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 16_000,
+        thinking: { type: "enabled" },
+        reasoning_effort: effort,
+        response_format:
+          format === "schema"
+            ? {
+                type: "json_schema",
+                json_schema: { name: "nuave_business_draft", schema: SCHEMA },
+              }
+            : { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              format === "schema"
+                ? developer
+                : `${developer}\nAnswer with one JSON object that follows this JSON schema exactly:\n${JSON.stringify(SCHEMA)}`,
+          },
+          { role: "user", content: user },
+        ],
+      }),
+      signal: AbortSignal.timeout(180_000),
+    });
+    const body = (await response.json().catch(() => null)) as {
+      choices?: { message?: { content?: string } }[];
+      usage?: {
+        prompt_cache_hit_tokens?: number;
+        prompt_cache_miss_tokens?: number;
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        completion_tokens_details?: { reasoning_tokens?: number };
+      };
+      error?: { message?: string };
+    } | null;
+    return { status: response.status, body, at: new Date() };
+  };
+  let answer = await call("schema");
+  const errorText = () => JSON.stringify(answer.body?.error ?? answer.body);
+  if (
+    answer.status >= 400 &&
+    /response_format|json_schema|schema/i.test(errorText())
+  )
+    answer = await call("object");
+  const usage = answer.body?.usage;
+  const price = Object.fromEntries(
+    Object.entries(DEEPSEEK_PEAK_PRICE).map(([kind, usd]) => [
+      kind,
+      deepseekPeak(answer.at) ? usd : usd / 2,
+    ]),
+  ) as typeof DEEPSEEK_PEAK_PRICE;
+  const billed = usage
+    ? {
+        usd:
+          ((usage.prompt_cache_hit_tokens ?? 0) * price.cacheHit +
+            (usage.prompt_cache_miss_tokens ?? 0) * price.cacheMiss +
+            (usage.completion_tokens ?? 0) * price.output) /
+          1e6,
+        tokens: {
+          input: usage.prompt_tokens ?? 0,
+          output: usage.completion_tokens ?? 0,
+          reasoning: usage.completion_tokens_details?.reasoning_tokens ?? 0,
+        },
+      }
+    : { usd: null };
+  const text = answer.body?.choices?.[0]?.message?.content ?? "";
+  if (answer.status >= 400 || !text)
+    return {
+      ok: false,
+      ...billed,
+      error: `HTTP ${answer.status}: ${errorText().slice(0, 300)}`,
+    };
+  return { ...billed, ...parseDraft(text) };
+}
+
 async function viaAnthropic(
   model: string,
   site: Site,
@@ -402,7 +521,9 @@ async function runModel(
           ? await viaOpenAIDirect(candidate.model, candidate.effort, site, own)
           : candidate.via === "cheaper"
             ? await viaCheaper(candidate.model, candidate.effort, site, own)
-            : await viaAnthropic(candidate.model, site, own);
+            : candidate.via === "deepseek-direct"
+              ? await viaDeepSeek(candidate.model, candidate.effort, site, own)
+              : await viaAnthropic(candidate.model, site, own);
     return {
       model: candidate.key,
       site: site.url,
@@ -478,16 +599,19 @@ describe("step 3 model comparison", () => {
   it.runIf(LIVE)(
     "runs every model on the founder's three sites",
     async () => {
+      const models = MODELS.filter(
+        (candidate) => !ONLY || ONLY.includes(candidate.key),
+      );
       for (const key of [
         "OPENAI_API_KEY",
         "CHEAPERINFERENCE_API_KEY",
         "NUAVE_ANTHROPIC_API_KEY",
         ...(SAVED_PAGES ? [] : ["FIRECRAWL_API_KEY"]),
+        ...(models.some((candidate) => candidate.via === "deepseek-direct")
+          ? ["DEEPSEEK_API_KEY"]
+          : []),
       ])
         expect(process.env[key], key).toBeTruthy();
-      const models = MODELS.filter(
-        (candidate) => !ONLY || ONLY.includes(candidate.key),
-      );
       expect(models.length).toBeGreaterThan(0);
       mkdirSync(OUT, { recursive: true });
       const reads: Record<string, unknown>[] = [];
