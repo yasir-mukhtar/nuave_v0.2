@@ -2,8 +2,8 @@
 
 > Status: **In review** (draft for the founder's approval; no code changed)
 > Owner: founder; plan written by Claude Code on `ccr-88631259-0lhn0m`
-> Updated: 2026-10-28, revision 4 (after independent review rounds 1 to 3:
-> FAIL, then narrow FAILs; every finding addressed below)
+> Updated: 2026-10-28, revision 5. Independent review: round 1 FAIL,
+> rounds 2 and 3 narrow FAIL, round 4 PASS+NOTES (notes applied)
 > Implements: the founder's report feedback of 2026-10-28: "deeper insights
 > as if advised by BCG consultants, answer first", and "natural and clear
 > like Tempo", for the live report writer (Claude Opus 5.5 with pages read,
@@ -195,7 +195,8 @@ today's fact safety stays, and the checker becomes more precise, not looser.
     dropped while another finding remains; for the last finding, the
     sentence is replaced as today. An emptied verdict falls back to the
     conclusion (as the page already does), and an emptied conclusion gets
-    the existing count-sentence prefix.
+    the existing count-sentence prefix. New diagnostic codes
+    `source_sentence_dropped` and `finding_dropped` record each drop.
 - **R-04, counts said once, in the cards.** The source cards already show
   each source's count in large type and a sentence. The verdict states the
   main message and may carry one number only when that number is the point.
@@ -271,7 +272,8 @@ today's fact safety stays, and the checker becomes more precise, not looser.
      that sound translated ("hal ini menunjukkan", "selain itu" at every
      paragraph, "bukan hanya… tetapi juga…", "melakukan optimalisasi") with
      a natural alternative for each; the words "ChatGPT" or "Google" in
-     every finding.
+     every finding; a count about a group of questions cites exactly the
+     questions it counts.
   3. **Jujur tanpa berbelit:** pattern vs cause, with examples on both
      sides; R-09's limits; no lawyer-style hedging; what we cannot see.
   4. **Contoh:** before/after pairs using placeholders ("Klinik A", "Klinik
@@ -338,7 +340,8 @@ today's fact safety stays, and the checker becomes more precise, not looser.
     Indonesian cause and guarantee markers ("karena", "dipilih", "lebih
     percaya", "dijamin", "pasti", "paling dicari"); any run of six or more
     words shared with the guide's examples; whether the revision ran; each
-    repair diagnostic; cost and time.
+    repair diagnostic, including `source_sentence_dropped` and
+    `finding_dropped`; cost and time.
 - **R-15, blind test.**
   - Writer: Opus 5.5 medium with pages, before vs after.
   - Orders: NV-3WDSAY (Sozo) twice per writer, plus one order of a
@@ -487,7 +490,8 @@ Two pull requests, so the free and safe part can merge first.
   averaging 10 to 18 words with more spread than before; fewer typical
   phrases, repeated counts and "klinik Anda" than before, without one name
   repeated in every sentence; no dashes; no more cause markers or fact
-  repairs (`source_sentence_replaced`, dropped headlines) than before; no
+  repairs (`source_sentence_replaced`, `source_sentence_dropped`,
+  `finding_dropped`, dropped headlines) than before; no
   six-word overlap with the guide's examples; and the revision rate.
 
 ## Open questions
