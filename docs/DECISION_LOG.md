@@ -6,6 +6,37 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-28 — Firecrawl reads the own site at the paid website reading
+
+After the step 3 reading test (PR #189: sozoskinclinic.com, audydental.com,
+brawijayahospital.com; 22 Firecrawl credits, about USD 0.11), Yasir chose:
+
+1. **Start Firecrawl as soon as payment is confirmed.** The paid website
+   reading (step 3), which the journey already starts by itself once the
+   order is paid, reads the own site with Firecrawl (start page and up to
+   four useful pages). GPT-5.6 Luna reads those pages instead of searching
+   the web. With no Firecrawl key, or no page read, the reading runs as
+   before (homepage reader and web search).
+2. **No new time cap.** No 20-second cut-off; the reader's existing safety
+   limit (150 seconds per reading, 90 per request) stays.
+3. **Better pages.** Posts, news, archives, sitemaps and job pages are
+   never read; one page of each kind (what the business offers, branches,
+   doctors, prices, about) before a second of any, a list page before its
+   items; the site map asks for up to 5,000 links (one credit at any
+   limit), because Sozo's 187 blog posts filled the old 200-link map. This
+   applies to the report's reading too.
+4. **Read once.** The step 3 pages are kept on the order; the report's pages
+   step reads only the pages AI cited and adds them. The page text is
+   dropped when the report is saved, or with the order, as the privacy page
+   says.
+
+The test also found that today's homepage reader cannot read
+brawijayahospital.com (403) and found no services on audydental.com;
+Firecrawl read both. Haiku 5.5 (low) was slower than Luna and too vague on
+the hospital, so Luna stays. Open: the privacy page's page-reader row says
+the pages are read "untuk bahan laporan"; they now also prepare the business
+summary (wording for the founder to approve).
+
 ## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
 
 Yasir chose, after the reading test:

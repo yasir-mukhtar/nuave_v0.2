@@ -32,7 +32,13 @@ import {
 } from "@/lib/audit/source-input";
 import { orderSafetyIdentifier } from "@/lib/orders/config";
 import { orderRuntime } from "@/lib/orders/http";
-import { orderInState, savePreparedReading } from "@/lib/orders/store";
+import { readOwnSiteLive } from "@/lib/orders/pages";
+import { unsafePublicSource } from "@/lib/audit/sensitive-intake";
+import {
+  orderInState,
+  saveOwnPages,
+  savePreparedReading,
+} from "@/lib/orders/store";
 import { withOrderSpend } from "@/lib/spending/provider-spend";
 import {
   callerIpFromRequest,
@@ -187,10 +193,26 @@ export async function POST(request: Request) {
     const provider = liveAuditProvider();
     // Testing-only adapters keep their existing path and never claim that they
     // consumed supplemental input. Both production aliases share OpenAI extraction.
-    if (
+    const openaiReading =
       normalizedSource.sourceType === "website" &&
-      (provider === "openai" || provider === "opencodego")
-    ) {
+      (provider === "openai" || provider === "opencodego");
+    // Founder decision 2026-10-28: the own site is read with Firecrawl here,
+    // as soon as the order is paid, and its pages are kept for the report,
+    // which then reads only the pages AI cited. The model reads the pages
+    // instead of searching. With no key, or no page read, the homepage
+    // reader and web search run as before.
+    // An address with credential-like parts keeps today's path, which
+    // refuses it.
+    const ownPages =
+      openaiReading && !unsafePublicSource(input.website_url)
+        ? await readOwnSiteLive({
+            apiKey: process.env.FIRECRAWL_API_KEY,
+            website: input.website_url,
+          })
+        : null;
+    if (ownPages) {
+      sourceStatus = "included";
+    } else if (openaiReading) {
       const bindings = getAuditRateLimitBindings();
       if (
         (bindings.contextAvailable || process.env.NODE_ENV === "production") &&
@@ -212,7 +234,11 @@ export async function POST(request: Request) {
       () =>
         liveExtractBusinessDraft({
           ...input,
-          ...(sourceData ? { public_source_data: sourceData } : {}),
+          ...(ownPages
+            ? { pages_read: ownPages.pages }
+            : sourceData
+              ? { public_source_data: sourceData }
+              : {}),
         }),
     );
     const reading = {
@@ -225,6 +251,13 @@ export async function POST(request: Request) {
       orderId: order.id,
       preparedJson: JSON.stringify(reading),
     }).catch(() => {});
+    // Kept for the report's pages step; dropped when the report is saved,
+    // or with the order (privacy page, section 6).
+    if (ownPages)
+      await saveOwnPages(server.db, {
+        orderId: order.id,
+        pagesJson: JSON.stringify({ status: "own_read", own: ownPages }),
+      }).catch(() => {});
     return NextResponse.json(reading);
   } catch (error) {
     if (error instanceof SafeSourceFetchError) {

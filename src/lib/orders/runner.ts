@@ -103,6 +103,7 @@ import {
 import { newLinkSecret, orderSafetyIdentifier, sha256Hex } from "./config";
 import {
   addressesOnly,
+  ownPagesSaved,
   MAX_READING_TRIES,
   orderCitedSources,
   orderOwnSite,
@@ -214,6 +215,8 @@ export type RunnerDeps = {
       | ((input: {
           ownSite: string | null;
           sources: readonly CitedSource[];
+          /** False when the own site was read at step 3. */
+          readOwn?: boolean;
         }) => Promise<PagesRead & { requests: number }>)
       | null;
   };
@@ -1633,12 +1636,15 @@ function stepPlan(
 }
 
 /** Spec 021 B-08: true when the order's pages still need a pages step: the
- * runner reads pages (live), and the order has none saved, or a reading
- * started that may still be tried or must be given up. */
+ * runner reads pages (live), and the order has none saved, only its own
+ * site's from step 3, or a reading started that may still be tried or must
+ * be given up. */
 function needsPagesStep(deps: RunnerDeps, order: OrderRow): boolean {
   if (!deps.pages) return false;
   const saved = parseSavedPages(order.pages_json ?? null);
-  return saved === null || saved.status === "reading";
+  return (
+    saved === null || saved.status === "reading" || saved.status === "own_read"
+  );
 }
 
 /** Spec 021 B-08: one reading of the order's pages, saved for its report.
@@ -1653,11 +1659,24 @@ async function pagesStep(
 ): Promise<StepOutcome> {
   const saved = parseSavedPages(order.pages_json ?? null);
   const tries = saved?.status === "reading" ? saved.tries : 0;
+  // The own site read at step 3 (founder decision 2026-10-28): kept through
+  // every marker, never read again, and joined by the cited pages.
+  const own = ownPagesSaved(saved);
+  const withOwn = (pages: SavedPages): SavedPages =>
+    own && pages.status === "reading" ? { ...pages, own } : pages;
+  const ownOnly = (): SavedPages => ({
+    status: own!.stopped === undefined ? "read" : "partial",
+    tries,
+    pages: own!.pages,
+    unread: own!.unread,
+    ...(own!.stopped === undefined ? {} : { stopped: own!.stopped }),
+    requests: own!.requests,
+  });
   const save = (pages: SavedPages) =>
     savePages(deps.db, {
       orderId: order.id,
       owner,
-      pagesJson: JSON.stringify(pages),
+      pagesJson: JSON.stringify(withOwn(pages)),
     });
   const notice = (status: number | null) =>
     recordFounderNotice(deps.db, {
@@ -1668,10 +1687,13 @@ async function pagesStep(
     }).catch(() => false);
   const reader = deps.pages?.reader ?? null;
   if (!reader) {
-    return (await save({ status: "no_key" })) ? "pages_read" : "skipped";
+    return (await save(own ? ownOnly() : { status: "no_key" }))
+      ? "pages_read"
+      : "skipped";
   }
   if (tries >= MAX_READING_TRIES) {
-    if (!(await save({ status: "gave_up", tries }))) return "skipped";
+    if (!(await save(own ? ownOnly() : { status: "gave_up", tries })))
+      return "skipped";
     await notice(null);
     return "pages_read";
   }
@@ -1681,20 +1703,21 @@ async function pagesStep(
     const read = await reader({
       ownSite: orderOwnSite(intake),
       sources: orderCitedSources(rows),
+      ...(own ? { readOwn: false } : {}),
     });
-    const stopped = read.stopped !== undefined;
+    const stopped = read.stopped ?? own?.stopped;
     if (
       !(await save({
-        status: stopped ? "partial" : "read",
+        status: stopped === undefined ? "read" : "partial",
         tries: tries + 1,
-        pages: read.pages,
-        unread: read.unread,
-        ...(stopped ? { stopped: read.stopped } : {}),
-        requests: read.requests,
+        pages: [...(own?.pages ?? []), ...read.pages],
+        unread: [...(own?.unread ?? []), ...read.unread],
+        ...(stopped === undefined ? {} : { stopped }),
+        requests: (own?.requests ?? 0) + read.requests,
       }))
     )
       return "skipped";
-    if (stopped) await notice(read.stopped!);
+    if (read.stopped !== undefined) await notice(read.stopped);
   } catch {
     // The marker stays: a later run tries again, or gives up.
   }

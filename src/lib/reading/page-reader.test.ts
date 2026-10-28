@@ -92,23 +92,46 @@ describe("which pages are read (the reading test)", () => {
     expect(citedPagesToRead(sources, null)).toHaveLength(10);
   });
 
-  it("own-site pages about prices, doctors, treatments or the business, up to four", () => {
+  it("own-site pages: one of each kind first (offer, branches, doctors, prices, about), list pages before their items, never posts", () => {
     expect(
       ownPagesToRead("https://fiksi.example/", [
         { url: "https://fiksi.example/" },
-        { url: "https://fiksi.example/blog/tips-kulit" },
+        { url: "https://fiksi.example/blog/harga-botox" },
+        { url: "https://fiksi.example/artikel/tips-kulit" },
+        { url: "https://fiksi.example/2025/01/promo-akhir-tahun" },
+        { url: "https://fiksi.example/testimoni" },
         { url: "https://fiksi.example/harga" },
-        { url: "https://fiksi.example/p/123", title: "Dokter kami" },
-        { url: "https://lain.example/harga" },
-        { url: "https://fiksi.example/tentang-kami" },
+        { url: "https://lain.example/cabang" },
         { url: "https://fiksi.example/treatment/botox" },
-        { url: "https://fiksi.example/cabang" },
+        { url: "https://fiksi.example/treatment" },
+        { url: "https://fiksi.example/lokasi/bandung" },
+        { url: "https://fiksi.example/lokasi" },
+        { url: "https://fiksi.example/p/123", title: "Tim dokter kami" },
+        { url: "https://fiksi.example/tentang-kami" },
       ]),
     ).toEqual([
-      "https://fiksi.example/harga",
+      "https://fiksi.example/treatment",
+      "https://fiksi.example/lokasi",
       "https://fiksi.example/p/123",
-      "https://fiksi.example/tentang-kami",
-      "https://fiksi.example/treatment/botox",
+      "https://fiksi.example/harga",
+    ]);
+  });
+
+  it("with fewer kinds than places, a second page of a kind fills the rest", () => {
+    expect(
+      ownPagesToRead("https://fiksi.example/", [
+        { url: "https://fiksi.example/layanan/gigi-anak" },
+        { url: "https://fiksi.example/layanan" },
+        { url: "https://fiksi.example/cabang" },
+        { url: "https://fiksi.example/layanan/implan" },
+        { url: "https://fiksi.example/sitemap.xml" },
+        { url: "https://fiksi.example/karir/perawat" },
+      ]),
+    ).toEqual([
+      "https://fiksi.example/layanan",
+      "https://fiksi.example/cabang",
+      "https://fiksi.example/layanan/gigi-anak",
+      "https://fiksi.example/layanan/implan",
     ]);
   });
 
@@ -154,6 +177,23 @@ describe("reading an order's pages", () => {
     ]);
     expect(pages[2]!.domain).toBe("hadirr.com");
     expect(unread).toEqual(["https://alodokter.com/jerawat"]);
+  });
+
+  it("with the own site read at step 3, only the cited pages are read, never the own site's", async () => {
+    const f = fetcher();
+    const { pages } = await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: [
+        { prompt_id: "q1", url: "https://hadirr.com/klinik-terbaik" },
+        { prompt_id: "q2", url: "https://fiksi.example/harga" },
+      ],
+      fetcher: f,
+      readOwn: false,
+    });
+    expect(pages.map((p) => [p.kind, p.url])).toEqual([
+      ["cited", "https://hadirr.com/klinik-terbaik"],
+    ]);
+    expect(f.map).not.toHaveBeenCalled();
   });
 
   it("an own site given as a bare domain is read; forums and Q&A sites are not", async () => {

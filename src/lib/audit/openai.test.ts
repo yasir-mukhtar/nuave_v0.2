@@ -430,6 +430,39 @@ describe("live website extraction", () => {
     vi.unstubAllEnvs();
   });
 
+  it("with pages read, the model reads them and does not search the web", async () => {
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({ output_parsed: parsedDraft }),
+    );
+    await extractBusinessDraft({
+      ...input,
+      pages_read: [
+        {
+          url: "https://klinikgigisehat.example/",
+          title: "Klinik Gigi Sehat",
+          text: "Layanan: tambal gigi, behel.",
+        },
+      ],
+    });
+    const request = mockResponsesParse.mock.calls[0]![0];
+    expect(request.tools).toBeUndefined();
+    expect(request.tool_choice).toBeUndefined();
+    expect(request.max_tool_calls).toBeUndefined();
+    const developer = request.input[0].content as string;
+    expect(developer).not.toContain("Web search remains restricted");
+    expect(developer).toContain(
+      "pages_read holds pages of the official website",
+    );
+    expect(developer).toContain("Tulis semua teks penjelasan");
+    expect(JSON.parse(request.input[1].content).pages_read).toEqual([
+      {
+        url: "https://klinikgigisehat.example/",
+        title: "Klinik Gigi Sehat",
+        text: "Layanan: tambal gigi, behel.",
+      },
+    ]);
+  });
+
   it("sends the OpenCode Go session header when the endpoint is OpenCode Go", async () => {
     // OpenCode Go rejects requests without `x-opencode-session` (observed
     // live 2026-09-12: HTTP 400 MissingSessionID). The protected path points
