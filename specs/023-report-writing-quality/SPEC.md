@@ -2,8 +2,8 @@
 
 > Status: **In review** (draft for the founder's approval; no code changed)
 > Owner: founder; plan written by Claude Code on `ccr-88631259-0lhn0m`
-> Updated: 2026-10-28, revision 3 (after independent review rounds 1 and 2:
-> FAIL, then a narrow FAIL; every finding addressed below)
+> Updated: 2026-10-28, revision 4 (after independent review rounds 1 to 3:
+> FAIL, then narrow FAILs; every finding addressed below)
 > Implements: the founder's report feedback of 2026-10-28: "deeper insights
 > as if advised by BCG consultants, answer first", and "natural and clear
 > like Tempo", for the live report writer (Claude Opus 5.5 with pages read,
@@ -165,7 +165,12 @@ today's fact safety stays, and the checker becomes more precise, not looser.
     ("di 4 pertanyaan treatment") and "semua"/"tidak satu pun" are checked
     against the finding's own `evidence_prompt_ids`: Y is the number of cited
     questions and X how many of them have the stated fact, by the
-    per-question facts the headline check uses (`questionFacts`).
+    per-question facts the headline check uses (`questionFacts`). A
+    qualifier that means the whole sample never names a subset: anything
+    `ABSOLUTE` matches today, and "yang diuji", "yang ditanyakan", "yang
+    dinilai", "yang sama", "audit", "Nuave", "mana pun". The qualifier is
+    set aside before the clause's polarity is read, so "SOZO muncul di 2
+    dari 4 jawaban yang tidak menyebut kota" stays a positive claim.
   - **Everything else stays source-wide.** A clause with no named subset
     ("di 4 dari 4 pertanyaan", "Tidak satu pun jawaban ChatGPT menyebut
     SOZO"), any clause in the verdict or conclusion, and any clause the
@@ -178,11 +183,19 @@ today's fact safety stays, and the checker becomes more precise, not looser.
     `sourceDenominator` does); an absolute negative ("tidak pernah menyebut
     ERHA") is false when that source named it at all; a positive is false
     when that source never named it; "semua" must hold for every question
-    counted. This applies in every field, the verdict and conclusion
-    included.
+    counted. This applies in every field the checker reads today (the
+    verdict, the conclusion, finding titles and explanations); fields it does
+    not read today stay unread. A clause that names both the owner and a
+    competitor is checked for the owner only, as today. A competitor clause
+    that names no source must be true for at least one source, as today.
   - **Repair.** A false subset or competitor sentence left after the
     revision is dropped, not replaced with the owner's count sentence. A
-    false owner sentence about the whole sample is replaced as today.
+    false owner sentence about the whole sample is replaced as today. If a
+    drop would empty a finding's title or explanation, the whole finding is
+    dropped while another finding remains; for the last finding, the
+    sentence is replaced as today. An emptied verdict falls back to the
+    conclusion (as the page already does), and an emptied conclusion gets
+    the existing count-sentence prefix.
 - **R-04, counts said once, in the cards.** The source cards already show
   each source's count in large type and a sentence. The verdict states the
   main message and may carry one number only when that number is the point.
@@ -196,7 +209,10 @@ today's fact safety stays, and the checker becomes more precise, not looser.
     the negative-sentence rule become: in a key finding, a count may cover
     the finding's own cited questions when the sentence names that group of
     questions; a competitor's count comes from `questions[].businesses`;
-    every other number about a source is copied from `source_counts`; in the
+    every other number about a source is copied from `source_counts`; never
+    write that a source did not name, mention or show the business when it
+    did, unless the sentence names the group of questions it is limited to
+    (this part of today's negative rule stays); in the
     verdict and conclusion, a count about the owner is always the
     source-wide one.
 - **R-05, brand name, used like an editor.** The writer names the business
@@ -409,8 +425,10 @@ Two pull requests, so the free and safe part can merge first.
   "Pemenang", no required "Di ChatGPT"/"Di Google AI Overview" formula, no
   per-source result in the verdict line, no count requirement for the
   conclusion, and the R-04a count rules in place of "Copy every 'X dari Y'
-  … from source_counts"; it has the naming rule, the storyline rule and the
-  guide text (unit test on `twoSourceWriterMessages`).
+  … from source_counts"; it keeps the rule never to deny a source's naming
+  except for a named group of questions; it has the naming rule, the
+  storyline rule and the guide text (unit test on
+  `twoSourceWriterMessages`).
 - **AC-02** A two-source draft with a 35-word sentence triggers no revision
   and is not cut. The legacy writer's tests pass unchanged.
 - **AC-03** Unit tests on `twoSourceWritingViolations` and
@@ -430,6 +448,13 @@ Two pull requests, so the free and safe part can merge first.
     menyebut ERHA" is caught when no Google list has ERHA; a caught
     competitor sentence is dropped, never replaced with the owner's count
     sentence;
+  - "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan yang diuji", "…di
+    semua pertanyaan yang ditanyakan" and "…di 4 dari 4 pertanyaan audit
+    ini" are caught, as today;
+  - "SOZO muncul di 2 dari 4 jawaban yang tidak menyebut kota" is read as a
+    positive claim and passes when true;
+  - a false sentence that is a finding's whole title drops that finding
+    when another remains;
   - every false verdict and conclusion sentence that today's tests catch is
     still caught.
 - **AC-04** An em dash or a spaced en dash left after a revision is
