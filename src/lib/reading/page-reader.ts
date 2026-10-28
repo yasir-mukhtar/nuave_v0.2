@@ -238,13 +238,23 @@ export function siteChrome(markdowns: readonly string[]): Set<string> {
  * links (founder decision 2026-10-28). */
 const LABEL_ONLY_LINK =
   /^(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps|waze\.com|api\.whatsapp\.com|wa\.me|wa\.link)/i;
-/** A markdown link, not an image; its address may hold one pair of
- * brackets, as a map search for "AEON (3-23AB)" does. */
-const LINK = /(?<!!)\[([^\]]*)\]\(((?:[^()\s]|\([^()\s]*\))*)\)/g;
-const LONG_URL = /https?:\/\/\S{90,}/g;
+/** A markdown link's address may hold one pair of brackets, as a map
+ * search for "AEON (3-23AB)" does. */
+const ADDRESS = String.raw`((?:[^()\s]|\([^()\s]*\))*)`;
+const IMAGE = new RegExp(String.raw`!\[[^\]]*\]\(${ADDRESS}\)`, "g");
+const LINK = new RegExp(String.raw`(?<!!)\[([^\]]*)\]\(${ADDRESS}\)`, "g");
+/** A bare long address; it stops at a bracket, so cutting it never leaves
+ * a link or image unclosed. */
+const LONG_URL = /https?:\/\/[^\s()]{90,}/g;
+/** What a cut can leave of a link that spans lines: "](" or "]()". */
+const BRACKETS_ONLY = /^[[\]()]+$/;
 
+/** Images go whole first: cutting only an image's long address left
+ * "![Behel Gigi](" open, and the later image removal then ran on to the
+ * next ")", taking Audy's service name with it. */
 function shortLinks(line: string): string {
-  return line
+  const short = line
+    .replace(IMAGE, "")
     .replace(LINK, (whole, label: string, url: string) =>
       url.length > 100 || LABEL_ONLY_LINK.test(url.replace(/^https?:\/\//, ""))
         ? label
@@ -252,6 +262,7 @@ function shortLinks(line: string): string {
     )
     .replace(LONG_URL, "")
     .trim();
+  return BRACKETS_ONLY.test(short) ? "" : short;
 }
 
 /** A phone form's country list ("- Belarus (Беларусь)+375"), dropped when a
@@ -286,7 +297,7 @@ export function pageText(
     return [raw.replace(line, () => short)];
   });
   const clean = withoutContacts(kept.join("\n"))
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/!\[[^\]\n]*\]\([^)\n]*\)/g, "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
