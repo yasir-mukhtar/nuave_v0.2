@@ -6,6 +6,28 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-28 — Step 3 at medium effort, 20 branches, and an easy model switch
+
+After PR #189 merged, Yasir decided:
+
+1. **Step 3 reads with GPT-5.6 Luna at medium effort** (it was low). In the
+   third model round (OpenAI, pages read by Firecrawl), medium took about 5
+   seconds longer per site and cost about the same. Step 3 now has its own
+   settings, `NUAVE_READING_MODEL` and `NUAVE_READING_EFFORT`, so the low
+   effort of the other OpenAI calls no longer applies to it.
+2. **The quiz offers up to 20 branches** from the reading (it was 8). When a
+   site publishes more than 20, the reading spreads the 20 across its cities.
+   The owner still picks one. Service areas stay at 8.
+3. **Shorter page text, same facts.** Map and WhatsApp links, and any link
+   over 100 characters, keep only their label. A phone form's country list
+   ("Belarus +375") is dropped. Sozo's branch page went from 19,590 to 5,973
+   characters with the same branches, so its whole list now fits.
+4. **Models stay easy to switch** for step 3 and step 7. The models, their
+   prices and the efforts are in one file (`src/lib/audit/models.ts`), the
+   choices are deploy settings, and [`MODELS.md`](./MODELS.md) says how to
+   switch or add a model. GPT-6 Luna is priced from OpenAI's model page
+   (USD 0.10 in, 0.50 out per million tokens), ready to try.
+
 ## 2026-10-28 — Firecrawl reads the own site at the paid website reading
 
 After the step 3 reading test (PR #189: sozoskinclinic.com, audydental.com,
@@ -72,6 +94,7 @@ needs the founder's approval before this merges. The plan is
 PR #185.
 
 Before the merge, the same day, Yasir:
+
 - added the GitHub secrets (Anthropic key and workspace, Firecrawl key);
 - approved the privacy page 1.5 (it names the page reader and says pages
   read may name doctors or staff) and the terms 1.2 (30 minutes);
@@ -304,7 +327,7 @@ method section, an unused JSON button). Decisions:
 2. **Confident advice.** Facts in a report must still come from the saved
    answers. Advice may be confident expert guidance, drawn from a written
    Nuave playbook the founder approves. A report never claims that something
-   *caused* the business's result. This replaces the writer's "do not
+   _caused_ the business's result. This replaces the writer's "do not
    diagnose from absence" instruction; `AGENTS.md` rules 7 to 9 stand.
 3. **No score yet.** No 0 to 100 score; a short verdict and one row of ten
    dots per source carry the big picture.
@@ -499,7 +522,7 @@ approval with the pull request:
   never removed by the job.
 - **Kept anyway:** an order with an open refund case, a running order, and one
   under a support hold. The founder sets a hold with `npm run support -- hold
-  <order> <days>` (up to 365 days; 0 releases it) while a support case is open.
+<order> <days>` (up to 365 days; 0 releases it) while a support case is open.
 - **Runs:** once an hour inside the existing order cron, up to 5 orders and
   200 cost rows per run.
 
@@ -994,13 +1017,13 @@ delivery performance remain separate implementation/launch gates.
 
 ### Options compared
 
-| Option | Customer/access implications | Operating and engineering cost drivers | Recommendation |
-| --- | --- | --- | --- |
-| Stored report + revocable emailed link | Simple initial access and cross-device return; link possession grants access, including to someone receiving a forwarded link; support handles recovery | Durable storage/jobs, initial email and retries/resends, grant revocation; least new authentication machinery | Choose |
-| Stored report + private link only, no email | Customer must retain the link; weaker cross-device return/recovery; contradicts current Module 06 email ownership unless separately changed | Same storage/jobs; removes initial email, increases manual recovery burden | Reject |
-| Stored report + emailed one-time code/magic-link recovery | Verifies mailbox possession for self-service recovery; needs enumeration/rate-limit/expiry controls | Same storage/jobs plus challenge state and additional email attempts | Defer |
-| Narrow report history for one verified email | Easier repeated access to several reports; unnecessary for the first one-report purchase | Same storage/jobs plus verified-email sessions, history listing and its access controls | Defer |
-| Bounded customer account | Credentials/login and account recovery before reading; largest support/authentication burden of these launch choices | Same storage/jobs plus credential/session/account lifecycle | Defer |
+| Option                                                    | Customer/access implications                                                                                                                            | Operating and engineering cost drivers                                                                        | Recommendation |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------- |
+| Stored report + revocable emailed link                    | Simple initial access and cross-device return; link possession grants access, including to someone receiving a forwarded link; support handles recovery | Durable storage/jobs, initial email and retries/resends, grant revocation; least new authentication machinery | Choose         |
+| Stored report + private link only, no email               | Customer must retain the link; weaker cross-device return/recovery; contradicts current Module 06 email ownership unless separately changed             | Same storage/jobs; removes initial email, increases manual recovery burden                                    | Reject         |
+| Stored report + emailed one-time code/magic-link recovery | Verifies mailbox possession for self-service recovery; needs enumeration/rate-limit/expiry controls                                                     | Same storage/jobs plus challenge state and additional email attempts                                          | Defer          |
+| Narrow report history for one verified email              | Easier repeated access to several reports; unnecessary for the first one-report purchase                                                                | Same storage/jobs plus verified-email sessions, history listing and its access controls                       | Defer          |
+| Bounded customer account                                  | Credentials/login and account recovery before reading; largest support/authentication burden of these launch choices                                    | Same storage/jobs plus credential/session/account lifecycle                                                   | Defer          |
 
 These are qualitative comparisons, not measured effort or current dollar
 quotes. Existing Cloudflare/Resend account terms, quotas, credentials and
@@ -1975,16 +1998,16 @@ decision evidence. [Spec 012](../specs/012-evidence-first-report/SPEC.md) is the
 implementation contract, **Approved** by the founder on 2026-09-22 after
 independent review 1 (S1–S6) was applied; approval is not an implementation pass.
 
-| Decision | Settled direction |
-|---|---|
-| D-01 | All ten exact questions/full answers are visible immediately; no collapse controls (G2). |
-| D-02 | Bounded Markdown, exact raw view and copy; preserve the retained answer. |
-| D-03 | One to ten findings and one to ten actions for completed new direct-ten reports; never pad. |
-| D-04 | Presentation PR A starts from current main without waiting for Spec 011. Shared content/header B1 and template/recovery B2 wait for its verified merge; B2 consumes integrated A/B1. |
-| D-05 | Exact labels: `Bisnis Anda muncul di X dari 10 pertanyaan`, `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, `Download PDF`. G3 fixes the shared toolbar default for every report. |
-| D-06 | Final usefulness failure after repair with ten usable observations permits only retained questions/answers, sources/provenance, and unfinished-analysis recovery; findings empty, actions empty, or both qualify. No surviving analysis or partial report. |
-| D-07 | Screen and PDF have the same order and one DOM tree; no appendix or duplicate print answer tree. |
-| D-08 | G4, confirmed 2026-09-22: recovery has copy and explicit report retry within existing limits, with no print/PDF/JSON save path. |
+| Decision | Settled direction                                                                                                                                                                                                                                          |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-01     | All ten exact questions/full answers are visible immediately; no collapse controls (G2).                                                                                                                                                                   |
+| D-02     | Bounded Markdown, exact raw view and copy; preserve the retained answer.                                                                                                                                                                                   |
+| D-03     | One to ten findings and one to ten actions for completed new direct-ten reports; never pad.                                                                                                                                                                |
+| D-04     | Presentation PR A starts from current main without waiting for Spec 011. Shared content/header B1 and template/recovery B2 wait for its verified merge; B2 consumes integrated A/B1.                                                                       |
+| D-05     | Exact labels: `Bisnis Anda muncul di X dari 10 pertanyaan`, `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, `Download PDF`. G3 fixes the shared toolbar default for every report.                                                                  |
+| D-06     | Final usefulness failure after repair with ten usable observations permits only retained questions/answers, sources/provenance, and unfinished-analysis recovery; findings empty, actions empty, or both qualify. No surviving analysis or partial report. |
+| D-07     | Screen and PDF have the same order and one DOM tree; no appendix or duplicate print answer tree.                                                                                                                                                           |
+| D-08     | G4, confirmed 2026-09-22: recovery has copy and explicit report retry within existing limits, with no print/PDF/JSON save path.                                                                                                                            |
 
 The reading order is **Hasil singkat → Jawaban model AI → Analisis Nuave →
 Yang dapat dilakukan → Tentang audit ini**. These decisions supersede the
@@ -1997,7 +2020,7 @@ code-owned template contract before their implementation. No runtime,
 dependency, live-provider, merge, or deployment work is authorized by this
 documentation promotion.
 
-*Reconciliation note (2026-09-26):* this entry is carried verbatim from the
+_Reconciliation note (2026-09-26):_ this entry is carried verbatim from the
 approved documentation branch at `9c5d4c0`. The draft links are pinned
 permalinks because the drafts were never merged. A/B1/B2 were later merged and
 deployed (PRs #74, #80, #81). The founder's 2026-09-26 acceptance above records

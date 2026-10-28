@@ -78,6 +78,10 @@ export function offlineE2EServerEnv(
     // Spec 021 PR 6b: no Claude writer, Anthropic key or Firecrawl key
     // offline; synthetic orders read no pages and call no writer.
     NUAVE_REPORT_WRITER: "",
+    NUAVE_REPORT_EFFORT: "",
+    // docs/MODELS.md: empty means step 3's defaults (GPT-5.6 Luna, medium).
+    NUAVE_READING_MODEL: "",
+    NUAVE_READING_EFFORT: "",
     NUAVE_ANTHROPIC_API_KEY: "",
     NUAVE_ANTHROPIC_WORKSPACE_ID: "",
     FIRECRAWL_API_KEY: "",

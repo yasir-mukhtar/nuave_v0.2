@@ -67,18 +67,10 @@ import {
   OBSERVATION_CALL_TIMEOUT_MS,
   REPORT_CALL_TIMEOUT_MS,
 } from "./call-timeouts";
+import { auditReasoningEffort, readingEffort, readingModel } from "./models";
 
 const DEFAULT_MODEL = AUDIT_MODEL;
-const REASONING_EFFORTS = [
-  "none",
-  "low",
-  "medium",
-  "high",
-  "xhigh",
-  "max",
-] as const;
-
-type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+export { auditReasoningEffort };
 type CostControlledResponseParams = ResponseCreateParamsWithTools & {
   max_tool_calls?: number;
 };
@@ -104,17 +96,6 @@ function client() {
 
 export function auditModel() {
   return process.env.OPENAI_AUDIT_MODEL?.trim() || DEFAULT_MODEL;
-}
-
-export function auditReasoningEffort(fallback: ReasoningEffort) {
-  const configured = process.env.OPENAI_AUDIT_REASONING_EFFORT?.trim();
-  if (!configured) return fallback;
-  if (!REASONING_EFFORTS.some((effort) => effort === configured)) {
-    throw new Error(
-      `OPENAI_AUDIT_REASONING_EFFORT must be one of: ${REASONING_EFFORTS.join(", ")}.`,
-    );
-  }
-  return configured as ReasoningEffort;
 }
 
 export function auditObservationSearchTool() {
@@ -319,7 +300,7 @@ const EXTRACTION_PAGES_INSTRUCTIONS = [
  * past its output allowance, which discards the whole paid draft.
  */
 const EXTRACTION_LENGTH_INSTRUCTIONS = [
-  "Return at most eight items in any list.",
+  "Return at most eight items in any list, except published_locations: at most twenty. When more than twenty locations are published, spread the twenty across the different cities.",
   "Return at most three similar_businesses suggestions.",
   "Return at most three category_suggestions and at most one offering_category_suggestions entry per verified_offerings item.",
   "Return at most twelve evidence records, covering the most material values only.",
@@ -327,7 +308,7 @@ const EXTRACTION_LENGTH_INSTRUCTIONS = [
 ];
 
 const EXTRACTION_RETRY_BREVITY_INSTRUCTION =
-  "The previous attempt ran past its output limit. Return a shorter draft: at most four items per list except market_areas, at most six evidence records, and no note longer than eight words. For market_areas preserve a faithful description of up to eight supported geographic areas without shortening it to four; national/international presence still has no active areas.";
+  "The previous attempt ran past its output limit. Return a shorter draft: at most four items per list except market_areas and published_locations, at most six evidence records, and no note longer than eight words. For market_areas preserve a faithful description of up to eight supported geographic areas without shortening it to four; national/international presence still has no active areas.";
 
 export function extractionRequest(
   input: Omit<ExtractionInput, "budget">,
@@ -355,7 +336,7 @@ export function extractionRequest(
   const pages = input.pages_read?.length ? input.pages_read : null;
   return {
     model: requestedModel,
-    reasoning: { effort: auditReasoningEffort("low") },
+    reasoning: { effort: readingEffort() },
     store: false,
     service_tier: "default" as const,
     max_output_tokens: AUDIT_CALL_LIMITS.extract.max_output_tokens,
@@ -445,7 +426,7 @@ export async function extractBusinessDraft(input: ExtractionInput): Promise<{
   response_id: string;
   telemetry: AuditCallTelemetry[];
 }> {
-  const requestedModel = auditModel();
+  const requestedModel = readingModel();
   const calls: AuditCallTelemetry[] = [];
 
   // Each attempt reserves against the running ledger — the caller's budget plus

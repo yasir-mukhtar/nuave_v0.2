@@ -1,8 +1,9 @@
 /**
  * Spec 021 PR 6b (go-live of 2026-10-28): the report writer on Claude. Every
  * live two-source order's report is written by the model `NUAVE_REPORT_WRITER`
- * names: Claude Opus 5.5 at medium effort (the founder's pick after the
- * reading test) or Claude Sonnet 5.5 at high effort (the cheaper one).
+ * names, a row of `CLAUDE_WRITERS` in `models.ts`: Claude Opus 5.5 at medium
+ * effort (the founder's pick after the reading test) or Claude Sonnet 5.5 at
+ * high effort (the cheaper one). `docs/MODELS.md` says how to switch.
  *
  * The request is the production writer's own text (`reportRequest`) and
  * answer format (`reportOutputSchema`), and the answer goes through
@@ -37,22 +38,14 @@ import {
   reserveProviderSpend,
   SpendCapError,
 } from "../spending/provider-spend";
+import {
+  CLAUDE_WRITERS,
+  type ClaudeEffort,
+  type ClaudeWriter,
+  reportWriterEffort,
+} from "./models";
 
-export const CLAUDE_WRITERS = {
-  // The reading test: Opus used 12,230 output tokens on its first call.
-  "claude-opus-5-5": {
-    effort: "medium",
-    maxTokens: 24_000,
-    usdPerMillion: { input: 4, output: 20, cacheRead: 0.2 },
-  },
-  // Sonnet at high effort was cut off at 16,000 and used 23,901 at 32,000.
-  "claude-sonnet-5-5": {
-    effort: "high",
-    maxTokens: 32_000,
-    usdPerMillion: { input: 2, output: 10, cacheRead: 0.2 },
-  },
-} as const;
-export type ClaudeWriter = keyof typeof CLAUDE_WRITERS;
+export { CLAUDE_WRITERS, type ClaudeWriter };
 
 /** Prices read 2026-10-28 (claude.com/pricing): standard tier; cache reads
  * at their own price, cache writes 1.25 times the input price. */
@@ -80,7 +73,7 @@ export function configuredReportWriter(): ClaudeWriter | null {
  * answer format as structured output, adaptive thinking. */
 export function claudeReportRequest(input: {
   model: string;
-  effort: "low" | "medium" | "high";
+  effort: ClaudeEffort;
   maxTokens: number;
   developer: string;
   user: string;
@@ -233,7 +226,7 @@ export async function generateClaudeReportContent(
     const { input: messages } = reportRequest(sent, revision);
     return claudeReportRequest({
       model,
-      effort: spec.effort,
+      effort: reportWriterEffort(model),
       maxTokens: spec.maxTokens,
       developer: messages[0].content,
       user: messages[1].content,

@@ -69,6 +69,14 @@
 
   After the deploy, the first live order or two measure the time, cost,
   pages and CPU per report.
+
+- **Step 3 reads with Firecrawl** (2026-10-28,
+  [#189](https://github.com/yasir-mukhtar/nuave_v0.2/pull/189),
+  [decision](./DECISION_LOG.md#2026-10-28--firecrawl-reads-the-own-site-at-the-paid-website-reading)),
+  then GPT-5.6 Luna at medium effort drafts the quiz, with up to 20
+  branches
+  ([decision](./DECISION_LOG.md#2026-10-28--step-3-at-medium-effort-20-branches-and-an-easy-model-switch)).
+  To switch the step 3 or step 7 model, read [`MODELS.md`](./MODELS.md).
 - **Audit stack plan** (approved 2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
   [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
@@ -111,7 +119,7 @@
   12 November. From then, check one failed order older than 30 days with
   `npm run support -- show <order>`: it should print "Made anonymous".
 - **Support commands (2026-10-25):** `npm run support -- email <order>
-  <new-email>` fixes a mistyped order email after the founder checks the
+<new-email>` fixes a mistyped order email after the founder checks the
   receipt, and sends a new report link to the new address;
   `npm run support -- norefund <order> <declined|delivered|settled>` closes a
   refund case without a refund
