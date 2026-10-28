@@ -43,19 +43,19 @@ export const CLAUDE_WRITERS = {
   "claude-opus-5-5": {
     effort: "medium",
     maxTokens: 24_000,
-    usdPerMillion: { input: 4, output: 20 },
+    usdPerMillion: { input: 4, output: 20, cacheRead: 0.2 },
   },
   // Sonnet at high effort was cut off at 16,000 and used 23,901 at 32,000.
   "claude-sonnet-5-5": {
     effort: "high",
     maxTokens: 32_000,
-    usdPerMillion: { input: 2, output: 10 },
+    usdPerMillion: { input: 2, output: 10, cacheRead: 0.2 },
   },
 } as const;
 export type ClaudeWriter = keyof typeof CLAUDE_WRITERS;
 
 /** Prices read 2026-10-28 (claude.com/pricing): standard tier; cache reads
- * a tenth of the input price, cache writes 1.25 times it. */
+ * at their own price, cache writes 1.25 times the input price. */
 export const CLAUDE_PRICING_VERSION = "anthropic-standard-2026-10-28";
 
 /** A report request counted above this is rebuilt with fewer pages; one
@@ -145,7 +145,7 @@ export function claudeCostUsd(
   const price = CLAUDE_WRITERS[known ?? "claude-opus-5-5"].usdPerMillion;
   const usd =
     (usage.input_tokens * price.input +
-      (usage.cache_read_input_tokens ?? 0) * price.input * 0.1 +
+      (usage.cache_read_input_tokens ?? 0) * price.cacheRead +
       (usage.cache_creation_input_tokens ?? 0) * price.input * 1.25 +
       usage.output_tokens * price.output) /
     1_000_000;

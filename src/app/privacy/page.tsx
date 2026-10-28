@@ -254,7 +254,9 @@ export default function PrivacyPage() {
             halamannya disimpan bersama pesanan.
           </p>
           <p>
-            Kami tidak memasukkan email, data pembayaran, atau data pribadi lain
+            Halaman yang dibaca bisa memuat nama dokter atau staf yang
+            dicantumkan sendiri oleh bisnis di halaman publiknya. Selain itu,
+            kami tidak memasukkan email, data pembayaran, atau data pribadi lain
             ke permintaan ini. Penyedia tersebut dapat memproses data di luar
             Indonesia sesuai kebijakan masing-masing.
           </p>

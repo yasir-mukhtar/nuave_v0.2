@@ -238,9 +238,10 @@ kami berikan ke penyedia layanan AI untuk menyusun laporan. Isi halaman itu kami
 hapus setelah laporan selesai, atau bersama pesanan jika laporannya tidak
 selesai. Alamat halamannya disimpan bersama pesanan.
 
-Kami tidak memasukkan email, data pembayaran, atau data pribadi lain ke
-permintaan ini. Penyedia tersebut dapat memproses data di luar Indonesia sesuai
-kebijakan masing-masing.
+Halaman yang dibaca bisa memuat nama dokter atau staf yang dicantumkan sendiri
+oleh bisnis di halaman publiknya. Selain itu, kami tidak memasukkan email, data
+pembayaran, atau data pribadi lain ke permintaan ini. Penyedia tersebut dapat
+memproses data di luar Indonesia sesuai kebijakan masing-masing.
 
 ## 7. Pihak yang membantu kami
 

@@ -26,6 +26,8 @@ import {
   type RunnerDeps,
 } from "./runner";
 import { orderStatus } from "./store";
+import { SpendCapError } from "../spending/provider-spend";
+import { AuditBudgetError } from "../audit/telemetry";
 import { competitorFacts } from "./two-source";
 import type { BusinessListing } from "../checks/listings";
 import {
@@ -1190,5 +1192,89 @@ describe("Spec 021 PR 6b: long steps (a Claude report, a page reading)", () => {
     };
     expect(await most(false)).toBe(2);
     expect(await most(true)).toBe(1);
+  });
+
+  it("a step sized from the first read is not run when the order moved on before the claim", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    // Bring the order to its pages step without reading them.
+    const t = deps(undefined, {
+      claudeReports: true,
+      pages: {
+        reader: async () => ({ pages: [], unread: [], requests: 0 }),
+      },
+    });
+    for (let i = 0; i < 40 && orderRow(id).state !== "reporting"; i += 1) {
+      await t.run();
+      minute();
+    }
+    expect(orderRow(id).pages_json).toBeNull();
+    // Another runner reads the pages between this run's first read and its
+    // claim: the step was sized as a pages step, the order now needs a
+    // Claude report.
+    let moved = false;
+    const db: RunnerDeps["db"] = {
+      ...d1.db,
+      prepare: (sql) => {
+        if (!moved && sql.includes("SET lease_owner = ?2, lease_until = ?3")) {
+          moved = true;
+          d1.query(
+            `UPDATE orders SET pages_json = '{"status":"no_key"}' WHERE id = '${id}' RETURNING 1`,
+          );
+        }
+        return d1.db.prepare(sql);
+      },
+      batch: (statements) => d1.db.batch(statements),
+    };
+    const before = t.reportInputs.length;
+    const { outcomes } = await runOrders({ ...t.d, db });
+    expect(moved).toBe(true);
+    expect(outcomes).toContain("waiting");
+    expect(outcomes).not.toContain("pages_read");
+    expect(t.reportInputs.length).toBe(before);
+    expect(orderRow(id).lease_owner).toBeNull();
+    // The next run sizes the step again and writes the report.
+    minute();
+    await t.run();
+    expect(t.reportInputs.length).toBe(before + 1);
+  });
+
+  it("a language fix the Claude writer cannot send (busy, or over the ceiling) keeps the first draft, and its attempt is spent", async () => {
+    for (const failure of [
+      new SpendCapError("unavailable"),
+      new AuditBudgetError("over the ceiling"),
+    ]) {
+      const id = await makeOrder(d1.db, { now: clock });
+      await approveTwoSource(d1.db, id, { now: clock });
+      let revisions = 0;
+      const t = deps(undefined, {
+        claudeReports: true,
+        generateReport: async (...args) => {
+          if (args[1]) {
+            revisions += 1;
+            throw failure;
+          }
+          const result = await generateSyntheticLocalReport(...args);
+          return {
+            ...result,
+            content: {
+              ...result.content,
+              priorities: result.content.priorities.map((priority, i) =>
+                i === 0
+                  ? { ...priority, action: "Pastikan audit nyata berjalan" }
+                  : priority,
+              ),
+            },
+          };
+        },
+      });
+      await runUntilEnded(t, id);
+      expect(revisions).toBe(1);
+      expect(orderRow(id).state).toBe("delivered");
+      expect(Number(orderRow(id).report_attempts)).toBe(2);
+      const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+      // The first draft, with the banned start removed by code.
+      expect(report.priorities[0]!.action).toBe("Audit nyata berjalan");
+    }
   });
 });

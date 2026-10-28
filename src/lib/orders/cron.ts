@@ -34,6 +34,17 @@ import {
 } from "../audit/anthropic-report";
 import { readPagesLive } from "./pages";
 
+/** Spec 021 B-08: the pages step, for live orders written by Claude only. */
+export function cronPages(
+  mode: OrderMode,
+  claudeWriter: ClaudeWriter | null,
+  firecrawlKey: string | undefined,
+): Pick<RunnerDeps, "pages"> {
+  return mode === "live" && claudeWriter
+    ? { pages: { reader: livePageReader(firecrawlKey) } }
+    : {};
+}
+
 /** The live page reader, or null when no Firecrawl key is set. */
 export function livePageReader(
   key: string | undefined,
@@ -143,11 +154,11 @@ export async function runScheduledOrders(
         ? liveGenerateReportContent
         : generateSyntheticLocalReport,
     claudeReports: claudeWriter !== null,
-    // Spec 021 B-08: live orders read their pages before the report; with
-    // no Firecrawl key they go on without them. Synthetic orders read none.
-    ...(mode === "live"
-      ? { pages: { reader: livePageReader(process.env.FIRECRAWL_API_KEY) } }
-      : {}),
+    // Spec 021 B-08: live orders written by Claude read their pages before
+    // the report; with no Firecrawl key they go on without them. With the
+    // OpenAI writer (unset, the way back) and in synthetic mode, no pages are
+    // read.
+    ...cronPages(mode, claudeWriter, process.env.FIRECRAWL_API_KEY),
     // Spec 018: ChatGPT and Google checks through DataForSEO (live), or the
     // labelled synthetic answers. Without credentials a live check is refused
     // unsent, as DataForSEO would refuse it (R-14, R-21).

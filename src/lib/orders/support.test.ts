@@ -38,6 +38,7 @@ import {
   sqlLiteral,
   SUPPORT_USAGE,
   type SupportDeps,
+  pagesSummary,
 } from "./support";
 
 // Spec 016 R-32, AC-17, and the `show` part of AC-09: the support commands on a
@@ -1153,5 +1154,37 @@ describe("export (spec 021 A-08)", () => {
     expect(await s.run("export", id)).toBe(1);
     expect(output.join("\n")).toContain("no saved report");
     expect(files.size).toBe(0);
+  });
+});
+
+describe("show: the pages read (Spec 021 B-08)", () => {
+  it("names the reading's status and counts, never the page text", () => {
+    expect(
+      pagesSummary(
+        JSON.stringify({
+          status: "kept_addresses",
+          read: "partial",
+          urls: ["https://a.example/"],
+          unread: ["https://b.example/", "https://c.example/"],
+        }),
+      ),
+    ).toBe("partial, 1 read, 2 unread (report saved; addresses only)");
+    expect(
+      pagesSummary(
+        JSON.stringify({
+          status: "read",
+          tries: 1,
+          pages: [{ url: "https://a.example/", text: "Isi rahasia" }],
+          unread: [],
+          requests: 3,
+        }),
+      ),
+    ).toBe("read, 1 read, 0 unread, 3 Firecrawl requests");
+    expect(pagesSummary(JSON.stringify({ status: "gave_up", tries: 2 }))).toBe(
+      "gave_up, try 2",
+    );
+    expect(pagesSummary(JSON.stringify({ status: "no_key" }))).toBe(
+      "not read (no Firecrawl key)",
+    );
   });
 });

@@ -742,35 +742,13 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
       outcomes.push("waiting");
       continue;
     }
-    const twoSource = setupOf(parseIntake(order)) !== null;
-    const writing = order.state === "reporting" && !order.report_json;
-    const readsPages = writing && twoSource && needsPagesStep(deps, order);
+    const { cost, long, stepMs } = stepPlan(deps, order);
     // Start a step only if its cost still fits the run's meter; a heavy report
     // step goes first on a later run (rotation by last step).
-    const cost =
-      order.state === "running"
-        ? RUN_COST.question
-        : readsPages
-          ? RUN_COST.pages
-          : order.report_json
-            ? RUN_COST.light
-            : RUN_COST.heavy;
     if (!fits(stepsStarted === 0 ? cost : cost + reserve)) {
       outcomes.push("waiting");
       continue;
     }
-    const long =
-      readsPages || (writing && twoSource && deps.claudeReports === true);
-    const stepMs =
-      order.state === "reporting"
-        ? readsPages
-          ? PAGES_STEP_MS
-          : long
-            ? CLAUDE_REPORT_STEP_MS
-            : REPORT_STEP_MS
-        : twoSource
-          ? TWO_SOURCE_STEP_MS
-          : OBSERVATION_STEP_MS;
     // Spec 021 PR 6b: a long step only as the run's first audit step.
     const stepBudgetMs =
       long && stepsStarted === 0
@@ -804,6 +782,15 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
         (current.state !== "running" && current.state !== "reporting")
       ) {
         outcomes.push("skipped");
+        continue;
+      }
+      // The step was sized from the first read. If another runner moved the
+      // order on since (it read the pages, or saved the last answer), this
+      // step's lease and budget may be too short for what is now next: leave
+      // it to a later run, which sizes it again.
+      const now = stepPlan(deps, current);
+      if (now.stepMs !== stepMs || now.long !== long) {
+        outcomes.push("waiting");
         continue;
       }
       const outcome =
@@ -1608,6 +1595,41 @@ async function reportStep(
     return "report_failed";
   }
   return "report_retry";
+}
+
+/** What an order's next audit step is and needs: its cost on the run's
+ * meter, its time (the lease and the budget are built from it), and whether
+ * it is a long step (a page reading or a Claude report). */
+function stepPlan(
+  deps: RunnerDeps,
+  order: OrderRow,
+): { cost: number; long: boolean; stepMs: number } {
+  const twoSource = setupOf(parseIntake(order)) !== null;
+  const writing = order.state === "reporting" && !order.report_json;
+  const readsPages = writing && twoSource && needsPagesStep(deps, order);
+  const long =
+    readsPages || (writing && twoSource && deps.claudeReports === true);
+  return {
+    cost:
+      order.state === "running"
+        ? RUN_COST.question
+        : readsPages
+          ? RUN_COST.pages
+          : order.report_json
+            ? RUN_COST.light
+            : RUN_COST.heavy,
+    long,
+    stepMs:
+      order.state === "reporting"
+        ? readsPages
+          ? PAGES_STEP_MS
+          : long
+            ? CLAUDE_REPORT_STEP_MS
+            : REPORT_STEP_MS
+        : twoSource
+          ? TWO_SOURCE_STEP_MS
+          : OBSERVATION_STEP_MS,
+  };
 }
 
 /** Spec 021 B-08: true when the order's pages still need a pages step: the

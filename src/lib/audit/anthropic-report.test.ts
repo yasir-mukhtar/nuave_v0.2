@@ -318,6 +318,13 @@ describe("spending", () => {
       }),
     ).toBeCloseTo(2 + 0.2 + 2.5, 8);
     expect(
+      claudeCostUsd("claude-opus-5-5", {
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_read_input_tokens: 1_000_000,
+      }),
+    ).toBeCloseTo(0.2, 8);
+    expect(
       claudeCostUsd("claude-new-model", {
         input_tokens: 1_000_000,
         output_tokens: 1_000_000,

@@ -20,7 +20,7 @@ vi.mock("@/lib/audit/provider", async (importOriginal) => ({
 import { POST as internalCronPOST } from "../../app/api/internal/cron/route";
 import { POST as devTriggerPOST } from "../../app/api/dev/run-cron/route";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
-import { runScheduledOrders } from "./cron";
+import { cronPages, runScheduledOrders } from "./cron";
 import { approve, makeOrder } from "./orders.test-helper";
 import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
 import { startAttempt } from "../payments/attempts";
@@ -182,6 +182,17 @@ describe("runScheduledOrders (R-15)", () => {
     vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "offline-test-key");
     expect(await skipped()).toBeUndefined();
     expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
+  it("Spec 021 B-08: pages are read only for live orders written by Claude", () => {
+    expect(
+      cronPages("live", "claude-opus-5-5", "fc-key").pages?.reader,
+    ).toBeTypeOf("function");
+    expect(cronPages("live", "claude-opus-5-5", "").pages).toEqual({
+      reader: null,
+    });
+    expect(cronPages("live", null, "fc-key")).toEqual({});
+    expect(cronPages("synthetic", "claude-opus-5-5", "fc-key")).toEqual({});
   });
 
   function liveSettings(resend = true) {

@@ -666,10 +666,17 @@ What does not change:
 
 ### 3. Pages read for every live two-source order
 
-- **When.** In `reporting`, before the first report call. If the order has
-  the new writer's facts and no saved pages, the step reads the pages, saves
-  them and ends ("pages_read"). The next run writes the report. It takes no
-  report attempt.
+- **When.** In `reporting`, before the first report call, for live orders
+  written by Claude (with the OpenAI writer, the way back, no pages are read
+  and no Firecrawl credit is spent). If the order has the new writer's facts
+  and no saved pages, the step reads the pages, saves them and ends
+  ("pages_read"). The next run writes the report. It takes no report
+  attempt.
+- **Sized again after the claim.** A step's time and lease are worked out
+  from the order as first read. Once the lease is taken, the order is read
+  again; if another run moved it on in between (it read the pages, or saved
+  the last answer), the step is left to a later run instead of running on a
+  lease sized for another step.
 - **What.** `readPagesForReport`, as tested:
   - the own site and up to four of its useful pages;
   - the ten pages the answers cited most, with tracking tags removed;
@@ -862,6 +869,22 @@ Its non-blocking notes are in:
 - the wording;
 - watching the 240-second limit on the first live orders (raising it is one
   constant, up to 320 seconds).
+
+### Code review
+
+Round 1 (ALMOST,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6459535326)).
+Fixed:
+- the step is sized again after the lease is claimed;
+- pages are read only for Claude-written orders;
+- the cache-read price is per model;
+- the privacy page says read pages may name doctors or staff;
+- `support show` names what the reading did;
+- a test for a language fix that cannot be sent;
+- a stale comment.
+
+Kept: when a reading throws, its Firecrawl requests are not added to the run
+meter. The step's 30-unit pre-check still bounds it.
 
 ## Cross-cutting rules
 
