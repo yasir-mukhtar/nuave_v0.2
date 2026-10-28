@@ -7,7 +7,8 @@ name: Branch cleanup
 # - "Run workflow" by hand: every branch without an open PR, older than the
 #   chosen number of days, gets the same treatment. Leave "dry run" ticked to
 #   see the list first.
-# A saved branch can be restored from its archive/<branch> tag at any time.
+# A saved branch can be restored from its archive/<branch> tag at any time;
+# its closed PR can only be reopened after that.
 
 on:
   pull_request_target:
@@ -23,8 +24,10 @@ on:
         type: string
         default: "7"
 
+# One queue per branch: a shared queue would drop runs when several PRs close
+# at once. Two runs on the same branch are safe either way.
 concurrency:
-  group: branch-cleanup
+  group: branch-cleanup-${{ github.event.pull_request.head.ref || 'sweep' }}
   cancel-in-progress: false
 
 permissions:
@@ -33,11 +36,9 @@ permissions:
 
 env:
   REPO: ${{ github.repository }}
-  # Never touched. Parked by founder decision 2026-10-03 (see AGENTS.md).
-  KEEP_BRANCHES: |
-    claude/website-build-575fvo
-    chore/desktop-autonomous-workflow
-    chore/pilot-ci-browser-artifacts
+  # Extra branches that are never touched. The three parked by the founder
+  # decision of 2026-10-03 are already kept by the script itself.
+  KEEP_BRANCHES: ""
 
 jobs:
   closed-pr:
@@ -53,6 +54,8 @@ jobs:
       # pull_request_target checks out the default branch, never PR code.
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Archive and delete branch
         env:
@@ -67,6 +70,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Archive and delete branches
         env:
