@@ -6,24 +6,22 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
-## 2026-10-28 — Go live: Opus 5.5 with pages read for every live order
+## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
 
 Yasir chose, after the reading test:
 
 1. **Writer.** Every live two-source order is written by Claude Opus 5.5 at
-   medium effort, with the pages Firecrawl read. The switch is for everyone
-   at once, with no staged roll-out. Claude Sonnet 5.5 at high effort, with
-   a larger output allowance, is the cheaper writer to switch to if needed.
-2. **Pages for live orders.** Firecrawl reads each order's pages. On a 429
-   it waits as long as Firecrawl asks, or 30 seconds, up to three times.
-   Tracking tags are removed (PR #185).
-3. **Spending.** The per-order hold is USD 5.00 (was 2.00) and the daily cap
+   medium effort, with the pages Firecrawl read for that order. The switch
+   is for everyone at once, with no staged roll-out. Claude Sonnet 5.5 at
+   high effort, with a larger output allowance, is the cheaper writer to
+   switch to if needed.
+2. **Spending.** The per-order hold is USD 5.00 (was 2.00) and the daily cap
    USD 50 (was 5). This supersedes point 5 of
    [2026-10-26](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)
    (keep the USD 2.00 hold).
-4. **Delivery promise.** "Laporan siap dalam 30 menit" everywhere (was 15
+3. **Delivery promise.** "Laporan siap dalam 30 menit" everywhere (was 15
    minutes), because the reading and the slower writer add minutes.
-5. **Orders already paid.** The go-live merges only when no live order is in
+4. **Orders already paid.** The go-live merges only when no live order is in
    progress, so every order the new writer touches holds USD 5.
 
 The vendor condition of 2026-10-26, point 4, still applies. The privacy

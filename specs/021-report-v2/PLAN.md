@@ -633,18 +633,27 @@ What does not change:
 - **Errors from Anthropic** (the token count and the call). The check is
   Claude's own, because `releaseIfRejectedUnrun` knows only OpenAI's error
   class.
-  - **Retryable:** a 429, a 529, another 5xx, or a network error received
-    before the stream starts. The reservation is released and the call
-    throws `SpendCapError("unavailable")`. That is the runner's branch that
-    gives the attempt back (`runner.ts`), so a later run tries again.
+  - **Retryable:** an HTTP 429, 529 or other 5xx answer received before the
+    stream starts. The reservation is released and the call throws
+    `SpendCapError("unavailable")`. That is the runner's branch that gives
+    the attempt back (`runner.ts`), so a later run tries again.
+  - **A network error, or no answer at all:** Anthropic may have run and
+    billed the call, so the reservation stays held (the ledger's rule for a
+    dropped connection) and the attempt counts.
   - **Not retryable:** any other 4xx before the stream starts, such as a bad
     or revoked key (401, 403) or "credit balance too low" (400). The
     reservation is released and the attempt counts, so the order fails after
     its three attempts, with its refund, as today.
   - Anything after the stream starts keeps its reservation.
   - Every Anthropic error also records a founder notice, at most one a day
-    (`anthropic_error`, with the status), so a key, credit or outage problem
-    is seen at once.
+    for each kind of problem: the notice's subject is the day and the status
+    group (busy, key, credit, other), so a busy morning does not hide a key
+    or credit problem later that day.
+- **The token count's request** carries `model`, `system`, `messages`,
+  `thinking` and `output_config` only (no `max_tokens`, `metadata` or
+  `stream`), built from the same request so the two never differ. A count is
+  free; one live count with the production request, which the founder
+  approves, confirms its shape before merging.
 - **Limits.** `DEFAULT_ORDER_SPEND_LIMIT_USD` goes 2 → 5 and
   `DEFAULT_DAILY_SPEND_LIMIT_USD` 5 → 50, in code and in the production
   deploy.
@@ -770,10 +779,10 @@ founder approves this wording before it merges:
 - **Tests.**
   - The writer request: system, user, schema, effort, allowance, metadata.
   - Every way an answer ends, and the abort of a stalled stream.
-  - The reservation, the input ceiling, and a failed count giving the
-    attempt back.
-  - Release and attempt rules for 429, 529, 5xx and other 4xx; the founder
-    notice; the over-ceiling request failing without a call; a failed
+  - The reservation, the input ceiling, and the count's request shape and
+    error rules.
+  - Release and attempt rules for 429, 529, 5xx, other 4xx and network
+    errors; the founder notice and its subject; the over-ceiling request failing without a call; a failed
     language fix keeping the first draft.
   - The routing: Claude only with writer facts, and fail closed on a bad
     setting.
@@ -843,6 +852,16 @@ Fixed in this revision:
 - the 15-minute wording in Specs 018 and 020;
 - the privacy section names;
 - the decision recorded now.
+
+Round 3 (PASS,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6459001289)).
+Its non-blocking notes are in:
+- a network error keeps its reservation and counts its attempt;
+- the notice subject names the kind of problem;
+- the count's request shape, with one live count before merging;
+- the wording;
+- watching the 240-second limit on the first live orders (raising it is one
+  constant, up to 320 seconds).
 
 ## Cross-cutting rules
 
