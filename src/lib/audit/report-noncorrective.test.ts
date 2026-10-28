@@ -274,7 +274,7 @@ describe("isExactCodeOwnedNonCorrectiveAction (Spec 012 R-13/AC-15)", () => {
         action.basis,
         action.done_when,
         action.caveat,
-      ]) {
+      ].filter((text): text is string => text !== undefined)) {
         for (const sentence of field.split(/(?<=\.)\s+/)) {
           expect(countWords(sentence)).toBeLessThanOrEqual(25);
         }

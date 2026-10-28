@@ -5,6 +5,7 @@ import {
   holdOrder,
 } from "./retention";
 import { savedReportEvidence } from "../audit/customer-evidence-export";
+import { parseSavedPages } from "./pages";
 import { applyRefund } from "../payments/apply";
 import type { SpendDb, SpendStatement } from "../spending/spend-ledger";
 import { newLinkSecret, sha256Hex } from "./link-secret";
@@ -508,6 +509,8 @@ async function show(
         ? "expired"
         : `active until ${order.link_expires_at}`;
   line("Link", linkState);
+  // Spec 021 B-08: what the pages step read (addresses only, never the text).
+  if (order.pages_json) line("Pages read", pagesSummary(order.pages_json));
   if (order.purged_at) line("Made anonymous", order.purged_at);
   if (order.hold_until) line("Kept until (support hold)", order.hold_until);
   if (order.email_changed_at) line("Email changed", order.email_changed_at);
@@ -612,6 +615,24 @@ type TransactionLine = {
   payment_method: string | null;
   amount: string | null;
 };
+
+/** One line about the order's pages: the reading's status and counts. */
+export function pagesSummary(json: string): string {
+  const saved = parseSavedPages(json);
+  if (!saved) return "unreadable";
+  switch (saved.status) {
+    case "read":
+    case "partial":
+      return `${saved.status}, ${saved.pages.length} read, ${saved.unread.length} unread, ${saved.requests} Firecrawl requests${saved.stopped ? `, stopped by ${saved.stopped}` : ""}`;
+    case "kept_addresses":
+      return `${saved.read}, ${saved.urls.length} read, ${saved.unread.length} unread (report saved; addresses only)`;
+    case "reading":
+    case "gave_up":
+      return `${saved.status}, try ${saved.tries}`;
+    case "no_key":
+      return "not read (no Firecrawl key)";
+  }
+}
 
 /** R-24: payment kind and paid time (`show` already prints the kind), and every
  * attempt with its transactions: status, refund and needs-refund states. */

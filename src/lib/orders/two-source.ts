@@ -6,6 +6,9 @@
  */
 import { failedChatGptObservation, type ChatGptFacts } from "../checks/chatgpt";
 import type { GoogleCheck } from "../checks/google";
+import type { BusinessListing } from "../checks/listings";
+import { stripPhoneNumbers } from "../checks/phones";
+import { findNames } from "../audit/find-names";
 import {
   subjectAliases,
   subjectBrandName,
@@ -17,10 +20,12 @@ import {
   topicsMissing,
   TWO_SOURCE_REPORT_VERSION,
   urlDomain,
+  type CompetitorFact,
   type ReportSubject,
   type TwoSourceQuestion,
   type TwoSourceReport,
   type TwoSourceReportFacts,
+  type TwoSourceWriterFacts,
 } from "../audit/two-source-report";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
@@ -241,9 +246,77 @@ function normalized(value: string): string {
     .trim();
 }
 
+/** The longest Google answer the writer reads (the longest in NV-3WDSAY is
+ * 4,227 characters, so most arrive whole); the report-writer test uses the
+ * same limit. */
+export const WRITER_GOOGLE_TEXT_MAX_CHARS = 3_000;
+
+/** A Google answer for the writer: phone numbers removed again (in case a
+ * saved answer predates the filter), and a long one shortened at the last
+ * sentence (or word) end that fits, ending with "…". */
+export function writerGoogleText(
+  text: string,
+  max = WRITER_GOOGLE_TEXT_MAX_CHARS,
+): string {
+  const clean = stripPhoneNumbers(text).trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const sentence = Math.max(
+    cut.lastIndexOf(". "),
+    cut.lastIndexOf(".\n"),
+    cut.lastIndexOf("\n"),
+  );
+  const end = sentence > max * 0.6 ? sentence + 1 : cut.lastIndexOf(" ");
+  return `${cut.slice(0, end > 0 ? end : max).trim()} …`;
+}
+
+/**
+ * Spec 021 B-01: what the new writer reads beside the counts, from the same
+ * code-built block the report saves (so the businesses per answer are
+ * counted by Part C's rule). Built before the report exists, so nothing here
+ * depends on the writer's own reading.
+ */
+export function twoSourceWriterFacts(input: {
+  rows: readonly OrderQuestionRow[];
+  prompts: readonly AuditPrompt[];
+  observations: readonly AuditObservation[];
+  setup: TwoSourceSetup;
+}): TwoSourceWriterFacts {
+  const two = buildTwoSourceReport({
+    ...input,
+    report: { details: [] },
+    orderNumber: null,
+  });
+  const others = (two.competitors?.others ?? []).filter(
+    (fact) => fact.chatgpt.length + fact.google.length > 0,
+  );
+  return {
+    questions: two.questions.map((question) => ({
+      prompt_id: question.prompt_id,
+      ordinal: question.ordinal,
+      topic: question.topic,
+      volume: question.volume,
+      named: { chatgpt: question.chatgpt.named, google: question.google.named },
+      google_text:
+        question.google.outcome === "summary"
+          ? writerGoogleText(question.google.text)
+          : "",
+      businesses: {
+        chatgpt: others
+          .filter((fact) => fact.chatgpt.includes(question.prompt_id))
+          .map((fact) => fact.name),
+        google: others
+          .filter((fact) => fact.google.includes(question.prompt_id))
+          .map((fact) => fact.name),
+      },
+    })),
+    businesses: others.map((fact) => fact.name),
+  };
+}
+
 /** The code-built block saved with a two-source report. */
 export function buildTwoSourceReport(input: {
-  report: AuditReport;
+  report: Pick<AuditReport, "details">;
   rows: readonly OrderQuestionRow[];
   prompts: readonly AuditPrompt[];
   observations: readonly AuditObservation[];
@@ -262,6 +335,13 @@ export function buildTwoSourceReport(input: {
   const chatgptBusinesses: string[] = [];
   const googleBusinesses: string[] = [];
   const times: string[] = [];
+  // Spec 021 Part C: what each answer says and what each page listed.
+  const answers: {
+    id: string;
+    chatgpt: string;
+    google: string;
+    listings: { chatgpt: BusinessListing[]; google: BusinessListing[] };
+  }[] = [];
   const questions = input.prompts.map((prompt, index) => {
     const row = input.rows.find((item) => item.prompt_id === prompt.prompt_id);
     const observation = input.observations.find(
@@ -286,6 +366,18 @@ export function buildTwoSourceReport(input: {
         if (!isOwn(name) && !googleBusinesses.includes(name))
           googleBusinesses.push(name);
     }
+    answers.push({
+      id: prompt.prompt_id,
+      chatgpt: answered && observation ? observation.raw_answer : "",
+      google: googleDone && google.outcome === "summary" ? google.text : "",
+      listings: {
+        chatgpt: answered ? (facts?.listings ?? []) : [],
+        google:
+          googleDone && google.outcome === "summary"
+            ? (google.listings ?? [])
+            : [],
+      },
+    });
     const detail = input.report.details.find(
       (item) => item.prompt_id === prompt.prompt_id,
     );
@@ -336,6 +428,19 @@ export function buildTwoSourceReport(input: {
   );
   const summaries = questions.filter((q) => q.google.outcome === "summary");
   const sorted = [...times].sort();
+  const otherBusinesses = {
+    chatgpt: chatgptBusinesses.slice(0, 10),
+    // N-19: Google's own page names, plus any business ChatGPT named that
+    // the AI Overview text also names.
+    google: [
+      ...googleBusinesses,
+      ...chatgptBusinesses.filter(
+        (name) =>
+          !googleBusinesses.includes(name) &&
+          googleTexts.some((text) => text.includes(` ${normalized(name)} `)),
+      ),
+    ].slice(0, 10),
+  };
   return {
     version: TWO_SOURCE_REPORT_VERSION,
     subject: setup.subject,
@@ -374,18 +479,109 @@ export function buildTwoSourceReport(input: {
       googleCompleted.length,
     ),
     topics_missing: topicsMissing(questions),
-    other_businesses: {
-      chatgpt: chatgptBusinesses.slice(0, 10),
-      // N-19: Google's own page names, plus any business ChatGPT named that
-      // the AI Overview text also names.
-      google: [
-        ...googleBusinesses,
-        ...chatgptBusinesses.filter(
-          (name) =>
-            !googleBusinesses.includes(name) &&
-            googleTexts.some((text) => text.includes(` ${normalized(name)} `)),
-        ),
-      ].slice(0, 10),
-    },
+    other_businesses: otherBusinesses,
+    competitors: competitorFacts({
+      answers,
+      names: [...otherBusinesses.chatgpt, ...otherBusinesses.google],
+      ownNames: setup.names,
+      isOwn,
+    }),
+  };
+}
+
+/** The listing with the most to show: a rating, then the most reviews. */
+function richest(
+  listings: readonly BusinessListing[],
+): BusinessListing | undefined {
+  return [...listings]
+    .filter((listing) => listing.rating)
+    .sort((a, b) => (b.reviews ?? 0) - (a.reviews ?? 0))[0];
+}
+
+function details(
+  listings: readonly BusinessListing[],
+): Pick<CompetitorFact, "website" | "rating" | "reviews"> {
+  const rated = richest(listings);
+  return {
+    website: listings.find((listing) => listing.website)?.website ?? null,
+    rating: rated?.rating ?? null,
+    reviews: rated?.reviews ?? null,
+  };
+}
+
+/**
+ * Spec 021 C-01/C-02: each other business counted by the answers that name
+ * it (once per answer, whole words, longest name first, the owner's names
+ * matched too; the rule the report highlights names with), the ChatGPT
+ * answers that showed it as a business card while naming it, and what the
+ * sources' own pages listed about it. The owner's card count and listing
+ * details come only from listings under one of its own names exactly; a
+ * branch ("Erha Clinic Surabaya") is neither the owner nor a competitor.
+ */
+export function competitorFacts(input: {
+  answers: readonly {
+    id: string;
+    chatgpt: string;
+    google: string;
+    listings: { chatgpt: BusinessListing[]; google: BusinessListing[] };
+  }[];
+  names: readonly string[];
+  ownNames: readonly string[];
+  isOwn: (name: string) => boolean;
+}): NonNullable<TwoSourceReport["competitors"]> {
+  const keyOf = (name: string) =>
+    name.trim().replace(/\s+/g, " ").toLowerCase();
+  const ownKeys = new Set(input.ownNames.map(keyOf).filter(Boolean));
+  const byKey = new Map<string, CompetitorFact>();
+  for (const name of input.names) {
+    const key = keyOf(name);
+    if (key && !byKey.has(key) && !ownKeys.has(key))
+      byKey.set(key, {
+        name: name.trim(),
+        chatgpt: [],
+        google: [],
+        cards: [],
+        website: null,
+        rating: null,
+        reviews: null,
+      });
+  }
+  const others = [...byKey.values()];
+  const listed = new Map<string, BusinessListing[]>();
+  const own: BusinessListing[] = [];
+  const ownCards: string[] = [];
+  for (const answer of input.answers) {
+    for (const source of ["chatgpt", "google"] as const) {
+      const found = new Set(
+        findNames(answer[source], [
+          ...input.ownNames,
+          ...others.map((fact) => fact.name),
+        ]).map((match) => keyOf(match.name)),
+      );
+      for (const key of found) byKey.get(key)?.[source].push(answer.id);
+      for (const listing of answer.listings[source]) {
+        const key = keyOf(listing.name);
+        // A card counts only in an answer that also names the business.
+        const carded = listing.card && found.has(key);
+        if (ownKeys.has(key)) {
+          own.push(listing);
+          if (carded && !ownCards.includes(answer.id)) ownCards.push(answer.id);
+          continue;
+        }
+        if (input.isOwn(listing.name)) continue;
+        const fact = byKey.get(key);
+        if (!fact) continue;
+        listed.set(key, [...(listed.get(key) ?? []), listing]);
+        if (carded && !fact.cards.includes(answer.id))
+          fact.cards.push(answer.id);
+      }
+    }
+  }
+  return {
+    others: others.map((fact) => ({
+      ...fact,
+      ...details(listed.get(keyOf(fact.name)) ?? []),
+    })),
+    own: { ...details(own), cards: ownCards },
   };
 }

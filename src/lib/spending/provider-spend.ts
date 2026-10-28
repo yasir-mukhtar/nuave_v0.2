@@ -3,6 +3,7 @@ import { APIError } from "openai";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { AuditBudgetError } from "../audit/telemetry";
 import { auditMode } from "../audit/deployment-gate";
+import { recordFounderNotice, type NoticeInput } from "../payments/notices";
 import {
   reserveOrderCall,
   SpendLedgerError,
@@ -10,7 +11,8 @@ import {
 } from "./spend-ledger";
 
 export const SPEND_DB_BINDING = "SPEND_DB";
-export const DEFAULT_DAILY_SPEND_LIMIT_USD = 5;
+/** Founder, 2026-10-28: USD 50 a day (was 5). */
+export const DEFAULT_DAILY_SPEND_LIMIT_USD = 50;
 
 /** Existing customer-facing "not available" copy (see /audit page). */
 export const SPEND_UNAVAILABLE_MESSAGE = "Audit tidak tersedia saat ini.";
@@ -71,6 +73,21 @@ export function withOrderSpend<T>(
 }
 
 export type SpendReservation = { settle(actualUsd: number): Promise<void> };
+
+/** A founder notice from inside a paid call (Spec 021 PR 6b: the report
+ * writer's errors), written to the order's database. Outside an order, or
+ * when the write fails, nothing happens: a notice never stops the call's own
+ * error handling. */
+export async function recordProviderNotice(
+  input: Omit<NoticeInput, "now">,
+): Promise<void> {
+  const scope = orderScope.getStore();
+  if (!scope) return;
+  await recordFounderNotice(scope.db, {
+    ...input,
+    now: (scope.now ?? (() => new Date()))(),
+  }).catch(() => false);
+}
 
 /**
  * Call immediately before every paid provider request. Throws SpendCapError

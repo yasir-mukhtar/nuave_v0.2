@@ -1,10 +1,119 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-26
+> Updated: 2026-10-28
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
+
+Yasir chose, after the reading test:
+
+1. **Writer.** Every live two-source order is written by Claude Opus 5.5 at
+   medium effort, with the pages Firecrawl read for that order. The switch
+   is for everyone at once, with no staged roll-out. Claude Sonnet 5.5 at
+   high effort, with a larger output allowance, is the cheaper writer to
+   switch to if needed.
+2. **Spending.** The per-order hold is USD 5.00 (was 2.00) and the daily cap
+   USD 50 (was 5). This supersedes point 5 of
+   [2026-10-26](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)
+   (keep the USD 2.00 hold).
+3. **Delivery promise.** "Laporan siap dalam 30 menit" everywhere (was 15
+   minutes), because the reading and the slower writer add minutes.
+4. **Orders already paid.** The go-live merges only when no live order is in
+   progress, so every order the new writer touches holds USD 5.
+
+The vendor condition of 2026-10-26, point 4, still applies. The privacy
+wording that names the page reader, and the AI provider reading the pages,
+needs the founder's approval before this merges. The plan is
+[Spec 021 PLAN, PR 6b](../specs/021-report-v2/PLAN.md); the work is in
+PR #185.
+
+Before the merge, the same day, Yasir:
+- added the GitHub secrets (Anthropic key and workspace, Firecrawl key);
+- approved the privacy page 1.5 (it names the page reader and says pages
+  read may name doctors or staff) and the terms 1.2 (30 minutes);
+- confirmed that Anthropic's and Firecrawl's terms support the privacy
+  page's section 7 sentence, and that the accounts may take customer orders;
+- approved one free live token count with the production request: it was
+  accepted (12,311 tokens for a synthetic input);
+- approved the merge with no live order in progress. A read of the
+  production orders found none open, running or reporting.
+
+Anthropic auto-reload and Firecrawl's monthly credits are left for after
+the first live orders. Until then, an empty Anthropic balance fails an
+order after three refused calls, with its refund and an `anthropic_error`
+notice; Firecrawl with no credits leaves the report without pages and sends
+a `pages_unread` notice.
+
+## 2026-10-27 — Reading test: Opus 5.5 medium with pages read wins on NV-3WDSAY
+
+Yasir judged the reading test's blind pairs on NV-3WDSAY (no 1–5 scores):
+pair B report 2, written by Claude Opus 5.5 at medium effort with the pages
+Firecrawl read, is the best of every report so far and the first one he
+would be confident offering to customers. He will not score the other
+reports. It cost USD 1.26 (two calls) plus 16 Firecrawl requests, against
+USD 0.05 for Luna high with the same pages. Before deciding the production
+writer, Claude Sonnet 5.5 at medium and high effort run with the same pages
+and are judged against it.
+
+Not yet decided: the production writer, page reading in production, and the
+per-order spend hold (USD 2.00) and daily cap (USD 5), which an Opus writer
+reading pages would likely exceed (its two calls cost USD 1.26 here, and each
+is reserved at its worst case first).
+The single order is one business; the plan's further test orders still
+apply.
+
+Sonnet result, same day, blind set of three with the same pages: Opus 5.5
+medium first again (USD 1.26), Sonnet 5.5 high second (USD 0.75, after an
+answer cut off at 16,000 output tokens and rerun at 32,000), Sonnet 5.5
+medium not good enough to send (USD 0.54). Yasir had already read the Opus
+report in the pairs, so this set was not fully blind for it.
+
+## 2026-10-27 — Report-writer test allowance raised to USD 7
+
+Yasir raised the agent-run allowance for the audit stack tests (the reading
+test and the report-writer test together) from USD 5 to USD 7, and approved
+running Spec 021's new writer with Luna high and Opus medium on NV-3WDSAY.
+USD 2.80 was used by then. The harness's hard stop
+(`scripts/report-writer-test`) is USD 7. Earlier, at the founder's request,
+GLM 5.3 Flash and Claude Opus 5.5 (low, medium) joined the test's writers.
+Yasir then approved the reading test's step 2 (the two page writers on
+NV-3WDSAY, printed as blind pairs with their twins) within the same USD 7.
+
+## 2026-10-27 — Reading test before G1; the writer may use pages read
+
+Yasir found every earlier NV-3WDSAY report shallow (all written before Spec
+021 Part B's writer) and suspected the input: the writer sees only what
+ChatGPT and Google said, never what is on the pages they cite. Approved
+("Yes and yes. Approved for 2."):
+
+1. **Baseline first.** Spec 021 Part B's writer is run on NV-3WDSAY with two
+   writers only (Luna high, Opus medium), within the test-B USD 5 limit.
+2. **The reading test moves before G1** (supersedes the timing in
+   [2026-10-26 — Audit stack plan](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+   point 1, for this test). Firecrawl reads the business's own site and the
+   ten pages the answers cited most; the same two writers write again with
+   those pages, and the founder compares each with its twin.
+3. **Facts may also come from pages read,** in the test: a sentence names
+   the page's site and cites the questions that cited it. Still never a
+   claimed cause (2026-10-26, point 2). Public business pages only; phone
+   numbers removed.
+
+The production writer reads no pages until the founder judges the test. The
+Firecrawl key is in the cloud environment (`FIRECRAWL_API_KEY`).
+
+## 2026-10-27 — Report playbook approved
+
+Yasir approved the report writer's playbook,
+[`docs/content/report/PLAYBOOK.md`](content/report/PLAYBOOK.md) (Spec 021
+B-02): how ChatGPT and Google's AI Overview choose clinics, from Google's and
+OpenAI's public pages, nine checkable actions a clinic can take, and what the
+writer never advises. Three sources (two OpenAI help pages and Permenkes
+1787/2010) were read through search results and summaries only; the playbook
+says so. The approval also settles item 3 of the decisions PLAN.md listed as
+owed; items 1 and 2 were settled on 2026-10-26 (audit stack plan, point 2).
 
 ## 2026-10-27 — Meta Conversions API spec renumbered 022
 
@@ -78,6 +187,51 @@ Answers:
   version and send time kept on the order; Purchase only; and Cloudflare's
   automatic per-request log switched off if it holds IP addresses, giving
   up its saved request history.
+
+## 2026-10-26 — Audit stack plan: report test before G1, reading after
+
+Yasir approved the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
+(independent review PASS after three rounds). Its five questions were
+answered "1. Yes 2. Okay 3. Okay 4. Ok 5. Accepted"; 5 is read as the
+recommended option.
+
+1. **Timing.** The report-writer test runs before G1, as
+   [Spec 021](../specs/021-report-v2/SPEC.md) Part B's side-by-side test
+   (B-07, [PLAN](../specs/021-report-v2/PLAN.md) PR 6 step 7), with the
+   plan's blind design: three orders with ChatGPT and Google answers; five
+   writers, each running Spec 021's new writer (GPT-5.6 Luna low, Luna high,
+   Claude Sonnet 5.5 medium and high, Claude Haiku 5.5 medium); the founder
+   rates them without knowing which wrote what. The report already delivered
+   for NV-3WDSAY is shown beside them as a labelled reference, not as a blind
+   entry: it used the old instructions, so it would not compare models
+   fairly. The rest of the plan (the reading test with its page reader and
+   Instagram reader, and the Google re-check) follows G1, unless an early
+   customer is Instagram-only.
+2. **Test accounts and budget.** Accounts with Anthropic, Firecrawl and Apify
+   may be opened for the tests only. They receive public business pages and
+   the founder's own test-order data, never customer orders. Agent-run live
+   calls for tests A and B: up to USD 5 in total. This is the named approval
+   for the B-07 live writer calls and the answer on the Anthropic API key
+   (items 1 and 2 of the decisions PLAN.md says the founder still owes).
+   Test B also needs two new founder-run live orders (about USD 0.18 each,
+   run one at a time).
+3. **Google's words reach the writer.** The report writer may read Google's
+   AI Overview text (phone numbers removed), not only the code-made facts.
+   Spec 021 B-01 and AC-B1 specify this (built in its PR 6). Spec 018 R-28
+   is updated with that PR to say so.
+4. **New vendors for real orders,** only if they win their test: Anthropic,
+   Firecrawl (USD 19 a month only past about 160–200 orders a month), Apify.
+   Each needs a privacy wording update the founder approves before customer
+   data reaches it.
+5. **Spending guard.** Keep the USD 2.00 order hold (Spec 021 B-07 also
+   requires this). The report is reserved from the prompt's real token
+   count, limited to the 3 calls the runner allows, and the reading's web
+   search is allowed on its first call only. Planned worst case about
+   USD 1.83. Separately still open: how many orders may run at once before
+   real sales (at USD 2 per hold, the USD 5 daily cap allows two).
+
+Kept unchanged: DataForSEO discovery, GLM 5.3 Flash question writing
+(including "similar businesses"), and the ChatGPT and Google checks.
 
 ## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
 

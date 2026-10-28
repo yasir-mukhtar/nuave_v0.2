@@ -128,12 +128,20 @@ export async function purgeOrder(
            email = '', business_name = '', website = '',
            intake_json = NULL, prepared_json = NULL, discovery_json = NULL,
            discovery_key = NULL, questions_json = NULL, report_json = NULL,
+           pages_json = NULL,
            link_hash = NULL, link_off = 1, meta_event_id = NULL,
            purged_at = ?1
          WHERE o.id = ?4 AND ${PURGE_ELIGIBLE}`,
       )
       .bind(now, completedBefore, endedBefore, input.orderId),
-    ...["order_questions", "order_emails", "payment_emails"].map((table) =>
+    ...[
+      "order_questions",
+      "order_emails",
+      "payment_emails",
+      // Spec 021 Part P: the PDF counts and print codes (no report data).
+      "report_pdf_days",
+      "report_print_tokens",
+    ].map((table) =>
       db
         .prepare(
           `DELETE FROM ${table} WHERE order_id = ?1

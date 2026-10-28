@@ -783,6 +783,8 @@ clinic landing page, whose report pictures show "Klinik Anda".
     order preview, checkout and payment email match the clinic landing page.
     It replaces the earlier proposal "Laporan biasanya siap dalam 15 menit
     setelah Anda menyetujui pertanyaan, paling lama 24 jam."
+    **Amended 2026-10-28:** 30 menit (founder, go-live of Spec 021 PR 6b:
+    the report now waits for the pages read and a slower writer).
   - These changes go live only together with the checks (see the build
     order).
 - **R-24: Price cutover.** The paid check compares the payment with the
@@ -833,6 +835,13 @@ clinic landing page, whose report pictures show "Klinik Anda".
     - each answer's text (phone numbers removed);
     - the cited domains;
     - the named and source facts (R-16) and the outcomes (R-17).
+  - Amended 2026-10-26 ([decision](../../docs/DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+    built in Spec 021 Part B): "each answer's text" includes the words of
+    Google's AI Overview, not only the code-made facts, with phone numbers
+    removed (and removed again, with every other text, before the prompt is
+    sent). The prompt also receives the other businesses each answer names,
+    the customer's confirmed profile and Nuave's approved playbook
+    (`docs/content/report/PLAYBOOK.md`).
   - S5's privacy page must name DataForSEO as a recipient of the questions
     and the place before G1.
 - **R-29: Old reports.**

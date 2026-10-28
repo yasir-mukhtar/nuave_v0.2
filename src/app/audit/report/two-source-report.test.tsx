@@ -8,7 +8,8 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent } from "@testing-library/react";
 import { presentationFixture } from "@/lib/audit/report-presentation.fixture";
 import {
   DIRECT_TEN_CONTEXT_VERSION,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/audit/two-source-report";
 import { DirectTenReportBody } from "./DirectTenReportBody";
 import { DirectTenReportPage } from "./DirectTenReportPage";
+import type { PdfOutcome } from "./report-pdf";
 
 afterEach(cleanup);
 
@@ -695,5 +697,390 @@ describe("the two-source report (R-16..R-20, AC-05, AC-09, AC-11)", () => {
     // AC-A4: no JSON export and no "Tentang audit ini" on a two-source report.
     expect(container.textContent).not.toContain("Unduh bukti JSON");
     expect(container.textContent).not.toContain("Tentang audit ini");
+  });
+});
+
+/* ------------------------- Spec 021 Part P, PDF ------------------------- */
+
+describe("Unduh PDF (Part P)", () => {
+  function page(onDownloadPdf?: () => Promise<PdfOutcome>) {
+    const fixture = twoSourceFixture();
+    return render(
+      <DirectTenReportPage
+        report={fixture.report}
+        brief={brief}
+        observations={fixture.observations}
+        onDownloadJson={() => {}}
+        onDownloadPdf={onDownloadPdf}
+      />,
+    );
+  }
+  const buttons = () => screen.getAllByRole("button", { name: "Unduh PDF" });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("asks for the server PDF with a spinner, once per press, and does not print", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    let finish: (value: PdfOutcome) => void = () => {};
+    const download = vi.fn(
+      () => new Promise<PdfOutcome>((resolve) => (finish = resolve)),
+    );
+    page(download);
+    expect(buttons()).toHaveLength(2);
+    await userEvent.click(buttons()[0]!);
+    expect(buttons()[0]).toHaveAttribute("aria-busy", "true");
+    expect(buttons()[0]!.querySelector(".animate-spin")).not.toBeNull();
+    // Only the pressed button spins, and screen readers hear it once.
+    expect(buttons()[1]!.querySelector(".animate-spin")).toBeNull();
+    expect(
+      screen
+        .getAllByRole("status")
+        .filter((status) => status.textContent === "PDF sedang dibuat…"),
+    ).toHaveLength(1);
+    // A second press while it is being made does nothing.
+    await userEvent.click(buttons()[1]!);
+    expect(download).toHaveBeenCalledTimes(1);
+    finish("saved");
+    await waitFor(() => expect(buttons()[0]).not.toHaveAttribute("aria-busy"));
+    expect(print).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("a failure shows the retry message next to the button pressed; Coba lagi asks again", async () => {
+    vi.spyOn(window, "print").mockImplementation(() => {});
+    const download = vi
+      .fn<() => Promise<PdfOutcome>>()
+      .mockResolvedValueOnce("failed")
+      .mockResolvedValueOnce("saved");
+    const { container } = page(download);
+    await userEvent.click(buttons()[1]!);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("PDF belum bisa dibuat. Coba lagi");
+    expect(container.querySelectorAll("[data-pdf-failed]")).toHaveLength(1);
+    expect(
+      alert.parentElement!.querySelector("[data-pdf-button]"),
+    ).toHaveAttribute("data-pdf-button", "end");
+    // The report itself is unaffected.
+    expect(container.querySelector("#temuan")).not.toBeNull();
+    await userEvent.click(
+      within(alert).getByRole("button", { name: "Coba lagi" }),
+    );
+    expect(download).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    // "Coba lagi" is gone; focus stays on the button it retried.
+    expect(document.activeElement).toBe(buttons()[1]);
+  });
+
+  it("prints when the server has no PDF for it (pdf_unavailable), and when there is no server PDF at all", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    page(async () => "print");
+    await userEvent.click(buttons()[0]!);
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+    cleanup();
+    page();
+    await userEvent.click(buttons()[1]!);
+    expect(print).toHaveBeenCalledTimes(2);
+  });
+
+  it("Temuan Utama, Rekomendasi and Penutup start a new page on paper", () => {
+    const { container } = page();
+    expect(
+      [...container.querySelectorAll("[data-new-page]")].map((band) => band.id),
+    ).toEqual(["temuan", "rekomendasi", "penutup"]);
+  });
+});
+
+/* -------------------- Spec 021 Part C, competitor data -------------------- */
+
+describe("Peta Pesaing with saved competitor data (Part C, AC-C1)", () => {
+  const fact = (name: string, over = {}) => ({
+    name,
+    chatgpt: [] as string[],
+    google: [] as string[],
+    cards: [] as string[],
+    website: null,
+    rating: null,
+    reviews: null,
+    ...over,
+  });
+  const ids = (n: number) =>
+    Array.from(
+      { length: n },
+      (_, i) => `NUAVE-DT-${String(i + 1).padStart(2, "0")}`,
+    );
+  const others = [
+    fact("Kopi Lain", {
+      chatgpt: ids(3),
+      google: ids(1),
+      cards: ids(2),
+      website: "https://kopilain.example/menu",
+      rating: { value: 4.7, max: 5 },
+      reviews: 1200,
+    }),
+    fact("Kopi Tanpa Situs", { chatgpt: ids(2) }),
+    ...["Satu", "Dua", "Tiga", "Empat"].map((name, i) =>
+      fact(`Kopi ${name}`, {
+        chatgpt: ids(1),
+        // Ties sort by name, so "Kopi Tiga" is past the top five.
+        website: i === 2 ? "https://kopitiga.example/" : null,
+      }),
+    ),
+  ];
+  function page(showLogos: boolean) {
+    const fixture = twoSourceFixture({
+      other_businesses: {
+        chatgpt: others.map((item) => item.name),
+        google: [],
+      },
+      competitors: {
+        others,
+        own: {
+          cards: ids(1),
+          website: null,
+          rating: { value: 4.9, max: 5 },
+          reviews: 80,
+        },
+      },
+    });
+    return render(
+      <DirectTenReportPage
+        report={fixture.report}
+        brief={brief}
+        observations={fixture.observations}
+        onDownloadJson={() => {}}
+        showLogos={showLogos}
+      />,
+    ).container.querySelector<HTMLElement>("[data-other-businesses]")!;
+  }
+
+  it("shows saved counts, recommendations, a website link and the rating", () => {
+    const map = page(false);
+    const row = [
+      ...map.querySelectorAll<HTMLElement>("[data-competitor]"),
+    ].find((item) => item.textContent?.includes("Kopi Lain"))!;
+    expect(row).toHaveTextContent("4×");
+    // ChatGPT's cards, never called "direkomendasikan" for another business.
+    expect(row).toHaveTextContent("kartu ChatGPT 2×");
+    expect(row).not.toHaveTextContent("direkomendasikan");
+    expect(map.querySelector("[data-cards-note]")).toHaveTextContent(
+      "Kartu ChatGPT: berapa kali ChatGPT menampilkan bisnis itu",
+    );
+    expect(row).toHaveTextContent("ChatGPT 3 · Google 1");
+    expect(row).toHaveTextContent("Rating 4,7 · 1.200 ulasan");
+    const link = row.querySelector("a[data-competitor-site]")!;
+    expect(link).toHaveAttribute("href", "https://kopilain.example/menu");
+    expect(link).toHaveTextContent("kopilain.example");
+    expect(link).toHaveAccessibleName("kopilain.example (membuka tab baru)");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveAttribute("referrerpolicy", "no-referrer");
+    // No website saved: no link (C-04).
+    const plain = [...map.querySelectorAll("[data-competitor]")].find((item) =>
+      item.textContent?.includes("Kopi Tanpa Situs"),
+    )!;
+    expect(plain.querySelector("a")).toBeNull();
+    // The owner's row: its rating, and its own site from the profile.
+    const own = map.querySelector('[data-competitor="own"]')!;
+    expect(own).toHaveTextContent("Rating 4,9 · 80 ulasan");
+    // The owner keeps the writer's "direkomendasikan" (as in Ringkasan) and
+    // gets the same card count as every row.
+    expect(own).toHaveTextContent("kartu ChatGPT 1×");
+    expect(own.querySelector("a")).toHaveAttribute(
+      "href",
+      "https://kedai-fiksi.example/",
+    );
+  });
+
+  it("past the top five, a chip links when a website is saved, with a note; otherwise plain", () => {
+    const map = page(false);
+    const chips = map.querySelectorAll("li");
+    const linked = [...chips].filter((chip) => chip.querySelector("a"));
+    expect(linked).toHaveLength(1);
+    expect(linked[0]!.querySelector("a")).toHaveAttribute(
+      "href",
+      "https://kopitiga.example/",
+    );
+    expect(linked[0]!.querySelector("a")).toHaveAccessibleName(
+      "Kopi Tiga (kopitiga.example, membuka tab baru)",
+    );
+    expect(map).toHaveTextContent(
+      "Ikon panah menandai website yang bisa dibuka.",
+    );
+  });
+
+  it("logos come only from the business's own site, never in synthetic reports or print, and fall back to initials", () => {
+    expect(page(false).querySelectorAll("img")).toHaveLength(0);
+    cleanup();
+    const map = page(true);
+    const logos = [...map.querySelectorAll("img[data-competitor-logo]")];
+    expect(logos.map((img) => img.getAttribute("src"))).toEqual([
+      "https://kopilain.example/favicon.ico",
+      "https://kedai-fiksi.example/favicon.ico",
+    ]);
+    for (const img of logos)
+      expect(img).toHaveAttribute("referrerpolicy", "no-referrer");
+    fireEvent.error(logos[0]!);
+    const row = [...map.querySelectorAll("[data-competitor]")].find((item) =>
+      item.textContent?.includes("Kopi Lain"),
+    )!;
+    expect(row.querySelector("img")).toBeNull();
+    expect(row).toHaveTextContent("KL");
+  });
+});
+
+describe("the new writer's block (Spec 021 Part B)", () => {
+  function partB() {
+    const fixture = twoSourceFixture();
+    const q = fixture.report.two_source!.questions;
+    const report: AuditReport = {
+      ...fixture.report,
+      two_source: {
+        ...fixture.report.two_source!,
+        competitors: {
+          others: [
+            {
+              name: "Kopi Lain",
+              chatgpt: [q[1]!.prompt_id],
+              google: [],
+              cards: [],
+              website: null,
+              rating: null,
+              reviews: null,
+            },
+          ],
+          own: { cards: [], website: null, rating: null, reviews: null },
+        },
+        // Saved before topic names: the row's topic is its whole question.
+        topics_missing: [
+          {
+            prompt_id: q[4]!.prompt_id,
+            ordinal: 5,
+            topic: q[4]!.question,
+            volume: null,
+            data_month: "2026-09",
+            domains: ["source.example"],
+          },
+        ],
+      },
+      key_findings: fixture.report.key_findings.map((finding, i) =>
+        i === 0
+          ? {
+              ...finding,
+              headline: {
+                number: "0 dari 2",
+                caption: "pertanyaan kopi",
+                basis: "chatgpt_named",
+              },
+            }
+          : finding,
+      ),
+      // The new writer's recommendations: a title and one paragraph only.
+      priorities: fixture.report.priorities.map((priority) => ({
+        order: priority.order,
+        action: priority.action,
+        why: priority.why,
+        evidence_prompt_ids: priority.evidence_prompt_ids,
+      })),
+      two_source_writing: {
+        version: "nuave-two-source-writing-v1",
+        verdict:
+          "Di ChatGPT, Kedai Fiksi belum disebut; Google menyebutnya sekali.",
+        competitor_reasons: [
+          { name: "Kopi Lain", reason: "ChatGPT menyebut menu kopi susunya." },
+        ],
+        takeaways: [
+          {
+            title: "Menu jelas menang",
+            text: "Bisnis yang disebut menulis menunya.",
+          },
+          { title: "Ulasan dikutip", text: "Google mengutip situs ulasan." },
+        ],
+        plan: [
+          {
+            weeks: "Minggu 1–2",
+            title: "Tulis menu",
+            text: "Satu halaman menu.",
+          },
+          {
+            weeks: "Minggu 3–4",
+            title: "Minta ulasan",
+            text: "Dari pelanggan.",
+          },
+          {
+            weeks: "Minggu 5–8",
+            title: "Audit ulang",
+            text: "Pertanyaan sama.",
+          },
+        ],
+        topic_names: [{ prompt_id: q[4]!.prompt_id, topic: "Kopi susu murah" }],
+        google_readings: [{ prompt_id: q[0]!.prompt_id, recommended: true }],
+      },
+    };
+    return { ...fixture, report };
+  }
+
+  const page = (fixture: ReturnType<typeof partB>) =>
+    render(
+      <DirectTenReportPage
+        report={fixture.report}
+        brief={brief}
+        observations={fixture.observations}
+        onDownloadJson={() => {}}
+      />,
+    ).container;
+
+  it("a report with the block passes the evidence check and shows every new field", () => {
+    const container = page(partB());
+    expect(container.querySelector("[role=alert]")).toBeNull();
+    expect(container.querySelector("[data-verdict]")).toHaveTextContent(
+      "Di ChatGPT, Kedai Fiksi belum disebut; Google menyebutnya sekali.",
+    );
+    const stat = container.querySelector("[data-finding-stat]")!;
+    expect(stat).toHaveTextContent("0 dari 2");
+    expect(stat).toHaveTextContent("pertanyaan kopi");
+    // Other findings have no number.
+    expect(container.querySelectorAll("[data-finding-stat]")).toHaveLength(1);
+    expect(
+      container.querySelector("[data-competitor-reason]"),
+    ).toHaveTextContent(
+      "Disebut AI karena: ChatGPT menyebut menu kopi susunya.",
+    );
+    const takeaways = container.querySelector("[data-takeaways]")!;
+    expect(takeaways.querySelectorAll("li")).toHaveLength(2);
+    expect(takeaways).toHaveTextContent("Menu jelas menang");
+    const plan = container.querySelector("[data-plan]")!;
+    expect(plan.querySelectorAll("li")).toHaveLength(3);
+    expect(plan).toHaveTextContent("Minggu 1–2");
+    expect(plan).toHaveTextContent("Tulis menu");
+    // The topic row saved with its whole question takes the writer's name.
+    expect(container.querySelector("[data-topics-missing]")).toHaveTextContent(
+      "Kopi susu murah",
+    );
+    // The writer read the first AI Overview as recommending the business.
+    const google = container.querySelector('[data-source-card="google"]')!;
+    expect(google.querySelector("[data-mention]")).toHaveAttribute(
+      "data-mention",
+      "recommended",
+    );
+    // No removed labels on the short recommendations.
+    expect(container).not.toHaveTextContent("Penanggung jawab");
+    expect(container).not.toHaveTextContent("Selesai ketika");
+  });
+
+  it("without the block, the same report shows none of them and hides the unnamed topic", () => {
+    const fixture = partB();
+    const { two_source_writing, ...report } = fixture.report;
+    void two_source_writing;
+    const container = page({ ...fixture, report: report as AuditReport });
+    expect(container.querySelector("[data-finding-stat]")).not.toBeNull();
+    expect(container.querySelector("[data-competitor-reason]")).toBeNull();
+    expect(container.querySelector("[data-takeaways]")).toBeNull();
+    expect(container.querySelector("[data-plan]")).toBeNull();
+    expect(container.querySelector("[data-topics-missing]")).toBeNull();
+    const google = container.querySelector('[data-source-card="google"]')!;
+    expect(google.querySelector("[data-mention]")).toHaveAttribute(
+      "data-mention",
+      "mentioned",
+    );
   });
 });

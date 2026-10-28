@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { formatObservationWindow, observationWindow } from "./report-header";
 import { DirectTenReportBody } from "./DirectTenReportBody";
 import { TwoSourceReportPage } from "./TwoSourceReport";
+import type { DownloadPdf } from "./report-pdf";
 import auditStyles from "../audit.module.css";
 
 const CONTENTS = [
@@ -69,6 +70,8 @@ export function DirectTenReportPage(props: {
   observations: AuditObservation[];
   onDownloadJson: () => void;
   previewNotice?: ReactNode;
+  onDownloadPdf?: DownloadPdf;
+  showLogos?: boolean;
 }) {
   // Spec 021: two-source reports use the new layout; reports saved before
   // Spec 018 keep this file's renderer exactly as it was.

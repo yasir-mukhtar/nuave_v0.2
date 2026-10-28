@@ -58,7 +58,8 @@ async function endedOrder(
   await sql(
     `UPDATE orders SET state = ?2, ended_at = ?3, intake_json = '{"x":1}',
        report_json = ?4, completed_at = ?5, link_hash = 'hash',
-       questions_json = '[]', prepared_json = '{}', discovery_json = '{}'
+       questions_json = '[]', prepared_json = '{}', discovery_json = '{}',
+       pages_json = '{"status":"no_key"}'
      WHERE id = ?1`,
     id,
     state,
@@ -282,6 +283,17 @@ describe("making an order anonymous", () => {
        VALUES ('tx-paid', 'NV-ABCDEF-1', 'settlement', 'paid', 'none', ?1, ?1)`,
       T0.toISOString(),
     );
+    // Spec 021 Part P: a PDF count and an unspent print code.
+    await sql(
+      `INSERT INTO report_pdf_days (order_id, day, count) VALUES (?1, '2026-10-12', 2)`,
+      id,
+    );
+    await sql(
+      `INSERT INTO report_print_tokens (token_hash, order_id, expires_at)
+       VALUES ('hash', ?1, ?2)`,
+      id,
+      T0.toISOString(),
+    );
     // Spec 022: a server Purchase was sent for this order.
     await sql(
       `UPDATE orders SET meta_sent_at = ?2, meta_consent_version = '1.4',
@@ -304,6 +316,8 @@ describe("making an order anonymous", () => {
       discovery_json: null,
       questions_json: null,
       report_json: null,
+      // Spec 021 B-08: the page addresses go with the order.
+      pages_json: null,
       link_hash: null,
       link_off: 1,
       // Spec 022 R-21 (AC-10): the event code goes; the send record stays.
@@ -327,6 +341,10 @@ describe("making an order anonymous", () => {
     expect(
       d1.query("SELECT * FROM payment_emails WHERE order_id = ?", id),
     ).toEqual([]);
+    for (const table of ["report_pdf_days", "report_print_tokens"])
+      expect(d1.query(`SELECT * FROM ${table} WHERE order_id = ?`, id)).toEqual(
+        [],
+      );
     // Payment and cost records stay.
     expect(
       d1.query("SELECT * FROM payment_attempts WHERE order_id = ?", id),

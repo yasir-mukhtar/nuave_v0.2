@@ -361,6 +361,39 @@ export function noticeEmail(
         ],
       };
       break;
+    case "anthropic_error": {
+      // Spec 021 PR 6b: the report writer (Claude) refused or failed. The
+      // subject is the UTC day and the kind of problem, so a busy morning
+      // does not hide a key or credit problem later that day.
+      const [day, group] = row.subject.split(" ");
+      built = {
+        subject: `Nuave: the report writer (Anthropic) answered with an error${group ? ` (${group})` : ""}`,
+        lines: [
+          `Anthropic answered a report call with an error on UTC day ${day}${d.status ? ` (status ${String(d.status)})` : ""}.`,
+          group === "busy"
+            ? "Anthropic was busy or down; the report is tried again on a later run."
+            : "The report call was refused. An order fails, with its refund, after three refused calls.",
+          group === "key"
+            ? "Check NUAVE_ANTHROPIC_API_KEY and NUAVE_ANTHROPIC_WORKSPACE_ID in the deploy secrets."
+            : group === "credit"
+              ? "Top up the Anthropic credit balance (turn on auto-reload)."
+              : null,
+        ],
+      };
+      break;
+    }
+    case "pages_unread":
+      // Spec 021 B-08: Firecrawl stopped a reading, or two tries never
+      // finished. The report is written with the pages read so far, or none.
+      built = {
+        subject: "Nuave: Firecrawl could not read an order's pages",
+        lines: [
+          `A report's page reading did not finish on UTC day ${row.subject}${d.status ? ` (Firecrawl status ${String(d.status)})` : ""}${d.order_number ? `, order ${String(d.order_number)}` : ""}.`,
+          "The report is written with the pages read so far, or without pages.",
+          "Check FIRECRAWL_API_KEY in the deploy secrets and the Firecrawl credit balance (402 means no credits).",
+        ],
+      };
+      break;
     default:
       built = {
         subject: `Nuave: ${row.kind}`,

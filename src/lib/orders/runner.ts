@@ -1,6 +1,7 @@
 import type { AuditSubject } from "../audit/direct-ten-context-v2";
 import { readyEmailDetails } from "./ready-email-details";
 import {
+  CLAUDE_REPORT_CALL_MS,
   OBSERVATION_CALL_TIMEOUT_MS,
   REPORT_CALL_TIMEOUT_MS,
 } from "../audit/call-timeouts";
@@ -83,6 +84,7 @@ import {
   twoSourceSetup,
   type TwoSourceSetup,
   twoSourceReportFacts,
+  twoSourceWriterFacts,
 } from "./two-source";
 import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "../audit/types";
 import { ORDER_GROSS_AMOUNT_TEXT } from "../payments/midtrans";
@@ -99,6 +101,21 @@ import {
   type MailSender,
 } from "./mail";
 import { newLinkSecret, orderSafetyIdentifier, sha256Hex } from "./config";
+import {
+  addressesOnly,
+  MAX_READING_TRIES,
+  orderCitedSources,
+  orderOwnSite,
+  pagesForWriter,
+  parseSavedPages,
+  type SavedPages,
+} from "./pages";
+import {
+  READ_DEADLINE_MS,
+  type CitedSource,
+  type PagesRead,
+  type ReadPage,
+} from "../reading/page-reader";
 import {
   activeOrders,
   claimOrderLease,
@@ -130,6 +147,7 @@ import {
   replaceLinkHash,
   saveQuestionDone,
   saveQuestionFailure,
+  savePages,
   saveReport,
   type OrderEnvironment,
   type OrderMode,
@@ -153,10 +171,21 @@ export const OBSERVATION_STEP_MS = OBSERVATION_CALL_TIMEOUT_MS + STEP_MARGIN_MS;
 export const TWO_SOURCE_STEP_MS =
   Math.max(CHATGPT_CHECK_TIMEOUT_MS, GOOGLE_CHECK_TIMEOUT_MS) + STEP_MARGIN_MS;
 export const REPORT_STEP_MS = 2 * REPORT_CALL_TIMEOUT_MS + STEP_MARGIN_MS;
+/** Spec 021 PR 6b: a report step written by Claude (two calls, each with its
+ * own time limit over the token count and the whole stream). */
+export const CLAUDE_REPORT_STEP_MS = 2 * CLAUDE_REPORT_CALL_MS + STEP_MARGIN_MS;
+/** Spec 021 B-08: the pages step, one reading with its deadline. */
+export const PAGES_STEP_MS = READ_DEADLINE_MS + STEP_MARGIN_MS;
 /** The lease and the question claim last longer than the call timeout (R-18). */
 const LEASE_SLACK_MS = 30_000;
 /** No new step starts unless it can finish inside this budget. */
 export const RUN_BUDGET_MS = 300_000;
+/** Spec 021 PR 6b: a Claude report step or a pages step is longer than the
+ * usual budget allows. It may start only as a run's first audit step, inside
+ * this longer budget, and nothing starts after it. With the email work after
+ * the loop (about 165 seconds at most) a run still ends well inside the
+ * cron's 15 minutes. */
+export const LONG_RUN_BUDGET_MS = 570_000;
 
 export type RunnerDeps = {
   db: SpendDb;
@@ -174,6 +203,20 @@ export type RunnerDeps = {
     send: (input: CheckCallInput) => Promise<CheckSend>;
   };
   generateReport: ReportGenerator;
+  /** Spec 021 PR 6b: true when the report writer is Claude, whose report
+   * step takes `CLAUDE_REPORT_STEP_MS` for a two-source order. */
+  claudeReports?: boolean;
+  /** Spec 021 B-08: the pages read before a two-source order's report.
+   * Absent (synthetic mode, tests): no pages step. `reader` null: live but no
+   * Firecrawl key, so the order goes on without pages. */
+  pages?: {
+    reader:
+      | ((input: {
+          ownSite: string | null;
+          sources: readonly CitedSource[];
+        }) => Promise<PagesRead & { requests: number }>)
+      | null;
+  };
   /** Pause between email tries (tests pass a no-op). */
   sleep?: (ms: number) => Promise<void>;
   /** Null when no sender is configured: no email can be accepted. */
@@ -217,6 +260,7 @@ export type StepOutcome =
   | "question_failed"
   | "to_reporting"
   | "report_saved"
+  | "pages_read"
   | "report_retry"
   | "report_failed"
   | "delivered"
@@ -243,13 +287,113 @@ type Intake = {
   question_origins?: unknown;
 };
 
+/** The report pipeline's input for an order, built from its saved intake and
+ * question rows. The report step uses it, and so does the report-writer test
+ * (scripts/report-writer-test), so a test writer reads exactly what the
+ * order's writer read. */
+export async function orderReportInput(order: {
+  orderId: string;
+  intake: Intake;
+  rows: readonly OrderQuestionRow[];
+  mode: OrderMode;
+  now: Date;
+  /** Spec 021 B-08: the pages read for the order (none: the writer's input
+   * is exactly as without the reading). */
+  pages?: ReadPage[];
+}) {
+  const { intake, rows } = order;
+  const setup = setupOf(intake);
+  const observations = setup
+    ? twoSourceObservations({
+        rows,
+        prompts: intake.prompts,
+        synthetic: order.mode === "synthetic",
+        now: order.now,
+      })
+    : rows.flatMap((row) =>
+        row.observation_json
+          ? [JSON.parse(row.observation_json) as AuditObservation]
+          : [],
+      );
+  const input = {
+    brief: intake.context,
+    prompts: intake.prompts,
+    observations,
+    safety_identifier: await orderSafetyIdentifier(order.orderId),
+    budget: serverOwnedAuditBudget(),
+    language: "id" as const,
+    question_method: "direct-ten" as const,
+    // Server-internal: the labeled synthetic substitute's evidence is admitted
+    // only in synthetic mode, never by request.
+    ...(order.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
+    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
+    // the model reads code-built Google facts and both sources' counts.
+    ...(setup
+      ? {
+          two_source: true,
+          two_source_facts: {
+            ...twoSourceReportFacts({
+              rows,
+              prompts: intake.prompts,
+              subject: setup.subject,
+              names: setup.names,
+            }),
+            // Spec 021 B-01: the new writer also reads Google's words, the
+            // topics and the businesses each answer names.
+            writer: {
+              ...twoSourceWriterFacts({
+                rows,
+                prompts: intake.prompts,
+                observations,
+                setup,
+              }),
+              ...(order.pages?.length ? { pages: order.pages } : {}),
+            },
+          },
+        }
+      : {}),
+  };
+  return { setup, observations, input };
+}
+
+/** Spec 018: the code-built block, saved with a two-source report; the method
+ * sentence counts both sources and names no internal system (N-10). A
+ * one-source report is saved as written. */
+export function withTwoSourceBlock(
+  written: AuditReport,
+  order: {
+    rows: readonly OrderQuestionRow[];
+    prompts: AuditPrompt[];
+    observations: AuditObservation[];
+    setup: TwoSourceSetup | null;
+    orderNumber: string | null;
+  },
+): AuditReport {
+  if (!order.setup) return written;
+  const two = buildTwoSourceReport({
+    report: written,
+    rows: order.rows,
+    prompts: order.prompts,
+    observations: order.observations,
+    setup: order.setup,
+    orderNumber: order.orderNumber,
+  });
+  return {
+    ...written,
+    method_summary: twoSourceMethodSentence(two),
+    two_source: two,
+  };
+}
+
 function setupOf(intake: Intake | null): TwoSourceSetup | null {
   return intake
     ? twoSourceSetup(intake as Parameters<typeof twoSourceSetup>[0])
     : null;
 }
 
-function parseIntake(order: OrderRow): Intake | null {
+export function parseIntake(
+  order: Pick<OrderRow, "intake_json">,
+): Intake | null {
   try {
     const value = JSON.parse(order.intake_json ?? "null") as Partial<Intake>;
     return value &&
@@ -300,12 +444,17 @@ export const RUN_COST = {
   deadline: 12,
   question: 24,
   light: 9,
-  heavy: 27,
+  // Spec 021 PR 6b: 27 measured, plus up to six Claude token counts (three
+  // for each of the step's two calls, which the meter does not see).
+  heavy: 33,
   retry: 7,
   /** One payment-received email (getting its number, three tries, the record). */
   paymentEmail: 6,
   /** One founder notice (the claim, three tries, the mark). */
   notice: 6,
+  /** Spec 021 B-08: a pages step (up to 24 Firecrawl requests, the marker,
+   * the question rows, the result and a notice). */
+  pages: 30,
 } as const;
 /** R-23: reconciliation may spend the meter up to here. The rest is kept for the
  * queries that follow it and cannot be skipped: the expiry, 7-day, deadline,
@@ -373,6 +522,16 @@ function metered(deps: RunnerDeps, meter: { n: number }): RunnerDeps {
       meter.n += 1;
       return deps.generateReport(...args);
     }) as RunnerDeps["generateReport"],
+    // Spec 021 B-08: every Firecrawl request a reading made.
+    pages: deps.pages && {
+      reader:
+        deps.pages.reader &&
+        (async (input) => {
+          const read = await deps.pages!.reader!(input);
+          meter.n += read.requests;
+          return read;
+        }),
+    },
   };
 }
 
@@ -556,11 +715,12 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
 
   // The room kept for one payment email and one refund notice that are due but
   // have not waited yet. The first audit step needs only to fit on its own (a
-  // report step is 27 of RUN_UNIT_LIMIT); later ones must leave this room (R-23).
+  // report step is 33 of RUN_UNIT_LIMIT); later ones must leave this room (R-23).
   let reserve = 0;
   if (email) reserve += RUN_COST.paymentEmail;
   if (refundNotice()) reserve += RUN_COST.notice;
   let stepsStarted = 0;
+  let longStepRan = false;
 
   for (const id of audit
     ? await activeOrders(deps.db, {
@@ -577,25 +737,24 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
     ) {
       continue;
     }
+    // A long step ran: nothing starts after it.
+    if (longStepRan) {
+      outcomes.push("waiting");
+      continue;
+    }
+    const { cost, long, stepMs } = stepPlan(deps, order);
     // Start a step only if its cost still fits the run's meter; a heavy report
     // step goes first on a later run (rotation by last step).
-    const cost =
-      order.state === "running"
-        ? RUN_COST.question
-        : order.report_json
-          ? RUN_COST.light
-          : RUN_COST.heavy;
     if (!fits(stepsStarted === 0 ? cost : cost + reserve)) {
       outcomes.push("waiting");
       continue;
     }
-    const stepMs =
-      order.state === "reporting"
-        ? REPORT_STEP_MS
-        : setupOf(parseIntake(order))
-          ? TWO_SOURCE_STEP_MS
-          : OBSERVATION_STEP_MS;
-    if (deps.now().getTime() - startedAt + stepMs > budgetMs) {
+    // Spec 021 PR 6b: a long step only as the run's first audit step.
+    const stepBudgetMs =
+      long && stepsStarted === 0
+        ? Math.max(budgetMs, LONG_RUN_BUDGET_MS)
+        : budgetMs;
+    if (deps.now().getTime() - startedAt + stepMs > stepBudgetMs) {
       outcomes.push("waiting");
       continue;
     }
@@ -611,6 +770,7 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
       continue;
     }
     stepsStarted += 1;
+    if (long) longStepRan = true;
     try {
       // Read the order again now that the lease is ours: another runner may have
       // moved it on between the first read and the claim.
@@ -622,6 +782,15 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
         (current.state !== "running" && current.state !== "reporting")
       ) {
         outcomes.push("skipped");
+        continue;
+      }
+      // The step was sized from the first read. If another runner moved the
+      // order on since (it read the pages, or saved the last answer), this
+      // step's lease and budget may be too short for what is now next: leave
+      // it to a later run, which sizes it again.
+      const now = stepPlan(deps, current);
+      if (now.stepMs !== stepMs || now.long !== long) {
+        outcomes.push("waiting");
         continue;
       }
       const outcome =
@@ -1290,6 +1459,11 @@ async function reportStep(
     await failOrder(deps, order.id, "intake_invalid");
     return "failed";
   }
+  // Spec 021 B-08: a two-source order's pages are read first, in their own
+  // step, which takes no report attempt.
+  if (setupOf(intake) && needsPagesStep(deps, order))
+    return pagesStep(deps, order, intake, owner);
+  const savedPages = parseSavedPages(order.pages_json ?? null);
   const leaseMs = stepMs + LEASE_SLACK_MS;
   const attempt = await claimReportAttempt(deps.db, {
     orderId: order.id,
@@ -1318,44 +1492,14 @@ async function reportStep(
   }
 
   const rows = await listQuestions(deps.db, order.id);
-  const setup = setupOf(intake);
-  const observations = setup
-    ? twoSourceObservations({
-        rows,
-        prompts: intake.prompts,
-        synthetic: deps.mode === "synthetic",
-        now: deps.now(),
-      })
-    : rows.flatMap((row) =>
-        row.observation_json
-          ? [JSON.parse(row.observation_json) as AuditObservation]
-          : [],
-      );
-  const input = {
-    brief: intake.context,
-    prompts: intake.prompts,
-    observations,
-    safety_identifier: await orderSafetyIdentifier(order.id),
-    budget: serverOwnedAuditBudget(),
-    language: "id" as const,
-    question_method: "direct-ten" as const,
-    // Server-internal: the labeled synthetic substitute's evidence is admitted
-    // only in synthetic mode, never by request.
-    ...(deps.mode === "synthetic" ? { allow_synthetic_evidence: true } : {}),
-    // Spec 018 R-19: failed ChatGPT checks are honest failed records; R-28:
-    // the model reads code-built Google facts and both sources' counts.
-    ...(setup
-      ? {
-          two_source: true,
-          two_source_facts: twoSourceReportFacts({
-            rows,
-            prompts: intake.prompts,
-            subject: setup.subject,
-            names: setup.names,
-          }),
-        }
-      : {}),
-  };
+  const { setup, observations, input } = await orderReportInput({
+    orderId: order.id,
+    intake,
+    rows,
+    mode: deps.mode,
+    now: deps.now(),
+    pages: pagesForWriter(savedPages),
+  });
 
   let code: ReportFailureCode;
   try {
@@ -1388,28 +1532,25 @@ async function reportStep(
           return deps.generateReport(...args);
         }),
     );
-    // Spec 018: the code-built block, saved with the report; the method
-    // sentence counts both sources and names no internal system (N-10).
-    const withTwoSourceBlock = (written: AuditReport) => {
-      const two = buildTwoSourceReport({
-        report: written,
-        rows,
-        prompts: intake.prompts,
-        observations,
-        setup: setup!,
-        orderNumber: order.order_number,
-      });
-      return {
-        ...written,
-        method_summary: twoSourceMethodSentence(two),
-        two_source: two,
-      };
-    };
     const saved = await saveReport(deps.db, {
       orderId: order.id,
       owner,
-      reportJson: JSON.stringify(setup ? withTwoSourceBlock(report) : report),
+      reportJson: JSON.stringify(
+        withTwoSourceBlock(report, {
+          rows,
+          prompts: intake.prompts,
+          observations,
+          setup,
+          orderNumber: order.order_number,
+        }),
+      ),
       now: deps.now(),
+      // Spec 021 B-08: once the report is saved, only the page addresses
+      // stay, not their text.
+      pagesJson:
+        savedPages && addressesOnly(savedPages) !== savedPages
+          ? JSON.stringify(addressesOnly(savedPages))
+          : null,
     });
     if (!saved) return "skipped";
     // Send the ready email now; `delivered` needs Resend to accept it. A
@@ -1454,6 +1595,110 @@ async function reportStep(
     return "report_failed";
   }
   return "report_retry";
+}
+
+/** What an order's next audit step is and needs: its cost on the run's
+ * meter, its time (the lease and the budget are built from it), and whether
+ * it is a long step (a page reading or a Claude report). */
+function stepPlan(
+  deps: RunnerDeps,
+  order: OrderRow,
+): { cost: number; long: boolean; stepMs: number } {
+  const twoSource = setupOf(parseIntake(order)) !== null;
+  const writing = order.state === "reporting" && !order.report_json;
+  const readsPages = writing && twoSource && needsPagesStep(deps, order);
+  const long =
+    readsPages || (writing && twoSource && deps.claudeReports === true);
+  return {
+    cost:
+      order.state === "running"
+        ? RUN_COST.question
+        : readsPages
+          ? RUN_COST.pages
+          : order.report_json
+            ? RUN_COST.light
+            : RUN_COST.heavy,
+    long,
+    stepMs:
+      order.state === "reporting"
+        ? readsPages
+          ? PAGES_STEP_MS
+          : long
+            ? CLAUDE_REPORT_STEP_MS
+            : REPORT_STEP_MS
+        : twoSource
+          ? TWO_SOURCE_STEP_MS
+          : OBSERVATION_STEP_MS,
+  };
+}
+
+/** Spec 021 B-08: true when the order's pages still need a pages step: the
+ * runner reads pages (live), and the order has none saved, or a reading
+ * started that may still be tried or must be given up. */
+function needsPagesStep(deps: RunnerDeps, order: OrderRow): boolean {
+  if (!deps.pages) return false;
+  const saved = parseSavedPages(order.pages_json ?? null);
+  return saved === null || saved.status === "reading";
+}
+
+/** Spec 021 B-08: one reading of the order's pages, saved for its report.
+ * A marker is saved first, so a run that dies mid-read is counted; after
+ * `MAX_READING_TRIES` the order goes on without pages. A stopped or given-up
+ * reading records one founder notice a day. */
+async function pagesStep(
+  deps: RunnerDeps,
+  order: OrderRow,
+  intake: Intake,
+  owner: string,
+): Promise<StepOutcome> {
+  const saved = parseSavedPages(order.pages_json ?? null);
+  const tries = saved?.status === "reading" ? saved.tries : 0;
+  const save = (pages: SavedPages) =>
+    savePages(deps.db, {
+      orderId: order.id,
+      owner,
+      pagesJson: JSON.stringify(pages),
+    });
+  const notice = (status: number | null) =>
+    recordFounderNotice(deps.db, {
+      kind: "pages_unread",
+      subject: utcDayOf(deps.now()),
+      detail: { status, order_number: order.order_number },
+      now: deps.now(),
+    }).catch(() => false);
+  const reader = deps.pages?.reader ?? null;
+  if (!reader) {
+    return (await save({ status: "no_key" })) ? "pages_read" : "skipped";
+  }
+  if (tries >= MAX_READING_TRIES) {
+    if (!(await save({ status: "gave_up", tries }))) return "skipped";
+    await notice(null);
+    return "pages_read";
+  }
+  if (!(await save({ status: "reading", tries: tries + 1 }))) return "skipped";
+  try {
+    const rows = await listQuestions(deps.db, order.id);
+    const read = await reader({
+      ownSite: orderOwnSite(intake),
+      sources: orderCitedSources(rows),
+    });
+    const stopped = read.stopped !== undefined;
+    if (
+      !(await save({
+        status: stopped ? "partial" : "read",
+        tries: tries + 1,
+        pages: read.pages,
+        unread: read.unread,
+        ...(stopped ? { stopped: read.stopped } : {}),
+        requests: read.requests,
+      }))
+    )
+      return "skipped";
+    if (stopped) await notice(read.stopped!);
+  } catch {
+    // The marker stays: a later run tries again, or gives up.
+  }
+  return "pages_read";
 }
 
 /** R-23/R-24: each send of the ready email makes a new link secret and

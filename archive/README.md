@@ -28,13 +28,17 @@ For current work, start from [`README.md`](../README.md) and
 | `archive/design/` | `DESIGN.md` (root) and dated `docs/*design*` studies | Current-looking but superseded design direction that conflicts with the new customer and score/report direction; dated design critiques and revision plans |
 | `archive/prompt-contexts/` | `docs/DENTAL_CLINIC_PROMPT_GENERATION_CONTEXT.md` | Superseded vertical-specific prompt generation context |
 | `archive/experiments/` | `experiments/` | Historical tests, runs, samples, and validation material; conflicts with the pipeline-first order |
-| `archive/prototypes/report-prototype/` | `report-prototype/` | Standalone prototype superseded by the production `src/app/audit/` workflow |
 | `archive/tools/` | `scripts/build_translation_sheet.py` | One-off helper tied to the archived report prototype and an obsolete absolute path |
 | `archive/legacy-empty/gtm/` | `gtm/` | Empty placeholder containing only local metadata, preserved rather than deleted |
 | `archive/maintenance/` | `docs/maintenance/` | Completed maintenance plans and execution records |
 
 An experiment or prototype is not product truth unless a founder-approved
 decision adopts its result.
+
+Deleted on 2026-10-28: `archive/prototypes/report-prototype/` (from
+`report-prototype/`), a standalone prototype superseded by `src/app/audit/`.
+Its old packages kept raising Dependabot PRs. It is still in Git history, for
+example `git show 5f5ed06:archive/prototypes/report-prototype/README.md`.
 
 ## Relationship to `Archive Candidates/`
 

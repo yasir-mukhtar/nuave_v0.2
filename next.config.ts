@@ -21,14 +21,15 @@ const nextConfig: NextConfig = {
   // sends no Referer. (The report data route sets the same headers itself.)
   async headers() {
     return [
-      {
-        source: "/r",
+      // `/r` and the page Browser Run prints (`/r/print`, Spec 021 Part P).
+      ...["/r", "/r/:path*"].map((source) => ({
+        source,
         headers: [
           { key: "Cache-Control", value: "no-store" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
           { key: "Referrer-Policy", value: "no-referrer" },
         ],
-      },
+      })),
     ];
   },
 };

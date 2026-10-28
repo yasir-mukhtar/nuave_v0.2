@@ -4,6 +4,12 @@ import {
   type TwoSourceReportFacts,
 } from "./two-source-report";
 import {
+  finishTwoSourceWriting,
+  partBWritingViolations,
+  saveableTwoSourceWriting,
+} from "./two-source-writing";
+import { hasWriterFacts } from "./two-source-writer";
+import {
   buildAuditReport,
   normalizeReportEvidence,
   REPORT_SYNTHESIS_PROMPT_VERSION_V2,
@@ -76,7 +82,10 @@ import {
   validateCanonicalIndonesianQuestionPack,
 } from "./questions-id";
 import { validateDirectTenQuestions } from "./questions-id-direct-ten";
-import { SYNTHETIC_LOCAL_FIXTURE_SYSTEM } from "./types";
+import {
+  SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
+  TWO_SOURCE_WRITING_VERSION,
+} from "./types";
 
 export type ReportPipelineInput = {
   brief: AuditSubject;
@@ -457,7 +466,13 @@ export async function createValidatedAuditReport(
   const isIndonesian = lockedInput.language === "id";
   const sourceFacts = lockedInput.two_source_facts;
   const sourceErrorsFor = (draft: typeof content) =>
-    sourceFacts ? twoSourceWritingViolations(draft, sourceFacts) : [];
+    sourceFacts
+      ? [
+          ...twoSourceWritingViolations(draft, sourceFacts),
+          // Spec 021 B-04/B-06: the new writer's own fields.
+          ...partBWritingViolations(draft),
+        ]
+      : [];
   const languageErrors = [
     ...languageErrorsFor(lockedInput, content),
     ...sourceErrorsFor(content),
@@ -562,6 +577,24 @@ export async function createValidatedAuditReport(
       diagnostics.add("source_sentence_replaced");
     }
   }
+  // Spec 021 B-04 to B-06: past the revision, code drops a headline number
+  // it cannot confirm, a reason, topic name or reading it cannot place, and
+  // removes a banned title start the revision left. Never a failed order.
+  if (hasWriterFacts(sourceFacts) && content.two_source_writing) {
+    const finished = finishTwoSourceWriting(
+      content,
+      sourceFacts,
+      lockedInput.observations,
+    );
+    content = finished.content;
+    finished.diagnostics.forEach((diagnostic) => diagnostics.add(diagnostic));
+    // Last guard: the saved report must pass the page's own schema check,
+    // or the customer would see "Bukti laporan tidak tersedia". Should the
+    // new block still fail it, the report keeps everything else.
+    const saveable = saveableTwoSourceWriting(content);
+    content = saveable.content;
+    if (saveable.dropped) diagnostics.add("writing_block_dropped");
+  }
 
   // Spec 012 R-13/R-14 (B2), direct-ten only. After normalization, repair and
   // any permitted language-only revision: when no corrective action survives,
@@ -633,7 +666,12 @@ export async function createValidatedAuditReport(
     {
       requested_model: final.requested_model,
       ...(isDirectTenAuditContext(lockedInput.brief)
-        ? { report_prompt_version: REPORT_SYNTHESIS_PROMPT_VERSION_V2 }
+        ? {
+            // Spec 021 Part B: a report from the new writer says so.
+            report_prompt_version: content.two_source_writing
+              ? TWO_SOURCE_WRITING_VERSION
+              : REPORT_SYNTHESIS_PROMPT_VERSION_V2,
+          }
         : {}),
       returned_model: final.returned_model,
       response_id: final.response_id,

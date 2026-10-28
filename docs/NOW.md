@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-26
+> Updated: 2026-10-27
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -50,9 +50,41 @@
   parts plus a server-made PDF. **Approved 2026-10-26** after four prototype
   rounds ([prototype](../experiments/report-v2-poc/),
   [decision](./DECISION_LOG.md#2026-10-26--approve-spec-021-server-pdf-now-re-audit-reminder-later)).
-  Next: the [build plan](../specs/021-report-v2/PLAN.md) passes independent
-  review, then six PRs in order (layout, answers, PDF, competitor data,
-  writing).
+  The [build plan](../specs/021-report-v2/PLAN.md) passed independent
+  review (round 3). Merged: layout (Part A,
+  [#173](https://github.com/yasir-mukhtar/nuave_v0.2/pull/173)), answers
+  (Part D, [#175](https://github.com/yasir-mukhtar/nuave_v0.2/pull/175)),
+  PDF, competitor data (Part C,
+  [#179](https://github.com/yasir-mukhtar/nuave_v0.2/pull/179)) and the new
+  writer (Part B,
+  [#182](https://github.com/yasir-mukhtar/nuave_v0.2/pull/182)).
+- **Go live with Opus 5.5 and pages read** (2026-10-28,
+  [decision](./DECISION_LOG.md#2026-10-28--go-live-opus-55-with-pages-read-for-every-live-two-source-order)):
+  [#185](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185) (PLAN PR 6b)
+  writes every live two-source report with Claude Opus 5.5 at medium effort
+  from the pages Firecrawl read, at USD 5.00 an order and USD 50 a day, and
+  promises the report in 30 minutes. The founder's pre-merge steps are done
+  (2026-10-28); Anthropic auto-reload and Firecrawl's monthly credits follow
+  the first live orders.
+
+  After the deploy, the first live order or two measure the time, cost,
+  pages and CPU per report.
+- **Audit stack plan** (approved 2026-10-26,
+  [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+  [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
+  report-writer test is Spec 021 B-07: five writers on Spec 021's new writer
+  (Luna low and high, Claude Sonnet 5.5 medium and high, Claude Haiku 5.5
+  medium), on three orders with ChatGPT and Google answers, with the
+  delivered NV-3WDSAY report as a labelled reference. The OpenAI, Anthropic
+  and Firecrawl keys are in the cloud environment (seen 2026-10-27; Anthropic as
+  `NUAVE_ANTHROPIC_API_KEY`, so Claude Code does not use it). Still needed:
+  two more founder-run live orders (two businesses, two cities, one at a
+  time), best run after Spec 021 PR 5 (competitor data) is deployed so they
+  carry everything the new writer reads. The reading test (Firecrawl) moved
+  before G1 on 2026-10-27, for the report writer: does reading the
+  business's own site and the pages AI cited make the report deeper
+  ([decision](./DECISION_LOG.md#2026-10-27--reading-test-before-g1-the-writer-may-use-pages-read)).
+  Cloudflare and Apify follow G1.
 
 - **Question writing fixed** (2026-10-26): orders with a search city failed
   to get their ten questions; four causes fixed and a live check added
@@ -200,6 +232,19 @@
   allowance on 2026-09-27; update this line after each approved agent run.
   The founder's own test runs (plan §5, JZ) are not counted here; the
   provider dashboards show total spend.
+- **Audit stack tests allowance** (approved 2026-10-26; raised from USD 5 to
+  USD 7 by the founder on 2026-10-27): agent-run live calls for the reading
+  test and the report-writer test together. USD 5.77 used as of 2026-10-27,
+  all with order NV-3WDSAY: eight writers on the earlier writer (USD 1.89),
+  Luna high and Opus medium on Spec 021's new writer (USD 0.91), the same
+  two with pages read (USD 1.31; 16 Firecrawl requests, not in USD), then
+  Sonnet medium and high with the same pages (USD 1.66, including a Sonnet
+  high answer cut off at 16,000 output tokens and rerun at 32,000). Opus
+  medium with pages won the pairs
+  ([decision](./DECISION_LOG.md#2026-10-27--reading-test-opus-55-medium-with-pages-read-wins-on-nv-3wdsay)).
+  Public business pages and the founder's own test-order
+  data only. The Anthropic key is not scoped to a workspace: runs need
+  `NUAVE_ANTHROPIC_WORKSPACE_ID` (see `scripts/report-writer-test/README.md`).
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
   engagement only. This does not reset the separately dated September allowance
   usage above. Founder-run charges remain unknown; no new spending is authorized.
@@ -241,7 +286,9 @@
   2026-10-26; the Workers Free limits recorded below are history, not a
   blocker), not Pages (Pages could not serve the static assets); worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
-- CI (`.github/workflows/ci.yml`): `validate` on every PR; on `main`,
+- CI (`.github/workflows/ci.yml`): on every PR, code checks, unit tests, the
+  build and the browser suites (the largest split in four) run side by side,
+  and `validate` passes only when all of them pass; on `main`,
   `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
   Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.
 - **Since Spec 016 (PR #129, deployed 2026-10-13):** the deploy job also writes the

@@ -352,6 +352,42 @@
   line-height: var(--type-copy-leading);
   letter-spacing: var(--type-copy-tracking);
 }
+/* Part B: the headline number beside the finding. */
+.withStat {
+  gap: 10px 32px;
+}
+@media (min-width: 640px) {
+  .withStat {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+}
+.stat {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.stat strong {
+  color: var(--text-accent);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-heading-lg-size);
+  font-weight: var(--type-heading-lg-weight);
+  line-height: var(--type-heading-lg-leading);
+  letter-spacing: var(--type-heading-lg-tracking);
+}
+.stat span {
+  max-width: 22ch;
+  color: var(--text-muted);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+.findingText {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
 .refs {
   display: inline-flex;
   flex-wrap: wrap;
@@ -415,6 +451,7 @@
 }
 .initials {
   display: grid;
+  overflow: hidden;
   place-items: center;
   width: 36px;
   height: 36px;
@@ -425,6 +462,12 @@
   font-weight: var(--type-label-strong-weight);
   line-height: var(--type-label-strong-leading);
   letter-spacing: var(--type-label-strong-tracking);
+}
+/* Part C: the business's own site icon, inside the initials tile. */
+.logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }
 .name {
   display: flex;
@@ -437,6 +480,41 @@
   font-weight: var(--type-title-sm-weight);
   line-height: var(--type-title-sm-leading);
   letter-spacing: var(--type-title-sm-tracking);
+}
+/* Part C: website link and rating under the name. */
+.metaLine {
+  flex-basis: 100%;
+  color: var(--text-muted);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-leading);
+  letter-spacing: var(--type-caption-tracking);
+}
+.site {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: var(--radius-token-sm);
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.site svg {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  opacity: 0.55;
+  transition: opacity 150ms var(--ease-out);
+}
+.site:hover,
+.site:focus-visible {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.site:hover svg,
+.site:focus-visible svg {
+  opacity: 1;
 }
 .youPill {
   padding: 2px 9px;
@@ -517,6 +595,46 @@
   font-weight: var(--type-copy-sm-weight);
   line-height: var(--type-copy-sm-leading);
   letter-spacing: var(--type-copy-sm-tracking);
+}
+
+.linkChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--line-300);
+  border-radius: var(--radius-token-full);
+  background: var(--bg-page);
+  color: var(--text-heading);
+  text-decoration: none;
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+  transition:
+    border-color 150ms var(--ease-out),
+    color 150ms var(--ease-out);
+}
+.linkChip svg {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+}
+.linkChip:hover,
+.linkChip:focus-visible {
+  border-color: var(--ember-500);
+  color: var(--text-accent);
+}
+.linkChip:hover svg,
+.linkChip:focus-visible svg {
+  color: var(--text-accent);
+}
+.tail .tailNote {
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-leading);
+  letter-spacing: var(--type-caption-tracking);
 }
 
 /* ── Celah Topik ── */
@@ -607,6 +725,57 @@
   letter-spacing: var(--type-label-strong-tracking);
 }
 
+/* Part B: why AI named a business, and the takeaways under the map. */
+.why {
+  grid-column: 2 / 4;
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+.why b {
+  color: var(--text-muted);
+  font-weight: var(--type-label-strong-weight);
+}
+.takeaways {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .takeaways {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.take {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 16px;
+  border-radius: var(--radius-token-lg);
+  background: var(--stone-50);
+}
+.take h3 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  letter-spacing: var(--type-title-sm-tracking);
+}
+.take p {
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+
 /* ── Penutup ── */
 
 .conclusion {
@@ -617,6 +786,50 @@
   font-weight: var(--type-copy-lg-weight);
   line-height: var(--type-copy-lg-leading);
   letter-spacing: var(--type-copy-lg-tracking);
+}
+/* Part B: the three-step plan. */
+.plan {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .plan {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+}
+.step {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding-block: 16px;
+  border-top: 1px solid var(--ink-700);
+}
+.when {
+  color: var(--ink-400);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: var(--type-label-sm-strong-leading);
+  letter-spacing: var(--type-label-sm-strong-tracking);
+  text-transform: uppercase;
+}
+.step h3 {
+  margin: 0;
+  color: var(--bg-page);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: var(--type-title-sm-leading);
+  letter-spacing: var(--type-title-sm-tracking);
+}
+.step p {
+  margin: 0;
+  color: var(--ink-400);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
 }
 .reaudit {
   display: grid;
@@ -693,6 +906,45 @@
   line-height: var(--type-copy-sm-leading);
   letter-spacing: var(--type-copy-sm-tracking);
 }
+.saveAction {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+@media (min-width: 640px) {
+  .saveAction {
+    justify-items: end;
+  }
+}
+/* Part P: "PDF belum bisa dibuat. Coba lagi." under the button pressed
+   (also inside the save row, whose own paragraphs are body grey). */
+.pdfFailed,
+.save .pdfFailed {
+  margin: 0;
+  color: var(--red);
+  font-size: var(--type-copy-sm-size);
+  font-weight: var(--type-copy-sm-weight);
+  line-height: var(--type-copy-sm-leading);
+  letter-spacing: var(--type-copy-sm-tracking);
+}
+/* The same width and side padding as the bar's own row. */
+.topbarNote {
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 10px
+    max(16px, env(safe-area-inset-left, 0px));
+  text-align: right;
+}
+.pdfFailed button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
 .footer {
   display: flex;
   flex-wrap: wrap;
@@ -726,6 +978,9 @@
     border-top: 0;
     break-inside: auto;
   }
+  .band[data-new-page] {
+    break-before: page;
+  }
   .bandWash,
   .bandGrey {
     background: none;
@@ -736,8 +991,16 @@
   }
   .bandInk .secHead h2,
   .conclusion,
-  .reaudit h3 {
+  .reaudit h3,
+  .step h3 {
     color: var(--text-heading);
+  }
+  .step {
+    border-color: var(--line-200);
+  }
+  .step p,
+  .when {
+    color: var(--text-body);
   }
   .reaudit {
     border-color: var(--line-200);
@@ -750,6 +1013,8 @@
   .rec,
   .compRow,
   .topic,
+  .take,
+  .step,
   .reaudit {
     break-inside: avoid;
   }

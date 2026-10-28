@@ -41,6 +41,7 @@ import { measurementSlotForPromptId } from "@/lib/audit/measurement-matrix";
 import styles from "./audit.module.css";
 import { DirectTenReportBody } from "./report/DirectTenReportBody";
 import { DirectTenReportPage } from "./report/DirectTenReportPage";
+import type { DownloadPdf } from "./report/report-pdf";
 
 function measurementLabel(promptId: string) {
   return (
@@ -187,12 +188,18 @@ export default function ReportView({
   observations,
   onDownloadJson,
   previewNotice,
+  onDownloadPdf,
+  showLogos,
 }: {
   report: AuditReport;
   brief: AuditSubject;
   observations: AuditObservation[];
   onDownloadJson: () => void;
   previewNotice?: React.ReactNode;
+  /** Spec 021 Part P: the server PDF, for two-source reports. */
+  onDownloadPdf?: DownloadPdf;
+  /** Spec 021 C-03: competitors' site icons (off by default). */
+  showLogos?: boolean;
 }) {
   const isDirectTen = report.provenance?.question_method === "direct-ten";
   // The v2 report (J32–J35); the historical renderer below stays as it was.
@@ -204,6 +211,8 @@ export default function ReportView({
         observations={observations}
         onDownloadJson={onDownloadJson}
         previewNotice={previewNotice}
+        onDownloadPdf={onDownloadPdf}
+        showLogos={showLogos}
       />
     );
   const brandName = subjectBrandName(brief);
@@ -605,7 +614,9 @@ export default function ReportView({
                         </div>
                         <div>
                           <dt>Penanggung jawab</dt>
-                          <dd>{ownerLabels[priority.owner]}</dd>
+                          <dd>
+                            {priority.owner ? ownerLabels[priority.owner] : ""}
+                          </dd>
                         </div>
                         <div>
                           <dt>Selesai ketika</dt>

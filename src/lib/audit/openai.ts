@@ -10,6 +10,8 @@ import {
   publicSourceDataSchema,
   type PublicSourceData,
   reportSynthesisSchemaForMethod,
+  twoSourceWritingSynthesisSchema,
+  type TwoSourceWritingSynthesis,
   type AuditObservation,
   type AuditBudget,
   type AuditCallTelemetry,
@@ -36,6 +38,11 @@ import {
   reportPromptMeasurements,
 } from "./report-prompt-contract";
 import { reportWritingInstructions } from "./report-language";
+import {
+  assembleTwoSourceWriting,
+  hasWriterFacts,
+  twoSourceWriterMessages,
+} from "./two-source-writer";
 import { contextForReportModel } from "./direct-ten-context-v2";
 import { isOpenCodeGoBaseUrl, opencodeGoTransportHeaders } from "./opencodego";
 import { OPENAI_SYSTEM } from "./approved-live-providers";
@@ -648,7 +655,51 @@ export async function executeAuditPrompt(input: {
   }
 }
 
-export async function generateReportContent(
+/** The shape the report writer must answer in, for this input. The
+ * report-writer test asks other models for the same shape. */
+export function reportOutputSchema(input: {
+  question_method?: AuditQuestionMethod;
+  two_source_facts?: import("./two-source-report").TwoSourceReportFacts;
+}) {
+  // Spec 021 Part B: the new two-source writer answers in its own shape.
+  return hasWriterFacts(input.two_source_facts)
+    ? twoSourceWritingSynthesisSchema
+    : reportSynthesisSchemaForMethod(input.question_method);
+}
+
+/** The report content code builds from the writer's answer. */
+export function reportContentFromAnswer(
+  synthesis: ReportSynthesis | TwoSourceWritingSynthesis,
+  input: Pick<
+    Parameters<typeof reportRequest>[0],
+    | "observations"
+    | "brief"
+    | "historical_fixture_id"
+    | "question_method"
+    | "language"
+    | "two_source_facts"
+  >,
+): ReportContent {
+  if (hasWriterFacts(input.two_source_facts))
+    return assembleTwoSourceWriting(
+      synthesis as TwoSourceWritingSynthesis,
+      input.observations,
+      input.brief,
+    );
+  return assembleReportContent(
+    synthesis as ReportSynthesis,
+    input.observations,
+    input.brief,
+    input.historical_fixture_id,
+    input.question_method,
+    input.language,
+  );
+}
+
+/** The request generateReportContent sends, built from its input. The
+ * report-writer test (scripts/report-writer-test) sends the same prompt to
+ * other models and effort levels. */
+export function reportRequest(
   input: {
     brief: import("./direct-ten-context-v2").AuditSubject;
     prompts: AuditPrompt[];
@@ -665,16 +716,18 @@ export async function generateReportContent(
     draft: ReportContent;
     violations: string[];
   },
-): Promise<{
-  content: ReportContent;
-  requested_model: string;
-  returned_model: string;
-  response_id: string;
-  telemetry: AuditCallTelemetry[];
-}> {
+) {
   const v2Context = "version" in input.brief ? input.brief : null;
   const requestedModel = auditModel();
-  const request = {
+  // Spec 021 Part B: the new two-source writer has its own instructions and
+  // input; everything else about the call is shared.
+  const writer = hasWriterFacts(input.two_source_facts)
+    ? twoSourceWriterMessages(
+        { ...input, two_source_facts: input.two_source_facts },
+        revision,
+      )
+    : null;
+  return {
     model: requestedModel,
     reasoning: { effort: auditReasoningEffort("medium") },
     store: false,
@@ -682,118 +735,134 @@ export async function generateReportContent(
     max_output_tokens: AUDIT_CALL_LIMITS.report.max_output_tokens,
     safety_identifier: hashSafetyIdentifier(input.safety_identifier),
     text: {
-      format: zodTextFormat(
-        reportSynthesisSchemaForMethod(input.question_method),
-        "nuave_audit_report",
-      ),
+      format: zodTextFormat(reportOutputSchema(input), "nuave_audit_report"),
       verbosity: "low" as const,
     },
-    input: [
-      {
-        role: "developer" as const,
-        content: [
-          input.language === "id"
-            ? v2Context
-              ? "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari konteks pilihan pelanggan yang dikonfirmasi beserta asal tiap makna, dan jawaban pengujian. Konfirmasi pelanggan tidak memverifikasi klaim secara independen."
-              : "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari brief terverifikasi dan jawaban pengujian yang diberikan."
-            : v2Context
-              ? "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the customer-confirmed context, its field origins, and the tested answers. Confirmation does not independently verify a claim."
-              : "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
-          `Use synthesis contract ${v2Context ? REPORT_SYNTHESIS_PROMPT_VERSION_V2 : REPORT_SYNTHESIS_PROMPT_VERSION}.`,
-          ...reportWritingInstructions(),
-          "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",
-          "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
-          "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
-          "Nuave computes run state, visible brand appearance, excerpts, source links, detail copy, and verified-competitor links in code; do not return those fields.",
-          ...reportAssessmentInstructions(input.question_method),
-          ...reportContentInstructions(input.question_method),
-          "Use needs_confirmation when a supplied claim still needs verification. Use needs_correction only when the answers show a specific conflict or error. Use no_clear_issues only when no specific issue appears; it does not prove all public information is correct.",
-          "Every finding and priority must cite one or more supplied prompt IDs. Every action needs an observable completion check.",
-          reportPriorityCountInstruction(
-            input.question_method,
-            "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",
-          ),
-          input.two_source_facts
-            ? 'Make the conclusion say, for each source, how often the business was named in this tested sample ("Di ChatGPT …; di Google AI Overview …"). Do not imply a wider or permanent result.'
-            : "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
-          "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
-          "Return exactly one assessment for each of the ten prompt IDs.",
-          ...(input.two_source_facts
-            ? [
-                "The observations are answers from the ChatGPT app. google_ai_overview gives, for the same prompt IDs, code-checked facts from Google AI Overview (shown or not, whether the business was named in its text, the cited domains); source_counts gives the code counts for both sources.",
-                'Name the source in the conclusion and in every key finding: write "Di ChatGPT" or "Di Google AI Overview". Never state a result for both sources unless the counts support it for each.',
-                'Do not contradict source_counts: when a source named the business at least once, never write that it did not name, mention or show the business ("tidak disebut", "tidak muncul", "tidak menyebut") unless the sentence is limited to some questions ("pada pertanyaan lain", "di 5 ringkasan lainnya") or gives that source\'s exact count from source_counts ("disebut di 3 dari 8 ringkasan").',
-                'Copy every "X dari Y" exactly from source_counts for the source it is about: for ChatGPT, named of completed answers; for Google AI Overview, named of summaries. Never write a count for one source with the other source\'s numbers, and never write that a source named the business when its count is 0.',
-                "Findings, priorities and evidence_prompt_ids still cite only what the ChatGPT answers or the supplied Google facts show.",
-                ...(input.two_source_facts.subject === "klinik"
-                  ? [
-                      'The audited business is a clinic: call it "klinik Anda" ("Klinik Anda" at the start of a sentence), never "bisnis Anda".',
-                    ]
-                  : []),
-              ]
-            : []),
-          ...(revision
-            ? [
-                "This is a language-only revision. Fix only the listed writing violations.",
-                "Keep accuracy status, assessment order and classifications, prompt IDs, evidence prompt IDs, priority timing, and owner exactly as supplied in the draft.",
-              ]
-            : []),
-        ].join("\n"),
-      },
-      {
-        role: "user" as const,
-        content: JSON.stringify({
-          ...(v2Context
-            ? { confirmed_context: contextForReportModel(v2Context) }
-            : {
-                verified_brief: {
-                  ...input.brief,
-                  agency_logo_data_url: "[not sent]",
+    input: writer
+      ? [
+          { role: "developer" as const, content: writer.developer },
+          { role: "user" as const, content: writer.user },
+        ]
+      : [
+          {
+            role: "developer" as const,
+            content: [
+              input.language === "id"
+                ? v2Context
+                  ? "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari konteks pilihan pelanggan yang dikonfirmasi beserta asal tiap makna, dan jawaban pengujian. Konfirmasi pelanggan tidak memverifikasi klaim secara independen."
+                  : "Tulis laporan visibilitas AI Nuave yang berbasis bukti dalam Bahasa Indonesia yang alami dan jelas, hanya dari brief terverifikasi dan jawaban pengujian yang diberikan."
+                : v2Context
+                  ? "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the customer-confirmed context, its field origins, and the tested answers. Confirmation does not independently verify a claim."
+                  : "Write an evidence-led Nuave AI Visibility Report in clear, natural English using only the supplied verified brief and test answers.",
+              `Use synthesis contract ${v2Context ? REPORT_SYNTHESIS_PROMPT_VERSION_V2 : REPORT_SYNTHESIS_PROMPT_VERSION}.`,
+              ...reportWritingInstructions(),
+              "Keep observation, interpretation, recommendation, confidence, and limitation distinct.",
+              "Do not claim causation, lost revenue, permanent ranking, consumer ChatGPT equivalence, or guaranteed improvement.",
+              "Return one compact assessment for each prompt ID with recommendation, comparison, and information only.",
+              "Nuave computes run state, visible brand appearance, excerpts, source links, detail copy, and verified-competitor links in code; do not return those fields.",
+              ...reportAssessmentInstructions(input.question_method),
+              ...reportContentInstructions(input.question_method),
+              "Use needs_confirmation when a supplied claim still needs verification. Use needs_correction only when the answers show a specific conflict or error. Use no_clear_issues only when no specific issue appears; it does not prove all public information is correct.",
+              "Every finding and priority must cite one or more supplied prompt IDs. Every action needs an observable completion check.",
+              reportPriorityCountInstruction(
+                input.question_method,
+                "Return no more than five priorities. Each priority's evidence_prompt_ids must include at least one observed gap: a failed test, an answer where the audited brand was absent, incomplete or conflicting public information, a competitor preferred over the audited brand, or an unbranded discovery question that did not recommend the audited brand.",
+              ),
+              input.two_source_facts
+                ? 'Make the conclusion say, for each source, how often the business was named in this tested sample ("Di ChatGPT …; di Google AI Overview …"). Do not imply a wider or permanent result.'
+                : "Make the conclusion answer whether the business was discovered and recommended in this tested sample. Do not imply a wider or permanent result.",
+              "For each key finding, state what happened and explain what it may mean for the business without claiming cause.",
+              "Return exactly one assessment for each of the ten prompt IDs.",
+              ...(input.two_source_facts
+                ? [
+                    "The observations are answers from the ChatGPT app. google_ai_overview gives, for the same prompt IDs, code-checked facts from Google AI Overview (shown or not, whether the business was named in its text, the cited domains); source_counts gives the code counts for both sources.",
+                    'Name the source in the conclusion and in every key finding: write "Di ChatGPT" or "Di Google AI Overview". Never state a result for both sources unless the counts support it for each.',
+                    'Do not contradict source_counts: when a source named the business at least once, never write that it did not name, mention or show the business ("tidak disebut", "tidak muncul", "tidak menyebut") unless the sentence is limited to some questions ("pada pertanyaan lain", "di 5 ringkasan lainnya") or gives that source\'s exact count from source_counts ("disebut di 3 dari 8 ringkasan").',
+                    'Copy every "X dari Y" exactly from source_counts for the source it is about: for ChatGPT, named of completed answers; for Google AI Overview, named of summaries. Never write a count for one source with the other source\'s numbers, and never write that a source named the business when its count is 0.',
+                    "Findings, priorities and evidence_prompt_ids still cite only what the ChatGPT answers or the supplied Google facts show.",
+                    ...(input.two_source_facts.subject === "klinik"
+                      ? [
+                          'The audited business is a clinic: call it "klinik Anda" ("Klinik Anda" at the start of a sentence), never "bisnis Anda".',
+                        ]
+                      : []),
+                  ]
+                : []),
+              ...(revision
+                ? [
+                    "This is a language-only revision. Fix only the listed writing violations.",
+                    "Keep accuracy status, assessment order and classifications, prompt IDs, evidence prompt IDs, priority timing, and owner exactly as supplied in the draft.",
+                  ]
+                : []),
+            ].join("\n"),
+          },
+          {
+            role: "user" as const,
+            content: JSON.stringify({
+              ...(v2Context
+                ? { confirmed_context: contextForReportModel(v2Context) }
+                : {
+                    verified_brief: {
+                      ...input.brief,
+                      agency_logo_data_url: "[not sent]",
+                    },
+                  }),
+              prompts: input.prompts,
+              // Direct-ten prompt IDs own no matrix definitions; sending any
+              // would fabricate semantics the method does not have.
+              ...(input.question_method === "direct-ten"
+                ? {}
+                : {
+                    measurement_definitions: reportPromptMeasurements(
+                      input.prompts,
+                    ),
+                  }),
+              observations: input.observations.map(
+                ({ telemetry, ...observation }) => {
+                  void telemetry;
+                  return observation;
                 },
-              }),
-          prompts: input.prompts,
-          // Direct-ten prompt IDs own no matrix definitions; sending any
-          // would fabricate semantics the method does not have.
-          ...(input.question_method === "direct-ten"
-            ? {}
-            : {
-                measurement_definitions: reportPromptMeasurements(
-                  input.prompts,
-                ),
-              }),
-          observations: input.observations.map(
-            ({ telemetry, ...observation }) => {
-              void telemetry;
-              return observation;
-            },
-          ),
-          ...(input.two_source_facts
-            ? {
-                source_counts: input.two_source_facts.counts,
-                google_ai_overview: input.two_source_facts.google,
-              }
-            : {}),
-          ...(revision
-            ? {
-                report_draft: {
-                  conclusion: revision.draft.conclusion,
-                  accuracy_status: revision.draft.accuracy_status,
-                  key_findings: revision.draft.key_findings,
-                  priorities: revision.draft.priorities,
-                  assessments: revision.draft.details.map((detail) => ({
-                    prompt_id: detail.prompt_id,
-                    recommendation: detail.recommendation,
-                    comparison: detail.comparison,
-                    information: detail.information,
-                  })),
-                },
-                writing_violations: revision.violations,
-              }
-            : {}),
-        }),
-      },
-    ],
+              ),
+              ...(input.two_source_facts
+                ? {
+                    source_counts: input.two_source_facts.counts,
+                    google_ai_overview: input.two_source_facts.google,
+                  }
+                : {}),
+              ...(revision
+                ? {
+                    report_draft: {
+                      conclusion: revision.draft.conclusion,
+                      accuracy_status: revision.draft.accuracy_status,
+                      key_findings: revision.draft.key_findings,
+                      priorities: revision.draft.priorities,
+                      assessments: revision.draft.details.map((detail) => ({
+                        prompt_id: detail.prompt_id,
+                        recommendation: detail.recommendation,
+                        comparison: detail.comparison,
+                        information: detail.information,
+                      })),
+                    },
+                    writing_violations: revision.violations,
+                  }
+                : {}),
+            }),
+          },
+        ],
   } satisfies CostControlledResponseParams;
+}
+
+export async function generateReportContent(
+  input: Parameters<typeof reportRequest>[0],
+  revision?: Parameters<typeof reportRequest>[1],
+): Promise<{
+  content: ReportContent;
+  requested_model: string;
+  returned_model: string;
+  response_id: string;
+  telemetry: AuditCallTelemetry[];
+}> {
+  const request = reportRequest(input, revision);
+  const requestedModel = request.model;
   const reservedCost = reserveAuditCall({
     budget: input.budget,
     stage: "report",
@@ -820,17 +889,14 @@ export async function generateReportContent(
     });
     await spend.settle(telemetry.accounted_cost_usd);
     return {
-      content: assembleReportContent(
-        structuredOutputOrThrow<ReportSynthesis>(
-          response.output_parsed,
+      content: reportContentFromAnswer(
+        structuredOutputOrThrow<ReportSynthesis | TwoSourceWritingSynthesis>(
+          response.output_parsed as
+            ReportSynthesis | TwoSourceWritingSynthesis | null,
           "Report generation",
           response,
         ),
-        input.observations,
-        input.brief,
-        input.historical_fixture_id,
-        input.question_method,
-        input.language,
+        input,
       ),
       requested_model: requestedModel,
       returned_model: response.model,

@@ -1,11 +1,13 @@
 # Verification: Spec 021 — Report v2
 
-> Result: **Pending** (Parts A and D built; Parts P, C and B to come; not
-> Verified until the founder's AC-A7 and AC-D2 checks are recorded)
+> Result: **Pending** (Parts A, D, P and C built; Part B's writer in PR #182,
+> its model choice to come; not Verified until the founder's AC-A7, AC-D2,
+> AC-B3 and AC-B4 checks are recorded)
 > Reviewer: independent agent review on each PR (verdict comment on the PR)
 > Date: 2026-10-26
 > Spec version or commit: `specs/021-report-v2/SPEC.md` at 590a273
-> Implementation version or commit: Part A (PR #173), Part D (PR #175)
+> Implementation version or commit: Part A (PR #173), Part D (PR #175),
+> Part P (PR #176), Part C (PR #179), Part B writer (PR #182)
 
 Each PR in [`PLAN.md`](./PLAN.md) adds its results here. The spec is marked
 **Verified** after PR 6 and the founder's AC-A7, AC-B4 and AC-D2 checks.
@@ -243,3 +245,241 @@ report), so the passed print layout stays; the split is cosmetic (no text
 overlaps or goes missing). Left for Part P: an automated long-answer print
 check (word-box overlap on the PDF) before the server PDF reuses the appendix,
 and print-only links from "P2" to the appendix.
+
+## Part P, PDF (PR 176)
+
+### Scope reviewed
+
+- `src/app/api/report/pdf/route.ts`: "Unduh PDF" posts the link secret; the
+  route checks it like the report-data route, counts the PDF against the
+  report's daily cap, makes a single-use print code and asks Browser Run
+  (`env.BROWSER.quickAction("pdf", …)`) to print `/r/print#<code>`.
+- `src/lib/orders/report-pdf.ts`: the cap (20 per report per UTC day), the
+  print code (32 random bytes, 60 seconds, hash only, deleted when read), the
+  footer, the file name and the Browser Run request.
+- `src/app/api/report/route.ts`: also accepts `print_token` and spends it.
+  Its shared answers moved to `src/lib/orders/report-route.ts`.
+- `src/app/r/print/page.tsx` and `src/app/r/SavedReport.tsx` (`via="print"`).
+- `src/app/audit/report/ReportPdfButton.tsx`, `report-pdf.ts` (page side),
+  `TwoSourceReport.tsx` (both buttons; Temuan Utama, Rekomendasi and Penutup
+  start a new page in print; the "Ketuk pertanyaan" hint is not printed).
+- `migrations/0014_report_pdf.sql`, `src/lib/orders/retention.ts` (both new
+  tables deleted with the order), `wrangler.jsonc` (Browser Run binding in
+  production and previews, none in `dev`; `REPORT_PDF_CALLER_RATE_LIMITER`,
+  3 a minute, in all three environments).
+- The `verify-nuave` skill's PDF step.
+
+### Spike (PLAN.md PR 4): HTML mode failed, URL mode with a print code
+
+Criterion 1 failed at once: a route handler that imports `react-dom/server`
+does not build on Next 16 ("You're importing a component that imports
+react-dom/server"), and the report's components are client components, which
+the server layer only sees as references. So, as the plan says for a failed
+spike, Browser Run opens the real report page by URL with a **single-use
+print code** in the fragment, never the link secret. The code is spent when
+the page reads the report, so a URL in Browser Run's run list opens nothing
+afterwards. What this gives:
+
+- The PDF is the page's own print layout (the same CSS and Geist fonts as the
+  browser's print), so criteria 2 and 3 do not arise; fonts and CSS load from
+  the site's own address, which Browser Run reaches (public pages).
+- No server renderer is added to the Worker (criterion 4).
+- Time (criterion 5): on the PR preview, with the real Browser Run, 10.9 and
+  8.0 seconds from the press to the saved file (under 15). Locally, against
+  `next start` with Chromium, 1.5 to 1.9 seconds for 11, 29 and 75 pages.
+
+### Acceptance results
+
+| Criterion | Result | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-P1     | Pass   | **PR preview (real Browser Run), 2026-10-27:** a fictional synthetic report put in the preview database; "Unduh PDF" in a browser saved `Laporan-Nuave-Klinik-Kecantikan-Contoh-Sentosa-Kemang-Raya.pdf` (200, `application/pdf`, `no-store`): 11 A4 pages, Geist embedded, footer "Nuave · Laporan Visibilitas AI · <klinik>" and "n / 11" on every page, page 1 the header, verdict and source cards, Temuan Utama (p. 2), Rekomendasi (p. 4) and Penutup (p. 5) each start a page, then "Lampiran: jawaban lengkap"; no text overlaps beyond the page-1 baseline. **Time per PDF: 10.9 s, then 8.0 s** (press to saved file). Afterwards no print code was left in the database and the day count was 2. Local runs of the same request for 29 and 75 page reports were also clean. Unit: request options, headers, file name. |
+| AC-P2     | Pass   | Unit "the link secret never goes into a URL": Browser Run gets `/r/print#<43-character code>`, never the secret; only the code's hash is stored; the code opens the report once and not after 60 seconds or after the link is switched off; a wrong, malformed or switched-off secret gets the report route's exact answer and Browser Run is not called; logs carry numbers and codes only. E2e: the page posts the secret in the body, never in a URL.                                                                                                                                                                                                                                                                                                                                                                          |
+
+### Checks run
+
+- Unit: `report-pdf.test.ts` (16), `saved-report.test.tsx` (the print page
+  sends a print code, never the secret), `two-source-report.test.tsx` (button,
+  spinner, one request per press, retry message next to the pressed button,
+  print fallback, page breaks), `retention.test.ts`, `wrangler-config.test.ts`,
+  `rate-limit-config.test.ts`, then the full suite.
+- E2e: `new-intake-glm.spec.ts` checks the PDF route's `pdf_unavailable`
+  answer locally and the print that follows, then the full suites (see the
+  PR).
+- `npm run check`, `next build`.
+
+### Independent review
+
+- **Round 1: PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/176#issuecomment-6434084965)),
+  nothing blocking. Its should-fix list was handled in 27ec9c5: a long name
+  with an emoji at the cut broke the file name header (now cut by whole
+  characters, made before Browser Run is asked); a print page test; private
+  headers on `/r/print`; the spinner and focus for screen readers and
+  keyboards; the secret checked before the Browser Run check; two risks
+  recorded below; doc fixes.
+- **Round 2: PASS**
+  ([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/176#issuecomment-6434222311))
+  on 27ec9c5, nothing open.
+
+### Risks to check after merge
+
+- Browser Run is identified as a bot. Cloudflare does not block it by
+  default; if bot protection (for example Bot Fight Mode) is switched on for
+  `nuave.ai`, the PDF fails with "PDF belum bisa dibuat" in production while
+  the preview (on `workers.dev`) works. The first production download after
+  the deploy confirms it.
+- Browser Run's reads of `/api/report` probably all come from one address, so
+  every PDF being made at the same moment shares that route's 20-a-minute
+  limit. Fine at today's volume; a busy day would show "PDF belum bisa
+  dibuat" for some presses.
+- When a report's 20 PDFs for the day are used up, "Unduh PDF" opens the
+  browser's print without a note (by design: the customer still gets a PDF,
+  and no browser time is used).
+
+## Part C, competitor data (PR #179)
+
+### Scope reviewed
+
+- `src/lib/checks/listings.ts` (new), `chatgpt.ts`, `google.ts`: each saved
+  check keeps, per business its page listed, the name, website, rating and
+  review count (`listings`, inside the existing JSON columns; no migration).
+- `src/lib/orders/two-source.ts`: `competitorFacts` builds the report's
+  `competitors` block (per business: the questions whose answers name it,
+  per source; the ChatGPT answers that named it and showed it as a business
+  card; website, rating, reviews; the owner's listing details). Report version
+  `nuave-two-source-v2`. `findNames` moved to `src/lib/audit/find-names.ts`
+  so the server and the page count with one rule.
+- `src/app/audit/report/report-v2-data.ts`, `TwoSourceReport.tsx`,
+  `report-v2.module.css`: the page prefers the saved block, shows the
+  website link, rating line, "kartu ChatGPT N×", site icons and linked
+  chips; older reports keep the render-time counts.
+- `src/app/r/SavedReport.tsx`, `ReportView.tsx`, `DirectTenReportPage.tsx`:
+  `showLogos`, on only for the private link page of a live report.
+- `src/lib/checks/synthetic.ts`: the fictional business has a `.test`
+  website, a rating and review counts.
+
+### Provider fields (no live check)
+
+DataForSEO's published response schemas (read 2026-10-27) name every field
+kept, so the founder's one live check was not needed:
+
+| Source | Element | Kept | Never kept |
+| --- | --- | --- | --- |
+| ChatGPT LLM Scraper | `chat_gpt_local_businesses` items | `title`, `url`, `rating.value`, `rating.rating_max`, `reviews_count` (else `rating.votes_count`) | `phone`, `address`, `description` |
+| Google Organic SERP | `local_pack` | `title`, `url`, `rating.value`, `rating.rating_max`, `rating.votes_count` | `phone` |
+| Google Organic SERP | `organic` | `website_name`, `url` | its `rating` (a page's stars, not the business's) |
+
+ChatGPT's `brand_entities` carry no reliable website (`urls` is "relevant
+URLs" and often null), so they add names only. Websites pass
+`phoneSafeUrl` (no messaging links, no phone number in the address), and
+map and search addresses (any Google page, `maps.app.goo.gl`, Apple Maps,
+Bing Maps and search) are refused: a map link is a
+place, not the business's site, and can spell out a street address. Google's
+map result and organic result for the same name are merged: the website from
+either, the rating and reviews from the map result. The owner's own names are
+looked up on Google's page too, so the owner's map listing is kept.
+
+### Definitions
+
+- **Named N×:** answers that name the business, once per answer, per
+  source; whole words, longest name first, the owner's names matched too
+  (the rule the page highlights names with).
+- **Kartu ChatGPT N×:** ChatGPT answers that name the business and showed it
+  as one of ChatGPT's business cards (name, rating, address). A card whose
+  business the answer text never names is not counted. It is deliberately
+  not called "direkomendasikan": on the owner's row that word keeps its
+  meaning, the report writer's assessment of the answer, and a note under the
+  list explains the card figure.
+- **Owner's details:** only from a listing whose name is exactly one of the
+  owner's names. A branch ("Erha Clinic Surabaya" for "Erha Clinic") is
+  neither the owner's row nor another business, so its rating never shows as
+  the owner's.
+- **Rating and reviews:** from the listing with a rating and the most
+  reviews across both sources.
+- **Logos:** `https://<host>/favicon.ico` of the saved website, never for a
+  shared platform (Instagram, Facebook, WhatsApp, Telegram, LINE, any Google domain, link
+  shorteners, marketplaces, health directories) or an IP address, and never
+  on synthetic reports or the copy Browser Run prints (no outside request
+  from the PDF).
+- **Owner's own link (exception to C-04):** the owner's row links the address
+  the audit started from (the website or Instagram the owner gave), not a
+  provider listing, when it is an http(s) address. It is the owner's own
+  address, so it carries no third-party risk; it opens the same way (new
+  tab, no referrer).
+- **New-tab links:** each link's accessible name says it opens a new tab
+  ("kopilain.example (membuka tab baru)").
+
+### Acceptance results
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| AC-C1 | Pass | Unit: `competitorFacts` (counts per source, nested names, cards counted once per answer, owner's details); saved rows preferred over matching; page rows show counts, "kartu ChatGPT" with its note, website link (new tab, no referrer), rating line, owner's row; chips link only with a saved website; logos from the own site only, initials on error. Whole path: a synthetic order saves the block (9 ChatGPT, 8 Google, 9 cards, website, rating 4.6, 131 reviews; the map and organic results merged). Branch listings never reach the owner's row; a card without a mention is not counted; map addresses and Google, shortener and IP hosts get no icon. The printed copy and synthetic reports request no logo. E2e: the fictional competitor's link, "Rating 4,6 · 131 ulasan" and "kartu ChatGPT 9×" on the report, no logo request. |
+| AC-C2 | Pass | Unit: listings keep no phone, address or messaging link; the whole-path test finds no phone number or address in the saved block or in any saved check's listings. |
+
+## Part B, the new writer (PR #182)
+
+PR 6a of the plan: what the writer reads and returns, the code checks and
+the page. The model choice (B-07, AC-B3) is PR 6b, run with the harness
+already merged (`scripts/report-writer-test/`, PR #174).
+
+### Scope reviewed
+
+- `src/lib/audit/two-source-writer.ts` (new): the request (B-01, B-03) and
+  the mapping of the answer onto the saved report (B-04).
+- `src/lib/audit/two-source-writing.ts` (new): the code checks (B-04 to
+  B-06) and the verdict cut.
+- `src/lib/audit/report-playbook.ts` (new): the approved playbook as text,
+  tested equal to `docs/content/report/PLAYBOOK.md`.
+- `src/lib/audit/types.ts`: the new answer shape, the `two_source_writing`
+  block (`nuave-two-source-writing-v1`), headline bases; the old priority
+  fields optional in a saved report.
+- `report-pipeline.ts`, `openai.ts`, `contracts.ts`, `report-language.ts`,
+  `report-quality-repair.ts`, `two-source-report.ts`: wiring, the
+  prohibited-claim and language checks over the new fields, the verdict in
+  the count check, the save guard and the version.
+- `src/lib/orders/two-source.ts`, `runner.ts`: `twoSourceWriterFacts`.
+- `TwoSourceReport.tsx`, `report-v2-data.ts`, `report-v2.module.css`: the
+  page.
+- `local-direct-ten-audit.ts`: the labelled synthetic writer in the new
+  shape.
+- `scripts/report-writer-test/harness.ts`: reads the new answer shape, uses
+  the production rule for shortening Google's text, and judges the new block.
+
+### Definitions
+
+- **Headline basis:** the writer names what each number counts; code
+  checks the number against that only (PLAN.md, "PR 6a design").
+- **Gap (recommendations):** a question where the business was absent,
+  cited without its name, or not recommended, by either source.
+- **Count check:** reads the conclusion, findings and verdict. Not the
+  recommendations, takeaways or plan, which talk about other businesses: a
+  probe showed sentences such as "ERHA, C Derma, dan Bamed disebut AI lewat
+  dokternya" read as claims about the owner.
+
+### Acceptance results
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| AC-B1 | Pass | Unit (`two-source-writer.test.ts`): Google's words, topics, businesses per answer and the playbook are in the request; phone numbers planted in an answer, a source title, Google's text and the profile never reach it. Whole path (`two-source.test.ts`): the order's real request carries Google's text for every summary and the playbook, and no phone number. |
+| AC-B2 | Pass | Whole path: a recommendation titled "Pastikan …" gets the one revision with that violation; kept by the revision, code removes the word; the delivered report has no banned start; a headline "42" with no basis behind it is dropped, the confirmed one stays. Unit (`two-source-writing.test.ts`): each headline basis kept when true, refused when its complement or another fact matches, verbatim only as a whole token. |
+| AC-B3 | Pending | PR 6b: the side-by-side run and the founder's pick. |
+| AC-B4 | Pending (judgement) | The founder reads NV-3WDSAY written by the picked writer. |
+
+Also checked: older saved reports render unchanged (existing snapshot tests);
+a report with the block passes the page's evidence check and shows the
+verdict, headline, reason, takeaways, plan, named topic rows and a
+recommended Google dot; the new answer shape has every field required
+(OpenAI strict mode) while older writers' shapes are unchanged; e2e, the
+synthetic journey shows the verdict, a headline, a reason, the takeaways, the
+plan and the named topics. Full main e2e suite: 86 passed. Unit: 2,701
+passed.
+
+Independent review: round 1 ALMOST (three Musts on headline numbers, all
+fixed), round 2 PASS
+([comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/182#issuecomment-6437892962)).
+Its non-blocking points: a caption must now fit its basis; the save guard
+and the version switch are tested; the guard has its own diagnostic. Still
+open, for PR 6b: one live harness call on NV-3WDSAY's export to measure the
+new answer's output tokens against the 16,000-token call limit before the
+founder deploys the writer.
+

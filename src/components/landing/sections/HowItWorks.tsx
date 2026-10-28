@@ -119,7 +119,7 @@ export function HowItWorks() {
               <br />
               Google AI Overview.
               <br />
-              Laporan lengkap siap dalam <b>15 menit.</b>
+              Laporan lengkap siap dalam <b>30 menit.</b>
             </p>
             <div className={styles.sketch}>
               <div className={cn(styles.card, styles.mail)}>

@@ -356,7 +356,7 @@ describe("rate limit and no stored IP (R-05, AC-03)", () => {
 });
 
 describe("the per-order limit setting (R-07, AC-04) and the daily cap (R-08, AC-05)", () => {
-  it.each(["lots", "-1", "NaN", "0", "5.01"])(
+  it.each(["lots", "-1", "NaN", "0", "50.01"])(
     "an invalid limit %s makes no order and no hold",
     async (value) => {
       vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", value);
@@ -370,26 +370,27 @@ describe("the per-order limit setting (R-07, AC-04) and the daily cap (R-08, AC-
 
   it("a limit above the daily cap fails closed, whatever the cap is", async () => {
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "1.5");
-    expect((await createTest()).status).toBe(503); // default limit 2.00 > 1.50
+    expect((await createTest()).status).toBe(503); // default limit 5.00 > 1.50
     vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "1.5");
     expect((await createTest()).status).toBe(200);
   });
 
-  it("a test pass defaults to USD 2.00 and holds exactly the configured limit", async () => {
+  it("a test pass defaults to USD 5.00 and holds exactly the configured limit", async () => {
     await createTest();
     vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "1.25");
     await createTest();
     expect(ledger().map((row) => row.held_units)).toEqual([
-      usdToUnits(2),
+      usdToUnits(5),
       usdToUnits(1.25),
     ]);
   });
 
   it("with less room in the daily cap than one limit, refuses and leaves the database unchanged", async () => {
+    vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "12");
     expect((await createTest()).status).toBe(200);
     expect((await createTest()).status).toBe(200);
     const before = JSON.stringify([orders(), ledger()]);
-    const response = await createTest(); // 2 + 2 + 2 > 5
+    const response = await createTest(); // 5 + 5 + 5 > 12
     expect(response.status).toBe(503);
     expect(JSON.stringify(await response.json())).toContain(UNAVAILABLE);
     expect(JSON.stringify([orders(), ledger()])).toBe(before);
@@ -634,7 +635,7 @@ describe("order status (R-21)", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     const json = await response.json();
     // S5 adds started_at so a reloaded page can tell when the audit passed
-    // the 15-minute promise; it carries no email, report or secret.
+    // the 30-minute promise; it carries no email, report or secret.
     expect(Object.keys(json).sort()).toEqual([
       "completed",
       "payment",
@@ -723,13 +724,14 @@ describe("a replacement order expires the test or legacy order it replaces (R-19
     expect(states[(await second.json()).order_id]).toBe("open");
     // The old hold is settled to nothing: only the new order holds the cap.
     expect(d1.heldUnitsToday(new Date().toISOString().slice(0, 10))).toBe(
-      usdToUnits(2),
+      usdToUnits(5),
     );
   });
 
   it("frees the room the new test pass needs when the cap would otherwise be full", async () => {
+    vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "12");
     const a = await (await createTest()).json();
-    await createTest(); // two orders hold 4 of 5
+    await createTest(); // two orders hold 10 of 12
     expect((await createTest()).status).toBe(503);
     expect((await createTest({ previous_order_id: a.order_id })).status).toBe(
       200,
@@ -944,8 +946,9 @@ describe("the founder test pass, server side (R-16, R-17, R-20, AC-17)", () => {
   });
 
   it("is refused with the same answer when the cap has no room, counting open attempts (R-10)", async () => {
+    vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "12");
     await createTest();
-    await createTest(); // 4 of 5 held
+    await createTest(); // 10 of 12 held
     const full = await createTest();
     expect(full.status).toBe(503);
     expect(JSON.stringify(await full.json())).toContain(UNAVAILABLE);
@@ -960,7 +963,7 @@ describe("the founder test pass, server side (R-16, R-17, R-20, AC-17)", () => {
       `INSERT INTO payment_attempts (id, order_id, attempt_number, midtrans_order_id, window_start, window_end, created_at, updated_at)
        VALUES ('a1', '${unpaid}', 1, 'NV-AAAAAA-1', 'x', 'y', 'x', 'x') RETURNING 1`,
     );
-    expect((await createTest()).status).toBe(503); // 2 held + 2 open + 2 > 5
+    expect((await createTest()).status).toBe(503); // 5 held + 5 open + 5 > 12
     d1.query("UPDATE payment_attempts SET status = 'void' RETURNING 1");
     expect((await createTest()).status).toBe(200);
   });

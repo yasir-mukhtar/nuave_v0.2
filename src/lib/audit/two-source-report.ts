@@ -10,14 +10,21 @@
  * - R-18: "Topik yang belum menyebut Anda".
  * - Q-3 default: the Google coverage finding.
  * - R-08: whether search data was available.
+ * - Spec 021 C-01/C-02: per business, the answers that name it and what the
+ *   sources' own pages showed about it (v2).
  *
  * This module has no server imports, so the report page can use its types.
  */
 
-export const TWO_SOURCE_REPORT_VERSION = "nuave-two-source-v1" as const;
+/** v2 (Spec 021 Part C) adds `competitors`; v1 reports have names only. */
+export const TWO_SOURCE_REPORT_VERSION = "nuave-two-source-v2" as const;
+export type TwoSourceReportVersion =
+  "nuave-two-source-v1" | typeof TWO_SOURCE_REPORT_VERSION;
 /** The evidence export carries its own version for two-source reports (R-29). */
 export const TWO_SOURCE_EXPORT_VERSION =
   "nuave-evidence-two-source-v1" as const;
+
+import type { ReadPage } from "../reading/page-reader";
 
 export type NamedFact = "named" | "source_only" | "absent";
 
@@ -78,6 +85,9 @@ export type TwoSourceQuestion = {
     /** Null unless a summary with text was shown. */
     named: NamedFact | null;
     observed_at: string | null;
+    /** Spec 021 Part B: the writer's reading of an AI Overview that names the
+     * business, applied when the page opens (never saved here). */
+    recommended?: boolean;
   };
 };
 
@@ -90,8 +100,24 @@ export type TopicRow = {
   domains: string[];
 };
 
+/** Spec 021 C-01/C-02: one business, counted by code when the report was
+ * made. Ids are the questions whose answers name it. */
+export type CompetitorFact = {
+  name: string;
+  chatgpt: string[];
+  google: string[];
+  /** ChatGPT answers that name it and showed it as one of ChatGPT's own
+   * business cards. Not "recommended": that word stays for the report
+   * writer's reading of the owner's answers. */
+  cards: string[];
+  /** From the provider data only (C-04); null when none was given. */
+  website: string | null;
+  rating: { value: number; max: number } | null;
+  reviews: number | null;
+};
+
 export type TwoSourceReport = {
-  version: typeof TWO_SOURCE_REPORT_VERSION;
+  version: TwoSourceReportVersion;
   /** AC-20: absent on reports saved before the label existed ("Bisnis Anda"). */
   subject?: ReportSubject;
   /** For the "Minta bantuan" email (R-20); null when the order has none. */
@@ -133,6 +159,13 @@ export type TwoSourceReport = {
   topics_missing: TopicRow[];
   /** One short list per source, taken from the answer text. */
   other_businesses: { chatgpt: string[]; google: string[] };
+  /** Spec 021 Part C: every business in `other_businesses`, counted, and the
+   * owner's listing details. Absent on reports made before Part C, whose
+   * counts are derived when the page opens. */
+  competitors?: {
+    others: CompetitorFact[];
+    own: Pick<CompetitorFact, "cards" | "website" | "rating" | "reviews">;
+  };
 };
 
 /** "Bisnis Anda muncul di X dari N pertanyaan" ("Klinik Anda …" for a
@@ -243,6 +276,38 @@ export type TwoSourceReportFacts = {
     business_named: boolean | null;
     cited_domains: string[];
   }[];
+  /** Spec 021 B-01: present for the new writer (Part B) only. */
+  writer?: TwoSourceWriterFacts;
+};
+
+/**
+ * Spec 021 B-01 (Spec 018 R-28 as amended 2026-10-26): what the new writer
+ * reads beside the ChatGPT answers and the counts, built by code from the
+ * saved checks. Google's words reach the writer with phone numbers removed.
+ */
+export type TwoSourceWriterFacts = {
+  questions: {
+    prompt_id: string;
+    ordinal: number;
+    /** The search topic the question came from; null when none. */
+    topic: string | null;
+    /** Monthly searches, when known. */
+    volume: number | null;
+    /** Whether each source's answer named the business, cited its site
+     * only, or neither; null when the check failed or showed no summary. */
+    named: { chatgpt: NamedFact | null; google: NamedFact | null };
+    /** Google's AI Overview text; empty when none was shown. */
+    google_text: string;
+    /** The other businesses each source's answer names. */
+    businesses: { chatgpt: string[]; google: string[] };
+  }[];
+  /** Every other business the answers name: a "disebut karena" reason may
+   * name only these. */
+  businesses: string[];
+  /** The reading test (founder decision 2026-10-27): pages Nuave read, the
+   * business's own site and the pages the answers cited most. Absent in
+   * production until the founder judges the test. */
+  pages?: ReadPage[];
 };
 
 export const SOURCE_CHATGPT = "ChatGPT";
@@ -556,6 +621,11 @@ export function repairTwoSourceWriting<
   T extends {
     conclusion: string;
     key_findings: { title: string; explanation: string }[];
+    /** Spec 021 Part B: the verdict is checked too. Recommendations,
+     * takeaways and the plan are not: they are about other businesses and
+     * advice, which this check would misread as claims about the owner ("ERHA
+     * disebut AI lewat dokternya"). */
+    two_source_writing?: { verdict: string };
   },
 >(content: T, facts: TwoSourceReportFacts): { content: T; changed: boolean } {
   let changed = false;
@@ -597,7 +667,18 @@ export function repairTwoSourceWriting<
     }
     return { ...finding, title, explanation };
   });
-  return { content: { ...content, conclusion, key_findings }, changed };
+  const writing = content.two_source_writing;
+  return {
+    content: {
+      ...content,
+      conclusion,
+      key_findings,
+      ...(writing
+        ? { two_source_writing: { ...writing, verdict: fix(writing.verdict) } }
+        : {}),
+    },
+    changed,
+  };
 }
 
 /**
@@ -609,6 +690,7 @@ export function twoSourceWritingViolations(
   content: {
     conclusion: string;
     key_findings: { title: string; explanation: string }[];
+    two_source_writing?: { verdict: string };
   },
   facts: TwoSourceReportFacts,
 ): string[] {
@@ -627,6 +709,7 @@ export function twoSourceWritingViolations(
   const texts = [
     content.conclusion,
     ...content.key_findings.flatMap((f) => [f.title, f.explanation]),
+    ...(content.two_source_writing ? [content.two_source_writing.verdict] : []),
   ];
   for (const sentence of texts.flatMap(sentences)) {
     const source = contradictedSource(sentence, facts);

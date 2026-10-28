@@ -2,8 +2,11 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { IconArrowRight, IconCheck, IconDownload } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
+import {
+  IconArrowRight,
+  IconCheck,
+  IconExternalLink,
+} from "@tabler/icons-react";
 import { NuaveLogo } from "@/components/product/journey/NuaveLogo";
 import { SUPPORT_EMAIL } from "@/components/product/journey/JourneyBars";
 import { motionAllowedNow } from "@/components/motion/useMotionAllowed";
@@ -25,8 +28,12 @@ import {
   competitorRows,
   displayHost,
   mentionState,
+  ratingLine,
+  siteIcon,
   topicGapRows,
   verdictFromConclusion,
+  twoSourceView,
+  competitorReasons,
   type CompetitorRow,
   type MentionState,
   type Source,
@@ -35,6 +42,8 @@ import { checkedDate, profileQuestionsNote } from "./TwoSourceSections";
 import { AnswerPanelProvider, SOURCE_ICON, useOpenAnswer } from "./AnswerPanel";
 import { AnswersTable } from "./AnswersTable";
 import { ReportAppendix } from "./ReportAppendix";
+import { PdfButton, PdfFailed, useReportPdf } from "./ReportPdfButton";
+import type { DownloadPdf } from "./report-pdf";
 import auditStyles from "../audit.module.css";
 import bodyStyles from "./report-body.module.css";
 import styles from "./report-v2.module.css";
@@ -132,6 +141,13 @@ function ContentsNav({ ids }: { ids: readonly SectionId[] }) {
   );
 }
 
+/** Spec 021 "PDF": these sections start a new page on paper. */
+const NEW_PAGE: ReadonlySet<SectionId> = new Set([
+  "temuan",
+  "rekomendasi",
+  "penutup",
+]);
+
 /** A full-width section band with its title and lede. */
 function Band({
   id,
@@ -142,7 +158,7 @@ function Band({
 }: {
   id: SectionId;
   title: string;
-  lede?: string;
+  lede?: ReactNode;
   tone?: "wash" | "ink" | "grey";
   children: ReactNode;
 }) {
@@ -151,6 +167,7 @@ function Band({
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-title`}
+      data-new-page={NEW_PAGE.has(id) || undefined}
       className={cn(
         styles.band,
         tone === "wash" && styles.bandWash,
@@ -296,12 +313,25 @@ function Findings({
   return (
     <ol className={styles.findings}>
       {report.key_findings.map((finding, i) => (
-        <li key={i} className={styles.finding} data-finding>
-          <h3>{finding.title}</h3>
-          <p>
-            {finding.explanation}{" "}
-            <QuestionRefs ordinals={ordinals(finding.evidence_prompt_ids)} />
-          </p>
+        <li
+          key={i}
+          className={cn(styles.finding, finding.headline && styles.withStat)}
+          data-finding
+        >
+          {/* Spec 021 B-05: a headline number code has confirmed. */}
+          {finding.headline ? (
+            <p className={styles.stat} data-finding-stat>
+              <strong>{finding.headline.number}</strong>
+              <span>{finding.headline.caption}</span>
+            </p>
+          ) : null}
+          <div className={styles.findingText}>
+            <h3>{finding.title}</h3>
+            <p>
+              {finding.explanation}{" "}
+              <QuestionRefs ordinals={ordinals(finding.evidence_prompt_ids)} />
+            </p>
+          </div>
         </li>
       ))}
       {two.google_finding ? (
@@ -324,14 +354,79 @@ function initials(name: string) {
     .join("");
 }
 
+/** Spec 021 C-03: the business's own site icon, loaded without a referrer;
+ * initials when there is none, when it fails, or when logos are off
+ * (synthetic reports and the printed copy). */
+function CompetitorLogo({
+  name,
+  website,
+  showLogos,
+}: {
+  name: string;
+  website: string | null | undefined;
+  showLogos: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
+  const icon = showLogos ? siteIcon(website) : null;
+  return (
+    <span className={styles.initials} aria-hidden="true">
+      {icon && !failed ? (
+        // A plain image: the site's own icon, never an optimised copy.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className={styles.logo}
+          src={icon}
+          alt=""
+          width={22}
+          height={22}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+          data-competitor-logo
+        />
+      ) : (
+        initials(name)
+      )}
+    </span>
+  );
+}
+
+/** A provider address as a link that opens in a new tab with no referrer
+ * (C-04). */
+function SiteLink({ website }: { website: string }) {
+  return (
+    <a
+      className={styles.site}
+      href={website}
+      target="_blank"
+      rel="noopener noreferrer"
+      referrerPolicy="no-referrer"
+      aria-label={`${displayHost(website)} (membuka tab baru)`}
+      data-competitor-site
+    >
+      {displayHost(website)}
+      <IconExternalLink aria-hidden="true" />
+    </a>
+  );
+}
+
 function CompetitorLine({
   row,
   ownLabel,
+  showLogos,
+  reason,
 }: {
   row: CompetitorRow;
   ownLabel: string;
+  showLogos: boolean;
+  /** Spec 021 Part B: "Disebut AI karena: …", from the writer. */
+  reason?: string;
 }) {
   const total = row.chatgpt + row.google;
+  // "direkomendasikan" is the report writer's reading of the owner's
+  // answers (as in Ringkasan); every row's card count is ChatGPT's own.
+  const recommended = row.own?.recommended ?? 0;
+  const cards = row.cards ?? 0;
   const split = [
     row.chatgpt ? `ChatGPT ${row.chatgpt}` : "",
     row.google ? `Google ${row.google}` : "",
@@ -339,28 +434,49 @@ function CompetitorLine({
   ]
     .filter(Boolean)
     .join(" · ");
+  const rating = ratingLine(row.rating, row.reviews);
   return (
     <div
       className={cn(styles.compRow, row.own && styles.own)}
       data-competitor={row.own ? "own" : "other"}
     >
-      <span className={styles.initials} aria-hidden="true">
-        {initials(row.name)}
-      </span>
+      <CompetitorLogo
+        name={row.name}
+        website={row.website}
+        showLogos={showLogos}
+      />
       <p className={styles.name}>
         {row.name}
         {row.own ? <span className={styles.youPill}>{ownLabel}</span> : null}
+        {row.website || rating ? (
+          <span className={styles.metaLine}>
+            {row.website ? <SiteLink website={row.website} /> : null}
+            {row.website && rating ? " · " : null}
+            {rating ? <span data-competitor-rating>{rating}</span> : null}
+          </span>
+        ) : null}
       </p>
       <p className={styles.stats}>
         <strong>{total}×</strong>
-        {row.own?.recommended ? (
+        {recommended ? (
           <>
-            direkomendasikan {row.own.recommended}×
+            direkomendasikan {recommended}×
+            <br />
+          </>
+        ) : null}
+        {cards ? (
+          <>
+            kartu ChatGPT {cards}×
             <br />
           </>
         ) : null}
         <span className={styles.split}>{split}</span>
       </p>
+      {reason ? (
+        <p className={styles.why} data-competitor-reason>
+          <b>Disebut AI karena:</b> {reason}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -369,20 +485,43 @@ function Competitors({
   two,
   observations,
   ownNames,
+  ownWebsite,
+  showLogos,
+  reasons,
 }: {
   two: TwoSourceReport;
+  /** Spec 021 Part B: the writer's reason per business, by lowercase name. */
+  reasons: ReadonlyMap<string, string>;
   observations: readonly AuditObservation[];
   /** The owner's display name first, then its other names. */
   ownNames: readonly string[];
+  /** The owner's own site, when the saved listings have none. */
+  ownWebsite?: string;
+  showLogos: boolean;
 }) {
   const { counted, uncounted } = competitorRows(two, observations, ownNames);
   const others = counted.filter((row) => !row.own);
   const top = new Set(others.slice(0, 5));
-  const shown = counted.filter((row) => row.own || top.has(row));
+  const shown = counted
+    .filter((row) => row.own || top.has(row))
+    .map((row) =>
+      row.own && !row.website && ownWebsite
+        ? { ...row, website: ownWebsite }
+        : row,
+    );
+  const saved = new Map(
+    (two.competitors?.others ?? []).map((fact) => [fact.name, fact]),
+  );
   const rest = [
-    ...others.filter((row) => !top.has(row)).map((row) => row.name),
-    ...uncounted,
+    ...others
+      .filter((row) => !top.has(row))
+      .map((row) => ({ name: row.name, website: row.website ?? null })),
+    ...uncounted.map((name) => ({
+      name,
+      website: saved.get(name)?.website ?? null,
+    })),
   ];
+  const anyCards = shown.some((row) => row.cards);
   return (
     <div className={styles.comp} data-other-businesses>
       {shown.map((row) => (
@@ -390,18 +529,58 @@ function Competitors({
           key={row.name}
           row={row}
           ownLabel={subjectNoun(two.subject)}
+          showLogos={showLogos}
+          reason={
+            row.own
+              ? undefined
+              : reasons.get(
+                  row.name
+                    .replace(/\s+/g, " ")
+                    .trim()
+                    .toLocaleLowerCase("id-ID"),
+                )
+          }
         />
       ))}
       {rest.length ? (
         <div className={styles.tail}>
           <p>Bisnis lain yang juga disebut AI:</p>
           <ul className={styles.chipList}>
-            {rest.map((name) => (
+            {rest.map(({ name, website }) => (
               <li key={name}>
-                <span className={styles.plainChip}>{name}</span>
+                {website ? (
+                  <a
+                    className={styles.linkChip}
+                    href={website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    referrerPolicy="no-referrer"
+                    title={displayHost(website)}
+                    aria-label={`${name} (${displayHost(website)}, membuka tab baru)`}
+                    data-competitor-site
+                  >
+                    {name}
+                    <IconExternalLink aria-hidden="true" />
+                  </a>
+                ) : (
+                  <span className={styles.plainChip}>{name}</span>
+                )}
               </li>
             ))}
           </ul>
+          {rest.some((item) => item.website) ? (
+            <p className={styles.tailNote}>
+              Ikon panah menandai website yang bisa dibuka.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {anyCards ? (
+        <div className={styles.tail}>
+          <p className={styles.tailNote} data-cards-note>
+            Kartu ChatGPT: berapa kali ChatGPT menampilkan bisnis itu sebagai
+            kartu tempat (nama, rating, alamat) dalam jawabannya.
+          </p>
         </div>
       ) : null}
       {!others.length && !uncounted.length ? (
@@ -472,10 +651,23 @@ function Recommendations({ report }: { report: AuditReport }) {
 }
 
 function Closing({ report }: { report: AuditReport }) {
+  const plan = report.two_source_writing?.plan ?? [];
   return (
     <>
       {report.conclusion ? (
         <p className={styles.conclusion}>{report.conclusion}</p>
+      ) : null}
+      {/* Spec 021 Part B: the three-step plan with week ranges. */}
+      {plan.length ? (
+        <ol className={styles.plan} data-plan>
+          {plan.map((step, i) => (
+            <li key={i} className={styles.step}>
+              <span className={styles.when}>{step.weeks}</span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </li>
+          ))}
+        </ol>
       ) : null}
       <div className={styles.reaudit} data-reaudit>
         <h3>Audit ulang setelah 8 minggu</h3>
@@ -499,14 +691,22 @@ export function TwoSourceReportBody({
   observations,
   names = [],
   nav,
+  ownWebsite,
+  showLogos = false,
 }: {
   report: AuditReport;
   observations: AuditObservation[];
   names?: readonly string[];
   nav?: ReactNode;
+  /** The owner's own site, for its row in Peta Pesaing. */
+  ownWebsite?: string;
+  /** Spec 021 C-03: competitors' site icons; off in synthetic reports and in
+   * the copy Browser Run prints. */
+  showLogos?: boolean;
 }) {
-  const two = report.two_source!;
+  const two = twoSourceView(report);
   const presentation = buildReportPresentation(report, observations);
+  const takeaways = report.two_source_writing?.takeaways ?? [];
   if (presentation.status !== "ready")
     return (
       <div className={bodyStyles.body} role="alert">
@@ -537,7 +737,8 @@ export function TwoSourceReportBody({
         <section id="summary" className={styles.inner} aria-label="Ringkasan">
           <div className={styles.summary}>
             <p className={styles.verdict} data-verdict>
-              {verdictFromConclusion(report.conclusion)}
+              {report.two_source_writing?.verdict ||
+                verdictFromConclusion(report.conclusion)}
             </p>
             <div className={styles.cards}>
               <SourceCard two={two} source="chatgpt" />
@@ -577,7 +778,20 @@ export function TwoSourceReportBody({
             two={two}
             observations={observations}
             ownNames={[ownName, ...names.slice(1)]}
+            ownWebsite={ownWebsite}
+            showLogos={showLogos}
+            reasons={competitorReasons(report)}
           />
+          {takeaways.length ? (
+            <ul className={styles.takeaways} data-takeaways>
+              {takeaways.map((item, i) => (
+                <li key={i} className={styles.take}>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </Band>
         {hasTopics ? (
           <Band
@@ -604,7 +818,16 @@ export function TwoSourceReportBody({
         <Band
           id="jawaban"
           title="Jawaban AI"
-          lede="Bukti di balik laporan ini. Ketuk pertanyaan untuk membaca jawaban lengkapnya."
+          lede={
+            <>
+              Bukti di balik laporan ini.
+              {/* On paper the answers follow in full; nothing to tap. */}
+              <span className={auditStyles.noPrint}>
+                {" "}
+                Ketuk pertanyaan untuk membaca jawaban lengkapnya.
+              </span>
+            </>
+          }
           tone="grey"
         >
           <AnswersTable two={two} names={names} />
@@ -641,16 +864,22 @@ export function TwoSourceReportPage({
   brief,
   observations,
   previewNotice,
+  onDownloadPdf,
+  showLogos = false,
 }: {
   report: AuditReport;
   brief: DirectTenAuditContext;
   observations: AuditObservation[];
   previewNotice?: ReactNode;
+  /** The server PDF (Part P); without it, "Unduh PDF" prints. */
+  onDownloadPdf?: DownloadPdf;
+  /** Competitors' site icons (Part C); off unless the page turns them on. */
+  showLogos?: boolean;
 }) {
-  const two = report.two_source!;
+  const two = twoSourceView(report);
   const name = brief.identity.name;
   const date = checkedDate(two);
-  const print = () => window.print();
+  const pdf = useReportPdf(onDownloadPdf);
   const hasTopics = topicGapRows(two, observations, two.subject).length > 0;
   const ids = SECTIONS.map(([id]) => id).filter(
     (id) =>
@@ -664,17 +893,9 @@ export function TwoSourceReportPage({
           <Link href="/" aria-label="Nuave, ke beranda" className="flex">
             <NuaveLogo className="h-[25px] w-auto" />
           </Link>
-          <Button
-            type="button"
-            variant="ink"
-            size="sm"
-            className="rounded-chip px-4"
-            onClick={print}
-          >
-            <IconDownload aria-hidden="true" />
-            Unduh PDF
-          </Button>
+          <PdfButton pdf={pdf} place="top" />
         </div>
+        <PdfFailed pdf={pdf} place="top" className={styles.topbarNote} />
       </div>
       {previewNotice ? (
         <div className={cn(styles.inner, "pt-4")}>{previewNotice}</div>
@@ -699,6 +920,12 @@ export function TwoSourceReportPage({
         observations={observations}
         names={[name, ...brief.identity.aliases]}
         nav={<ContentsNav ids={ids} />}
+        ownWebsite={
+          /^https?:\/\//i.test(brief.identity.source)
+            ? brief.identity.source
+            : undefined
+        }
+        showLogos={showLogos}
       />
       <div className={styles.inner}>
         <div className={cn(styles.save, auditStyles.noPrint)}>
@@ -709,16 +936,10 @@ export function TwoSourceReportPage({
               siap dibagikan ke tim atau agensi Anda.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="ink"
-            size="sm"
-            className="rounded-chip px-4"
-            onClick={print}
-          >
-            <IconDownload aria-hidden="true" />
-            Unduh PDF
-          </Button>
+          <div className={styles.saveAction}>
+            <PdfButton pdf={pdf} place="end" />
+            <PdfFailed pdf={pdf} place="end" />
+          </div>
         </div>
         <footer className={styles.footer}>
           <span>Nuave · Laporan Visibilitas AI · {name}</span>

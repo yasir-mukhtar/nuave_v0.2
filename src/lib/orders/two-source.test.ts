@@ -16,8 +16,20 @@ import { containsPhoneNumber } from "../checks/phones";
 import type { CheckSend } from "../checks/send";
 import { syntheticCheckSend } from "../checks/synthetic";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
-import { runOrders, type CheckCallInput, type RunnerDeps } from "./runner";
+import {
+  CLAUDE_REPORT_STEP_MS,
+  LONG_RUN_BUDGET_MS,
+  PAGES_STEP_MS,
+  RUN_BUDGET_MS,
+  runOrders,
+  type CheckCallInput,
+  type RunnerDeps,
+} from "./runner";
 import { orderStatus } from "./store";
+import { SpendCapError } from "../spending/provider-spend";
+import { AuditBudgetError } from "../audit/telemetry";
+import { competitorFacts } from "./two-source";
+import type { BusinessListing } from "../checks/listings";
 import {
   approveTwoSource,
   makeOrder,
@@ -739,5 +751,530 @@ describe("the report gate and failures (R-14, R-19, R-21, AC-10, AC-13)", () => 
     expect(sent).toEqual([]);
     expect(orderRow(id).state).toBe("failed");
     expect(orderRow(id).failure_code).toBe("order_limit");
+  });
+});
+
+/* ------------------- Spec 021 Part C: competitor data ------------------- */
+
+describe("competitor data saved with the report (Spec 021 C-01, C-02, AC-C1, AC-C2)", () => {
+  it("a synthetic order saves each business's counts, recommendations, website, rating and reviews, with no phone or address", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const two = report.two_source!;
+    expect(two.version).toBe("nuave-two-source-v2");
+    // Klinik Sintesa Contoh: named in the 9 ChatGPT answers and the 8 AI
+    // Overviews, shown as a ChatGPT business card in all 9 answers.
+    const fact = two.competitors!.others.find(
+      (item) => item.name === "Klinik Sintesa Contoh",
+    )!;
+    expect(fact.chatgpt).toHaveLength(9);
+    expect(fact.google).toHaveLength(8);
+    expect(fact.cards).toHaveLength(9);
+    expect(fact.chatgpt).not.toContain(two.questions[6]!.prompt_id);
+    expect(fact).toMatchObject({
+      website: "https://klinik-sintesa.test/",
+      rating: { value: 4.6, max: 5 },
+      // The listing with the most reviews: Google's map result.
+      reviews: 131,
+    });
+    expect(two.competitors!.own).toEqual({
+      cards: [],
+      website: null,
+      rating: null,
+      reviews: null,
+    });
+    // AC-C2: no phone number and no address in what is saved about
+    // businesses, in the report or in the saved checks.
+    const saved = [
+      JSON.stringify(two.competitors),
+      ...rows<{ c_facts_json: string | null; g_result_json: string | null }>(
+        `SELECT c_facts_json, g_result_json FROM order_questions WHERE order_id = '${id}'`,
+      ).flatMap((row) => [
+        JSON.stringify(
+          (JSON.parse(row.c_facts_json ?? "{}") as { listings?: unknown })
+            .listings ?? [],
+        ),
+        JSON.stringify(
+          (JSON.parse(row.g_result_json ?? "{}") as { listings?: unknown })
+            .listings ?? [],
+        ),
+      ]),
+    ].join("\n");
+    expect(saved).toContain("klinik-sintesa.test");
+    expect(containsPhoneNumber(saved)).toBe(false);
+    expect(saved).not.toContain("Jl. Contoh");
+  });
+});
+
+describe("competitorFacts (C-02)", () => {
+  const card = (
+    name: string,
+    more: Partial<BusinessListing> = {},
+  ): BusinessListing => ({
+    name,
+    website: null,
+    rating: null,
+    reviews: null,
+    card: true,
+    ...more,
+  });
+  const own = ["Erha Clinic"];
+  const isOwn = (name: string) => / erha clinic /i.test(` ${name} `);
+
+  it("counts answers once per source, longest name first, owner's names matched too; a card counts once per answer that names the business", () => {
+    const facts = competitorFacts({
+      answers: [
+        {
+          id: "q1",
+          chatgpt:
+            "Erha Clinic dan Natasha Skin Clinic. Natasha Skin Clinic lagi.",
+          google: "Natasha Skin Clinic.",
+          listings: {
+            chatgpt: [
+              card("Natasha Skin Clinic", {
+                website: "https://natasha.example/",
+                rating: { value: 4.5, max: 5 },
+                reviews: 40,
+              }),
+              card("Natasha Skin Clinic"),
+              card("Erha Clinic", {
+                website: "https://erha.example/",
+                rating: { value: 4.8, max: 5 },
+                reviews: 900,
+              }),
+              // A branch: neither the owner nor a competitor.
+              card("Erha Clinic Surabaya", {
+                rating: { value: 3.1, max: 5 },
+                reviews: 5000,
+              }),
+              // A card for a business the answer does not name: no card.
+              card("Klinik Kosong"),
+            ],
+            google: [
+              card("Natasha Skin Clinic", {
+                card: false,
+                rating: { value: 4.6, max: 5 },
+                reviews: 300,
+              }),
+            ],
+          },
+        },
+        // "Erha" alone is not "Erha Clinic"; "Natasha" alone is a competitor.
+        {
+          id: "q2",
+          chatgpt: "Coba Natasha atau Erha.",
+          google: "",
+          listings: { chatgpt: [], google: [] },
+        },
+      ],
+      names: ["Natasha Skin Clinic", "Natasha", "Klinik  Kosong"],
+      ownNames: own,
+      isOwn,
+    });
+    expect(facts.others).toEqual([
+      {
+        name: "Natasha Skin Clinic",
+        chatgpt: ["q1"],
+        google: ["q1"],
+        cards: ["q1"],
+        website: "https://natasha.example/",
+        rating: { value: 4.6, max: 5 },
+        reviews: 300,
+      },
+      {
+        name: "Natasha",
+        chatgpt: ["q2"],
+        google: [],
+        cards: [],
+        website: null,
+        rating: null,
+        reviews: null,
+      },
+      {
+        name: "Klinik  Kosong",
+        chatgpt: [],
+        google: [],
+        cards: [],
+        website: null,
+        rating: null,
+        reviews: null,
+      },
+    ]);
+    // The owner's details come only from listings under its own name: the
+    // branch's 3.1 with 5,000 reviews is not the owner's rating.
+    expect(facts.own).toEqual({
+      cards: ["q1"],
+      website: "https://erha.example/",
+      rating: { value: 4.8, max: 5 },
+      reviews: 900,
+    });
+  });
+});
+
+describe("Spec 021 Part B: the new writer on the whole path (AC-B1, AC-B2)", () => {
+  it("AC-B1: the writer's request holds Google's words, the topics, the businesses per answer and the playbook, and no phone number", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    const input = t.reportInputs[0] as Parameters<
+      typeof import("../audit/openai").reportRequest
+    >[0];
+    const { reportRequest } = await import("../audit/openai");
+    const request = reportRequest(input);
+    const developer = request.input[0].content;
+    const user = request.input[1].content;
+    expect(developer).toContain("# Nuave report playbook");
+    expect(developer).toContain("Rule 3, no causes");
+    const sent = JSON.parse(user) as {
+      questions: {
+        prompt_id: string;
+        google_text: string;
+        businesses: { chatgpt: string[] };
+      }[];
+      google_ai_overview: { prompt_id: string; outcome: string }[];
+      other_businesses: string[];
+    };
+    const summaries = sent.google_ai_overview.filter(
+      (fact) => fact.outcome === "summary",
+    );
+    expect(summaries.length).toBeGreaterThan(0);
+    for (const fact of summaries)
+      expect(
+        sent.questions.find((q) => q.prompt_id === fact.prompt_id)!.google_text,
+      ).not.toBe("");
+    expect(sent.other_businesses.length).toBeGreaterThan(0);
+    expect(sent.questions.some((q) => q.businesses.chatgpt.length > 0)).toBe(
+      true,
+    );
+    // The synthetic ChatGPT answers carry "0812-3456-7890": none reaches
+    // the writer.
+    expect(containsPhoneNumber(developer)).toBe(false);
+    expect(containsPhoneNumber(user)).toBe(false);
+  });
+
+  it("saves the new block", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    await runUntilEnded(deps(), id);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    const writing = report.two_source_writing!;
+    expect(writing.version).toBe("nuave-two-source-writing-v1");
+    // The report says which writer wrote it (the side-by-side test reads it).
+    expect(report.provenance.report_prompt_version).toBe(
+      "nuave-two-source-writing-v1",
+    );
+    expect(writing.verdict).toMatch(/^Uji alur sintetis/);
+    expect(writing.plan).toHaveLength(3);
+    expect(report.key_findings[0]!.headline?.number).toMatch(/^\d+ dari \d+$/);
+    // The new writer's recommendations carry a title and one paragraph only.
+    expect(report.priorities[0]).not.toHaveProperty("done_when");
+    expect(report.priorities[0]).not.toHaveProperty("owner");
+    // The page check (status "ready") runs on this same synthetic report in
+    // the whole-path test above.
+  });
+
+  it("AC-B2: a banned title start is revised once; one the revision keeps is removed by code; a wrong headline number is dropped", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: string[][] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            key_findings: result.content.key_findings.map((finding, i) =>
+              i === 1
+                ? {
+                    ...finding,
+                    headline: {
+                      number: "42",
+                      caption: "salah",
+                      basis: "cited_domains" as const,
+                    },
+                  }
+                : finding,
+            ),
+            priorities: result.content.priorities.map((priority, i) =>
+              i === 0
+                ? { ...priority, action: "Pastikan audit nyata berjalan" }
+                : priority,
+            ),
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(1);
+    expect(revisions[0]!.join("\n")).toMatch(
+      /Recommendation 1 title starts with/,
+    );
+    expect(orderRow(id).state).toBe("delivered");
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.priorities[0]!.action).toBe("Audit nyata berjalan");
+    for (const text of [
+      ...report.key_findings.map((f) => f.title),
+      ...report.priorities.map((p) => p.action),
+    ])
+      expect(text).not.toMatch(
+        /^(Periksa|Pertahankan|Pertimbangkan|Pastikan)\b/i,
+      );
+    expect(report.key_findings[1]!.headline).toBeUndefined();
+    // The confirmed headline stays.
+    expect(report.key_findings[0]!.headline).toBeDefined();
+  });
+});
+
+describe("Spec 021 B-08: the pages read before the report (AC-B5)", () => {
+  const page = (url: string) => ({
+    url,
+    domain: new URL(url).hostname,
+    title: "Judul",
+    kind: "cited" as const,
+    cited_in: ["q1"],
+    text: `Isi ${url}`,
+  });
+  type Reader = NonNullable<NonNullable<RunnerDeps["pages"]>["reader"]>;
+  const writerPages = (input: unknown) =>
+    (
+      input as {
+        two_source_facts?: { writer?: { pages?: { url: string }[] } };
+      }
+    ).two_source_facts?.writer?.pages;
+
+  it("reads once, in its own step, with no report attempt; the writer gets the pages; only the addresses stay", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const reader = vi.fn<Reader>(async (input) => {
+      expect(input.sources.length).toBeGreaterThan(0);
+      return {
+        pages: [page("https://hadirr.example/a")],
+        unread: ["https://b.example/"],
+        requests: 3,
+      };
+    });
+    const t = deps(undefined, { pages: { reader } });
+    const outcomes: string[] = [];
+    for (let i = 0; i < 40 && orderRow(id).state !== "delivered"; i += 1) {
+      if (orderRow(id).state === "reporting" && !orderRow(id).report_json)
+        expect(orderRow(id).report_attempts).toBe(0);
+      outcomes.push(...(await t.run()).outcomes);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(1);
+    expect(outcomes.indexOf("pages_read")).toBeLessThan(
+      outcomes.indexOf("report_saved"),
+    );
+    expect(writerPages(t.reportInputs[0])!.map((p) => p.url)).toEqual([
+      "https://hadirr.example/a",
+    ]);
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "kept_addresses",
+      read: "read",
+      urls: ["https://hadirr.example/a"],
+      unread: ["https://b.example/"],
+    });
+    expect(
+      rows("SELECT * FROM founder_notices WHERE kind = 'pages_unread'"),
+    ).toHaveLength(0);
+  });
+
+  it("no Firecrawl key: no reading, no notice, the report is written without pages", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps(undefined, { pages: { reader: null } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(writerPages(t.reportInputs[0])).toBeUndefined();
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({ status: "no_key" });
+    expect(
+      rows("SELECT * FROM founder_notices WHERE kind = 'pages_unread'"),
+    ).toHaveLength(0);
+  });
+
+  it("a stopped reading keeps its pages and records one notice for the day", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps(undefined, {
+      pages: {
+        reader: async () => ({
+          pages: [page("https://a.example/")],
+          unread: ["https://b.example/"],
+          stopped: 402,
+          requests: 2,
+        }),
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(writerPages(t.reportInputs[0])).toHaveLength(1);
+    expect(JSON.parse(orderRow(id).pages_json!).read).toBe("partial");
+    const notices = rows<{ kind: string; detail_json: string }>(
+      "SELECT kind, detail_json FROM founder_notices WHERE kind != 'checks_failed'",
+    );
+    expect(notices.map((n) => n.kind)).toEqual(["pages_unread"]);
+    expect(JSON.parse(notices[0]!.detail_json).status).toBe(402);
+  });
+
+  it("a reading that never finishes is tried twice, then the report goes on without pages", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const reader = vi.fn<Reader>(async () => {
+      throw new Error("the run died mid-read");
+    });
+    const t = deps(undefined, { pages: { reader } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(2);
+    expect(writerPages(t.reportInputs[0])).toBeUndefined();
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "gave_up",
+      tries: 2,
+    });
+    expect(
+      rows<{ kind: string }>(
+        "SELECT kind FROM founder_notices WHERE kind != 'checks_failed'",
+      ).map((n) => n.kind),
+    ).toEqual(["pages_unread"]);
+  });
+
+  it("without the page reader (synthetic mode) there is no pages step", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).pages_json).toBeNull();
+  });
+});
+
+describe("Spec 021 PR 6b: long steps (a Claude report, a page reading)", () => {
+  it("fit the longer budget, which with the email work after them ends inside the cron's 15 minutes", () => {
+    expect(CLAUDE_REPORT_STEP_MS).toBeGreaterThan(RUN_BUDGET_MS);
+    expect(CLAUDE_REPORT_STEP_MS).toBeLessThanOrEqual(LONG_RUN_BUDGET_MS);
+    expect(PAGES_STEP_MS).toBeLessThanOrEqual(LONG_RUN_BUDGET_MS);
+    // The ready email, payment email, two notices and failure email, each
+    // up to about 36 seconds (mail.ts), after the step.
+    expect(LONG_RUN_BUDGET_MS + 5 * 36_000).toBeLessThan(900_000);
+  });
+
+  it("a Claude report step starts as a run's first audit step, and nothing starts after it", async () => {
+    // The test clock stands still within a run, so two short report steps
+    // fit one run; two Claude report steps never do.
+    const most = async (claudeReports: boolean) => {
+      const a = await makeOrder(d1.db, { now: clock });
+      await approveTwoSource(d1.db, a, { now: clock });
+      const b = await makeOrder(d1.db, { now: clock });
+      await approveTwoSource(d1.db, b, { now: clock });
+      const t = deps(undefined, { claudeReports });
+      let max = 0;
+      for (let i = 0; i < 60; i += 1) {
+        const { outcomes } = await t.run();
+        max = Math.max(
+          max,
+          outcomes.filter((o) => o === "report_saved").length,
+        );
+        minute();
+        if (
+          orderRow(a).state === "delivered" &&
+          orderRow(b).state === "delivered"
+        )
+          return max;
+      }
+      throw new Error("not delivered");
+    };
+    expect(await most(false)).toBe(2);
+    expect(await most(true)).toBe(1);
+  });
+
+  it("a step sized from the first read is not run when the order moved on before the claim", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    // Bring the order to its pages step without reading them.
+    const t = deps(undefined, {
+      claudeReports: true,
+      pages: {
+        reader: async () => ({ pages: [], unread: [], requests: 0 }),
+      },
+    });
+    for (let i = 0; i < 40 && orderRow(id).state !== "reporting"; i += 1) {
+      await t.run();
+      minute();
+    }
+    expect(orderRow(id).pages_json).toBeNull();
+    // Another runner reads the pages between this run's first read and its
+    // claim: the step was sized as a pages step, the order now needs a
+    // Claude report.
+    let moved = false;
+    const db: RunnerDeps["db"] = {
+      ...d1.db,
+      prepare: (sql) => {
+        if (!moved && sql.includes("SET lease_owner = ?2, lease_until = ?3")) {
+          moved = true;
+          d1.query(
+            `UPDATE orders SET pages_json = '{"status":"no_key"}' WHERE id = '${id}' RETURNING 1`,
+          );
+        }
+        return d1.db.prepare(sql);
+      },
+      batch: (statements) => d1.db.batch(statements),
+    };
+    const before = t.reportInputs.length;
+    const { outcomes } = await runOrders({ ...t.d, db });
+    expect(moved).toBe(true);
+    expect(outcomes).toContain("waiting");
+    expect(outcomes).not.toContain("pages_read");
+    expect(t.reportInputs.length).toBe(before);
+    expect(orderRow(id).lease_owner).toBeNull();
+    // The next run sizes the step again and writes the report.
+    minute();
+    await t.run();
+    expect(t.reportInputs.length).toBe(before + 1);
+  });
+
+  it("a language fix the Claude writer cannot send (busy, or over the ceiling) keeps the first draft, and its attempt is spent", async () => {
+    for (const failure of [
+      new SpendCapError("unavailable"),
+      new AuditBudgetError("over the ceiling"),
+    ]) {
+      const id = await makeOrder(d1.db, { now: clock });
+      await approveTwoSource(d1.db, id, { now: clock });
+      let revisions = 0;
+      const t = deps(undefined, {
+        claudeReports: true,
+        generateReport: async (...args) => {
+          if (args[1]) {
+            revisions += 1;
+            throw failure;
+          }
+          const result = await generateSyntheticLocalReport(...args);
+          return {
+            ...result,
+            content: {
+              ...result.content,
+              priorities: result.content.priorities.map((priority, i) =>
+                i === 0
+                  ? { ...priority, action: "Pastikan audit nyata berjalan" }
+                  : priority,
+              ),
+            },
+          };
+        },
+      });
+      await runUntilEnded(t, id);
+      expect(revisions).toBe(1);
+      expect(orderRow(id).state).toBe("delivered");
+      expect(Number(orderRow(id).report_attempts)).toBe(2);
+      const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+      // The first draft, with the banned start removed by code.
+      expect(report.priorities[0]!.action).toBe("Audit nyata berjalan");
+    }
   });
 });

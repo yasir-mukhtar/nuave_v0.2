@@ -111,7 +111,7 @@ export function PriceReceipt() {
               </p>
               <SourceForm layout="stacked" className={styles.form} />
               <p className={styles.ready}>
-                Laporan siap dalam 15 menit setelah audit dimulai.
+                Laporan siap dalam 30 menit setelah audit dimulai.
               </p>
             </div>
           </div>

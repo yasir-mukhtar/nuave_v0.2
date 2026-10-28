@@ -504,4 +504,52 @@ describe("Google's own business list (N-6)", () => {
       ),
     ).toEqual(["Dental Prima"]);
   });
+
+  it("Spec 021 Part C: the business's own map listing is saved for its row, never as another business", () => {
+    const attempt = readGoogleAttempt({
+      send: send({
+        items: [
+          {
+            type: "ai_overview",
+            markdown: "CS Dental dan Dental Prima sering disebut.",
+          },
+          {
+            type: "local_pack",
+            title: "CS Dental",
+            phone: "+62 31 555 0101",
+            url: "https://csdental.example/",
+            rating: { value: 4.9, votes_count: 210, rating_max: 5 },
+          },
+          {
+            type: "local_pack",
+            title: "Dental Prima",
+            rating: { value: 4.4, votes_count: 12, rating_max: 5 },
+          },
+        ],
+      }),
+      promptId: "NUAVE-DT-01",
+      question: prompt.question,
+      locationCode: 1007715,
+      locationName: "Surabaya",
+      names,
+    });
+    if (attempt.kind !== "done") throw new Error("expected a result");
+    expect(attempt.check.businesses).toEqual(["Dental Prima"]);
+    expect(attempt.check.listings).toEqual([
+      {
+        name: "CS Dental",
+        website: "https://csdental.example/",
+        rating: { value: 4.9, max: 5 },
+        reviews: 210,
+        card: false,
+      },
+      {
+        name: "Dental Prima",
+        website: null,
+        rating: { value: 4.4, max: 5 },
+        reviews: 12,
+        card: false,
+      },
+    ]);
+  });
 });
