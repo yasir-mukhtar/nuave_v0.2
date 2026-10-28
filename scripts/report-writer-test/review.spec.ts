@@ -11,9 +11,20 @@
  * with the saved file, so no link, database or provider is used. Every page is
  * also checked for writer names. CHROMIUM_PATH points at a browser when
  * Playwright's own is not installed.
+ *
+ * Spec 023: with REPORT_TEST_SHARED_DIR set, it also prints the
+ * before/after pairs in <shared>/style-review/<order>/ ("Pasangan 1 - 1.pdf").
+ * Run it from the after writer's build, so both reports of a pair are
+ * printed by the same page.
  */
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { chromium, type Browser } from "playwright";
 import { afterAll, beforeAll, expect, it } from "vitest";
@@ -24,12 +35,20 @@ const ORIGIN = `http://localhost:${PORT}`;
 
 function pages(): { file: string; pdf: string }[] {
   const out: { file: string; pdf: string }[] = [];
-  // The blind set, the reading test's blind pairs and its page-reading set.
-  for (const root of ["review", "review-pages", "review-pages-set"]) {
-    const review = join(EVIDENCE_DIR, root);
+  // The blind set, the reading test's blind pairs and its page-reading set,
+  // and Spec 023's before/after pairs.
+  const shared = process.env.REPORT_TEST_SHARED_DIR?.trim();
+  const roots: [string, string][] = [
+    ...["review", "review-pages", "review-pages-set"].map(
+      (root): [string, string] => [EVIDENCE_DIR, root],
+    ),
+    ...(shared ? [[shared, "style-review"] as [string, string]] : []),
+  ];
+  for (const [base, root] of roots) {
+    const review = join(base, root);
     if (!existsSync(review)) continue;
-    for (const order of readdirSync(review).filter(
-      (name) => !name.endsWith(".json"),
+    for (const order of readdirSync(review).filter((name) =>
+      statSync(join(review, name)).isDirectory(),
     ))
       for (const name of readdirSync(join(review, order)).filter((n) =>
         n.endsWith(".json"),
@@ -41,7 +60,7 @@ function pages(): { file: string; pdf: string }[] {
             order,
             name === "reference.json"
               ? "Referensi - laporan yang dikirim.pdf"
-              : root === "review-pages"
+              : root === "review-pages" || root === "style-review"
                 ? name.replace(/\.json$/, ".pdf")
                 : `Laporan ${name.replace(/\.json$/, "")}.pdf`,
           ),

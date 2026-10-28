@@ -51,7 +51,13 @@ import {
   drawPageSet,
   PAGE_SET,
   type OrderEvidence,
+  HARD_STOP_USD,
 } from "../scripts/report-writer-test/harness";
+import {
+  blindStyleReport,
+  drawStylePair,
+  styleMetrics,
+} from "../scripts/report-writer-test/style";
 import { mkdirSync, writeFileSync } from "node:fs";
 
 // The test B harness (scripts/report-writer-test), offline: a synthetic
@@ -819,5 +825,151 @@ describe("the reading test (founder decision 2026-10-27)", () => {
         .writers,
     ).toEqual(["p1", "t9"]);
     void luna;
+  });
+});
+
+describe("Spec 023: the writing-quality test", () => {
+  it("labels each ledger line with its writer, and stops at USD 10", () => {
+    expect(HARD_STOP_USD).toBe(10);
+    const ledger = new Ledger(join(dir, "spend.json"), 10, "before");
+    ledger
+      .reserve({
+        order: "NV-TEST01",
+        entry: "opus-medium-pages",
+        model: "claude-opus-5-5",
+        reserved_usd: 1,
+      })
+      .settle(0.5);
+    expect(ledger.calls()[0]).toMatchObject({
+      label: "before",
+      actual_usd: 0.5,
+    });
+    // Another writer's lines share the same file and the same stop.
+    new Ledger(join(dir, "spend.json"), 10, "after").reserve({
+      order: "NV-TEST01",
+      entry: "opus-medium-pages",
+      model: "claude-opus-5-5",
+      reserved_usd: 1,
+    });
+    expect(ledger.calls().map((call) => call.label)).toEqual([
+      "before",
+      "after",
+    ]);
+    expect(ledger.spentUsd()).toBe(1.5);
+  });
+
+  it("a writer reads the pages from the shared folder it is given", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const shared = join(dir, "shared");
+    const path = pagesPath(evidence.order.order_number, shared);
+    mkdirSync(join(path, ".."), { recursive: true });
+    writeFileSync(
+      path,
+      JSON.stringify({
+        read_at: "2026-10-28T00:00:00.000Z",
+        pages: [
+          {
+            url: "https://fiksi.example/",
+            domain: "fiksi.example",
+            title: "Beranda",
+            kind: "own",
+            cited_in: [],
+            text: "Klinik Fiksi, 3 cabang.",
+          },
+        ],
+        unread: [],
+        firecrawl_requests: 2,
+      }),
+    );
+    const entry = PAGE_ENTRIES.find((item) => item.id === "opus-medium-pages")!;
+    const seen: string[] = [];
+    const spy =
+      (): ReportGenerator =>
+      async (...args) => {
+        const { reportRequest } = await import("../src/lib/audit/openai");
+        seen.push(reportRequest(args[0] as never, args[1]).input[1].content);
+        return generateSyntheticLocalReport(...args);
+      };
+    const result = await runEntry(
+      evidence,
+      entry,
+      spy,
+      new Ledger(join(shared, "spend.json")),
+      shared,
+    );
+    expect(result.status).toBe("ok");
+    expect(seen[0]).toContain("Klinik Fiksi, 3 cabang.");
+  });
+
+  it("draws a pair's numbers once and keeps them while both writers stay", () => {
+    const writers = { before: "aaa", after: "bbb" };
+    const first = drawStylePair(writers, undefined, () => 1);
+    expect(first.after).toBe("2");
+    expect(drawStylePair(writers, first, () => 0)).toBe(first);
+    expect(
+      drawStylePair({ ...writers, after: "ccc" }, first, () => 0).after,
+    ).toBe("1");
+  });
+
+  it("hides the writer and its prompt version from the founder", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const report = JSON.parse(evidence.order.report_json) as AuditReport;
+    const blind = blindStyleReport(
+      {
+        ...report,
+        provenance: {
+          ...report.provenance,
+          returned_report_model: "claude-opus-5-5",
+          report_prompt_version: "nuave-two-source-writing-v2",
+        },
+      },
+      "2026-10-26T02:59:26.100Z",
+    );
+    expect(telltaleIn(blind)).toBeNull();
+    expect(blind.provenance.report_prompt_version).toBe("hidden");
+  });
+
+  it("measures the writing: sentence lengths, typical phrases, dashes, names, repeated counts, cause words and guide overlaps", () => {
+    const report = {
+      conclusion: "Di ChatGPT, klinik Anda disebut di 3 dari 10 jawaban.",
+      key_findings: [
+        {
+          title: "SOZO belum disebut untuk treatment",
+          explanation:
+            "Selain itu, klinik ini tidak muncul di 3 dari 10 jawaban — hal ini menunjukkan celah karena halaman treatment tipis.",
+        },
+      ],
+      priorities: [
+        {
+          action: "Tulis halaman treatment",
+          why: "Satu halaman untuk satu treatment.",
+        },
+      ],
+      two_source_writing: {
+        verdict: "SOZO disebut di 3 dari 10 jawaban ChatGPT.",
+        competitor_reasons: [],
+        takeaways: [],
+        plan: [],
+      },
+    } as unknown as AuditReport;
+    const m = styleMetrics(
+      report,
+      ["SOZO"],
+      "Contoh buruk: klinik ini tidak muncul di 3 dari 10 jawaban.",
+    );
+    expect(m.sentences).toBe(6);
+    expect(m.typical_phrases).toEqual({
+      "hal ini menunjukkan": 1,
+      "selain itu": 1,
+    });
+    expect(m.dashes).toBe(1);
+    expect(m.brand_name).toBe(2);
+    expect(m.klinik_ini).toBe(1);
+    expect(m.klinik_or_bisnis_anda).toBe(1);
+    expect(m.repeated_counts).toEqual(["3 dari 10"]);
+    expect(m.cause_markers).toEqual({ karena: 1 });
+    expect(m.example_overlaps).toContain("klinik ini tidak muncul di 3");
   });
 });
