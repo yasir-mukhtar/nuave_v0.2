@@ -9,6 +9,11 @@
  * serves the message over HTTP.
  */
 
+import { SUPPORT_EMAIL } from "@/lib/legal";
+import { DELIVERY_PROMISE } from "./promise";
+
+export { DELIVERY_PROMISE };
+
 export type MailMessage = {
   to: string;
   subject: string;
@@ -27,8 +32,6 @@ export type MailResult = {
 
 export type MailSender = (message: MailMessage) => Promise<MailResult>;
 
-const SUPPORT_EMAIL = "support@nuave.ai";
-
 export function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -38,17 +41,126 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-/** Draft wording; S5 finalizes. The business name is escaped in the HTML. */
-export function readyEmail(input: { businessName: string; link: string }) {
-  const text = `Laporan audit untuk ${input.businessName} sudah siap: ${input.link}. Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Bantuan: ${SUPPORT_EMAIL}.`;
-  const html = `<p>Laporan audit untuk ${escapeHtml(input.businessName)} sudah siap: <a href="${escapeHtml(input.link)}">${escapeHtml(input.link)}</a>.</p><p>Siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan. Link berlaku 12 bulan. Bantuan: ${SUPPORT_EMAIL}.</p>`;
-  return { subject: "Laporan audit Nuave Anda sudah siap", text, html };
+const EMAIL_FONT =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+/** "18 Oktober 2026 (UTC)": the day in the report's own time zone. */
+export function observedOnText(value: string): string | null {
+  const date = new Date(value);
+  // The report's header shows its times in UTC and names the zone (Spec 012
+  // R-12); the email gives the same day, named the same way.
+  return Number.isNaN(date.getTime())
+    ? null
+    : `${new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(date)} (UTC)`;
 }
 
-export function failureEmail(input: { businessName: string }) {
-  const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.`;
-  const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Bantuan: ${SUPPORT_EMAIL}.</p>`;
+/**
+ * J31: the report-ready email. It names the business and the day the answers
+ * were observed, has one action ("Buka laporan"), says where Download PDF is,
+ * and carries the privacy note, the 12-month link life, the snapshot note and
+ * one help route. The pictures come from the site itself and every line still
+ * reads without them. The business name is escaped in the HTML; the order
+ * number (spec 017 R-01) is in every customer email.
+ */
+export function readyEmail(input: {
+  businessName: string;
+  link: string;
+  orderNumber: string;
+  /** The audited location or area ("Kedai Fiksi Dago", "Bandung, Cimahi"). */
+  scope?: string | null;
+  /** When the first answer was observed (ISO time). */
+  observedAt?: string | null;
+}) {
+  const observedOn = input.observedAt ? observedOnText(input.observedAt) : null;
+  // "Kedai Fiksi Dago" under "Kedai Fiksi" reads as "Kedai Fiksi, Dago".
+  const name = input.businessName.trim();
+  const rawScope = input.scope?.trim() ?? "";
+  const scope = rawScope
+    .toLocaleLowerCase("id-ID")
+    .startsWith(`${name.toLocaleLowerCase("id-ID")} `)
+    ? rawScope.slice(name.length).trim()
+    : rawScope;
+  const about = `AI Visibility Report untuk ${input.businessName}${
+    scope &&
+    scope.toLocaleLowerCase("id-ID") !== name.toLocaleLowerCase("id-ID")
+      ? `, ${scope}`
+      : ""
+  }.${observedOn ? ` Jawaban diamati pada ${observedOn}.` : ""}`;
+  const text = [
+    "Laporan Anda sudah siap.",
+    about,
+    `Buka laporan: ${input.link}`,
+    "Di halaman laporan, pilih Download PDF untuk menyimpan versi PDF.",
+    "Link ini pribadi: siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan email ini. Link berlaku 12 bulan.",
+    "Laporan ini merekam jawaban model AI untuk 10 pertanyaan pada satu waktu. Jawaban dapat berubah.",
+    `Ada masalah dengan laporan? Balas email ini atau tulis ke ${SUPPORT_EMAIL}.`,
+    `Nomor pesanan: ${input.orderNumber}`,
+  ].join("\n\n");
+  let origin = "";
+  try {
+    origin = new URL(input.link).origin;
+  } catch {
+    // No pictures without a site address; the words carry the email.
+  }
+  const href = escapeHtml(input.link);
+  const muted = `margin:0;font-family:${EMAIL_FONT};font-size:13px;line-height:19px;color:#52516a;`;
+  const html = `<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Laporan Anda sudah siap</title></head>
+<body style="margin:0;padding:0;background:#f8f8fb;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f8fb;"><tr><td align="center" style="padding:16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e7e6ee;border-radius:20px;">
+<tr><td style="padding:24px 24px 0;">${
+    origin
+      ? `<img src="${escapeHtml(origin)}/v2/email/nuave-logo.png" width="79" height="22" alt="Nuave" style="display:block;border:0;">`
+      : `<p style="margin:0;font-family:${EMAIL_FONT};font-size:18px;font-weight:600;color:#16161d;">Nuave</p>`
+  }</td></tr>
+${
+  origin
+    ? `<tr><td style="padding:20px 24px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:16px;"><tr><td align="center" style="padding:6px;"><img src="${escapeHtml(origin)}/v2/email/kedai-busy.jpg" width="204" height="137" alt="" style="display:block;border:0;"></td></tr></table></td></tr>`
+    : ""
+}
+<tr><td style="padding:22px 24px 0;"><h1 style="margin:0;font-family:${EMAIL_FONT};font-size:24px;line-height:30px;font-weight:600;color:#16161d;">Laporan Anda sudah siap</h1>
+<p style="margin:10px 0 0;font-family:${EMAIL_FONT};font-size:16px;line-height:24px;color:#52516a;">${escapeHtml(about)}</p></td></tr>
+<tr><td style="padding:22px 24px 0;"><a href="${href}" style="display:block;background:#4129e0;border-radius:14px;padding:17px 24px;font-family:${EMAIL_FONT};font-size:18px;line-height:22px;font-weight:600;color:#ffffff;text-align:center;text-decoration:none;">Buka laporan</a>
+<p style="${muted}margin-top:12px;text-align:center;color:#6b6a85;">Di halaman laporan, pilih Download PDF untuk menyimpan versi PDF.</p></td></tr>
+<tr><td style="padding:20px 24px 0;"><div style="height:1px;background:#e7e6ee;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
+<tr><td style="padding:16px 24px 0;"><p style="${muted}">Link ini pribadi: siapa pun yang memegang link ini bisa membuka laporan, jadi jangan teruskan email ini. Link berlaku 12 bulan.</p>
+<p style="${muted}margin-top:10px;">Laporan ini merekam jawaban model AI untuk 10 pertanyaan pada satu waktu. Jawaban dapat berubah.</p></td></tr>
+<tr><td style="padding:16px 24px 0;"><div style="height:1px;background:#e7e6ee;line-height:1px;font-size:1px;">&nbsp;</div></td></tr>
+<tr><td style="padding:16px 24px 24px;"><p style="${muted}color:#6b6a85;">Ada masalah dengan laporan? Balas email ini atau tulis ke <a href="mailto:${SUPPORT_EMAIL}" style="color:#16161d;">${SUPPORT_EMAIL}</a>.</p>
+<p style="margin:10px 0 0;font-family:ui-monospace, Menlo, Consolas, monospace;font-size:12px;line-height:16px;color:#6b6a85;">No. pesanan ${escapeHtml(input.orderNumber)}</p>
+<p style="${muted}margin-top:14px;font-size:12px;color:#6b6a85;">Jika tombol tidak bisa dibuka, salin link ini: <span style="word-break:break-all;">${href}</span></p></td></tr>
+</table></td></tr></table></body></html>`;
+  return {
+    subject: `AI Visibility Report untuk ${input.businessName} sudah siap`,
+    text,
+    html,
+  };
+}
+
+export function failureEmail(input: {
+  businessName: string;
+  orderNumber: string;
+}) {
+  const text = `Audit untuk ${input.businessName} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${input.orderNumber}. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Audit untuk ${escapeHtml(input.businessName)} belum bisa diselesaikan. Kami akan menghubungi Anda dalam 1 hari kerja. Nomor pesanan: ${escapeHtml(input.orderNumber)}. Bantuan: ${SUPPORT_EMAIL}.</p>`;
   return { subject: "Audit Nuave Anda belum bisa diselesaikan", text, html };
+}
+
+/** R-22: the payment-received email. It has no link and no secret; it names the
+ * business, the order number, the amount, the promise and the browser line. */
+export function paymentReceivedEmail(input: {
+  businessName: string;
+  orderNumber: string;
+}) {
+  const text = `Pembayaran Rp249.000 untuk audit ${input.businessName} sudah kami terima. Nomor pesanan: ${input.orderNumber}. ${DELIVERY_PROMISE} Lanjutkan di browser yang sama untuk mengisi data bisnis Anda. Bantuan: ${SUPPORT_EMAIL}.`;
+  const html = `<p>Pembayaran Rp249.000 untuk audit ${escapeHtml(input.businessName)} sudah kami terima.</p><p>Nomor pesanan: ${escapeHtml(input.orderNumber)}.</p><p>${DELIVERY_PROMISE}</p><p>Lanjutkan di browser yang sama untuk mengisi data bisnis Anda.</p><p>Bantuan: ${SUPPORT_EMAIL}.</p>`;
+  return { subject: "Pembayaran Nuave Anda sudah diterima", text, html };
 }
 
 export const RESEND_ENDPOINT = "https://api.resend.com/emails";

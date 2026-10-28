@@ -1,0 +1,540 @@
+/* The hero's picture (Figma S1 · Hero > Demo). Measured in the laptop
+   phone's units (352 wide). On a phone the phone and the report card are
+   drawn at 90.34% (318 / 352) with `zoom`, as in the 390 design.
+
+   Two arrangements:
+   - stacked (below 1100px): the tabs scroll sideways above the phone; the
+     report card sits low on the phone's right; the stage clips the phone;
+   - side (from 1100px): the tabs float above the phone, the card hangs off
+     its right edge, and the hero's own bottom edge clips the phone. */
+
+.demo {
+  --z: 0.9034;
+  --phone-h: 775px;
+  --card-x: 62px;
+  --card-y: 542px;
+  --stage-h: 757px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Below 352px the phone and card shrink a little more, so the card's right
+   edge stays on screen. */
+@media (max-width: 351px) {
+  .demo {
+    --z: 0.8;
+  }
+}
+
+/* ── Clinic-type tabs (Figma "Components · Clinic tab") ── */
+
+.tabsScroller {
+  position: relative;
+  align-self: stretch;
+  margin-inline: calc(-1 * var(--gutter));
+}
+
+.tabsScroller::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 56px;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0), #ffffff 85%);
+  pointer-events: none;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px var(--gutter);
+  scrollbar-width: none;
+  scroll-padding-inline: var(--gutter);
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-500);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--ink-900);
+}
+
+.tab[data-active] {
+  border-color: var(--line-200);
+  background: #ffffff;
+  color: var(--ink-900);
+  font-weight: var(--type-label-strong-weight);
+  box-shadow:
+    0 1px 2px rgb(22 22 29 / 0.06),
+    0 4px 12px rgb(22 22 29 / 0.1);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
+
+.tabIcon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* ── The stage: phone, report card, caption ── */
+
+.stage {
+  position: relative;
+  width: calc(352px * var(--z));
+  height: calc(var(--stage-h) * var(--z));
+  margin-top: 16px;
+  overflow-x: visible;
+  overflow-y: clip;
+}
+
+.phone,
+.report {
+  zoom: var(--z);
+}
+
+.phone {
+  position: relative;
+  z-index: 1;
+  width: 352px;
+  height: var(--phone-h);
+  padding: 11px;
+  border-radius: 60px;
+  background: linear-gradient(
+    150deg,
+    #4a4a55 0%,
+    #1d1d23 22%,
+    #101014 60%,
+    #2b2b33 100%
+  );
+  box-shadow:
+    0 40px 80px -30px rgb(22 22 29 / 0.45),
+    0 20px 40px -24px rgb(22 22 29 / 0.35),
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.1);
+}
+
+.key {
+  position: absolute;
+  left: -3px;
+  width: 4px;
+  border-radius: 2px;
+  background: #26262d;
+}
+
+.key[data-key="1"] {
+  top: 150px;
+  height: 34px;
+}
+
+.key[data-key="2"] {
+  top: 200px;
+  height: 58px;
+}
+
+.key[data-key="3"] {
+  top: 270px;
+  height: 58px;
+}
+
+.key[data-key="4"] {
+  top: 220px;
+  right: -3px;
+  left: auto;
+  height: 86px;
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 49px;
+  background: #ffffff;
+}
+
+.island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  width: 104px;
+  height: 30px;
+  border-radius: 999px;
+  background: #0b0b0e;
+  transform: translateX(-50%);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50px;
+  padding: 15px 28px 0 32px;
+  color: var(--ink-900);
+  font-size: var(--type-title-sm-size);
+  font-weight: var(--type-title-sm-weight);
+  line-height: 1;
+}
+
+.statusIcons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.appbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  padding: 0 16px;
+  color: var(--ink-600);
+}
+
+.appbarMid {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: 1;
+}
+
+.aiDot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: linear-gradient(140deg, #7f6cfe 0%, #4129e0 100%);
+  color: #ffffff;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 6px 16px 0;
+}
+
+.bubble {
+  align-self: flex-end;
+  max-width: 268px;
+  margin: 0;
+  padding: 11px 15px;
+  border-radius: 22px 22px 6px 22px;
+  background: var(--stone-100);
+  color: var(--ink-900);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.lead {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--ink-900);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.results {
+  margin: 0;
+  padding: 0 12px;
+  list-style: none;
+  border: 1px solid var(--line-200);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(22 22 29 / 0.04);
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.result + .result {
+  border-top: 1px solid var(--line-200);
+}
+
+.thumb {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: 13px;
+  background: linear-gradient(160deg, #fbf8f1 0%, #f1ede3 100%);
+}
+
+.thumb img {
+  display: block;
+  width: 46px;
+  height: 46px;
+}
+
+.resultText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.resultName {
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: var(--type-label-strong-leading);
+}
+
+.resultWhy {
+  color: var(--ink-600);
+  font-size: var(--type-copy-sm-size);
+  line-height: var(--type-copy-sm-leading);
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1.5px dashed var(--ember-300);
+  border-radius: 16px;
+  background: var(--ember-50);
+}
+
+.slotThumb {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border: 1.5px dashed var(--ember-300);
+  border-radius: 13px;
+  background: #ffffff;
+  color: var(--ember-600);
+  font-size: var(--type-heading-sm-size);
+  font-weight: var(--type-heading-sm-weight);
+  line-height: 1;
+}
+
+.slotLabel {
+  color: var(--ember-700);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: var(--type-label-strong-leading);
+}
+
+/* ── Report card ── */
+
+.report {
+  position: absolute;
+  z-index: 3;
+  top: var(--card-y);
+  left: var(--card-x);
+  width: 300px;
+  padding: 18px 20px 20px;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: var(--elevation-float);
+}
+
+.reportHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 14px;
+  color: var(--ink-500);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: var(--type-label-sm-strong-leading);
+}
+
+.reportMark {
+  width: 15px;
+  height: auto;
+}
+
+.reportRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+}
+
+.reportName {
+  color: var(--ink-900);
+  font-size: var(--type-label-strong-size);
+  font-weight: var(--type-label-strong-weight);
+  line-height: var(--type-label-strong-leading);
+  white-space: nowrap;
+}
+
+.reportScore {
+  color: var(--ink-900);
+  font-size: var(--type-label-sm-strong-size);
+  font-weight: var(--type-label-sm-strong-weight);
+  line-height: var(--type-label-sm-strong-leading);
+  white-space: nowrap;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.dot,
+.dotOn {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line-200);
+}
+
+.dotOn {
+  background: var(--ember-600);
+}
+
+.reportDivider {
+  height: 1px;
+  margin: 14px 0;
+  border: 0;
+  background: var(--line-200);
+}
+
+.caption {
+  position: absolute;
+  z-index: 3;
+  top: calc((var(--card-y) + 171px) * var(--z) + 4px);
+  left: calc(var(--card-x) * var(--z));
+  margin: 0;
+  color: var(--ink-500);
+  font-size: var(--type-caption-size);
+  line-height: var(--type-caption-leading);
+  white-space: nowrap;
+}
+
+/* Tablets: the same stack, drawn at full size, tabs centred. */
+@media (min-width: 768px) {
+  .demo {
+    --z: 1;
+    --stage-h: 760px;
+    --card-x: 210px;
+    --card-y: 520px;
+  }
+
+  .tabsScroller::after {
+    display: none;
+  }
+
+  .tabs {
+    justify-content: center;
+  }
+
+  .tab {
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+  }
+
+  .tabIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Laptops: tabs above the phone, card off its right edge. */
+@media (min-width: 1100px) {
+  .demo {
+    --z: 0.8;
+    --phone-h: calc(720px / var(--z));
+    --card-x: 328px;
+    --card-y: 390px;
+    align-items: flex-start;
+  }
+
+  .tabsScroller {
+    position: absolute;
+    top: -64px;
+    left: calc(176px * var(--z));
+    margin: 0;
+    transform: translateX(-50%);
+  }
+
+  .tabs {
+    overflow: visible;
+    padding: 0;
+  }
+
+  .stage {
+    height: auto;
+    margin-top: 0;
+    overflow: visible;
+  }
+
+  .caption {
+    top: calc((var(--card-y) + 171px) * var(--z) + 16px);
+    left: calc((var(--card-x) + 38px) * var(--z));
+  }
+}
+
+/* Up to 1340px the 1440 picture does not fit beside the copy: it is drawn
+   smaller, in steps, instead of the card covering the answer. The phone
+   keeps its 720px height, so the hero's bottom edge still cuts it. */
+@media (min-width: 1180px) {
+  .demo {
+    --z: 0.87;
+  }
+}
+
+@media (min-width: 1260px) {
+  .demo {
+    --z: 0.93;
+  }
+}
+
+@media (min-width: 1340px) {
+  .demo {
+    --z: 1;
+  }
+}

@@ -1,8 +1,9 @@
 # Nuave audit journey verification map
 
 This directory is the maintained source for verifying Nuave's user-facing audit
-journey. Read this index before driving, then use the matching feature file as
-the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
+journey (the v2 mobile journey, Figma J01–J35). Read this index before driving,
+then use the matching feature file as the recipe. `V` below means
+`.agents/skills/verify-nuave/bin/verify-nuave`.
 
 ## Baseline preconditions
 
@@ -18,17 +19,25 @@ the recipe. `V` below means `.agents/skills/verify-nuave/bin/verify-nuave`.
   016 R-29), so a new context is the baseline. The report is not in the browser
   at all: it opens only from the emailed link.
 - The fictional business is `Kedai Fiksi` at `https://kedai-fiksi.example/`.
+  The customer types only the website; the free check reads the name
+  `Kedai Fiksi` from it.
 
 ## Driving conventions
 
 - Drive only through `$V drive <feature>`. Its steps come from
   `tests/e2e/journey.ts`, the shared driver the e2e specs also use.
 - Use ARIA roles and accessible names, plus the stable `data-*` handles the app
-  exposes: `data-intake-screen`, `data-smart-summary`, `data-question-slot`,
-  `data-order-stage`, `data-saved-report`, `data-direct-ten-report`,
-  `data-answer-body`, `data-report-answer`. Never use coordinates.
-- UI text is Indonesian. Copy names exactly, including the em dash in
-  `Sudah sesuai — buat pertanyaan audit`.
+  exposes: `data-intake-screen`, `data-journey-tone`, `data-smart-summary`,
+  `data-question-slot`, `data-order-stage`, `data-order-note`,
+  `data-saved-report`, `data-direct-ten-report`, `data-answer-body`,
+  `data-report-answer`. Never use coordinates.
+- UI text is Indonesian. Copy names exactly, including the ellipsis in
+  `Mereka butuh…` and the middle dot in `Pembayaran diterima · NV-…`.
+- Edit sheets (`Ubah Bisnis`, `Tambah produk`, `Ubah pertanyaan 1`, the start
+  sheet) are dialogs. While one is open the page behind it is hidden from
+  role queries, so look for controls inside the sheet.
+- Screens slide in and out. A step waits for the next screen's heading
+  before it acts, never for a fixed time.
 - A new step goes into `tests/e2e/journey.ts` first, then into the recipe in
   `src/features.ts`.
 
@@ -57,23 +66,27 @@ user-visible behavior. It then uses exactly four H2 sections in this order:
 
 ## Features
 
-- [Audit entry](./audit-entry.md) covers the landing call-to-action, the
-  `/audit` entry step, and its validation.
-- [Smart intake summary](./smart-intake-summary.md) covers the J5, J6 and JQ
-  detail screens (category, offerings, target customer, customer needs,
-  buyer considerations, service channels, market, competitors,
-  differentiator, public fact), the
-  "Ini yang akan Nuave audit" final review, its read-back rows, editable
-  `Nama lain` aliases and focus, through question creation.
+- [Audit entry](./audit-entry.md) covers the `/audit` website step (J01), its
+  validation, the landing form that hands its website to `/audit`, and
+  `Ganti tautan bisnis` on the business found.
+- [Smart intake summary](./smart-intake-summary.md) covers the free check
+  (J02), the business found (J05), the three steps and checkout, the paid
+  reading, the Step 2 screens (focus, category, offerings, target customer,
+  customer needs and considerations, service, market, competitors,
+  differentiator with its folded public fact), the Step 3 cover, the review
+  "Ini profil yang akan Nuave pakai" with its edit sheets, and question
+  creation.
 - [Rich preparation](./rich-preparation.md) covers the labelled fictional
-  preparation — locations, category suggestions, customer needs, the JQ
-  customer meanings, and named
-  competitor suggestions in the session, reload persistence, and downstream
+  preparation: published branches, category suggestions, the prepared
+  customer meanings and a named competitor in the session, reload
+  persistence, `Nama lain` aliases in the Bisnis sheet, and downstream
   question creation.
-- [Question review](./question-review.md) covers "Periksa pertanyaan audit",
-  question edits, and `Mulai audit` (the questions are approved on the server).
-- [Audit run](./audit-run.md) covers the whole order path: free brand confirm,
-  order summary, paid reading, intake, ten questions, closing the tab, the
-  server audit and the report opened from the emailed link.
-- [Report link](./report-link.md) covers the saved report page, `Download PDF`,
-  the JSON download and the not-available page.
+- [Question review](./question-review.md) covers "10 pertanyaan untuk AI",
+  question edits, and the start sheet (`Jalankan audit`, then
+  `Mulai audit sekarang` approves the questions on the server).
+- [Audit run](./audit-run.md) covers the whole order path: the free business
+  check, the three steps, checkout with its price, simulated payment, the paid
+  reading, intake, ten questions, the start sheet, closing the tab, the server
+  audit and the report opened from the emailed link.
+- [Report link](./report-link.md) covers the saved report page, both
+  `Download PDF` buttons, the JSON download and the not-available page.

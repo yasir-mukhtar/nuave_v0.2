@@ -22,7 +22,6 @@ here is type-checked, linted, or built.
 
 | Path                                                 | Came from                                                                 | Why it was staged                                                                                                                                                                                                    | Decision needed                                                  |
 | ---------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `lp-remote/`                                         | `LP-remote/` (root)                                                       | A second, complete Next.js app. Its landing components were merged into `src/` (commit `9ce1d01`) and have since diverged. It was still being type-checked by `npm run check`.                                       | Archive, or state what still needs merging                       |
 | `lp-claude-static/`                                  | `LP - Claude/` (root)                                                     | Static HTML content-first landing draft (`index`, `-v2`, `-v3`). Declared out of scope by `docs/V2_SUBDOMAIN_LAUNCH_PLAN.md`.                                                                                        | Archive, or promote its copy into `docs/content/landing-copy.md` |
 | `faq-taste-preview/`                                 | `faq-taste-preview/` (root)                                               | Static FAQ design preview against the external taste-system repo. The live page is `src/app/faq/page.tsx`.                                                                                                           | Archive, or fold its design decisions into the design pass       |
 | `landing-copy-drafts/landing-copy-backup.md`         | `Landing Page Copy Backup.md` (root)                                      | Undated backup of an earlier landing copy revision.                                                                                                                                                                  | Archive                                                          |
@@ -45,6 +44,12 @@ they were folded into `../archive/` — the completed plan now lives at
 [`../archive/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md`](../archive/completed-plans/V2_SUBDOMAIN_LAUNCH_PLAN.md)
 and the superseded plan at
 [`../archive/superseded-plans/DOMAIN_TRANSITION_PLAN.md`](../archive/superseded-plans/DOMAIN_TRANSITION_PLAN.md).
+
+`lp-remote/` (from `LP-remote/` at the root), a second complete Next.js app
+whose landing components were merged into `src/` in `9ce1d01`, was deleted on
+2026-10-28: the live landing page is now `src/`, and its old packages kept
+raising Dependabot PRs. It is still in Git history, for example
+`git show 5f5ed06:"Archive Candidates/lp-remote/README.md"`.
 
 Everything else in the table above is still waiting on a decision.
 

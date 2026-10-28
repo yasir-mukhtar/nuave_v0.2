@@ -1,10 +1,906 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-12
+> Updated: 2026-10-28
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
+
+Yasir chose, after the reading test:
+
+1. **Writer.** Every live two-source order is written by Claude Opus 5.5 at
+   medium effort, with the pages Firecrawl read for that order. The switch
+   is for everyone at once, with no staged roll-out. Claude Sonnet 5.5 at
+   high effort, with a larger output allowance, is the cheaper writer to
+   switch to if needed.
+2. **Spending.** The per-order hold is USD 5.00 (was 2.00) and the daily cap
+   USD 50 (was 5). This supersedes point 5 of
+   [2026-10-26](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)
+   (keep the USD 2.00 hold).
+3. **Delivery promise.** "Laporan siap dalam 30 menit" everywhere (was 15
+   minutes), because the reading and the slower writer add minutes.
+4. **Orders already paid.** The go-live merges only when no live order is in
+   progress, so every order the new writer touches holds USD 5.
+
+The vendor condition of 2026-10-26, point 4, still applies. The privacy
+wording that names the page reader, and the AI provider reading the pages,
+needs the founder's approval before this merges. The plan is
+[Spec 021 PLAN, PR 6b](../specs/021-report-v2/PLAN.md); the work is in
+PR #185.
+
+Before the merge, the same day, Yasir:
+- added the GitHub secrets (Anthropic key and workspace, Firecrawl key);
+- approved the privacy page 1.5 (it names the page reader and says pages
+  read may name doctors or staff) and the terms 1.2 (30 minutes);
+- confirmed that Anthropic's and Firecrawl's terms support the privacy
+  page's section 7 sentence, and that the accounts may take customer orders;
+- approved one free live token count with the production request: it was
+  accepted (12,311 tokens for a synthetic input);
+- approved the merge with no live order in progress. A read of the
+  production orders found none open, running or reporting.
+
+Anthropic auto-reload and Firecrawl's monthly credits are left for after
+the first live orders. Until then, an empty Anthropic balance fails an
+order after three refused calls, with its refund and an `anthropic_error`
+notice; Firecrawl with no credits leaves the report without pages and sends
+a `pages_unread` notice.
+
+## 2026-10-27 — Reading test: Opus 5.5 medium with pages read wins on NV-3WDSAY
+
+Yasir judged the reading test's blind pairs on NV-3WDSAY (no 1–5 scores):
+pair B report 2, written by Claude Opus 5.5 at medium effort with the pages
+Firecrawl read, is the best of every report so far and the first one he
+would be confident offering to customers. He will not score the other
+reports. It cost USD 1.26 (two calls) plus 16 Firecrawl requests, against
+USD 0.05 for Luna high with the same pages. Before deciding the production
+writer, Claude Sonnet 5.5 at medium and high effort run with the same pages
+and are judged against it.
+
+Not yet decided: the production writer, page reading in production, and the
+per-order spend hold (USD 2.00) and daily cap (USD 5), which an Opus writer
+reading pages would likely exceed (its two calls cost USD 1.26 here, and each
+is reserved at its worst case first).
+The single order is one business; the plan's further test orders still
+apply.
+
+Sonnet result, same day, blind set of three with the same pages: Opus 5.5
+medium first again (USD 1.26), Sonnet 5.5 high second (USD 0.75, after an
+answer cut off at 16,000 output tokens and rerun at 32,000), Sonnet 5.5
+medium not good enough to send (USD 0.54). Yasir had already read the Opus
+report in the pairs, so this set was not fully blind for it.
+
+## 2026-10-27 — Report-writer test allowance raised to USD 7
+
+Yasir raised the agent-run allowance for the audit stack tests (the reading
+test and the report-writer test together) from USD 5 to USD 7, and approved
+running Spec 021's new writer with Luna high and Opus medium on NV-3WDSAY.
+USD 2.80 was used by then. The harness's hard stop
+(`scripts/report-writer-test`) is USD 7. Earlier, at the founder's request,
+GLM 5.3 Flash and Claude Opus 5.5 (low, medium) joined the test's writers.
+Yasir then approved the reading test's step 2 (the two page writers on
+NV-3WDSAY, printed as blind pairs with their twins) within the same USD 7.
+
+## 2026-10-27 — Reading test before G1; the writer may use pages read
+
+Yasir found every earlier NV-3WDSAY report shallow (all written before Spec
+021 Part B's writer) and suspected the input: the writer sees only what
+ChatGPT and Google said, never what is on the pages they cite. Approved
+("Yes and yes. Approved for 2."):
+
+1. **Baseline first.** Spec 021 Part B's writer is run on NV-3WDSAY with two
+   writers only (Luna high, Opus medium), within the test-B USD 5 limit.
+2. **The reading test moves before G1** (supersedes the timing in
+   [2026-10-26 — Audit stack plan](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
+   point 1, for this test). Firecrawl reads the business's own site and the
+   ten pages the answers cited most; the same two writers write again with
+   those pages, and the founder compares each with its twin.
+3. **Facts may also come from pages read,** in the test: a sentence names
+   the page's site and cites the questions that cited it. Still never a
+   claimed cause (2026-10-26, point 2). Public business pages only; phone
+   numbers removed.
+
+The production writer reads no pages until the founder judges the test. The
+Firecrawl key is in the cloud environment (`FIRECRAWL_API_KEY`).
+
+## 2026-10-27 — Report playbook approved
+
+Yasir approved the report writer's playbook,
+[`docs/content/report/PLAYBOOK.md`](content/report/PLAYBOOK.md) (Spec 021
+B-02): how ChatGPT and Google's AI Overview choose clinics, from Google's and
+OpenAI's public pages, nine checkable actions a clinic can take, and what the
+writer never advises. Three sources (two OpenAI help pages and Permenkes
+1787/2010) were read through search results and summaries only; the playbook
+says so. The approval also settles item 3 of the decisions PLAN.md listed as
+owed; items 1 and 2 were settled on 2026-10-26 (audit stack plan, point 2).
+
+## 2026-10-27 — Meta Conversions API spec renumbered 022
+
+Yasir chose to renumber the Meta Conversions API spec from 021 to 022
+(`specs/022-meta-conversions-api/`), because the Report v2 spec reached main
+first as Spec 021 (PR #171), as with Spec 019/020. Its database change
+becomes migration 0015, so Report v2 keeps the 0014 its plan reserves. The
+2026-10-26 entries below, written under the old number, now read 022.
+Founder step 0 is done (Cloudflare's per-request log keeps visitor IP
+addresses, so it is switched off), and the Meta access token is saved.
+
+## 2026-10-26 — Spec 022 wording re-approved after review round 4
+
+Review round 4 found the first "How it works" text (Q-9) and the privacy
+page's reassurance paragraph (Q-2) said less than the privacy page or
+more than is true. Yasir re-approved both reworded texts as written: How
+it works now says what the browser shares for everyone who allows, adds
+the Meta cookie codes, says the coded email is matched to the buyer's
+Facebook or Instagram account, says "never send Meta" and "none of your
+data", and points to Pengaturan cookie on the home and privacy pages; the
+reassurance paragraph says "data Anda" and "ke Meta" throughout. This
+supersedes the Q-9 approval recorded in the entry below. Review round 5:
+PASS.
+
+## 2026-10-26 — Cookie notice: layered disclosure (Spec 022)
+
+Yasir replaced the Spec 022 notice wording (Q-1, option A) with a layered
+notice. First layer: "**Help us understand what works** We use cookies and
+limited purchase information to measure which ads lead to sales. Your
+report and business answers are never shared with advertising partners.",
+a visible **How it works** link, and the buttons Don't allow and Allow. How
+it works opens, inside the notice and before any choice, a short
+explanation of the data shared (including the hashed order email), with
+whom (Meta) and why; the privacy page gives the full detail and names Meta.
+Don't allow turns off both the browser Pixel and server conversion
+matching.
+
+This supersedes the 2026-10-25 rule ("Cookie notice in English, shorter")
+that the server step brings the email back into the notice itself, and
+privacy item 1's "the notice names it": the information must instead be
+clearly available before consent. Yasir's view is that informed consent
+does not require the hashed email in the first layer; this is recorded as
+a decision for the lawyer's check, not a claim that it is compliant. Yasir
+approved the How it works wording (Spec 022 Q-9) as written.
+
+## 2026-10-26 — Approve Spec 022 (Meta Conversions API, server Purchase)
+
+Yasir approved [Spec 022](../specs/022-meta-conversions-api/SPEC.md)
+(revision 4, after three independent review rounds, the last PASS; PR
+#170). The server sends Meta one Purchase (249000 IDR) per paid order, only
+when the buyer's own browser reaches the paid screen after Allow (Option A,
+so the IP address and browser type are passed on without being stored),
+with the same event code as the browser Pixel so Meta counts it once.
+Answers:
+
+- **Notice (Q-1):** option A, without naming Meta: "Cookies help us measure
+  our ads. If you buy, our ad partner gets a coded version of your order
+  email, to see which ad brought you. Your report and answers are never
+  shared." Yasir asked whether Meta could go unnamed everywhere; the
+  privacy page keeps naming it, because Meta's advertiser terms and UU PDP,
+  as we understand them, expect visitors to be told who receives the data.
+- **Privacy page (Q-2):** version 1.4, so everyone is asked again. Section
+  10 gets a short reassurance paragraph first (nothing goes to Meta without
+  Allow; the email is never sent readable; report, questions, AI answers
+  and business data are never sent; data is not sold; the choice can be
+  changed any time), and its server-event point is narrowed to purchases.
+  The page must not suggest that data is shared with no one.
+- **Q-3 to Q-8, as recommended:** sandbox purchases reach Meta only while a
+  test code is set (Meta still counts them, so the check runs before ads
+  start); a fixed `/audit` page address; one try per order; the consent
+  version and send time kept on the order; Purchase only; and Cloudflare's
+  automatic per-request log switched off if it holds IP addresses, giving
+  up its saved request history.
+
+## 2026-10-26 — Audit stack plan: report test before G1, reading after
+
+Yasir approved the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)
+(independent review PASS after three rounds). Its five questions were
+answered "1. Yes 2. Okay 3. Okay 4. Ok 5. Accepted"; 5 is read as the
+recommended option.
+
+1. **Timing.** The report-writer test runs before G1, as
+   [Spec 021](../specs/021-report-v2/SPEC.md) Part B's side-by-side test
+   (B-07, [PLAN](../specs/021-report-v2/PLAN.md) PR 6 step 7), with the
+   plan's blind design: three orders with ChatGPT and Google answers; five
+   writers, each running Spec 021's new writer (GPT-5.6 Luna low, Luna high,
+   Claude Sonnet 5.5 medium and high, Claude Haiku 5.5 medium); the founder
+   rates them without knowing which wrote what. The report already delivered
+   for NV-3WDSAY is shown beside them as a labelled reference, not as a blind
+   entry: it used the old instructions, so it would not compare models
+   fairly. The rest of the plan (the reading test with its page reader and
+   Instagram reader, and the Google re-check) follows G1, unless an early
+   customer is Instagram-only.
+2. **Test accounts and budget.** Accounts with Anthropic, Firecrawl and Apify
+   may be opened for the tests only. They receive public business pages and
+   the founder's own test-order data, never customer orders. Agent-run live
+   calls for tests A and B: up to USD 5 in total. This is the named approval
+   for the B-07 live writer calls and the answer on the Anthropic API key
+   (items 1 and 2 of the decisions PLAN.md says the founder still owes).
+   Test B also needs two new founder-run live orders (about USD 0.18 each,
+   run one at a time).
+3. **Google's words reach the writer.** The report writer may read Google's
+   AI Overview text (phone numbers removed), not only the code-made facts.
+   Spec 021 B-01 and AC-B1 specify this (built in its PR 6). Spec 018 R-28
+   is updated with that PR to say so.
+4. **New vendors for real orders,** only if they win their test: Anthropic,
+   Firecrawl (USD 19 a month only past about 160–200 orders a month), Apify.
+   Each needs a privacy wording update the founder approves before customer
+   data reaches it.
+5. **Spending guard.** Keep the USD 2.00 order hold (Spec 021 B-07 also
+   requires this). The report is reserved from the prompt's real token
+   count, limited to the 3 calls the runner allows, and the reading's web
+   search is allowed on its first call only. Planned worst case about
+   USD 1.83. Separately still open: how many orders may run at once before
+   real sales (at USD 2 per hold, the USD 5 daily cap allows two).
+
+Kept unchanged: DataForSEO discovery, GLM 5.3 Flash question writing
+(including "similar businesses"), and the ChatGPT and Google checks.
+
+## 2026-10-26 — Approve Spec 021; server PDF now; re-audit reminder later
+
+After four rounds on the clickable prototype (`experiments/report-v2-poc/`),
+Yasir approved [Spec 021](../specs/021-report-v2/SPEC.md):
+
+1. **Server-made PDF comes with this work.** "Unduh PDF" returns an A4 PDF made
+   on the server with Cloudflare Browser Run (footer with page numbers, answers
+   appendix), instead of the browser's print. It leaves the parking lot.
+2. **Re-audit reminder goes to the wishlist** (plan §6). Penutup recommends a
+   re-audit after eight weeks in words, without a scheduling button.
+3. **Light only.** The report keeps the product's light palette (the design
+   system has no dark scheme); confirmed after the plan review.
+4. **Build after review.** The build follows
+   [`PLAN.md`](../specs/021-report-v2/PLAN.md) once an independent review
+   passes; each build PR gets its own review, and merge stays with the founder.
+
+## 2026-10-26 — Report v2 before G1; confident advice; no score
+
+Yasir reviewed the NV-3WDSAY report and found it hard to read and shallow
+for Rp249.000 (header repeats, two-row dot cards, long answer blocks, recap
+instead of analysis, a bare competitor list, hedged recommendations with
+"Mengapa/Berdasarkan/Penanggung jawab/Selesai ketika" boxes, an over-long
+method section, an unused JSON button). Decisions:
+
+1. **Before G1.** The report rework ([Spec 021](../specs/021-report-v2/SPEC.md))
+   moves out of the parking lot and goes ahead of G1, in four parts: clean
+   layout, deeper writing, competitor map, answers in a side panel.
+2. **Confident advice.** Facts in a report must still come from the saved
+   answers. Advice may be confident expert guidance, drawn from a written
+   Nuave playbook the founder approves. A report never claims that something
+   *caused* the business's result. This replaces the writer's "do not
+   diagnose from absence" instruction; `AGENTS.md` rules 7 to 9 stand.
+3. **No score yet.** No 0 to 100 score; a short verdict and one row of ten
+   dots per source carry the big picture.
+4. **Lo-fi first.** Built from the spec without a Figma design; the founder
+   adjusts the look afterwards.
+
+## 2026-10-26 — AC-14 passed; its findings go to the parking lot
+
+Yasir ran AC-14 (order NV-3WDSAY): delivered in 12.5 minutes for USD 0.177,
+questions judged good enough. The report layout gets its own design sessions.
+The run's findings (Google AI Overview not shown on some checks, no city
+making ChatGPT pick one, DataForSEO status 40101) and the ideas to improve
+reading and report quality are recorded in the plan's parking lot without a
+schedule. The plan continues to G1 unchanged.
+
+## 2026-10-26 — Question writing: four fixes and a live canary
+
+On 2026-10-26 a paid order with a search city (NV-3WDSAY, a skin clinic)
+could not get its ten questions after three tries. A live replay found four
+causes, all fixed together on the founder's request for a durable fix:
+
+1. **Room to think.** The provider's hosts now think longer before they
+   answer, and the thinking shares the 4,096-token reply limit; some replies
+   were cut off ("length"). The limit is now 16,384. Cost follows the tokens
+   actually used, not the limit.
+2. **Billing.** Cheaper Inference moved the billed cost to a new field, so
+   each call's USD 0.05 hold was never settled and counted against the
+   order's USD 0.25 question allowance. Nuave now reads the new field, the old
+   one, and `usage.cost`.
+3. **The brief and the check disagreed.** The check needs every key word of a
+   search topic in a question; the brief never named those words. The brief
+   now lists them per topic and says so.
+4. **Generic words in a name.** For "Sozo Skin Clinic", "skin" counted as the
+   brand, so its own "Skin Booster" was treated as its name and every skin
+   booster question was rejected. Generic words (skin, clinic, beauty, kopi,
+   and so on) no longer count as brand words, unless the name has no other
+   words ("Beauty Glow Clinic" keeps them all).
+
+Also: a cut-off reply is retried like a rejected one; each request writes one
+line to the Worker log saying how each call ended, as codes only (never the
+reply text, the questions or the email; a crash logs "error" alone); and
+`npm run test:canary:questions` runs the real writer once on a live-mode test
+order (about USD 0.01) and fails when replies use more than half the limit, a
+cost cannot be read, or a call's spend record is not settled at that cost.
+Before: 0 of 10 grounded tries passed. After: 5 of 5 runs gave ten
+questions, all calls finished normally.
+
+The founder approved settling NV-3WDSAY's three stuck question holds
+(USD 0.05 each) at USD 0.0015 each in production, an upper bound from the
+replay (a call cut off at 4,096 tokens cost USD 0.0012), so the order can be
+retried with its full allowance.
+
+## 2026-10-26 — Production runs on Workers Paid
+
+Yasir confirmed the Cloudflare account that hosts worker `nuave-v2` is on
+**Workers Paid**. This completes the 2026-10-14 decision (Workers Paid
+before G1) and the Spec 018 assumption that production has the Paid CPU and
+subrequest limits. Earlier notes about Workers Free limits are history; they
+no longer block G1 or AC-14. No code or configuration changed.
+
+## 2026-10-25 — Cookie notice: "🍪 Allow cookies?", Allow as the main button
+
+Yasir settled the notice's words: title "🍪 Allow cookies?", text "Cookies
+help us measure our ads. Your report and answers are never shared." with the
+Privacy policy link, and the buttons **Don't allow** and **Allow**, with
+Allow as the main (purple) button to lessen the effort of choosing. "Allow /
+Don't allow" matches the permission prompts phone users know. The text names
+the purpose (ads) and the linked privacy page names Meta, which is what
+informed consent under UU PDP and Meta's Business Tools terms need; the word
+"Meta" need not be in the notice itself. This supersedes Spec 019's "two
+buttons of the same size and weight": they keep the same size, but Allow
+stands out; Don't allow stays one tap and in plain view. Indonesian law asks
+for clear, freely given consent, not equal button styles; EU-style
+regulators treat a highlighted Allow as nudging, which does not apply to
+Nuave's market today. The privacy page names Allow (version 1.3), so
+everyone is asked again.
+
+## 2026-10-25 — Cookie notice above the audit's button bar
+
+The founder chose to lift the cookie notice above the `/audit` journey's
+bottom bar (Spec 019 R-14, PR #166). Until a choice, the notice covered that
+bar: on a phone the main button ("Ya, ini bisnis saya", "Lanjut ke
+pembayaran", "Bayar Rp249.000") was hidden, and a tap where it sat could land
+on "Setuju". Now the bar's buttons stay in view and tappable while the notice
+is open, and keyboard focus stays clear of the notice on every page.
+
+## 2026-10-25 — Approve Spec 020 (clinic landing page)
+
+The founder approved [Spec 020](../specs/020-clinic-landing-page/SPEC.md):
+the clinic landing page from Figma page 244:2 replaces the page at `/`, with
+the words of its `COPY.md`. (Approved as Spec 019; renumbered 020 because the
+cookie notice and Meta Pixel spec reached main first as Spec 019.) Answers to
+its four questions:
+
+- **D-1:** big display headlines may go down to 36px on phones
+  (`--type-display-size: clamp(2.25rem, 5vw, 4rem)`, was 48px). The `/audit`
+  headline also gets smaller on small phones.
+- **D-2:** the hero keeps "10 pertanyaan berdasarkan volume pencarian
+  tertinggi Google".
+- **D-3:** the newest wording goes everywhere: "Rp249.000 untuk mulai audit
+  lengkap." under every form, "Nama klinik hanya ilustrasi." on every
+  example.
+- **D-4:** the proposed examples for the Gigi, Kulit, Anak and Lainnya hero
+  tabs are approved.
+
+## 2026-10-25 — Cookie notice in English, shorter
+
+After the notice went live, Yasir found the approved Indonesian text
+intimidating. The notice now reads, in English: "🍪 Cookie? Meta cookies
+help us measure our ads. Your report and answers are never shared. Privacy
+policy", in smaller type, with the buttons still **Tolak** and **Setuju** so
+the privacy page (which names them) stays as it is. This supersedes the
+Spec 019 Q-1/Q-2 answers: the notice no longer names the hashed order email,
+which is true while only the browser Pixel runs (it sends no email). The
+server step (Conversions API) must bring the email back into the notice
+before it ships. A deliberate exception to `docs/VOICE.md` (Indonesian
+customer copy) for this notice only.
+
+## 2026-10-25 — Support commands: fix an order email, close a refund case without a refund
+
+Yasir chose how the two founder commands work:
+
+- **`npm run support -- email <order> <new-email>`:** after the founder has
+  checked the payment receipt or Midtrans transaction number (FAQ, terms
+  section 10), the command replaces the order email. When the report is
+  saved, the old link stops in the same write and a new link goes to the new
+  address only; nothing is sent to the old address. An order still running
+  sends its ready email to the new address (the command refuses, "try again
+  in a minute", while the runner holds the order, and reads the order again
+  after the change, so a report finished meanwhile also gets a new link).
+  One narrow gap stays: a payment or failure email already picked up by a
+  cron run in progress may still reach the old address; those carry no
+  report link. Only paid orders: an
+  unpaid order has no receipt, and the customer can simply order again.
+  Running it again with the same address finishes a run that stopped before
+  the new link went out. This changes Spec 016 R-32 ("the script never
+  sends to another email"): it still never sends to an address that is not
+  the order's, but the founder can now correct that address. The new address
+  reaches the database as a hex literal, so it never appears as readable text
+  in the SQL the script runs.
+- **`npm run support -- norefund <order> <declined|delivered|settled>`:**
+  closes a money refund case (a settled payment that could not be applied, or
+  a paid order that failed) without a refund, when the customer declined it
+  in writing, got the full report another way, or the money already went
+  back outside Nuave's records. Each case open at that moment is closed on
+  its own, with the reason (`refund_closures`); a payment that arrives later
+  is a new case and is listed again. Closed cases leave `support refunds`,
+  and the hourly cleanup can reach the order.
+  A payment with no final answer is still closed with `close`.
+
+## 2026-10-25 — Cookie notice and Meta Pixel (Spec 019)
+
+Yasir approved Spec 019: the cookie notice is built together with the Meta
+Pixel, both switched off without a Pixel ID. He then created the Pixel
+(ID 890453577390181), which the production build sets in
+`.github/workflows/ci.yml`, so the notice goes live with the merge. Meta's own
+copy-paste snippet is not used: it tracks before consent, and its `noscript`
+image would send a PageView with no choice at all. Answers:
+
+- **Scope:** notice, "Pengaturan cookie" footer link and the browser Pixel
+  now; the Conversions API (server events, hashed purchase email) is a later
+  step.
+- **Notice wording:** approved as drafted, naming the hashed order email now
+  so the text stays true when the server step ships.
+- **Events:** PageView, Lead (free check found the business),
+  InitiateCheckout and Purchase (both 249000 IDR); never the email, business,
+  website, order number or report.
+- **Next after this:** the two support commands (change an order's email;
+  close a refund case without a refund).
+
+Before merge (2026-10-25), Yasir confirmed "Automatic advanced matching" is
+off in Meta Events Manager, and chose to tap **Tolak** in the browsers he
+tests with, so his sandbox payments before G1 do not reach Meta as purchases
+(no code holds Purchase back).
+
+Worker choice in the same change, for approval with the pull request: the
+privacy page gets its own version (`PRIVACY_VERSION` 1.2, for the sentence
+that the cookie choice is kept 12 months); the terms stay at 1.1.
+
+## 2026-10-25 — Record cleanup job
+
+Yasir asked for the cleanup job decided on 2026-10-24. How it works, for his
+approval with the pull request:
+
+- **Anonymise, not delete:** an order past its lifetime keeps a bare row
+  (order number, dates, state, payment links) so payment and cost records
+  still add up; the email, business details, intake, questions, answers,
+  report, link and email records go. This is the privacy page's "dibuat tidak
+  lagi menunjuk ke Anda".
+- **When:** 12 months after the report was saved; 30 days after an order
+  failed or expired. Settled cost rows after 24 months. Payment records are
+  never removed by the job.
+- **Kept anyway:** an order with an open refund case, a running order, and one
+  under a support hold. The founder sets a hold with `npm run support -- hold
+  <order> <days>` (up to 365 days; 0 releases it) while a support case is open.
+- **Runs:** once an hour inside the existing order cron, up to 5 orders and
+  200 cost rows per run.
+
+## 2026-10-25 — Legal pages stay Indonesian; clauses adopted from HaloAI
+
+Yasir compared Nuave's terms and privacy pages with HaloAI's and decided:
+
+- **Language:** the terms and privacy pages stay in Indonesian, the binding
+  language for contracts with Indonesian consumers. An English translation is
+  left for later.
+- **Clauses to adopt** (terms and privacy version 1.1, wording for his
+  approval): definitions, prohibited uses, cancelling an order shown at a
+  mistaken price, AI answers quoted as is, report ownership, a liability cap at the amount paid, a dispute route (support, 30 days, then
+  the competent court or BPSK), severability and entire agreement; in
+  privacy, the legal basis for each use, providers bound by their service
+  agreements, and a written breach notice within 3 x 24 hours. The liability cap and the breach deadline get a lawyer's check. Yasir approved the
+  version 1.1 wording on 2026-10-25 (PR #160).
+
+## 2026-10-25 — S5 wording approved
+
+Yasir approved the final Indonesian wording of the terms, privacy, support
+and FAQ pages (PR #159) and asked for it to be merged. The pages take
+effect on 24 Oktober 2026, version 1.0, as written in `src/lib/legal.ts`.
+
+## 2026-10-24 — S5 follow-up: promise clause, mistyped email, provider names, FAQ
+
+Yasir decided, reviewing the S5 pages (PR #159):
+
+- **Delivery promise:** the refund clause now says the refund is partial,
+  by the failed checks: "Laporan siap dalam 15 menit setelah audit dimulai.
+  Jika ada bagian yang gagal diperiksa, tim kami membantu
+  menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana
+  sebagian, sesuai jumlah pemeriksaan yang gagal." (`DELIVERY_PROMISE`, so
+  the order preview, checkout, payment email and terms all change.)
+- **Mistyped order email:** support may accept a payment receipt or a
+  Midtrans transaction number as proof, then send the report link to the
+  correct email and switch off the old link. This narrows S0 D5 and D7 for
+  that one case. The support script has no command to change an order's
+  email yet, so for now it is done by hand in the database; switch off the
+  old link (`npm run support -- off <order>`) before sending the new one. A
+  support command for this is parked.
+- **Provider names on the privacy page:** name only the companies a
+  customer deals with directly (Midtrans, Meta) and describe the others by
+  type; give the names to a customer who asks. The internal map lives in
+  `docs/content/website/PRIVACY.md`.
+- **FAQ:** the /faq page takes the clinic landing FAQ questions (lofi v2.2),
+  with answers corrected to the product.
+
+## 2026-10-24 — S5: Meta consent, operator, refunds and record deletion
+
+Yasir answered eight questions while the S5 wording (terms, privacy,
+support and FAQ pages) was written and reviewed:
+
+- **Meta ads tracking:** keep the promise of a choice before tracking. The
+  Meta Pixel and Conversions API run only for visitors who agree on a cookie
+  notice. That notice belongs to the separate tracking change.
+- **Privacy contact:** support@nuave.ai handles privacy requests too.
+- **Operator:** the pages say Nuave is run by **PT Nuave Arah Baru** in
+  **Jakarta Selatan**.
+- **Cancellation:** a customer who cancels after paying but before the audit
+  starts (before approving the ten questions) gets a full refund.
+- **Record deletion:** keep the record lifetimes of Spec 016 Q3 on the
+  privacy page and build an automatic cleanup job before the first failed
+  orders reach 30 days (mid-November 2026). This replaces "no deletion now"
+  for those lifetimes; the job needs its own change.
+- **Failed checks in a delivered report:** when a failed check cannot be
+  re-run, the refund is by share: Rp12.450 per failed check (Rp249.000 over
+  20 checks, 10 on ChatGPT and 10 on Google).
+- **Support email:** kept 12 months after the issue is closed.
+- **Quote validity:** remove "Ringkasan ini berlaku 30 hari" from the
+  checkout; no quote validity is promised (an unpaid order ends after 2
+  hours, Spec 016 Q2).
+
+Worker choices in the same change, for Yasir to approve with the final
+wording: the refund clock starts when the failure is recorded or the
+cancellation is received (S0 D3); refund routes follow Q9 of 2026-10-14
+(Midtrans for QRIS, GoPay and DANA; a transfer from the founder's bank for
+bank transfer); the tracking change must also add a **Pengaturan cookie**
+footer link and send server events only for visitors who agreed; if
+Midtrans cannot refund a QRIS, GoPay or DANA payment, the founder transfers
+the refund by bank; the order status answer now carries `started_at` (a
+change to Spec 016 R-21's field list, still with no email, report or
+secret), so a reloaded running page shows the elapsed time and the
+15-minute delay notice. That last point supersedes the "no clock after a
+reload" part of item 7 of the 2026-10-21 journey design decision.
+
+## 2026-10-24 — Target market: beauty clinics in Jabodetabek and Bandung
+
+Yasir set the target market:
+
+- **First customers:** beauty clinics in Jabodetabek and Bandung.
+- **Who buys:** the clinic owner or the person who runs the clinic's
+  marketing.
+- **Secondary:** other clinic types (dental, skin, children's, and the
+  "Lainnya" tab). The clinic landing page keeps them as they are
+  ([PR #152](https://github.com/yasir-mukhtar/nuave_v0.2/pull/152)).
+
+This replaces the 2026-08-17 wedge (dental clinics in Depok) and settles the
+2026-07-19 open question on the first city. It sets who outreach, copy and
+terms are written for; it does not add a check that turns other businesses
+away at checkout.
+
+## 2026-10-24 — Delivery promise wording and the clinic report label
+
+Yasir decided, reviewing the clinic landing page (PR #152, lofi v2.2):
+
+- **Delivery promise (Spec 018 Q-1, R-23):** "Laporan siap dalam 15 menit
+  setelah audit dimulai." replaces "Laporan biasanya siap dalam 15 menit
+  setelah Anda menyetujui pertanyaan, paling lama 24 jam." The refund
+  sentence after it is unchanged. The order preview, checkout and payment
+  email all use `DELIVERY_PROMISE` (`src/lib/orders/promise.ts`), so they now
+  say the same as the landing page.
+- **Clinic report label:** for a clinic, the report says "Klinik Anda" where
+  it says "Bisnis Anda" ("Klinik Anda muncul di X dari N pertanyaan", and so
+  on). Other businesses keep "Bisnis Anda". Not built yet: Spec 018 or a
+  follow-up builds it and updates the settled labels in `docs/VOICE.md` at
+  the same time.
+- **Clinic landing page:** keep "Google AI Overview" (not "Ringkasan AI"),
+  contact by email only (support@nuave.ai, no WhatsApp), no "coba sendiri"
+  line, and keep the H1 "Pasien sekarang tanya AI dulu, baru pilih klinik."
+
+## 2026-10-24 — Approve Spec 018
+
+Yasir approved [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+(revision 7) after four plan review rounds (the last PASS+NOTES, notes
+applied), with every recommendation:
+
+- **Report gate (Q-2):** a report is delivered when each source completed at
+  least 5 of its 10 checks; otherwise the order fails as today and the founder
+  resolves it.
+- **Google AI Overview coverage (Q-3):** accept that Google often shows no AI
+  Overview; the report says how often it did, as a finding.
+- **Workers (Q-4):** production is already on Cloudflare Workers Paid.
+- **Probe re-run (Q-5):** re-run the three-clinic probe on the current rules
+  before PR 1 (about USD 0.25).
+- **Name:** customers see "ChatGPT dan Google AI Overview" (not "ChatGPT dan
+  Google"); Google's AI summary is called "Google AI Overview" wherever
+  customers see it.
+- Q-1 (exact delivery-promise wording) is approved in PR 2.
+- **Later the same day (revision 8):** DataForSEO's "navigational" label no
+  longer drops a search; only a search that names a business does. The probe
+  re-run showed the label removed good local searches such as "klinik
+  kecantikan laser terdekat".
+- **N-17 accepted (later the same day):** discovery's USD 0.12 is one budget
+  per order, shared by both runs; a second run after a place change spends
+  only what is left. The DataForSEO repository secrets exist; the balance
+  top-up comes before the live run (AC-14).
+- **"Klinik Anda" built in Spec 018 (later the same day):** Yasir asked for the
+  clinic label (decided in the entry above) to be built now, before the live
+  run, as AC-20.
+
+## 2026-10-23 — Real-search questions, ChatGPT and Google, Rp249.000
+
+Yasir decided, after the DataForSEO test on Sozo Skin Clinic
+([`experiments/dataforseo-sozo/`](../experiments/dataforseo-sozo/), USD 0.16),
+what the audit sold to the first paying customers will be:
+
+- **Questions from real searches:** the ten questions come from real Google
+  search data for the business's type and city (People also ask,
+  autocomplete, keyword volumes), keep real human wording, and show how often
+  their topic is searched. Cheaper Inference stays the question writer and the
+  fallback when search data is missing.
+- **Two answers per question:** the same question is asked to ChatGPT and to
+  Google's AI summary (via DataForSEO). This reopens the earlier "two grounded
+  API surfaces for v0" row for this one addition; Gemini is left out for now.
+- **One package, no tiers.**
+- **City:** the business's main city by default, or the branch the customer
+  chooses.
+- **Price:** Rp249.000 (was Rp99.000).
+- **Order:** build this first ([Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)),
+  then S5 (terms, price and promise wording), S6 (landing page) and G1, so the
+  promise and landing page describe the new audit once.
+- **Failed checks:** one free re-run of only the failed part; if it still
+  fails, the customer is sent to support; a refund only when it cannot be
+  fixed.
+- **Report design:** no Figma design now; build from the existing report
+  design and evaluate later.
+- **Promise:** the order preview and checkout name "ChatGPT dan Google".
+
+**2026-10-24 founder answers** (after the round-1 plan review of Spec 018):
+
+1. **ChatGPT label:** the ChatGPT part uses DataForSEO's ChatGPT LLM Scraper,
+   which reads the real ChatGPT app, so the report may say "ChatGPT". The
+   OpenAI API stays for the business reading and report writing only.
+2. **Failed checks (ChatGPT or Google):** the report is still delivered; the
+   failed part points the customer to support; Yasir resolves it by hand; a
+   refund only when it cannot be fixed. This replaces the ten-evaluable rule
+   for these orders.
+3. **No free re-run button** for now; it may become its own small spec.
+4. **"Kota untuk pencarian":** one field on the review screen, pre-filled and
+   editable, used for both Google and ChatGPT.
+5. **Probe approved:** about USD 0.20 of DataForSEO credit to test discovery
+   and the ChatGPT app on three clinics before building the question part.
+   It ran on 2026-10-24 for USD 0.244 (within the USD 0.30 stop).
+
+**2026-10-24 clarification** (fact found in the round-2 plan review, not a new
+decision): DataForSEO's ChatGPT scraper accepts countries only, so ChatGPT is
+always asked as "Indonesia". Answer 4's city sets the place for Google, and
+every question about choosing a provider names the city in its text so both
+sources answer for the same place. (The probe showed ChatGPT treats a question
+with no city as Jakarta; Spec 018 revision 5, R-10a.)
+
+## 2026-10-23 — Errors use Jeton red
+
+Yasir chose red for errors, "probably Jeton red" (Figma page 09's JETON
+study: #f73b20 / #e02e14), so a mistake no longer looks like a violet
+highlight. Error messages, wrong-field edges, the "business name in this
+question" warning, missing required profile details and payment problems
+are red; running states, accent words and highlights stay violet. Small
+error text uses Jeton's next step, ember-700 #bc2410, to stay clearly
+readable on the grey surfaces.
+
+## 2026-10-23 — Switch the v2 journey to the violet design (Figma page 11)
+
+Yasir asked to update v2.nuave.ai to the violet copy of the mobile journey
+(Figma `eXCVryQzgx93oaYTR9NYGA`, page 11, node `238:1967`), reviewed by an
+independent Opus review before merging, and authorised merging once the
+review passes and checks are green.
+
+- **What changes:** the look only. Cool ink greys and one violet accent
+  replace the warm greys and orange; the paid reading (J09) is the one
+  full-violet screen. The 3D miniatures are re-exported from page 11 (the
+  kedai is now a small clinic). The report-ready email takes the same
+  colours, picture and logo.
+- **Unchanged:** every screen, word and layout of the 2026-10-21 journey
+  (page 11 is a copy of page 09 with the same frames and text), gates,
+  payment, the audit and report method, and what the browser stores. The
+  orange page 09 stays in Figma.
+
+## 2026-10-21 — Adopt the v2 mobile journey design (Figma J01–J35)
+
+Yasir asked to adopt the new audit journey design from the Figma file
+(`eXCVryQzgx93oaYTR9NYGA`, mobile, J01–J35) on v2.nuave.ai, with intentional
+animation benchmarked on Airbnb, reviewed by an independent Opus review loop
+before merging. Desktop follows when its design is ready; until then desktop
+shows the same 480px column.
+
+- **What the customer sees:** the landing page (J01) is the website field,
+  "how customers ask", three steps and what the report holds. One website
+  field starts the free check (J02–J04, with a way out after 30 seconds);
+  the business card (J05), the three steps (J06), checkout (J07/J08), the
+  paid reading (J09), Step 2 (J10–J23), the profile review with edit sheets
+  (J25/J26), the ten questions with an edit sheet and a final start sheet
+  (J27/J27b/J28), the running and ready pages (J29/J30), the ready email
+  (J31) and the report (J32–J35) follow the design.
+- **Supersedes the screen split of 2026-10-02 (JQ):** decision
+  considerations share one optional screen with customer needs (J17); the
+  public fact sits under the differentiator (J22) instead of its own screen;
+  the target customer is picked as chips and stored as one phrase.
+- **After payment the paid reading starts by itself** (once per order in a
+  tab), as the design shows. A reading interrupted by a reload, or one that
+  failed, still waits for "Lanjut": a refresh never replays the call.
+- **Unchanged:** server-side provider and spending gates, the audit and
+  report method and wording rules, validation limits, what the browser
+  stores (R-31: the email never), Spec 017 payment states and locks.
+- **Spec 013's screen-level presentation follows the design where they
+  differ** (Yasir's Figma file is the founder's direction for it): one
+  website field and "Cek bisnis saya di AI" instead of R-06's two fields and
+  R-01's `Periksa`; the review (J25) reads the answers back without
+  repeating each one's source label, which stays on the answer's own screen
+  (R-02, R-21), and edits by section in sheets (J26) instead of one screen
+  per row; its confirmation is J25's tick plus "Buat pertanyaan audit"
+  instead of R-21's exact `Sudah sesuai — buat pertanyaan audit`, and it
+  calls the same confirmation and freeze. Behaviour Spec 013 fixes is kept:
+  R-18/AC-09's three competitor choices (named, "Tidak ada pembanding
+  langsung", "Belum tahu"), each freezing as itself, and unticking the last
+  name keeps "named" and blocks `Lanjut` until a name or another choice is
+  picked.
+- **Where the build differs from the Figma file, and why:**
+  1. The website field accepts a website or an Instagram account, not a
+     Google Maps link (the source parser does not accept one).
+  2. Payment methods are shown for information; the choice happens on the
+     Midtrans page.
+  3. No address autocomplete or location permission for branches (J12b);
+     areas get one-tap Indonesian place suggestions instead (J19b).
+  4. All ten questions are asked without the business name (the current
+     direct-ten method); the design's 6 + 4 split is not built.
+  5. No "Kirim ulang email" (there is no resend service for customers):
+     "Minta kirim ulang email" opens an email to support.
+  6. The running and ready pages do not show the order email, masked or not
+     (it is never stored in the browser).
+  7. The running page shows the question texts and the elapsed time only in
+     the tab that approved them (both stay in memory, never in browser
+     storage); after a reload it shows "Pertanyaan 1" to "Pertanyaan 10" and
+     no clock.
+  8. The differentiator counter shows the real limit (1,000 characters),
+     not 160; competitor names allow up to 5 (the context limit), and the
+     copy says so.
+  9. The payment consent links name the real page, "Syarat Penggunaan", not
+     "Ketentuan Layanan".
+  10. The report keeps both downloads (PDF and the evidence JSON) and the
+      header facts for the system and model tested.
+  11. Areas typed on J19b show as chips above the field, as products do on
+      J14/J15, rather than as tokens inside the field.
+  12. J04 says the website is read after payment, because continuing with a
+      name stops the free check; J05 then shows "Bisnis yang akan diaudit"
+      without the found tick (the design's "Kami tetap membaca website di
+      belakang layar" would not be true).
+  13. The free check's third line reads "Membaca deskripsi bisnis", not
+      "Mencari cabang dan produk": the free check reads only the name, logo
+      and description; branches and products come from the paid reading.
+  14. J12 does not pre-select a branch: the owner picks the one to audit.
+  15. J20 rows show a "Saran Nuave" or "Dari Anda" tag instead of a source
+      line, and the screen adds "Tidak ada pembanding langsung? Lewati
+      juga." under "Belum tahu? Lewati" (R-18's third choice; the review's
+      sheet offers both).
+  16. J10 has no `Kembali` after payment: the website and business are
+      locked (R-19).
+  17. The commit buttons (pay, start the audit, open the report) are filled
+      #d4420b instead of ember-600 #e2470b, so their white labels reach WCAG
+      AA (4.6:1; ember-600 gives 4.1:1).
+  18. Small grey text on cream (J01's sample note, J30's help line and
+      order number) is ink-600 instead of ink-500, so it reaches WCAG AA
+      (6.8:1; ink-500 gives 4.3:1 on cream).
+
+## 2026-10-18 — S4 live check; slow websites; refund check at G1
+
+- **AC-25 accepted** with one exception: the Midtrans sandbox refused the
+  refund ("merchant insufficient funds"), so the refund notification and a
+  DANA dashboard refund are checked at G1 on Midtrans production. Spec 017
+  is Verified with that exception.
+- **Slow websites (Option A):** Nuave retries a slow website read once
+  (PR #139) and lets each try wait up to 10 seconds instead of 5 (12 seconds
+  in total per read). A
+  customer may wait longer on a slow site before an error, but fewer slow
+  sites fail.
+- **Workers plan:** the account is still on Workers Free. Q10 stands: move
+  to Workers Paid before G1 (live CPU is about 200 ms per invocation).
+
+## 2026-10-15 — S4 merged; Q18
+
+Yasir merged PR #137 (Spec 017, S4) on 2026-10-15 as `15842d4`, and
+answered **Q18 — A**: when an order has a payment attempt closed as unknown
+and its latest attempt ended unpaid, the customer sees the support-only
+screen, not "Coba bayar lagi" (which Q14 would refuse). Recorded in the
+spec; built in a follow-up PR.
+
+## 2026-10-14 — S4 build: partial chargeback and lost second payment try
+
+Yasir answered two questions found while building
+[Spec 017](../specs/017-payment-and-test-pass/SPEC.md) (S4), where the spec
+did not decide:
+
+- **Q11 — B:** a Midtrans `partial_chargeback` is handled like a full
+  chargeback (R-15). Before the questions are approved, a partial chargeback
+  of the paying transaction ends the order (`failed`, code `refunded`), with
+  no AI work and no failure email. After approval it is only recorded. The
+  founder gets a notice in every case.
+- **Q12 — A:** when the customer's page checks a waiting payment (R-14),
+  Nuave also asks Midtrans by the attempt's `order_id`, not only by the
+  transaction IDs it already knows. A second payment try whose notification
+  was lost is then found at once. It is still at most one check per attempt
+  per 30 seconds.
+- **Q13 — A:** when a payment attempt has no final answer from Midtrans
+  after 7 days (R-06 "closed unknown"), the customer's screen shows only the
+  order number and "Hubungi support@nuave.ai", with no "Coba bayar lagi".
+  The founder is told after 24 hours (`payment_unknown`) and settles the
+  case by hand, so a customer is never invited to pay twice.
+
+Yasir also approved the S4 live check (Spec 017 AC-25) with a budget of
+USD 2.00, to run after he merges and deploys PR #137. It does not approve
+merge or deploy.
+
+After the Opus max review of PR #137, Yasir answered four more questions
+(recorded in the spec as Q14–Q17): an order with a payment attempt closed
+as unknown cannot be replaced until the founder settles it; a settled
+`99000.00` answer without a currency counts as IDR; the AC-25 budget is a
+worst case of USD 4.00 (expected about USD 0.30); and a customer refunded
+before approval gets a "Mulai pesanan baru" button for a fresh start.
+
+## 2026-10-14 — Approve Spec 017 (S4)
+
+Yasir approved [Spec 017](../specs/017-payment-and-test-pass/SPEC.md)
+revision 6 (PR #136): Midtrans Snap payment in sandbox, founder test pass,
+short order number, the order hold at payment confirmation, and founder
+notices and cap alerts. Independent plan reviews (Opus, maximum effort): FAIL
+on revisions 2, 3, 4 and 5; PASS+NOTES on revision 6, notes applied. Founder
+answers Q1–Q10 are recorded in the spec.
+
+This approves the build of S4 in a new session (Sonnet worker, Opus review),
+on a feature branch with a pull request. It does not approve merge, deploy,
+live AI calls, real emails, live sandbox payments or spending; AC-25 needs a
+separate named approval. The founder reports the Midtrans sandbox account,
+redirect URLs and GitHub secrets as set up (2026-10-14).
+
+## 2026-10-14 — Bank transfer kept; Workers Paid before G1
+
+Yasir answered two questions raised by the plan reviews of
+[Spec 017](../specs/017-payment-and-test-pass/SPEC.md) (S4):
+
+- **Q9:** keep bank transfer as a payment method. Midtrans cannot refund it
+  from its dashboard, so such refunds are made by hand from the founder's
+  bank and recorded with the support command. The customer's account number
+  is asked by support email only when needed and is never stored in Nuave.
+- **Q10:** move the Cloudflare account to Workers Paid (USD 5 per month)
+  before G1, the first real purchase. Reason: the S3 live run used 12–22 ms
+  of CPU per question step and 55 ms for the report, against Workers Free's
+  10 ms per cron run, and Cloudflare stops Workers that exceed it
+  consistently. S4 sandbox testing may stay on Free. **This supersedes the
+  2026-10-13 decision "stay on Workers Free for now".** No plan change is
+  made by agents; the founder upgrades the account.
+
+## 2026-10-13 — S4 answers for Spec 017 (draft)
+
+Yasir answered the open questions of the draft
+[Spec 017](../specs/017-payment-and-test-pass/SPEC.md) (S4). The spec is not
+yet approved; an independent plan review (Opus, maximum effort) comes first,
+and the build happens in a new session after approval.
+
+- Keep the founder's email list while Midtrans runs in sandbox (test mode).
+- Reserve the USD 2.00 order hold when the payment is confirmed.
+- Payment window 60 minutes.
+- A paid order with no approved questions after 7 days ends; the founder is
+  emailed and refunds by hand.
+- Delivery promise wording approved: "Laporan biasanya siap dalam 15 menit
+  setelah Anda menyetujui pertanyaan, paling lama 24 jam. Jika gagal, kami
+  kembalikan uang Anda."
+- Founder test pass through an unlinked page with a secret code plus a
+  listed email.
+- The server may ask Midtrans directly about a waiting payment.
+- Founder alerts go to `hello@nuave.ai`.
+
+## 2026-10-13 — S3 decisions after Spec 016
+
+Yasir made these decisions after Spec 016 was approved. PR #129 is merged
+(`d641701`) and deployed.
+
+1. **Late report:** a report that starts before the order's 24-hour deadline
+   and finishes just after it is still delivered. No code change; this is how
+   the merged runner works.
+2. **Secret order code stays as built:** only the customer's browser holds it.
+   It is never shown, emailed or put in a URL.
+3. **Order number (build in S4/S5):** after payment, the customer's email
+   shows a short order number. It is separate from the secret code and
+   unlocks nothing; it only helps the customer and the founder talk about one
+   order.
+4. **Plan:** stay on Cloudflare Workers Free for now. A paid plan needs a new
+   founder decision.
+
+Also on 2026-10-13, Yasir accepted the AC-20 evidence exception (browser-drive
+screenshots kept locally, not in the PR); see the Spec 016
+[verification record](../specs/016-order-and-saved-report/VERIFICATION.md).
 
 ## 2026-10-12 — Approve Spec 016 (S3)
 

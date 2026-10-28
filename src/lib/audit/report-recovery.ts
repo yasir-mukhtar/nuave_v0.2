@@ -19,6 +19,15 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "noncorrective_action_inserted",
   "usefulness_minimum_not_met",
   "unrecoverable_report_failure",
+  "source_sentence_replaced",
+  "revision_discarded",
+  // Spec 021 Part B (B-05, B-06).
+  "headline_dropped",
+  "banned_title_repaired",
+  "writing_label_removed",
+  "writing_item_dropped",
+  "writing_block_dropped",
+  "verdict_cut",
 ] as const;
 
 export type ReportDiagnosticCode = (typeof REPORT_DIAGNOSTIC_CODES)[number];

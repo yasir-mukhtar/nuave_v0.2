@@ -1,0 +1,116 @@
+/* S6 · Bisa dipercaya, bisa ditindaklanjuti (Figma 288:804, 289:784).
+   Phone: rows of a picture (84) and its words. From 768px: two columns;
+   from 1024px: four centred columns over a 164px picture shelf. */
+
+.narrowBreak {
+  display: inline;
+}
+
+.items {
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 18px;
+  padding: 20px 0;
+}
+
+.item + .item {
+  border-top: 1px solid var(--line-200);
+}
+
+.item:first-child {
+  padding-top: 0;
+}
+
+.item:last-child {
+  padding-bottom: 0;
+}
+
+.art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+}
+
+.art img {
+  display: block;
+  width: calc(var(--w) * 0.556);
+  height: auto;
+}
+
+.title {
+  margin: 0;
+  color: var(--ink-900);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: 24px;
+  letter-spacing: -0.015em;
+}
+
+.line {
+  margin: 4px 0 0;
+  color: var(--ink-600);
+  font-size: var(--type-copy-size);
+  line-height: 22px;
+}
+
+@media (min-width: 768px) {
+  .narrowBreak {
+    display: none;
+  }
+
+  .items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 48px 24px;
+    margin-top: 72px;
+  }
+
+  .item,
+  .item:first-child,
+  .item:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    text-align: center;
+  }
+
+  .item + .item {
+    border-top: 0;
+  }
+
+  .art {
+    align-items: flex-end;
+    width: 100%;
+    height: 164px;
+  }
+
+  .art img {
+    width: var(--w);
+  }
+
+  .title {
+    margin-top: 28px;
+    line-height: 28px;
+  }
+
+  .line {
+    margin-top: 8px;
+    line-height: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .items {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

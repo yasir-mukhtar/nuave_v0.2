@@ -13,9 +13,17 @@ export const ORDER_CREATE_CALLER_RATE_LIMITER =
 export const ORDER_STATUS_CALLER_RATE_LIMITER =
   "ORDER_STATUS_CALLER_RATE_LIMITER";
 
+/** Spec 017 R-05: starting a payment, per caller IP. */
+export const PAYMENT_START_CALLER_RATE_LIMITER =
+  "PAYMENT_START_CALLER_RATE_LIMITER";
+
 /** Spec 016 R-27: the saved-report data route, per caller IP. */
 export const REPORT_DATA_CALLER_RATE_LIMITER =
   "REPORT_DATA_CALLER_RATE_LIMITER";
+
+/** Spec 021 P-02: the report PDF route, per caller IP (tighter: each PDF uses
+ * Browser Run time). */
+export const REPORT_PDF_CALLER_RATE_LIMITER = "REPORT_PDF_CALLER_RATE_LIMITER";
 
 export const RATE_LIMITED_MESSAGE =
   "Permintaan terlalu banyak. Coba lagi dalam beberapa saat.";
@@ -39,6 +47,8 @@ export interface AuditRateLimitBindings {
   orderCreateCaller?: AuditRateLimitBinding;
   orderStatusCaller?: AuditRateLimitBinding;
   reportDataCaller?: AuditRateLimitBinding;
+  reportPdfCaller?: AuditRateLimitBinding;
+  paymentStartCaller?: AuditRateLimitBinding;
 }
 
 export type AuditRateLimitDecision = "allowed" | "limited" | "unavailable";
@@ -82,6 +92,10 @@ export function getAuditRateLimitBindings(): AuditRateLimitBindings {
       ),
       reportDataCaller: asRateLimitBinding(
         env[REPORT_DATA_CALLER_RATE_LIMITER],
+      ),
+      reportPdfCaller: asRateLimitBinding(env[REPORT_PDF_CALLER_RATE_LIMITER]),
+      paymentStartCaller: asRateLimitBinding(
+        env[PAYMENT_START_CALLER_RATE_LIMITER],
       ),
     };
   } catch {

@@ -49,8 +49,10 @@ export function SelectionCard({
   description,
   meta,
   icon,
+  image,
   disabled,
   id,
+  onClick,
 }: {
   value: string;
   title: string;
@@ -58,8 +60,12 @@ export function SelectionCard({
   /** Small muted provenance note (e.g. an origin label) under the title. */
   meta?: string;
   icon?: React.ReactNode;
+  /** A 64px 3D miniature on the right of the row (decorative). */
+  image?: string;
   disabled?: boolean;
   id?: string;
+  /** A tap or Space/Enter press (arrow keys only move the selection). */
+  onClick?: () => void;
 }) {
   return (
     <Radio.Root
@@ -67,8 +73,19 @@ export function SelectionCard({
       disabled={disabled}
       className={styles.card}
       id={id}
+      onClick={onClick}
     >
-      {icon ? (
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- static decorative art
+        <img
+          className={styles.cardImage}
+          src={image}
+          alt=""
+          width={64}
+          height={64}
+          aria-hidden="true"
+        />
+      ) : icon ? (
         <span className={styles.cardIcon} aria-hidden="true">
           {icon}
         </span>

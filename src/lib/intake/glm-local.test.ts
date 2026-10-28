@@ -335,7 +335,7 @@ describe("prepareGlmQuestionsForIntake — direct-ten method (Spec 009)", () => 
     };
     expect(request.model).toBe("glm-5.3-flash");
     expect(request.reasoning_effort).toBe("low");
-    expect(request.max_tokens).toBe(4096);
+    expect(request.max_tokens).toBe(16384);
     // The direct-ten contract: adapted source body + amendments + one brief.
     expect(request.messages[0].content).toContain(
       "Then generate **10 consumer questions**.",

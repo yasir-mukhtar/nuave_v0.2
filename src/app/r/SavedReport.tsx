@@ -1,29 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AuditNotice } from "@/components/product/AuditNotice";
 import { Button } from "@/components/ui/button";
 import ReportView from "@/app/audit/ReportView";
+import { downloadReportPdf } from "@/app/audit/report/report-pdf";
 import {
-  makeSmartCustomerEvidenceExport,
-  promptsWithOriginals,
+  savedReportEvidence,
+  type SavedReportData,
 } from "@/lib/audit/customer-evidence-export";
-import type { DirectTenAuditContext } from "@/lib/audit/direct-ten-context-v2";
-import type {
-  AuditObservation,
-  AuditPrompt,
-  AuditReport,
-} from "@/lib/audit/types";
-
-/** What the report-data route returns for a valid link (spec 016 R-26). */
-type SavedReportData = {
-  report: AuditReport;
-  context: DirectTenAuditContext;
-  prompts: AuditPrompt[];
-  originals: string[];
-  observations: AuditObservation[];
-  synthetic: boolean;
-};
 
 type View =
   | { kind: "loading" }
@@ -34,11 +19,20 @@ type View =
 /**
  * Spec 016 R-24/R-26: the private report page. It reads the secret from the
  * URL fragment, POSTs it in a body to the report-data route, and shows the same
- * report, PDF (browser print) and JSON buttons as before. Nothing is kept in
- * the browser.
+ * report, PDF and JSON buttons as before. Nothing is kept in the browser.
+ *
+ * Spec 021 Part P: "Unduh PDF" asks the server for the PDF with the same
+ * secret. `via="print"` is the page Browser Run opens (`/r/print`): its
+ * fragment is a single-use print code, never the link secret.
  */
-export default function SavedReport() {
+export default function SavedReport({
+  via = "link",
+}: {
+  via?: "link" | "print";
+}) {
   const [view, setView] = useState<View>({ kind: "loading" });
+  const secret = useRef("");
+  const downloadPdf = useCallback(() => downloadReportPdf(secret.current), []);
 
   // Bumped by the retry button to read the page's fragment again.
   const [attempt, setAttempt] = useState(0);
@@ -48,12 +42,15 @@ export default function SavedReport() {
     async function open() {
       // A missing or odd fragment is sent as it is: the server answers with the
       // same "not available" it gives for any wrong secret.
-      const secret = window.location.hash.replace(/^#/, "");
+      const code = window.location.hash.replace(/^#/, "");
+      if (via === "link") secret.current = code;
       try {
         const response = await fetch("/api/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ secret }),
+          body: JSON.stringify(
+            via === "link" ? { secret: code } : { print_token: code },
+          ),
           cache: "no-store",
           referrerPolicy: "no-referrer",
           signal: controller.signal,
@@ -82,28 +79,12 @@ export default function SavedReport() {
     }
     void open();
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, via]);
 
   if (view.kind === "ready") {
     const { data } = view;
     const downloadJson = () => {
-      const originalByPromptId = new Map(
-        data.prompts.map((prompt, index) => [
-          prompt.prompt_id,
-          data.originals[index] ?? prompt.question,
-        ]),
-      );
-      const evidence = makeSmartCustomerEvidenceExport(
-        data.context,
-        promptsWithOriginals(data.prompts, originalByPromptId),
-        data.observations,
-        data.report,
-        {
-          report_context_version: data.context.version,
-          question_method: "direct-ten",
-          synthetic: data.synthetic,
-        },
-      );
+      const evidence = savedReportEvidence(data);
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(evidence, null, 2)], {
           type: "application/json",
@@ -122,6 +103,10 @@ export default function SavedReport() {
           brief={data.context}
           observations={data.observations}
           onDownloadJson={downloadJson}
+          onDownloadPdf={via === "link" ? downloadPdf : undefined}
+          // Spec 021 C-03: no logo requests for a synthetic report or in the
+          // copy Browser Run prints.
+          showLogos={via === "link" && !data.synthetic}
           previewNotice={
             data.synthetic ? (
               <AuditNotice tone="info" title="Audit uji — jawaban sintetis">

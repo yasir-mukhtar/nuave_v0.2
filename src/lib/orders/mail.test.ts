@@ -118,24 +118,76 @@ describe("email wording", () => {
     const ready = readyEmail({
       businessName: name,
       link: "https://v2.nuave.test/r#abc",
+      orderNumber: "NV-7K3Q9P",
     });
     expect(ready.html).not.toContain("<script>");
     expect(ready.html).toContain(
       "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; Kopi &#39;Nuave&#39;",
     );
     expect(ready.text).toContain(name);
-    const failed = failureEmail({ businessName: name });
+    const failed = failureEmail({
+      businessName: name,
+      orderNumber: "NV-7K3Q9P",
+    });
     expect(failed.html).not.toContain("<script>");
   });
 
-  it("the ready email carries the link, the 12-month note and the support address", () => {
+  it("the ready email carries the link, the 12-month note, the order number and the support address", () => {
     const ready = readyEmail({
       businessName: "Kopi Nuave",
       link: "https://v2.nuave.test/r#abc",
+      orderNumber: "NV-7K3Q9P",
     });
+    expect(ready.text).toContain("Nomor pesanan: NV-7K3Q9P");
+    expect(ready.html).toContain("NV-7K3Q9P");
+    const failed = failureEmail({
+      businessName: "Kopi Nuave",
+      orderNumber: "NV-7K3Q9P",
+    });
+    expect(failed.text).toContain("Nomor pesanan: NV-7K3Q9P");
     expect(ready.text).toContain("https://v2.nuave.test/r#abc");
     expect(ready.text).toContain("Link berlaku 12 bulan");
     expect(ready.text).toContain("support@nuave.ai");
+  });
+
+  it("J31: names the business, the place and the observation day, with one action and the site's own pictures", () => {
+    const ready = readyEmail({
+      businessName: "Kedai Fiksi",
+      link: "https://v2.nuave.test/r#abc",
+      orderNumber: "NV-7K3Q9P",
+      scope: "Kedai Fiksi Dago",
+      observedAt: "2026-10-18T03:10:00.000Z",
+    });
+    expect(ready.subject).toBe(
+      "AI Visibility Report untuk Kedai Fiksi sudah siap",
+    );
+    // The location's own name repeats the business; the email says it once.
+    expect(ready.text).toContain(
+      "AI Visibility Report untuk Kedai Fiksi, Dago. Jawaban diamati pada 18 Oktober 2026 (UTC).",
+    );
+    expect(ready.html.match(/>Buka laporan</g)).toHaveLength(1);
+    expect(ready.html).toContain('href="https://v2.nuave.test/r#abc"');
+    expect(ready.html).toContain(
+      "https://v2.nuave.test/v2/email/nuave-logo.png",
+    );
+    expect(ready.html).toContain(
+      "https://v2.nuave.test/v2/email/kedai-busy.jpg",
+    );
+    expect(ready.text).toContain("Download PDF");
+    expect(ready.text).toContain("Jawaban dapat berubah.");
+  });
+
+  it("J31: leaves out what it cannot read instead of guessing", () => {
+    const ready = readyEmail({
+      businessName: "Kedai Fiksi",
+      link: "https://v2.nuave.test/r#abc",
+      orderNumber: "NV-7K3Q9P",
+      scope: null,
+      observedAt: "bukan-tanggal",
+    });
+    expect(ready.text).toContain("AI Visibility Report untuk Kedai Fiksi.");
+    expect(ready.text).not.toContain("Jawaban diamati");
+    expect(ready.text).not.toContain("Invalid");
   });
 });
 

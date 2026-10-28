@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   readlinkSync,
   realpathSync,
@@ -99,8 +100,52 @@ export function groupAlive(pgid: number) {
   }
 }
 
-/** PIDs listening on the TCP port (any interface). Needs `lsof`. */
+/**
+ * Linux: the PIDs holding a listening socket on the port, read from
+ * `/proc/net/tcp{,6}` (state `0A` is LISTEN) and each process's
+ * `/proc/<pid>/fd`. lsof 4.95 cannot be used here: it skips the
+ * `next-server` process, whose name (`next-server (v1`) holds a parenthesis.
+ */
+function procListeners(port: number): number[] {
+  const hexPort = `:${port.toString(16).toUpperCase().padStart(4, "0")}`;
+  const inodes = new Set<string>();
+  for (const table of ["/proc/net/tcp", "/proc/net/tcp6"]) {
+    if (!existsSync(table)) continue;
+    for (const line of readFileSync(table, "utf8").split("\n").slice(1)) {
+      const [, local, , state, , , , , , inode] = line.trim().split(/\s+/);
+      if (local?.endsWith(hexPort) && state === "0A" && inode)
+        inodes.add(inode);
+    }
+  }
+  if (!inodes.size) return [];
+  const pids: number[] = [];
+  for (const entry of readdirSync("/proc")) {
+    if (!/^\d+$/.test(entry)) continue;
+    let fds: string[];
+    try {
+      fds = readdirSync(`/proc/${entry}/fd`);
+    } catch {
+      continue; // gone, or not ours to read
+    }
+    const holds = fds.some((fd) => {
+      try {
+        const socket = /^socket:\[(\d+)\]$/.exec(
+          readlinkSync(`/proc/${entry}/fd/${fd}`),
+        );
+        return !!socket && inodes.has(socket[1]);
+      } catch {
+        return false;
+      }
+    });
+    if (holds) pids.push(Number(entry));
+  }
+  return pids;
+}
+
+/** PIDs listening on the TCP port (any interface). Linux reads `/proc`;
+ * macOS (and any system without `/proc`) asks `lsof`. */
 export function listeners(port: number): number[] {
+  if (process.platform === "linux") return procListeners(port);
   try {
     return execFileSync(
       "lsof",

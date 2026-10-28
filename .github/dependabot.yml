@@ -1,0 +1,14 @@
+# Dependabot: the root app only. Archived folders are never updated.
+# `open-pull-requests-limit: 0` keeps routine version bumps off; security
+# updates still open PRs.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - "**/*"
+    exclude-paths:
+      - "archive/**"
+      - "Archive Candidates/**"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

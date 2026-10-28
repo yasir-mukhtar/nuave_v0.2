@@ -20,8 +20,11 @@ vi.mock("@/lib/audit/provider", async (importOriginal) => ({
 import { POST as internalCronPOST } from "../../app/api/internal/cron/route";
 import { POST as devTriggerPOST } from "../../app/api/dev/run-cron/route";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
-import { runScheduledOrders } from "./cron";
-import { approve, makeOrder, T0 } from "./orders.test-helper";
+import { cronPages, runScheduledOrders } from "./cron";
+import { approve, makeOrder } from "./orders.test-helper";
+import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
+import { startAttempt } from "../payments/attempts";
+import { usdToUnits } from "../spending/spend-ledger";
 
 // Spec 016 R-15, R-33, AC-11: what one cron run does, and when it does nothing.
 // The real cron entry, the real runner, the real ledger and migrations on the
@@ -80,17 +83,18 @@ describe("runScheduledOrders (R-15)", () => {
     expect(done()).toBe(1);
   });
 
-  it("does nothing when the audit switch is off or missing", async () => {
+  it("with the audit switch off or missing, runs no audit step (the tasks that make no AI call still run, R-23)", async () => {
     await dueOrder();
     for (const value of ["", "false", "0", "no"]) {
       vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", value);
       expect(await runScheduledOrders()).toEqual({
-        ran: false,
-        reason: "switch_off",
+        ran: true,
+        outcomes: [],
+        auditSkipped: "switch_off",
       });
     }
     vi.unstubAllEnvs();
-    expect((await runScheduledOrders()).ran).toBe(false);
+    expect((await runScheduledOrders()).ran).toBe(false); // the mode is gone too
     expect(done()).toBe(0);
   });
 
@@ -143,23 +147,52 @@ describe("runScheduledOrders (R-15)", () => {
     expect(done()).toBe(0);
   });
 
-  it("live mode with a provider key or the question-writer key missing does nothing and calls no provider", async () => {
+  it("live mode with a provider key or the question-writer key missing runs no audit step and calls no provider", async () => {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     vi.stubEnv("NUAVE_PROVIDER", "openai");
     vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
-    expect(await runScheduledOrders()).toEqual({
-      ran: false,
-      reason: "credentials_missing",
-    });
+    const skipped = async () =>
+      ((await runScheduledOrders()) as { auditSkipped?: string }).auditSkipped;
+    expect(await skipped()).toBe("credentials_missing");
     vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
-    expect((await runScheduledOrders()).ran).toBe(false);
+    expect(await skipped()).toBe("credentials_missing");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "lots");
-    expect((await runScheduledOrders()).ran).toBe(false);
+    expect(await skipped()).toBe("credentials_missing");
     expect(mocks.liveExecute).not.toHaveBeenCalled();
     expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
+  it("Spec 021 PR 6b: a report-writer setting that is not valid, or a Claude writer without its key, runs no audit step", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+    vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    const skipped = async () =>
+      ((await runScheduledOrders()) as { auditSkipped?: string }).auditSkipped;
+    vi.stubEnv("NUAVE_REPORT_WRITER", "claude-opus");
+    expect(await skipped()).toBe("credentials_missing");
+    vi.stubEnv("NUAVE_REPORT_WRITER", "claude-opus-5-5");
+    vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "");
+    expect(await skipped()).toBe("credentials_missing");
+    vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "offline-test-key");
+    expect(await skipped()).toBeUndefined();
+    expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
+  it("Spec 021 B-08: pages are read only for live orders written by Claude", () => {
+    expect(
+      cronPages("live", "claude-opus-5-5", "fc-key").pages?.reader,
+    ).toBeTypeOf("function");
+    expect(cronPages("live", "claude-opus-5-5", "").pages).toEqual({
+      reader: null,
+    });
+    expect(cronPages("live", null, "fc-key")).toEqual({});
+    expect(cronPages("synthetic", "claude-opus-5-5", "fc-key")).toEqual({});
   });
 
   function liveSettings(resend = true) {
@@ -183,17 +216,20 @@ describe("runScheduledOrders (R-15)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("live mode without the Resend key or the from address does nothing, and touches no order", async () => {
+  it("live mode without the Resend key or the from address runs no audit step, and touches no order", async () => {
     const live = await makeOrder(d1.db, { mode: "live", now: new Date() });
     await approve(d1.db, live, { mode: "live", now: new Date() });
     const before = JSON.stringify(d1.query("SELECT * FROM orders ORDER BY id"));
     liveSettings(false);
     expect(await runScheduledOrders()).toEqual({
-      ran: false,
-      reason: "sender_missing",
+      ran: true,
+      outcomes: [],
+      auditSkipped: "sender_missing",
     });
     vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key"); // from address still missing
-    expect((await runScheduledOrders()).ran).toBe(false);
+    expect(
+      ((await runScheduledOrders()) as { auditSkipped?: string }).auditSkipped,
+    ).toBe("sender_missing");
     expect(JSON.stringify(d1.query("SELECT * FROM orders ORDER BY id"))).toBe(
       before,
     );
@@ -292,8 +328,13 @@ describe("the entries to the cron", () => {
     await dueOrder();
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("NUAVE_ENVIRONMENT", "preview");
-    const order = await makeOrder(d1.db, { environment: "preview", now: T0 });
-    await approve(d1.db, order, { environment: "preview", now: T0 });
+    // The trigger runs on the real clock, so the order must be made now too: a
+    // fixed date in the past would be past its 24-hour deadline.
+    const order = await makeOrder(d1.db, {
+      environment: "preview",
+      now: new Date(),
+    });
+    await approve(d1.db, order, { environment: "preview", now: new Date() });
     const response = await devTriggerPOST();
     expect((await response.json()).ran).toBe(true);
     // Only the preview order was touched.
@@ -303,5 +344,145 @@ describe("the entries to the cron", () => {
          WHERE q.status = 'done' AND o.environment = 'preview'`,
       )[0].n,
     ).toBe(1);
+  });
+});
+
+describe("the cron with the emergency switch off or AI settings missing (R-23, AC-21)", () => {
+  const rows = (sql: string) => d1.query<Record<string, unknown>>(sql);
+
+  it("synthetic, switch off: the payment email still goes out and no audit step runs", async () => {
+    const paid = await makeOrder(d1.db, {
+      payment: "simulated",
+      now: new Date(),
+    });
+    const running = await dueOrder();
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "false");
+    const result = await runScheduledOrders();
+    expect(result).toEqual({
+      ran: true,
+      outcomes: ["payment_email"],
+      auditSkipped: "switch_off",
+    });
+    expect(done()).toBe(0);
+    expect(
+      rows("SELECT order_id, result FROM payment_emails").map(
+        (row) => row.result,
+      ),
+    ).toEqual(["accepted"]);
+    expect(
+      rows(`SELECT state FROM orders WHERE id = '${running}'`)[0]!.state,
+    ).toBe("running");
+    expect(paid).toBeTruthy();
+    // Switched on again, the audit step runs.
+    vi.stubEnv("NUAVE_NEW_AUDIT_ENABLED", "true");
+    expect(await runScheduledOrders()).toEqual({
+      ran: true,
+      outcomes: ["question_done"],
+    });
+  });
+
+  it("live, AI keys missing: reconciliation still marks a paid attempt, and its payment email still goes out", async () => {
+    const fake = createFakeMidtrans();
+    const sent: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown, init?: RequestInit) => {
+        const url = String(input);
+        if (url.startsWith("https://api.resend.com/")) {
+          sent.push(String(JSON.parse(String(init?.body)).subject));
+          return Response.json({ id: "re-1" });
+        }
+        return fake.fetch(input as string, init);
+      }),
+    );
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
+    vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "5");
+    vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "2");
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+    vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", fake.serverKey);
+    vi.stubEnv("MIDTRANS_IS_PRODUCTION", "false");
+    vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "founder@example.test");
+    const started = new Date(Date.now() - 3 * 3600_000);
+    const id = await makeOrder(d1.db, {
+      mode: "live",
+      payment: "unpaid",
+      now: started,
+    });
+    const attempt = await startAttempt(d1.db, {
+      orderId: id,
+      environment: "production",
+      mode: "live",
+      now: started,
+      limitUnits: usdToUnits(2),
+      dailyLimitUnits: usdToUnits(5),
+    });
+    if (attempt.result !== "started") throw new Error("no attempt");
+    fake.addTransaction({ orderId: attempt.attempt.midtrans_order_id });
+    const result = await runScheduledOrders();
+    expect(result).toMatchObject({
+      ran: true,
+      auditSkipped: "credentials_missing",
+    });
+    expect((result as { outcomes: string[] }).outcomes).toEqual([
+      "reconciled",
+      "payment_email",
+    ]);
+    expect(
+      rows(`SELECT payment_kind FROM orders WHERE id = '${id}'`)[0]!
+        .payment_kind,
+    ).toBe("midtrans");
+    expect(sent).toEqual(["Pembayaran Nuave Anda sudah diterima"]);
+    expect(mocks.liveExecute).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("founder notices and payment emails need only the database and Resend: with the cap settings missing, a refund notice is still sent", async () => {
+    const sent: { to: string; subject: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: unknown, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body));
+        sent.push({ to: body.to[0], subject: body.subject });
+        return Response.json({ id: "re-1" });
+      }),
+    );
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", ""); // the cap is missing
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+    vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    vi.stubEnv("NUAVE_FOUNDER_ALERT_EMAIL", "founder@example.test");
+    d1.query(
+      `INSERT INTO founder_notices (id, kind, subject, detail_json, status, created_at)
+       VALUES ('n1', 'needs_refund', 'tx-1', '{"order_number":"NV-AAAAAA","amount":"249000.00"}', 'pending', '2026-10-12T10:00:00.000Z') RETURNING 1`,
+    );
+    const result = await runScheduledOrders();
+    expect(result).toMatchObject({ ran: true, outcomes: ["notice"] });
+    expect(sent).toEqual([
+      expect.objectContaining({
+        to: "founder@example.test",
+        subject: expect.stringContaining("NV-AAAAAA"),
+      }),
+    ]);
+    vi.unstubAllGlobals();
+  });
+
+  it("an order made before payment existed (no payment kind) finishes, gets an order number, and its ready email shows it", async () => {
+    const id = await makeOrder(d1.db, { payment: "legacy", now: new Date() });
+    d1.query(
+      `UPDATE orders SET order_number = NULL WHERE id = '${id}' RETURNING 1`,
+    );
+    await approve(d1.db, id, { now: new Date() });
+    for (let i = 0; i < 12; i += 1) await runScheduledOrders();
+    const order = rows(
+      `SELECT state, order_number FROM orders WHERE id = '${id}'`,
+    )[0]!;
+    expect(order.state).toBe("delivered");
+    expect(String(order.order_number)).toMatch(/^NV-/);
+    expect(
+      rows("SELECT idempotency_key FROM order_emails")[0]!.idempotency_key,
+    ).toContain(String(order.order_number));
   });
 });

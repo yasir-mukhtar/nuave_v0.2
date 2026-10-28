@@ -14,7 +14,12 @@ permissions:
   pull-requests: read
 
 jobs:
-  validate:
+  # The checks run as separate jobs at the same time, so a run takes about as
+  # long as the slowest one instead of all of them added together. `validate`
+  # at the bottom stays the single required check and passes only when every
+  # one of them passed.
+  checks:
+    name: Code checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -32,13 +37,44 @@ jobs:
       - name: Run non-mutating checks
         run: npm run check
 
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run unit tests (audit engine + fixture journey)
         run: npm run test:unit
 
-      - name: Build application
-        run: npm run build
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Build Cloudflare worker (build-only)
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # build:cf runs `npm run build` (the Next.js build) itself before
+      # packaging the worker, so one step covers both builds.
+      - name: Build application and Cloudflare worker (build-only)
         env:
           NUAVE_PROVIDER: openai
           NUAVE_QUESTION_PROVIDER: openai
@@ -58,11 +94,92 @@ jobs:
           EOF
           npm run build:cf
 
-      - name: Install Playwright browsers
+  browser-tests:
+    name: Browser tests (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The enabled suite holds most of the tests, so it is split by test
+        # into four parts that run on separate machines. The tests do not
+        # depend on running in order, so --fully-parallel lets Playwright
+        # split inside a file, not only between files.
+        include:
+          - name: enabled 1/4
+            suite: enabled
+            args: --fully-parallel --shard=1/4
+          - name: enabled 2/4
+            suite: enabled
+            args: --fully-parallel --shard=2/4
+          - name: enabled 3/4
+            suite: enabled
+            args: --fully-parallel --shard=3/4
+          - name: enabled 4/4
+            suite: enabled
+            args: --fully-parallel --shard=4/4
+          - name: disabled
+            suite: disabled
+            args: ""
+          - name: pixel
+            suite: pixel
+            args: ""
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The downloaded browser is kept between runs and only fetched again
+      # when the lockfile (and so the Playwright version) changes.
+      - name: Restore Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # Skips the download when the restored browser is already there, and
+      # always installs the system packages the browser needs.
+      - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
       - name: Run browser tests
-        run: npm run test:e2e
+        run: npm run test:e2e:${{ matrix.suite }} -- ${{ matrix.args }}
+
+      # Keeps the screenshot and trace of a failed test, so a failure that
+      # does not happen again locally can still be explained.
+      - name: Save failed-test screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ strategy.job-index }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  validate:
+    name: validate
+    if: always()
+    needs: [checks, unit-tests, build, browser-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every check to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Check results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            if [ "${result}" != "success" ]; then
+              echo "::error::At least one check did not pass (${result})."
+              exit 1
+            fi
+          done
 
   verify-main-origin:
     name: Verify main came from merged PR
@@ -147,6 +264,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Spec 019: NEXT_PUBLIC_META_PIXEL_ID is Nuave's Meta Pixel (public: it
+      # appears in the page). It turns on the cookie notice; the Pixel itself
+      # loads only after a visitor taps Setuju. Blank it to switch both off.
       - name: Prepare production build env
         run: |
           cat > .env.production.local <<'EOF'
@@ -159,6 +279,7 @@ jobs:
           NUAVE_NEW_AUDIT_ENABLED=true
           NUAVE_AUDIT_MODE=live
           CHEAPERINFERENCE_API_KEY=${{ secrets.CHEAPERINFERENCE_API_KEY }}
+          NEXT_PUBLIC_META_PIXEL_ID=890453577390181
           EOF
 
       - name: Build validated OpenNext worker
@@ -187,13 +308,24 @@ jobs:
         env:
           NUAVE_NEW_AUDIT_ENABLED: "true"
           NUAVE_AUDIT_MODE: live
-          NUAVE_DAILY_SPEND_LIMIT_USD: "5"
-          NUAVE_ORDER_SPEND_LIMIT_USD: "2"
+          # Founder, 2026-10-28 (Spec 021 PR 6b): USD 50 a day, USD 5.00 an
+          # order, so three Claude report calls always fit an order's hold.
+          NUAVE_DAILY_SPEND_LIMIT_USD: "50"
+          NUAVE_ORDER_SPEND_LIMIT_USD: "5"
           NUAVE_ORDER_EMAIL_ALLOWLIST: ${{ secrets.NUAVE_ORDER_EMAIL_ALLOWLIST }}
           # Spec 016 R-25: the real mail sender (Resend). The cron and the order
           # route both refuse live work when either is missing.
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NUAVE_MAIL_FROM: ${{ secrets.NUAVE_MAIL_FROM }}
+          # Spec 017 R-17: Midtrans sandbox (the production switch stays false
+          # until G1), the founder test-pass code (at least 24 characters) and
+          # the founder's alert address. Without the key and the alert address no
+          # payment and no test pass start (fail closed). Preview workers get
+          # none of these.
+          MIDTRANS_SERVER_KEY: ${{ secrets.MIDTRANS_SERVER_KEY }}
+          MIDTRANS_IS_PRODUCTION: "false"
+          NUAVE_TEST_PASS_CODE: ${{ secrets.NUAVE_TEST_PASS_CODE }}
+          NUAVE_FOUNDER_ALERT_EMAIL: ${{ secrets.NUAVE_FOUNDER_ALERT_EMAIL }}
           NUAVE_PROVIDER: openai
           NUAVE_QUESTION_PROVIDER: openai
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -201,6 +333,22 @@ jobs:
           OPENAI_AUDIT_MODEL: gpt-5.6-luna
           OPENAI_AUDIT_REASONING_EFFORT: low
           CHEAPERINFERENCE_API_KEY: ${{ secrets.CHEAPERINFERENCE_API_KEY }}
+          # Spec 018 R-26: DataForSEO (search discovery, and in PR 2 the ChatGPT
+          # and Google AI Overview checks). Preview workers get none.
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+          # Spec 022 R-16: the Meta Conversions API token for the server
+          # Purchase event. Preview workers get none, so they send nothing.
+          # The founder makes it in Meta Events Manager before this merges.
+          META_CAPI_ACCESS_TOKEN: ${{ secrets.META_CAPI_ACCESS_TOKEN }}
+          # Spec 021 PR 6b: every live two-source report is written by Claude
+          # Opus 5.5 (claude-sonnet-5-5 is the cheaper writer), with the pages
+          # Firecrawl read for the order. The founder adds the three keys to
+          # the GitHub secrets before this merges; preview workers get none.
+          NUAVE_REPORT_WRITER: claude-opus-5-5
+          NUAVE_ANTHROPIC_API_KEY: ${{ secrets.NUAVE_ANTHROPIC_API_KEY }}
+          NUAVE_ANTHROPIC_WORKSPACE_ID: ${{ secrets.NUAVE_ANTHROPIC_WORKSPACE_ID }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -214,6 +362,10 @@ jobs:
             NUAVE_ORDER_EMAIL_ALLOWLIST
             RESEND_API_KEY
             NUAVE_MAIL_FROM
+            MIDTRANS_SERVER_KEY
+            MIDTRANS_IS_PRODUCTION
+            NUAVE_TEST_PASS_CODE
+            NUAVE_FOUNDER_ALERT_EMAIL
             NUAVE_PROVIDER
             NUAVE_QUESTION_PROVIDER
             OPENAI_API_KEY
@@ -221,3 +373,10 @@ jobs:
             OPENAI_AUDIT_MODEL
             OPENAI_AUDIT_REASONING_EFFORT
             CHEAPERINFERENCE_API_KEY
+            DATAFORSEO_LOGIN
+            DATAFORSEO_PASSWORD
+            META_CAPI_ACCESS_TOKEN
+            NUAVE_REPORT_WRITER
+            NUAVE_ANTHROPIC_API_KEY
+            NUAVE_ANTHROPIC_WORKSPACE_ID
+            FIRECRAWL_API_KEY

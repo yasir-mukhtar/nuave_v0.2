@@ -1,294 +1,382 @@
-# Kebijakan Privasi dan Data — agent handoff and implementation draft
+# Kebijakan Privasi dan Data
 
-> Route: `/privacy`
-> Status: founder draft for an independently operated service
+> Route: `/privacy` (`src/app/privacy/page.tsx`)
+> Status: version 1.5 (2026-10-28, Spec 021 PR 6b) adds the page reader
+> (Firecrawl) and the public pages read for the report; waits for the
+> founder's approval in PR #185. Version 1.4 (2026-10-26, Spec 022) adds a short summary of what
+> goes to Meta at the start of the Meta part of section 10 and narrows server
+> events to purchases; approved by the founder on 2026-10-26. Version 1.3
+> (2026-10-25) names the cookie notice's English button, **Allow**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
+> browser for 12 months (Spec 019). Version 1.1 (2026-10-25) added the clauses
+> adopted from the HaloAI comparison; approved by the founder on 2026-10-25
+> (PR #160). The lawyer
+> checks listed below are still open. The page and this file say the same thing; change
+> both together.
 > Language: Indonesian
+> Shared facts: `src/lib/legal.ts` (operator, city, version, date, support
+> email, reply time) and `src/lib/orders/promise.ts` (delivery promise).
 
-## Instructions for the implementation agent
+## Notes for whoever changes this page
 
-Implement the text under **Public page copy** only after comparing it with the
-real production data flow. Replace every bracketed field. Remove any data,
-provider, cookie, or retention statement that is not true; add any real
-processing that is missing. Do not claim “patuh”, “tersertifikasi”, “100% aman”,
-or “sesuai UU PDP”.
+- Every statement must match what the system does. Sources: S0 decisions D1
+  to D8 (`docs/DECISION_LOG.md`, 2026-10-05), Spec 016 Q3 (record lifetimes),
+  Spec 018 (providers and checks), and `.github/workflows/ci.yml` (the
+  providers production actually uses).
+- No "patuh", "tersertifikasi", "100% aman" or "sesuai UU PDP" claims.
+- **Before the Meta Pixel or Conversions API goes live** (founder decision
+  2026-10-24: keep the promise of a choice before tracking), the tracking
+  change must:
+  1. show a cookie notice with **Allow** and **Don't allow** (English since
+     2026-10-25), and load nothing from Meta until the visitor taps Allow; a
+     How it works link opens, inside the notice and before the choice, a
+     short explanation that names the hashed order email and Meta (Spec 022
+     layered notice, founder 2026-10-26; this replaces "the notice names
+     it", and is for the lawyer's check);
+  2. send server events (Conversions API) only for visitors who agreed, and
+     send no fields beyond those section 10 lists (event, value, IP address,
+     browser type, Meta cookie codes, hashed email for purchases);
+  3. add a **Pengaturan cookie** link in the footer that reopens the choice;
+  4. send purchase value 249000 IDR (the price since Spec 018), not 99000;
+  5. never load the Pixel on `/r` (the report link keeps its secret in the
+     address) or `/uji` (the founder test pass);
+  6. never send the report, the audit questions, AI answers or intake facts;
+  7. pass the visitor's IP address and browser type to Meta at request time
+     without storing them, so section 2's "Nuave sendiri tidak menyimpan
+     alamat IP Anda" stays true.
+  If any of these changes, section 10 below must change first.
+  **Spec 019 (browser step)** meets items 1, 3, 4, 5 and 6: the notice, the
+  footer link and the Pixel are on in production (Pixel ID set in
+  `.github/workflows/ci.yml`); with the ID blank, all three are off. The Pixel sends PageView, Lead (the free check found
+  the business), InitiateCheckout and Purchase (249000 IDR), never the email,
+  business, order number or report, and runs with automatic configuration
+  off. The page's "seberapa jauh Anda membacanya" is not sent yet; sending
+  less than the page lists keeps it true.
+  **Spec 022 (server step)** meets items 2 and 7 and the new item 1: the
+  server sends one Purchase per paid order (`/api/meta/purchase`), only when
+  the paying customer's own browser reaches the paid screen after Allow, with
+  the event, value, IP address, browser type, Meta cookie codes, hashed order
+  email and the fixed `/audit` page address. The IP address and browser type
+  are read from that request and passed to Meta without being stored; the
+  order keeps only a random event code, the send time, the privacy version
+  agreed to and an outcome code. No server Lead: section 10 now names server
+  events for purchases only. It changes Spec 019 R-09 and R-10 (the Pixel
+  Purchase carries the event code). Cloudflare's automatic per-request log is
+  switched off (Q-8) if the founder's check shows it holds the IP address.
+- **Deletion (section 9):** an hourly cleanup in the order cron
+  (`src/lib/orders/retention.ts`, minute 17) makes an order anonymous 12 months
+  after its report was saved, or 30 days after it failed or expired. It empties
+  the email, business details, intake, questions, answers, report and link, and
+  deletes the question, email and payment-email rows; a bare order row stays
+  (order number, dates, state, payment links) so payment records still add up.
+  It skips an order with an open refund case (the cases `support refunds`
+  lists, plus any payment attempt still open), a running order, and one under
+  a support hold (`npm run support
+  -- hold <order> <days>`). Settled cost rows go after 24 months. Payment
+  records are never removed. A late payment for an anonymised order becomes a
+  refund case and never revives it.
+  Not covered by the job, to handle by hand or later:
+  - the support inbox (12 months) and the email provider's own copies;
+  - orders in a mode or environment the production cron does not run
+    (synthetic orders in the production database, and the preview database);
+  - cost rows that never settled (a call whose cost is unknown);
+  - Midtrans `snap_token` and `redirect_url` on payment attempts;
+  - an order whose refund case was settled without a recorded refund (fixed
+    by hand, declined, or a chargeback on a `needs_refund` transaction) stays
+    on `support refunds` until `npm run support -- norefund <order>
+    <declined|delivered|settled>` closes it; then the job reaches it;
+  - a delivered order with a chargeback near its 12 months: set a `hold`.
+  - a failed order whose report link support resent by hand: the link stops
+    working at 30 days, so set a `hold` when resending it.
+  For a paid order, the bare row and the payment records still carry Midtrans
+  IDs that Midtrans can link to the customer, so paid orders are pseudonymous
+  rather than anonymous; unpaid orders become effectively anonymous.
+- **Version 1.5 (2026-10-28):** Spec 021 PR 6b reads the business's own site
+  and the pages the AI answers cited (Firecrawl), and the report writer
+  (Anthropic) reads them. Section 2's "Data audit" adds the public pages
+  read; section 6 names the page reader and says the page text, without
+  phone numbers or email addresses, goes to the AI provider and is deleted
+  once the report is saved (the addresses stay with the order); section 7
+  adds the row "Penyedia pembaca halaman web" and the pages read to the AI
+  provider's data. The founder approves this wording before the PR merges
+  (decision 2026-10-26, point 4) and checks that both providers' terms
+  support section 7's "hanya memproses data untuk menjalankan layanan
+  Nuave".
+- **Version 1.4 (2026-10-26):** section 10 gets the "Singkatnya" summary
+  before the Meta details, and its third point names server events for
+  purchases only, with the page address. A sentence that Nuave records the
+  send time and the policy version for each purchase sent to Meta waits for
+  the lawyer (Spec 022 Q-2).
+- **Version 1.3 (2026-10-25):** section 10 names the notice's button
+  **Allow** (was **Setuju**): the notice's buttons are now English, Allow
+  (the main, purple button) and Don't allow, under the title "Allow cookies?".
+- **Version 1.2 (2026-10-25):** section 10 adds "Pilihan cookie Anda sendiri
+  disimpan di browser Anda selama 12 bulan." The privacy page now has its own
+  version (`PRIVACY_VERSION` in `src/lib/legal.ts`); the terms stay at 1.1. A
+  new privacy version asks every visitor for their cookie choice again.
+- **Version 1.1 (2026-10-25):** adds the legal basis for each use (section
+  5), providers bound by their service agreements (section 7), and a written
+  breach notice within 3 x 24 hours (section 11). Before publishing,
+  check that the terms of DataForSEO, Cheaper Inference and the inbox provider
+  support "hanya memproses data untuk menjalankan layanan Nuave, sesuai
+  perjanjian layanan mereka" (Cloudflare, OpenAI's API terms and Resend do);
+  owner: the founder, with the lawyer check. **Lawyer check:** the
+  3 x 24 hour notice follows UU 27/2022 Pasal 46 as we understand it.
+- **Provider names (founder, 2026-10-24):** the public page names only the
+  companies a customer deals with directly (Midtrans, Meta) and describes the
+  rest by type. Give a customer the names on request. Keep this map current:
 
-Link to `/support` and `/terms`. Show the effective date and version. The privacy
-contact must reach a monitored inbox. Do not use a blanket “by using the site you
-consent to everything” checkbox. Optional marketing, if any, needs a separate
-choice.
+  | Type on the page | Company today |
+  |---|---|
+  | Penyedia hosting dan penyimpanan cloud | Cloudflare (Workers, D1) |
+  | Penyedia layanan AI | OpenAI; Cheaper Inference (draft questions); Anthropic (report writer) |
+  | Penyedia pembaca halaman web | Firecrawl |
+  | Penyedia data pencarian | DataForSEO |
+  | Penyedia pengiriman email | Resend |
+  | Penyedia kotak masuk email | not yet recorded |
 
-## Operational truth check before publishing
-
-Confirm:
-
-- operator name and privacy email;
-- every field collected in intake, checkout, report delivery, and support;
-- hosting, AI/search, payment, email, storage, analytics, and support providers;
-- where those providers process data;
-- whether prompts contain a name or email (recommended: they must not);
-- actual cookies, local storage, logs, and analytics;
-- whether reports are stored and for how long;
-- whether backups follow the same deletion schedule; and
-- that access, correction, and deletion requests can actually be handled.
-
-## Recommended lean retention defaults
-
-Use these only if implementation can enforce them:
-
-- abandoned intake: 30 days;
-- order inputs, approved questions, evidence, and report: 90 days after delivery;
-- report-access grant or proof: no longer than the report-access period selected
-  for Module 07;
-- support correspondence: 12 months after the issue closes;
-- security/access logs: 30 days;
-- payment and bookkeeping records: as long as required for payment, tax, fraud,
-  or legal recordkeeping.
-
-These defaults support a six-to-eight-week re-check while avoiding indefinite
-storage. The founder may choose shorter periods.
+  The report's method section still names DataForSEO, so paying customers
+  see that one anyway.
 
 ---
 
 ## Public page copy
 
-### Metadata
-
 **Page title:** Kebijakan Privasi dan Data | Nuave
 
-**Meta description:** Penjelasan tentang data yang dikumpulkan Nuave, alasan
-penggunaannya, pihak yang membantu memprosesnya, masa penyimpanan, dan pilihan Anda.
+**Meta description:** Data yang dipakai Nuave, untuk apa, siapa yang ikut
+memprosesnya, berapa lama disimpan, dan pilihan Anda.
 
-# Kebijakan Privasi dan Data
+# Kebijakan privasi dan data
 
-**Berlaku sejak:** `[TANGGAL]`  
-**Versi:** `[VERSI]`
+Berlaku sejak 28 Oktober 2026 · Versi 1.5
 
-Kami ingin Anda memahami data apa yang dibutuhkan Nuave dan apa yang terjadi
-setelah Anda memberikannya. Prinsip kami sederhana: kumpulkan seperlunya, gunakan
-untuk tujuan yang dijelaskan, batasi akses, dan jangan publikasikan laporan tanpa
-izin.
+Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang ikut
+memprosesnya, berapa lama disimpan, dan pilihan Anda. Prinsip kami sederhana.
+Kami mengambil data seperlunya dan memakainya sesuai tujuan. Laporan Anda tidak
+kami bagikan tanpa izin.
 
-Kebijakan ini bukan klaim bahwa risiko keamanan dapat dihilangkan seluruhnya.
-Kebijakan ini menjelaskan cara kami berusaha menangani data secara bertanggung
-jawab dan cara Anda dapat menghubungi kami.
+## 1. Siapa yang bertanggung jawab
 
-## 1. Siapa yang bertanggung jawab?
+Nuave adalah layanan independen yang dijalankan oleh PT Nuave Arah Baru
+di Jakarta Selatan, Indonesia.
 
-Nuave adalah layanan independen yang dioperasikan oleh
-`[NAMA LENGKAP PENGELOLA]` di `[KOTA]`, Indonesia.
+Pertanyaan dan permintaan soal data dikirim ke support@nuave.ai. Kami membalas
+dalam 1 hari kerja (Senin sampai Jumat, WIB).
 
-Pertanyaan atau permintaan terkait data dapat dikirim ke `[EMAIL PRIVASI]` atau
-melalui [Kontak dan Bantuan](/support).
+## 2. Data yang kami pakai
 
-## 2. Kapan kebijakan ini berlaku?
+- **Alamat website atau akun Instagram bisnis** yang Anda masukkan, dan
+  informasi publik yang kami baca dari sana, seperti nama, alamat, dan layanan.
+- **Email pesanan.** Kami pakai untuk konfirmasi pembayaran, link laporan, dan
+  jawaban bantuan. Jika Anda menyetujui cookie Meta, email ini juga dikirim ke
+  Meta dalam bentuk kode acak saat pembelian (bagian 10).
+- **Data pembayaran dari Midtrans:** status, jumlah, waktu, cara bayar, dan
+  nomor transaksi. Kami tidak menerima nomor kartu, PIN, kata sandi bank, atau kode
+  OTP. Jika kami perlu mengembalikan uang lewat transfer bank, kami
+  menanyakan nomor rekening Anda lewat email bantuan.
+- **Data bisnis yang Anda periksa:** kota untuk pencarian, kategori, layanan,
+  calon pelanggan, pesaing, dan fakta publik lain yang Anda konfirmasi.
+- **Data audit:** sepuluh pertanyaan yang Anda setujui, jawaban ChatGPT dan
+  Google AI Overview, sumber yang disebut, isi halaman web publik yang dibaca
+  untuk laporan (website bisnis Anda dan halaman yang dikutip jawaban AI), dan
+  laporan.
+- **Data teknis:** penyedia hosting kami memproses alamat IP dan
+  informasi browser untuk menjalankan situs dan menahan serangan. Nuave sendiri
+  tidak menyimpan alamat IP Anda.
 
-Kebijakan ini berlaku ketika Anda:
+## 3. Data yang tidak kami perlukan
 
-- mengunjungi situs Nuave;
-- menghubungi kami;
-- mengisi informasi bisnis;
-- memeriksa atau menyetujui pertanyaan audit;
-- melakukan pembayaran;
-- menerima atau membuka laporan; atau
-- meminta bantuan, koreksi, re-check, atau pengembalian dana.
+Nuave memeriksa bisnis, bukan pasien atau pelanggan Anda. Jangan kirim data
+pasien, rekam medis, daftar pelanggan, kata sandi, data keuangan pribadi, atau
+data sensitif lain.
 
-## 3. Data yang kami kumpulkan
+Pengecualiannya nomor rekening yang kami tanyakan untuk pengembalian
+dana. Nomor itu hanya kami pakai untuk transfer tersebut. Jika data
+lain seperti itu sampai ke kami, kami batasi aksesnya dan berhenti
+memprosesnya. Lalu kami menghapusnya, kecuali ada kewajiban untuk menyimpannya.
 
-### Data kontak dan pesanan
+## 4. Untuk apa data dipakai
 
-Kami dapat mengumpulkan nama, email, nama bisnis, nomor pesanan, status pembayaran,
-serta isi komunikasi dengan dukungan.
+- memastikan bisnis yang diperiksa memang bisnis Anda;
+- menyiapkan data bisnis dan pertanyaan untuk Anda periksa;
+- menerima dan mencatat pembayaran;
+- menjalankan audit dan menyusun laporan;
+- mengirim link laporan dan membantu jika ada masalah;
+- mengembalikan uang jika diperlukan;
+- menjaga keamanan layanan dan mencegah penyalahgunaan;
+- mengukur iklan Nuave di Facebook dan Instagram, dan menampilkan iklan kepada
+  orang yang mirip dengan pembeli Nuave, hanya jika Anda setuju (bagian 10); dan
+- memenuhi kewajiban pembukuan dan hukum.
 
-### Informasi bisnis
+Kami tidak menjual data pribadi Anda. Kami tidak memakai laporan Anda sebagai contoh atau bahan promosi tanpa izin terpisah dari Anda.
 
-Kami memproses nama bisnis, cabang atau wilayah, website atau profil resmi,
-layanan utama, target pelanggan, pembeda bisnis, dan fakta lain yang Anda berikan
-untuk menyusun audit.
+## 5. Dasar pemrosesan data
 
-Sebagian besar informasi bisnis berasal dari Anda atau sumber publik. Informasi
-bisnis dapat menjadi data pribadi jika dapat dikaitkan dengan pemilik atau orang
-tertentu.
+Kami memproses data Anda berdasarkan:
 
-### Data audit dan laporan
+- **pesanan Anda**: untuk menjalankan pesanan, atau atas permintaan Anda
+  sebelum memesan, seperti cek gratis;
+- **persetujuan Anda**: untuk cookie dan pengukuran iklan Meta;
+- **kewajiban hukum**: untuk catatan pembayaran dan pajak; dan
+- **kepentingan yang sah**: untuk menjaga keamanan layanan dan mencegah
+  penyalahgunaan.
 
-Kami memproses 10 pertanyaan yang Anda setujui, jawaban AI, sumber yang tersedia,
-hasil analisis, rekomendasi, dan laporan akhir.
+Anda bisa menarik persetujuan kapan saja, lewat tautan Pengaturan cookie
+(bagian 10) atau email ke support@nuave.ai. Penarikan tidak mengubah pemrosesan
+yang sudah terjadi sebelumnya.
 
-### Data pembayaran
+## 6. Layanan AI dan pencarian
 
-Pembayaran diproses oleh Midtrans. Kami menerima informasi seperti
-status, jumlah, waktu, dan referensi transaksi. Kami tidak menerima atau menyimpan
-nomor kartu, PIN, kata sandi perbankan, atau kode OTP Anda.
+Untuk membuat audit, sebagian data bisnis dan pertanyaan Anda dikirim ke
+penyedia layanan AI dan penyedia data pencarian. Penyedia data pencarian
+mengambil data pencarian Google. Penyedia itu juga menanyakan sepuluh pertanyaan
+Anda ke ChatGPT dan Google, lalu mengembalikan jawabannya kepada kami.
 
-### Data teknis dan keamanan
+Penyedia pembaca halaman web membaca halaman website bisnis Anda dan halaman web
+publik yang dikutip jawaban AI. Isinya, tanpa nomor telepon dan alamat email,
+kami berikan ke penyedia layanan AI untuk menyusun laporan. Isi halaman itu kami
+hapus setelah laporan selesai, atau bersama pesanan jika laporannya tidak
+selesai. Alamat halamannya disimpan bersama pesanan.
 
-Sistem kami dapat mencatat alamat IP, jenis perangkat/peramban, waktu akses,
-halaman atau tindakan yang diminta, kesalahan sistem, dan informasi keamanan yang
-diperlukan untuk menjalankan dan melindungi layanan.
+Halaman yang dibaca bisa memuat nama dokter atau staf yang dicantumkan sendiri
+oleh bisnis di halaman publiknya. Selain itu, kami tidak memasukkan email, data
+pembayaran, atau data pribadi lain ke permintaan ini. Penyedia tersebut dapat
+memproses data di luar Indonesia sesuai kebijakan masing-masing.
 
-## 4. Data yang tidak kami perlukan
+## 7. Pihak yang membantu kami
 
-Jangan mengirim data pelanggan Anda, daftar kontak, kata sandi, kredensial akun,
-data kesehatan, data biometrik, data keuangan pribadi, dokumen hukum privat, atau
-data sensitif lain. Nuave dirancang menggunakan informasi bisnis yang Anda
-konfirmasi dan informasi yang sudah tersedia secara publik.
-
-Jika kami menerima data sensitif yang tidak diperlukan, kami akan membatasi
-akses, menghentikan pemrosesan yang terkait, dan menghapusnya sejauh dapat
-dilakukan serta tidak ada kewajiban lain untuk menyimpannya.
-
-## 5. Mengapa kami menggunakan data?
-
-Kami menggunakan data untuk:
-
-- memastikan bisnis dan cabang yang benar;
-- menyusun dan menampilkan pertanyaan untuk Anda periksa;
-- menerima dan mengonfirmasi pesanan serta pembayaran;
-- menjalankan audit dan membuat laporan;
-- mengirim, memulihkan, atau memperbaiki laporan;
-- menjawab pertanyaan, keluhan, dan permintaan terkait data;
-- mencegah penyalahgunaan dan menjaga keamanan layanan;
-- memenuhi kewajiban pencatatan atau permintaan hukum yang sah; dan
-- menawarkan re-check jika Anda memintanya atau telah memilih menerima
-  komunikasi tersebut.
-
-Kami tidak menjual data pribadi Anda. Kami tidak menggunakan laporan Anda sebagai
-contoh, studi kasus, atau materi promosi tanpa meminta izin terpisah.
-
-## 6. Dasar penggunaan data
-
-Tergantung pada kegiatannya, kami menggunakan data karena dibutuhkan untuk
-mempersiapkan atau melaksanakan pesanan Anda, memenuhi kewajiban yang berlaku,
-menjaga keamanan layanan, menangani permintaan Anda, atau karena Anda memberikan
-persetujuan khusus.
-
-Kami tidak menganggap satu persetujuan sebagai izin untuk semua tujuan. Jika kami
-menawarkan email promosi atau penggunaan laporan sebagai studi kasus, pilihannya
-akan dipisahkan dari pembelian dan dapat ditarik kembali.
-
-## 7. Penggunaan layanan AI
-
-Pertanyaan audit dan informasi bisnis yang diperlukan dapat dikirim kepada
-`[PENYEDIA AI/SEARCH]` untuk menghasilkan pengamatan yang menjadi bagian laporan.
-Kami berusaha tidak memasukkan nama pemesan, email, informasi pembayaran, data
-pelanggan, atau data sensitif ke dalam permintaan tersebut.
-
-Laporan akan menyebutkan layanan atau sistem yang digunakan untuk pengujian.
-Penyedia AI dapat memproses data di luar Indonesia sesuai dengan pengaturan dan
-kebijakannya.
-
-## 8. Pihak yang membantu kami
-
-Kami menggunakan penyedia layanan hanya untuk fungsi yang diperlukan, antara lain:
-
-| Fungsi | Penyedia | Data yang terkait |
+| Penyedia | Untuk | Data yang terkait |
 |---|---|---|
-| Hosting dan keamanan situs | `[PENYEDIA HOSTING]` | permintaan web, log teknis, dan data layanan yang disimpan |
-| AI dan pencarian | `[PENYEDIA AI/SEARCH]` | pertanyaan serta informasi bisnis yang diperlukan untuk audit |
-| Pembayaran | Midtrans | detail transaksi dan data yang Anda berikan langsung kepada penyedia |
-| Email/pengiriman laporan | Resend | nama, email, nomor pesanan, dan petunjuk akses laporan |
-| Penyimpanan data | `[PENYEDIA PENYIMPANAN]` | data pesanan, audit, dan laporan sesuai kebutuhan |
-| Dukungan/analitik, jika digunakan | `[PENYEDIA ATAU “tidak digunakan”]` | komunikasi dukungan atau data penggunaan yang dijelaskan di sini |
+| Penyedia hosting dan penyimpanan cloud | Menjalankan situs, menjaga keamanannya, dan menyimpan data pesanan serta laporan | Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan |
+| Penyedia layanan AI | Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, jawaban yang diperiksa, dan isi halaman web publik yang dikutip jawaban AI |
+| Penyedia pembaca halaman web | Membaca halaman website bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan laporan | Alamat website bisnis Anda dan alamat halaman yang dikutip |
+| Penyedia data pencarian | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
+| Midtrans | Pembayaran | Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans |
+| Penyedia pengiriman email | Mengirim email pesanan dan link laporan | Email pesanan, nama bisnis, nomor pesanan, dan link laporan |
+| Penyedia kotak masuk email | Menerima dan membalas email ke support@nuave.ai | Isi email yang Anda kirim ke kami |
+| Meta Platforms | Iklan dan pengukuran iklan, hanya jika Anda setuju | Lihat bagian 10 |
 
-Kami juga dapat memberikan data jika diwajibkan oleh permintaan pemerintah atau
-penegak hukum yang sah, atau jika diperlukan untuk melindungi hak dan keamanan
-pengguna maupun layanan.
+Kami menyebut nama Midtrans dan Meta karena Anda berhubungan langsung dengan
+keduanya. Penyedia lain kami sebut menurut jenisnya. Jika Anda ingin tahu nama penyedia yang memproses data Anda, tanyakan ke support@nuave.ai.
 
-## 9. Pemrosesan di luar Indonesia
+Penyedia yang kami sebut menurut jenisnya hanya memproses data untuk menjalankan
+layanan Nuave, sesuai perjanjian layanan mereka dengan kami. Midtrans dan Meta
+memproses data sesuai kebijakan mereka sendiri. Pertanyaan audit juga sampai ke
+ChatGPT dan Google, yang memprosesnya sesuai kebijakan mereka.
 
-Sebagian penyedia dapat menyimpan atau memproses data di negara lain. Sebelum
-meluncurkan layanan berbayar, kami akan mencatat lokasi penyedia yang digunakan
-dan memilih pengaturan yang tersedia untuk membatasi penggunaan serta melindungi
-data.
+Kami juga dapat memberikan data jika diminta secara sah oleh pemerintah atau
+penegak hukum, atau jika perlu untuk melindungi keamanan orang yang memakai Nuave dan layanan kami.
 
-Kami tidak akan menyatakan bahwa semua data berada di Indonesia jika hal itu
-tidak benar. Anda dapat meminta informasi lebih lanjut melalui `[EMAIL PRIVASI]`.
+## 8. Pemrosesan di luar Indonesia
 
-## 10. Berapa lama data disimpan?
+Sebagian besar penyedia di atas menyimpan atau memproses data di luar
+Indonesia. Kami memilih pengaturan yang membatasi penggunaan data jika penyedia
+menyediakannya. Tanyakan ke support@nuave.ai jika Anda ingin tahu lebih lanjut.
 
-Kami tidak ingin menyimpan data tanpa batas. Jadwal yang kami gunakan adalah:
+## 9. Berapa lama data disimpan
 
-| Jenis data | Masa simpan |
+| Data | Masa simpan |
 |---|---|
-| Draf pesanan yang tidak dilanjutkan | `[30 hari]` |
-| Informasi pesanan, pertanyaan, bukti audit, dan laporan | `[90 hari setelah laporan dikirim]` |
-| Akses privat laporan | `[MASA AKSES LAPORAN]` |
-| Komunikasi bantuan atau keluhan | `[12 bulan setelah masalah selesai]` |
-| Log keamanan dan akses | `[30 hari]` |
-| Catatan transaksi dan pembukuan | selama diperlukan untuk pembayaran, pajak, pencegahan fraud, atau kewajiban hukum |
+| Pesanan yang selesai: email, data bisnis, pertanyaan, hasil pemeriksaan, laporan, dan catatan pengiriman | 12 bulan setelah laporan selesai |
+| Pesanan yang gagal atau tidak dilanjutkan | 30 hari, kecuali masih ada permintaan bantuan yang terbuka |
+| Link laporan | Berlaku 12 bulan, atau sampai diganti atau dimatikan |
+| Catatan biaya per pesanan (tanpa email) | 24 bulan |
+| Kemajuan pesanan di browser Anda | Paling lama 7 hari, di perangkat Anda |
+| Email bantuan dan keluhan | 12 bulan setelah masalahnya selesai |
+| Catatan pembayaran | Paling sedikit 24 bulan, atau lebih lama jika diwajibkan untuk pajak atau hukum |
+| Salinan email di penyedia pengiriman email | Sesuai masa simpan penyedia itu, kami atur sesingkat yang tersedia |
 
-Setelah masa tersebut, data dihapus atau dibuat tidak lagi mengidentifikasi Anda,
-kecuali masih diperlukan untuk menyelesaikan permintaan, sengketa, keamanan, atau
-kewajiban pencatatan yang berlaku. Penghapusan dari cadangan dapat mengikuti
-siklus penghapusan cadangan yang terbatas.
+Setelah masa itu, data dihapus atau dibuat tidak lagi menunjuk ke Anda.
+Pengecualiannya data yang masih diperlukan untuk permintaan, sengketa, atau
+kewajiban hukum yang belum selesai.
 
-## 11. Cookie dan penyimpanan di perangkat
+## 10. Cookie, penyimpanan di browser, dan iklan Meta
 
-Kami menggunakan cookie atau penyimpanan browser yang diperlukan untuk keamanan,
-menjaga alur audit, dan mengingat status sesi. Cookie tersebut bukan digunakan
-untuk menjual profil Anda kepada pengiklan.
+Nuave menyimpan kemajuan pesanan di browser Anda, agar Anda bisa melanjutkan
+setelah halaman dimuat ulang. Data ini tetap di perangkat Anda. Setelah 7 hari data itu tidak dipakai lagi, dan
+dihapus saat Anda membuka Nuave berikutnya. Penyedia hosting kami juga dapat memasang cookie keamanan untuk
+menahan lalu lintas berbahaya.
 
-`[JIKA BENAR: Kami tidak menggunakan cookie iklan atau pelacak lintas situs.]`
+Singkatnya: kami tidak mengirim data Anda ke Meta kecuali Anda memilih
+**Allow**. Email Anda tidak pernah dikirim ke Meta dalam bentuk yang bisa
+dibaca. Laporan, pertanyaan, jawaban AI, dan data bisnis Anda tidak pernah
+dikirim ke Meta. Kami tidak menjual data Anda, dan Anda bisa mengubah pilihan
+kapan saja.
 
-Jika nanti kami menambahkan analitik atau pemasaran yang tidak diperlukan, kami
-akan memperbarui kebijakan ini dan menyediakan pilihan yang sesuai sebelum alat
-tersebut digunakan.
+Untuk mengukur iklan Nuave di Facebook dan Instagram, kami memakai Meta Pixel
+di browser dan Meta Conversions API dari server kami. Keduanya hanya aktif jika
+Anda memilih **Allow** pada pemberitahuan cookie. Jika Anda menolak atau belum
+memilih, Nuave tidak memasang cookie Meta dan tidak mengirim data Anda ke Meta.
 
-## 12. Cara kami melindungi data
+Jika Anda setuju, yang dikirim ke Meta Platforms adalah:
 
-Kami menggunakan langkah yang sesuai dengan ukuran layanan, seperti koneksi
-HTTPS, pembatasan akses, penyimpanan kredensial di sisi server, perlindungan
-akses privat sesuai mekanisme yang digunakan, pencatatan akses yang diperlukan,
-dan pembaruan perangkat lunak.
+- halaman Nuave yang Anda buka dan seberapa jauh Anda membacanya, cookie Meta di
+  browser Anda, dan informasi teknis yang biasa dikirim browser, seperti alamat
+  IP dan jenis perangkat;
+- tanda bahwa cek gratis selesai, checkout dibuka, dan pembayaran berhasil,
+  beserta nilai pembelian (Rp249.000);
+- untuk pembelian, catatan yang sama dari server kami, beserta alamat IP, jenis
+  browser, kode cookie Meta Anda, dan alamat halaman pemesanan Nuave; dan
+- untuk pembelian, email pesanan yang sudah diubah menjadi kode acak (hash)
+  sebelum dikirim. Meta memakainya untuk mencocokkan pembelian dengan akun
+  Facebook atau Instagram Anda.
 
-Tidak ada sistem yang sepenuhnya bebas risiko. Jika terjadi insiden yang berdampak
-pada data Anda, kami akan memeriksanya, membatasi dampaknya, dan memberikan
-pemberitahuan yang diwajibkan dengan informasi yang dapat membantu Anda.
+Tujuannya untuk mengetahui iklan mana yang benar-benar menghasilkan cek gratis
+dan pembelian. Data ini juga dipakai untuk menampilkan iklan Nuave kepada orang
+yang mirip dengan pembeli Nuave.
 
-## 13. Pilihan dan hak Anda
+Yang tidak pernah kami kirim ke Meta: laporan Anda, sepuluh pertanyaan audit,
+jawaban AI, dan data bisnis yang Anda isi.
 
-Anda dapat meminta kami untuk:
+Meta memproses data ini sesuai
+[Kebijakan Privasi Meta](https://www.facebook.com/privacy/policy). Pilihan
+cookie Anda sendiri disimpan di browser Anda selama 12 bulan. Anda bisa
+mengubahnya kapan saja lewat tautan **Pengaturan cookie** di bagian bawah
+halaman. Anda juga bisa mengatur iklan di
+[pengaturan iklan Meta](https://www.facebook.com/adpreferences), atau memblokir
+cookie di pengaturan browser Anda.
 
-- menjelaskan data pribadi tentang Anda yang kami proses;
-- memberikan akses atau salinan yang tersedia;
-- memperbaiki data yang keliru;
-- menghapus data yang tidak lagi diperlukan, sepanjang tidak ada alasan yang
-  mewajibkan penyimpanannya;
-- menghentikan penggunaan berdasarkan persetujuan setelah persetujuan ditarik;
-- membatasi atau menyampaikan keberatan atas penggunaan tertentu; dan
-- menjelaskan pihak yang menerima data terkait layanan Anda.
+## 11. Cara kami melindungi data
 
-Kirim permintaan ke `[EMAIL PRIVASI]`. Untuk mencegah orang lain mengambil atau
-menghapus data Anda, kami mungkin meminta informasi yang wajar untuk memastikan
-identitas dan hubungan Anda dengan pesanan. Kami akan mengonfirmasi penerimaan
-dan menanggapi secepat yang dapat kami lakukan sesuai kewajiban yang berlaku.
+Kami memakai koneksi HTTPS, membatasi siapa yang bisa membuka data, menyimpan
+kunci akses hanya di server, dan memperbarui perangkat lunak. Tidak ada sistem
+yang bebas risiko. Jika terjadi kebocoran yang menyangkut data Anda, kami akan memeriksanya, membatasi dampaknya, dan memberi tahu Anda secara
+tertulis paling lambat 3 x 24 jam setelah kami mengetahuinya.
 
-## 14. Privasi laporan
+## 12. Hak Anda
 
-Laporan tersedia melalui akses privat untuk penerima yang ditentukan. Jangan
-membagikan bukti atau petunjuk akses kepada orang yang tidak berwenang.
+Anda bisa meminta kami untuk:
 
-Jika akses diduga bocor, hubungi `support@nuave.ai` agar kami dapat menonaktifkan
-dan menggantinya sesuai mekanisme akses yang nanti disetujui.
+- menjelaskan data tentang Anda yang kami simpan;
+- mengirim salinan data yang tersedia;
+- memperbaiki data yang salah;
+- menghapus data yang tidak lagi diperlukan, kecuali ada kewajiban untuk
+  menyimpannya; dan
+- berhenti memakai data yang Anda izinkan sebelumnya.
 
-## 15. Anak
+Kirim permintaan ke support@nuave.ai dari email pesanan Anda. Nomor pesanan
+saja tidak cukup untuk membuktikan pesanan itu milik Anda, jadi kami mungkin
+meminta konfirmasi dari email tersebut.
 
-Nuave ditujukan untuk pemesan berusia 18 tahun ke atas. Kami tidak sengaja meminta
-data anak untuk menjalankan audit. Jangan mengirim data anak melalui formulir,
-pertanyaan audit, atau dukungan.
+## 13. Link laporan bersifat pribadi
 
-## 16. Perubahan kebijakan
+Siapa pun yang memegang link laporan bisa membukanya. Jangan teruskan link itu
+ke orang yang tidak berhak. Jika link terlanjur tersebar, tulis ke support@nuave.ai dari email pesanan. Kami akan mematikan link lama
+dan mengirim link baru ke email pesanan.
 
-Kami dapat memperbarui kebijakan ini ketika layanan atau penyedia berubah. Tanggal
-dan versi terbaru akan ditampilkan di bagian atas. Jika perubahan secara material
-mengubah cara kami menggunakan data pesanan yang masih aktif, kami akan memberi
-tahu melalui kanal yang tersedia.
+## 14. Usia
 
-## 17. Hubungi kami
+Nuave untuk pemesan berusia 18 tahun ke atas. Jangan kirim data anak melalui
+isian, pertanyaan, atau email bantuan.
 
-Untuk pertanyaan, koreksi, penghapusan, keluhan, atau insiden privasi:
+## 15. Perubahan kebijakan
 
-**Pengelola:** `[NAMA LENGKAP PENGELOLA]`  
-**Email privasi:** `[EMAIL PRIVASI]`  
-**Bantuan umum:** `support@nuave.ai`
-**Halaman bantuan:** [Kontak dan Bantuan](/support)
+Kebijakan ini bisa berubah jika layanan atau penyedia kami berubah. Tanggal dan
+versi terbaru ada di bagian atas halaman ini.
+
+## 16. Hubungi kami
+
+Pengelola: PT Nuave Arah Baru, Jakarta Selatan
+Email: support@nuave.ai
+Halaman bantuan: [Kontak dan bantuan](/support)
+Syarat layanan: [Syarat dan ketentuan](/terms)

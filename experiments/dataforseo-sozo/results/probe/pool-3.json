@@ -1,0 +1,548 @@
+{
+  "clinic": "NK Health",
+  "place": {
+    "display": "Jakarta",
+    "code": 1007716
+  },
+  "phrases": [
+    "fisioterapi saraf kejepit",
+    "fisioterapi stroke",
+    "cedera olahraga pasca operasi",
+    "nyeri lutut"
+  ],
+  "businessNamesSeen": [
+    "acesio",
+    "the bali thamrin",
+    "nk com",
+    "alodokter",
+    "utama dr indrajana",
+    "vlife",
+    "rs pondok indah",
+    "instagram nk",
+    "rumah sakit",
+    "flex free",
+    "halodoc",
+    "jakartasigmabrainspinecenter id",
+    "lamina rehab",
+    "nk",
+    "fisiohome",
+    "instagram orthojackclinic"
+  ],
+  "topics": [
+    {
+      "topic": "fisioterapi saraf kejepit di bokong",
+      "volume": 170,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "saraf",
+        "kejepit",
+        "di",
+        "bokong"
+      ]
+    },
+    {
+      "topic": "apakah fisioterapi bisa menyembuhkan saraf kejepit",
+      "volume": 110,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "apakah",
+        "bisa",
+        "menyembuhkan",
+        "saraf",
+        "kejepit"
+      ]
+    },
+    {
+      "topic": "manfaat fisioterapi untuk saraf kejepit",
+      "volume": 70,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "manfaat",
+        "untuk",
+        "saraf",
+        "kejepit"
+      ]
+    },
+    {
+      "topic": "berapa kali fisioterapi untuk saraf kejepit",
+      "volume": 70,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "berapa",
+        "kali",
+        "untuk",
+        "saraf",
+        "kejepit"
+      ]
+    },
+    {
+      "topic": "berapa lama fisioterapi saraf kejepit",
+      "volume": 50,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "berapa",
+        "lama",
+        "saraf",
+        "kejepit"
+      ]
+    },
+    {
+      "topic": "jenis fisioterapi saraf kejepit",
+      "volume": 20,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "jenis",
+        "saraf",
+        "kejepit"
+      ]
+    },
+    {
+      "topic": "fisioterapi stroke",
+      "volume": 590,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "stroke"
+      ]
+    },
+    {
+      "topic": "alat fisioterapi stroke",
+      "volume": 70,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "alat",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "fisioterapi stroke bpjs",
+      "volume": 30,
+      "intent": "informational",
+      "month": "2026-08",
+      "core": [
+        "stroke",
+        "bpjs"
+      ]
+    },
+    {
+      "topic": "soap fisioterapi stroke",
+      "volume": 20,
+      "intent": "transactional",
+      "month": "2026-09",
+      "core": [
+        "soap",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "golden period stroke fisioterapi",
+      "volume": 20,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "golden",
+        "period",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "cara fisioterapi stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "cara",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "pemeriksaan fisioterapi pada stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "pemeriksaan",
+        "pada",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "jurnal penatalaksanaan fisioterapi pada stroke pdf",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "jurnal",
+        "penatalaksanaan",
+        "pada",
+        "stroke",
+        "pdf"
+      ]
+    },
+    {
+      "topic": "contoh status klinis fisioterapi stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "contoh",
+        "status",
+        "klinis",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "sop fisioterapi pada stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "sop",
+        "pada",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "fisioterapi wicara pasien stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "wicara",
+        "pasien",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "sop fisioterapi stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "sop",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "jurnal fisioterapi pada stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "jurnal",
+        "pada",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "laporan status klinis fisioterapi stroke",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "laporan",
+        "status",
+        "klinis",
+        "stroke"
+      ]
+    },
+    {
+      "topic": "fisioterapi stroke kanan",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-08",
+      "core": [
+        "stroke",
+        "kanan"
+      ]
+    },
+    {
+      "topic": "penatalaksanaan fisioterapi pada stroke hemoragik pdf",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-09",
+      "core": [
+        "penatalaksanaan",
+        "pada",
+        "stroke",
+        "hemoragik",
+        "pdf"
+      ]
+    },
+    {
+      "topic": "penatalaksanaan fisioterapi pada stroke pdf",
+      "volume": 10,
+      "intent": "informational",
+      "month": "2026-08",
+      "core": [
+        "penatalaksanaan",
+        "pada",
+        "stroke",
+        "pdf"
+      ]
+    }
+  ],
+  "counted": [
+    {
+      "origin": "Orang lain juga bertanya",
+      "text": "Saraf kejepit apakah bisa sembuh dengan fisioterapi?",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Orang lain juga bertanya",
+      "text": "Berapa lama terapi saraf kejepit bisa sembuh?",
+      "topic": "berapa lama fisioterapi saraf kejepit",
+      "volume": 50,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Orang lain juga bertanya",
+      "text": "Terapi saraf kejepit apakah ditanggung BPJS?",
+      "topic": null,
+      "volume": null,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "fisioterapi saraf kejepit terdekat",
+      "topic": null,
+      "volume": null,
+      "provider": true,
+      "keepsLabel": false
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "fisioterapi stroke jakarta barat",
+      "topic": "fisioterapi stroke",
+      "volume": 590,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "fisioterapi stroke jakarta selatan",
+      "topic": "fisioterapi stroke",
+      "volume": 590,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "fisioterapi stroke jakarta timur",
+      "topic": "fisioterapi stroke",
+      "volume": 590,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "fisioterapi stroke ke rumah",
+      "topic": "fisioterapi stroke",
+      "volume": 590,
+      "provider": false,
+      "keepsLabel": true
+    },
+    {
+      "origin": "Dicari di Google",
+      "text": "terapi stroke jakarta selatan",
+      "topic": "fisioterapi stroke",
+      "volume": 590,
+      "provider": false,
+      "keepsLabel": true
+    }
+  ],
+  "dropped": [
+    {
+      "text": "fisioterapi saraf kejepit",
+      "why": "volume < 10"
+    },
+    {
+      "text": "gerakan fisioterapi untuk saraf kejepit",
+      "why": "volume < 10"
+    },
+    {
+      "text": "biaya fisioterapi saraf kejepit",
+      "why": "volume < 10"
+    },
+    {
+      "text": "fisioterapi saraf kejepit",
+      "why": "volume < 10"
+    },
+    {
+      "text": "apakah saraf kejepit bisa sembuh dengan fisioterapi",
+      "why": "volume < 10"
+    },
+    {
+      "text": "alat fisioterapi saraf kejepit",
+      "why": "volume < 10"
+    },
+    {
+      "text": "fisioterapi saraf kejepit leher",
+      "why": "volume < 10"
+    },
+    {
+      "text": "fisioterapi stroke",
+      "why": "duplicate"
+    },
+    {
+      "text": "fisioterapi stroke sebelah kiri",
+      "why": "navigational"
+    },
+    {
+      "text": "penatalaksanaan fisioterapi pada stroke non hemoragik pdf",
+      "why": "volume < 10"
+    },
+    {
+      "text": "klinik fisioterapi bekasi stroke & parkinson center",
+      "why": "volume < 10"
+    },
+    {
+      "text": "cedera olahraga pasca operasi",
+      "why": "volume < 10"
+    },
+    {
+      "text": "nyeri lutut",
+      "why": "volume < 10"
+    },
+    {
+      "text": "obat nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat nyeri sendi lutut yang bagus",
+      "why": "not relevant"
+    },
+    {
+      "text": "icd 10 nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat nyeri lutut dan sendi",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat untuk nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat nyeri sendi lutut di apotik",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat nyeri lutut di apotik",
+      "why": "not relevant"
+    },
+    {
+      "text": "nyeri pada lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "kode icd 10 nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat untuk nyeri sendi lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "icd nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "kode icd nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "makanan untuk nyeri sendi lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "icd 10 nyeri lutut kiri",
+      "why": "not relevant"
+    },
+    {
+      "text": "nyeri lutut apakah asam urat",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat nyeri lutut pada lansia di apotek",
+      "why": "not relevant"
+    },
+    {
+      "text": "obat nyeri lutut yang bagus",
+      "why": "not relevant"
+    },
+    {
+      "text": "senam lansia untuk nyeri lutut",
+      "why": "not relevant"
+    },
+    {
+      "text": "nyeri sendi lutut icd 10",
+      "why": "not relevant"
+    },
+    {
+      "text": "lutut paha dan betis terasa nyeri",
+      "why": "not relevant"
+    },
+    {
+      "text": "Di mana jurusan fisioterapi terbaik di Indonesia?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Klinik fisioterapi itu apa?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa saja rumah sakit terbaik di Jakarta?",
+      "why": "names a business (rumah sakit)"
+    },
+    {
+      "text": "Berapa harga biaya fisioterapi?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa kali fisioterapi ditanggung BPJS?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Berapa harga 1 kali fisioterapi?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Saraf kejepit apakah bisa sembuh dengan fisioterapi?",
+      "why": "duplicate"
+    },
+    {
+      "text": "Apa saja ciri-ciri saraf kejepit yang sudah parah?",
+      "why": "not relevant"
+    },
+    {
+      "text": "Apa yang tidak boleh dilakukan saat saraf kejepit?",
+      "why": "not relevant"
+    },
+    {
+      "text": "fisioterapi saraf kejepit bekasi",
+      "why": "other place (Bekasi)"
+    },
+    {
+      "text": "fisioterapi saraf kejepit di rumah sakit",
+      "why": "names a business (rumah sakit)"
+    },
+    {
+      "text": "fisioterapi saraf kejepit surabaya",
+      "why": "other place (Surabaya)"
+    }
+  ]
+}

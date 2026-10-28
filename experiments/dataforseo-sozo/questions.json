@@ -1,0 +1,18 @@
+{
+  "chatgptModel": "gpt-5.6-luna",
+  "why": "Topics chosen from discovery: flek hitam, bekas jerawat, filler/botox and klinik kecantikan have the most AI-assistant mentions; the last prompt checks what ChatGPT says about Sozo by name.",
+  "chatgpt": [
+    "Klinik kecantikan yang bagus untuk menghilangkan flek hitam di Jakarta apa ya? Cari yang harganya terjangkau.",
+    "Rekomendasi klinik untuk menghilangkan bekas jerawat di Jakarta Selatan, kisaran harganya berapa?",
+    "Mau coba filler atau botox pertama kali, klinik mana yang aman dan terpercaya di Jakarta?",
+    "Klinik kecantikan yang cabangnya banyak dan harganya terjangkau di Indonesia apa saja?",
+    "Sozo Skin Clinic bagus nggak? Aman dan worth it untuk treatment wajah?"
+  ],
+  "google": [
+    "klinik kecantikan terdekat",
+    "apa klinik kecantikan terbaik di indonesia",
+    "berapa biaya laser untuk menghilangkan flek hitam di wajah",
+    "cara menghilangkan bekas jerawat di klinik kecantikan",
+    "berapa biaya treatment di sozo"
+  ]
+}

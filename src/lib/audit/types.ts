@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { APPROVED_LIVE_SYSTEMS } from "./approved-live-providers";
+import {
+  APPROVED_LIVE_SYSTEMS,
+  DATAFORSEO_CHATGPT_SYSTEM,
+} from "./approved-live-providers";
 import { parseSourceInput } from "./source-input";
 import type { AuditQuestionMethod } from "./locked-question-pack";
+import type { TwoSourceReport } from "./two-source-report";
 
 /** Preparation metadata only: never part of confirmed, audit or export context. */
 export const sourceExcerptStatusSchema = z.enum([
@@ -314,6 +318,8 @@ export const auditObservationSchema = z.object({
   instruction_version: z.string().optional(),
   system: z.enum([
     ...APPROVED_LIVE_SYSTEMS,
+    // Spec 018: the ChatGPT app through DataForSEO, with its own method check.
+    DATAFORSEO_CHATGPT_SYSTEM,
     "Google Gemini API",
     "Groq + Tavily",
     "OpenRouter",
@@ -414,6 +420,98 @@ export const observedCompetitorSchema = z.object({
  */
 export const REPORT_CONTENT_MAX_ITEMS = 10;
 
+/** A finding as the writer returns it. */
+const keyFindingSchema = z.object({
+  title: z.string(),
+  explanation: z.string(),
+  evidence_prompt_ids: z.array(z.string()).min(1),
+});
+
+/** Spec 021 B-04/B-05: a finding's headline number, kept only when code can
+ * confirm it ("0 dari 2", "3", "75+"). */
+/** What a headline number counts (B-05), so code checks only that fact:
+ * - a per-question fact, counted over the questions the finding cites
+ *   ("0 dari 2", "2×") or over the source's completed checks ("1 dari 9");
+ * - the distinct domains cited, or other businesses named, in the cited
+ *   answers (per source or both);
+ * - `verbatim`: a figure copied from a cited answer ("75+", "70 vs 75+"). */
+export const HEADLINE_BASES = [
+  "chatgpt_named",
+  "chatgpt_not_named",
+  "chatgpt_cited_only",
+  "chatgpt_recommended",
+  "chatgpt_not_recommended",
+  "google_shown",
+  "google_not_shown",
+  "google_named",
+  "google_not_named",
+  "google_cited_only",
+  "google_recommended",
+  "named_by_either",
+  "named_by_neither",
+  "chatgpt_cited_domains",
+  "google_cited_domains",
+  "cited_domains",
+  "chatgpt_named_businesses",
+  "google_named_businesses",
+  "named_businesses",
+  "verbatim",
+] as const;
+export type HeadlineBasis = (typeof HEADLINE_BASES)[number];
+
+export const HEADLINE_NUMBER_MAX = 24;
+export const HEADLINE_CAPTION_MAX = 160;
+
+export const findingHeadlineSchema = z.object({
+  number: z.string().trim().min(1).max(HEADLINE_NUMBER_MAX),
+  caption: z.string().trim().min(1).max(HEADLINE_CAPTION_MAX),
+  basis: z.enum(HEADLINE_BASES),
+});
+
+/** A priority as every writer before Spec 021 Part B returns it. */
+const priorityItemSchema = z.object({
+  order: z.number().int().min(1).max(REPORT_CONTENT_MAX_ITEMS),
+  timing: z.enum(["do_first", "do_next"]),
+  action: z.string(),
+  why: z.string(),
+  basis: z.string(),
+  owner: z.enum(["business_owner", "admin", "marketing", "web_developer"]),
+  done_when: z.string(),
+  evidence_prompt_ids: z.array(z.string()).min(1),
+  caveat: z.string(),
+});
+
+export const TWO_SOURCE_WRITING_VERSION =
+  "nuave-two-source-writing-v1" as const;
+
+/**
+ * Spec 021 Part B: what the new writer adds to a two-source report, saved
+ * with it. Absent on every report written before Part B.
+ */
+export const twoSourceWritingSchema = z.object({
+  version: z.literal(TWO_SOURCE_WRITING_VERSION),
+  /** One or two sentences for the header. */
+  verdict: z.string(),
+  /** "Disebut AI karena: …", per business named in the answers. */
+  competitor_reasons: z
+    .array(z.object({ name: z.string(), reason: z.string() }))
+    .max(20),
+  /** Two or three short cards under Peta Pesaing. */
+  takeaways: z.array(z.object({ title: z.string(), text: z.string() })).max(3),
+  /** Penutup's three steps, with week ranges ("Minggu 1–2"). */
+  plan: z
+    .array(z.object({ weeks: z.string(), title: z.string(), text: z.string() }))
+    .max(3),
+  /** Short topic names for questions saved without one. */
+  topic_names: z
+    .array(z.object({ prompt_id: z.string(), topic: z.string() }))
+    .max(10),
+  /** Whether each AI Overview that names the business recommends it. */
+  google_readings: z
+    .array(z.object({ prompt_id: z.string(), recommended: z.boolean() }))
+    .max(10),
+});
+
 export const reportContentSchema = z.object({
   conclusion: z.string(),
   accuracy_status: z.enum([
@@ -425,57 +523,103 @@ export const reportContentSchema = z.object({
   observed_competitors: z.array(observedCompetitorSchema).max(20),
   key_findings: z
     .array(
-      z.object({
-        title: z.string(),
-        explanation: z.string(),
-        evidence_prompt_ids: z.array(z.string()).min(1),
-      }),
+      keyFindingSchema.extend({ headline: findingHeadlineSchema.optional() }),
     )
     .min(1)
     .max(REPORT_CONTENT_MAX_ITEMS),
+  // Spec 021 Part B: the new writer gives a recommendation a title (`action`)
+  // and one paragraph (`why`) only, so the other fields are optional in a
+  // saved report. Code never fills them in.
   priorities: z
     .array(
-      z.object({
-        order: z.number().int().min(1).max(REPORT_CONTENT_MAX_ITEMS),
-        timing: z.enum(["do_first", "do_next"]),
-        action: z.string(),
-        why: z.string(),
-        basis: z.string(),
-        owner: z.enum([
-          "business_owner",
-          "admin",
-          "marketing",
-          "web_developer",
-        ]),
-        done_when: z.string(),
-        evidence_prompt_ids: z.array(z.string()).min(1),
-        caveat: z.string(),
+      priorityItemSchema.extend({
+        timing: priorityItemSchema.shape.timing.optional(),
+        basis: z.string().optional(),
+        owner: priorityItemSchema.shape.owner.optional(),
+        done_when: z.string().optional(),
+        caveat: z.string().optional(),
       }),
     )
     .min(1)
     .max(REPORT_CONTENT_MAX_ITEMS),
   details: z.array(reportDetailSchema).length(10),
+  two_source_writing: twoSourceWritingSchema.optional(),
 });
+
+const assessmentsSchema = z
+  .array(
+    z.object({
+      prompt_id: z.string(),
+      recommendation: z.enum(recommendationStatuses),
+      comparison: z.enum(comparisonStatuses),
+      information: z.enum(informationStatuses),
+    }),
+  )
+  .length(10);
 
 export const reportSynthesisSchema = reportContentSchema
   .pick({
     conclusion: true,
     accuracy_status: true,
-    key_findings: true,
-    priorities: true,
   })
   .extend({
-    assessments: z
-      .array(
-        z.object({
-          prompt_id: z.string(),
-          recommendation: z.enum(recommendationStatuses),
-          comparison: z.enum(comparisonStatuses),
-          information: z.enum(informationStatuses),
-        }),
-      )
-      .length(10),
+    key_findings: z
+      .array(keyFindingSchema)
+      .min(1)
+      .max(REPORT_CONTENT_MAX_ITEMS),
+    priorities: z
+      .array(priorityItemSchema)
+      .min(1)
+      .max(REPORT_CONTENT_MAX_ITEMS),
+    assessments: assessmentsSchema,
   });
+
+/** Spec 021 B-04: at most six findings and six recommendations. */
+export const TWO_SOURCE_WRITING_MAX_ITEMS = 6;
+
+/**
+ * Spec 021 B-04: the structured output of the new two-source writer. Every
+ * field is required (nulls where optional) for OpenAI's strict mode; lengths
+ * and wording are checked by code afterwards.
+ */
+export const twoSourceWritingSynthesisSchema = z.object({
+  verdict: z.string(),
+  conclusion: z.string(),
+  accuracy_status: reportContentSchema.shape.accuracy_status,
+  key_findings: z
+    .array(
+      keyFindingSchema.extend({
+        headline: z
+          .object({
+            number: z.string(),
+            caption: z.string(),
+            basis: z.enum(HEADLINE_BASES),
+          })
+          .nullable(),
+      }),
+    )
+    .min(1)
+    .max(TWO_SOURCE_WRITING_MAX_ITEMS),
+  priorities: z
+    .array(
+      z.object({
+        order: z.number().int().min(1).max(TWO_SOURCE_WRITING_MAX_ITEMS),
+        action: z.string(),
+        why: z.string(),
+        evidence_prompt_ids: z.array(z.string()).min(1),
+      }),
+    )
+    .min(1)
+    .max(TWO_SOURCE_WRITING_MAX_ITEMS),
+  assessments: assessmentsSchema,
+  competitor_reasons: twoSourceWritingSchema.shape.competitor_reasons,
+  takeaways: twoSourceWritingSchema.shape.takeaways,
+  plan: z
+    .array(z.object({ weeks: z.string(), title: z.string(), text: z.string() }))
+    .length(3),
+  topic_names: twoSourceWritingSchema.shape.topic_names,
+  google_readings: twoSourceWritingSchema.shape.google_readings,
+});
 
 /**
  * Spec 012 R-13 (B2): the direct-ten intermediate synthesis contract permits
@@ -487,7 +631,7 @@ export const reportSynthesisSchema = reportContentSchema
  */
 export const directTenReportSynthesisSchema = reportSynthesisSchema.extend({
   priorities: z
-    .array(reportContentSchema.shape.priorities.element)
+    .array(reportSynthesisSchema.shape.priorities.element)
     .min(0)
     .max(REPORT_CONTENT_MAX_ITEMS),
 });
@@ -526,6 +670,10 @@ export type ReportContent = z.infer<typeof reportContentSchema>;
 export type ReportSynthesis = z.infer<typeof reportSynthesisSchema>;
 export type DirectTenReportSynthesis = z.infer<
   typeof directTenReportSynthesisSchema
+>;
+export type TwoSourceWriting = z.infer<typeof twoSourceWritingSchema>;
+export type TwoSourceWritingSynthesis = z.infer<
+  typeof twoSourceWritingSynthesisSchema
 >;
 
 export type AuditReport = ReportContent & {
@@ -616,6 +764,9 @@ export type AuditReport = ReportContent & {
       assessed: number;
     };
   };
+  /** Spec 018: the code-built two-source block (R-13, R-16..R-19). Absent on
+   * reports saved before Spec 018, which keep today's renderer (R-29). */
+  two_source?: TwoSourceReport;
   operational_telemetry: {
     pricing_version: string;
     cost_limit_usd: number;

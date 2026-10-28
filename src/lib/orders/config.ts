@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { dailySpendLimitUsd } from "../spending/provider-spend";
 import { sha256Hex } from "./link-secret";
+import { parseOrderEmail } from "./order-email";
 
 export { newLinkSecret, sha256Hex } from "./link-secret";
 
@@ -39,7 +40,9 @@ export function orderEnvironment(): OrderEnvironment | null {
   return value === "production" || value === "preview" ? value : null;
 }
 
-export const DEFAULT_ORDER_SPEND_LIMIT_USD = 2;
+/** Founder, 2026-10-28 (go-live of Spec 021 PR 6b): USD 5.00, so three Claude
+ * report calls always fit (was 2.00). */
+export const DEFAULT_ORDER_SPEND_LIMIT_USD = 5;
 
 export class OrderConfigError extends Error {
   constructor() {
@@ -93,15 +96,91 @@ export function resendSettings(): { apiKey: string; from: string } | null {
   return apiKey && from ? { apiKey, from } : null;
 }
 
-const EMAIL_PATTERN =
-  /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;
-
-/** The address, trimmed, or null when it is not one valid email. */
-export function parseOrderEmail(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const email = value.trim();
-  return email.length <= 254 && EMAIL_PATTERN.test(email) ? email : null;
+/** Spec 017 R-17: the Midtrans server key and the production switch. The
+ * switch must be exactly `true` or `false`; anything else counts as missing.
+ * Null when either is missing. The key is never logged or returned to a page. */
+export function midtransSettings(): {
+  serverKey: string;
+  isProduction: boolean;
+} | null {
+  const serverKey = setting(
+    "MIDTRANS_SERVER_KEY",
+    process.env.MIDTRANS_SERVER_KEY,
+  )?.trim();
+  const production = setting(
+    "MIDTRANS_IS_PRODUCTION",
+    process.env.MIDTRANS_IS_PRODUCTION,
+  )
+    ?.trim()
+    .toLowerCase();
+  if (!serverKey || (production !== "true" && production !== "false")) {
+    return null;
+  }
+  return { serverKey, isProduction: production === "true" };
 }
+
+/** R-17/Q8: where founder notices go. */
+export function founderAlertEmail(): string | null {
+  return parseOrderEmail(
+    setting("NUAVE_FOUNDER_ALERT_EMAIL", process.env.NUAVE_FOUNDER_ALERT_EMAIL),
+  );
+}
+
+/** R-17: in live mode no payment and no test pass starts unless the Midtrans
+ * server key, the production switch and the founder alert address are all set
+ * (fail closed). Synthetic mode never calls Midtrans: it uses the labeled
+ * simulated payment, so it needs none of them. */
+export function paymentSettingsReady(mode: "live" | "synthetic"): boolean {
+  if (mode === "synthetic") return true;
+  return midtransSettings() !== null && founderAlertEmail() !== null;
+}
+
+/** R-20: a test-pass secret shorter than this is no test pass at all. */
+export const TEST_PASS_MIN_SECRET_LENGTH = 24;
+const TEST_PASS_MAX_CODE_LENGTH = 256;
+
+/** Equal-length hex strings compared without stopping at the first difference. */
+function sameHex(left: string, right: string): boolean {
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return difference === 0;
+}
+
+/**
+ * R-20: does the code in the request body match `NUAVE_TEST_PASS_CODE`? A hash
+ * of each is compared in constant time. A missing secret, or one shorter than
+ * 24 characters, never matches: no test pass. Always hashes both, so a wrong
+ * code and a missing secret take the same path. The code is never logged,
+ * stored or echoed.
+ */
+export async function testPassCodeMatches(code: unknown): Promise<boolean> {
+  // The /uji form trims what is typed, so both sides are trimmed (a secret
+  // saved with a trailing newline still works); the 24-character rule counts
+  // the trimmed secret.
+  const secret = (
+    setting("NUAVE_TEST_PASS_CODE", process.env.NUAVE_TEST_PASS_CODE) ?? ""
+  ).trim();
+  const given =
+    typeof code === "string" && code.length <= TEST_PASS_MAX_CODE_LENGTH
+      ? code.trim()
+      : "";
+  const [givenHash, secretHash] = await Promise.all([
+    sha256Hex(given),
+    sha256Hex(secret),
+  ]);
+  const matches = sameHex(givenHash, secretHash);
+  return (
+    matches &&
+    secret.length >= TEST_PASS_MIN_SECRET_LENGTH &&
+    given.length > 0 &&
+    typeof code === "string"
+  );
+}
+
+export { parseOrderEmail };
 
 /** R-06 (Q6): in live mode only addresses on NUAVE_ORDER_EMAIL_ALLOWLIST
  * (comma, semicolon or whitespace separated) may order. Matched without case

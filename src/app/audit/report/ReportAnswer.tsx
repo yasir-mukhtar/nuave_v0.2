@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { IconCopy } from "@tabler/icons-react";
+import { IconCopy, IconExternalLink, IconWorld } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -49,20 +49,46 @@ export function observationTime(value: string) {
   }).format(new Date(value));
 }
 
-export function ReportAnswer({ answer }: { answer: AnswerPresentation }) {
-  const [rawOpen, setRawOpen] = useState<string[]>([]);
-  const [copyStatus, setCopyStatus] = useState("");
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(answerCopyText(answer));
-      setCopyStatus("Pertanyaan, jawaban, dan informasi pengamatan tersalin.");
-    } catch {
-      setRawOpen(["raw"]);
-      setCopyStatus(
-        "Tidak dapat menyalin otomatis. Pilih dan salin teks asli di bawah.",
-      );
-    }
-  }
+/** Ember for a good result, ink for "said, but not this", grey otherwise. */
+function tone(value: string): "good" | "plain" | "none" {
+  if (
+    ["mentioned", "recommended", "client_preferred", "confirmed"].includes(
+      value,
+    )
+  )
+    return "good";
+  if (["not_assessed", "not_observed"].includes(value)) return "none";
+  return "plain";
+}
+
+function Status({
+  label,
+  value,
+  text,
+}: {
+  label: string;
+  value: string;
+  text: string;
+}) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd data-tone={tone(value)}>
+        <span className={styles.dot} aria-hidden="true" />
+        {text}
+      </dd>
+    </div>
+  );
+}
+
+export function ReportAnswer({
+  answer,
+  names = [],
+}: {
+  answer: AnswerPresentation;
+  /** The business's name and other names, marked inside the answer. */
+  names?: readonly string[];
+}) {
   return (
     <section
       className={styles.answer}
@@ -76,32 +102,36 @@ export function ReportAnswer({ answer }: { answer: AnswerPresentation }) {
         </h3>
         {answer.detail ? (
           <dl className={styles.statuses}>
-            <div>
-              <dt>Penyebutan</dt>
-              <dd>{appearance[answer.detail.appearance]}</dd>
-            </div>
-            <div>
-              <dt>Rekomendasi</dt>
-              <dd>{recommendation[answer.detail.recommendation]}</dd>
-            </div>
+            <Status
+              label="Penyebutan"
+              value={answer.detail.appearance}
+              text={appearance[answer.detail.appearance]}
+            />
+            <Status
+              label="Rekomendasi"
+              value={answer.detail.recommendation}
+              text={recommendation[answer.detail.recommendation]}
+            />
             {!["not_observed", "not_assessed"].includes(
               answer.detail.comparison,
             ) && (
-              <div>
-                <dt>Perbandingan</dt>
-                <dd>{comparison[answer.detail.comparison]}</dd>
-              </div>
+              <Status
+                label="Perbandingan"
+                value={answer.detail.comparison}
+                text={comparison[answer.detail.comparison]}
+              />
             )}
             {answer.detail.information !== "not_assessed" && (
-              <div>
-                <dt>Informasi publik</dt>
-                <dd>{information[answer.detail.information]}</dd>
-              </div>
+              <Status
+                label="Informasi publik"
+                value={answer.detail.information}
+                text={information[answer.detail.information]}
+              />
             )}
           </dl>
         ) : null}
       </header>
-      <AnswerMarkdown raw={answer.rawAnswer} />
+      <AnswerMarkdown raw={answer.rawAnswer} names={names} />
       <div className={styles.provenance}>
         <h4>Sumber yang tersimpan</h4>
         {answer.sources.length ? (
@@ -115,14 +145,25 @@ export function ReportAnswer({ answer }: { answer: AnswerPresentation }) {
                     rel="noopener noreferrer"
                     referrerPolicy="no-referrer"
                   >
-                    <span>{source.title || source.domain}</span>
-                    <span>{source.url}</span>
+                    <IconWorld size={18} stroke={1.75} aria-hidden="true" />
+                    <span>
+                      <span>{source.title || source.domain}</span>
+                      <span>{source.url}</span>
+                    </span>
+                    <IconExternalLink
+                      size={16}
+                      stroke={1.75}
+                      aria-hidden="true"
+                    />
                   </a>
                 ) : (
                   <span>
-                    {source.title}
-                    <br />
-                    {source.url}
+                    <IconWorld size={18} stroke={1.75} aria-hidden="true" />
+                    <span>
+                      {source.title}
+                      <br />
+                      {source.url}
+                    </span>
                   </span>
                 )}
               </li>
@@ -161,33 +202,55 @@ export function ReportAnswer({ answer }: { answer: AnswerPresentation }) {
           </div>
         </dl>
       </div>
-      <div className={styles.controls}>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={copy}
-          aria-label={`Salin pertanyaan dan jawaban ${answer.ordinal}`}
-        >
-          <IconCopy aria-hidden="true" />
-          Salin pertanyaan dan jawaban
-        </Button>
-        <p role="status">{copyStatus}</p>
-        <Accordion value={rawOpen} onValueChange={setRawOpen}>
-          <AccordionItem value="raw">
-            <AccordionTrigger
-              aria-label={`Teks asli pertanyaan ${answer.ordinal}`}
-            >
-              Teks asli
-              <span className="sr-only"> pertanyaan {answer.ordinal}</span>
-            </AccordionTrigger>
-            <AccordionContent>
-              <pre className={styles.rawText} data-raw-answer>
-                {answer.rawAnswer}
-              </pre>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+      <AnswerControls answer={answer} />
     </section>
+  );
+}
+
+/** Copy the question and answer, and the exact retained text. Spec 018 reuses
+ * these under the ChatGPT answer of a two-source report. */
+export function AnswerControls({ answer }: { answer: AnswerPresentation }) {
+  const [rawOpen, setRawOpen] = useState<string[]>([]);
+  const [copyStatus, setCopyStatus] = useState("");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(answerCopyText(answer));
+      setCopyStatus("Pertanyaan, jawaban, dan informasi pengamatan tersalin.");
+    } catch {
+      setRawOpen(["raw"]);
+      setCopyStatus(
+        "Tidak dapat menyalin otomatis. Pilih dan salin teks asli di bawah.",
+      );
+    }
+  }
+  return (
+    <div className={styles.controls}>
+      <Button
+        type="button"
+        variant="inkOutline"
+        size="touch"
+        onClick={copy}
+        aria-label={`Salin pertanyaan dan jawaban ${answer.ordinal}`}
+      >
+        <IconCopy aria-hidden="true" />
+        Salin pertanyaan dan jawaban
+      </Button>
+      <p role="status">{copyStatus}</p>
+      <Accordion value={rawOpen} onValueChange={setRawOpen}>
+        <AccordionItem value="raw" className={styles.raw}>
+          <AccordionTrigger
+            aria-label={`Teks asli pertanyaan ${answer.ordinal}`}
+          >
+            Teks asli
+            <span className="sr-only"> pertanyaan {answer.ordinal}</span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <pre className={styles.rawText} data-raw-answer>
+              {answer.rawAnswer}
+            </pre>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
   );
 }

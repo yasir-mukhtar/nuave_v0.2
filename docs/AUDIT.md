@@ -11,14 +11,28 @@
 
 ## Purpose
 
+**Approved method amendment (2026-10-24):** [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+changes the scope of one paid audit to **ten questions, two sources**. Each
+approved question is asked, byte for byte, to the **ChatGPT app** (asked from
+Indonesia) and to **Google's AI Overview** (asked from the confirmed city),
+both through DataForSEO. OpenAI is used only for the business reading and for
+writing the report. Whether the business is named is decided by code, not by
+a model. The report is generated when every question has a final outcome for
+both sources and **each source completed at least 5 of its 10 checks**
+(R-19); counts use per-source denominators: ChatGPT N = completed answers;
+Google M = completed checks and Z = AI Overviews with text; failed checks are
+counted separately and shown as **Tidak dapat diuji**. A denominator of 0 shows
+**Tidak diuji**. Where this amendment and the text below disagree, the
+amendment governs for Spec 018 orders; earlier reports keep their method.
+
 **Approved method amendment (2026-09-18):** [Spec 009](../specs/009-recommendation-eligible-audit/SPEC.md)
 owns the new ten-unnamed recommendation-eligible method. Its scope, question
 rules and report denominators supersede the matrix, 6/4 split, fixed purposes
 and R5 gates below for that method. Human-approved texts run independently;
 the answering request must not receive hidden target identity. Report mention
 and explicit recommendation from actual evidence, with no position-derived
-coverage claims. Ten evaluable observations remain required; untested is not
-zero, and historical methods remain separate. Privacy, grounded evidence and
+coverage claims. Ten evaluable observations remain required (Spec 018 orders
+use its per-source gate instead); untested is not zero, and historical methods remain separate. Privacy, grounded evidence and
 delivery protections continue. Implementation and live validation are pending.
 
 
@@ -192,8 +206,11 @@ Do not turn one response into a percentage or stable rank.
 
 A failed test is never converted into zero visibility or a fabricated result.
 Retry only when the method stays the same, record the retry, and disclose any
-material timing or configuration change. The current paid flow requires ten of
-ten evaluable observations before automatic report generation and delivery. If
+material timing or configuration change. Before Spec 018 the paid flow required
+ten of ten evaluable observations before automatic report generation and
+delivery; Spec 018 orders need each source to complete at least 5 of 10, show
+each failed check as **Tidak dapat diuji** with **Minta bantuan**, and tell the
+founder (R-19..R-21). If
 one question remains technically unexecutable, preserve the completed work and
 route the order to recovery or an approved remedy instead of quietly producing
 a nine-question report. Never fill a report to make it look complete.
@@ -224,7 +241,8 @@ Spec 012 closeout record. It supersedes the older report order, item limits, exc
 and mixed-name summary below for the direct-ten method only.
 
 1. **Hasil singkat:** `Bisnis Anda muncul di X dari 10 pertanyaan` and
-   `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan`, from validated
+   `Bisnis Anda direkomendasikan di Y dari 10 pertanyaan` (Spec 018: one card
+   per source with the per-source denominators above), from validated
    measures, plus quiet completion, conclusion, and the snapshot limitation.
    Recommendation remains out of ten even when individual answers are not
    assessed. Do not duplicate the unnamed measure or add untested tiles.
@@ -350,7 +368,9 @@ and information, use only the questions where that dimension was meaningfully
 assessed. Show **Tidak diuji** when a dimension has no eligible question; never
 turn an empty denominator into zero performance.
 
-The headline is the direct appearance count across the ten retained answers,
+For Spec 018 two-source reports the counts are per source, with the
+denominators in R-19, not out of ten. Otherwise, the headline is the direct
+appearance count across the ten retained answers,
 for example **Bisnis Anda muncul di 4 dari 10 pertanyaan** and **4/10**. This is
 the Nuave score for that audit. It is not a percentage forecast, permanent
 ranking, or peer benchmark.
@@ -415,8 +435,10 @@ before treating the generated report as usable sample evidence:
 - competitors are real, locally relevant, and not confused with similarly
   named businesses;
 - failed, contradictory, and missing results remain visible;
-- all ten observations are evaluable before the report is delivered;
-- the overall appearance count out of ten matches the retained answers;
+- all ten observations are evaluable before the report is delivered (Spec 018
+  orders: each source completed at least 5 of 10, failed checks shown);
+- the overall appearance count out of ten matches the retained answers (Spec
+  018: each source's counts match its completed checks);
   direct-ten shows its separate recommendation count out of ten, while
   historical mixed-name reports retain their name/no-name components;
 - no statement implies permanent ranking, consumer-interface equivalence, a
