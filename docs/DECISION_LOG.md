@@ -43,9 +43,9 @@ brawijayahospital.com; 22 Firecrawl credits, about USD 0.11), Yasir chose:
 The test also found that today's homepage reader cannot read
 brawijayahospital.com (403) and found no services on audydental.com;
 Firecrawl read both. Haiku 5.5 (low) was slower than Luna and too vague on
-the hospital, so Luna stays. Open: the privacy page's page-reader row says
-the pages are read "untuk bahan laporan"; they now also prepare the business
-summary (wording for the founder to approve).
+the hospital, so Luna stays. Yasir approved the privacy wording the same day:
+privacy 1.6 says the business's own pages are read for the business summary
+and the report (section 2, section 6 and the page-reader row of section 7).
 
 ## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
 
