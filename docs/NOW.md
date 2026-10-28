@@ -46,10 +46,12 @@
 
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
-  [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. Next:
-  the test harness (PR 1), then the writer change, held as a draft until the
-  founder's blind test passes. Waiting on the founder: one free test-pass
-  order for a different clinic.
+  [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The
+  test harness merged with #194. The writer change is built on a draft PR,
+  held until the founder's blind test passes. Waiting on the founder: reading
+  the writing guide (`content/report/WRITING_GUIDE.md`), one free test-pass
+  order for a different clinic, and a session that can export the saved
+  orders (the Cloudflare token) for the live test.
 - **Report v2 before G1** (2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score)):
   [Spec 021](../specs/021-report-v2/SPEC.md) reworks the report in four

@@ -6,6 +6,7 @@
 > Owner: Orchestrator
 > Report-label amendment: 2026-09-22, founder decisions D-05/D-07 in Spec 012; documentation only
 > Plain-voice amendment: 2026-09-28, founder decision to match landing copy v8 (see `DECISION_LOG.md`); documentation only
+> Report-writer amendment: 2026-10-28, founder approval of Spec 023 (R-13): the two-source report writer's prose only (§2, §3, §5, §7.4)
 > Supersedes: `Archive Candidates/superseded-voice/voice-candidate-2026-08-10.md` (v1 draft)
 >
 > This document is the canonical Indonesian writing contract for
@@ -40,7 +41,7 @@ verbatim, even when it does not follow the general prose rules.
 
 | Meaning | Prefer (customer-facing) | Avoid |
 |---|---|---|
-| Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**) | brand Anda (except **Seluruh brand**, see the notes) |
+| Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**). In the two-source report writer's prose (Spec 023 R-05): the confirmed name where a section opens or where the business must be told apart from others, then **klinik ini** or **Anda** while it is the subject; never a short form that is not a confirmed alias. Settled labels and code-built sentences are unchanged | brand Anda (except **Seluruh brand**, see the notes) |
 | Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari N pertanyaan** · **Bisnis Anda direkomendasikan di Y dari N pertanyaan** (N is the source's completed checks, 10 when all completed; Spec 018) · **Tidak diuji** · **Download PDF**. In a Spec 018 report for a clinic (confirmed category contains "klinik") the two count labels read **Klinik Anda muncul di X dari N pertanyaan** and **Klinik Anda direkomendasikan di Y dari N pertanyaan** (founder, 2026-10-24) | any paraphrase or spelling variant of these six |
 | Prospective customer | **calon pelanggan** | calon klien, calon customer, customer potensial, bare "customer" |
 | Existing customer | **pelanggan** | klien, customer |
@@ -102,9 +103,13 @@ alarmist or all-knowing.** Apply these invariants to every surface:
   `perbarui`, `periksa`, `jelaskan`).
 - **No em dashes (—) and no en dashes (–) in prose.** Use a comma, a period,
   or `sampai` / `hingga`. The only allowed en dash is inside a time range
-  written as `08.00–21.00`.
+  written as `08.00–21.00`, or the report plan's week labels (`Minggu 1–2`,
+  Spec 023).
 - **Short sentences.** One idea per sentence; no multi-clause sentences that
-  are one English sentence in disguise.
+  are one English sentence in disguise. The two-source report writer
+  follows a range instead of a ceiling (Spec 023 D-2): most sentences 8 to 20
+  words, about 14 on average, an occasional very short one (3 to 7 words) to
+  land a point, and now and then a longer one up to about 30 words.
 - **Think in Indonesian first.** Write the line the way an Indonesian owner
   would say it, not as a translated English sentence. Say "Cuma semenit", not
   "Hasil dalam detik". Say "Pelanggan tidak lagi cek website satu per satu.
@@ -148,6 +153,9 @@ alarmist or all-knowing.** Apply these invariants to every surface:
 - **25 words is the hard ceiling in validated report fields** (the current
   runtime `report-language.ts` enforces it as a failure). Treat 25 words as a
   review signal only outside those validated fields (per review 002 F-01).
+  Exception (Spec 023 R-01, 2026-10-28): the two-source report writer has no
+  hard limit; it follows the §3 range, and a long sentence is neither sent
+  back nor cut. The legacy writer keeps the ceiling.
 - Exact evidence — tested questions, AI answer excerpts, business and
   competitor names, source titles, official terms, dates, models — is exempt
   from prose-length guidance and must be copied verbatim.
@@ -266,7 +274,13 @@ The voice is constant; the register and vocabulary shift per surface.
   **Menyebut bisnis Anda**, **Tidak diuji**, and **Download PDF**. The PDF label
   is the shared default for every report, not a direct-ten-only override.
 - Other named businesses are **bisnis lain yang disebut**, never "competitors"
-  without verified context.
+  without verified context. The writer's line for each is labelled **Menurut
+  jawaban AI:** (Spec 023 R-07; it replaced "Disebut AI karena:", which
+  claimed a cause).
+- The code-built count sentences above stay word for word (Spec 023 R-13).
+  The report writer also reads
+  [`content/report/WRITING_GUIDE.md`](content/report/WRITING_GUIDE.md);
+  where the guide and this document differ, this document wins.
 - Keep the snapshot limitation beside the summary, not in fine print. Keep the
   artifact title in English (**AI Visibility Report**) with the body in
   Indonesian. Exact excerpts, questions, names, and sources stay verbatim.
