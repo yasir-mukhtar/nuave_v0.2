@@ -6,6 +6,47 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-28 — Firecrawl reads the own site at the paid website reading
+
+After the step 3 reading test (PR #189: sozoskinclinic.com, audydental.com,
+brawijayahospital.com; 22 Firecrawl credits, about USD 0.11), Yasir chose:
+
+1. **Start Firecrawl as soon as payment is confirmed.** The paid website
+   reading (step 3), which the journey already starts by itself once the
+   order is paid, reads the own site with Firecrawl (start page and up to
+   four useful pages). GPT-5.6 Luna reads those pages instead of searching
+   the web. With no Firecrawl key, or no page read, the reading runs as
+   before (homepage reader and web search).
+2. **No new time cap.** No 20-second cut-off; the reader's existing safety
+   limit (150 seconds per reading, 90 per request) stays.
+3. **Better pages.** Posts, news, archives, sitemaps and job pages are
+   never read; one page of each kind (what the business offers, branches,
+   doctors, prices, about) before a second of any, a list page before its
+   items; the site map asks for up to 5,000 links (one credit at any
+   limit), because Sozo's 187 blog posts filled the old 200-link map. This
+   applies to the report's reading too.
+4. **Read once.** The step 3 pages are kept on the order; the report's pages
+   step reads only the pages AI cited and adds them. The page text is
+   dropped when the report is saved, or with the order, as the privacy page
+   says.
+
+5. **Cleaner page text** (same day, after reading Audy Dental's pages):
+   before the 6,000-character cut, the reader drops the site's menu (the
+   linked lines every own page repeats, found with three or more pages),
+   repeats of a linked or long line within a page, slider numbers and image
+   leftovers. The own branches page is cut at 20,000 characters, so a
+   chain's whole list fits (Audy's 60+ branches were cut at C). This applies
+   to every reading from then on, at step 3 and for the report. The quiz
+   still holds at most 8 branches and 8 areas; raising that is a separate
+   decision.
+
+The test also found that today's homepage reader cannot read
+brawijayahospital.com (403) and found no services on audydental.com;
+Firecrawl read both. Haiku 5.5 (low) was slower than Luna and too vague on
+the hospital, so Luna stays. Yasir approved the privacy wording the same day:
+privacy 1.6 says the business's own pages are read for the business summary
+and the report (section 2, section 6 and the page-reader row of section 7).
+
 ## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
 
 Yasir chose, after the reading test:

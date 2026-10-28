@@ -21,9 +21,21 @@ import {
 } from "../reading/page-reader";
 import type { OrderQuestionRow } from "./store";
 
+/** The business's own pages, read at the paid website reading (step 3),
+ * before the order runs (founder decision 2026-10-28). */
+export type OwnPages = {
+  pages: ReadPage[];
+  unread: string[];
+  stopped?: number;
+  requests: number;
+};
+
 /** What `orders.pages_json` holds.
+ * - `own_read`: the own site was read at step 3; the pages step reads only
+ *   the cited pages and adds them.
  * - `reading`: a reading started (`tries` counts them); a run that died
- *   mid-read leaves it, and the next run tries again, at most twice.
+ *   mid-read leaves it, and the next run tries again, at most twice. It
+ *   keeps the step 3 pages (`own`), if any.
  * - `read`: the reading finished (with any number of pages).
  * - `partial`: Firecrawl stopped it (401, 402, or 429 after its waits); the
  *   pages read before are kept.
@@ -32,7 +44,8 @@ import type { OrderQuestionRow } from "./store";
  * Once the report is saved, the page text is dropped and only the addresses
  * stay (`urls`). */
 export type SavedPages =
-  | { status: "reading"; tries: number }
+  | { status: "own_read"; own: OwnPages }
+  | { status: "reading"; tries: number; own?: OwnPages }
   | {
       status: "read" | "partial";
       tries: number;
@@ -69,8 +82,16 @@ export function parseSavedPages(json: string | null): SavedPages | null {
 export function pagesPending(saved: SavedPages | null): boolean {
   return (
     saved === null ||
+    saved.status === "own_read" ||
     (saved.status === "reading" && saved.tries < MAX_READING_TRIES)
   );
+}
+
+/** The step 3 pages an order's pages step builds on, if any. */
+export function ownPagesSaved(saved: SavedPages | null): OwnPages | null {
+  return saved?.status === "own_read" || saved?.status === "reading"
+    ? (saved.own ?? null)
+    : null;
 }
 
 /** The pages the writer reads: none until a reading finished. */
@@ -82,6 +103,16 @@ export function pagesForWriter(saved: SavedPages | null): ReadPage[] {
 
 /** What stays once the report is saved: the addresses, not the text. */
 export function addressesOnly(saved: SavedPages | null): SavedPages | null {
+  const own = ownPagesSaved(saved);
+  // A report written with no pages step (the OpenAI writer) still drops the
+  // step 3 page text.
+  if (own)
+    return {
+      status: "kept_addresses",
+      read: own.stopped === undefined ? "read" : "partial",
+      urls: own.pages.map((page) => page.url),
+      unread: own.unread,
+    };
   if (!saved || (saved.status !== "read" && saved.status !== "partial"))
     return saved;
   return {
@@ -135,6 +166,8 @@ export async function readPagesLive(input: {
   apiKey: string;
   ownSite: string | null;
   sources: readonly CitedSource[];
+  /** False when the own site was read at step 3. */
+  readOwn?: boolean;
   fetchImpl?: typeof fetch;
   wait?: (ms: number, signal?: AbortSignal) => Promise<void>;
   deadlineMs?: number;
@@ -144,6 +177,7 @@ export async function readPagesLive(input: {
   const read = await readPagesForReport({
     ownSite: input.ownSite,
     sources: input.sources,
+    readOwn: input.readOwn,
     fetcher: firecrawlFetcher(
       input.apiKey,
       patientFetch(capped, input.wait, deadline),
@@ -152,4 +186,33 @@ export async function readPagesLive(input: {
     concurrency: READ_CONCURRENCY,
   });
   return { ...read, requests: capped.sent() };
+}
+
+/** The paid website reading (step 3, founder decision 2026-10-28): the own
+ * site's start page and its useful pages, read as soon as the order is
+ * paid, for the reading and later for the report. Null when no Firecrawl
+ * key is set, the address is not a website, or no page could be read; the
+ * reading then goes on as before. */
+export async function readOwnSiteLive(input: {
+  apiKey: string | undefined;
+  website: string;
+  fetchImpl?: typeof fetch;
+  wait?: (ms: number, signal?: AbortSignal) => Promise<void>;
+}): Promise<OwnPages | null> {
+  const apiKey = input.apiKey?.trim();
+  if (!apiKey) return null;
+  const read = await readPagesLive({
+    apiKey,
+    ownSite: input.website,
+    sources: [],
+    fetchImpl: input.fetchImpl,
+    wait: input.wait,
+  }).catch(() => null);
+  if (!read?.pages.length) return null;
+  return {
+    pages: read.pages,
+    unread: read.unread,
+    ...(read.stopped === undefined ? {} : { stopped: read.stopped }),
+    requests: read.requests,
+  };
 }
