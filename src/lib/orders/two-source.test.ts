@@ -9,7 +9,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 }));
 
 import { generateSyntheticLocalReport } from "../audit/local-direct-ten-audit";
-import type { AuditReport } from "../audit/types";
+import { TWO_SOURCE_PROMPT_VERSION, type AuditReport } from "../audit/types";
 import { makeSmartCustomerEvidenceExport } from "../audit/customer-evidence-export";
 import { buildReportPresentation } from "../audit/report-presentation";
 import { containsPhoneNumber } from "../checks/phones";
@@ -447,6 +447,37 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
     expect(revisions).toHaveLength(0);
     const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
     expect(report.conclusion).toBe(long);
+  });
+
+  it("Spec 023 AC-04 and AC-10: a dash alone is replaced by code without a revision, and the report records the new writer", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion: `${result.content.conclusion} Langkah pertama jelas — mulai dari halaman layanan.`,
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(0);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.conclusion).toContain(
+      "Langkah pertama jelas, mulai dari halaman layanan.",
+    );
+    expect(report.conclusion).not.toContain("—");
+    expect(report.provenance.report_prompt_version).toBe(
+      TWO_SOURCE_PROMPT_VERSION,
+    );
+    // The storyline is never saved.
+    expect(orderRow(id).report_json).not.toContain("storyline");
   });
 
   it("B-5: a plain negation the counts contradict is revised once, then repaired by code, and the order is delivered", async () => {
@@ -984,9 +1015,10 @@ describe("Spec 021 Part B: the new writer on the whole path (AC-B1, AC-B2)", () 
     const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
     const writing = report.two_source_writing!;
     expect(writing.version).toBe("nuave-two-source-writing-v1");
-    // The report says which writer wrote it (the side-by-side test reads it).
+    // The report says which writer wrote it (the side-by-side test reads it;
+    // Spec 023 R-12 gives the new instructions their own version).
     expect(report.provenance.report_prompt_version).toBe(
-      "nuave-two-source-writing-v1",
+      "nuave-two-source-prompt-v2",
     );
     expect(writing.verdict).toMatch(/^Uji alur sintetis/);
     expect(writing.plan).toHaveLength(3);

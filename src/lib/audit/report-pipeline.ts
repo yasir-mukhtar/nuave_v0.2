@@ -4,8 +4,10 @@ import {
   type TwoSourceReportFacts,
 } from "./two-source-report";
 import {
+  dashViolations,
   finishTwoSourceWriting,
   partBWritingViolations,
+  repairDashes,
   saveableTwoSourceWriting,
 } from "./two-source-writing";
 import { hasWriterFacts } from "./two-source-writer";
@@ -84,7 +86,7 @@ import {
 import { validateDirectTenQuestions } from "./questions-id-direct-ten";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
-  TWO_SOURCE_WRITING_VERSION,
+  TWO_SOURCE_PROMPT_VERSION,
 } from "./types";
 
 export type ReportPipelineInput = {
@@ -483,6 +485,11 @@ export async function createValidatedAuditReport(
     ...languageErrorsFor(lockedInput, content),
     ...sourceErrorsFor(content),
   ];
+  // Spec 023 R-11: a dash used as punctuation rides along when a revision
+  // runs for another reason; on its own it never triggers one (code
+  // replaces it below).
+  if (languageErrors.length && hasWriterFacts(sourceFacts))
+    languageErrors.push(...dashViolations(content, sourceFacts));
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
@@ -593,6 +600,11 @@ export async function createValidatedAuditReport(
   // it cannot confirm, a reason, topic name or reading it cannot place, and
   // removes a banned title start the revision left. Never a failed order.
   if (hasWriterFacts(sourceFacts) && content.two_source_writing) {
+    const dashes = repairDashes(content, sourceFacts);
+    if (dashes.changed) {
+      content = dashes.content;
+      diagnostics.add("dash_replaced");
+    }
     const finished = finishTwoSourceWriting(
       content,
       sourceFacts,
@@ -681,7 +693,7 @@ export async function createValidatedAuditReport(
         ? {
             // Spec 021 Part B: a report from the new writer says so.
             report_prompt_version: content.two_source_writing
-              ? TWO_SOURCE_WRITING_VERSION
+              ? TWO_SOURCE_PROMPT_VERSION
               : REPORT_SYNTHESIS_PROMPT_VERSION_V2,
           }
         : {}),

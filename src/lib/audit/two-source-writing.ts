@@ -665,3 +665,137 @@ export function finishTwoSourceWriting(
     diagnostics: [...diagnostics],
   };
 }
+
+/* ---------------------------- Spec 023 R-11 ---------------------------- */
+
+/** A dash used as punctuation in the writer's prose: an em dash, or a
+ * spaced en dash or hyphen (VOICE §3). An unspaced number range ("1-2",
+ * "Minggu 1–2") is not one. */
+const PROSE_DASH = /\s*—\s*|\s+[–-]\s+/g;
+
+/** The writer's prose with exact evidence (business names) masked, so a
+ * name such as "Klinik A - Cabang B" is never changed or counted. */
+function masked(text: string, names: readonly string[]) {
+  const kept: string[] = [];
+  let out = text;
+  for (const name of [...names]
+    .map((item) => item.trim())
+    .filter((item) => item.length > 1)
+    .sort((a, b) => b.length - a.length)) {
+    out = out.replace(
+      new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu"),
+      (found) => {
+        kept.push(found);
+        return `\u0000${kept.length - 1}\u0000`;
+      },
+    );
+  }
+  return {
+    text: out,
+    restore: (value: string) =>
+      value.replace(/\u0000(\d+)\u0000/g, (_, i: string) => kept[Number(i)]!),
+  };
+}
+
+function exactNames(facts: TwoSourceReportFacts) {
+  return [...(facts.names ?? []), ...(facts.writer?.businesses ?? [])];
+}
+
+/** Spec 023 R-11: the writer's prose fields that use a dash as
+ * punctuation. Listed among the writing violations only when a revision
+ * runs for another reason; a dash alone never triggers one. */
+export function dashViolations(
+  content: ReportContent,
+  facts: TwoSourceReportFacts,
+): string[] {
+  const names = exactNames(facts);
+  const fields: [string, string][] = [
+    ["The conclusion", content.conclusion],
+    ...content.key_findings.flatMap((finding, i): [string, string][] => [
+      [`Finding ${i + 1} title`, finding.title],
+      [`Finding ${i + 1} paragraph`, finding.explanation],
+    ]),
+    ...content.priorities.flatMap((priority, i): [string, string][] => [
+      [`Recommendation ${i + 1} title`, priority.action],
+      [`Recommendation ${i + 1} paragraph`, priority.why],
+    ]),
+    ...twoSourceWritingFields(content),
+  ];
+  return fields
+    .filter(([, text]) =>
+      new RegExp(PROSE_DASH.source).test(masked(text, names).text),
+    )
+    .map(
+      ([label]) =>
+        `${label} uses a dash as punctuation; write a comma or a full stop instead (no "—", " – " or " - " in prose).`,
+    );
+}
+
+/** Spec 023 R-11: past the revision, code replaces a dash used as
+ * punctuation with a comma. Business names, headline numbers and the plan's
+ * week labels are never changed. */
+export function repairDashes(
+  content: ReportContent,
+  facts: TwoSourceReportFacts,
+): { content: ReportContent; changed: boolean } {
+  const names = exactNames(facts);
+  let changed = false;
+  const fix = (text: string) => {
+    const { text: hidden, restore } = masked(text, names);
+    if (!new RegExp(PROSE_DASH.source).test(hidden)) return text;
+    changed = true;
+    return restore(
+      hidden
+        .replace(PROSE_DASH, ", ")
+        .replace(/,\s*([,.;:!?])/g, "$1")
+        .replace(/^,\s*/, "")
+        .trim(),
+    );
+  };
+  const writing = content.two_source_writing;
+  const next: ReportContent = {
+    ...content,
+    conclusion: fix(content.conclusion),
+    key_findings: content.key_findings.map((finding) => ({
+      ...finding,
+      title: fix(finding.title),
+      explanation: fix(finding.explanation),
+      ...(finding.headline
+        ? {
+            headline: {
+              ...finding.headline,
+              caption: fix(finding.headline.caption),
+            },
+          }
+        : {}),
+    })),
+    priorities: content.priorities.map((priority) => ({
+      ...priority,
+      action: fix(priority.action),
+      why: fix(priority.why),
+    })),
+    ...(writing
+      ? {
+          two_source_writing: {
+            ...writing,
+            verdict: fix(writing.verdict),
+            competitor_reasons: writing.competitor_reasons.map((item) => ({
+              ...item,
+              reason: fix(item.reason),
+            })),
+            takeaways: writing.takeaways.map((item) => ({
+              ...item,
+              title: fix(item.title),
+              text: fix(item.text),
+            })),
+            plan: writing.plan.map((step) => ({
+              ...step,
+              title: fix(step.title),
+              text: fix(step.text),
+            })),
+          },
+        }
+      : {}),
+  };
+  return { content: changed ? next : content, changed };
+}

@@ -127,6 +127,24 @@ describe("the new writer's request (AC-B1, B-01, B-03)", () => {
     expect(developer).toContain("This is a language-only revision.");
     expect(developer).toContain("Google readings exactly as supplied");
   });
+
+  it("Spec 023 AC-05: the revision is sent no storyline, and the first call is told to plan first", () => {
+    const { user } = twoSourceWriterMessages(input(), {
+      draft: {
+        conclusion: "x",
+        accuracy_status: "could_not_assess",
+        observed_competitors: [],
+        key_findings: [],
+        priorities: [],
+        details: [],
+      },
+      violations: ["x"],
+    });
+    expect(JSON.parse(user).report_draft).not.toHaveProperty("storyline");
+    const { developer } = twoSourceWriterMessages(input());
+    expect(developer).toContain("storyline: before any other field");
+    expect(developer).toContain("Never say why this business got its result");
+  });
 });
 
 describe("the reading test: pages read (founder decision 2026-10-27)", () => {

@@ -9,7 +9,10 @@ vi.mock("@opennextjs/cloudflare", () => ({
 }));
 
 import type Anthropic from "@anthropic-ai/sdk";
-import { generateSyntheticLocalReport } from "../src/lib/audit/local-direct-ten-audit";
+import {
+  generateSyntheticLocalReport,
+  syntheticTwoSourceWriting,
+} from "../src/lib/audit/local-direct-ten-audit";
 import type { ReportGenerator } from "../src/lib/audit/report-pipeline";
 import type { AuditReport } from "../src/lib/audit/types";
 import { containsPhoneNumber } from "../src/lib/checks/phones";
@@ -416,6 +419,40 @@ describe("a Claude answer that breaks the report format", () => {
     expect(result.failure).toMatch(/did not match the report schema: .+/);
     expect(result.calls).toHaveLength(1);
     expect(ledger.spentUsd()).toBe(0.004);
+  });
+});
+
+describe("Spec 023 R-08: the storyline beside the result", () => {
+  it("keeps the first answer's storyline with the result, and never in the report", async () => {
+    const exported = await deliveredOrderExport();
+    const evidence = evidenceFromD1(exported.order, exported.questions);
+    const entry = ENTRIES[4]!;
+    const { input } = await entryInput(evidence, entry);
+    const answer = syntheticTwoSourceWriting(
+      input.observations,
+      "Kedai Fiksi",
+      input.two_source_facts as Parameters<typeof syntheticTwoSourceWriting>[2],
+    );
+    const client = {
+      messages: {
+        create: vi.fn(async () => ({
+          id: "msg_test",
+          model: "claude-haiku-5-5",
+          stop_reason: "end_turn",
+          content: [{ type: "text", text: JSON.stringify(answer) }],
+          usage: { input_tokens: 30_000, output_tokens: 2_000 },
+        })),
+      },
+    } as unknown as Anthropic;
+    const result = await runEntry(
+      evidence,
+      entry,
+      (ctx) => claudeWriter(ctx, client),
+      new Ledger(join(dir, "spend.json")),
+    );
+    expect(result.status).toBe("ok");
+    expect(result.storyline).toEqual(answer.storyline);
+    expect(JSON.stringify(result.report)).not.toContain("storyline");
   });
 });
 
