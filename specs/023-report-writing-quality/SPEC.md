@@ -2,8 +2,8 @@
 
 > Status: **In review** (draft for the founder's approval; no code changed)
 > Owner: founder; plan written by Claude Code on `ccr-88631259-0lhn0m`
-> Updated: 2026-10-28, revision 2 (after independent review round 1: FAIL,
-> 16 findings, all addressed below)
+> Updated: 2026-10-28, revision 3 (after independent review rounds 1 and 2:
+> FAIL, then a narrow FAIL; every finding addressed below)
 > Implements: the founder's report feedback of 2026-10-28: "deeper insights
 > as if advised by BCG consultants, answer first", and "natural and clear
 > like Tempo", for the live report writer (Claude Opus 5.5 with pages read,
@@ -153,32 +153,59 @@ today's fact safety stays, and the checker becomes more precise, not looser.
   in a natural sentence ("ChatGPT menyebut…", "Ringkasan AI Google…"). The
   violation text is reworded the same way. The last-resort repair stays, as
   the rare fallback it is.
-- **R-03, the checker reads findings precisely.** In a key finding (which
-  has `evidence_prompt_ids`), a count is accepted when it is true for the
-  finding's own questions, and still caught when it is false:
-  - "X dari Y" where Y is the number of the finding's cited questions and X
-    is how many of them have the stated fact, by the same per-question facts
-    the headline check uses (`questionFacts`);
-  - "semua" / "tidak satu pun" limited to the cited questions in the same
-    way;
-  - a clause that names a business from `facts.writer.businesses` and not
-    the owner is about that business: its count is checked against the
-    per-question `businesses` lists (questions whose answer from that source
-    names it), among the cited questions or all questions.
-    The verdict and conclusion keep today's source-wide check. Nothing that is
-    false today becomes accepted. Because this changes a fact check, the
-    founder approves it with this spec (Q-6).
+- **R-03, the checker reads findings precisely.** All of this lives in the
+  shared `contradictedSources`, so the check and the code repair always
+  agree (the repair runs over every sentence whenever any violation is left).
+  Nothing that is false today becomes accepted. Because this changes a fact
+  check, the founder approves the exact behaviour in AC-03 (Q-6).
+  - **Owner clauses in a key finding, with a named subset.** When the clause
+    names the subset ("pertanyaan treatment", "pertanyaan tentang harga",
+    "jawaban yang menyebut kota": a topic word or "tentang"/"yang …" after
+    "pertanyaan", "jawaban" or "ringkasan"), its "X dari Y", bare count
+    ("di 4 pertanyaan treatment") and "semua"/"tidak satu pun" are checked
+    against the finding's own `evidence_prompt_ids`: Y is the number of cited
+    questions and X how many of them have the stated fact, by the
+    per-question facts the headline check uses (`questionFacts`).
+  - **Everything else stays source-wide.** A clause with no named subset
+    ("di 4 dari 4 pertanyaan", "Tidak satu pun jawaban ChatGPT menyebut
+    SOZO"), any clause in the verdict or conclusion, and any clause the
+    checker cannot map to a per-question fact keep today's source-wide check.
+  - **Competitor clauses.** A clause that names a business from
+    `facts.writer.businesses` and not the owner is checked against that
+    business's per-question `businesses` lists for the named source: a count
+    must match (among the cited questions when a subset is named, else over
+    the source's denominator, ChatGPT answers or Google summaries, as
+    `sourceDenominator` does); an absolute negative ("tidak pernah menyebut
+    ERHA") is false when that source named it at all; a positive is false
+    when that source never named it; "semua" must hold for every question
+    counted. This applies in every field, the verdict and conclusion
+    included.
+  - **Repair.** A false subset or competitor sentence left after the
+    revision is dropped, not replaced with the owner's count sentence. A
+    false owner sentence about the whole sample is replaced as today.
 - **R-04, counts said once, in the cards.** The source cards already show
   each source's count in large type and a sentence. The verdict states the
   main message and may carry one number only when that number is the point.
   The conclusion carries no counts; it names the sources, returns to the
   main message and gives the next step.
+- **R-04a, the instructions follow R-03 and R-04.** These lines of
+  `two-source-writer.ts` change, and AC-01 checks them:
+  - the verdict line drops "with the per-source result";
+  - the conclusion line drops the required per-source counts;
+  - "Copy every 'X dari Y' about a source exactly from source_counts" and
+    the negative-sentence rule become: in a key finding, a count may cover
+    the finding's own cited questions when the sentence names that group of
+    questions; a competitor's count comes from `questions[].businesses`;
+    every other number about a source is copied from `source_counts`; in the
+    verdict and conclusion, a count about the owner is always the
+    source-wide one.
 - **R-05, brand name, used like an editor.** The writer names the business
   by its exact confirmed name (or a listed alias) where a section opens or
   where it must be told apart from other businesses, then uses "klinik ini"
-  or "Anda" in between. With no confirmed name it uses "klinik Anda" /
-  "bisnis Anda" as today. Never a short form that is not a listed alias
-  (the checker would not recognise it as the owner).
+  or "Anda" in between, only while the owner is the subject of the
+  paragraph (the checker reads "klinik ini" as the owner). With no confirmed
+  name it uses "klinik Anda" / "bisnis Anda" as today. Never a short form
+  that is not a listed alias.
 - **R-06, no teaching examples in the instructions.** The "Pemenang menjual
   keahlian, bukan harga" example goes. Examples live only in the guide.
 - **R-07, the competitor label.** "Disebut AI karena:" on the page and PDF
@@ -196,11 +223,13 @@ today's fact safety stays, and the checker becomes more precise, not looser.
   first, two or three supporting points; the verdict states the main
   message; three or four strong findings beat six thin ones; findings come in
   order of importance and each supports the main message; each
-  recommendation says which finding it answers; the conclusion returns to the
-  main message. The revision receives the storyline in its draft and keeps
-  it unchanged. `storyline` is never saved, shown on the page or PDF, or
-  included in the JSON download (`assembleTwoSourceWriting` drops it). The
-  harness keeps it beside each result, hidden until scoring is done.
+  recommendation says in natural words which problem it answers (never a
+  label such as "Temuan 2:"); the conclusion returns to the main message.
+  `storyline` is never saved, shown on the page or PDF, or included in the
+  JSON download (`assembleTwoSourceWriting` drops it). The language-only
+  revision is not sent a storyline, and the storyline it returns is ignored.
+  The writer function returns the first answer's storyline beside the
+  content, so the harness keeps it, hidden until scoring is done.
 - **R-09, interpretation without causes.** The writer may describe a pattern
   across questions ("Polanya…", "Artinya…") with how consistent it is, and
   say why a step comes first, from the evidence and from what the playbook
@@ -239,13 +268,14 @@ today's fact safety stays, and the checker becomes more precise, not looser.
 
 ### Checks by code (kept small)
 
-- **R-11, dashes.** An em dash, or a spaced hyphen used as a dash (" - "),
-  in writer prose is listed among the writing violations when a revision runs
-  for another reason; on its own it does not trigger a revision. After the
-  revision, code replaces any left with a comma and records
-  `dash_replaced`. Code never changes exact evidence: business names and
-  aliases, listed other businesses, `headline.number`, and the plan's week
-  ranges ("Minggu 1–2" uses the en dash VOICE §3 allows).
+- **R-11, dashes.** An em dash, or a spaced en dash or hyphen used as a
+  dash (" – ", " - "), in writer prose is listed among the writing
+  violations when a revision runs for another reason; on its own it does not
+  trigger a revision. After the revision, code replaces any left with a comma
+  and records `dash_replaced`. Unspaced number ranges stay. Code never
+  changes exact evidence: business names and aliases, listed other
+  businesses, `headline.number`, and the plan's week labels ("Minggu 1–2",
+  allowed by R-13).
 - **R-12, provenance.** The saved block keeps its version literal, but the
   provenance's `report_prompt_version` gets a new value for the new
   instructions, so a delivered report shows which writer wrote it.
@@ -253,9 +283,12 @@ today's fact safety stays, and the checker becomes more precise, not looser.
 ### Canonical documents
 
 - **R-13** `VOICE.md`, for report-writer prose only: §3 "short sentences"
-  becomes the D-2 guidance (the 25-word ceiling stays for other copy); the
-  §2 "Your business (prose)" row adds the R-05 rule; the new competitor
-  label; §7.4's code count sentences stay as they are (said explicitly).
+  becomes the D-2 guidance (the 25-word ceiling stays for other copy), and
+  §3 allows the plan's week labels ("Minggu 1–2") next to time ranges; §5's
+  "25 words is the hard ceiling in validated report fields" no longer
+  applies to the two-source writer; the §2 "Your business (prose)" row adds
+  the R-05 rule; the new competitor label; §7.4's code count sentences stay
+  as they are (said explicitly).
   The guide ranks below `VOICE.md`. `INDEX.md` routes report-writing work to
   the guide. `DECISION_LOG.md` records D-1 to D-6 and the answers to Q-1 to
   Q-6. `NOW.md` names this spec.
@@ -272,6 +305,9 @@ today's fact safety stays, and the checker becomes more precise, not looser.
     ledger and read the same pages; Firecrawl reads each order once.
   - Both writers run with `REPORT_TEST_MAX_OUTPUT_TOKENS=24000`, as
     production's Claude writer.
+  - Writers run one at a time, pair by pair (before, then after, for each
+    order and run), so a ledger refusal still leaves complete pairs; each
+    ledger line is labelled before or after. Both commits are recorded.
   - The dry run prints each call's worst case and the total for both
     writers, counting one revision per report, and the guide's token count.
   - Printing: both writers' results are printed by PR 2's build, so the
@@ -291,9 +327,9 @@ today's fact safety stays, and the checker becomes more precise, not looser.
   - Writer: Opus 5.5 medium with pages, before vs after.
   - Orders: NV-3WDSAY (Sozo) twice per writer, plus one order of a
     different business once per writer (Q-2): six reports.
-  - Freeze first: the guide is approved and PR 2's commit is recorded before
-    any live output. A change after seeing outputs means both writers run
-    again on that order.
+  - Freeze first: the guide is approved and both commits (before and after)
+    are recorded before any live output. A change after seeing outputs means
+    both writers run again on that order, which needs new budget approval.
   - The founder scores each pair blind: main message after the first
     paragraph? every finding answers "so what"? would an editor change much?
     an overall pick. A safety gate fails a pair for any new causal claim,
@@ -351,11 +387,15 @@ Two pull requests, so the free and safe part can merge first.
   per call (measured in the dry run; at USD 4 per million, about USD 0.01 to
   0.02 per call). A revision is a second full Opus call; this spec adds no
   new revision triggers, and R-01 and R-03 remove two common ones.
-- **Test (Q-4):** six Opus reports. The founder's earlier figure is about
-  USD 1.3 per Opus report; a revision adds about the same again. Planned
-  spend is about USD 8, and the ledger's worst-case holds (which count every
-  prompt character as a token) refuse a call before real spend reaches the
-  cap. Firecrawl: at most 16 requests per new order (Q-3). The second order
+- **Test (Q-4):** six Opus reports. Token arithmetic gives about USD 0.67
+  per Opus call (about 107,000 input tokens at USD 4 per million and 12,000
+  output at USD 20); the founder's earlier figure is about USD 1.3 per
+  report, which likely includes a revision. The before writer keeps today's
+  25-word revision trigger, so its revision rate may be high. Planned spend:
+  about USD 4 to 8. The dry run prints the worst case, and the ledger's
+  holds (which count every prompt character as a token) refuse a call
+  before real spend reaches the cap. Per-call cost and revisions are
+  recorded for each report. Firecrawl: at most 16 requests per new order (Q-3). The second order
   (Q-2) runs in production under its own caps (USD 5 per order) and is not in
   this ledger.
 - **Privacy:** the export queries read no email, payment or link column; the
@@ -366,24 +406,40 @@ Two pull requests, so the free and safe part can merge first.
 ## Acceptance criteria
 
 - **AC-01** The two-source writer's request has no "25 words", no
-  "Pemenang", no required "Di ChatGPT"/"Di Google AI Overview" formula, and
-  no count requirement for the conclusion; it has the naming rule, the
-  storyline rule and the guide text (unit test on
-  `twoSourceWriterMessages`).
+  "Pemenang", no required "Di ChatGPT"/"Di Google AI Overview" formula, no
+  per-source result in the verdict line, no count requirement for the
+  conclusion, and the R-04a count rules in place of "Copy every 'X dari Y'
+  … from source_counts"; it has the naming rule, the storyline rule and the
+  guide text (unit test on `twoSourceWriterMessages`).
 - **AC-02** A two-source draft with a 35-word sentence triggers no revision
   and is not cut. The legacy writer's tests pass unchanged.
-- **AC-03** For counts ChatGPT 3 of 10 and a finding citing four treatment
-  questions where ChatGPT named the owner in none: "ChatGPT tidak menyebut
-  SOZO di 4 dari 4 pertanyaan treatment" survives unchanged; "…di 3 dari 4…"
-  is caught and repaired; "ChatGPT menyebut ERHA di 7 dari 10 jawaban"
-  survives only when ERHA is named in 7 ChatGPT answers. The same false
-  verdict and conclusion sentences as today are still caught.
-- **AC-04** An em dash left after a revision is replaced by a comma and
-  `dash_replaced` is recorded; "Minggu 1–2", a business name with " - " and
-  a verbatim headline are untouched; a dash alone triggers no revision.
+- **AC-03** Unit tests on `twoSourceWritingViolations` and
+  `repairTwoSourceWriting`, with counts ChatGPT 3 of 10 and Google 0 of 6,
+  and a finding citing four treatment questions where ChatGPT named the
+  owner in none:
+  - "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan treatment" and "di
+    semua pertanyaan treatment" pass and survive the repair unchanged;
+  - "…di 3 dari 4 pertanyaan treatment" is caught, and dropped if it
+    survives the revision;
+  - "Tidak satu pun jawaban ChatGPT menyebut SOZO" and "ChatGPT tidak
+    menyebut SOZO di 4 dari 4 pertanyaan" (no named subset) are caught, as
+    today;
+  - "ChatGPT menyebut ERHA di 7 dari 10 jawaban" passes only when ERHA is in
+    7 ChatGPT answers' lists, also in the verdict; "ChatGPT tidak pernah
+    menyebut ERHA" is caught when ERHA is in any ChatGPT list; "Google
+    menyebut ERHA" is caught when no Google list has ERHA; a caught
+    competitor sentence is dropped, never replaced with the owner's count
+    sentence;
+  - every false verdict and conclusion sentence that today's tests catch is
+    still caught.
+- **AC-04** An em dash or a spaced en dash left after a revision is
+  replaced by a comma and `dash_replaced` is recorded; "Minggu 1–2", "1-2",
+  a business name with " - " and a verbatim headline are untouched; a dash
+  alone triggers no revision.
 - **AC-05** `storyline` is the schema's first property; a schema with it
   passes the Claude SDK's transform without moved bounds; it appears in no
-  saved report, page, PDF or JSON download; the revision draft carries it.
+  saved report, page, PDF or JSON download; the revision is sent none, and
+  the first answer's storyline is what the writer function returns.
 - **AC-06** The competitor rows show the approved label on the page and the
   PDF; affected component and pixel tests are updated.
 - **AC-07** The guide file and its code copy are equal byte for byte; the
@@ -421,8 +477,8 @@ Two pull requests, so the free and safe part can merge first.
 - **Q-4 (founder)** What USD 10 covers. NOW.md records USD 5.77 used of the
   USD 7 tests allowance as of 2026-10-27, and later Sonnet runs may have
   used more. If USD 10 is the shared total, about USD 4 or less remains:
-  enough for three reports, not six. Recommended: USD 10 for this round,
-  counted in a fresh ledger.
+  enough for three to five reports, and neither AC-11 path is assured.
+  Recommended: USD 10 for this round, counted in a fresh ledger.
 - **Q-5 (founder, after the test)** Whether typical phrases, long sentences
   or cause markers become code checks.
 - **Q-6 (founder)** R-03: the checker accepts a count that is true for the
