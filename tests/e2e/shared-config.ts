@@ -75,6 +75,12 @@ export function offlineE2EServerEnv(
     // Spec 016 R-25: the real mail sender is never configured offline.
     RESEND_API_KEY: "",
     NUAVE_MAIL_FROM: "",
+    // Spec 021 PR 6b: no Claude writer, Anthropic key or Firecrawl key
+    // offline; synthetic orders read no pages and call no writer.
+    NUAVE_REPORT_WRITER: "",
+    NUAVE_ANTHROPIC_API_KEY: "",
+    NUAVE_ANTHROPIC_WORKSPACE_ID: "",
+    FIRECRAWL_API_KEY: "",
     // Spec 017 R-17: no Midtrans key, test-pass code or alert address offline;
     // synthetic mode uses the labeled simulated payment.
     MIDTRANS_SERVER_KEY: "",
