@@ -539,7 +539,8 @@ export function productionSendsGoogleWords(
 /* --------------------------------- ledger --------------------------------- */
 
 /** Agent-run calls for tests A and B, together, stop here: USD 5 by the
- * founder's decision of 2026-10-26, raised to USD 7 on 2026-10-27. */
+ * founder's decision of 2026-10-26, raised to USD 7 on 2026-10-27. Spec
+ * 023's round keeps its own ledger and stop (STYLE_HARD_STOP_USD). */
 export const HARD_STOP_USD = 7;
 
 type LedgerCall = {
@@ -549,6 +550,8 @@ type LedgerCall = {
   model: string;
   reserved_usd: number;
   actual_usd: number | null;
+  /** Spec 023: which writer of a before/after test made the call. */
+  label?: string;
 };
 
 export class SpendRefused extends Error {}
@@ -561,6 +564,7 @@ export class Ledger {
   constructor(
     readonly path = join(EVIDENCE_DIR, "spend.json"),
     readonly hardStopUsd = HARD_STOP_USD,
+    readonly label?: string,
   ) {}
 
   calls(): LedgerCall[] {
@@ -598,7 +602,12 @@ export class Ledger {
     const index = calls.length;
     this.save([
       ...calls,
-      { ...call, at: new Date().toISOString(), actual_usd: null },
+      {
+        ...call,
+        at: new Date().toISOString(),
+        actual_usd: null,
+        ...(this.label ? { label: this.label } : {}),
+      },
     ]);
     return {
       settle: (actualUsd: number) => {
@@ -1166,9 +1175,10 @@ export async function runEntry(
   entry: Entry,
   writer: ((ctx: WriterContext) => ReportGenerator) | null,
   ledger: Ledger,
+  dir = EVIDENCE_DIR,
 ): Promise<EntryResult> {
   const delivered = JSON.parse(evidence.order.report_json) as AuditReport;
-  const built = await entryInput(evidence, entry);
+  const built = await entryInput(evidence, entry, dir);
   const ctx: WriterContext = {
     order: evidence.order.order_number,
     entry,
