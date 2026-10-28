@@ -63,17 +63,9 @@
   [#185](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185) (PLAN PR 6b)
   writes every live two-source report with Claude Opus 5.5 at medium effort
   from the pages Firecrawl read, at USD 5.00 an order and USD 50 a day, and
-  promises the report in 30 minutes. Before it merges, the founder:
-  - adds `NUAVE_ANTHROPIC_API_KEY`, `NUAVE_ANTHROPIC_WORKSPACE_ID` and
-    `FIRECRAWL_API_KEY` to the GitHub secrets;
-  - approves the privacy page 1.5 and the terms 1.2 wording;
-  - checks that Anthropic's and Firecrawl's terms support the privacy
-    page's section 7 sentence, and that the test accounts may take customer
-    orders;
-  - turns on Anthropic auto-reload and confirms Firecrawl credits renew
-    monthly;
-  - approves one free live token count with the production request;
-  - merges only when no live order is in progress.
+  promises the report in 30 minutes. The founder's pre-merge steps are done
+  (2026-10-28); Anthropic auto-reload and Firecrawl's monthly credits follow
+  the first live orders.
 
   After the deploy, the first live order or two measure the time, cost,
   pages and CPU per report.

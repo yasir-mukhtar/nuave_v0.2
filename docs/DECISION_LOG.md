@@ -30,6 +30,23 @@ needs the founder's approval before this merges. The plan is
 [Spec 021 PLAN, PR 6b](../specs/021-report-v2/PLAN.md); the work is in
 PR #185.
 
+Before the merge, the same day, Yasir:
+- added the GitHub secrets (Anthropic key and workspace, Firecrawl key);
+- approved the privacy page 1.5 (it names the page reader and says pages
+  read may name doctors or staff) and the terms 1.2 (30 minutes);
+- confirmed that Anthropic's and Firecrawl's terms support the privacy
+  page's section 7 sentence, and that the accounts may take customer orders;
+- approved one free live token count with the production request: it was
+  accepted (12,311 tokens for a synthetic input);
+- approved the merge with no live order in progress. A read of the
+  production orders found none open, running or reporting.
+
+Anthropic auto-reload and Firecrawl's monthly credits are left for after
+the first live orders. Until then, an empty Anthropic balance fails an
+order after three refused calls, with its refund and an `anthropic_error`
+notice; Firecrawl with no credits leaves the report without pages and sends
+a `pages_unread` notice.
+
 ## 2026-10-27 — Reading test: Opus 5.5 medium with pages read wins on NV-3WDSAY
 
 Yasir judged the reading test's blind pairs on NV-3WDSAY (no 1–5 scores):
