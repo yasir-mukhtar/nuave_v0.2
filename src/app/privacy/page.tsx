@@ -46,7 +46,12 @@ const PROVIDERS: Array<[string, string, string]> = [
   [
     "Penyedia layanan AI",
     "Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan",
-    "Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa",
+    "Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, jawaban yang diperiksa, dan isi halaman web publik yang dikutip jawaban AI",
+  ],
+  [
+    "Penyedia pembaca halaman web",
+    "Membaca halaman website bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan laporan",
+    "Alamat website bisnis Anda dan alamat halaman yang dikutip",
   ],
   [
     "Penyedia data pencarian",
@@ -155,8 +160,9 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Data audit:</strong> sepuluh pertanyaan yang Anda setujui,
-              jawaban ChatGPT dan Google AI Overview, sumber yang disebut, dan
-              laporan.
+              jawaban ChatGPT dan Google AI Overview, sumber yang disebut, isi
+              halaman web publik yang dibaca untuk laporan (website bisnis Anda
+              dan halaman yang dikutip jawaban AI), dan laporan.
             </li>
             <li>
               <strong>Data teknis:</strong> penyedia hosting kami memproses
@@ -238,6 +244,14 @@ export default function PrivacyPage() {
             data pencarian mengambil data pencarian Google. Penyedia itu juga
             menanyakan sepuluh pertanyaan Anda ke ChatGPT dan Google, lalu
             mengembalikan jawabannya kepada kami.
+          </p>
+          <p>
+            Penyedia pembaca halaman web membaca halaman website bisnis Anda dan
+            halaman web publik yang dikutip jawaban AI. Isinya, tanpa nomor
+            telepon dan alamat email, kami berikan ke penyedia layanan AI untuk
+            menyusun laporan. Isi halaman itu kami hapus setelah laporan
+            selesai, atau bersama pesanan jika laporannya tidak selesai.
+            Alamat halamannya disimpan bersama pesanan.
           </p>
           <p>
             Kami tidak memasukkan email, data pembayaran, atau data pribadi lain

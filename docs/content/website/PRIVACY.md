@@ -1,7 +1,9 @@
 # Kebijakan Privasi dan Data
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
-> Status: version 1.4 (2026-10-26, Spec 022) adds a short summary of what
+> Status: version 1.5 (2026-10-28, Spec 021 PR 6b) adds the page reader
+> (Firecrawl) and the public pages read for the report; waits for the
+> founder's approval in PR #185. Version 1.4 (2026-10-26, Spec 022) adds a short summary of what
 > goes to Meta at the start of the Meta part of section 10 and narrows server
 > events to purchases; approved by the founder on 2026-10-26. Version 1.3
 > (2026-10-25) names the cookie notice's English button, **Allow**. Version 1.2 (2026-10-25) added that the cookie choice is kept in the
@@ -88,6 +90,17 @@
   For a paid order, the bare row and the payment records still carry Midtrans
   IDs that Midtrans can link to the customer, so paid orders are pseudonymous
   rather than anonymous; unpaid orders become effectively anonymous.
+- **Version 1.5 (2026-10-28):** Spec 021 PR 6b reads the business's own site
+  and the pages the AI answers cited (Firecrawl), and the report writer
+  (Anthropic) reads them. Section 2's "Data audit" adds the public pages
+  read; section 6 names the page reader and says the page text, without
+  phone numbers or email addresses, goes to the AI provider and is deleted
+  once the report is saved (the addresses stay with the order); section 7
+  adds the row "Penyedia pembaca halaman web" and the pages read to the AI
+  provider's data. The founder approves this wording before the PR merges
+  (decision 2026-10-26, point 4) and checks that both providers' terms
+  support section 7's "hanya memproses data untuk menjalankan layanan
+  Nuave".
 - **Version 1.4 (2026-10-26):** section 10 gets the "Singkatnya" summary
   before the Meta details, and its third point names server events for
   purchases only, with the page address. A sentence that Nuave records the
@@ -115,7 +128,8 @@
   | Type on the page | Company today |
   |---|---|
   | Penyedia hosting dan penyimpanan cloud | Cloudflare (Workers, D1) |
-  | Penyedia layanan AI | OpenAI; Cheaper Inference (draft questions) |
+  | Penyedia layanan AI | OpenAI; Cheaper Inference (draft questions); Anthropic (report writer) |
+  | Penyedia pembaca halaman web | Firecrawl |
   | Penyedia data pencarian | DataForSEO |
   | Penyedia pengiriman email | Resend |
   | Penyedia kotak masuk email | not yet recorded |
@@ -134,7 +148,7 @@ memprosesnya, berapa lama disimpan, dan pilihan Anda.
 
 # Kebijakan privasi dan data
 
-Berlaku sejak 26 Oktober 2026 · Versi 1.4
+Berlaku sejak 28 Oktober 2026 · Versi 1.5
 
 Halaman ini menjelaskan data yang dipakai Nuave, untuk apa, siapa yang ikut
 memprosesnya, berapa lama disimpan, dan pilihan Anda. Prinsip kami sederhana.
@@ -163,7 +177,9 @@ dalam 1 hari kerja (Senin sampai Jumat, WIB).
 - **Data bisnis yang Anda periksa:** kota untuk pencarian, kategori, layanan,
   calon pelanggan, pesaing, dan fakta publik lain yang Anda konfirmasi.
 - **Data audit:** sepuluh pertanyaan yang Anda setujui, jawaban ChatGPT dan
-  Google AI Overview, sumber yang disebut, dan laporan.
+  Google AI Overview, sumber yang disebut, isi halaman web publik yang dibaca
+  untuk laporan (website bisnis Anda dan halaman yang dikutip jawaban AI), dan
+  laporan.
 - **Data teknis:** penyedia hosting kami memproses alamat IP dan
   informasi browser untuk menjalankan situs dan menahan serangan. Nuave sendiri
   tidak menyimpan alamat IP Anda.
@@ -216,6 +232,12 @@ penyedia layanan AI dan penyedia data pencarian. Penyedia data pencarian
 mengambil data pencarian Google. Penyedia itu juga menanyakan sepuluh pertanyaan
 Anda ke ChatGPT dan Google, lalu mengembalikan jawabannya kepada kami.
 
+Penyedia pembaca halaman web membaca halaman website bisnis Anda dan halaman web
+publik yang dikutip jawaban AI. Isinya, tanpa nomor telepon dan alamat email,
+kami berikan ke penyedia layanan AI untuk menyusun laporan. Isi halaman itu kami
+hapus setelah laporan selesai, atau bersama pesanan jika laporannya tidak
+selesai. Alamat halamannya disimpan bersama pesanan.
+
 Kami tidak memasukkan email, data pembayaran, atau data pribadi lain ke
 permintaan ini. Penyedia tersebut dapat memproses data di luar Indonesia sesuai
 kebijakan masing-masing.
@@ -225,7 +247,8 @@ kebijakan masing-masing.
 | Penyedia | Untuk | Data yang terkait |
 |---|---|---|
 | Penyedia hosting dan penyimpanan cloud | Menjalankan situs, menjaga keamanannya, dan menyimpan data pesanan serta laporan | Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan |
-| Penyedia layanan AI | Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, dan jawaban yang diperiksa |
+| Penyedia layanan AI | Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, jawaban yang diperiksa, dan isi halaman web publik yang dikutip jawaban AI |
+| Penyedia pembaca halaman web | Membaca halaman website bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan laporan | Alamat website bisnis Anda dan alamat halaman yang dikutip |
 | Penyedia data pencarian | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
 | Midtrans | Pembayaran | Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans |
 | Penyedia pengiriman email | Mengirim email pesanan dan link laporan | Email pesanan, nama bisnis, nomor pesanan, dan link laporan |

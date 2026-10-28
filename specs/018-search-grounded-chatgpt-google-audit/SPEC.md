@@ -783,6 +783,8 @@ clinic landing page, whose report pictures show "Klinik Anda".
     order preview, checkout and payment email match the clinic landing page.
     It replaces the earlier proposal "Laporan biasanya siap dalam 15 menit
     setelah Anda menyetujui pertanyaan, paling lama 24 jam."
+    **Amended 2026-10-28:** 30 menit (founder, go-live of Spec 021 PR 6b:
+    the report now waits for the pages read and a slower writer).
   - These changes go live only together with the checks (see the build
     order).
 - **R-24: Price cutover.** The paid check compares the payment with the

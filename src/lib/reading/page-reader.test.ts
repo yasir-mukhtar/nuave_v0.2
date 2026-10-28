@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { containsPhoneNumber } from "../checks/phones";
 import {
+  cappedFetch,
   citedPagesToRead,
+  EMAIL_REMOVED,
+  patientFetch,
   FirecrawlUnavailable,
   MAX_REQUESTS_PER_ORDER,
   firecrawlFetcher,
@@ -109,12 +112,14 @@ describe("which pages are read (the reading test)", () => {
     ]);
   });
 
-  it("a page's text has no phone number or image, and is cut at a line end", () => {
+  it("a page's text has no phone number, email or image, and is cut at a line end", () => {
     const text = pageText(
-      `# Harga\n\n![logo](https://x/logo.png)\nHubungi 0812-3456-7890.\n\n\n\nBotox mulai Rp 1.500.000\n${"baris\n".repeat(2000)}`,
+      `# Harga\n\n![logo](https://x/logo.png)\nHubungi 0812-3456-7890 atau dr.sari@klinik-fiksi.co.id.\n\n\n\nBotox mulai Rp 1.500.000\n${"baris\n".repeat(2000)}`,
       400,
     );
     expect(containsPhoneNumber(text)).toBe(false);
+    expect(text).not.toContain("@");
+    expect(text).toContain(EMAIL_REMOVED);
     expect(text).not.toContain("logo.png");
     expect(text).toContain("Botox mulai Rp 1.500.000");
     expect(text.length).toBeLessThanOrEqual(402);
@@ -194,6 +199,62 @@ describe("reading an order's pages", () => {
     expect(requests).toBe(MAX_REQUESTS_PER_ORDER);
   });
 
+  it("a stop keeps the pages already read; the rest are unread", async () => {
+    const stopping: PageFetcher = {
+      map: async () => [],
+      scrape: async (url) => {
+        if (url.includes("b.example")) throw new FirecrawlUnavailable(402);
+        return { title: "", markdown: `Isi ${url}` };
+      },
+    };
+    const read = await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: ["a", "b", "c"].map((x) => ({
+        prompt_id: "q1",
+        url: `https://${x}.example/`,
+      })),
+      fetcher: stopping,
+    });
+    expect(read.pages.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+      "https://a.example/",
+    ]);
+    expect(read.unread).toEqual(["https://b.example/", "https://c.example/"]);
+    expect(read.stopped).toBe(402);
+  });
+
+  it("reads two at a time and keeps the pages in order of importance", async () => {
+    let open = 0;
+    let most = 0;
+    const slow: PageFetcher = {
+      map: async () => [],
+      scrape: async (url) => {
+        open += 1;
+        most = Math.max(most, open);
+        // The first page is the slowest: it still comes first.
+        await new Promise((r) => setTimeout(r, url.includes("fiksi") ? 20 : 1));
+        open -= 1;
+        return { title: "", markdown: url };
+      },
+    };
+    const read = await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: ["a", "b", "c"].map((x) => ({
+        prompt_id: "q1",
+        url: `https://${x}.example/`,
+      })),
+      fetcher: slow,
+      concurrency: 2,
+    });
+    expect(most).toBe(2);
+    expect(read.pages.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+      "https://a.example/",
+      "https://b.example/",
+      "https://c.example/",
+    ]);
+  });
+
   it("an Instagram profile as the own site is not read", async () => {
     const f = fetcher();
     const { pages } = await readPagesForReport({
@@ -241,8 +302,8 @@ describe("Firecrawl (v2)", () => {
     });
   });
 
-  it("a bad key, no credits, too many requests or an outage stops the reading", async () => {
-    for (const status of [401, 402, 403, 429, 500, 503]) {
+  it("a bad key, no credits or too many requests stops the reading", async () => {
+    for (const status of [401, 402, 429]) {
       const fetcher = firecrawlFetcher(
         "k",
         vi.fn(async () => new Response("{}", { status })),
@@ -253,13 +314,28 @@ describe("Firecrawl (v2)", () => {
       await expect(fetcher.map("https://x.example/")).rejects.toThrow(
         FirecrawlUnavailable,
       );
-      await expect(
-        readPagesForReport({
+      expect(
+        await readPagesForReport({
           ownSite: "https://x.example/",
-          sources: [],
+          sources: [{ prompt_id: "q1", url: "https://a.example/" }],
           fetcher,
         }),
-      ).rejects.toThrow(FirecrawlUnavailable);
+      ).toEqual({
+        pages: [],
+        unread: ["https://x.example/", "https://a.example/"],
+        stopped: status,
+      });
+    }
+  });
+
+  it("a 403 or an outage is one unread page, not the end of the reading", async () => {
+    for (const status of [403, 500, 503]) {
+      const fetcher = firecrawlFetcher(
+        "k",
+        vi.fn(async () => new Response("{}", { status })),
+      );
+      expect(await fetcher.scrape("https://x.example/")).toBeNull();
+      expect(await fetcher.map("https://x.example/")).toEqual([]);
     }
   });
 
@@ -310,5 +386,62 @@ describe("Firecrawl (v2)", () => {
     expect(await fetcher.map("https://x.example/")).toEqual([
       { url: "https://x.example/harga", title: "Harga" },
     ]);
+  });
+});
+
+describe("the reading's limits", () => {
+  it("a wait never runs past the deadline: the page is unread", async () => {
+    const deadline = new AbortController();
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response("{}", { status: 429, headers: { "retry-after": "60" } }),
+    );
+    const patient = patientFetch(
+      fetchImpl,
+      (_ms, signal) =>
+        new Promise((_resolve, reject) => {
+          signal?.addEventListener("abort", () => reject(signal.reason));
+          deadline.abort(new Error("deadline"));
+        }),
+      deadline.signal,
+    );
+    const fetcher = firecrawlFetcher("k", patient, deadline.signal);
+    expect(await fetcher.scrape("https://x.example/")).toBeNull();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("each retry keeps the deadline with a fresh request time limit", async () => {
+    const deadline = new AbortController();
+    const signals: AbortSignal[] = [];
+    const answers = [429, 200];
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      signals.push(init!.signal!);
+      return new Response("{}", { status: answers.shift()! });
+    }) as typeof fetch;
+    await patientFetch(
+      fetchImpl,
+      async () => {},
+      deadline.signal,
+    )("https://api.firecrawl.dev/v2/scrape", {
+      signal: AbortSignal.timeout(90_000),
+    });
+    expect(signals[1]).not.toBe(signals[0]);
+    expect(signals[1]!.aborted).toBe(false);
+    deadline.abort();
+    expect(signals[1]!.aborted).toBe(true);
+  });
+
+  it("at most the capped number of requests, retries included", async () => {
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 429 }));
+    const capped = cappedFetch(fetchImpl, 5);
+    const patient = patientFetch(capped, async () => {});
+    const fetcher = firecrawlFetcher("k", patient);
+    // Four tries on the first page (three waits), one on the next, then none.
+    await expect(fetcher.scrape("https://x.example/")).rejects.toThrow(
+      FirecrawlUnavailable,
+    );
+    await expect(fetcher.scrape("https://y.example/")).resolves.toBeNull();
+    expect(await fetcher.scrape("https://z.example/")).toBeNull();
+    expect(capped.sent()).toBe(5);
   });
 });

@@ -106,6 +106,9 @@ export type OrderRow = {
   /** Spec 022 (migration 0015): the Purchase event code, made with the
    * payment; and the one server send's time, consent version and outcome. */
   meta_event_id?: string | null;
+  /** Spec 021 B-08 (migration 0016): the pages read for the report
+   * (`SavedPages` in pages.ts). */
+  pages_json?: string | null;
   meta_sent_at?: string | null;
   meta_consent_version?: string | null;
   meta_outcome?: string | null;
@@ -455,7 +458,7 @@ export type QuestionProgress =
 
 /** R-21: what the tab may see: the state and question progress only. Never
  * the report, the email or the link secret. `started_at` (S5) lets a reloaded
- * page tell when the audit passed the 15-minute promise. */
+ * page tell when the audit passed the 30-minute promise. */
 export type OrderStatus = {
   state: OrderState;
   completed: number;
@@ -1096,14 +1099,23 @@ export async function refundReportAttempt(
  * saved (R-23); the link works 12 months after it. */
 export async function saveReport(
   db: SpendDb,
-  input: { orderId: string; owner: string; reportJson: string; now: Date },
+  input: {
+    orderId: string;
+    owner: string;
+    reportJson: string;
+    now: Date;
+    /** Spec 021 B-08: the pages kept once the report is saved (addresses
+     * only); null leaves the column as it is. */
+    pagesJson?: string | null;
+  },
 ): Promise<boolean> {
   const completed = new Date(input.now);
   const linkEnds = new Date(completed);
   linkEnds.setUTCMonth(linkEnds.getUTCMonth() + 12);
   const result = await db
     .prepare(
-      `UPDATE orders SET report_json = ?3, completed_at = ?4, link_expires_at = ?5
+      `UPDATE orders SET report_json = ?3, completed_at = ?4, link_expires_at = ?5,
+         pages_json = COALESCE(?6, pages_json)
        WHERE id = ?1 AND state = 'reporting' AND lease_owner = ?2
          AND report_json IS NULL`,
     )
@@ -1113,7 +1125,26 @@ export async function saveReport(
       input.reportJson,
       iso(completed),
       iso(linkEnds),
+      input.pagesJson ?? null,
     )
+    .run();
+  return result.meta?.changes === 1;
+}
+
+/** Spec 021 B-08: saves the order's pages (a reading's marker or its
+ * result) while the order is still reporting, has no report, and the lease
+ * is ours. */
+export async function savePages(
+  db: SpendDb,
+  input: { orderId: string; owner: string; pagesJson: string },
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE orders SET pages_json = ?3
+       WHERE id = ?1 AND state = 'reporting' AND lease_owner = ?2
+         AND report_json IS NULL`,
+    )
+    .bind(input.orderId, input.owner, input.pagesJson)
     .run();
   return result.meta?.changes === 1;
 }

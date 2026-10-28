@@ -573,7 +573,7 @@ export const PAY_CONSENT =
   "Dengan membayar, Anda menyetujui Syarat dan Ketentuan serta Kebijakan Privasi.";
 /** Q5, word for word: mirrors `DELIVERY_PROMISE` in `src/lib/orders/promise.ts`. */
 export const ORDER_DELIVERY_PROMISE =
-  "Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.";
+  "Laporan siap dalam 30 menit setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.";
 /** The code `/uji` keeps in session storage (the e2e server's own test code). */
 export const E2E_TEST_PASS_CODE = "e2e-test-pass-code-not-a-secret-0001";
 /** Mirrors `TEST_PASS_STORAGE_KEY` in `src/lib/intake/test-pass.ts`. */

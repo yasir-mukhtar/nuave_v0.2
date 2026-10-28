@@ -16,7 +16,15 @@ import { containsPhoneNumber } from "../checks/phones";
 import type { CheckSend } from "../checks/send";
 import { syntheticCheckSend } from "../checks/synthetic";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
-import { runOrders, type CheckCallInput, type RunnerDeps } from "./runner";
+import {
+  CLAUDE_REPORT_STEP_MS,
+  LONG_RUN_BUDGET_MS,
+  PAGES_STEP_MS,
+  RUN_BUDGET_MS,
+  runOrders,
+  type CheckCallInput,
+  type RunnerDeps,
+} from "./runner";
 import { orderStatus } from "./store";
 import { competitorFacts } from "./two-source";
 import type { BusinessListing } from "../checks/listings";
@@ -1019,5 +1027,168 @@ describe("Spec 021 Part B: the new writer on the whole path (AC-B1, AC-B2)", () 
     expect(report.key_findings[1]!.headline).toBeUndefined();
     // The confirmed headline stays.
     expect(report.key_findings[0]!.headline).toBeDefined();
+  });
+});
+
+describe("Spec 021 B-08: the pages read before the report (AC-B5)", () => {
+  const page = (url: string) => ({
+    url,
+    domain: new URL(url).hostname,
+    title: "Judul",
+    kind: "cited" as const,
+    cited_in: ["q1"],
+    text: `Isi ${url}`,
+  });
+  type Reader = NonNullable<NonNullable<RunnerDeps["pages"]>["reader"]>;
+  const writerPages = (input: unknown) =>
+    (
+      input as {
+        two_source_facts?: { writer?: { pages?: { url: string }[] } };
+      }
+    ).two_source_facts?.writer?.pages;
+
+  it("reads once, in its own step, with no report attempt; the writer gets the pages; only the addresses stay", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const reader = vi.fn<Reader>(async (input) => {
+      expect(input.sources.length).toBeGreaterThan(0);
+      return {
+        pages: [page("https://hadirr.example/a")],
+        unread: ["https://b.example/"],
+        requests: 3,
+      };
+    });
+    const t = deps(undefined, { pages: { reader } });
+    const outcomes: string[] = [];
+    for (let i = 0; i < 40 && orderRow(id).state !== "delivered"; i += 1) {
+      if (orderRow(id).state === "reporting" && !orderRow(id).report_json)
+        expect(orderRow(id).report_attempts).toBe(0);
+      outcomes.push(...(await t.run()).outcomes);
+      minute();
+    }
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(1);
+    expect(outcomes.indexOf("pages_read")).toBeLessThan(
+      outcomes.indexOf("report_saved"),
+    );
+    expect(writerPages(t.reportInputs[0])!.map((p) => p.url)).toEqual([
+      "https://hadirr.example/a",
+    ]);
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "kept_addresses",
+      read: "read",
+      urls: ["https://hadirr.example/a"],
+      unread: ["https://b.example/"],
+    });
+    expect(
+      rows("SELECT * FROM founder_notices WHERE kind = 'pages_unread'"),
+    ).toHaveLength(0);
+  });
+
+  it("no Firecrawl key: no reading, no notice, the report is written without pages", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps(undefined, { pages: { reader: null } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(writerPages(t.reportInputs[0])).toBeUndefined();
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({ status: "no_key" });
+    expect(
+      rows("SELECT * FROM founder_notices WHERE kind = 'pages_unread'"),
+    ).toHaveLength(0);
+  });
+
+  it("a stopped reading keeps its pages and records one notice for the day", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps(undefined, {
+      pages: {
+        reader: async () => ({
+          pages: [page("https://a.example/")],
+          unread: ["https://b.example/"],
+          stopped: 402,
+          requests: 2,
+        }),
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(writerPages(t.reportInputs[0])).toHaveLength(1);
+    expect(JSON.parse(orderRow(id).pages_json!).read).toBe("partial");
+    const notices = rows<{ kind: string; detail_json: string }>(
+      "SELECT kind, detail_json FROM founder_notices WHERE kind != 'checks_failed'",
+    );
+    expect(notices.map((n) => n.kind)).toEqual(["pages_unread"]);
+    expect(JSON.parse(notices[0]!.detail_json).status).toBe(402);
+  });
+
+  it("a reading that never finishes is tried twice, then the report goes on without pages", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const reader = vi.fn<Reader>(async () => {
+      throw new Error("the run died mid-read");
+    });
+    const t = deps(undefined, { pages: { reader } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(2);
+    expect(writerPages(t.reportInputs[0])).toBeUndefined();
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "gave_up",
+      tries: 2,
+    });
+    expect(
+      rows<{ kind: string }>(
+        "SELECT kind FROM founder_notices WHERE kind != 'checks_failed'",
+      ).map((n) => n.kind),
+    ).toEqual(["pages_unread"]);
+  });
+
+  it("without the page reader (synthetic mode) there is no pages step", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).pages_json).toBeNull();
+  });
+});
+
+describe("Spec 021 PR 6b: long steps (a Claude report, a page reading)", () => {
+  it("fit the longer budget, which with the email work after them ends inside the cron's 15 minutes", () => {
+    expect(CLAUDE_REPORT_STEP_MS).toBeGreaterThan(RUN_BUDGET_MS);
+    expect(CLAUDE_REPORT_STEP_MS).toBeLessThanOrEqual(LONG_RUN_BUDGET_MS);
+    expect(PAGES_STEP_MS).toBeLessThanOrEqual(LONG_RUN_BUDGET_MS);
+    // The ready email, payment email, two notices and failure email, each
+    // up to about 36 seconds (mail.ts), after the step.
+    expect(LONG_RUN_BUDGET_MS + 5 * 36_000).toBeLessThan(900_000);
+  });
+
+  it("a Claude report step starts as a run's first audit step, and nothing starts after it", async () => {
+    // The test clock stands still within a run, so two short report steps
+    // fit one run; two Claude report steps never do.
+    const most = async (claudeReports: boolean) => {
+      const a = await makeOrder(d1.db, { now: clock });
+      await approveTwoSource(d1.db, a, { now: clock });
+      const b = await makeOrder(d1.db, { now: clock });
+      await approveTwoSource(d1.db, b, { now: clock });
+      const t = deps(undefined, { claudeReports });
+      let max = 0;
+      for (let i = 0; i < 60; i += 1) {
+        const { outcomes } = await t.run();
+        max = Math.max(
+          max,
+          outcomes.filter((o) => o === "report_saved").length,
+        );
+        minute();
+        if (
+          orderRow(a).state === "delivered" &&
+          orderRow(b).state === "delivered"
+        )
+          return max;
+      }
+      throw new Error("not delivered");
+    };
+    expect(await most(false)).toBe(2);
+    expect(await most(true)).toBe(1);
   });
 });

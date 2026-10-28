@@ -2,7 +2,8 @@
 
 > Status: **Approved** with [`SPEC.md`](./SPEC.md) on 2026-10-25
 > Language: Indonesian
-> Updated: 2026-10-25
+> Updated: 2026-10-28 (the delivery promise is 30 minutes since
+> 2026-10-28: founder, go-live of Spec 021 PR 6b)
 
 Where the words come from:
 
@@ -61,7 +62,7 @@ Shown above the headline only when this browser has a saved journey:
 - **Ticks:**
   1. "10 pertanyaan berdasarkan volume pencarian tertinggi Google" (D-2: kept)
   2. "ChatGPT dan Google AI Overview"
-  3. "Laporan siap dalam 15 menit"
+  3. "Laporan siap dalam 30 menit"
 - **Clinic-type tabs:** "Kecantikan" (selected on load), "Gigi", "Kulit",
   "Anak", "Lainnya". Name of the tab group for screen readers: "Jenis klinik"
   (Proposal).
@@ -159,7 +160,7 @@ Shown above the headline only when this browser has a saved journey:
 - **Step 3:**
   - "Terima laporan".
   - "Kami tanyakan ke ChatGPT dan Google AI Overview. Laporan lengkap siap
-    dalam 15 menit."
+    dalam 30 menit."
   - Picture, an email: "Tim Nuave"; "AI Visibility Report untuk / Klinik
     Cantik Fiksi sudah siap"; button "Buka laporan".
 - **Caption:** "Nama klinik hanya ilustrasi."
@@ -283,7 +284,7 @@ label and topic line.
   - "Bayar setelah klinik Anda ketemu."
   - "QRIS · Transfer bank · GoPay · DANA"
   - The form (see S1).
-  - "Laporan siap dalam 15 menit setelah audit dimulai."
+  - "Laporan siap dalam 30 menit setelah audit dimulai."
 
 ## S8 · FAQ (`#faq`)
 
@@ -344,7 +345,7 @@ label and topic line.
 
 7. **Berapa lama?**
 
-   Cek gratis biasanya hanya beberapa detik. Laporan siap dalam 15 menit
+   Cek gratis biasanya hanya beberapa detik. Laporan siap dalam 30 menit
    setelah audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami
    membantu menyelesaikannya. Jika tetap tidak bisa, Anda mendapat
    pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.

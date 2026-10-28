@@ -941,7 +941,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
     expect(readActiveOrder()).toBeNull();
   });
 
-  it("past 15 minutes the running page says so and offers help (S5)", async () => {
+  it("past 30 minutes the running page says so and offers help (S5)", async () => {
     writeActiveOrder(ORDER_ID);
     stubServer({
       status: () => ({
@@ -957,7 +957,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
         orderId={ORDER_ID}
         pollMs={10}
         onRestart={() => {}}
-        startedAt={Date.now() - 16 * 60_000}
+        startedAt={Date.now() - 31 * 60_000}
       />,
     );
     await screen.findByText(/Audit ini berjalan lebih lama dari biasanya/);
@@ -973,7 +973,7 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
   it("a reloaded page uses the server's start time for the delay note (S5)", async () => {
     writeActiveOrder(ORDER_ID);
     // Fixed once, before the page reads the clock.
-    const startedAt = new Date(Date.now() - 20 * 60_000).toISOString();
+    const startedAt = new Date(Date.now() - 40 * 60_000).toISOString();
     stubServer({
       status: () => ({
         state: "running",
@@ -988,13 +988,13 @@ describe("the progress view (screens 15 and 15a, R-21, AC-19)", () => {
       <SmartAuditStage orderId={ORDER_ID} pollMs={10} onRestart={() => {}} />,
     );
     await screen.findByText(/berjalan lebih lama dari biasanya/);
-    expect(screen.getByText(/Waktu berjalan: 20 menit/)).toBeTruthy();
+    expect(screen.getByText(/Waktu berjalan: 40 menit/)).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Minta bantuan" }).getAttribute("href"),
     ).toMatch(/^mailto:support@nuave\.ai\?subject=/);
   });
 
-  it("within 15 minutes the running page shows no delay note", async () => {
+  it("within 30 minutes the running page shows no delay note", async () => {
     writeActiveOrder(ORDER_ID);
     stubServer({
       status: () => ({

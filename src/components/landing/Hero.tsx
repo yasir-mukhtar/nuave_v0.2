@@ -8,7 +8,7 @@ import styles from "./Hero.module.css";
 const TICKS = [
   "10 pertanyaan berdasarkan volume pencarian tertinggi Google",
   "ChatGPT dan Google AI Overview",
-  "Laporan siap dalam 15 menit",
+  "Laporan siap dalam 30 menit",
 ];
 
 /** S1: the promise, the website form and the AI-answer picture. */
