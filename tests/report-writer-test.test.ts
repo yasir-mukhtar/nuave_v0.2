@@ -58,6 +58,7 @@ import {
   blindStyleReport,
   drawStylePair,
   guideExamples,
+  resultIdentity,
   STYLE_HARD_STOP_USD,
   styleMetrics,
   styleWorstCaseUsd,
@@ -919,6 +920,21 @@ describe("Spec 023: the writing-quality test", () => {
     const first = drawStylePair(writers, undefined, () => 1);
     expect(first.after).toBe("2");
     expect(drawStylePair(writers, first, () => 0)).toBe(first);
+    // The same writer's report written again is a new identity.
+    const result = (text: string) => ({
+      writer: "aaa",
+      report: {
+        conclusion: text,
+        key_findings: [],
+        priorities: [],
+      } as unknown as AuditReport,
+    });
+    expect(resultIdentity(result("Satu."))).not.toBe(
+      resultIdentity(result("Dua.")),
+    );
+    expect(resultIdentity(result("Satu."))).toBe(
+      resultIdentity(result("Satu.")),
+    );
     expect(
       drawStylePair({ ...writers, after: "ccc" }, first, () => 0).after,
     ).toBe("1");
@@ -957,6 +973,12 @@ describe("Spec 023: the writing-quality test", () => {
       ),
     ).toBe("Klinik A menulis satu halaman untuk satu treatment.\n");
     expect(guideExamples("# Panduan tanpa contoh")).toBe("");
+    // Every "Contoh" section, at any heading level, and nothing else.
+    expect(
+      guideExamples(
+        "## 3. Jujur\n### Contoh pola\nPola A.\n### Batas\nAturan.\n## 4. Contoh\nKlinik B.\n",
+      ),
+    ).toBe("Pola A.\nKlinik B.\n");
     const report = {
       conclusion:
         "Di ChatGPT, SOZO Skin Clinic disebut di 3 dari 10 jawaban; di Google, SOZO belum disebut. Di ChatGPT, SOZO disebut di 3 dari 10 jawaban.",

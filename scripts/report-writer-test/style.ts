@@ -7,7 +7,7 @@
  * in random order; the key and the metrics (which name before and after) are
  * kept apart until scoring is done.
  */
-import { randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { sentences } from "../../src/lib/audit/two-source-report";
 import type { AuditReport } from "../../src/lib/audit/types";
 import { blindReport, costUsd } from "./harness";
@@ -94,18 +94,32 @@ export function blindStyleReport(
   };
 }
 
-/** The guide's examples (its "Contoh" part), the only text a report must
- * not copy from (R-14). Empty when the guide has none. */
+/** The guide's examples (every section whose heading says "Contoh"), the
+ * only text a report must not copy from (R-14). Empty when it has none. */
 export function guideExamples(guide: string): string {
-  const lines = guide.split("\n");
-  const start = lines.findIndex((line) => /^#{2,3}\s.*contoh/i.test(line));
-  if (start < 0) return "";
-  const level = lines[start]!.match(/^#+/)![0].length;
-  const end = lines.findIndex(
-    (line, i) =>
-      i > start && /^#+\s/.test(line) && line.match(/^#+/)![0].length <= level,
-  );
-  return lines.slice(start + 1, end < 0 ? undefined : end).join("\n");
+  const level = (line: string) => line.match(/^#+(?=\s)/)?.[0].length ?? 0;
+  const out: string[] = [];
+  let open = 0;
+  for (const line of guide.split("\n")) {
+    const heading = level(line);
+    if (heading && open && heading <= open) open = 0;
+    if (heading && !open && /contoh/i.test(line)) {
+      open = heading;
+      continue;
+    }
+    if (open) out.push(line);
+  }
+  return out.join("\n");
+}
+
+/** A result's identity for the pair key: its writer and its report text,
+ * so a report written again by the same writer is a new draw too. */
+export function resultIdentity(result: {
+  writer: string;
+  report: AuditReport | null;
+}): string {
+  const text = result.report ? JSON.stringify(writerProse(result.report)) : "";
+  return `${result.writer}:${createHash("sha256").update(text).digest("hex").slice(0, 12)}`;
 }
 
 /** Phrases that read as machine-translated Indonesian (Spec 023 R-14):
@@ -282,7 +296,7 @@ export function styleMetrics(
   ];
   // Dashes, leaving out the ones inside a business name.
   const unnamed = [...names, ...businesses]
-    .filter((name) => /\s[–-]\s/.test(name))
+    .filter((name) => /\s[–-]\s|—/.test(name))
     .reduce((rest, name) => rest.split(name).join(" "), text);
   return {
     sentences: lengths.length,

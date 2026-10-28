@@ -68,6 +68,7 @@ import {
   blindStyleReport,
   drawStylePair,
   guideExamples,
+  resultIdentity,
   STYLE_HARD_STOP_USD,
   STYLE_OUTPUT_TOKENS,
   styleMetrics,
@@ -282,9 +283,14 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
     const examples = existsSync(guidePath)
       ? guideExamples(readFileSync(guidePath, "utf8"))
       : "";
+    // A guide with no "Contoh" section would leave overlaps unmeasured.
+    if (existsSync(guidePath) && !examples.trim())
+      throw new Error(
+        `${guidePath} has no "Contoh" section: the overlap metric needs it.`,
+      );
     if (!examples)
       console.log(
-        `No guide examples at ${guidePath}: run the pairs from the after writer's checkout to measure overlaps.`,
+        `No guide at ${guidePath}: run the pairs from the after writer's checkout to measure overlaps.`,
       );
     const metricsRows: string[] = [
       [
@@ -363,8 +369,13 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
           );
           continue;
         }
+        // A report written again (even by the same writer) is a new draw,
+        // so old scores never apply to a report the founder has not read.
         const pair = drawStylePair(
-          { before: results.before.writer, after: results.after.writer },
+          {
+            before: resultIdentity(results.before),
+            after: resultIdentity(results.after),
+          },
           stored[order]?.[run],
         );
         if (stored[order]?.[run] && pair !== stored[order]![run])
@@ -475,7 +486,7 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
       .reduce((sum, row) => sum + (row.worst_case_usd ?? 0), 0);
     console.log(
       [
-        `${pairs.length} pairs in ${review} (${added.length} new on the sheet${redrawn ? "; a pair was redrawn, so the old sheet was set aside" : ""}).`,
+        `${pairs.length} pairs in ${review} (${added.length} new on the sheet${redrawn ? "; a pair was redrawn, so the old sheet was set aside: print the PDFs again with review.spec.ts" : ""}).`,
         ...(missing.length
           ? [`Not paired (no report on one side):`, ...missing]
           : []),
