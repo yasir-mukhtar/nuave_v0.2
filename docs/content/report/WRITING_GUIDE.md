@@ -147,7 +147,7 @@ ini menunjukkan bahwa konten treatment klinik Anda perlu dioptimalkan secara
 signifikan."
 
 Sesudah: judul "Untuk [treatment], ChatGPT menyebut klinik lain"; isi
-"Begitu pertanyaan menyebut [treatment], ChatGPT menyebut klinik lain. Polanya
+"Untuk pertanyaan tentang [treatment], ChatGPT menyebut klinik lain. Polanya
 sama di keempat pertanyaan tentang [treatment]. Klinik yang disebut punya
 halaman khusus untuk perawatan itu, lengkap dengan kisaran harga dan nama
 dokter. Halaman Klinik A belum seperti itu."

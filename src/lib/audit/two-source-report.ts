@@ -483,11 +483,12 @@ type Contradiction = { sources: Set<Source>; droppable: boolean };
 const GROUP_NOUN = /^(?:pertanyaan|jawaban|ringkasan)$/i;
 const GROUP_VERB =
   /^(?:menyebut(?:kan)?|menanyakan|membahas|tentang|soal|mengenai)$/i;
-/** Words that never name a topic: the whole test or its sample, a source,
+/** Words that never name a topic: the whole test or its sample (in a
+ * clinic audit every question is a patient's), a source,
  * "other" questions, function words, and the claim's own words (a negation,
  * an adverb, a naming verb). */
 const NOT_A_TOPIC = new RegExp(
-  `^(?:chatgpt|google|ai|overview|ini|itu|tersebut|kami|kita|nuave|audit|uji|diuji|pengujian|tes|test|sampel|sample|survei|lain(?:nya)?|sama|berbeda|mana|semua|seluruh|setiap|ada|satu|pada|di|ke|dari|dan|atau|untuk|dengan|oleh|dalam|saat|ketika|sebagai|serta|juga|pun|apa|yang|tentang|soal|mengenai|tidak|tak|belum|bukan|pernah|selalu|masih|hanya|umumnya|biasanya|sudah|lagi|sering|jarang|sekali|cuma|${NAMING_VERB})$`,
+  `^(?:chatgpt|google|ai|overview|ini|itu|tersebut|kami|kita|nuave|audit|uji|diuji|pengujian|tes|test|sampel|sample|survei|pasien|pelanggan|konsumen|calon|pengguna|orang|asli|lengkap|utama|acak|contoh|umum|nyata|lain(?:nya)?|sama|berbeda|mana|semua|seluruh|setiap|ada|satu|pada|di|ke|dari|dan|atau|untuk|dengan|oleh|dalam|saat|ketika|sebagai|serta|juga|pun|apa|yang|tentang|soal|mengenai|tidak|tak|belum|bukan|pernah|selalu|masih|hanya|umumnya|biasanya|sudah|lagi|sering|jarang|sekali|cuma|${NAMING_VERB})$`,
   "i",
 );
 /** A word shaped like a verb ("diajukan", "menunjukkan", "berisi") is no
@@ -560,8 +561,18 @@ function refersToOwner(clause: string, facts: TwoSourceReportFacts): boolean {
   let rest = clause;
   for (const name of facts.writer?.businesses ?? [])
     if (name.trim().length > 1)
-      rest = rest.replace(new RegExp(escapeRegExp(name.trim()), "giu"), " ");
+      rest = rest.replace(
+        new RegExp(escapeRegExp(name.trim()), "giu"),
+        " \u0001 ",
+      );
   if (/\b(?:bisnis|klinik|usaha)\s+ini\b/i.test(rest)) return true;
+  // A bare "klinik" reads as the owner, as namesBusiness reads it, unless it
+  // is "klinik lain" or part of a competitor's name ("klinik ERHA").
+  if (
+    /\b(?:bisnis|klinik|usaha)\b(?!\s+\u0001)/i.test(rest) &&
+    !OTHER_BUSINESS.test(rest)
+  )
+    return true;
   return [...rest.matchAll(/(\S+)\s+Anda\b|^\s*Anda\b/gi)].some(
     (m) => !m[1] || !new RegExp(`^${DETAIL_NOUN}$`, "i").test(m[1]),
   );

@@ -237,6 +237,7 @@ describe("Spec 023 R-03: nothing false today becomes accepted", () => {
       "ChatGPT tidak menyebut Anda atau ZAP.",
       "Google AI Overview menyebut klinik ini dan ZAP.",
       "Google AI Overview menyebut Anda dan ZAP.",
+      "ChatGPT tidak menyebut klinik maupun ZAP.",
       "ChatGPT menyebut ERHA dan klinik ini di 7 dari 10 jawaban.",
     ])
       caught(sentence);
@@ -253,6 +254,9 @@ describe("Spec 023 R-03: nothing false today becomes accepted", () => {
       "ChatGPT tidak menyebut SOZO di 7 dari 7 pertanyaan yang kami ajukan.",
       "ChatGPT tidak menyebut SOZO di semua pertanyaan pengujian.",
       "ChatGPT tidak menyebut SOZO di semua pertanyaan sampel.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan pasien.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan pelanggan.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 jawaban asli.",
     ])
       caught(sentence, treatment);
   });
