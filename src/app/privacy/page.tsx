@@ -250,8 +250,8 @@ export default function PrivacyPage() {
             halaman web publik yang dikutip jawaban AI. Isinya, tanpa nomor
             telepon dan alamat email, kami berikan ke penyedia layanan AI untuk
             menyusun laporan. Isi halaman itu kami hapus setelah laporan
-            selesai, atau bersama pesanan jika laporannya tidak selesai.
-            Alamat halamannya disimpan bersama pesanan.
+            selesai, atau bersama pesanan jika laporannya tidak selesai. Alamat
+            halamannya disimpan bersama pesanan.
           </p>
           <p>
             Kami tidak memasukkan email, data pembayaran, atau data pribadi lain
