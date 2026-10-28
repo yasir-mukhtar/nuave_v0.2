@@ -16,7 +16,7 @@
  * withTwoSourceBlock), so all reports pass the same checks and repairs.
  *
  * Nothing here calls a provider unless a live writer is passed in; every live
- * call is reserved against a USD 5 ledger first and refused when it could pass
+ * call is reserved against the ledger (HARD_STOP_USD) first and refused when it could pass
  * it. Evidence, results and the letter key stay in the git-ignored
  * .local-evidence/report-writer-test/ folder.
  */
@@ -180,7 +180,9 @@ export type EntryId =
   // The reading test (founder decision 2026-10-27): the same writer, also
   // given the pages Firecrawl read. Compared with their twin, not blind.
   | "luna-high-pages"
-  | "opus-medium-pages";
+  | "opus-medium-pages"
+  | "sonnet-medium-pages"
+  | "sonnet-high-pages";
 
 export type EntryKey = EntryId | "reference";
 
@@ -302,7 +304,87 @@ export const PAGE_ENTRIES: readonly (Entry & { twin: EntryId })[] = [
     effort: "medium",
     input: "pages",
   },
+  // Added 2026-10-27, after Opus medium with pages won the pairs.
+  {
+    id: "sonnet-medium-pages",
+    twin: "sonnet-medium",
+    label: "Claude Sonnet 5.5, medium effort, new input and pages read",
+    provider: "anthropic",
+    model: "claude-sonnet-5-5",
+    effort: "medium",
+    input: "pages",
+  },
+  {
+    id: "sonnet-high-pages",
+    twin: "sonnet-high",
+    label: "Claude Sonnet 5.5, high effort, new input and pages read",
+    provider: "anthropic",
+    model: "claude-sonnet-5-5",
+    effort: "high",
+    input: "pages",
+  },
 ];
+
+/**
+ * The page-reading set (founder decision 2026-10-27): Opus medium with
+ * pages won the pairs on NV-3WDSAY, and Sonnet medium and high with the same
+ * pages are judged against it, blind, as one set.
+ */
+export const PAGE_SET: readonly EntryId[] = [
+  "opus-medium-pages",
+  "sonnet-medium-pages",
+  "sonnet-high-pages",
+];
+
+/** The page-reading set's key for one order: a letter per report, and the
+ * writer of each when the letters were drawn. */
+export type PageSetKey = {
+  letters: Record<string, EntryId>;
+  writers: Partial<Record<EntryId, string>>;
+};
+
+/** Letters for an order's page-reading set, drawn only once every report
+ * in it exists from today's writer (so no partial set shows which is
+ * which), and kept while those writers stay the same. */
+export function drawPageSet(
+  writers: Partial<Record<EntryId, string>>,
+  previous: PageSetKey | undefined,
+  pick: (n: number) => number = (n) => randomInt(n),
+): PageSetKey | null {
+  if (!PAGE_SET.every((id) => writers[id])) return null;
+  if (previous && PAGE_SET.every((id) => previous.writers[id] === writers[id]))
+    return previous;
+  const ids = [...PAGE_SET];
+  for (let i = ids.length - 1; i > 0; i -= 1) {
+    const j = pick(i + 1);
+    [ids[i], ids[j]] = [ids[j]!, ids[i]!];
+  }
+  return {
+    letters: Object.fromEntries(ids.map((id, i) => [LETTERS[i]!, id])),
+    writers: Object.fromEntries(PAGE_SET.map((id) => [id, writers[id]])),
+  };
+}
+
+/** A fetch for the test's Firecrawl reading that waits out Firecrawl's
+ * rate limit (429) instead of giving up: up to three waits, each as long as
+ * Firecrawl asks (Retry-After) or 30 seconds, at most 70. Any other answer,
+ * and a fourth 429, go to the page reader unchanged. */
+export function patientFetch(
+  fetchImpl: typeof fetch = fetch,
+  wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
+): typeof fetch {
+  return async (input, init) => {
+    for (let attempt = 0; ; attempt += 1) {
+      const response = await fetchImpl(input, init);
+      if (response.status !== 429 || attempt === 3) return response;
+      const asked = Number(response.headers.get("retry-after"));
+      await wait(Math.min(asked > 0 ? asked * 1000 : 30_000, 70_000));
+      // The reader's own time limit started with the first try; a retry
+      // gets a fresh one.
+      if (init?.signal) init = { ...init, signal: AbortSignal.timeout(90_000) };
+    }
+  };
+}
 
 /** Where an order's read pages are kept, so a re-run never reads again. */
 export const pagesPath = (order: string, dir = EVIDENCE_DIR) =>
@@ -493,9 +575,9 @@ export function productionSendsGoogleWords(
 
 /* --------------------------------- ledger --------------------------------- */
 
-/** Founder decision 2026-10-26: agent-run calls for tests A and B, together,
- * stop at USD 5. */
-export const HARD_STOP_USD = 5;
+/** Agent-run calls for tests A and B, together, stop here: USD 5 by the
+ * founder's decision of 2026-10-26, raised to USD 7 on 2026-10-27. */
+export const HARD_STOP_USD = 7;
 
 type LedgerCall = {
   at: string;

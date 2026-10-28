@@ -218,10 +218,19 @@
   allowance on 2026-09-27; update this line after each approved agent run.
   The founder's own test runs (plan §5, JZ) are not counted here; the
   provider dashboards show total spend.
-- **Audit stack tests allowance** (approved 2026-10-26): up to USD 5 of
-  agent-run live calls for the reading test and the report-writer test
-  together, USD 0 used so far. Public business pages and the founder's own
-  test-order data only.
+- **Audit stack tests allowance** (approved 2026-10-26; raised from USD 5 to
+  USD 7 by the founder on 2026-10-27): agent-run live calls for the reading
+  test and the report-writer test together. USD 5.77 used as of 2026-10-27,
+  all with order NV-3WDSAY: eight writers on the earlier writer (USD 1.89),
+  Luna high and Opus medium on Spec 021's new writer (USD 0.91), the same
+  two with pages read (USD 1.31; 16 Firecrawl requests, not in USD), then
+  Sonnet medium and high with the same pages (USD 1.66, including a Sonnet
+  high answer cut off at 16,000 output tokens and rerun at 32,000). Opus
+  medium with pages won the pairs
+  ([decision](./DECISION_LOG.md#2026-10-27--reading-test-opus-55-medium-with-pages-read-wins-on-nv-3wdsay)).
+  Public business pages and the founder's own test-order
+  data only. The Anthropic key is not scoped to a workspace: runs need
+  `NUAVE_ANTHROPIC_WORKSPACE_ID` (see `scripts/report-writer-test/README.md`).
 - **JZ accounting:** parent-reported agent live spend is USD 0 for this JZ
   engagement only. This does not reset the separately dated September allowance
   usage above. Founder-run charges remain unknown; no new spending is authorized.

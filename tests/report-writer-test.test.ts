@@ -44,9 +44,12 @@ import {
   trimGoogleText,
   PAGE_ENTRIES,
   pagesPath,
+  patientFetch,
   readOrderPages,
   blindWriterFingerprint,
   drawPagePairs,
+  drawPageSet,
+  PAGE_SET,
   type OrderEvidence,
 } from "../scripts/report-writer-test/harness";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -276,7 +279,7 @@ describe("test B harness", () => {
   });
 });
 
-describe("the USD 5 ledger", () => {
+describe("the spend ledger", () => {
   it("refuses a call whose worst case would pass the hard stop, and counts an unsettled call at its worst case", () => {
     const ledger = new Ledger(join(dir, "spend.json"), 1);
     const first = {
@@ -583,6 +586,60 @@ describe("blind review", () => {
 });
 
 describe("the reading test (founder decision 2026-10-27)", () => {
+  it("draws the page-reading set's letters only once every report in it exists, and keeps them while the writers stay", () => {
+    const writers = Object.fromEntries(PAGE_SET.map((id) => [id, "w1"]));
+    expect(
+      drawPageSet({ ...writers, "sonnet-high-pages": undefined }, undefined),
+    ).toBeNull();
+    const drawn = drawPageSet(writers, undefined, () => 0)!;
+    expect(Object.keys(drawn.letters)).toEqual(["A", "B", "C"]);
+    expect(new Set(Object.values(drawn.letters))).toEqual(new Set(PAGE_SET));
+    expect(drawPageSet(writers, drawn, () => 1)).toBe(drawn);
+    const redrawn = drawPageSet(
+      { ...writers, "sonnet-medium-pages": "w2" },
+      drawn,
+      () => 0,
+    )!;
+    expect(redrawn.writers["sonnet-medium-pages"]).toBe("w2");
+  });
+
+  it("waits out Firecrawl's rate limit, then gives the reader the answer", async () => {
+    const answers = [429, 429, 200];
+    const calls: (RequestInit | undefined)[] = [];
+    const waits: number[] = [];
+    const fetchImpl = (async (_url: unknown, init?: RequestInit) => {
+      calls.push(init);
+      const status = answers.shift()!;
+      return new Response("{}", {
+        status,
+        headers: status === 429 ? { "retry-after": "5" } : {},
+      });
+    }) as typeof fetch;
+    const signal = AbortSignal.timeout(90_000);
+    const response = await patientFetch(fetchImpl, async (ms) => {
+      waits.push(ms);
+    })("https://api.firecrawl.dev/v2/scrape", { signal });
+    expect(response.status).toBe(200);
+    expect(waits).toEqual([5000, 5000]);
+    expect(calls[0]!.signal).toBe(signal);
+    expect(calls[1]!.signal).not.toBe(signal);
+  });
+
+  it("gives up after three waits, so a lasting limit still stops the reading", async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return new Response("{}", { status: 429 });
+    }) as typeof fetch;
+    const waits: number[] = [];
+    const response = await patientFetch(fetchImpl, async (ms) => {
+      waits.push(ms);
+    })("https://api.firecrawl.dev/v2/scrape");
+    expect(response.status).toBe(429);
+    expect(calls).toBe(4);
+    expect(waits).toEqual([30_000, 30_000, 30_000]);
+  });
+
   it("reads the order's own site and the pages its answers cited, and counts the Firecrawl requests", async () => {
     const exported = await deliveredOrderExport();
     const evidence = evidenceFromD1(exported.order, exported.questions);

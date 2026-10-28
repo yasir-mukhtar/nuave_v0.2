@@ -6,6 +6,41 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-27 — Reading test: Opus 5.5 medium with pages read wins on NV-3WDSAY
+
+Yasir judged the reading test's blind pairs on NV-3WDSAY (no 1–5 scores):
+pair B report 2, written by Claude Opus 5.5 at medium effort with the pages
+Firecrawl read, is the best of every report so far and the first one he
+would be confident offering to customers. He will not score the other
+reports. It cost USD 1.26 (two calls) plus 16 Firecrawl requests, against
+USD 0.05 for Luna high with the same pages. Before deciding the production
+writer, Claude Sonnet 5.5 at medium and high effort run with the same pages
+and are judged against it.
+
+Not yet decided: the production writer, page reading in production, and the
+per-order spend hold (USD 2.00) and daily cap (USD 5), which an Opus writer
+reading pages would likely exceed (its two calls cost USD 1.26 here, and each
+is reserved at its worst case first).
+The single order is one business; the plan's further test orders still
+apply.
+
+Sonnet result, same day, blind set of three with the same pages: Opus 5.5
+medium first again (USD 1.26), Sonnet 5.5 high second (USD 0.75, after an
+answer cut off at 16,000 output tokens and rerun at 32,000), Sonnet 5.5
+medium not good enough to send (USD 0.54). Yasir had already read the Opus
+report in the pairs, so this set was not fully blind for it.
+
+## 2026-10-27 — Report-writer test allowance raised to USD 7
+
+Yasir raised the agent-run allowance for the audit stack tests (the reading
+test and the report-writer test together) from USD 5 to USD 7, and approved
+running Spec 021's new writer with Luna high and Opus medium on NV-3WDSAY.
+USD 2.80 was used by then. The harness's hard stop
+(`scripts/report-writer-test`) is USD 7. Earlier, at the founder's request,
+GLM 5.3 Flash and Claude Opus 5.5 (low, medium) joined the test's writers.
+Yasir then approved the reading test's step 2 (the two page writers on
+NV-3WDSAY, printed as blind pairs with their twins) within the same USD 7.
+
 ## 2026-10-27 — Reading test before G1; the writer may use pages read
 
 Yasir found every earlier NV-3WDSAY report shallow (all written before Spec

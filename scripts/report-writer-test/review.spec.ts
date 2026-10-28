@@ -24,8 +24,8 @@ const ORIGIN = `http://localhost:${PORT}`;
 
 function pages(): { file: string; pdf: string }[] {
   const out: { file: string; pdf: string }[] = [];
-  // The blind set, and the reading test's blind pairs.
-  for (const root of ["review", "review-pages"]) {
+  // The blind set, the reading test's blind pairs and its page-reading set.
+  for (const root of ["review", "review-pages", "review-pages-set"]) {
     const review = join(EVIDENCE_DIR, root);
     if (!existsSync(review)) continue;
     for (const order of readdirSync(review).filter(
