@@ -6,6 +6,21 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-28 — CI runs only what a PR needs, to fit 2,000 Actions minutes
+
+Yasir approved, because the monthly 2,000 GitHub Actions minutes ran out
+mid-month:
+
+1. A PR that changes only docs (`docs/` or `.md` files) runs code checks and
+   unit tests, but no build, browser tests or preview.
+2. `main` is not tested again after a merge; it checks the merge came from a
+   PR, then builds and deploys.
+3. A draft PR runs only code checks and unit tests, and gets no preview. The
+   full set and the preview run when it is marked ready for review.
+4. The Meta Pixel browser suite runs only when a file it depends on changes.
+
+Not approved: fewer test machines per run (the browser suite stays split).
+
 ## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
 
 Yasir chose, after the reading test:

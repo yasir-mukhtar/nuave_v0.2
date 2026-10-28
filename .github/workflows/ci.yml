@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+    # ready_for_review: a draft runs only the quick checks, so the full set
+    # runs again when it is marked ready.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -14,12 +17,81 @@ permissions:
   pull-requests: read
 
 jobs:
+  # To fit the monthly GitHub Actions minutes, a PR runs only what it needs:
+  # - always: code checks and unit tests (the unit tests also read some docs);
+  # - not on a draft and not when only docs changed: the build and the
+  #   browser tests;
+  # - the Meta Pixel browser suite only when a file it depends on changed.
+  # `main` is not tested again after a merge: the PR was tested, so `main`
+  # only checks the merge and deploys.
+  changes:
+    name: What changed
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.scope.outputs.full }}
+      browser-matrix: ${{ steps.scope.outputs.browser-matrix }}
+    steps:
+      - name: Decide which checks this PR needs
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          set -euo pipefail
+          # Every file the PR changes, with the old name of a moved file.
+          files="$(
+            gh api --paginate "/repos/${GH_REPO}/pulls/${PR_NUMBER}/files?per_page=100" \
+              --jq '.[] | .filename, (.previous_filename // empty)'
+          )"
+
+          code=false
+          if printf '%s\n' "${files}" | grep -Ev '^docs/|\.md$' | grep -q .; then
+            code=true
+          fi
+
+          # The files the Meta Pixel suite depends on: the consent notice, the
+          # Pixel and Conversions API code, the screens that send its events,
+          # the suite itself and the dependencies.
+          pixel=false
+          if printf '%s\n' "${files}" | grep -Eq '^(src/lib/consent/|src/components/consent/|src/lib/meta/|src/app/api/meta/|src/app/layout\.tsx|src/app/privacy/|src/components/Footer\.tsx|src/components/landing/SiteFooter\.tsx|src/lib/bottom-bars\.ts|src/lib/intake/SmartIntakeJourney\.tsx|src/lib/intake/order-screens\.tsx|src/lib/payments/|tests/e2e/(meta-pixel\.spec|shared-config|helpers|journey)\.ts|playwright\.config\.pixel\.ts|next\.config\.ts|package(-lock)?\.json)'; then
+            pixel=true
+          fi
+
+          full=false
+          if [ "${IS_DRAFT}" != "true" ] && [ "${code}" = "true" ]; then
+            full=true
+          fi
+
+          # The enabled suite holds most of the tests, so it is split by test
+          # into four parts that run on separate machines. The tests do not
+          # depend on running in order, so --fully-parallel lets Playwright
+          # split inside a file, not only between files.
+          matrix='[{"name":"enabled 1/4","suite":"enabled","args":"--fully-parallel --shard=1/4"}'
+          matrix+=',{"name":"enabled 2/4","suite":"enabled","args":"--fully-parallel --shard=2/4"}'
+          matrix+=',{"name":"enabled 3/4","suite":"enabled","args":"--fully-parallel --shard=3/4"}'
+          matrix+=',{"name":"enabled 4/4","suite":"enabled","args":"--fully-parallel --shard=4/4"}'
+          matrix+=',{"name":"disabled","suite":"disabled","args":""}'
+          if [ "${pixel}" = "true" ]; then
+            matrix+=',{"name":"pixel","suite":"pixel","args":""}'
+          fi
+          matrix+=']'
+
+          echo "Draft: ${IS_DRAFT}. Changes code: ${code}. Changes Meta Pixel files: ${pixel}. Full run: ${full}."
+          {
+            echo "full=${full}"
+            echo "browser-matrix=${matrix}"
+          } >> "${GITHUB_OUTPUT}"
+
   # The checks run as separate jobs at the same time, so a run takes about as
   # long as the slowest one instead of all of them added together. `validate`
   # at the bottom stays the single required check and passes only when every
-  # one of them passed.
+  # check this PR needs passed.
   checks:
     name: Code checks
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -39,6 +111,7 @@ jobs:
 
   unit-tests:
     name: Unit tests
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -58,6 +131,8 @@ jobs:
 
   build:
     name: Build
+    needs: changes
+    if: needs.changes.outputs.full == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -96,33 +171,14 @@ jobs:
 
   browser-tests:
     name: Browser tests (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.full == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # The enabled suite holds most of the tests, so it is split by test
-        # into four parts that run on separate machines. The tests do not
-        # depend on running in order, so --fully-parallel lets Playwright
-        # split inside a file, not only between files.
-        include:
-          - name: enabled 1/4
-            suite: enabled
-            args: --fully-parallel --shard=1/4
-          - name: enabled 2/4
-            suite: enabled
-            args: --fully-parallel --shard=2/4
-          - name: enabled 3/4
-            suite: enabled
-            args: --fully-parallel --shard=3/4
-          - name: enabled 4/4
-            suite: enabled
-            args: --fully-parallel --shard=4/4
-          - name: disabled
-            suite: disabled
-            args: ""
-          - name: pixel
-            suite: pixel
-            args: ""
+        # The list of suites comes from the `changes` job above.
+        include: ${{ fromJSON(needs.changes.outputs.browser-matrix) }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -165,21 +221,44 @@ jobs:
 
   validate:
     name: validate
-    if: always()
-    needs: [checks, unit-tests, build, browser-tests]
+    if: always() && github.event_name == 'pull_request'
+    needs: [changes, checks, unit-tests, build, browser-tests]
     runs-on: ubuntu-latest
     steps:
-      - name: Require every check to pass
+      - name: Require every check this PR needs to pass
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          CHANGES: ${{ needs.changes.result }}
+          CHECKS: ${{ needs.checks.result }}
+          UNIT_TESTS: ${{ needs.unit-tests.result }}
+          BUILD: ${{ needs.build.result }}
+          BROWSER_TESTS: ${{ needs.browser-tests.result }}
+          FULL: ${{ needs.changes.outputs.full }}
         run: |
-          echo "Check results: ${RESULTS}"
-          for result in ${RESULTS}; do
+          echo "What changed: ${CHANGES}. Code checks: ${CHECKS}. Unit tests: ${UNIT_TESTS}. Build: ${BUILD}. Browser tests: ${BROWSER_TESTS}. Full run: ${FULL}."
+          failed=0
+          for result in "${CHANGES}" "${CHECKS}" "${UNIT_TESTS}"; do
             if [ "${result}" != "success" ]; then
-              echo "::error::At least one check did not pass (${result})."
-              exit 1
+              failed=1
             fi
           done
+          # The build and the browser tests may be skipped only when this PR
+          # did not need them (a draft, or only docs changed).
+          for result in "${BUILD}" "${BROWSER_TESTS}"; do
+            if [ "${result}" = "success" ]; then
+              continue
+            fi
+            if [ "${result}" = "skipped" ] && [ "${FULL}" != "true" ]; then
+              continue
+            fi
+            failed=1
+          done
+          if [ "${failed}" -ne 0 ]; then
+            echo "::error::At least one check did not pass."
+            exit 1
+          fi
+          if [ "${FULL}" != "true" ]; then
+            echo "::notice::Draft or docs-only change: the build and browser tests were skipped. They run when the PR is marked ready and changes code."
+          fi
 
   verify-main-origin:
     name: Verify main came from merged PR
@@ -246,7 +325,8 @@ jobs:
 
   deploy:
     name: Deploy to Cloudflare Workers
-    needs: [validate, verify-main-origin]
+    # The merged PR was tested; the deploy builds the commit again below.
+    needs: verify-main-origin
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

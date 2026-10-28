@@ -23,6 +23,18 @@ describe("previewPolicy", () => {
     ).toEqual({ deploy: false, cleanup: true });
   });
 
+  it("skips deploy for a draft PR but still cleans up when it closes", () => {
+    const draft = { ...base, prAuthorLogin: "yasir-mukhtar", draft: true };
+    expect(previewPolicy({ ...draft, action: "opened" })).toEqual({
+      deploy: false,
+      cleanup: false,
+    });
+    expect(previewPolicy({ ...draft, action: "closed" })).toEqual({
+      deploy: false,
+      cleanup: true,
+    });
+  });
+
   it("skips deploy and cleanup for a Dependabot-authored PR", () => {
     expect(
       previewPolicy({
@@ -80,8 +92,9 @@ describe("workflow conditions match the policy", () => {
     /name: Remove closed PR preview[\s\S]*?if: >-\n([\s\S]*?)\n    runs-on:/,
   )[1];
 
-  it("deploy requires a non-closed same-repo event by a non-Dependabot author", () => {
+  it("deploy requires a non-closed, non-draft same-repo event by a non-Dependabot author", () => {
     expect(previewIf).toContain("github.event.action != 'closed'");
+    expect(previewIf).toContain("github.event.pull_request.draft == false");
     expect(previewIf).toContain("head.repo.full_name == github.repository");
     expect(previewIf).toContain("pull_request.user.login != 'dependabot[bot]'");
   });
