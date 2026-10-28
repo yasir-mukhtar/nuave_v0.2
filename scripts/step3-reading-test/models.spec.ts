@@ -64,7 +64,10 @@ type Site = (typeof SITES)[number];
 type Effort = "low" | "medium";
 
 const MODELS = [
-  { key: "gpt-5.6-luna-low (today)", via: "openai", model: "gpt-5.6-luna" },
+  // The live step 3 call, at the deploy's NUAVE_READING_MODEL and
+  // NUAVE_READING_EFFORT (default GPT-5.6 Luna medium). Results before
+  // 2026-10-28's switch to medium carry the key "gpt-5.6-luna-low (today)".
+  { key: "production-reading", via: "openai", model: "gpt-5.6-luna" },
   { key: "gpt-6-luna-low", via: "cheaper", model: "gpt-6-luna", effort: "low" },
   {
     key: "gpt-6-luna-medium",

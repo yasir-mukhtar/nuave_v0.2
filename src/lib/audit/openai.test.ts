@@ -511,7 +511,7 @@ describe("live website extraction", () => {
     const request = mockResponsesParse.mock.calls[0][0];
     expect(request.max_output_tokens).toBe(16_000);
     expect(request.input[0].content).toContain(
-      "Return at most eight items in any list.",
+      "Return at most eight items in any list, except published_locations: at most twenty.",
     );
     expect(request.input[0].content).toContain(
       "Return at most twelve evidence records",
@@ -535,6 +535,28 @@ describe("live website extraction", () => {
     });
   });
 
+  it("reads with step 3's own model and effort, whatever the other calls use", async () => {
+    vi.stubEnv("OPENAI_AUDIT_REASONING_EFFORT", "low");
+    vi.stubEnv("OPENAI_AUDIT_MODEL", "gpt-5.6-luna");
+    vi.stubEnv("NUAVE_READING_MODEL", "gpt-6-luna");
+    vi.stubEnv("NUAVE_READING_EFFORT", "high");
+    mockResponsesParse.mockResolvedValue(
+      extractionResponse({
+        model: "gpt-6-luna",
+        output_parsed: extractionDraftSchema.parse(parsedDraft),
+      }),
+    );
+    const result = await extractBusinessDraft(input);
+    expect(mockResponsesParse.mock.calls[0][0]).toMatchObject({
+      model: "gpt-6-luna",
+      reasoning: { effort: "high" },
+    });
+    expect(result.telemetry[0]).toMatchObject({
+      requested_model: "gpt-6-luna",
+      returned_model: "gpt-6-luna",
+    });
+  });
+
   it("sends the approved location rules to both extraction adapters with their existing settings", async () => {
     const draft = extractionDraftSchema.parse(parsedDraft);
     mockResponsesParse.mockResolvedValue(
@@ -542,9 +564,10 @@ describe("live website extraction", () => {
     );
     await extractBusinessDraft(input);
     const request = mockResponsesParse.mock.calls[0][0];
+    // Step 3 reads at medium effort (founder decision 2026-10-28).
     expect(request).toMatchObject({
       model: "gpt-5.6-luna",
-      reasoning: { effort: "low" },
+      reasoning: { effort: "medium" },
       store: false,
       service_tier: "default",
       max_output_tokens: 16000,
