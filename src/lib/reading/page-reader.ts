@@ -28,6 +28,9 @@ export type ReadPage = {
 };
 
 export const PAGE_TEXT_MAX_CHARS = 6_000;
+/** The own site's branch list (founder decision 2026-10-28): long enough
+ * for a chain's whole list (Audy Dental's 60+ branches were cut at C). */
+export const BRANCH_PAGE_TEXT_MAX_CHARS = 20_000;
 /** Own-site pages: the address the audit started from, plus up to this many
  * of its pages found by the site map (prices, doctors, treatments, about). */
 export const OWN_EXTRA_PAGES = 4;
@@ -39,9 +42,48 @@ export const CITED_PAGES = 10;
 const SKIPPED_HOSTS =
   /(^|\.)(instagram\.com|facebook\.com|fb\.com|tiktok\.com|x\.com|twitter\.com|threads\.net|youtube\.com|youtu\.be|wa\.me|linktr\.ee|reddit\.com|quora\.com|kaskus\.co\.id|google\.[a-z.]+|goo\.gl|maps\.app\.goo\.gl|bing\.com|bit\.ly|s\.id)$/i;
 
-/** Own-site pages worth reading, by words in their address or title. */
-const USEFUL_OWN_PAGE =
-  /harga|price|pricelist|biaya|tarif|promo|dokter|doctor|dr-|tim|team|treatment|perawatan|layanan|service|tentang|about|cabang|lokasi|location|branch/i;
+/** Own-site pages never read: posts, news and their archives (a blog post
+ * on hair loss says little about the clinic's branches or treatments),
+ * sitemaps, search and files. */
+const SKIPPED_OWN_PAGE =
+  /\/(blog|blogs|artikel|article|articles|news|berita|post|posts|tag|tags|category|categories|kategori|author|search|cari|pencarian|feed|wp-content|careers?|karir|lowongan[^/]*)(\/|$)|\/\d{4}\/\d{2}\/|sitemap|\.(xml|pdf|jpe?g|png|gif|webp|svg|zip|docx?|xlsx?)$/i;
+
+/** Kinds of own-site pages worth reading, most useful first, by words in
+ * their address (or, failing that, their title). One page of each kind is
+ * read before a second of any. */
+const OWN_PAGE_KINDS = [
+  // What the business offers.
+  /layanan|service|treatment|perawatan|tindakan|produk|product|program|center|centre|poli|spesialis|specialt/i,
+  // Where it is.
+  /cabang|lokasi|location|branch|outlet|alamat|klinik-kami|our-clinic/i,
+  // Who treats patients.
+  // "tim" as a whole word: "testimoni" is not a team page.
+  /dokter|doctor|(^|[/_-])(dr|tim|team|staff)([/_-]|$)/i,
+  // What it costs.
+  /harga|price|pricelist|biaya|tarif|promo/i,
+  // The business itself.
+  /tentang|about|profil|profile/i,
+];
+
+/** The kind of an own-site page (an index into `OWN_PAGE_KINDS`), or -1. */
+function ownPageKind(url: string, title: string | undefined): number {
+  const path = new URL(url).pathname;
+  const byPath = OWN_PAGE_KINDS.findIndex((kind) => kind.test(path));
+  return byPath >= 0 || !title
+    ? byPath
+    : OWN_PAGE_KINDS.findIndex((kind) => kind.test(title));
+}
+
+/** True for an own-site page about where the business is. */
+export function isBranchPage(url: string): boolean {
+  return ownPageKind(url, undefined) === 1;
+}
+
+/** Path depth: a list page ("/lokasi") before one of its items
+ * ("/lokasi/jakarta"). */
+function depth(url: string): number {
+  return new URL(url).pathname.split("/").filter(Boolean).length;
+}
 
 export type CitedSource = { prompt_id: string; url: string };
 
@@ -115,7 +157,13 @@ export function citedPagesToRead(
     .map(({ url, cited_in }) => ({ url, cited_in }));
 }
 
-/** Own-site pages from the site map worth reading, best first. */
+/**
+ * Own-site pages from the site map worth reading, best first: what the
+ * business offers, where it is, who treats patients, what it costs, and
+ * about the business. Within a kind the shallowest page comes first (a list
+ * of branches before one branch), and every kind gets one page before any
+ * gets a second. Posts, news and archives are never read.
+ */
 export function ownPagesToRead(
   start: string,
   mapped: readonly { url: string; title?: string }[],
@@ -124,14 +172,23 @@ export function ownPagesToRead(
   const home = canonical(start);
   const domain = urlDomain(home);
   const seen = new Set([home]);
-  const out: string[] = [];
+  const byKind: string[][] = OWN_PAGE_KINDS.map(() => []);
   for (const link of mapped) {
     const url = canonical(link.url);
     if (seen.has(url) || urlDomain(url) !== domain || !readable(url)) continue;
-    if (!USEFUL_OWN_PAGE.test(`${url} ${link.title ?? ""}`)) continue;
+    if (SKIPPED_OWN_PAGE.test(new URL(url).pathname)) continue;
+    const kind = ownPageKind(url, link.title);
+    if (kind < 0) continue;
     seen.add(url);
-    out.push(url);
-    if (out.length >= limit) break;
+    byKind[kind]!.push(url);
+  }
+  // Stable: pages of the same depth keep the site map's order.
+  byKind.forEach((urls) => urls.sort((a, b) => depth(a) - depth(b)));
+  const out: string[] = [];
+  for (let round = 0; out.length < limit; round += 1) {
+    const picked = byKind.flatMap((urls) => urls[round] ?? []);
+    if (!picked.length) break;
+    out.push(...picked.slice(0, limit - out.length));
   }
   return out;
 }
@@ -144,10 +201,91 @@ export function withoutContacts(text: string): string {
   return stripPhoneNumbers(text).replace(EMAIL, EMAIL_REMOVED);
 }
 
-/** A page's text for the writer: phone numbers and email addresses removed,
- * images and blank runs dropped, cut at the limit on a line end. */
-export function pageText(markdown: string, max = PAGE_TEXT_MAX_CHARS): string {
-  const clean = withoutContacts(markdown)
+/** Lines that carry no content: a broken image's address, or a slider's
+ * page number ("- 3"). */
+const NOISE_LINE =
+  /^(?:[-*]\s*\d{1,2}|\S*\.(?:webp|png|jpe?g|gif|svg|avif)\S*)$/i;
+
+/** A line worth comparing for repeats: one with a link, or a long one.
+ * Short lines repeat for good reasons (the same price for two treatments,
+ * the brand name above each branch) and are kept. */
+function repeatable(line: string): boolean {
+  return /\]\(/.test(line) || line.length >= 40;
+}
+
+/** The lines every one of the own site's pages repeats: its menu, header
+ * and footer (founder decision 2026-10-28: stripped before the cut, so the
+ * cut keeps content). Only with three or more pages, so a list two pages
+ * share (the services on the homepage and on /services) stays. */
+export function siteChrome(markdowns: readonly string[]): Set<string> {
+  if (markdowns.length < 3) return new Set();
+  const sets = markdowns.map(
+    (markdown) =>
+      new Set(
+        markdown
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(repeatable),
+      ),
+  );
+  return new Set(
+    [...sets[0]!].filter((line) => sets.every((set) => set.has(line))),
+  );
+}
+
+/** A link worth only its label: a map, a WhatsApp chat, or any address
+ * over 100 characters. Sozo's branch list ran past its cut on its map
+ * links (founder decision 2026-10-28). */
+const LABEL_ONLY_LINK =
+  /^(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps|waze\.com|api\.whatsapp\.com|wa\.me|wa\.link)/i;
+/** A markdown link, not an image; its address may hold one pair of
+ * brackets, as a map search for "AEON (3-23AB)" does. */
+const LINK = /(?<!!)\[([^\]]*)\]\(((?:[^()\s]|\([^()\s]*\))*)\)/g;
+const LONG_URL = /https?:\/\/\S{90,}/g;
+
+function shortLinks(line: string): string {
+  return line
+    .replace(LINK, (whole, label: string, url: string) =>
+      url.length > 100 || LABEL_ONLY_LINK.test(url.replace(/^https?:\/\//, ""))
+        ? label
+        : whole,
+    )
+    .replace(LONG_URL, "")
+    .trim();
+}
+
+/** A phone form's country list ("- Belarus (Беларусь)+375"), dropped when a
+ * page has five or more: Audy's chat form filled its branch page's cut. */
+const DIALING_CODE_ITEM = /^[-*]\s+\S.*\+\d{1,4}$/;
+
+/** A page's text for the writer: phone numbers and email addresses removed;
+ * images, noise lines, the site's menu (`chrome`), a phone form's country
+ * list and repeats of a linked or long line dropped; map, chat and long
+ * links cut to their label; blank runs closed; cut at the limit on a line
+ * end. */
+export function pageText(
+  markdown: string,
+  max = PAGE_TEXT_MAX_CHARS,
+  chrome: ReadonlySet<string> = new Set(),
+): string {
+  const lines = markdown.split("\n");
+  const dialingCodes =
+    lines.filter((raw) => DIALING_CODE_ITEM.test(raw.trim())).length >= 5;
+  const seen = new Set<string>();
+  const kept = lines.flatMap((raw) => {
+    const line = raw.trim();
+    if (!line) return [raw];
+    if (NOISE_LINE.test(line) || chrome.has(line)) return [];
+    if (dialingCodes && DIALING_CODE_ITEM.test(line)) return [];
+    const short = shortLinks(line);
+    if (!short) return [];
+    if (repeatable(line)) {
+      if (seen.has(short)) return [];
+      seen.add(short);
+    }
+    return [raw.replace(line, () => short)];
+  });
+  const clean = withoutContacts(kept.join("\n"))
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -243,6 +381,8 @@ export type PageFetcher = {
 };
 
 const FIRECRAWL = "https://api.firecrawl.dev/v2";
+/** Links one site map may return. */
+export const MAP_LIMIT = 5_000;
 
 /** Firecrawl's scrape and map endpoints (v2), read from Indonesia. A page
  * that fails or is empty gives null; a failed map gives no pages. With a
@@ -306,7 +446,11 @@ export function firecrawlFetcher(
       };
     },
     async map(url) {
-      const json = await post("map", { url, limit: 200 });
+      // The map lists sitemap entries first, so a blog of a few hundred
+      // posts filled a 200-link map and hid every treatment and branch
+      // page (sozoskinclinic.com, 2026-10-28). One map is one credit at any
+      // limit.
+      const json = await post("map", { url, limit: MAP_LIMIT });
       return json?.success && Array.isArray(json.links)
         ? (json.links as { url: string; title?: string }[]).filter(
             (link) => typeof link?.url === "string",
@@ -346,6 +490,9 @@ export async function readPagesForReport(input: {
   sources: readonly CitedSource[];
   fetcher: PageFetcher;
   concurrency?: number;
+  /** False when the own site was already read (at the paid website reading,
+   * step 3): only the cited pages are read, still never the own site's. */
+  readOwn?: boolean;
 }): Promise<PagesRead> {
   const parsed = input.ownSite ? parseSourceInput(input.ownSite) : null;
   const own =
@@ -358,15 +505,20 @@ export async function readPagesForReport(input: {
     if (!(error instanceof FirecrawlUnavailable)) throw error;
     stopped ??= error.status;
   };
+  const readOwn = input.readOwn !== false;
   let mapped: { url: string; title?: string }[] = [];
-  if (own) mapped = await input.fetcher.map(own).catch((e) => (stop(e), []));
-  const ownUrls = own ? [own, ...ownPagesToRead(own, mapped)] : [];
+  if (own && readOwn)
+    mapped = await input.fetcher.map(own).catch((e) => (stop(e), []));
+  const ownUrls = own && readOwn ? [own, ...ownPagesToRead(own, mapped)] : [];
   const cited = citedPagesToRead(input.sources, ownDomain);
   const wanted = [
     ...ownUrls.map((url) => ({ url, kind: "own" as const, cited_in: [] })),
     ...cited.map((page) => ({ ...page, kind: "cited" as const })),
   ];
   const results: (ReadPage | null)[] = wanted.map(() => null);
+  const raw: ({ title: string; markdown: string } | null)[] = wanted.map(
+    () => null,
+  );
   let next = 0;
   const worker = async () => {
     while (stopped === undefined && next < wanted.length) {
@@ -376,21 +528,40 @@ export async function readPagesForReport(input: {
         stop(e);
         return null;
       });
-      const text = read ? pageText(read.markdown) : "";
-      if (!text) continue;
-      results[index] = {
-        url: page.url,
-        domain: urlDomain(page.url) ?? "",
-        title: withoutContacts(String(read!.title ?? "")).slice(0, 200),
-        kind: page.kind,
-        cited_in: page.cited_in,
-        text,
-      };
+      if (read?.markdown.trim()) raw[index] = read;
     }
   };
   await Promise.all(
     Array.from({ length: Math.max(1, input.concurrency ?? 1) }, worker),
   );
+  // The own site's menu is found across its pages, so the text is made only
+  // once every page is read.
+  const chrome = siteChrome(
+    wanted.flatMap((page, i) =>
+      page.kind === "own" && raw[i] ? [raw[i]!.markdown] : [],
+    ),
+  );
+  wanted.forEach((page, i) => {
+    const read = raw[i];
+    if (!read) return;
+    const own = page.kind === "own";
+    const text = pageText(
+      read.markdown,
+      own && isBranchPage(page.url)
+        ? BRANCH_PAGE_TEXT_MAX_CHARS
+        : PAGE_TEXT_MAX_CHARS,
+      own ? chrome : undefined,
+    );
+    if (!text) return;
+    results[i] = {
+      url: page.url,
+      domain: urlDomain(page.url) ?? "",
+      title: withoutContacts(String(read.title ?? "")).slice(0, 200),
+      kind: page.kind,
+      cited_in: page.cited_in,
+      text,
+    };
+  });
   return {
     pages: results.filter((page): page is ReadPage => page !== null),
     unread: wanted.flatMap((page, i) => (results[i] ? [] : [page.url])),

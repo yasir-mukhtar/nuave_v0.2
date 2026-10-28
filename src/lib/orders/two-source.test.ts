@@ -1146,6 +1146,74 @@ describe("Spec 021 B-08: the pages read before the report (AC-B5)", () => {
     ).toEqual(["pages_unread"]);
   });
 
+  const ownRead = (id: string) => {
+    const own = {
+      pages: [{ ...page("https://fiksi.example/"), kind: "own", cited_in: [] }],
+      unread: ["https://fiksi.example/harga"],
+      requests: 3,
+    };
+    rows(
+      `UPDATE orders SET pages_json = '${JSON.stringify({ status: "own_read", own })}' WHERE id = '${id}' RETURNING 1`,
+    );
+  };
+
+  it("with the own site read at step 3, only the cited pages are read; the writer gets both", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    ownRead(id);
+    const reader = vi.fn<Reader>(async () => ({
+      pages: [page("https://hadirr.example/a")],
+      unread: [],
+      requests: 1,
+    }));
+    const t = deps(undefined, { pages: { reader } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(1);
+    expect(reader.mock.calls[0]![0].readOwn).toBe(false);
+    expect(writerPages(t.reportInputs[0])!.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+      "https://hadirr.example/a",
+    ]);
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "kept_addresses",
+      read: "read",
+      urls: ["https://fiksi.example/", "https://hadirr.example/a"],
+      unread: ["https://fiksi.example/harga"],
+    });
+  });
+
+  it("a cited reading that never finishes still leaves the step 3 pages to the writer", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    ownRead(id);
+    const reader = vi.fn<Reader>(async () => {
+      throw new Error("the run died mid-read");
+    });
+    const t = deps(undefined, { pages: { reader } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(2);
+    expect(writerPages(t.reportInputs[0])!.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+    ]);
+  });
+
+  it("without the page reader, the step 3 page text is still dropped when the report is saved", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    ownRead(id);
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "kept_addresses",
+      read: "read",
+      urls: ["https://fiksi.example/"],
+      unread: ["https://fiksi.example/harga"],
+    });
+  });
+
   it("without the page reader (synthetic mode) there is no pages step", async () => {
     const id = await makeOrder(d1.db, { now: clock });
     await approveTwoSource(d1.db, id, { now: clock });

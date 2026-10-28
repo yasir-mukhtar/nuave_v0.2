@@ -412,6 +412,12 @@ jobs:
           OPENAI_BASE_URL: https://api.openai.com/v1
           OPENAI_AUDIT_MODEL: gpt-5.6-luna
           OPENAI_AUDIT_REASONING_EFFORT: low
+          # Step 3, the paid website reading: its own model and effort, so
+          # OPENAI_AUDIT_REASONING_EFFORT above never changes it. The model
+          # must be a row of OPENAI_MODEL_PRICES (src/lib/audit/models.ts).
+          # How to switch: docs/MODELS.md.
+          NUAVE_READING_MODEL: gpt-5.6-luna
+          NUAVE_READING_EFFORT: medium
           CHEAPERINFERENCE_API_KEY: ${{ secrets.CHEAPERINFERENCE_API_KEY }}
           # Spec 018 R-26: DataForSEO (search discovery, and in PR 2 the ChatGPT
           # and Google AI Overview checks). Preview workers get none.
@@ -425,6 +431,8 @@ jobs:
           # Opus 5.5 (claude-sonnet-5-5 is the cheaper writer), with the pages
           # Firecrawl read for the order. The founder adds the three keys to
           # the GitHub secrets before this merges; preview workers get none.
+          # Step 7: a row of CLAUDE_WRITERS (src/lib/audit/models.ts); add
+          # NUAVE_REPORT_EFFORT here to change its effort. docs/MODELS.md.
           NUAVE_REPORT_WRITER: claude-opus-5-5
           NUAVE_ANTHROPIC_API_KEY: ${{ secrets.NUAVE_ANTHROPIC_API_KEY }}
           NUAVE_ANTHROPIC_WORKSPACE_ID: ${{ secrets.NUAVE_ANTHROPIC_WORKSPACE_ID }}
@@ -452,6 +460,8 @@ jobs:
             OPENAI_BASE_URL
             OPENAI_AUDIT_MODEL
             OPENAI_AUDIT_REASONING_EFFORT
+            NUAVE_READING_MODEL
+            NUAVE_READING_EFFORT
             CHEAPERINFERENCE_API_KEY
             DATAFORSEO_LOGIN
             DATAFORSEO_PASSWORD

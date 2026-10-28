@@ -10,6 +10,8 @@ import {
   firecrawlFetcher,
   ownPagesToRead,
   pageText,
+  siteChrome,
+  BRANCH_PAGE_TEXT_MAX_CHARS,
   readPagesForReport,
   type PageFetcher,
 } from "./page-reader";
@@ -92,24 +94,154 @@ describe("which pages are read (the reading test)", () => {
     expect(citedPagesToRead(sources, null)).toHaveLength(10);
   });
 
-  it("own-site pages about prices, doctors, treatments or the business, up to four", () => {
+  it("own-site pages: one of each kind first (offer, branches, doctors, prices, about), list pages before their items, never posts", () => {
     expect(
       ownPagesToRead("https://fiksi.example/", [
         { url: "https://fiksi.example/" },
-        { url: "https://fiksi.example/blog/tips-kulit" },
+        { url: "https://fiksi.example/blog/harga-botox" },
+        { url: "https://fiksi.example/artikel/tips-kulit" },
+        { url: "https://fiksi.example/2025/01/promo-akhir-tahun" },
+        { url: "https://fiksi.example/testimoni" },
         { url: "https://fiksi.example/harga" },
-        { url: "https://fiksi.example/p/123", title: "Dokter kami" },
-        { url: "https://lain.example/harga" },
-        { url: "https://fiksi.example/tentang-kami" },
+        { url: "https://lain.example/cabang" },
         { url: "https://fiksi.example/treatment/botox" },
-        { url: "https://fiksi.example/cabang" },
+        { url: "https://fiksi.example/treatment" },
+        { url: "https://fiksi.example/lokasi/bandung" },
+        { url: "https://fiksi.example/lokasi" },
+        { url: "https://fiksi.example/p/123", title: "Tim dokter kami" },
+        { url: "https://fiksi.example/tentang-kami" },
       ]),
     ).toEqual([
-      "https://fiksi.example/harga",
+      "https://fiksi.example/treatment",
+      "https://fiksi.example/lokasi",
       "https://fiksi.example/p/123",
-      "https://fiksi.example/tentang-kami",
-      "https://fiksi.example/treatment/botox",
+      "https://fiksi.example/harga",
     ]);
+  });
+
+  it("with fewer kinds than places, a second page of a kind fills the rest", () => {
+    expect(
+      ownPagesToRead("https://fiksi.example/", [
+        { url: "https://fiksi.example/layanan/gigi-anak" },
+        { url: "https://fiksi.example/layanan" },
+        { url: "https://fiksi.example/cabang" },
+        { url: "https://fiksi.example/layanan/implan" },
+        { url: "https://fiksi.example/sitemap.xml" },
+        { url: "https://fiksi.example/karir/perawat" },
+      ]),
+    ).toEqual([
+      "https://fiksi.example/layanan",
+      "https://fiksi.example/cabang",
+      "https://fiksi.example/layanan/gigi-anak",
+      "https://fiksi.example/layanan/implan",
+    ]);
+  });
+
+  it("a page's text drops slider numbers, image leftovers and repeats of a linked or long line, but keeps short repeats such as prices", () => {
+    const menu = "- [Pricelist](https://fiksi.example/pricelist/)";
+    const text = pageText(
+      [
+        menu,
+        menu,
+        "- 1",
+        "- 2",
+        "%20Homepage%20-%20Referral.webp&w=3840&q=85)",
+        "Scaling",
+        "Rp 300.000",
+        "Tambal",
+        "Rp 300.000",
+      ].join("\n"),
+    );
+    expect(text.split(menu)).toHaveLength(2);
+    expect(text).not.toMatch(/^- 1$/m);
+    expect(text).not.toContain("webp");
+    expect(text.match(/Rp 300\.000/g)).toHaveLength(2);
+  });
+
+  it("the site's menu is the linked lines every own page repeats, found only with three or more pages", () => {
+    const menu =
+      "[Pricelist](https://fiksi.example/pricelist/) [Promo](https://fiksi.example/promo/)";
+    const services = "[Behel Gigi](https://fiksi.example/services/behel/)";
+    const pages = [
+      `${menu}\n${services}\nBeranda`,
+      `${menu}\n${services}\nLayanan`,
+      `${menu}\nCabang`,
+    ];
+    expect([...siteChrome(pages)]).toEqual([menu]);
+    expect(siteChrome(pages.slice(0, 2)).size).toBe(0);
+    expect(pageText(pages[0]!, undefined, siteChrome(pages))).toBe(
+      `${services}\nBeranda`,
+    );
+  });
+
+  it("map, WhatsApp and long links keep only their label; short page links stay", () => {
+    const maps =
+      "https://www.google.com/maps/search/?api=1&query=Klinik%20Fiksi%20-%20Mal%20(3-23AB)%2C%20Jl.%20Contoh";
+    const wa = "https://api.whatsapp.com/send?text=Halo";
+    const long = `https://fiksi.example/promo?${"utm=iklan&".repeat(12)}`;
+    const branch = (name: string) => [
+      `### [${name}](https://fiksi.example/lokasi/${name.toLowerCase()}/)`,
+      `Jl. ${name} No. 1, Kota Fiksi`,
+      `[BUAT JADWAL](${wa}) [LIHAT MAPS >](${maps})`,
+    ];
+    const text = pageText(
+      [
+        ...branch("Dago"),
+        ...branch("Cimahi"),
+        `[Promo bulan ini](${long})`,
+        `Sumber: ${long}`,
+      ].join("\n"),
+    );
+    expect(text).not.toContain("google.com");
+    expect(text).not.toContain("whatsapp");
+    expect(text).not.toContain("utm=");
+    expect(text).toContain("### [Dago](https://fiksi.example/lokasi/dago/)");
+    expect(text).toContain("Promo bulan ini");
+    expect(text.match(/BUAT JADWAL LIHAT MAPS >/g)).toHaveLength(1);
+  });
+
+  it("a phone form's country list is dropped when a page has five or more", () => {
+    const codes = [
+      "- United States+1",
+      "- Albania (Shqipëri)+355",
+      "- Belarus (Беларусь)+375",
+      "- Brunei+673",
+      "- Indonesia+62",
+    ];
+    expect(pageText(["Cabang Dago", ...codes].join("\n"))).toBe("Cabang Dago");
+    expect(pageText(codes.slice(0, 4).join("\n"))).toBe(
+      codes.slice(0, 4).join("\n"),
+    );
+  });
+
+  it("the own branch list is read at the longer limit, with the menu stripped first", async () => {
+    const menu = "- [Promo](https://fiksi.example/promo/)";
+    const branches = Array.from(
+      { length: 400 },
+      (_, i) => `Cabang ${i}: Jl. Contoh No. ${i}, Kota Fiksi`,
+    ).join("\n");
+    const markdown: Record<string, string> = {
+      "https://fiksi.example/": `${menu}\nBeranda`,
+      "https://fiksi.example/layanan": `${menu}\nLayanan`,
+      "https://fiksi.example/lokasi": `${menu}\n${branches}`,
+    };
+    const { pages } = await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: [],
+      fetcher: {
+        scrape: async (url) => ({ title: "Judul", markdown: markdown[url]! }),
+        map: async () => [
+          { url: "https://fiksi.example/layanan" },
+          { url: "https://fiksi.example/lokasi" },
+        ],
+      },
+    });
+    const lokasi = pages.find((page) => page.url.endsWith("/lokasi"))!;
+    expect(lokasi.text.length).toBeGreaterThan(6_000);
+    expect(lokasi.text.length).toBeLessThanOrEqual(
+      BRANCH_PAGE_TEXT_MAX_CHARS + 2,
+    );
+    expect(pages.every((page) => !page.text.includes("Promo"))).toBe(true);
   });
 
   it("a page's text has no phone number, email or image, and is cut at a line end", () => {
@@ -154,6 +286,23 @@ describe("reading an order's pages", () => {
     ]);
     expect(pages[2]!.domain).toBe("hadirr.com");
     expect(unread).toEqual(["https://alodokter.com/jerawat"]);
+  });
+
+  it("with the own site read at step 3, only the cited pages are read, never the own site's", async () => {
+    const f = fetcher();
+    const { pages } = await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: [
+        { prompt_id: "q1", url: "https://hadirr.com/klinik-terbaik" },
+        { prompt_id: "q2", url: "https://fiksi.example/harga" },
+      ],
+      fetcher: f,
+      readOwn: false,
+    });
+    expect(pages.map((p) => [p.kind, p.url])).toEqual([
+      ["cited", "https://hadirr.com/klinik-terbaik"],
+    ]);
+    expect(f.map).not.toHaveBeenCalled();
   });
 
   it("an own site given as a bare domain is read; forums and Q&A sites are not", async () => {

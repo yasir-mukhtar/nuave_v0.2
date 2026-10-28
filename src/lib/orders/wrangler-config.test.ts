@@ -180,6 +180,14 @@ describe("workflows and the payment settings", () => {
     expect(ci).toContain('NUAVE_DAILY_SPEND_LIMIT_USD: "50"');
   });
 
+  it("the deploy job names step 3's model and effort as Worker secrets (docs/MODELS.md)", () => {
+    const ci = read("ci.yml");
+    expect(ci).toContain("NUAVE_READING_MODEL: gpt-5.6-luna");
+    expect(ci).toContain("NUAVE_READING_EFFORT: medium");
+    expect(ci).toMatch(/^\s+NUAVE_READING_MODEL$/m);
+    expect(ci).toMatch(/^\s+NUAVE_READING_EFFORT$/m);
+  });
+
   it("preview workers get no payment key, test code or alert address", () => {
     const preview = read("pr-preview.yml");
     for (const name of [

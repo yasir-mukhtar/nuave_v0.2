@@ -94,6 +94,8 @@ beforeEach(() => {
   vi.stubEnv("NUAVE_PROVIDER", "openai");
   vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
   vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+  // No page reader unless a test sets one (the step 3 reading tests).
+  vi.stubEnv("FIRECRAWL_API_KEY", "");
   vi.stubEnv("OPENAI_AUDIT_CARRYOVER_COST_USD", "0");
   vi.stubEnv("NUAVE_GLM_EVIDENCE_DIR", "");
   vi.stubEnv(
@@ -694,6 +696,85 @@ describe("the paid website reading is made once per order (R-08)", () => {
     expect(await second.json()).toEqual(firstBody);
     expect(mocks.extractDraft).toHaveBeenCalledTimes(1); // no second reading
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("with a Firecrawl key, the own site's pages are read once, given to the reading instead of web search, and kept for the report", async () => {
+    vi.stubEnv("FIRECRAWL_API_KEY", "offline-firecrawl-key");
+    fetchSpy.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/v2/map"))
+        return Response.json({
+          success: true,
+          links: [
+            { url: "https://kopinuave.example/blog/tips" },
+            { url: "https://kopinuave.example/lokasi" },
+          ],
+        });
+      if (url.endsWith("/v2/scrape"))
+        return Response.json({
+          success: true,
+          data: {
+            markdown: "# Kopi Nuave\n\nCabang Bandung. Hubungi 0812-3456-7890.",
+            metadata: { title: "Kopi Nuave", statusCode: 200 },
+          },
+        });
+      return new Response("{}", { status: 500 });
+    });
+    const created = await (await createTest()).json();
+    const extract = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+      async () => ({
+        draft: { name: "Kopi Nuave" },
+        telemetry: [],
+      }),
+    );
+    mocks.extractDraft = extract;
+    const ask = () =>
+      extractPOST(post("/api/audit/extract", { order_id: created.order_id }));
+    const first = await ask();
+    expect(first.status).toBe(200);
+    expect((await first.json()).source_excerpt_status).toBe("included");
+    const read = extract.mock.calls[0]![0] as {
+      pages_read?: { url: string; text: string }[];
+      public_source_data?: unknown;
+    };
+    expect(read.public_source_data).toBeUndefined();
+    expect(read.pages_read?.map((page) => page.url)).toEqual([
+      "https://kopinuave.example/",
+      "https://kopinuave.example/lokasi",
+    ]);
+    expect(JSON.stringify(read.pages_read)).not.toContain("3456");
+    const saved = JSON.parse(
+      (orders()[0] as { pages_json: string }).pages_json,
+    );
+    expect(saved.status).toBe("own_read");
+    expect(saved.own.pages).toHaveLength(2);
+    expect(saved.own.requests).toBe(3); // the map and two pages
+    const calls = fetchSpy.mock.calls.length;
+    expect((await ask()).status).toBe(200);
+    expect(fetchSpy.mock.calls.length).toBe(calls); // never read twice
+    expect(extract).toHaveBeenCalledTimes(1);
+  });
+
+  it("when Firecrawl reads no page, the reading goes on as before and keeps no pages", async () => {
+    vi.stubEnv("FIRECRAWL_API_KEY", "offline-firecrawl-key");
+    const created = await (await createTest()).json();
+    const extract = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+      async () => ({
+        draft: { name: "Kopi Nuave" },
+        telemetry: [],
+      }),
+    );
+    mocks.extractDraft = extract;
+    const response = await extractPOST(
+      post("/api/audit/extract", { order_id: created.order_id }),
+    );
+    expect(response.status).toBe(200);
+    expect(
+      (extract.mock.calls[0]![0] as { pages_read?: unknown }).pages_read,
+    ).toBeUndefined();
+    expect(
+      (orders()[0] as { pages_json: string | null }).pages_json,
+    ).toBeNull();
   });
 
   it("a failed reading is not saved, so a later request may try again", async () => {

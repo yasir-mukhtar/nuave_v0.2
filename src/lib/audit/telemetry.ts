@@ -5,31 +5,18 @@ import {
   type AuditCallTelemetry,
 } from "./types";
 import { OBSERVATION_STAGE_MAX_CALLS } from "./retry";
+import {
+  isPricedOpenAIModel,
+  OPENAI_MODEL_PRICES,
+  type PricedOpenAIModel,
+} from "./models";
 
 export const AUDIT_PRICING_VERSION = "openai-standard-2026-08-01";
+/** The model of every OpenAI call but step 3's (`OPENAI_AUDIT_MODEL`'s
+ * default). The cost guard prices any row of `OPENAI_MODEL_PRICES`. */
 export const AUDIT_MODEL = "gpt-5.6-luna";
 
-// Official OpenAI standard pricing and model limits observed 2026-08-01:
-// https://developers.openai.com/api/docs/pricing
-// https://developers.openai.com/api/docs/models/gpt-5.6-luna
-const LUNA_MAX_INPUT_TOKENS = 922_000;
-const LONG_CONTEXT_THRESHOLD = 272_000;
 const WEB_SEARCH_USD_PER_CALL = 0.01;
-
-const PRICING = {
-  short: {
-    input: 0.2,
-    cached_input: 0.02,
-    cache_write_input: 0.25,
-    output: 1.2,
-  },
-  long: {
-    input: 0.4,
-    cached_input: 0.04,
-    cache_write_input: 0.5,
-    output: 1.8,
-  },
-} as const;
 
 // Question generation is built in code from the verified brief, so the prompts
 // stage has no provider call and no output allowance. The stage is retained so
@@ -139,13 +126,15 @@ export function effectiveAuditCarryoverCostUsd(budget: AuditBudget) {
 }
 
 function tokenCost(
+  model: PricedOpenAIModel,
   inputTokens: number,
   cachedInputTokens: number,
   cacheWriteInputTokens: number,
   outputTokens: number,
 ) {
+  const prices = OPENAI_MODEL_PRICES[model];
   const rate =
-    inputTokens > LONG_CONTEXT_THRESHOLD ? PRICING.long : PRICING.short;
+    inputTokens > prices.long_context_threshold ? prices.long : prices.short;
   const ordinaryInputTokens = Math.max(
     0,
     inputTokens - cachedInputTokens - cacheWriteInputTokens,
@@ -208,17 +197,18 @@ export function reserveAuditCall(input: {
   requested_model: string;
   has_web_search: boolean;
 }) {
-  if (input.requested_model !== AUDIT_MODEL) {
+  const model = input.requested_model;
+  if (!isPricedOpenAIModel(model)) {
     throw new AuditBudgetError(
-      `The private cost guard supports only ${AUDIT_MODEL}; received ${input.requested_model}.`,
+      `The private cost guard has no price for ${model}; priced models: ${Object.keys(OPENAI_MODEL_PRICES).join(", ")}.`,
     );
   }
   const limits = AUDIT_CALL_LIMITS[input.stage];
   const inputTokenUpperBound = input.has_web_search
-    ? LUNA_MAX_INPUT_TOKENS
+    ? OPENAI_MODEL_PRICES[model].max_input_tokens
     : requestInputTokenUpperBound(input.request);
   const reservedCost = roundedUsd(
-    tokenCost(inputTokenUpperBound, 0, 0, limits.max_output_tokens) +
+    tokenCost(model, inputTokenUpperBound, 0, 0, limits.max_output_tokens) +
       (input.has_web_search ? WEB_SEARCH_USD_PER_CALL : 0),
   );
   checkAuditBudget({
@@ -318,9 +308,10 @@ export function completedCallTelemetry(input: {
   response: Response;
 }): AuditCallTelemetry {
   const completedAt = Date.now();
-  if (input.response.model !== AUDIT_MODEL) {
+  const model = input.response.model;
+  if (model !== input.requested_model || !isPricedOpenAIModel(model)) {
     throw new AuditBudgetError(
-      `OpenAI returned ${input.response.model}, but the cost guard is pinned to ${AUDIT_MODEL}.`,
+      `OpenAI returned ${model}, but the cost guard is pinned to the requested ${input.requested_model}.`,
     );
   }
   if (
@@ -337,6 +328,7 @@ export function completedCallTelemetry(input: {
   ).length;
   const accountedCost = roundedUsd(
     tokenCost(
+      model,
       usage.input_tokens,
       usage.cached_input_tokens,
       usage.cache_write_input_tokens,

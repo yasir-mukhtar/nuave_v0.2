@@ -188,6 +188,10 @@ export const extractionRequestSchema = z.object({
  * `source_url` is the public page that publishes the address; it may be empty
  * when the draft cannot name a more specific page than the supplied website.
  */
+/** The most branches the paid reading offers the quiz (founder decision of
+ * 2026-10-28; it was 8). The owner still picks one. */
+export const MAX_PUBLISHED_LOCATIONS = 20;
+
 export const publishedLocationSchema = z.object({
   name: z.string().trim().min(1).max(160),
   address: z.string().trim().min(1).max(300),
@@ -223,7 +227,10 @@ export const extractionDraftSchema = z.object({
     .enum(["sekitar", "beberapa", "seluruh", "luar", ""])
     .default(""),
   market_areas: z.array(z.string().trim().min(1).max(160)).max(8).default([]),
-  published_locations: z.array(publishedLocationSchema).max(8).default([]),
+  published_locations: z
+    .array(publishedLocationSchema)
+    .max(MAX_PUBLISHED_LOCATIONS)
+    .default([]),
   category_suggestions: z
     .array(z.string().trim().min(1).max(200))
     .max(3)
