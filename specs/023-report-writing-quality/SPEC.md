@@ -2,7 +2,8 @@
 
 > Status: **In review** (draft for the founder's approval; no code changed)
 > Owner: founder; plan written by Claude Code on `ccr-88631259-0lhn0m`
-> Updated: 2026-10-28
+> Updated: 2026-10-28, revision 2 (after independent review round 1: FAIL,
+> 16 findings, all addressed below)
 > Implements: the founder's report feedback of 2026-10-28: "deeper insights
 > as if advised by BCG consultants, answer first", and "natural and clear
 > like Tempo", for the live report writer (Claude Opus 5.5 with pages read,
@@ -12,26 +13,33 @@
 
 Read in order:
 
-1. `AGENTS.md`, `docs/VOICE.md` (sections 1 to 5; it is the canonical
-   Indonesian writing contract), `docs/content/report/PLAYBOOK.md`.
+1. `AGENTS.md`, `docs/VOICE.md` (sections 1 to 5 and 7.4; it is the
+   canonical Indonesian writing contract), `docs/content/report/PLAYBOOK.md`.
 2. [Spec 021](../021-report-v2/SPEC.md), Part B (B-01 to B-08): the writer
    this spec changes.
 3. The writer today:
-   - `src/lib/audit/two-source-writer.ts`: the instructions and request;
+   - `src/lib/audit/two-source-writer.ts`: the instructions, the request and
+     `revisionDraft`;
    - `src/lib/audit/two-source-writing.ts`: field limits, banned title
-     starts, Part B checks and the code repair after the revision;
+     starts, Part B checks, `headlineConfirmed` and `questionFacts`, and the
+     code repair after the revision;
    - `src/lib/audit/two-source-report.ts`: `twoSourceWritingViolations`,
-     `repairTwoSourceWriting`, `namesBusiness`, `twoSourceCountSentence`;
+     `contradictedSources`, `clauseKind`, `namesBusiness`,
+     `repairTwoSourceWriting`, `twoSourceCountSentence`;
    - `src/lib/audit/report-pipeline.ts`, `createValidatedAuditReport`: the
-     one language-only revision and the repairs after it;
+     one language-only revision, the repairs after it, and the provenance;
    - `src/lib/audit/report-language.ts`: `REPORT_MAX_SENTENCE_WORDS` and
      `validateIndonesianReportLanguage`;
-   - `src/lib/audit/types.ts`: `twoSourceWritingSynthesisSchema` and the saved
-     `two_source_writing` block (`version` is a literal);
+   - `src/lib/audit/types.ts`: `twoSourceWritingSynthesisSchema`, the saved
+     `two_source_writing` block (its `version` is a literal) and the
+     provenance;
+   - `src/lib/audit/anthropic-report.ts`: the Claude call and its schema
+     check;
    - `src/app/audit/report/TwoSourceReport.tsx`: the page, which also prints
      the PDF.
 4. The test harness: `scripts/report-writer-test/README.md` and `harness.ts`
-   (ledger, `HARD_STOP_USD`, blind letters, page pairs).
+   (ledger, `HARD_STOP_USD`, evidence folder, pages, blind letters, page
+   pairs, the writer fingerprint).
 5. The founder's benchmark pack (input, not a contract):
    `nuave-editorial-skill.zip` (`SKILL.md`, `references/kamus-ringkas.md`,
    `references/contoh-sozo.md`, `QA-CHECKLIST.md`, `RUNTIME-PROMPT.md`).
@@ -42,66 +50,81 @@ Do not load: `archive/`, Spec 014, the older report prototypes.
 
 ### Evidence
 
-- The Sozo report (NV-3WDSAY) reads as a scoreboard. Its closing says
-  "klinik Anda disebut di 3 dari 10 jawaban" twice, sentences have the same
-  length, "klinik Anda" appears in nearly every sentence, and a takeaway
-  title copies our own example word ("Pemenang menulis harga yang bisa
-  dikutip"). The founder judged it "written by AI" despite Opus 5.5.
-- The writer's instructions cause most of this (`two-source-writer.ts`):
+- The founder judged the latest reports "written by AI" despite Opus 5.5:
+  stiff, a list of facts instead of an answer, the same sentence length, the
+  same address in every sentence. The ChatGPT pack's "before" lines (Sozo)
+  show it: the closing gives "3 dari 10" twice, "klinik Anda" appears in
+  nearly every sentence, a takeaway copies our example word ("Pemenang…").
+- The Sozo report that was delivered (NV-3WDSAY) was written by the older
+  writer (provenance `report-synthesis-v7-context`), so its exact sentences
+  do not prove what the current writer does. The repeated sentence "klinik
+  Anda disebut di 3 dari 10 jawaban" is also word for word the sentence code
+  puts in when it repairs a count (`twoSourceCountSentence`, VOICE §7.4).
+- The current writer's instructions (`two-source-writer.ts`) still push the
+  same style:
   - "Keep every sentence to 25 words or fewer." Code also sends any sentence
     over 25 words back for revision (`REPORT_MAX_SENTENCE_WORDS`);
   - "Name the source … write 'Di ChatGPT' or 'Di Google AI Overview'" in the
-    conclusion and every finding, and the conclusion must give each source's
-    count, which the verdict already gave;
+    conclusion and every finding; the conclusion must give each source's
+    count; the violation text repeats the formula, and the last-resort repair
+    adds "Di ChatGPT: " in front of a finding;
   - "Call the audited business 'klinik Anda'";
   - the takeaway example "Pemenang menjual keahlian, bukan harga";
   - competitor rows are labelled "Disebut AI karena:" on the page, while
     rule 3 forbids saying why;
   - nine boxes to fill and no step that settles one main message first;
   - about 30 rules in English, most of them "don't".
+- **The fact checker blocks depth.** `contradictedSources` compares every "X
+  dari Y", bare count or "semua" in a clause with the source-wide counts, and
+  treats a clause that names no business as being about the owner. A probe
+  (review round 1) showed these true sentences are all violations, then
+  replaced by the code count sentence after the revision: "ChatGPT tidak
+  menyebut SOZO di 4 dari 4 pertanyaan treatment", "di semua pertanyaan
+  umum", "ChatGPT menyebut ERHA di 7 dari 10 jawaban". Asking for patterns
+  without fixing this would bring back the robotic sentence through code and
+  cost a revision call each time.
 - Not the cause: the facts. Since PR #185 the writer reads the pages, the
-  Google answer text, monthly searches and the playbook. The depth of the
-  evidence is there; the instructions do not ask the writer to reason with
-  it.
+  Google answer text, monthly searches and the playbook.
 
 ### Interpretation
 
-The report is shallow because nothing asks for a storyline, and robotic
-because our own rules force a uniform rhythm, repeated formulas and a fixed
-way to address the owner. Fixing the rules comes first; a guide on how to
-think and write comes second; a code check for typical AI phrasing catches
-what is left.
+The report is shallow because nothing asks for a storyline and the checker
+punishes the subset numbers a storyline needs. It is robotic because our own
+rules force a uniform rhythm, formulas and one way to address the owner.
+Fix the rules and the checker first; then add a guide on how to think and
+write; measure typical AI phrasing in the test before deciding whether code
+should police it.
 
 ## Desired outcome
 
 An owner reading the report can say its main message after the first
-paragraph, every finding answers "so what for my clinic", and an Indonesian
-editor would change little. All of today's fact safety stays: the counts,
-the headline numbers, the source contradiction repair and "no causes".
+paragraph, every finding answers "so what for my clinic", each recommendation
+answers a finding, and an Indonesian editor would change little. All of
+today's fact safety stays, and the checker becomes more precise, not looser.
 
 ## Scope
 
 - The live two-source writer's instructions, output schema and writing
-  checks (Claude Opus 5.5 and the OpenAI fallback that uses the same
+  checks (Claude Opus 5.5, and the OpenAI fallback that uses the same
   two-source schema).
+- A precise extension of the count checker for findings (R-03).
 - A writing guide in Indonesian that the writer reads next to the playbook.
 - One label on the report page and PDF ("Disebut AI karena").
 - `docs/VOICE.md` amendments for report-writer prose only.
-- The report-writer test harness: the USD 10 cap, a before/after blind test,
-  and a metrics table.
+- The report-writer test harness: the cap, a before/after blind test, a
+  metrics table.
 
 ## Non-scope
 
-- The layout of the report, its sections, the box length limits
-  (`TWO_SOURCE_WRITING_LIMITS`) and the banned title starts. Box limits are
-  revisited after the human-edited report (founder, 2026-10-28).
-- The code-built count sentences and the settled exact labels in
-  `VOICE.md` (for example **Klinik Anda muncul di X dari N pertanyaan**).
+- The layout, sections, box length limits (`TWO_SOURCE_WRITING_LIMITS`) and
+  banned title starts. Box limits are revisited in Phase 2.
+- Code-built page text: the source cards, the settled exact labels, the
+  code count sentence (VOICE §7.4) and the Celah Topik lede ("Topik yang
+  dicari orang…"). They keep reading the same way; Phase 2 lists them.
 - The legacy single-source writer (`reportWritingInstructions`,
   `validateReportLanguage`) and its 25-word rule. It is not live.
-- Steps 1 to 6 and the pages read.
-- The playbook's content and its three rules.
-- Old saved reports: their saved content is not rewritten.
+- Steps 1 to 6, the pages read, the playbook's content and its three rules.
+- Old saved reports.
 
 ## Settled decisions (founder, 2026-10-28)
 
@@ -111,193 +134,230 @@ the headline numbers, the source contradiction repair and "no causes".
   a mix of lengths, an occasional very short sentence to land a point.
 - **D-3** The guide sits at the report-writing step, next to the playbook,
   and the writer reads it with every report.
-- **D-4** Em dashes are banned (matches `VOICE.md` §3).
+- **D-4** Em dashes are banned (as `VOICE.md` §3 already says).
 - **D-5** A human editor will rewrite the Sozo report; it arrives later
   (Phase 2).
-- **D-6** The test harness cap is USD 10 (was USD 7).
+- **D-6** The test harness cap is USD 10 (was USD 7). What it covers is Q-4.
 
 ## Requirements
 
-### Rules that fight good writing (R-01 to R-06)
+### Rules that fight good writing
 
-- **R-01, sentence length.** The two-source writer's instructions drop "Keep
-  every sentence to 25 words or fewer". For two-source reports, a sentence
-  over 25 words is no longer a writing violation: it is not sent back and
-  not cut. A sentence over 30 words is recorded as an advisory diagnostic
-  (`long_sentence`) only. The legacy writer keeps its rule.
-- **R-02, sources without a formula.** The instructions drop the "write 'Di
-  ChatGPT' / 'Di Google AI Overview'" formula. Every finding still makes
-  clear which source it is about, in natural words ("ChatGPT menyebut…",
-  "Ringkasan AI Google…"). The existing check (the conclusion and each
-  finding name a source somewhere) and the last-resort repair stay as they
-  are.
-- **R-03, counts said once.** The verdict carries each source's result. The
-  conclusion is the closing judgement and the next step: it names the
-  sources but does not repeat the verdict's counts. Code records a
-  `repeated_count` diagnostic when the same source count ("3 dari 10")
-  appears in both the verdict and the conclusion; it joins the violation
-  list only when a revision runs for another reason.
-- **R-04, brand name.** The writer calls the business by its confirmed brand
-  name; "klinik Anda" (or "bisnis Anda") may appear for direct address, not
-  in every sentence. With no confirmed brand name, it uses "klinik Anda" /
-  "bisnis Anda" as today. The contradiction check already recognises the
-  brand name and aliases (`namesBusiness`); a test proves it for brand-name
-  sentences.
-- **R-05, no teaching examples.** The "Pemenang menjual keahlian, bukan
-  harga" example is removed. No instruction contains an example title a
-  writer could copy into a real report; examples live only in the guide,
-  marked as illustrations of fictional businesses.
-- **R-06, the competitor label.** "Disebut AI karena:" on the page and PDF
-  becomes the founder-approved wording (Q-1). The writer's instruction for
-  `competitor_reasons` asks for what the answers say about that business,
-  not why AI chose it.
+- **R-01, sentence length.** The two-source instructions drop "Keep every
+  sentence to 25 words or fewer". For two-source reports a long sentence is
+  no longer a writing violation: not sent back, not cut. The legacy writer
+  keeps its rule. Sentence length is measured in the test (R-15).
+- **R-02, sources in natural words.** The instructions drop the "write 'Di
+  ChatGPT' / 'Di Google AI Overview'" formula. Each finding still contains
+  the word "ChatGPT" or "Google" (the existing check matches those words),
+  in a natural sentence ("ChatGPT menyebut…", "Ringkasan AI Google…"). The
+  violation text is reworded the same way. The last-resort repair stays, as
+  the rare fallback it is.
+- **R-03, the checker reads findings precisely.** In a key finding (which
+  has `evidence_prompt_ids`), a count is accepted when it is true for the
+  finding's own questions, and still caught when it is false:
+  - "X dari Y" where Y is the number of the finding's cited questions and X
+    is how many of them have the stated fact, by the same per-question facts
+    the headline check uses (`questionFacts`);
+  - "semua" / "tidak satu pun" limited to the cited questions in the same
+    way;
+  - a clause that names a business from `facts.writer.businesses` and not
+    the owner is about that business: its count is checked against the
+    per-question `businesses` lists (questions whose answer from that source
+    names it), among the cited questions or all questions.
+    The verdict and conclusion keep today's source-wide check. Nothing that is
+    false today becomes accepted. Because this changes a fact check, the
+    founder approves it with this spec (Q-6).
+- **R-04, counts said once, in the cards.** The source cards already show
+  each source's count in large type and a sentence. The verdict states the
+  main message and may carry one number only when that number is the point.
+  The conclusion carries no counts; it names the sources, returns to the
+  main message and gives the next step.
+- **R-05, brand name, used like an editor.** The writer names the business
+  by its exact confirmed name (or a listed alias) where a section opens or
+  where it must be told apart from other businesses, then uses "klinik ini"
+  or "Anda" in between. With no confirmed name it uses "klinik Anda" /
+  "bisnis Anda" as today. Never a short form that is not a listed alias
+  (the checker would not recognise it as the owner).
+- **R-06, no teaching examples in the instructions.** The "Pemenang menjual
+  keahlian, bukan harga" example goes. Examples live only in the guide.
+- **R-07, the competitor label.** "Disebut AI karena:" on the page and PDF
+  becomes the founder-approved wording (Q-1). The `competitor_reasons`
+  instruction asks for what the answers say about that business, not why AI
+  chose it.
 
-### Depth (R-07, R-08)
+### Depth
 
-- **R-07, plan before writing.** The two-source output schema gains
-  `storyline` as its first property: `main_message` (one sentence) and
-  `support` (two or three short points). The instructions say: settle the
-  storyline first; the verdict states the main message; findings come in
-  order of importance and each supports it; the conclusion returns to it.
-  `storyline` is never saved in the report, shown on the page or PDF, or
-  included in the JSON download. The test harness keeps it next to each
-  result for scoring.
-- **R-08, interpretation, clearly marked.** The writer may describe a
-  pattern across questions and what Nuave reads into it ("Polanya…",
-  "Artinya…"), say how consistent it is ("di 4 dari 4 pertanyaan
-  treatment"), and name the most sensible next step from the playbook. It
-  still never says why this business got its result (playbook rule 3,
-  unchanged). The guide sets the line between a pattern (allowed) and a
-  cause (not allowed), with examples on both sides.
+- **R-08, plan before writing.** The two-source output schema gains
+  `storyline` as its first property: `main_message` (a string) and
+  `support` (an array of strings), with no array or length bounds in the
+  schema (the Claude SDK moves bounds into descriptions and the zod re-check
+  would then fail a paid call). The instructions say: settle the storyline
+  first, two or three supporting points; the verdict states the main
+  message; three or four strong findings beat six thin ones; findings come in
+  order of importance and each supports the main message; each
+  recommendation says which finding it answers; the conclusion returns to the
+  main message. The revision receives the storyline in its draft and keeps
+  it unchanged. `storyline` is never saved, shown on the page or PDF, or
+  included in the JSON download (`assembleTwoSourceWriting` drops it). The
+  harness keeps it beside each result, hidden until scoring is done.
+- **R-09, interpretation without causes.** The writer may describe a pattern
+  across questions ("Polanya…", "Artinya…") with how consistent it is, and
+  say why a step comes first, from the evidence and from what the playbook
+  says the step involves. It never says why this business got its result
+  (playbook rule 3), never claims cost, effort or impact the playbook does
+  not support, never says what people "search most" or "paling dicari"
+  except a monthly-search figure given in the facts, and never treats the
+  ten questions as the whole market.
 
-### The guide (R-09)
+### The guide
 
-- **R-09, the writing guide.** `docs/content/report/WRITING_GUIDE.md`, in
+- **R-10, the writing guide.** `docs/content/report/WRITING_GUIDE.md`, in
   Indonesian, approved by the founder before any paid test run. It is copied
-  into `src/lib/audit/report-writing-guide.ts` and a unit test checks the two
+  into `src/lib/audit/report-writing-guide.ts` and a unit test checks they
   are equal byte for byte (as for the playbook). The writer reads it after
   the playbook. Four parts:
   1. **Cara berpikir konsultan:** one main message first; "so what for this
-     clinic" for every fact; most important first; use monthly searches to
-     rank topics; say what you would do first and why it is the cheapest
-     bet.
+     clinic" for each fact; most important first; fewer, stronger
+     findings; every recommendation answers a finding.
   2. **Cara menulis seperti editor:** common words, active sentences, the
-     D-2 rhythm, the brand name, one count said once, no em or en dash in
-     prose, and a short list of phrases that sound like machine translation
-     (R-10) with a natural alternative for each.
-  3. **Jujur tanpa berbelit:** pattern vs cause; how sure we are; no
-     lawyer-style hedging ("Sampel ini belum membuktikan bahwa…"); what we
-     cannot see (inside ChatGPT, other users' answers).
-  4. **Contoh:** before/after pairs from at least two fictional businesses of
-     different kinds, marked as illustrations. No real business, competitor
-     or city name from any Nuave order.
+     D-2 rhythm, R-05 naming, counts in the cards, no em dash, an en dash
+     only in a time range ("Minggu 1–2", VOICE §3); a short list of phrases
+     that sound translated ("hal ini menunjukkan", "selain itu" at every
+     paragraph, "bukan hanya… tetapi juga…", "melakukan optimalisasi") with
+     a natural alternative for each; the words "ChatGPT" or "Google" in
+     every finding.
+  3. **Jujur tanpa berbelit:** pattern vs cause, with examples on both
+     sides; R-09's limits; no lawyer-style hedging; what we cannot see.
+  4. **Contoh:** before/after pairs using placeholders ("Klinik A", "Klinik
+     B", "[kota]"), never a real business, competitor or city from a Nuave
+     order.
 
-  It stays under 2,500 words. Where it and the ChatGPT pack disagree, this
-  spec and `VOICE.md` win (for example, no dashes; the brand name per D-1).
+  Its length is measured in tokens in the dry run. Where it and the ChatGPT
+  pack disagree, this spec and `VOICE.md` win; where it and `VOICE.md`
+  disagree, `VOICE.md` wins.
 
-### Checks by code (R-10 to R-12)
+### Checks by code (kept small)
 
-- **R-10, typical AI phrasing.** A list in code (`AI_GIVEAWAY_PHRASES`,
-  mirrored in the guide) is matched, whole words and case-insensitive, in
-  the writer's prose fields (verdict, conclusion, findings, recommendations,
-  reasons, takeaways, plan). First list: "hal ini menunjukkan", "perlu
-  dicatat", "selain itu" at the start of a sentence, "secara signifikan",
-  "signifikan", "memastikan", "komprehensif", "holistik", "krusial",
-  "lanskap", "memanfaatkan", "melakukan optimalisasi", "bukan hanya …
-  tetapi juga", "tidak hanya … tetapi juga", "secara keseluruhan", "dapat
-  disimpulkan". Three or more hits in one report make a writing violation
-  that names each hit (it triggers the one revision). One or two hits are an
-  advisory diagnostic. Code never deletes a phrase.
-- **R-11, dashes.** An em dash (—) anywhere in writer prose is a writing
-  violation; so is an en dash (–) except between two numbers ("Minggu
-  1–2"), and a spaced hyphen used as a dash (" - "). If one survives the
-  revision, code replaces it with a comma (or "sampai" between numbers
-  written with a hyphen) and records `dash_replaced`.
-- **R-12, guide examples never leak.** The guide's illustration names are
-  listed in code. A report that contains one of them, when that name is not
-  in the order's own facts (context, answers, pages), gets a writing
-  violation; if it survives the revision, it is recorded as
-  `example_name_leaked` and the founder is told (founder notice) rather than
-  the order failing.
+- **R-11, dashes.** An em dash, or a spaced hyphen used as a dash (" - "),
+  in writer prose is listed among the writing violations when a revision runs
+  for another reason; on its own it does not trigger a revision. After the
+  revision, code replaces any left with a comma and records
+  `dash_replaced`. Code never changes exact evidence: business names and
+  aliases, listed other businesses, `headline.number`, and the plan's week
+  ranges ("Minggu 1–2" uses the en dash VOICE §3 allows).
+- **R-12, provenance.** The saved block keeps its version literal, but the
+  provenance's `report_prompt_version` gets a new value for the new
+  instructions, so a delivered report shows which writer wrote it.
 
-### Canonical documents (R-13)
+### Canonical documents
 
-- **R-13** `VOICE.md` gains: the D-2 guidance for report-writer prose (the
-  25-word ceiling stays for other copy), the D-1 brand-name rule for
-  report-writer prose (settled labels unchanged), and the new competitor
-  label. `DECISION_LOG.md` records D-1 to D-6 and the founder's answers to
-  the open questions. `NOW.md` names this spec.
+- **R-13** `VOICE.md`, for report-writer prose only: §3 "short sentences"
+  becomes the D-2 guidance (the 25-word ceiling stays for other copy); the
+  §2 "Your business (prose)" row adds the R-05 rule; the new competitor
+  label; §7.4's code count sentences stay as they are (said explicitly).
+  The guide ranks below `VOICE.md`. `INDEX.md` routes report-writing work to
+  the guide. `DECISION_LOG.md` records D-1 to D-6 and the answers to Q-1 to
+  Q-6. `NOW.md` names this spec.
 
-### The test (R-14, R-15)
+### The test
 
 - **R-14, harness.**
-  - `HARD_STOP_USD` = 10 (D-6). The ledger file on this machine starts
-    empty; spend recorded on another machine is not counted (Q-4).
-  - `REPORT_TEST_EVIDENCE_DIR` lets a run write to its own folder, so the
-    "before" writer (a git worktree of `main` before this change) and the
-    "after" writer (this branch) never supersede each other. Both read the
-    same exported evidence and the same `pages/<order>.json`.
-  - A pairing step prints blind pairs per order and run ("Pasangan A - 1.pdf"
-    and "- 2.pdf"), with the key kept apart, reusing the page-pair code.
-  - A metrics table per report: sentences, mean and spread of sentence
-    length, share over 30 words, giveaway hits, dashes, brand name vs
-    "klinik Anda" count, repeated counts, whether the revision ran, each
-    repair diagnostic, cost and time.
-- **R-15, blind test.** Writer: Opus 5.5 medium with pages, before vs after.
-  Orders: NV-3WDSAY (Sozo) twice per writer (to see run-to-run variation),
-  plus at least one delivered two-source order of a different business
-  (Q-2). The founder scores each pair blind with three questions (main
-  message after the first paragraph? every finding answers "so what"? would
-  an editor change much?) and an overall pick. The before reports are
-  produced first, so the after writer cannot be tuned on them.
+  - `HARD_STOP_USD` follows Q-4.
+  - One shared folder (`REPORT_TEST_SHARED_DIR`, an absolute path) holds the
+    one ledger file, the exported evidence and `pages/<order>.json`. Each
+    writer writes only its own results folder (`REPORT_TEST_RESULTS_DIR`).
+    So the "before" writer (a git worktree of `main` at the commit before
+    PR 2) and the "after" writer (PR 2's frozen commit) spend from one
+    ledger and read the same pages; Firecrawl reads each order once.
+  - Both writers run with `REPORT_TEST_MAX_OUTPUT_TOKENS=24000`, as
+    production's Claude writer.
+  - The dry run prints each call's worst case and the total for both
+    writers, counting one revision per report, and the guide's token count.
+  - Printing: both writers' results are printed by PR 2's build, so the
+    page label cannot tell them apart. A pairing step prints blind pairs per
+    order and run, with the key kept apart (reusing the page-pair code).
+  - A metrics table per report: mean and spread of sentence length and the
+    share over 30 words; the typical-phrase hits (the guide's list plus
+    "memastikan", "signifikan", "komprehensif", "holistik", "krusial",
+    "lanskap", "memanfaatkan", "secara keseluruhan", "dapat disimpulkan");
+    dashes; how often the brand name, "klinik ini", "klinik Anda" and
+    "Anda" appear; counts repeated across verdict, conclusion and findings;
+    Indonesian cause and guarantee markers ("karena", "dipilih", "lebih
+    percaya", "dijamin", "pasti", "paling dicari"); any run of six or more
+    words shared with the guide's examples; whether the revision ran; each
+    repair diagnostic; cost and time.
+- **R-15, blind test.**
+  - Writer: Opus 5.5 medium with pages, before vs after.
+  - Orders: NV-3WDSAY (Sozo) twice per writer, plus one order of a
+    different business once per writer (Q-2): six reports.
+  - Freeze first: the guide is approved and PR 2's commit is recorded before
+    any live output. A change after seeing outputs means both writers run
+    again on that order.
+  - The founder scores each pair blind: main message after the first
+    paragraph? every finding answers "so what"? would an editor change much?
+    an overall pick. A safety gate fails a pair for any new causal claim,
+    claim about AI's intent, guarantee, or claim that treats the ten
+    questions as the market. The storyline stays hidden until scoring is
+    done.
+  - The founder wrote some of the changes (brand name, no "Di ChatGPT"), so
+    the test is not fully blind for them; one more Indonesian reader scoring
+    the same pairs is optional (Q-7).
 
-### Phase 2 (R-16)
+### Phase 2
 
-- **R-16** When the human-edited Sozo report arrives: it is compared with
-  the after writer's Sozo reports (same three questions, plus the metrics);
-  its lessons go into the guide in general terms and fictional examples, never
-  its Sozo text (R-12 keeps that out); the box limits are revisited; one more
-  blind round runs on a non-Sozo order.
+- **R-16** When the human-edited Sozo report arrives: compare it with the
+  after writer's Sozo reports (the three questions plus the metrics); put
+  its lessons into the guide in general terms and placeholder examples,
+  never its Sozo text; revisit the box limits; decide whether any metric
+  (typical phrases, long sentences, cause markers) should become a code
+  check (Q-5); list the code-built page text that still reads stiffly (the
+  source card sentences, the Celah Topik lede) for a separate change; run
+  one more blind round on a non-Sozo order.
 
 ## Build order
 
 Two pull requests, so the free and safe part can merge first.
 
 1. **PR 1, harness only (no customer change):** R-14. Finish condition: the
-   dry run (`run.spec.ts`, no provider call) builds both writers' prompts
-   from two evidence folders and prints the plan with each call's worst
-   case under USD 10.
-2. **PR 2, the writer (customer-visible; stays a draft until AC-11 passes):**
-   1. R-01 to R-06 and R-11, with tests.
-   2. R-07 and R-08, with tests.
-   3. R-09: the guide draft, sent to the founder to read **before** any paid
-      run; R-10 and R-12 lists with tests.
+   dry run, with `REPORT_TEST_SHARED_DIR` and two results folders, builds
+   today's writer's prompts for NV-3WDSAY into both folders from one ledger
+   and one pages file, and prints the worst-case total; all harness tests
+   pass.
+2. **PR 2, the writer (customer-visible; stays a draft until AC-11):**
+   1. R-01 to R-07 and R-11 to R-12, with tests.
+   2. R-08 and R-09, with tests.
+   3. R-10: the guide draft goes to the founder to read **before** any paid
+      run.
    4. R-13 document edits.
-   5. The free dry run, then the live blind test (R-15) after the founder
-      says go, then the founder's scoring.
+   5. Freeze the commit; the free dry run; the live blind test after the
+      founder says go; the founder's scoring.
    6. Merge only on the founder's pass. Merging deploys.
 
 ## Failure and recovery
 
 - A failed or discarded revision keeps today's behaviour: the first draft
-  stands, code repairs the counts, headlines, titles and dashes, and the
-  order never fails over writing.
-- A report that still has three or more giveaway phrases after the revision
-  is delivered as is, with the diagnostic; nothing is deleted from it.
-- If `storyline` is missing or malformed in an answer, the schema check
-  fails the call as today; the existing retry path applies.
+  stands, code repairs counts, headlines, titles and dashes, and the order
+  never fails over writing.
+- A storyline that is missing makes the schema check fail the call as
+  today, with the existing retry; the schema has no bounds that could fail a
+  well-formed answer.
 - Rollback: revert PR 2. Saved reports keep their shape (the saved block's
-  version literal does not change; `storyline` is never saved).
+  version literal is unchanged; `storyline` is never saved).
 
 ## Evidence, data, privacy, and cost
 
-- **Cost per report:** the guide adds at most about 3,500 input tokens per
-  call: about USD 0.014 per Opus call at USD 4 per million. Every revision
-  is a second full Opus call (about USD 1.2), so the revision rate matters
-  more; the metrics table reports it (AC-12).
-- **Test cost:** about 6 to 8 Opus reports at about USD 1.3 each, under the
-  USD 10 cap. The ledger refuses a call that could pass it. Reading pages
-  for a new order uses at most 16 Firecrawl requests (Q-3).
+- **Per report in production:** the guide adds a few thousand input tokens
+  per call (measured in the dry run; at USD 4 per million, about USD 0.01 to
+  0.02 per call). A revision is a second full Opus call; this spec adds no
+  new revision triggers, and R-01 and R-03 remove two common ones.
+- **Test (Q-4):** six Opus reports. The founder's earlier figure is about
+  USD 1.3 per Opus report; a revision adds about the same again. Planned
+  spend is about USD 8, and the ledger's worst-case holds (which count every
+  prompt character as a token) refuse a call before real spend reaches the
+  cap. Firecrawl: at most 16 requests per new order (Q-3). The second order
+  (Q-2) runs in production under its own caps (USD 5 per order) and is not in
+  this ledger.
 - **Privacy:** the export queries read no email, payment or link column; the
   evidence stays in the git-ignored `.local-evidence/`. Phone numbers are
   removed before the writer, as today. The guide holds no real business
@@ -305,56 +365,70 @@ Two pull requests, so the free and safe part can merge first.
 
 ## Acceptance criteria
 
-- **AC-01** The two-source writer's request no longer contains "25 words",
-  "Pemenang", or a required "Di ChatGPT"/"Di Google AI Overview" formula,
-  and contains the brand-name rule, the storyline rule and the guide text
-  (unit test on `twoSourceWriterMessages`).
+- **AC-01** The two-source writer's request has no "25 words", no
+  "Pemenang", no required "Di ChatGPT"/"Di Google AI Overview" formula, and
+  no count requirement for the conclusion; it has the naming rule, the
+  storyline rule and the guide text (unit test on
+  `twoSourceWriterMessages`).
 - **AC-02** A two-source draft with a 35-word sentence triggers no revision
-  and is not cut; `long_sentence` is recorded. The legacy writer's tests
-  pass unchanged.
-- **AC-03** An em dash in a finding is a violation; one left after the
-  revision is replaced by a comma and `dash_replaced` is recorded; "Minggu
-  1–2" is untouched.
-- **AC-04** Three giveaway phrases make one violation naming them; two make
-  only a diagnostic; neither removes text.
-- **AC-05** `storyline` is the schema's first property, and it appears in no
-  saved report, page, PDF or JSON download (unit test on the saved content
-  and the page render).
+  and is not cut. The legacy writer's tests pass unchanged.
+- **AC-03** For counts ChatGPT 3 of 10 and a finding citing four treatment
+  questions where ChatGPT named the owner in none: "ChatGPT tidak menyebut
+  SOZO di 4 dari 4 pertanyaan treatment" survives unchanged; "…di 3 dari 4…"
+  is caught and repaired; "ChatGPT menyebut ERHA di 7 dari 10 jawaban"
+  survives only when ERHA is named in 7 ChatGPT answers. The same false
+  verdict and conclusion sentences as today are still caught.
+- **AC-04** An em dash left after a revision is replaced by a comma and
+  `dash_replaced` is recorded; "Minggu 1–2", a business name with " - " and
+  a verbatim headline are untouched; a dash alone triggers no revision.
+- **AC-05** `storyline` is the schema's first property; a schema with it
+  passes the Claude SDK's transform without moved bounds; it appears in no
+  saved report, page, PDF or JSON download; the revision draft carries it.
 - **AC-06** The competitor rows show the approved label on the page and the
-  PDF; the affected component and pixel tests are updated.
-- **AC-07** The guide file and its code copy are equal byte for byte, the
-  guide is under 2,500 words, and an illustration name in a report that is
-  not in the order's facts is a violation (R-12).
-- **AC-08** A brand-name sentence that contradicts the counts ("SOZO tidak
-  disebut di ChatGPT" when ChatGPT named it) is still caught and repaired.
+  PDF; affected component and pixel tests are updated.
+- **AC-07** The guide file and its code copy are equal byte for byte; the
+  guide names no business from any Nuave order (a test against the order
+  names in the test fixtures and NV-3WDSAY's businesses).
+- **AC-08** A sentence with the exact brand name that contradicts the
+  counts is caught and repaired; a sentence with a short form that is not an
+  alias is still checked as being about the owner.
 - **AC-09** Every existing fact-safety test (counts, headline basis, source
   repair, no causes, phone removal) passes without being weakened.
-- **AC-10** `npm run verify` passes, and the PR has an independent verdict
-  comment.
-- **AC-11 (judgment, founder)** In the blind test the after writer wins on
-  the three questions in a majority of pairs, including the non-Sozo order,
-  and no pair shows a fact error that the before writer did not make.
+- **AC-10** `npm run verify` passes, the provenance shows the new prompt
+  version, and the PR has an independent verdict comment.
+- **AC-11 (judgment, founder)** The six reports make three pairs (Sozo run
+  1, Sozo run 2, the second order). With the second order (Q-2): the after
+  writer wins the overall pick in at least two of the three pairs, including
+  the second order, and no pair fails the safety gate. Without the second
+  order: the after writer wins both Sozo pairs, and the founder decides
+  whether that is enough to merge.
 - **AC-12** The metrics table shows, for the after writer: sentence length
-  averaging 10 to 18 words with more spread than before; fewer giveaway
-  phrases and repeated counts than before; no dashes; and no more fact
-  repairs (`source_sentence_replaced`, dropped headlines) than before. Its
-  revision rate is reported; if it is above half of the reports, the
-  founder decides before merge whether the R-10 threshold stays.
+  averaging 10 to 18 words with more spread than before; fewer typical
+  phrases, repeated counts and "klinik Anda" than before, without one name
+  repeated in every sentence; no dashes; no more cause markers or fact
+  repairs (`source_sentence_replaced`, dropped headlines) than before; no
+  six-word overlap with the guide's examples; and the revision rate.
 
 ## Open questions
 
 - **Q-1 (founder)** The competitor label. Recommended: "Menurut jawaban AI:".
 - **Q-2 (founder)** Only one delivered order has both ChatGPT and Google
-  results (NV-3WDSAY; checked 2026-10-28). A second business is needed so
-  the guide is not tuned to Sozo. Recommended: the founder places one free
-  test-pass order for a different clinic (production caps apply: USD 5 per
-  order). Without it, the test is Sozo only and its result is weaker.
-- **Q-3 (founder)** Firecrawl credits for the test pages: up to 16 per order
-  (about 32 for two orders), beyond the earlier 50-credit allowance.
-- **Q-4 (founder)** The USD 10 cap counts only this round's calls (this
-  machine's ledger starts empty). Confirm, or give the remaining amount
-  instead.
-- **Q-5 (founder)** The R-10 threshold of three phrases and the first list.
+  results (NV-3WDSAY; checked 2026-10-28). Recommended: the founder places
+  one free test-pass order for a different clinic before the live test, so
+  the guide is not tuned to Sozo (production caps apply).
+- **Q-3 (founder)** Firecrawl requests for the test pages: at most 16 per
+  new order, beyond the earlier 50-credit allowance.
+- **Q-4 (founder)** What USD 10 covers. NOW.md records USD 5.77 used of the
+  USD 7 tests allowance as of 2026-10-27, and later Sonnet runs may have
+  used more. If USD 10 is the shared total, about USD 4 or less remains:
+  enough for three reports, not six. Recommended: USD 10 for this round,
+  counted in a fresh ledger.
+- **Q-5 (founder, after the test)** Whether typical phrases, long sentences
+  or cause markers become code checks.
+- **Q-6 (founder)** R-03: the checker accepts a count that is true for the
+  finding's own questions or for a named competitor.
+- **Q-7 (founder)** An optional second Indonesian reader for the blind
+  scoring.
 
 ## Verification record
 
