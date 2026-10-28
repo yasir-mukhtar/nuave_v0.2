@@ -238,15 +238,20 @@ export function siteChrome(markdowns: readonly string[]): Set<string> {
  * links (founder decision 2026-10-28). */
 const LABEL_ONLY_LINK =
   /^(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps|waze\.com|api\.whatsapp\.com|wa\.me|wa\.link)/i;
-/** A markdown link's address may hold one pair of brackets, as a map
- * search for "AEON (3-23AB)" does. */
-const ADDRESS = String.raw`((?:[^()\s]|\([^()\s]*\))*)`;
-const IMAGE = new RegExp(String.raw`!\[[^\]]*\]\(${ADDRESS}\)`, "g");
-const LINK = new RegExp(String.raw`(?<!!)\[([^\]]*)\]\(${ADDRESS}\)`, "g");
-/** A bare long address; it stops at a bracket, so cutting it never leaves
- * a link or image unclosed. */
-const LONG_URL = /https?:\/\/[^\s()]{90,}/g;
-/** What a cut can leave of a link that spans lines: "](" or "]()". */
+/** An address may hold brackets two deep, as a map search for "AEON
+ * (3-23AB)" or an image named "((Landscape))" does. */
+const ADDRESS_PART = String.raw`(?:[^()\s]|\((?:[^()\s]|\([^()\s]*\))*\))`;
+const IMAGE = new RegExp(String.raw`!\[[^\]]*\]\((${ADDRESS_PART}*)\)`, "g");
+const LINK = new RegExp(
+  String.raw`(?<!!)\[([^\]]*)\]\((${ADDRESS_PART}*)\)`,
+  "g",
+);
+/** A bare address; one of 90 characters or more after "://" goes. It takes
+ * only whole bracket pairs, so cutting it never leaves a link or image
+ * unclosed. */
+const BARE_URL = new RegExp(String.raw`https?:\/\/(${ADDRESS_PART}+)`, "g");
+/** A line of brackets only, nothing to read: the "[" and "](" of a link
+ * that spans lines, once its address is cut. */
 const BRACKETS_ONLY = /^[[\]()]+$/;
 
 /** Images go whole first: cutting only an image's long address left
@@ -260,7 +265,9 @@ function shortLinks(line: string): string {
         ? label
         : whole,
     )
-    .replace(LONG_URL, "")
+    .replace(BARE_URL, (whole, rest: string) =>
+      rest.length >= 90 ? "" : whole,
+    )
     .trim();
   return BRACKETS_ONLY.test(short) ? "" : short;
 }
@@ -290,7 +297,9 @@ export function pageText(
     if (dialingCodes && DIALING_CODE_ITEM.test(line)) return [];
     const short = shortLinks(line);
     if (!short) return [];
-    if (repeatable(line)) {
+    // Judged without images, so two treatments' "Rp 100.000" lines with
+    // different pictures both stay.
+    if (repeatable(line.replace(IMAGE, ""))) {
       if (seen.has(short)) return [];
       seen.add(short);
     }

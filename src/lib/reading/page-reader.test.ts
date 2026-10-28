@@ -228,6 +228,28 @@ describe("which pages are read (the reading test)", () => {
     );
   });
 
+  it("an image address with brackets two deep goes whole; bare long addresses keep their brackets", () => {
+    const image = `https://fiksi.example/_next/image/?url=${"https%3A%2F%2Fcdn.fiksi.example%2F".repeat(3)}((Landscape))%20behel&w=828`;
+    const wiki = `https://fiksi.example/wiki/${"Klinik_gigi_".repeat(8)}(disambiguasi)`;
+    const text = pageText(
+      [
+        `![Behel Gigi](${image})`,
+        "[Behel Gigi](https://fiksi.example/services/behel-gigi/)",
+        `Lihat ${wiki} di sini`,
+        "![Satu](https://fiksi.example/satu.png) Rp 100.000 per gigi",
+        "![Dua](https://fiksi.example/dua.png) Rp 100.000 per gigi",
+      ].join("\n"),
+    );
+    expect(text).toBe(
+      [
+        "[Behel Gigi](https://fiksi.example/services/behel-gigi/)",
+        "Lihat  di sini",
+        "Rp 100.000 per gigi",
+        "Rp 100.000 per gigi",
+      ].join("\n"),
+    );
+  });
+
   it("a phone form's country list is dropped when a page has five or more", () => {
     const codes = [
       "- United States+1",
