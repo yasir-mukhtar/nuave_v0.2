@@ -308,8 +308,10 @@ jobs:
         env:
           NUAVE_NEW_AUDIT_ENABLED: "true"
           NUAVE_AUDIT_MODE: live
-          NUAVE_DAILY_SPEND_LIMIT_USD: "5"
-          NUAVE_ORDER_SPEND_LIMIT_USD: "2"
+          # Founder, 2026-10-28 (Spec 021 PR 6b): USD 50 a day, USD 5.00 an
+          # order, so three Claude report calls always fit an order's hold.
+          NUAVE_DAILY_SPEND_LIMIT_USD: "50"
+          NUAVE_ORDER_SPEND_LIMIT_USD: "5"
           NUAVE_ORDER_EMAIL_ALLOWLIST: ${{ secrets.NUAVE_ORDER_EMAIL_ALLOWLIST }}
           # Spec 016 R-25: the real mail sender (Resend). The cron and the order
           # route both refuse live work when either is missing.
@@ -339,6 +341,14 @@ jobs:
           # Purchase event. Preview workers get none, so they send nothing.
           # The founder makes it in Meta Events Manager before this merges.
           META_CAPI_ACCESS_TOKEN: ${{ secrets.META_CAPI_ACCESS_TOKEN }}
+          # Spec 021 PR 6b: every live two-source report is written by Claude
+          # Opus 5.5 (claude-sonnet-5-5 is the cheaper writer), with the pages
+          # Firecrawl read for the order. The founder adds the three keys to
+          # the GitHub secrets before this merges; preview workers get none.
+          NUAVE_REPORT_WRITER: claude-opus-5-5
+          NUAVE_ANTHROPIC_API_KEY: ${{ secrets.NUAVE_ANTHROPIC_API_KEY }}
+          NUAVE_ANTHROPIC_WORKSPACE_ID: ${{ secrets.NUAVE_ANTHROPIC_WORKSPACE_ID }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -366,3 +376,7 @@ jobs:
             DATAFORSEO_LOGIN
             DATAFORSEO_PASSWORD
             META_CAPI_ACCESS_TOKEN
+            NUAVE_REPORT_WRITER
+            NUAVE_ANTHROPIC_API_KEY
+            NUAVE_ANTHROPIC_WORKSPACE_ID
+            FIRECRAWL_API_KEY

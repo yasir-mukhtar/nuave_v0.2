@@ -615,7 +615,7 @@ What does not change:
 - **Input ceiling.** A request counted above 150,000 input tokens is rebuilt
   first with half its pages, then with none, and counted again. If it is
   still over 150,000, nothing is sent and the report fails at once as
-  `REPORT_INTEGRITY_FAILURE`, with the refund path. The request would always
+  `REPORT_LIMIT_EXHAUSTED` (an `AuditBudgetError`), with the refund path. The request would always
   be too long, and sending it could pass the hold. The test's request was
   about 107,000 tokens with pages and 58,600 without.
 - **Worst case fits the hold.**

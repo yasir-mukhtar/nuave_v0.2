@@ -24,10 +24,9 @@ import { createHash, randomInt } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import OpenAI from "openai";
+import { claudeReportRequest } from "../../src/lib/audit/anthropic-report";
 import {
-  hashSafetyIdentifier,
   reportContentFromAnswer,
   reportOutputSchema,
   reportRequest,
@@ -924,10 +923,10 @@ function parseAnswer(
       };
 }
 
-/** Claude at the entry's effort, adaptive thinking, the same developer and
- * user text as production, and the report schema as structured output. No
- * refusal fallback: a fallback model would blur the comparison, so a refusal
- * is recorded as a failed call. */
+/** Claude at the entry's effort, with the request production's Claude writer
+ * sends (`claudeReportRequest`: adaptive thinking, the same developer and
+ * user text, the report schema as structured output). No refusal fallback,
+ * as in production: a refusal is recorded as a failed call. */
 export function claudeWriter(
   ctx: WriterContext,
   client = new Anthropic({
@@ -959,18 +958,16 @@ export function claudeWriter(
     const startedAt = Date.now();
     const response = await sendHeld(hold, () =>
       client.messages.create(
-        {
+        // The request production's Claude writer sends (anthropic-report.ts).
+        claudeReportRequest({
           model,
-          max_tokens: outputAllowance(),
-          thinking: { type: "adaptive" },
-          output_config: {
-            effort: ctx.entry.effort!,
-            format: zodOutputFormat(schema),
-          },
-          metadata: { user_id: hashSafetyIdentifier(input.safety_identifier) },
-          system: developer,
-          messages: [{ role: "user", content: user }],
-        },
+          effort: ctx.entry.effort!,
+          maxTokens: outputAllowance(),
+          developer,
+          user,
+          schema,
+          safetyIdentifier: input.safety_identifier,
+        }),
         { timeout: 600_000 },
       ),
     );

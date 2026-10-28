@@ -444,7 +444,9 @@ export const RUN_COST = {
   deadline: 12,
   question: 24,
   light: 9,
-  heavy: 27,
+  // Spec 021 PR 6b: 27 measured, plus up to six Claude token counts (three
+  // for each of the step's two calls, which the meter does not see).
+  heavy: 33,
   retry: 7,
   /** One payment-received email (getting its number, three tries, the record). */
   paymentEmail: 6,
@@ -713,7 +715,7 @@ export async function runOrders(input: RunnerDeps): Promise<RunSummary> {
 
   // The room kept for one payment email and one refund notice that are due but
   // have not waited yet. The first audit step needs only to fit on its own (a
-  // report step is 27 of RUN_UNIT_LIMIT); later ones must leave this room (R-23).
+  // report step is 33 of RUN_UNIT_LIMIT); later ones must leave this room (R-23).
   let reserve = 0;
   if (email) reserve += RUN_COST.paymentEmail;
   if (refundNotice()) reserve += RUN_COST.notice;

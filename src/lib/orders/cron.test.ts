@@ -165,6 +165,25 @@ describe("runScheduledOrders (R-15)", () => {
     expect(mocks.liveReport).not.toHaveBeenCalled();
   });
 
+  it("Spec 021 PR 6b: a report-writer setting that is not valid, or a Claude writer without its key, runs no audit step", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+    vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    const skipped = async () =>
+      ((await runScheduledOrders()) as { auditSkipped?: string }).auditSkipped;
+    vi.stubEnv("NUAVE_REPORT_WRITER", "claude-opus");
+    expect(await skipped()).toBe("credentials_missing");
+    vi.stubEnv("NUAVE_REPORT_WRITER", "claude-opus-5-5");
+    vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "");
+    expect(await skipped()).toBe("credentials_missing");
+    vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "offline-test-key");
+    expect(await skipped()).toBeUndefined();
+    expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
   function liveSettings(resend = true) {
     vi.stubEnv("NUAVE_AUDIT_MODE", "live");
     vi.stubEnv("NUAVE_PROVIDER", "openai");
@@ -369,6 +388,7 @@ describe("the cron with the emergency switch off or AI settings missing (R-23, A
     vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "5");
+    vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "2");
     vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
     vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
     vi.stubEnv("MIDTRANS_SERVER_KEY", fake.serverKey);

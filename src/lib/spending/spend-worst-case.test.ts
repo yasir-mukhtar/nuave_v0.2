@@ -8,6 +8,12 @@ import {
   reserveAuditCall,
   serverOwnedAuditBudget,
 } from "../audit/telemetry";
+import {
+  CLAUDE_INPUT_CEILING_TOKENS,
+  CLAUDE_WRITERS,
+  claudeCostUsd,
+  type ClaudeWriter,
+} from "../audit/anthropic-report";
 import { DATAFORSEO_CALL_MAX_USD } from "../discovery/dataforseo";
 import { DISCOVERY_HARD_STOP_USD } from "../discovery/discover";
 import { DEFAULT_ORDER_SPEND_LIMIT_USD } from "../orders/config";
@@ -25,8 +31,8 @@ import {
 
 // Spec 018 R-25, AC-15: the most one order can cost, summed from the maxima the
 // code reserves before each paid call. The ledger also refuses any call past
-// the order's USD 2.00 hold at run time; this test shows the design itself
-// stays inside it. (runner-worst-case.test.ts is about database queries and
+// the order's hold at run time (USD 5.00 since 2026-10-28; the OpenAI case
+// still fits the old USD 2.00); this test shows the design stays inside it. (runner-worst-case.test.ts is about database queries and
 // outbound requests per run, not dollars.)
 
 const QUESTIONS = 10;
@@ -98,6 +104,28 @@ describe("the most one order can cost (spec 018 R-25, AC-15)", () => {
     expect(parts.reading).toBeCloseTo(0.8152, 3);
     expect(total).toBeLessThanOrEqual(2);
     expect(total).toBeLessThanOrEqual(DEFAULT_ORDER_SPEND_LIMIT_USD);
+  });
+
+  it("with a Claude writer, three report calls at the input ceiling stay under the USD 5.00 hold (Spec 021 PR 6b)", () => {
+    const parts = worstCase();
+    const beforeReport =
+      parts.discovery + parts.checks + parts.reading + parts.questions;
+    // The runner allows three report calls in all; the language fix counts
+    // as one (claimReportAttempt).
+    const perCall = (writer: ClaudeWriter) =>
+      claudeCostUsd(writer, {
+        input_tokens: CLAUDE_INPUT_CEILING_TOKENS,
+        output_tokens: CLAUDE_WRITERS[writer].maxTokens,
+      });
+    expect(beforeReport).toBeCloseTo(1.5452, 3);
+    expect(perCall("claude-opus-5-5")).toBeCloseTo(1.08, 6);
+    expect(perCall("claude-sonnet-5-5")).toBeCloseTo(0.62, 6);
+    expect(MAX_REPORT_ATTEMPTS).toBe(3);
+    for (const writer of Object.keys(CLAUDE_WRITERS) as ClaudeWriter[])
+      expect(
+        beforeReport + MAX_REPORT_ATTEMPTS * perCall(writer),
+      ).toBeLessThanOrEqual(DEFAULT_ORDER_SPEND_LIMIT_USD);
+    expect(DEFAULT_ORDER_SPEND_LIMIT_USD).toBe(5);
   });
 });
 

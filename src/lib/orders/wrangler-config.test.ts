@@ -161,6 +161,25 @@ describe("workflows and the payment settings", () => {
     expect(preview).not.toContain("META_CAPI");
   });
 
+  it("the deploy job names the Claude writer, writes its key and Firecrawl's as Worker secrets, and sets USD 5 and USD 50; previews get none (Spec 021 PR 6b)", () => {
+    const ci = read("ci.yml");
+    const preview = read("pr-preview.yml");
+    for (const name of [
+      "NUAVE_ANTHROPIC_API_KEY",
+      "NUAVE_ANTHROPIC_WORKSPACE_ID",
+      "FIRECRAWL_API_KEY",
+    ]) {
+      expect(ci).toContain(`${name}: ${"$"}{{ secrets.${name} }}`);
+      expect(ci).toMatch(new RegExp(`^\\s+${name}$`, "m"));
+      expect(preview).not.toContain(name);
+    }
+    expect(ci).toContain("NUAVE_REPORT_WRITER: claude-opus-5-5");
+    expect(ci).toMatch(/^\s+NUAVE_REPORT_WRITER$/m);
+    expect(preview).not.toContain("NUAVE_REPORT_WRITER");
+    expect(ci).toContain('NUAVE_ORDER_SPEND_LIMIT_USD: "5"');
+    expect(ci).toContain('NUAVE_DAILY_SPEND_LIMIT_USD: "50"');
+  });
+
   it("preview workers get no payment key, test code or alert address", () => {
     const preview = read("pr-preview.yml");
     for (const name of [

@@ -40,7 +40,9 @@ export function orderEnvironment(): OrderEnvironment | null {
   return value === "production" || value === "preview" ? value : null;
 }
 
-export const DEFAULT_ORDER_SPEND_LIMIT_USD = 2;
+/** Founder, 2026-10-28 (go-live of Spec 021 PR 6b): USD 5.00, so three Claude
+ * report calls always fit (was 2.00). */
+export const DEFAULT_ORDER_SPEND_LIMIT_USD = 5;
 
 export class OrderConfigError extends Error {
   constructor() {

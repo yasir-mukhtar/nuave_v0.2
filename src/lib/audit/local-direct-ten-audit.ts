@@ -452,7 +452,7 @@ function syntheticDirectTenSynthesis(
  * so the journey, the e2e tests and the PDF show every new field. Every
  * number is one code can confirm; nothing claims real visibility.
  */
-function syntheticTwoSourceWriting(
+export function syntheticTwoSourceWriting(
   observations: AuditObservation[],
   brandName: string,
   facts: TwoSourceReportFacts & { writer: TwoSourceWriterFacts },
