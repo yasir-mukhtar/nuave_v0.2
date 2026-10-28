@@ -672,6 +672,10 @@ export function finishTwoSourceWriting(
  * spaced en dash or hyphen (VOICE §3). An unspaced number range ("1-2",
  * "Minggu 1–2") is not one. */
 const PROSE_DASH = /\s*—\s*|\s+[–-]\s+/g;
+/** A dash between two numbers ("Rp250.000 - Rp500.000", "08.00 – 21.00")
+ * is a range: it becomes "sampai" (VOICE §3), never a comma. */
+const NUMBER_RANGE =
+  /(\d[\p{L}\p{N}.,%]*)(?:\s*—\s*|\s+[–-]\s+)((?:Rp\.?\s?)?\d)/gu;
 
 /** The writer's prose with exact evidence (business names) masked, so a
  * name such as "Klinik A - Cabang B" is never changed or counted. */
@@ -732,7 +736,8 @@ export function dashViolations(
 }
 
 /** Spec 023 R-11: past the revision, code replaces a dash used as
- * punctuation with a comma. Business names, headline numbers and the plan's
+ * punctuation with a comma, and one between two numbers with "sampai".
+ * Business names, headline numbers and the plan's
  * week labels are never changed. */
 export function repairDashes(
   content: ReportContent,
@@ -746,6 +751,7 @@ export function repairDashes(
     changed = true;
     return restore(
       hidden
+        .replace(NUMBER_RANGE, "$1 sampai $2")
         .replace(PROSE_DASH, ", ")
         .replace(/,\s*([,.;:!?])/g, "$1")
         .replace(/^,\s*/, "")

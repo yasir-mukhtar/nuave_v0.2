@@ -775,6 +775,16 @@ describe("Spec 023 R-11: dashes (AC-04)", () => {
     // Nothing to change: the same object back.
     expect(repairDashes(fixed, dashFacts).changed).toBe(false);
   });
+
+  it("turns a dash between two numbers into 'sampai', never a list", () => {
+    const ranges = content({
+      conclusion:
+        "Harga di situs Rp250.000 - Rp500.000 per sesi. Klinik buka 08.00 – 21.00.",
+    });
+    expect(repairDashes(ranges, dashFacts).content.conclusion).toBe(
+      "Harga di situs Rp250.000 sampai Rp500.000 per sesi. Klinik buka 08.00 sampai 21.00.",
+    );
+  });
 });
 
 describe("Spec 023 R-08: the storyline (AC-05)", () => {

@@ -13,9 +13,10 @@ yang pertama.
 1. **Tetapkan pesan utama dulu.** Satu kalimat yang harus dipahami pemilik
    sebelum hal lain. Tulis di storyline, lalu nyatakan di verdict. Ujinya:
    bila pemilik hanya membaca paragraf pertama, apa yang ia tahu?
-2. **Pesan utama adalah diagnosis, bukan skor.** "AI sudah mengenal Klinik A
-   sebagai klinik di [kota], tapi belum sebagai tempat untuk [treatment]."
-   lebih berguna daripada mengulang angka yang sudah ada di kartu.
+2. **Pesan utama adalah diagnosis, bukan skor.** "ChatGPT menyebut Klinik A
+   saat pertanyaannya tentang klinik di [kota], tetapi tidak saat
+   pertanyaannya tentang [treatment]." lebih berguna daripada mengulang angka
+   yang sudah ada di kartu.
 3. **Setiap fakta menjawab "lalu apa artinya bagi klinik ini?"** Fakta yang
    tidak mengubah apa yang sebaiknya dilakukan pemilik tidak perlu ditulis.
 4. **Sedikit temuan yang kuat.** Tiga atau empat temuan lebih baik daripada
@@ -43,6 +44,11 @@ ada batas keras. Satu gagasan per kalimat, subjeknya jelas, kalimatnya aktif.
 **Kata.** Pilih kata yang dipakai pemilik klinik sehari-hari. Istilah teknis
 hanya bila perlu, dan jelaskan sekali.
 
+**Kata kerja yang bisa dilihat.** Tulis apa yang tampak di jawaban: ChatGPT
+"menyebut", Google "mengutip", jawaban "mengarah ke". Jangan menulis apa yang
+AI "kenal", "pahami", "kaitkan" atau "percayai". Itu tebakan tentang isi
+kepala AI. Sebut sumbernya, ChatGPT atau Google, bukan "AI" saja.
+
 **Nama klinik.** Sebut nama klinik di awal bagian, atau saat harus dibedakan
 dari klinik lain. Di antaranya pakai "klinik ini" atau "Anda", selama klinik
 itu yang sedang dibicarakan. Jangan ulang nama di setiap kalimat. Jangan
@@ -62,8 +68,8 @@ temuan harus menyebut kelompoknya ("di 4 dari 4 pertanyaan tentang
 jeda dalam kalimat. Pakai koma atau titik. Di antara angka, tulis "sampai".
 Tanda pisah pendek hanya untuk rentang waktu, seperti "Minggu 1–2".
 
-**Judul.** Judul temuan menyatakan isinya, bukan topiknya: "ChatGPT belum
-mengaitkan Klinik A dengan [treatment]", bukan "Analisis treatment". Judul
+**Judul.** Judul temuan menyatakan isinya, bukan topiknya: "Untuk
+[treatment], ChatGPT menyebut klinik lain", bukan "Analisis treatment". Judul
 rekomendasi diawali kata kerja yang tegas.
 
 **Nada.** Tenang dan langsung, seperti konsultan yang menghargai waktu
@@ -92,11 +98,11 @@ pemilik. Tidak menggurui, tidak berlebihan, tidak berjualan.
 
 **Pola boleh, sebab tidak.** Kita melihat jawaban, bukan cara kerja AI.
 
-| Boleh                                                                                                                      | Tidak boleh                                                             |
-| -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| "Polanya sama di keempat pertanyaan tentang [treatment]: ChatGPT menyebut klinik lain."                                    | "ChatGPT tidak menyebut Klinik A karena halaman [treatment]-nya tipis." |
-| "Situs yang dikutip Google untuk topik ini menampilkan harga dan nama dokter. Halaman Klinik A belum."                     | "Google memilih klinik itu karena mencantumkan harga."                  |
-| "Langkah pertama: satu halaman untuk [treatment]. Playbook menyebut halaman teks yang terbuka adalah dasar untuk dikutip." | "Halaman ini akan membuat Klinik A muncul dalam dua minggu."            |
+| Boleh                                                                                                                          | Tidak boleh                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| "Polanya sama di keempat pertanyaan tentang [treatment]: ChatGPT menyebut klinik lain."                                        | "ChatGPT tidak menyebut Klinik A karena halaman [treatment]-nya tipis." |
+| "Situs yang dikutip Google untuk topik ini menampilkan harga dan nama dokter. Halaman Klinik A belum."                         | "Google memilih klinik itu karena mencantumkan harga."                  |
+| "Langkah pertama: satu halaman untuk [treatment]. Panduan Google untuk fitur AI-nya meminta isi penting ditulis sebagai teks." | "Halaman ini akan membuat Klinik A muncul dalam dua minggu."            |
 
 **Seberapa yakin.** Katakan seberapa konsisten polanya, lalu nyatakan dengan
 tegas. Jangan menumpuk keraguan ("mungkin", "bisa jadi", "sampel ini belum
@@ -129,8 +135,9 @@ Semua contoh memakai klinik rekaan ("Klinik A", "Klinik B") dan tempat isian
 Sebelum: "Di ChatGPT, klinik Anda disebut di 3 dari 10 jawaban. Di Google AI
 Overview, klinik Anda disebut di 0 dari 6 ringkasan."
 
-Sesudah: "AI sudah mengenal Klinik A sebagai klinik di [kota], tapi belum
-sebagai tempat untuk [treatment]."
+Sesudah: "ChatGPT menyebut Klinik A saat pertanyaannya tentang klinik di
+[kota], tetapi tidak saat pertanyaannya tentang [treatment]. Ringkasan AI
+Google belum menyebutnya sama sekali."
 
 ### Temuan
 
@@ -139,7 +146,7 @@ ChatGPT, klinik Anda tidak disebut di 4 dari 4 pertanyaan per treatment. Hal
 ini menunjukkan bahwa konten treatment klinik Anda perlu dioptimalkan secara
 signifikan."
 
-Sesudah: judul "ChatGPT belum mengaitkan Klinik A dengan [treatment]"; isi
+Sesudah: judul "Untuk [treatment], ChatGPT menyebut klinik lain"; isi
 "Begitu pertanyaan menyebut [treatment], ChatGPT menyebut klinik lain. Polanya
 sama di keempat pertanyaan tentang [treatment]. Klinik yang disebut punya
 halaman khusus untuk perawatan itu, lengkap dengan kisaran harga dan nama
@@ -153,8 +160,8 @@ klinik Anda tidak hanya terlihat tetapi juga direkomendasikan."
 Sesudah: judul "Buat satu halaman untuk setiap treatment utama"; isi "Mulai
 dari [treatment]: sekitar 2.400 pencarian per bulan, tertinggi di antara topik
 audit ini. Tulis apa perawatannya, untuk siapa, berapa lama, kisaran harganya,
-dan siapa dokternya. Halaman seperti inilah yang dikutip jawaban AI untuk
-topik ini."
+dan siapa dokternya. Untuk topik ini, ringkasan AI Google mengutip halaman
+seperti itu."
 
 ### Penutup
 
@@ -162,13 +169,13 @@ Sebelum: "Di ChatGPT, klinik Anda disebut di 3 dari 10 jawaban; di Google AI
 Overview, klinik Anda disebut di 0 dari 6 ringkasan. Secara keseluruhan,
 klinik Anda perlu meningkatkan visibilitas."
 
-Sesudah: "ChatGPT dan Google sudah bisa menemukan Klinik A, tapi belum
-mengaitkannya dengan perawatan yang Anda tawarkan. Mulailah dari halaman
-[treatment]. Audit ulang setelah sekitar delapan minggu untuk melihat
-perubahannya."
+Sesudah: "ChatGPT sudah menyebut Klinik A untuk pertanyaan tentang [kota],
+tetapi belum untuk perawatan yang Anda tawarkan. Ringkasan AI Google belum
+menyebutnya. Mulailah dari halaman [treatment]. Audit ulang setelah sekitar
+delapan minggu untuk melihat perubahannya."
 
 ### Ritme kalimat
 
-"ChatGPT mengenal Klinik A. Tapi hanya sebagai nama di [kota]. Saat orang
-bertanya tentang [treatment], jawabannya mengarah ke Klinik B, yang menulis
-halaman perawatannya dengan lengkap."
+"ChatGPT menyebut Klinik A. Tapi hanya saat orang bertanya tentang [kota].
+Saat orang bertanya tentang [treatment], jawabannya mengarah ke Klinik B, yang
+menulis halaman perawatannya dengan lengkap."

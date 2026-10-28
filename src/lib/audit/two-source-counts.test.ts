@@ -13,7 +13,7 @@ import {
 // The fixture: ChatGPT named SOZO in 3 of 10 answers (q1 to q3); Google
 // showed 6 summaries (q1 to q6) and named SOZO in none. q4 to q7 are the
 // treatment questions. ERHA is named in 7 ChatGPT answers (q1 to q7) and in
-// no Google summary.
+// no Google summary; ZAP in 2 Google summaries (q1, q2) and no ChatGPT answer.
 const ids = Array.from({ length: 10 }, (_, i) => `q${i + 1}`);
 const facts: TwoSourceReportFacts = {
   subject: "klinik",
@@ -39,9 +39,12 @@ const facts: TwoSourceReportFacts = {
         google: i < 6 ? "absent" : null,
       },
       google_text: "",
-      businesses: { chatgpt: i < 7 ? ["ERHA"] : [], google: [] },
+      businesses: {
+        chatgpt: i < 7 ? ["ERHA"] : [],
+        google: i < 2 ? ["ZAP"] : [],
+      },
     })),
-    businesses: ["ERHA"],
+    businesses: ["ERHA", "ZAP"],
   },
 };
 const treatment = ["q4", "q5", "q6", "q7"];
@@ -200,6 +203,67 @@ describe("Spec 023 R-03: claims about another business", () => {
     expect(violations(withFinding("Google tidak menyebut ERHA.", ids))).toEqual(
       [],
     );
+  });
+});
+
+describe("Spec 023 R-03: nothing false today becomes accepted", () => {
+  const caught = (sentence: string, evidence: string[] = ids) =>
+    expect(
+      violations(withFinding(sentence, evidence)).join(" "),
+      sentence,
+    ).toMatch(/contradicts|is not true/);
+
+  it("never takes a negation, a verb or a business after 'jawaban' as a group", () => {
+    for (const sentence of [
+      "Jawaban tidak menyebut SOZO.",
+      "Jawaban yang diberikan ChatGPT tidak menyebut SOZO.",
+      "Jawaban yang muncul tidak menyebut SOZO.",
+      "Tidak ada jawaban yang menyebut klinik ini.",
+    ])
+      caught(sentence);
+    caught(
+      "Semua jawaban yang diberikan ChatGPT tidak menyebut SOZO.",
+      treatment,
+    );
+    caught(
+      "Tidak ada jawaban yang menyebut ZAP di 4 dari 4 pertanyaan yang diajukan.",
+      ["q1", "q2", "q3", "q4"],
+    );
+  });
+
+  it("checks a clause about the owner and another business for the owner (AC-03)", () => {
+    for (const sentence of [
+      "ChatGPT tidak pernah menyebut klinik ini maupun ZAP.",
+      "ChatGPT tidak menyebut Anda atau ZAP.",
+      "Google AI Overview menyebut klinik ini dan ZAP.",
+      "Google AI Overview menyebut Anda dan ZAP.",
+      "ChatGPT menyebut ERHA dan klinik ini di 7 dari 10 jawaban.",
+    ])
+      caught(sentence);
+    // In a group, each business must hold: ERHA was named in all four.
+    caught(
+      "ChatGPT belum pernah menyebut ERHA dan klinik ini di 4 dari 4 pertanyaan treatment.",
+      treatment,
+    );
+  });
+
+  it("reads other words for the whole test as the whole test", () => {
+    for (const sentence of [
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan yang diajukan.",
+      "ChatGPT tidak menyebut SOZO di 7 dari 7 pertanyaan yang kami ajukan.",
+      "ChatGPT tidak menyebut SOZO di semua pertanyaan pengujian.",
+      "ChatGPT tidak menyebut SOZO di semua pertanyaan sampel.",
+    ])
+      caught(sentence, treatment);
+  });
+
+  it("needs a 'not named' claim with no source to hold for each source", () => {
+    caught("Semua jawaban treatment tidak menyebut SOZO.", [
+      "q1",
+      "q2",
+      "q3",
+      "q4",
+    ]);
   });
 });
 

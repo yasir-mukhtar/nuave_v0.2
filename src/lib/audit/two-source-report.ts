@@ -474,27 +474,65 @@ export type CheckScope = { ids: readonly string[] };
  * than a claim about the whole test (replaced by the count sentence). */
 type Contradiction = { sources: Set<Source>; droppable: boolean };
 
-/** Spec 023 R-03: a group of questions named after "pertanyaan", "jawaban"
- * or "ringkasan" ("pertanyaan treatment", "pertanyaan tentang harga",
- * "jawaban yang menyebut kota"). Words that mean the whole test, a source,
- * or "other" questions never name a group. */
-const GROUP =
-  /\b(?:pertanyaan|jawaban|ringkasan)\s+((?:tentang|soal|mengenai)\s+[\p{L}\p{N}-]+|yang\s+[\p{L}\p{N}-]+(?:\s+[\p{L}\p{N}-]+){0,2}|[\p{L}][\p{L}-]{2,})/giu;
-const NOT_A_GROUP =
-  /^(?:chatgpt|google|ai|overview|ini|itu|tersebut|kami|nuave|audit|uji|diuji|lain(?:nya)?|sama|berbeda|mana|yang\s+(?:diuji|ditanyakan|dinilai|sama)\b|(?:pada|di|ke|dari|dan|atau|untuk|dengan|oleh|dalam|saat|ketika|sebagai|serta|juga|pun|apa|mana)$)/i;
+/** Spec 023 R-03: a group of questions is named right after "pertanyaan",
+ * "jawaban" or "ringkasan" in one of three forms: a topic word ("pertanyaan
+ * treatment"), "tentang/soal/mengenai" and a topic ("pertanyaan tentang
+ * harga"), or "yang (tidak) menyebut/menanyakan/membahas" and a topic
+ * ("jawaban yang menyebut kota"). Anything else names no group, and the
+ * clause is read as today. */
+const GROUP_NOUN = /^(?:pertanyaan|jawaban|ringkasan)$/i;
+const GROUP_VERB =
+  /^(?:menyebut(?:kan)?|menanyakan|membahas|tentang|soal|mengenai)$/i;
+/** Words that never name a topic: the whole test or its sample, a source,
+ * "other" questions, function words, and the claim's own words (a negation,
+ * an adverb, a naming verb). */
+const NOT_A_TOPIC = new RegExp(
+  `^(?:chatgpt|google|ai|overview|ini|itu|tersebut|kami|kita|nuave|audit|uji|diuji|pengujian|tes|test|sampel|sample|survei|lain(?:nya)?|sama|berbeda|mana|semua|seluruh|setiap|ada|satu|pada|di|ke|dari|dan|atau|untuk|dengan|oleh|dalam|saat|ketika|sebagai|serta|juga|pun|apa|yang|tentang|soal|mengenai|tidak|tak|belum|bukan|pernah|selalu|masih|hanya|umumnya|biasanya|sudah|lagi|sering|jarang|sekali|cuma|${NAMING_VERB})$`,
+  "i",
+);
+/** A word shaped like a verb ("diajukan", "menunjukkan", "berisi") is no
+ * topic: such a clause falls back to today's reading. */
+const VERB_FORM = /^(?:me[mnlrwy]|meng|meny|di|ter|ber)\p{L}{2,}$/iu;
+const isTopic = (word: string | undefined) =>
+  !!word &&
+  /^[\p{L}][\p{L}\p{N}-]{2,}$/u.test(word) &&
+  !NOT_A_TOPIC.test(word) &&
+  !VERB_FORM.test(word);
 
 /** The qualifier of the group a clause names, or null. A qualifier that
- * names the owner ("jawaban yang tidak menyebut SOZO") is the claim itself,
- * not a group, and is read as today. */
+ * refers to the owner in any form or to any business ("jawaban yang tidak
+ * menyebut SOZO", "jawaban yang menyebut klinik ini", "jawaban yang
+ * menyebut ZAP") is the claim itself, not a group, and the clause is read
+ * as today. */
 function namedGroup(
   clause: string,
   facts: TwoSourceReportFacts,
 ): string | null {
   if (ABSOLUTE.test(clause)) return null;
-  for (const m of clause.matchAll(GROUP)) {
-    const qualifier = m[1]!;
-    if (NOT_A_GROUP.test(qualifier)) continue;
-    if (namesOwnerExplicitly(qualifier, facts) || /Anda/.test(qualifier))
+  const words = clause.match(/[\p{L}\p{N}][\p{L}\p{N}-]*/gu) ?? [];
+  for (let i = 0; i < words.length; i++) {
+    if (!GROUP_NOUN.test(words[i]!)) continue;
+    const next = words.slice(i + 1);
+    let taken: string[] = [];
+    if (/^(?:tentang|soal|mengenai)$/i.test(next[0] ?? "")) {
+      if (isTopic(next[1])) taken = next.slice(0, 2);
+    } else if (/^yang$/i.test(next[0] ?? "")) {
+      const at = /^(?:tidak|tak|belum)$/i.test(next[1] ?? "") ? 2 : 1;
+      if (GROUP_VERB.test(next[at] ?? "") && isTopic(next[at + 1])) {
+        taken = next.slice(0, at + 2);
+        if (isTopic(next[at + 2])) taken.push(next[at + 2]!);
+      }
+    } else if (isTopic(next[0])) taken = [next[0]!];
+    if (!taken.length) continue;
+    const qualifier = clause.match(
+      new RegExp(taken.map(escapeRegExp).join("\\s+"), "iu"),
+    )?.[0];
+    if (!qualifier) continue;
+    if (
+      refersToOwner(qualifier, facts) ||
+      competitorsIn(qualifier, facts).length ||
+      /\b(?:bisnis|klinik|usaha|merek|tempat)\b/i.test(qualifier)
+    )
       return null;
     return qualifier;
   }
@@ -513,6 +551,22 @@ function namesOwnerExplicitly(
   return (facts.names ?? []).some((name) => hasName(clause, name));
 }
 
+/** The owner in any form the writer may use (R-05): its name or an alias,
+ * "klinik Anda", "klinik ini", a bare "Anda" that is not a detail's owner,
+ * or "menyebutnya". Other businesses' names are set aside first, so a
+ * competitor called "Klinik …" never reads as the owner. */
+function refersToOwner(clause: string, facts: TwoSourceReportFacts): boolean {
+  if (namesOwnerExplicitly(clause, facts)) return true;
+  let rest = clause;
+  for (const name of facts.writer?.businesses ?? [])
+    if (name.trim().length > 1)
+      rest = rest.replace(new RegExp(escapeRegExp(name.trim()), "giu"), " ");
+  if (/\b(?:bisnis|klinik|usaha)\s+ini\b/i.test(rest)) return true;
+  return [...rest.matchAll(/(\S+)\s+Anda\b|^\s*Anda\b/gi)].some(
+    (m) => !m[1] || !new RegExp(`^${DETAIL_NOUN}$`, "i").test(m[1]),
+  );
+}
+
 function hasName(clause: string, name: string): boolean {
   const trimmed = name.trim();
   return (
@@ -529,10 +583,19 @@ function competitorIn(
   clause: string,
   facts: TwoSourceReportFacts,
 ): string | null {
-  const names = [...(facts.writer?.businesses ?? [])].sort(
+  return competitorsIn(clause, facts)[0] ?? null;
+}
+
+/** Every other business the answers name that the clause names, the
+ * longest first; a name inside a longer one found already counts once. */
+function competitorsIn(clause: string, facts: TwoSourceReportFacts): string[] {
+  const found: string[] = [];
+  for (const name of [...(facts.writer?.businesses ?? [])].sort(
     (a, b) => b.length - a.length,
-  );
-  return names.find((name) => hasName(clause, name)) ?? null;
+  ))
+    if (hasName(clause, name) && !found.some((longer) => hasName(longer, name)))
+      found.push(name);
+  return found;
 }
 
 /** Per question, for one source: was it checked, and was the owner (or the
@@ -598,6 +661,20 @@ function holds(input: {
   return true;
 }
 
+/** The sources a precise reading (R-03) finds false. One named source is
+ * checked on its own. With none or both named, a "not named" claim without
+ * a count must hold for each, as today; any other claim for at least one. */
+function failedSources(
+  at: ClauseSources,
+  verdict: (source: Source) => boolean,
+  eachMustHold: boolean,
+): Source[] {
+  if (at.explicit && at.sources.length === 1)
+    return verdict(at.sources[0]!) ? [] : [at.sources[0]!];
+  if (eachMustHold) return at.sources.filter((s) => !verdict(s));
+  return at.sources.some(verdict) ? [] : [...at.sources];
+}
+
 /**
  * B-5, N-31, N-32: the sources a sentence contradicts. Each clause is read on
  * its own, with the source named in it (or carried from the clause before):
@@ -640,12 +717,8 @@ function contradictedSources(
           explicit: whole.length > 0,
         });
     if (own.length) carried = at;
-    // R-03: a group's own words ("jawaban yang tidak menyebut kota") never
-    // decide whether the clause says named or not named.
-    const group = facts.writer ? namedGroup(clause, facts) : null;
-    const said = group ? clause.replace(group, "") : clause;
-    let negative = NEGATIVE.test(said);
-    let positive = !negative && POSITIVE.test(said);
+    let negative = NEGATIVE.test(clause);
+    let positive = !negative && POSITIVE.test(clause);
     if (negative || positive)
       carriedPolarity = negative ? "negative" : "positive";
     else if (
@@ -662,9 +735,26 @@ function contradictedSources(
     ];
     const unlimited = ABSOLUTE.test(clause) || !LIMITED.test(clause);
 
-    // R-03: another business the answers name, and not the owner.
+    // R-03: a group's own naming verb ("jawaban yang tidak menyebut kota")
+    // is not the claim's. Only when the rest of the clause has its own
+    // ("SOZO muncul di 3 dari 4 …") does the rest decide, and only in the
+    // two precise readings below; today's reading keeps the whole clause.
+    const group = facts.writer ? namedGroup(clause, facts) : null;
+    let groupNegative = negative;
+    let groupPositive = positive;
+    if (group && POSITIVE.test(group)) {
+      const rest = clause.replace(group, " ");
+      if (NEGATIVE.test(rest) || POSITIVE.test(rest)) {
+        groupNegative = NEGATIVE.test(rest);
+        groupPositive = !groupNegative;
+      }
+    }
+
+    // R-03: another business the answers name, when the clause does not
+    // also refer to the owner (a clause about both is checked for the owner,
+    // as today).
     const competitor =
-      facts.writer && !namesOwnerExplicitly(clause, facts)
+      facts.writer && !refersToOwner(clause, facts)
         ? competitorIn(clause, facts)
         : null;
     if (competitor) {
@@ -683,20 +773,18 @@ function contradictedSources(
               : [facts.counts.google.summaries],
           counts,
           all: ALL.test(clause) || /\bsemua\b/i.test(clause),
-          negative,
-          positive,
+          negative: groupNegative,
+          positive: groupPositive,
           unlimited,
         });
       };
-      if (at.explicit && at.sources.length === 1) {
-        if (!verdict(at.sources[0]!)) {
-          out.add(at.sources[0]!);
-          droppable = true;
-        }
-      } else if (!at.sources.some(verdict)) {
-        at.sources.forEach((s) => out.add(s));
-        droppable = true;
-      }
+      const failed = failedSources(
+        at,
+        verdict,
+        groupNegative && !counts.length,
+      );
+      failed.forEach((s) => out.add(s));
+      if (failed.length) droppable = true;
       continue;
     }
 
@@ -711,31 +799,33 @@ function contradictedSources(
       group &&
       scope &&
       (counts.length || all) &&
-      !(RECOMMEND.test(clause) && !negative)
+      !(RECOMMEND.test(clause) && !groupNegative)
     ) {
       const cited = new Set(scope.ids);
-      const verdict = (source: Source) => {
-        const asked = perQuestion(facts, source, null);
-        const ids = [...asked.keys()].filter((id) => cited.has(id));
-        return holds({
-          named: ids.filter((id) => asked.get(id)).length,
-          denominators: [ids.length],
-          counts,
-          all,
-          negative,
-          positive,
-          unlimited: false,
+      // A clause about the owner and another business ("ERHA dan klinik
+      // ini") must hold for each of them.
+      const subjects = [null, ...competitorsIn(clause, facts)];
+      const verdict = (source: Source) =>
+        subjects.every((subject) => {
+          const asked = perQuestion(facts, source, subject);
+          const ids = [...asked.keys()].filter((id) => cited.has(id));
+          return holds({
+            named: ids.filter((id) => asked.get(id)).length,
+            denominators: [ids.length],
+            counts,
+            all,
+            negative: groupNegative,
+            positive: groupPositive,
+            unlimited: false,
+          });
         });
-      };
-      if (at.explicit && at.sources.length === 1) {
-        if (!verdict(at.sources[0]!)) {
-          out.add(at.sources[0]!);
-          droppable = true;
-        }
-      } else if (!at.sources.some(verdict)) {
-        at.sources.forEach((s) => out.add(s));
-        droppable = true;
-      }
+      const failed = failedSources(
+        at,
+        verdict,
+        groupNegative && !counts.length,
+      );
+      failed.forEach((s) => out.add(s));
+      if (failed.length) droppable = true;
       continue;
     }
 
