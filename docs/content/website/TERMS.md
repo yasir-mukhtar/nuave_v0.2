@@ -1,8 +1,10 @@
 # Syarat dan Ketentuan
 
 > Route: `/terms` (`src/app/terms/page.tsx`)
-> Status: version 1.1 (2026-10-25) adds the clauses adopted from the HaloAI
-> comparison; approved by the founder on 2026-10-25 (PR #160). The lawyer
+> Status: version 1.2 (2026-10-28) changes the delivery promise to 30
+> minutes (founder, go-live of Spec 021 PR 6b). Version 1.1 (2026-10-25)
+> added the clauses adopted from the HaloAI comparison; approved by the
+> founder on 2026-10-25 (PR #160). The lawyer
 > checks listed below are still open. The page and this file say the same thing; change
 > both together.
 > Language: Indonesian
@@ -14,7 +16,7 @@
 | Rule on the page | Source |
 |---|---|
 | Rp249.000 total, Midtrans with QRIS, bank transfer, GoPay, DANA | Spec 018 R-23; `docs/PRODUCT.md` |
-| Delivery promise sentence | Spec 018 R-23, approved 2026-10-24 |
+| Delivery promise sentence | Spec 018 R-23, approved 2026-10-24; 30 minutes since 2026-10-28 (v1.2) |
 | The audit starts when the ten questions are approved | S0 D2 |
 | Full refund if no report 24 hours after the start | S0 D3 |
 | Report sent when each source completed at least 5 of 10 checks | Spec 018 R-19 (Q-2) |
@@ -52,7 +54,7 @@ Rp249.000, waktu laporan, pengembalian dana, dan batasan audit.
 
 # Syarat dan ketentuan
 
-Berlaku sejak 25 Oktober 2026 · Versi 1.1
+Berlaku sejak 28 Oktober 2026 · Versi 1.2
 
 Halaman ini menjelaskan apa yang Anda beli dari Nuave, kapan laporan siap, dan
 kapan uang Anda kembali. Baca sebelum membayar.
@@ -134,7 +136,7 @@ hanya tersimpan di browser itu. Jika sepuluh pertanyaan belum Anda setujui dalam
 
 ## 7. Kapan laporan siap
 
-Laporan siap dalam 15 menit setelah audit dimulai. Jika ada bagian yang gagal
+Laporan siap dalam 30 menit setelah audit dimulai. Jika ada bagian yang gagal
 diperiksa, tim kami membantu menyelesaikannya. Jika tetap tidak bisa, Anda
 mendapat pengembalian dana sebagian, sesuai jumlah pemeriksaan yang gagal.
 

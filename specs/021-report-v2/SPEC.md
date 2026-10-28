@@ -9,7 +9,9 @@
 > A-04 and A-05 (counts from saved answers, hidden topic rows), A-08 (support
 > export), A-11 (light only; confirmed by the founder on 2026-10-26), P-02 and P-05 (no secret in URLs, own rate limit,
 > previews have Browser Run), C-03 (own-site icons), B-05 (headline number
-> rule), verdict and Penutup fallbacks.
+> rule), verdict and Penutup fallbacks. Amended 2026-10-28 for the go-live
+> (PLAN.md PR 6b; founder confirms with PR #185): B-07's limit is USD 5.00,
+> new B-08 and AC-B5 (pages read), and the data section.
 > Implements: the founder's report feedback of 2026-10-26; moved ahead of G1
 > ([decision](../../docs/DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score))
 
@@ -365,7 +367,22 @@ dark (ink); Jawaban AI's band is light grey.
 - **B-07** Model choice by side-by-side test on the same saved answers: GPT-5.6
   Luna (today) and at least one Claude model (Sonnet 5.5; Opus 5.5 if
   affordable). The founder reads the reports and picks. Cost and time per
-  report are recorded and must fit the per-order limit (USD 2.00) with room.
+  report are recorded and must fit the per-order limit (USD 5.00, amended
+  2026-10-28 from USD 2.00) with room. The founder picked Claude Opus 5.5 at
+  medium effort with pages read
+  ([decision](../../docs/DECISION_LOG.md#2026-10-28--go-live-opus-55-with-pages-read-for-every-live-two-source-order)).
+- **B-08** (added 2026-10-28) The writer may read the pages Firecrawl read
+  for the order: the business's own site and up to four of its useful pages
+  (prices, doctors, treatments, about, branches), and the ten pages the
+  answers cited most. Public business pages only: never social profiles,
+  forums, maps, search or link shorteners. Phone numbers and email addresses
+  are removed from every page kept. The pages are data: any instruction in
+  them is ignored, the own site is the owner's claim, and a fact taken from a
+  page names the page's site and cites the questions that cited it. Still
+  never a claimed cause. The page text is kept only until the report is
+  saved; the page addresses stay with the order until it is deleted. Without
+  pages (none read, no key, Firecrawl unavailable) the report is written as
+  B-01 to B-07 describe.
 
 ## Failure and recovery
 
@@ -381,13 +398,23 @@ dark (ink); Jawaban AI's band is light grey.
 
 - No new answer data is collected; Part C keeps more of what the provider
   already returns, never phone numbers.
+- B-08 (2026-10-28) reads public web pages for each order: the page text,
+  without phone numbers or email addresses, goes to the report writer
+  (Anthropic) and is deleted from the order when the report is saved; the
+  page addresses and the reading's status stay with the order and are
+  deleted with it. Firecrawl (the page reader) and Anthropic are new
+  providers for customer orders; the privacy page names them by type
+  (version 1.5), which the founder approves before they receive order data
+  (decision 2026-10-26, point 4).
 - The playbook states general guidance, not claims about a named business.
 - No claim of cause, ranking guarantee or service quality (`AGENTS.md` 8, 9).
 - **Cost:** Parts A, D and C add no provider calls. Part P uses Browser Run
   (within the included hours at current volume). Part B's side-by-side test
   needs a named founder approval for its live writer calls, and a Claude
   model needs an Anthropic API key, which is a new paid provider and needs a
-  founder decision (`AGENTS.md`).
+  founder decision (`AGENTS.md`). The go-live (2026-10-28) holds USD 5.00
+  per order and caps spend at USD 50 a day; Firecrawl is billed in credits,
+  at most 48 requests per order.
 
 ## Acceptance criteria
 
@@ -442,6 +469,9 @@ dark (ink); Jawaban AI's band is light grey.
   use.
 - **AC-B4 (judgement)** On NV-3WDSAY, the founder judges at least two findings
   new information and the recommendations firm and specific.
+- **AC-B5** (B-08) A test shows the writer request includes the order's saved
+  pages and contains no phone number or email address, and that a request
+  with no pages is byte-identical to the request without B-08.
 
 ## Decisions (founder, 2026-10-26)
 

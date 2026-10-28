@@ -497,6 +497,395 @@ playbook and contains no phone number** (checked with the phone patterns in
 `src/lib/checks/phones.ts`). The offline fixture writer returns a Part B
 report so the journey and snapshots cover it.
 
+## PR 6b: go live with Claude Opus 5.5 and pages read
+
+The founder's pick, after the reading test
+([decision](../../docs/DECISION_LOG.md#2026-10-27--reading-test-opus-55-medium-with-pages-read-wins-on-nv-3wdsay)),
+and the go-live choices of 2026-10-28:
+- **Writer:** every live two-source order made after this deploys is written
+  by Claude Opus 5.5 at medium effort, with the pages Firecrawl read. No
+  staged roll-out.
+- **Limits:** per-order hold USD 5.00, daily cap USD 50.
+- **Delivery promise:** 30 minutes, up from 15.
+- **Merge timing:** the founder merges only when no live order is in
+  progress, so every order the new writer touches holds USD 5.
+
+Claude Sonnet 5.5 at high effort is the cheaper writer. Switching to it is a
+one-line change in `ci.yml` and a deploy.
+
+What does not change:
+- synthetic mode and previews (no Claude call, no page read);
+- orders without two-source checks (today's OpenAI writer);
+- the questions and the checks;
+- every saved report (S0: never rewritten).
+
+### 1. The writer (`src/lib/audit/anthropic-report.ts`)
+
+- **Which writer.** A new server setting `NUAVE_REPORT_WRITER` takes
+  `claude-opus-5-5` (effort medium) or `claude-sonnet-5-5` (effort high).
+  - Unset keeps today's OpenAI writer.
+  - Any other value fails closed: the cron skips audit steps, as it does for
+    a missing key.
+  - `liveGenerateReportContent` sends a report to Claude only when the input
+    has the new writer's facts (`hasWriterFacts`). Everything else goes where
+    it goes today.
+- **Same text as the test.**
+  - The request is built from `reportRequest`: the developer text becomes
+    `system`, and the user text the one user message.
+  - The answer format is `reportOutputSchema`, passed as
+    `output_config.format` via `zodOutputFormat`.
+  - The answer goes through `reportContentFromAnswer`, so the checks, repairs
+    and language fix are unchanged.
+  - The harness's `claudeWriter` switches to the same request builder, so the
+    test keeps sending what production sends.
+- **Call settings.**
+  - `thinking: {type: "adaptive"}` and `output_config.effort`.
+  - `metadata.user_id` = the hashed safety identifier.
+  - Streamed (`.stream().finalMessage()`).
+  - SDK retries off: the runner's step retry decides.
+  - The workspace header when `NUAVE_ANTHROPIC_WORKSPACE_ID` is set (the key
+    is not scoped to one workspace).
+  - No refusal fallback model: it was never part of the test, and it bills a
+    second model inside the same call.
+- **Output allowance.** Opus 24,000 tokens, Sonnet 32,000. See section 2 for
+  the measured use.
+- **One time limit for the whole call.** One `AbortSignal` covers the token
+  count and the whole stream. The SDK's `timeout` stops at the response
+  headers only (`@anthropic-ai/sdk` `client.js`), so it cannot bound a
+  stalled stream. The limit (`CLAUDE_REPORT_CALL_MS`, section 2) is shorter
+  than the order lease, so a second run can never start a second call on the
+  same order while one is still streaming. A test proves the signal aborts a
+  stream that stops sending.
+- **How an answer ends.**
+  - `end_turn`: the answer is parsed with the schema.
+  - `refusal`, `max_tokens`, an abort, or anything else: a failed call
+    (`AuditCallExecutionError`). The runner retries on a later run, with at
+    most three report calls per order as today; then the order fails with its
+    refund path.
+  - The language-fix call is different. If it fails, the pipeline keeps the
+    first draft and saves it with the existing repair, as today. Its attempt
+    is spent either way.
+- **Its own cost path.** `reserveAuditCall` and `completedCallTelemetry`
+  accept only Luna (`telemetry.ts`), so the Claude path does not use them.
+  - It keeps the shared stage-call limit and the request-budget check, moved
+    into one helper both paths call.
+  - It writes its own telemetry, with pricing version
+    `anthropic-standard-2026-10-28`.
+
+### 2. Time, spending and limits
+
+- **Measured in the reading test** (NV-3WDSAY, from the test-B session's
+  records; each time runs from the reservation to the next record).
+
+  | Writer and call | Time | Input → output tokens |
+  | --- | --- | --- |
+  | Opus medium with pages, call 1 | 107 s | 106,820 → 12,230 |
+  | Opus medium with pages, call 2 (language fix) | 48 s | 113,246 → 6,771 |
+  | Sonnet high with pages, call 1 (32k allowance) | 154 s | 106,820 → 23,901 |
+  | Sonnet high with pages, call 2 | 38 s | 113,065 → 7,166 |
+
+  Every report needed the language fix. Opus writes about 115 tokens a
+  second and Sonnet about 155, so even a whole allowance (Opus 24k, Sonnet
+  32k) takes about 210 seconds. Reading 16 pages one at a time took about 88
+  seconds; one earlier try hit a 429 about 68 seconds in. Firecrawl allows two
+  requests at a time on this account.
+- **Time.**
+  - A Claude report call gets `CLAUDE_REPORT_CALL_MS` = 240 seconds. That
+    is more than a whole allowance takes (about 210 seconds) and more than
+    twice the test's slowest Opus call.
+  - The report step holds two calls, so 495 seconds.
+  - A longer run budget (570 seconds) applies only when the run's first
+    audit step is a Claude report step or a pages step. Nothing starts after
+    it.
+  - The email work after the step can take about 165 seconds: the ready
+    email, the payment email, two notices and the failure email, each up to
+    about 36 seconds (`mail.ts`). The run then ends by about 735 seconds,
+    inside the cron's 900-second wall time.
+  - The design can carry a call limit up to about 320 seconds. Past that,
+    the language fix would need its own run.
+  - Email-only retries and OpenAI-writer orders keep today's short steps.
+- **Reservation from the real token count.**
+  - Before each call, Anthropic's free token-count endpoint counts the
+    request.
+  - The call reserves that count at the model's input price, plus the whole
+    output allowance at the output price. It reserves through
+    `reserveProviderSpend` (provider `anthropic`, stage `report`) and the
+    request's audit budget, before anything is sent.
+  - The count follows the same error rules as the call (below).
+- **Input ceiling.** A request counted above 150,000 input tokens is rebuilt
+  first with half its pages, then with none, and counted again. If it is
+  still over 150,000, nothing is sent and the report fails at once as
+  `REPORT_LIMIT_EXHAUSTED` (an `AuditBudgetError`), with the refund path. The request would always
+  be too long, and sending it could pass the hold. The test's request was
+  about 107,000 tokens with pages and 58,600 without.
+- **Worst case fits the hold.**
+  - Before the report, the order can hold USD 1.545 in reservations (AC-15,
+    `spend-worst-case.test.ts`).
+  - Each Opus call reserves at most USD 1.08 (150k × 4 + 24k × 20 per
+    million), and three calls USD 3.24.
+  - The total is USD 4.785, under USD 5.00, even when every call times out
+    and keeps its whole reservation.
+  - Sonnet: USD 0.62 per call.
+  - AC-15 gets a Claude case. It counts 3 report calls, because the runner
+    counts the language fix as one.
+- **Settled from real usage.** Opus 5.5 is priced at USD 4/20 per million,
+  Sonnet 5.5 at 2/10. Cache reads and writes are priced at their rates.
+- **Errors from Anthropic** (the token count and the call). The check is
+  Claude's own, because `releaseIfRejectedUnrun` knows only OpenAI's error
+  class.
+  - **Retryable:** an HTTP 429, 529 or other 5xx answer received before the
+    stream starts. The reservation is released and the call throws
+    `SpendCapError("unavailable")`. That is the runner's branch that gives
+    the attempt back (`runner.ts`), so a later run tries again.
+  - **A network error, or no answer at all:** Anthropic may have run and
+    billed the call, so the reservation stays held (the ledger's rule for a
+    dropped connection) and the attempt counts.
+  - **Not retryable:** any other 4xx before the stream starts, such as a bad
+    or revoked key (401, 403) or "credit balance too low" (400). The
+    reservation is released and the attempt counts, so the order fails after
+    its three attempts, with its refund, as today.
+  - Anything after the stream starts keeps its reservation.
+  - Every Anthropic error also records a founder notice, at most one a day
+    for each kind of problem: the notice's subject is the day and the status
+    group (busy, key, credit, other), so a busy morning does not hide a key
+    or credit problem later that day.
+- **The token count's request** carries `model`, `system`, `messages`,
+  `thinking` and `output_config` only (no `max_tokens`, `metadata` or
+  `stream`), built from the same request so the two never differ. A count is
+  free; one live count with the production request, which the founder
+  approves, confirms its shape before merging.
+- **Limits.** `DEFAULT_ORDER_SPEND_LIMIT_USD` goes 2 → 5 and
+  `DEFAULT_DAILY_SPEND_LIMIT_USD` 5 → 50, in code and in the production
+  deploy.
+- **Expected cost per order.** Checks are about USD 0.20, plus Opus for two
+  calls (as in the test). About USD 1.50.
+- **Firecrawl.** It is billed in credits on the founder's plan, not in the
+  USD ledger. One read makes at most 24 Firecrawl requests, retries
+  included, and an order has at most two tries (section 3), so 48 at
+  most.
+
+### 3. Pages read for every live two-source order
+
+- **When.** In `reporting`, before the first report call, for live orders
+  written by Claude (with the OpenAI writer, the way back, no pages are read
+  and no Firecrawl credit is spent). If the order has the new writer's facts
+  and no saved pages, the step reads the pages, saves them and ends
+  ("pages_read"). The next run writes the report. It takes no report
+  attempt.
+- **Sized again after the claim.** A step's time and lease are worked out
+  from the order as first read. Once the lease is taken, the order is read
+  again; if another run moved it on in between (it read the pages, or saved
+  the last answer), the step is left to a later run instead of running on a
+  lease sized for another step.
+- **What.** `readPagesForReport`, as tested:
+  - the own site and up to four of its useful pages;
+  - the ten pages the answers cited most, with tracking tags removed;
+  - public business pages only.
+
+  Phone numbers and email addresses are removed from everything kept.
+- **One deadline.** One `AbortSignal` of 150 seconds covers every request and
+  every wait.
+  - Pages are read two at a time, the smallest Firecrawl plan's limit.
+  - On a 429 the reader waits as long as Firecrawl asks (Retry-After) or 30
+    seconds, at most 70 and never past the deadline. It tries up to three
+    times.
+  - Pages not read by the deadline are listed as unread.
+  - `patientFetch` moves from the harness into `page-reader.ts`, and both use
+    it.
+- **Errors.**
+  - A 5xx, a timeout or a 4xx on one page makes that page unread.
+  - A 403 is one unread page too: Firecrawl answers 403 for sites it does not
+    read, such as LinkedIn.
+  - Only 401 or 402 (bad key, no credits), or a 429 after its three waits,
+    stops the reading.
+  - Pages already read are always kept.
+- **Saved.** Migration 0016 adds `orders.pages_json` (nullable).
+  - A marker `{status: "reading", tries}` is written before reading. A run
+    that dies mid-read is counted. After two tries the order goes on without
+    pages (`gave_up`).
+  - The result is one of:
+    - `read`, with its pages (any number);
+    - `partial`, stopped by 401, 402 or 429, keeping the pages read so far;
+    - `gave_up`, after two tries that never finished;
+    - `no_key`, with no `FIRECRAWL_API_KEY` set.
+  - The writer gets the saved pages in `two_source_facts.writer.pages`.
+  - With none, the report is written as today's new writer writes it: the
+    request is byte-identical without pages.
+  - `partial` and `gave_up` record a founder notice, at most one a day, so a
+    Firecrawl problem is not silent.
+- **Kept only while needed.** When the report is saved, `pages_json` keeps
+  only the status and the page addresses, not the text. `purgeOrder` clears
+  it with the rest of the order.
+- **Run meter.** The pages step costs `RUN_COST.pages` = 30: up to 24
+  requests plus its D1 queries. The token counts add up to 6 to the report
+  step's cost (up to three counts for each of two calls).
+
+### 4. The delivery promise: 30 minutes
+
+"Laporan siap dalam 15 menit" becomes "30 menit" everywhere:
+- `promise.ts` (the order screen and the payment email);
+- `Hero.tsx`, `HowItWorks.tsx` and `PriceReceipt.tsx`;
+- the running page's help notice (`DELAY_NOTICE_MS`);
+- `TERMS.md` and the terms page, with `LEGAL_VERSION` going 1.1 → 1.2;
+- `FAQ.md` and `specs/020-clinic-landing-page/COPY.md`;
+- Spec 018 R-23, with an amendment note dated 2026-10-28;
+- the tests that quote it.
+
+The founder's first live orders measure the real time.
+
+### 5. Deploy (`.github/workflows/ci.yml`)
+
+- **New Worker secrets, set by the production deploy:**
+  - `NUAVE_REPORT_WRITER: claude-opus-5-5`;
+  - `NUAVE_ANTHROPIC_API_KEY`;
+  - `NUAVE_ANTHROPIC_WORKSPACE_ID`;
+  - `FIRECRAWL_API_KEY`;
+  - the new limits, `"5"` and `"50"`.
+- **The founder adds the three keys to GitHub secrets before merging.** A
+  secret that is empty fails the deploy.
+- **Fail closed.** The cron refuses audit steps when the writer is Claude and
+  the Anthropic key is missing.
+
+### 6. Privacy wording (2026-10-26, point 4)
+
+Anthropic and Firecrawl receive customer-order data from this PR, so the
+founder approves this wording before it merges:
+
+- **Penyedia layanan AI**, data column: add "isi halaman web publik yang
+  dikutip jawaban AI".
+- **New row:** "Penyedia pembaca halaman web" | "Membaca halaman website
+  bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan
+  laporan" | "Alamat website bisnis Anda dan alamat halaman yang dikutip".
+- **Section 6, "Layanan AI dan pencarian",** names the page reader the same
+  way.
+- **Section 2's "Data audit" bullet** adds the public pages read for the
+  report.
+- **Version.** Privacy goes 1.4 → 1.5. This asks every visitor for their
+  cookie choice again, as each new version does.
+- **Internal map.** `docs/content/website/PRIVACY.md` names Anthropic (AI)
+  and Firecrawl (page reader).
+
+**Founder checks before merge:**
+- Anthropic's and Firecrawl's terms support the section 7 sentence ("hanya
+  memproses data untuk menjalankan layanan Nuave").
+- The accounts opened "for the tests only" may receive customer orders.
+- Anthropic auto-reload is on.
+- Firecrawl credits renew monthly.
+
+### 7. Records and checks
+
+- **Spec amendment, for the founder to confirm:**
+  - `SPEC.md` B-07's "USD 2.00" becomes USD 5.00.
+  - A new **B-08**: the writer may read the pages Firecrawl read, as section
+    3 describes, with its **AC-B5**.
+  - The data section says which page data is kept and for how long.
+- **Decision log.** `DECISION_LOG.md` has the 2026-10-28 entry (added with
+  this revision): writer, pages, USD 5 and USD 50, 30 minutes, merging with
+  no live order open. Point 5 of 2026-10-26 (the USD 2 hold) is superseded.
+  `NOW.md` is updated with the code.
+- **Tests.**
+  - The writer request: system, user, schema, effort, allowance, metadata.
+  - Every way an answer ends, and the abort of a stalled stream.
+  - The reservation, the input ceiling, and the count's request shape and
+    error rules.
+  - Release and attempt rules for 429, 529, 5xx, other 4xx and network
+    errors; the founder notice and its subject; the over-ceiling request failing without a call; a failed
+    language fix keeping the first draft.
+  - The routing: Claude only with writer facts, and fail closed on a bad
+    setting.
+  - The pages step: once, no report attempt, the marker and its two tries,
+    each saved status, 429 waits inside the deadline, one bad page as
+    unread, the notice, no read in synthetic mode.
+  - The long budget only for Claude and pages steps.
+  - Page text dropped when the report is saved, and the purge.
+  - The limits, the AC-15 Claude case, and the 30-minute wording.
+  - `npm run verify` and the synthetic journey stay green. Neither CI nor an
+    agent makes a live call.
+- **First live orders.** After the deploy, the founder's next live order or
+  two show the real time, cost, pages and CPU time per report. The agent
+  reads them from the support export, not from production.
+
+### Risks
+
+- **Time.** A call over the time limit fails and retries; three failures fail
+  the order. The first orders measure it.
+- **CPU.** A cron that runs every minute has 30 seconds of CPU per run.
+  Streaming and parsing one report should be far below that; the first
+  orders confirm it.
+- **Page text is untrusted.** The writer's instructions already say the
+  pages are data and any instruction in them is ignored. The code checks
+  (counts, headline numbers, verbatim figures) still run on every report.
+
+### Plan review
+
+Round 1 (ALMOST,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6458698387)).
+Its seven must-fixes are in this revision:
+- one abort signal for the whole stream;
+- a worst case that fits USD 5, with the input ceiling, the smaller Opus
+  allowance and the attempt given back on a failed count;
+- orders already in progress (the founder chose to merge when none is open);
+- the 15-minute promise (the founder chose 30 minutes);
+- the spec amendment and decision entry;
+- one bad page no longer drops every page;
+- one reading deadline.
+
+Its should-fixes are in too:
+- the long budget only for Claude and pages steps;
+- 429 and 529 give the attempt back;
+- a Claude-specific release check;
+- the Claude cost path;
+- no fallback model;
+- two calls per order;
+- the privacy section 6, email stripping and the founder's checks;
+- page text dropped when the report is saved;
+- the read marker;
+- the run meter;
+- Sonnet needing a deploy;
+- CPU time.
+
+Round 2 (ALMOST,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6458966304)).
+Fixed in this revision:
+- a request still over the ceiling fails without a call;
+- only 429, 529, 5xx and network errors give the attempt back, with a
+  founder notice for every Anthropic error;
+- the call limit set from the test's timings (240 seconds), with the
+  wall-time sum;
+- 403 is one unread page;
+- a failed language fix keeps the first draft;
+- the request counts;
+- `gave_up` and its notice;
+- the 15-minute wording in Specs 018 and 020;
+- the privacy section names;
+- the decision recorded now.
+
+Round 3 (PASS,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6459001289)).
+Its non-blocking notes are in:
+- a network error keeps its reservation and counts its attempt;
+- the notice subject names the kind of problem;
+- the count's request shape, with one live count before merging;
+- the wording;
+- watching the 240-second limit on the first live orders (raising it is one
+  constant, up to 320 seconds).
+
+### Code review
+
+Round 1 (ALMOST,
+[comment](https://github.com/yasir-mukhtar/nuave_v0.2/pull/185#issuecomment-6459535326)).
+Fixed:
+- the step is sized again after the lease is claimed;
+- pages are read only for Claude-written orders;
+- the cache-read price is per model;
+- the privacy page says read pages may name doctors or staff;
+- `support show` names what the reading did;
+- a test for a language fix that cannot be sent;
+- a stale comment.
+
+Kept: when a reading throws, its Firecrawl requests are not added to the run
+meter. The step's 30-unit pre-check still bounds it.
+
 ## Cross-cutting rules
 
 - **Privacy:** no phone numbers anywhere new; competitor data is public

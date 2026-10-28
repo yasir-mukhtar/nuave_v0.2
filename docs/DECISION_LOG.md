@@ -1,10 +1,51 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-27
+> Updated: 2026-10-28
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-28 — Go live: Opus 5.5 with pages read for every live two-source order
+
+Yasir chose, after the reading test:
+
+1. **Writer.** Every live two-source order is written by Claude Opus 5.5 at
+   medium effort, with the pages Firecrawl read for that order. The switch
+   is for everyone at once, with no staged roll-out. Claude Sonnet 5.5 at
+   high effort, with a larger output allowance, is the cheaper writer to
+   switch to if needed.
+2. **Spending.** The per-order hold is USD 5.00 (was 2.00) and the daily cap
+   USD 50 (was 5). This supersedes point 5 of
+   [2026-10-26](#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after)
+   (keep the USD 2.00 hold).
+3. **Delivery promise.** "Laporan siap dalam 30 menit" everywhere (was 15
+   minutes), because the reading and the slower writer add minutes.
+4. **Orders already paid.** The go-live merges only when no live order is in
+   progress, so every order the new writer touches holds USD 5.
+
+The vendor condition of 2026-10-26, point 4, still applies. The privacy
+wording that names the page reader, and the AI provider reading the pages,
+needs the founder's approval before this merges. The plan is
+[Spec 021 PLAN, PR 6b](../specs/021-report-v2/PLAN.md); the work is in
+PR #185.
+
+Before the merge, the same day, Yasir:
+- added the GitHub secrets (Anthropic key and workspace, Firecrawl key);
+- approved the privacy page 1.5 (it names the page reader and says pages
+  read may name doctors or staff) and the terms 1.2 (30 minutes);
+- confirmed that Anthropic's and Firecrawl's terms support the privacy
+  page's section 7 sentence, and that the accounts may take customer orders;
+- approved one free live token count with the production request: it was
+  accepted (12,311 tokens for a synthetic input);
+- approved the merge with no live order in progress. A read of the
+  production orders found none open, running or reporting.
+
+Anthropic auto-reload and Firecrawl's monthly credits are left for after
+the first live orders. Until then, an empty Anthropic balance fails an
+order after three refused calls, with its refund and an `anthropic_error`
+notice; Firecrawl with no credits leaves the report without pages and sends
+a `pages_unread` notice.
 
 ## 2026-10-27 — Reading test: Opus 5.5 medium with pages read wins on NV-3WDSAY
 

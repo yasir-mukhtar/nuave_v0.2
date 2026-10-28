@@ -58,7 +58,8 @@ async function endedOrder(
   await sql(
     `UPDATE orders SET state = ?2, ended_at = ?3, intake_json = '{"x":1}',
        report_json = ?4, completed_at = ?5, link_hash = 'hash',
-       questions_json = '[]', prepared_json = '{}', discovery_json = '{}'
+       questions_json = '[]', prepared_json = '{}', discovery_json = '{}',
+       pages_json = '{"status":"no_key"}'
      WHERE id = ?1`,
     id,
     state,
@@ -315,6 +316,8 @@ describe("making an order anonymous", () => {
       discovery_json: null,
       questions_json: null,
       report_json: null,
+      // Spec 021 B-08: the page addresses go with the order.
+      pages_json: null,
       link_hash: null,
       link_off: 1,
       // Spec 022 R-21 (AC-10): the event code goes; the send record stays.

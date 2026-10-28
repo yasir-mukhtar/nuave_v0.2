@@ -24,10 +24,9 @@ import { createHash, randomInt } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import OpenAI from "openai";
+import { claudeReportRequest } from "../../src/lib/audit/anthropic-report";
 import {
-  hashSafetyIdentifier,
   reportContentFromAnswer,
   reportOutputSchema,
   reportRequest,
@@ -46,7 +45,6 @@ import {
 import type { TwoSourceReportFacts } from "../../src/lib/audit/two-source-report";
 import {
   type AuditCallTelemetry,
-  type AuditObservation,
   type AuditReport,
   type ReportContent,
   type ReportSynthesis,
@@ -63,10 +61,12 @@ import {
 import { z } from "zod";
 import type { GoogleCheck } from "../../src/lib/checks/google";
 import {
+  FirecrawlUnavailable,
   readPagesForReport,
   type PageFetcher,
   type ReadPage,
 } from "../../src/lib/reading/page-reader";
+import { orderCitedSources, orderOwnSite } from "../../src/lib/orders/pages";
 import {
   orderReportInput,
   parseIntake,
@@ -365,26 +365,9 @@ export function drawPageSet(
   };
 }
 
-/** A fetch for the test's Firecrawl reading that waits out Firecrawl's
- * rate limit (429) instead of giving up: up to three waits, each as long as
- * Firecrawl asks (Retry-After) or 30 seconds, at most 70. Any other answer,
- * and a fourth 429, go to the page reader unchanged. */
-export function patientFetch(
-  fetchImpl: typeof fetch = fetch,
-  wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
-): typeof fetch {
-  return async (input, init) => {
-    for (let attempt = 0; ; attempt += 1) {
-      const response = await fetchImpl(input, init);
-      if (response.status !== 429 || attempt === 3) return response;
-      const asked = Number(response.headers.get("retry-after"));
-      await wait(Math.min(asked > 0 ? asked * 1000 : 30_000, 70_000));
-      // The reader's own time limit started with the first try; a retry
-      // gets a fresh one.
-      if (init?.signal) init = { ...init, signal: AbortSignal.timeout(90_000) };
-    }
-  };
-}
+/** The live reader's 429 waits (Retry-After or 30 s, at most 70, three
+ * times), shared with production. */
+export { patientFetch } from "../../src/lib/reading/page-reader";
 
 /** Where an order's read pages are kept, so a re-run never reads again. */
 export const pagesPath = (order: string, dir = EVIDENCE_DIR) =>
@@ -405,30 +388,7 @@ export async function readOrderPages(
   fetcher: PageFetcher,
 ): Promise<OrderPages> {
   const intake = parseIntake(evidence.order)!;
-  const context = intake.context as { identity?: { source?: string } };
-  const sources = evidence.rows.flatMap((row) => {
-    const observation = row.observation_json
-      ? (JSON.parse(row.observation_json) as AuditObservation)
-      : null;
-    const check =
-      row.g_status === "done" && row.g_result_json
-        ? (JSON.parse(row.g_result_json) as GoogleCheck)
-        : null;
-    return [
-      ...(observation?.run_status === "completed"
-        ? observation.sources.map((source) => ({
-            prompt_id: row.prompt_id,
-            url: source.url,
-          }))
-        : []),
-      ...(check?.outcome === "summary"
-        ? check.references.map((reference) => ({
-            prompt_id: row.prompt_id,
-            url: reference.url,
-          }))
-        : []),
-    ];
-  });
+  const sources = orderCitedSources(evidence.rows);
   let requests = 0;
   const counted: PageFetcher = {
     scrape: (url) => {
@@ -440,11 +400,14 @@ export async function readOrderPages(
       return fetcher.map(url);
     },
   };
-  const { pages, unread } = await readPagesForReport({
-    ownSite: context.identity?.source ?? null,
+  const { pages, unread, stopped } = await readPagesForReport({
+    ownSite: orderOwnSite(intake),
     sources,
     fetcher: counted,
   });
+  // The test keeps nothing from a stopped reading, so a later run reads
+  // again instead of writing "with pages" from part of them.
+  if (stopped !== undefined) throw new FirecrawlUnavailable(stopped);
   return {
     read_at: new Date().toISOString(),
     pages,
@@ -960,10 +923,10 @@ function parseAnswer(
       };
 }
 
-/** Claude at the entry's effort, adaptive thinking, the same developer and
- * user text as production, and the report schema as structured output. No
- * refusal fallback: a fallback model would blur the comparison, so a refusal
- * is recorded as a failed call. */
+/** Claude at the entry's effort, with the request production's Claude writer
+ * sends (`claudeReportRequest`: adaptive thinking, the same developer and
+ * user text, the report schema as structured output). No refusal fallback,
+ * as in production: a refusal is recorded as a failed call. */
 export function claudeWriter(
   ctx: WriterContext,
   client = new Anthropic({
@@ -995,18 +958,16 @@ export function claudeWriter(
     const startedAt = Date.now();
     const response = await sendHeld(hold, () =>
       client.messages.create(
-        {
+        // The request production's Claude writer sends (anthropic-report.ts).
+        claudeReportRequest({
           model,
-          max_tokens: outputAllowance(),
-          thinking: { type: "adaptive" },
-          output_config: {
-            effort: ctx.entry.effort!,
-            format: zodOutputFormat(schema),
-          },
-          metadata: { user_id: hashSafetyIdentifier(input.safety_identifier) },
-          system: developer,
-          messages: [{ role: "user", content: user }],
-        },
+          effort: ctx.entry.effort!,
+          maxTokens: outputAllowance(),
+          developer,
+          user,
+          schema,
+          safetyIdentifier: input.safety_identifier,
+        }),
         { timeout: 600_000 },
       ),
     );

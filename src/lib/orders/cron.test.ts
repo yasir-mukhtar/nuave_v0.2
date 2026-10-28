@@ -20,7 +20,7 @@ vi.mock("@/lib/audit/provider", async (importOriginal) => ({
 import { POST as internalCronPOST } from "../../app/api/internal/cron/route";
 import { POST as devTriggerPOST } from "../../app/api/dev/run-cron/route";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
-import { runScheduledOrders } from "./cron";
+import { cronPages, runScheduledOrders } from "./cron";
 import { approve, makeOrder } from "./orders.test-helper";
 import { createFakeMidtrans } from "../payments/fake-midtrans.test-helper";
 import { startAttempt } from "../payments/attempts";
@@ -163,6 +163,36 @@ describe("runScheduledOrders (R-15)", () => {
     expect(await skipped()).toBe("credentials_missing");
     expect(mocks.liveExecute).not.toHaveBeenCalled();
     expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
+  it("Spec 021 PR 6b: a report-writer setting that is not valid, or a Claude writer without its key, runs no audit step", async () => {
+    vi.stubEnv("NUAVE_AUDIT_MODE", "live");
+    vi.stubEnv("NUAVE_PROVIDER", "openai");
+    vi.stubEnv("OPENAI_API_KEY", "offline-test-key");
+    vi.stubEnv("CHEAPERINFERENCE_API_KEY", "offline-test-key");
+    vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
+    vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
+    const skipped = async () =>
+      ((await runScheduledOrders()) as { auditSkipped?: string }).auditSkipped;
+    vi.stubEnv("NUAVE_REPORT_WRITER", "claude-opus");
+    expect(await skipped()).toBe("credentials_missing");
+    vi.stubEnv("NUAVE_REPORT_WRITER", "claude-opus-5-5");
+    vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "");
+    expect(await skipped()).toBe("credentials_missing");
+    vi.stubEnv("NUAVE_ANTHROPIC_API_KEY", "offline-test-key");
+    expect(await skipped()).toBeUndefined();
+    expect(mocks.liveReport).not.toHaveBeenCalled();
+  });
+
+  it("Spec 021 B-08: pages are read only for live orders written by Claude", () => {
+    expect(
+      cronPages("live", "claude-opus-5-5", "fc-key").pages?.reader,
+    ).toBeTypeOf("function");
+    expect(cronPages("live", "claude-opus-5-5", "").pages).toEqual({
+      reader: null,
+    });
+    expect(cronPages("live", null, "fc-key")).toEqual({});
+    expect(cronPages("synthetic", "claude-opus-5-5", "fc-key")).toEqual({});
   });
 
   function liveSettings(resend = true) {
@@ -369,6 +399,7 @@ describe("the cron with the emergency switch off or AI settings missing (R-23, A
     vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("CHEAPERINFERENCE_API_KEY", "");
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "5");
+    vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "2");
     vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
     vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
     vi.stubEnv("MIDTRANS_SERVER_KEY", fake.serverKey);

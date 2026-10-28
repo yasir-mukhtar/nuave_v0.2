@@ -27,7 +27,31 @@ import {
 } from "../discovery/dataforseo";
 import { sendCheck, type CheckSend } from "../checks/send";
 import { syntheticCheckSend } from "../checks/synthetic";
-import { runOrders, type RunSummary } from "./runner";
+import { runOrders, type RunnerDeps, type RunSummary } from "./runner";
+import {
+  configuredReportWriter,
+  type ClaudeWriter,
+} from "../audit/anthropic-report";
+import { readPagesLive } from "./pages";
+
+/** Spec 021 B-08: the pages step, for live orders written by Claude only. */
+export function cronPages(
+  mode: OrderMode,
+  claudeWriter: ClaudeWriter | null,
+  firecrawlKey: string | undefined,
+): Pick<RunnerDeps, "pages"> {
+  return mode === "live" && claudeWriter
+    ? { pages: { reader: livePageReader(firecrawlKey) } }
+    : {};
+}
+
+/** The live page reader, or null when no Firecrawl key is set. */
+export function livePageReader(
+  key: string | undefined,
+): NonNullable<RunnerDeps["pages"]>["reader"] {
+  const apiKey = key?.trim();
+  return apiKey ? (input) => readPagesLive({ apiKey, ...input }) : null;
+}
 import type { OrderMode } from "./store";
 
 type AuditSkipped = "switch_off" | "credentials_missing" | "sender_missing";
@@ -91,10 +115,17 @@ export async function runScheduledOrders(
     // cap alerts.
   }
   let sender: MailSender | null;
+  // Spec 021 PR 6b: the report writer the deploy names (null: today's).
+  let claudeWriter: ClaudeWriter | null = null;
   if (mode === "live") {
     try {
       assertLiveAuditStageCredentials("observations");
       dailySpendLimitUsd();
+      // A writer setting that is not valid, or a Claude writer without its
+      // key, stops the audit steps before any call (fail closed).
+      claudeWriter = configuredReportWriter();
+      if (claudeWriter && !process.env.NUAVE_ANTHROPIC_API_KEY?.trim())
+        throw new Error("NUAVE_ANTHROPIC_API_KEY is not configured.");
     } catch {
       auditSkipped ??= "credentials_missing";
     }
@@ -122,6 +153,12 @@ export async function runScheduledOrders(
       mode === "live"
         ? liveGenerateReportContent
         : generateSyntheticLocalReport,
+    claudeReports: claudeWriter !== null,
+    // Spec 021 B-08: live orders written by Claude read their pages before
+    // the report; with no Firecrawl key they go on without them. With the
+    // OpenAI writer (unset, the way back) and in synthetic mode, no pages are
+    // read.
+    ...cronPages(mode, claudeWriter, process.env.FIRECRAWL_API_KEY),
     // Spec 018: ChatGPT and Google checks through DataForSEO (live), or the
     // labelled synthetic answers. Without credentials a live check is refused
     // unsent, as DataForSEO would refuse it (R-14, R-21).

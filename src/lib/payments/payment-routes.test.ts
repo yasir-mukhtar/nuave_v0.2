@@ -82,8 +82,10 @@ beforeEach(() => {
   );
   vi.stubEnv("RESEND_API_KEY", "offline-test-resend-key");
   vi.stubEnv("NUAVE_MAIL_FROM", "Nuave <laporan@nuave.test>");
-  vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "");
-  vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "");
+  // These tests count holds against the cap with a USD 2.00 limit and a USD 5
+  // cap (the defaults before 2026-10-28); the arithmetic is what they test.
+  vi.stubEnv("NUAVE_ORDER_SPEND_LIMIT_USD", "2");
+  vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "5");
   vi.stubEnv("NUAVE_TEST_PASS_CODE", "test-pass-code-of-at-least-24-chars");
   vi.stubEnv("MIDTRANS_SERVER_KEY", fake.serverKey);
   vi.stubEnv("MIDTRANS_IS_PRODUCTION", "false");

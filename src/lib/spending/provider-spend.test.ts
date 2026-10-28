@@ -142,9 +142,9 @@ describe("reserveProviderSpend", () => {
 });
 
 describe("daily limit setting", () => {
-  it("defaults to 5 and fails closed on a bad value", () => {
+  it("defaults to 50 and fails closed on a bad value", () => {
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "");
-    expect(dailySpendLimitUsd()).toBe(5);
+    expect(dailySpendLimitUsd()).toBe(50);
     vi.stubEnv("NUAVE_DAILY_SPEND_LIMIT_USD", "0.015");
     expect(dailySpendLimitUsd()).toBe(0.015);
     for (const bad of ["lots", "-1", "NaN"]) {

@@ -47,9 +47,9 @@ type OrderStatusAnswer = {
 };
 
 const POLL_MS = 5_000;
-/** The delivery promise says 15 minutes after the audit starts (Spec 018
- * R-23); past it, the running page offers help (S5). */
-const DELAY_NOTICE_MS = 15 * 60_000;
+/** The delivery promise says 30 minutes after the audit starts (Spec 018
+ * R-23, amended 2026-10-28); past it, the running page offers help (S5). */
+const DELAY_NOTICE_MS = 30 * 60_000;
 
 /** A "Minta bantuan" email to support, naming the order when it is known. */
 function helpHref(subject: string, orderNumber: string | null): string {

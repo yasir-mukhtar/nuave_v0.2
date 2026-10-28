@@ -78,7 +78,7 @@ biaya tambahan saat checkout. Bayar lewat QRIS, transfer bank, GoPay, atau DANA.
 
 ## Berapa lama?
 
-Cek gratis biasanya hanya beberapa detik. Laporan siap dalam 15 menit setelah
+Cek gratis biasanya hanya beberapa detik. Laporan siap dalam 30 menit setelah
 audit dimulai. Jika ada bagian yang gagal diperiksa, tim kami membantu
 menyelesaikannya. Jika tetap tidak bisa, Anda mendapat pengembalian dana
 sebagian, sesuai jumlah pemeriksaan yang gagal.
