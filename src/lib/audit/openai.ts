@@ -316,7 +316,7 @@ const EXTRACTION_LENGTH_INSTRUCTIONS = [
 const EXTRACTION_RETRY_BREVITY_INSTRUCTION =
   "The previous attempt ran past its output limit. Return a shorter draft: at most four items per list except market_areas, at most six evidence records, and no note longer than eight words. For market_areas preserve a faithful description of up to eight supported geographic areas without shortening it to four; national/international presence still has no active areas.";
 
-function extractionRequest(
+export function extractionRequest(
   input: Omit<ExtractionInput, "budget">,
   requestedModel: string,
   extraInstructions: string[],
