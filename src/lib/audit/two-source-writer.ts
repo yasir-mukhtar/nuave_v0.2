@@ -6,6 +6,7 @@
 import { assembleReportContent } from "./contracts";
 import { reportAssessmentInstructions } from "./report-prompt-contract";
 import { REPORT_PLAYBOOK } from "./report-playbook";
+import { REPORT_WRITING_GUIDE } from "./report-writing-guide";
 import { stripPhoneNumbers } from "../checks/phones";
 import {
   contextForReportModel,
@@ -115,6 +116,10 @@ function writerInstructions(
       : []),
     "Nuave's playbook (approved by the founder) follows.",
     REPORT_PLAYBOOK,
+    // Spec 023 R-10: how to think and write, read after the playbook. Its
+    // examples use placeholders; copy the way, never the sentences.
+    "Nuave's writing guide (in Indonesian) follows. Where it and the rules above differ on facts, counts or advice, the rules above win.",
+    REPORT_WRITING_GUIDE,
   ];
 }
 
