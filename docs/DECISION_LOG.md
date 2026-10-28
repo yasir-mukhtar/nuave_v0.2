@@ -30,6 +30,16 @@ brawijayahospital.com; 22 Firecrawl credits, about USD 0.11), Yasir chose:
    dropped when the report is saved, or with the order, as the privacy page
    says.
 
+5. **Cleaner page text** (same day, after reading Audy Dental's pages):
+   before the 6,000-character cut, the reader drops the site's menu (the
+   linked lines every own page repeats, found with three or more pages),
+   repeats of a linked or long line within a page, slider numbers and image
+   leftovers. The own branches page is cut at 20,000 characters, so a
+   chain's whole list fits (Audy's 60+ branches were cut at C). This applies
+   to every reading from then on, at step 3 and for the report. The quiz
+   still holds at most 8 branches and 8 areas; raising that is a separate
+   decision.
+
 The test also found that today's homepage reader cannot read
 brawijayahospital.com (403) and found no services on audydental.com;
 Firecrawl read both. Haiku 5.5 (low) was slower than Luna and too vague on

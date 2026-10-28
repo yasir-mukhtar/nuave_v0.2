@@ -10,6 +10,8 @@ import {
   firecrawlFetcher,
   ownPagesToRead,
   pageText,
+  siteChrome,
+  BRANCH_PAGE_TEXT_MAX_CHARS,
   readPagesForReport,
   type PageFetcher,
 } from "./page-reader";
@@ -133,6 +135,73 @@ describe("which pages are read (the reading test)", () => {
       "https://fiksi.example/layanan/gigi-anak",
       "https://fiksi.example/layanan/implan",
     ]);
+  });
+
+  it("a page's text drops slider numbers, image leftovers and repeats of a linked or long line, but keeps short repeats such as prices", () => {
+    const menu = "- [Pricelist](https://fiksi.example/pricelist/)";
+    const text = pageText(
+      [
+        menu,
+        menu,
+        "- 1",
+        "- 2",
+        "%20Homepage%20-%20Referral.webp&w=3840&q=85)",
+        "Scaling",
+        "Rp 300.000",
+        "Tambal",
+        "Rp 300.000",
+      ].join("\n"),
+    );
+    expect(text.split(menu)).toHaveLength(2);
+    expect(text).not.toMatch(/^- 1$/m);
+    expect(text).not.toContain("webp");
+    expect(text.match(/Rp 300\.000/g)).toHaveLength(2);
+  });
+
+  it("the site's menu is the linked lines every own page repeats, found only with three or more pages", () => {
+    const menu =
+      "[Pricelist](https://fiksi.example/pricelist/) [Promo](https://fiksi.example/promo/)";
+    const services = "[Behel Gigi](https://fiksi.example/services/behel/)";
+    const pages = [
+      `${menu}\n${services}\nBeranda`,
+      `${menu}\n${services}\nLayanan`,
+      `${menu}\nCabang`,
+    ];
+    expect([...siteChrome(pages)]).toEqual([menu]);
+    expect(siteChrome(pages.slice(0, 2)).size).toBe(0);
+    expect(pageText(pages[0]!, undefined, siteChrome(pages))).toBe(
+      `${services}\nBeranda`,
+    );
+  });
+
+  it("the own branch list is read at the longer limit, with the menu stripped first", async () => {
+    const menu = "- [Promo](https://fiksi.example/promo/)";
+    const branches = Array.from(
+      { length: 400 },
+      (_, i) => `Cabang ${i}: Jl. Contoh No. ${i}, Kota Fiksi`,
+    ).join("\n");
+    const markdown: Record<string, string> = {
+      "https://fiksi.example/": `${menu}\nBeranda`,
+      "https://fiksi.example/layanan": `${menu}\nLayanan`,
+      "https://fiksi.example/lokasi": `${menu}\n${branches}`,
+    };
+    const { pages } = await readPagesForReport({
+      ownSite: "https://fiksi.example/",
+      sources: [],
+      fetcher: {
+        scrape: async (url) => ({ title: "Judul", markdown: markdown[url]! }),
+        map: async () => [
+          { url: "https://fiksi.example/layanan" },
+          { url: "https://fiksi.example/lokasi" },
+        ],
+      },
+    });
+    const lokasi = pages.find((page) => page.url.endsWith("/lokasi"))!;
+    expect(lokasi.text.length).toBeGreaterThan(6_000);
+    expect(lokasi.text.length).toBeLessThanOrEqual(
+      BRANCH_PAGE_TEXT_MAX_CHARS + 2,
+    );
+    expect(pages.every((page) => !page.text.includes("Promo"))).toBe(true);
   });
 
   it("a page's text has no phone number, email or image, and is cut at a line end", () => {

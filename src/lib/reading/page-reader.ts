@@ -28,6 +28,9 @@ export type ReadPage = {
 };
 
 export const PAGE_TEXT_MAX_CHARS = 6_000;
+/** The own site's branch list (founder decision 2026-10-28): long enough
+ * for a chain's whole list (Audy Dental's 60+ branches were cut at C). */
+export const BRANCH_PAGE_TEXT_MAX_CHARS = 20_000;
 /** Own-site pages: the address the audit started from, plus up to this many
  * of its pages found by the site map (prices, doctors, treatments, about). */
 export const OWN_EXTRA_PAGES = 4;
@@ -69,6 +72,11 @@ function ownPageKind(url: string, title: string | undefined): number {
   return byPath >= 0 || !title
     ? byPath
     : OWN_PAGE_KINDS.findIndex((kind) => kind.test(title));
+}
+
+/** True for an own-site page about where the business is. */
+export function isBranchPage(url: string): boolean {
+  return ownPageKind(url, undefined) === 1;
 }
 
 /** Path depth: a list page ("/lokasi") before one of its items
@@ -193,10 +201,57 @@ export function withoutContacts(text: string): string {
   return stripPhoneNumbers(text).replace(EMAIL, EMAIL_REMOVED);
 }
 
-/** A page's text for the writer: phone numbers and email addresses removed,
- * images and blank runs dropped, cut at the limit on a line end. */
-export function pageText(markdown: string, max = PAGE_TEXT_MAX_CHARS): string {
-  const clean = withoutContacts(markdown)
+/** Lines that carry no content: a broken image's address, or a slider's
+ * page number ("- 3"). */
+const NOISE_LINE =
+  /^(?:[-*]\s*\d{1,2}|\S*\.(?:webp|png|jpe?g|gif|svg|avif)\S*)$/i;
+
+/** A line worth comparing for repeats: one with a link, or a long one.
+ * Short lines repeat for good reasons (the same price for two treatments,
+ * the brand name above each branch) and are kept. */
+function repeatable(line: string): boolean {
+  return /\]\(/.test(line) || line.length >= 40;
+}
+
+/** The lines every one of the own site's pages repeats: its menu, header
+ * and footer (founder decision 2026-10-28: stripped before the cut, so the
+ * cut keeps content). Only with three or more pages, so a list two pages
+ * share (the services on the homepage and on /services) stays. */
+export function siteChrome(markdowns: readonly string[]): Set<string> {
+  if (markdowns.length < 3) return new Set();
+  const sets = markdowns.map(
+    (markdown) =>
+      new Set(
+        markdown
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(repeatable),
+      ),
+  );
+  return new Set(
+    [...sets[0]!].filter((line) => sets.every((set) => set.has(line))),
+  );
+}
+
+/** A page's text for the writer: phone numbers and email addresses removed;
+ * images, noise lines, the site's menu (`chrome`) and repeats of a linked
+ * or long line dropped; blank runs closed; cut at the limit on a line end. */
+export function pageText(
+  markdown: string,
+  max = PAGE_TEXT_MAX_CHARS,
+  chrome: ReadonlySet<string> = new Set(),
+): string {
+  const seen = new Set<string>();
+  const kept = markdown.split("\n").filter((raw) => {
+    const line = raw.trim();
+    if (!line) return true;
+    if (NOISE_LINE.test(line) || chrome.has(line)) return false;
+    if (!repeatable(line)) return true;
+    if (seen.has(line)) return false;
+    seen.add(line);
+    return true;
+  });
+  const clean = withoutContacts(kept.join("\n"))
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -427,6 +482,9 @@ export async function readPagesForReport(input: {
     ...cited.map((page) => ({ ...page, kind: "cited" as const })),
   ];
   const results: (ReadPage | null)[] = wanted.map(() => null);
+  const raw: ({ title: string; markdown: string } | null)[] = wanted.map(
+    () => null,
+  );
   let next = 0;
   const worker = async () => {
     while (stopped === undefined && next < wanted.length) {
@@ -436,21 +494,40 @@ export async function readPagesForReport(input: {
         stop(e);
         return null;
       });
-      const text = read ? pageText(read.markdown) : "";
-      if (!text) continue;
-      results[index] = {
-        url: page.url,
-        domain: urlDomain(page.url) ?? "",
-        title: withoutContacts(String(read!.title ?? "")).slice(0, 200),
-        kind: page.kind,
-        cited_in: page.cited_in,
-        text,
-      };
+      if (read?.markdown.trim()) raw[index] = read;
     }
   };
   await Promise.all(
     Array.from({ length: Math.max(1, input.concurrency ?? 1) }, worker),
   );
+  // The own site's menu is found across its pages, so the text is made only
+  // once every page is read.
+  const chrome = siteChrome(
+    wanted.flatMap((page, i) =>
+      page.kind === "own" && raw[i] ? [raw[i]!.markdown] : [],
+    ),
+  );
+  wanted.forEach((page, i) => {
+    const read = raw[i];
+    if (!read) return;
+    const own = page.kind === "own";
+    const text = pageText(
+      read.markdown,
+      own && isBranchPage(page.url)
+        ? BRANCH_PAGE_TEXT_MAX_CHARS
+        : PAGE_TEXT_MAX_CHARS,
+      own ? chrome : undefined,
+    );
+    if (!text) return;
+    results[i] = {
+      url: page.url,
+      domain: urlDomain(page.url) ?? "",
+      title: withoutContacts(String(read.title ?? "")).slice(0, 200),
+      kind: page.kind,
+      cited_in: page.cited_in,
+      text,
+    };
+  });
   return {
     pages: results.filter((page): page is ReadPage => page !== null),
     unread: wanted.flatMap((page, i) => (results[i] ? [] : [page.url])),

@@ -18,9 +18,15 @@
  *   STEP3_MODELS_LIVE=1 npx vitest run --config vitest.live-provider.config.ts \
  *     scripts/step3-reading-test/models.spec.ts
  *
+ * - GPT-5.6 Luna medium and GPT-6 Luna low and medium, straight from
+ *   OpenAI (founder request, third round).
+ *
  * STEP3_MODELS (comma-separated keys) runs only those models;
  * STEP3_PAGES=saved reuses the pages an earlier run saved (no Firecrawl
- * credit); STEP3_OUT names the results file (default models.json).
+ * credit); STEP3_PAGES=reread reads again, with the live reader, the sites
+ * named in STEP3_REREAD (hostnames) from the pages an earlier run chose
+ * (no site map, so five credits a site) and reuses the others' saved pages;
+ * STEP3_OUT names the results file (default models.json).
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -36,6 +42,13 @@ import {
 import { cheaperInferenceBilledCostUsd } from "../../src/lib/audit/questions-id-glm";
 import { serverOwnedAuditBudget } from "../../src/lib/audit/telemetry";
 import { readOwnSiteLive, type OwnPages } from "../../src/lib/orders/pages";
+import {
+  cappedFetch,
+  firecrawlFetcher,
+  patientFetch,
+  readPagesForReport,
+} from "../../src/lib/reading/page-reader";
+import OpenAI from "openai";
 
 const LIVE = process.env.STEP3_MODELS_LIVE === "1";
 const OUT = join(process.cwd(), ".local-evidence", "step3-reading-test");
@@ -79,6 +92,18 @@ const MODELS = [
       effort,
     })),
   ),
+  ...(
+    [
+      ["gpt-5.6-luna", "medium"],
+      ["gpt-6-luna", "low"],
+      ["gpt-6-luna", "medium"],
+    ] as const
+  ).map(([model, effort]) => ({
+    key: `${model}-${effort} (OpenAI)`,
+    via: "openai-direct" as const,
+    model,
+    effort,
+  })),
   {
     key: "haiku-5.5-low",
     via: "anthropic",
@@ -95,10 +120,21 @@ const MODELS = [
 type Model = (typeof MODELS)[number];
 
 const ONLY = process.env.STEP3_MODELS?.split(",").map((key) => key.trim());
-const SAVED_PAGES = process.env.STEP3_PAGES === "saved";
+const REREAD = process.env.STEP3_PAGES === "reread";
+const SAVED_PAGES = process.env.STEP3_PAGES === "saved" || REREAD;
+const REREAD_SITES = (process.env.STEP3_REREAD ?? "")
+  .split(",")
+  .map((host) => host.trim())
+  .filter(Boolean);
 const OUT_FILE = process.env.STEP3_OUT?.trim() || "models.json";
 const pagesFile = (site: Site) =>
   join(OUT, `models-pages-${new URL(site.url).hostname}.json`);
+const rereadFile = (site: Site) =>
+  join(OUT, `models-pages-reread-${new URL(site.url).hostname}.json`);
+/** gpt-5.6-luna short-context price, as in telemetry.ts PRICING (USD per
+ * million tokens). GPT-6 Luna has no price in Nuave's code: its tokens are
+ * recorded instead. */
+const LUNA_PRICE = { input: 0.2, cachedInput: 0.02, output: 1.2 };
 
 /** USD per million tokens (claude-api skill table, cached 2026-10-06). */
 const CLAUDE_PRICE: Record<string, { input: number; output: number }> = {
@@ -117,6 +153,7 @@ type Result = {
   ok: boolean;
   error?: string;
   draft?: unknown;
+  tokens?: { input: number; output: number; reasoning: number };
 };
 
 const seconds = (start: number) =>
@@ -180,6 +217,61 @@ async function viaOpenAI(site: Site, own: OwnPages): Promise<Partial<Result>> {
     ),
     ok: result.draft.verified_offerings.length > 0 || !!result.draft.category,
     draft: result.draft,
+  };
+}
+
+/** The live request (pages, no search) sent straight to OpenAI with the
+ * model and effort under test. */
+async function viaOpenAIDirect(
+  model: string,
+  effort: Effort,
+  site: Site,
+  own: OwnPages,
+): Promise<Partial<Result>> {
+  const request = extractionRequest(
+    {
+      website_url: site.url,
+      brand_name: site.name,
+      market_context: "",
+      category: "",
+      identity_unverified: true,
+      safety_identifier: "nuave-step3-models-test",
+      pages_read: own.pages,
+    },
+    model,
+    [],
+  );
+  const response = await new OpenAI({ maxRetries: 0 }).responses.parse(
+    { ...request, reasoning: { effort } },
+    { timeout: 180_000 },
+  );
+  const usage = response.usage;
+  const cached = usage?.input_tokens_details?.cached_tokens ?? 0;
+  const parsed = response.output_parsed
+    ? extractionModelDraftSchema.safeParse(response.output_parsed)
+    : null;
+  return {
+    usd:
+      usage && model === "gpt-5.6-luna"
+        ? ((usage.input_tokens - cached) * LUNA_PRICE.input +
+            cached * LUNA_PRICE.cachedInput +
+            usage.output_tokens * LUNA_PRICE.output) /
+          1e6
+        : null,
+    ...(usage
+      ? {
+          tokens: {
+            input: usage.input_tokens,
+            output: usage.output_tokens,
+            reasoning: usage.output_tokens_details?.reasoning_tokens ?? 0,
+          },
+        }
+      : {}),
+    ok: Boolean(parsed?.success),
+    draft: parsed?.success ? parsed.data : response.output_parsed,
+    ...(parsed?.success
+      ? {}
+      : { error: `no usable answer (${response.status})` }),
   };
 }
 
@@ -303,9 +395,11 @@ async function runModel(
     const result =
       candidate.via === "openai"
         ? await viaOpenAI(site, own)
-        : candidate.via === "cheaper"
-          ? await viaCheaper(candidate.model, candidate.effort, site, own)
-          : await viaAnthropic(candidate.model, site, own);
+        : candidate.via === "openai-direct"
+          ? await viaOpenAIDirect(candidate.model, candidate.effort, site, own)
+          : candidate.via === "cheaper"
+            ? await viaCheaper(candidate.model, candidate.effort, site, own)
+            : await viaAnthropic(candidate.model, site, own);
     return {
       model: candidate.key,
       site: site.url,
@@ -326,6 +420,29 @@ async function runModel(
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+/** The live reader on the pages an earlier run chose (its site map
+ * replaced by those addresses, so no map credit): today's trimming and
+ * branch-page limit on fresh text. */
+async function rereadOwn(site: Site, earlier: OwnPages): Promise<OwnPages> {
+  const home = earlier.pages[0]!.url;
+  const read = await readPagesForReport({
+    ownSite: site.url,
+    sources: [],
+    concurrency: 2,
+    fetcher: {
+      ...firecrawlFetcher(
+        process.env.FIRECRAWL_API_KEY!.trim(),
+        cappedFetch(patientFetch(fetch), earlier.pages.length),
+      ),
+      map: async () =>
+        earlier.pages
+          .filter((page) => page.url !== home)
+          .map((page) => ({ url: page.url })),
+    },
+  });
+  return { pages: read.pages, unread: read.unread, requests: 0 };
 }
 
 describe("step 3 model comparison", () => {
@@ -379,18 +496,30 @@ describe("step 3 model comparison", () => {
         );
       for (const site of SITES) {
         const start = performance.now();
-        const own: OwnPages | null = SAVED_PAGES
-          ? {
-              pages: JSON.parse(readFileSync(pagesFile(site), "utf8")),
-              unread: [],
-              requests: 0,
-            }
-          : await readOwnSiteLive({
-              apiKey: process.env.FIRECRAWL_API_KEY,
-              website: site.url,
-            });
+        const host = new URL(site.url).hostname;
+        const saved = (): OwnPages => ({
+          pages: JSON.parse(readFileSync(pagesFile(site), "utf8")),
+          unread: [],
+          requests: 0,
+        });
+        const own: OwnPages | null =
+          REREAD && REREAD_SITES.includes(host)
+            ? await rereadOwn(site, saved())
+            : SAVED_PAGES
+              ? saved()
+              : await readOwnSiteLive({
+                  apiKey: process.env.FIRECRAWL_API_KEY,
+                  website: site.url,
+                });
         reads.push({
           site: site.url,
+          source:
+            REREAD && REREAD_SITES.includes(host)
+              ? "reread"
+              : SAVED_PAGES
+                ? "saved"
+                : "read",
+          chars: own?.pages.map((page) => page.text.length) ?? [],
           seconds: seconds(start),
           pages: own?.pages.map((page) => page.url) ?? [],
           unread: own?.unread ?? [],
@@ -400,6 +529,8 @@ describe("step 3 model comparison", () => {
         if (!own) continue;
         if (!SAVED_PAGES)
           writeFileSync(pagesFile(site), JSON.stringify(own.pages, null, 2));
+        if (REREAD && REREAD_SITES.includes(host))
+          writeFileSync(rereadFile(site), JSON.stringify(own.pages, null, 2));
         for (let run = 1; run <= RUNS; run += 1)
           for (const candidate of models) {
             results.push(await runModel(candidate, site, own, run));
