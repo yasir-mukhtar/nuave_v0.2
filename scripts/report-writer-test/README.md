@@ -82,9 +82,8 @@ Needs `OPENAI_API_KEY`, `NUAVE_ANTHROPIC_API_KEY` and
 workspace. `ORDERS=NV-…` and
 `ENTRIES=luna-high,haiku-medium` narrow it. Each call is first written to
 `spend.json` at its worst case and is refused when that could take the total
-past **USD 10** (the hard stop: USD 5 on 2026-10-26, USD 7 on 2026-10-27,
-USD 10 on 2026-10-28 for Spec 023's round, which keeps its own ledger); it is
-then settled
+past **USD 7** (the hard stop for tests A and B together, raised from USD 5 on
+2026-10-27); it is then settled
 at its real cost. An entry already written by today's writer is never run
 again; move its file out of `runs/` to redo it.
 `REPORT_TEST_MAX_OUTPUT_TOKENS=32000` gives that run a bigger output allowance
@@ -169,14 +168,19 @@ writer after it, on the same evidence and pages, from one ledger.
 
 1. **Folders.** One shared folder (an absolute path) holds `raw/` (the
    exported evidence, as in step 1), `pages/` and `spend.json`, the one
-   ledger for both writers (USD 10, fresh for this round). Each writer has
-   its own results folder.
+   ledger for both writers (`STYLE_HARD_STOP_USD`, USD 10, fresh for this
+   round; the run refuses a ledger that holds test B's unlabelled calls).
+   Each writer has its own results folder. Where an earlier test already
+   saved Sozo's evidence and pages (`raw/NV-3WDSAY-*.json`,
+   `pages/NV-3WDSAY.json`), copy them into the shared folder, so Sozo is not
+   read again.
 2. **Two checkouts.** The "after" writer runs from the frozen commit of the
    writer change; the "before" writer from a git worktree of `main` at the
    commit before it (`git worktree add ../before <commit>`). Both commits are
    recorded in each results folder (`commit.json`) and in every result.
-3. **Dry run, each writer** (free): prints each call's worst case (the
-   report and one revision) and the ledger.
+3. **Dry run, each writer** (free): prints each report's worst case (the
+   report and one revision carrying the draft, both at 24,000 output tokens)
+   and the ledger.
 
    ```sh
    REPORT_TEST_SHARED_DIR=/abs/shared REPORT_TEST_RESULTS_DIR=/abs/before \
@@ -191,11 +195,16 @@ writer after it, on the same evidence and pages, from one ledger.
    run refuses any other). The first live run on an order reads its pages
    with Firecrawl (at most 16 requests) into the shared folder; every later
    run reuses them. Orders: NV-3WDSAY with `RUN=1` and `RUN=2`, and the
-   founder's second order with `RUN=1`.
-5. **Pairs** (free): with `REPORT_TEST_SHARED_DIR`, `REPORT_TEST_BEFORE_DIR`
-   and `REPORT_TEST_AFTER_DIR` set, the same command writes
+   founder's second order with `RUN=1`. A report that failed is kept (its
+   cost is real) and is not run again; move `runs/<order>/run-N.json` aside
+   to redo it.
+5. **Pairs** (free), from the after writer's checkout (where the guide's
+   examples are): with `REPORT_TEST_SHARED_DIR`, `REPORT_TEST_BEFORE_DIR`
+   and `REPORT_TEST_AFTER_DIR` set, the same command lists any pair with a
+   missing side and writes
    `style-review/<order>/Pasangan <run> - 1.json` and `- 2.json` in random
-   order and a blank `style-review/scores.csv`. `style-key/key.json` and
+   order, adding a row to `style-review/scores.csv` for each new pair (a
+   redrawn pair sets the old sheet aside). `style-key/key.json` and
    `style-key/metrics.csv` name before and after: open them only after
    scoring.
 6. **Print** from the after writer's checkout, so both reports of a pair are

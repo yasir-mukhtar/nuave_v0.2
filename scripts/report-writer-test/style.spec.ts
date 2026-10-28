@@ -52,7 +52,6 @@ import {
   claudeWriter,
   entryInput,
   entryPrompt,
-  HARD_STOP_USD,
   Ledger,
   loadEvidence,
   outputAllowance,
@@ -62,14 +61,17 @@ import {
   readOrderPages,
   runEntry,
   telltaleIn,
-  worstCaseUsd,
   writerFingerprint,
   type EntryResult,
 } from "./harness";
 import {
   blindStyleReport,
   drawStylePair,
+  guideExamples,
+  STYLE_HARD_STOP_USD,
+  STYLE_OUTPUT_TOKENS,
   styleMetrics,
+  styleWorstCaseUsd,
   type StyleLabel,
   type StylePairKey,
 } from "./style";
@@ -141,18 +143,24 @@ it.skipIf(!SHARED || !RESULTS || !LABEL)(
   "Spec 023: one writer's reports on the saved orders",
   { timeout: 60 * 60 * 1000 },
   async () => {
-    if (
-      live &&
-      outputAllowance() !== CLAUDE_WRITERS["claude-opus-5-5"].maxTokens
-    )
+    expect(CLAUDE_WRITERS["claude-opus-5-5"].maxTokens).toBe(
+      STYLE_OUTPUT_TOKENS,
+    );
+    if (live && outputAllowance() !== STYLE_OUTPUT_TOKENS)
       throw new Error(
-        `A live run uses production's output allowance: set REPORT_TEST_MAX_OUTPUT_TOKENS=${CLAUDE_WRITERS["claude-opus-5-5"].maxTokens}.`,
+        `A live run uses production's output allowance: set REPORT_TEST_MAX_OUTPUT_TOKENS=${STYLE_OUTPUT_TOKENS}.`,
       );
     const ledger = new Ledger(
       join(SHARED!, "spend.json"),
-      HARD_STOP_USD,
+      STYLE_HARD_STOP_USD,
       LABEL,
     );
+    // This round's ledger is fresh (Q-4): a line without a before/after
+    // label is test B's, and its spend is not this round's.
+    if (ledger.calls().some((call) => !call.label))
+      throw new Error(
+        `${ledger.path} holds calls from another test; use a fresh shared folder.`,
+      );
     const at = commit();
     write(join(RESULTS!, "commit.json"), { label: LABEL, ...at });
     const plan: Record<string, unknown>[] = [];
@@ -197,8 +205,9 @@ it.skipIf(!SHARED || !RESULTS || !LABEL)(
         label: LABEL,
         writer,
         prompt_chars: promptChars,
-        // The report and, at worst, its one language revision.
-        worst_case_usd: 2 * worstCaseUsd(ENTRY.model!, promptChars),
+        // The report and, at worst, its one language revision, at
+        // production's output allowance in every mode.
+        worst_case_usd: styleWorstCaseUsd(ENTRY.model!, promptChars),
         done,
       });
       if (!live || done) continue;
@@ -268,9 +277,15 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
         join(keyDir, "key.json"),
       ) ?? {};
     const key: Record<string, Record<string, StylePairKey>> = { ...stored };
-    const guide = existsSync("docs/content/report/WRITING_GUIDE.md")
-      ? readFileSync("docs/content/report/WRITING_GUIDE.md", "utf8")
+    // Run from the after writer's checkout, where the guide is.
+    const guidePath = "docs/content/report/WRITING_GUIDE.md";
+    const examples = existsSync(guidePath)
+      ? guideExamples(readFileSync(guidePath, "utf8"))
       : "";
+    if (!examples)
+      console.log(
+        `No guide examples at ${guidePath}: run the pairs from the after writer's checkout to measure overlaps.`,
+      );
     const metricsRows: string[] = [
       [
         "order",
@@ -302,8 +317,12 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
     const cell = (value: unknown) =>
       `"${(typeof value === "string" ? value : JSON.stringify(value)).replace(/"/g, '""')}"`;
     const pairs: string[] = [];
+    const missing: string[] = [];
+    let redrawn = false;
 
-    for (const order of ordersIn(SHARED!)) {
+    // Every saved order, whatever ORDERS names, so the sheet and the
+    // metrics always cover the whole test.
+    for (const order of savedOrders(SHARED!)) {
       const evidence = loadEvidence(order, SHARED!);
       const deliveredAt = (
         JSON.parse(evidence.order.report_json) as AuditReport
@@ -313,16 +332,22 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
         prompts: unknown;
         originals?: unknown;
       };
-      const names = existsSync(pagesPath(order, SHARED!))
-        ? ((await entryInput(evidence, ENTRY, SHARED!)).input.two_source_facts
-            ?.names ?? [])
-        : [];
-      const runs = existsSync(join(AFTER!, "runs", order))
-        ? readdirSync(join(AFTER!, "runs", order))
-            .map((name) => /^run-(\d+)\.json$/.exec(name)?.[1])
-            .filter((run): run is string => Boolean(run))
-            .sort()
-        : [];
+      const facts = existsSync(pagesPath(order, SHARED!))
+        ? (await entryInput(evidence, ENTRY, SHARED!)).input.two_source_facts
+        : undefined;
+      const names = facts?.names ?? [];
+      const businesses = facts?.writer?.businesses ?? [];
+      const runs = [
+        ...new Set(
+          [BEFORE!, AFTER!].flatMap((dir) =>
+            existsSync(join(dir, "runs", order))
+              ? readdirSync(join(dir, "runs", order))
+                  .map((name) => /^run-(\d+)\.json$/.exec(name)?.[1])
+                  .filter((run): run is string => Boolean(run))
+              : [],
+          ),
+        ),
+      ].sort();
       for (const run of runs) {
         const results = {
           before: readJson<StyleResult>(
@@ -330,37 +355,45 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
           ),
           after: readJson<StyleResult>(resultPath(AFTER!, order, Number(run))),
         };
-        if (!results.before?.report || !results.after?.report) continue;
+        if (!results.before?.report || !results.after?.report) {
+          // A failed report is saved (its cost is real) and is not run
+          // again; move runs/<order>/run-N.json aside to redo it.
+          missing.push(
+            `${order} run ${run}: before ${results.before?.status ?? "not run"}, after ${results.after?.status ?? "not run"}`,
+          );
+          continue;
+        }
         const pair = drawStylePair(
           { before: results.before.writer, after: results.after.writer },
           stored[order]?.[run],
         );
+        if (stored[order]?.[run] && pair !== stored[order]![run])
+          redrawn = true;
         key[order] = { ...key[order], [run]: pair };
-        const numbers: Record<StyleLabel, "1" | "2"> = {
-          after: pair.after,
-          before: pair.after === "1" ? "2" : "1",
-        };
-        for (const label of ["before", "after"] as const) {
+        const labels: Record<"1" | "2", StyleLabel> =
+          pair.after === "1"
+            ? { "1": "after", "2": "before" }
+            : { "1": "before", "2": "after" };
+        // Written in number order, so file times tell nothing.
+        for (const number of ["1", "2"] as const) {
+          const label = labels[number];
           const result = results[label]!;
           const report = blindStyleReport(result.report!, deliveredAt);
           expect(
             telltaleIn(report),
             `${order} run ${run} ${label} still names its writer`,
           ).toBeNull();
-          write(
-            join(review, order, `Pasangan ${run} - ${numbers[label]}.json`),
-            {
-              report,
-              context: intake.context,
-              prompts: intake.prompts,
-              originals: intake.originals ?? [],
-              observations: evidence.rows.flatMap((row) =>
-                row.observation_json ? [JSON.parse(row.observation_json)] : [],
-              ),
-              synthetic: false,
-            },
-          );
-          const m = styleMetrics(result.report!, names, guide);
+          write(join(review, order, `Pasangan ${run} - ${number}.json`), {
+            report,
+            context: intake.context,
+            prompts: intake.prompts,
+            originals: intake.originals ?? [],
+            observations: evidence.rows.flatMap((row) =>
+              row.observation_json ? [JSON.parse(row.observation_json)] : [],
+            ),
+            synthetic: false,
+          });
+          const m = styleMetrics(result.report!, names, examples, businesses);
           const seconds =
             (result.report!.operational_telemetry?.calls ?? []).reduce(
               (sum, call) => sum + (call.latency_ms ?? 0),
@@ -371,7 +404,7 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
               order,
               run,
               label,
-              numbers[label],
+              number,
               result.writer,
               result.commit?.commit ?? "",
               result.status,
@@ -402,17 +435,26 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
     write(join(keyDir, "key.json"), key);
     writeFileSync(join(keyDir, "metrics.csv"), `${metricsRows.join("\n")}\n`);
     // The founder's sheet: for each pair, which report does better (1, 2 or
-    // sama), the overall pick, and the safety gate for each report. An
-    // existing sheet is never overwritten.
+    // sama), the overall pick, and the safety gate for each report. Scores
+    // are never overwritten: a new pair adds a row; a redrawn pair sets the
+    // whole sheet aside, since its numbers no longer mean the same report.
     const scores = join(review, "scores.csv");
-    if (!existsSync(scores) && pairs.length) {
+    const header =
+      "order,pair,main_message_after_first_paragraph_1_2_sama,every_finding_answers_so_what_1_2_sama,editor_would_change_less_1_2_sama,overall_pick_1_2,safety_fail_1_ya_tidak,safety_fail_2_ya_tidak,notes";
+    if (redrawn && existsSync(scores))
+      renameSync(scores, join(review, `scores-superseded-${Date.now()}.csv`));
+    const lines = existsSync(scores)
+      ? readFileSync(scores, "utf8").trimEnd().split("\n")
+      : [header];
+    const listed = new Set(
+      lines.slice(1).map((line) => line.split(",").slice(0, 2).join(",")),
+    );
+    const added = pairs.filter((pair) => !listed.has(pair));
+    if (pairs.length) {
       mkdirSync(review, { recursive: true });
       writeFileSync(
         scores,
-        `${[
-          "order,pair,main_message_after_first_paragraph_1_2_sama,every_finding_answers_so_what_1_2_sama,editor_would_change_less_1_2_sama,overall_pick_1_2,safety_fail_1_ya_tidak,safety_fail_2_ya_tidak,notes",
-          ...pairs.map((pair) => `${pair},,,,,,,`),
-        ].join("\n")}\n`,
+        `${[...lines, ...added.map((pair) => `${pair},,,,,,,`)].join("\n")}\n`,
       );
     }
     // Both writers' worst cases, from their dry runs.
@@ -432,7 +474,14 @@ it.skipIf(!SHARED || !BEFORE || !AFTER)(
       .filter((row) => row.done === false)
       .reduce((sum, row) => sum + (row.worst_case_usd ?? 0), 0);
     console.log(
-      `${pairs.length} pairs written to ${review}; key and metrics in ${keyDir} (open only after scoring). Both writers' worst case still to run: USD ${Math.round(worst * 100) / 100} (hard stop USD ${HARD_STOP_USD}).`,
+      [
+        `${pairs.length} pairs in ${review} (${added.length} new on the sheet${redrawn ? "; a pair was redrawn, so the old sheet was set aside" : ""}).`,
+        ...(missing.length
+          ? [`Not paired (no report on one side):`, ...missing]
+          : []),
+        `Key and metrics in ${keyDir}: open only after scoring.`,
+        `Both writers' worst case still to run: USD ${Math.round(worst * 100) / 100} (hard stop USD ${STYLE_HARD_STOP_USD}).`,
+      ].join("\n"),
     );
   },
 );

@@ -51,12 +51,16 @@ import {
   drawPageSet,
   PAGE_SET,
   type OrderEvidence,
+  costUsd,
   HARD_STOP_USD,
 } from "../scripts/report-writer-test/harness";
 import {
   blindStyleReport,
   drawStylePair,
+  guideExamples,
+  STYLE_HARD_STOP_USD,
   styleMetrics,
+  styleWorstCaseUsd,
 } from "../scripts/report-writer-test/style";
 import { mkdirSync, writeFileSync } from "node:fs";
 
@@ -829,8 +833,16 @@ describe("the reading test (founder decision 2026-10-27)", () => {
 });
 
 describe("Spec 023: the writing-quality test", () => {
-  it("labels each ledger line with its writer, and stops at USD 10", () => {
-    expect(HARD_STOP_USD).toBe(10);
+  it("labels each ledger line with its writer; this round stops at USD 10, test B still at USD 7", () => {
+    expect(HARD_STOP_USD).toBe(7);
+    expect(STYLE_HARD_STOP_USD).toBe(10);
+    // Worst case: the report and its revision (which also carries the
+    // draft), both at production's 24,000-token allowance in every mode.
+    expect(styleWorstCaseUsd("claude-opus-5-5", 100_000)).toBeCloseTo(
+      costUsd("claude-opus-5-5", 100_000, 24_000) +
+        costUsd("claude-opus-5-5", 140_000, 24_000),
+      6,
+    );
     const ledger = new Ledger(join(dir, "spend.json"), 10, "before");
     ledger
       .reserve({
@@ -929,6 +941,50 @@ describe("Spec 023: the writing-quality test", () => {
     );
     expect(telltaleIn(blind)).toBeNull();
     expect(blind.provenance.report_prompt_version).toBe("hidden");
+    // Nothing else tells the writers apart: the revision, its reasons, or
+    // the input size.
+    expect(blind.provenance.language_retry_violations).toEqual([]);
+    expect(blind.provenance.language_retry_performed).toBe(false);
+    expect(blind.provenance.report_call_count).toBe(1);
+    expect(blind.operational_telemetry.input_tokens).toBe(0);
+    expect(blind.operational_telemetry.calls).toEqual([]);
+  });
+
+  it("reads only the guide's examples, counts each name once, splits sentences at . ! ? only, and leaves dashes in business names out", () => {
+    expect(
+      guideExamples(
+        "# Panduan\n\n## 2. Cara menulis\nKalimat aturan.\n\n## 4. Contoh\nKlinik A menulis satu halaman untuk satu treatment.\n\n## Sumber\nlain",
+      ),
+    ).toBe("Klinik A menulis satu halaman untuk satu treatment.\n");
+    expect(guideExamples("# Panduan tanpa contoh")).toBe("");
+    const report = {
+      conclusion:
+        "Di ChatGPT, SOZO Skin Clinic disebut di 3 dari 10 jawaban; di Google, SOZO belum disebut. Di ChatGPT, SOZO disebut di 3 dari 10 jawaban.",
+      key_findings: [
+        {
+          title: "Judul yang panjang sekali dan tidak dihitung sebagai kalimat",
+          explanation: "Klinik Fiksi - Cabang Dago disebut ChatGPT.",
+        },
+      ],
+      priorities: [],
+      two_source_writing: {
+        verdict: "SOZO perlu halaman treatment.",
+        competitor_reasons: [],
+        takeaways: [],
+        plan: [],
+      },
+    } as unknown as AuditReport;
+    const m = styleMetrics(report, ["SOZO Skin Clinic", "SOZO"], "", [
+      "Klinik Fiksi - Cabang Dago",
+    ]);
+    // verdict 1, conclusion 2 (the ";" does not split), finding 1; the
+    // title is not a sentence.
+    expect(m.sentences).toBe(4);
+    // "SOZO Skin Clinic" once, "SOZO" three times: four mentions, not five.
+    expect(m.brand_name).toBe(4);
+    // Said twice in one part: still a repeat.
+    expect(m.repeated_counts).toEqual(["3 dari 10"]);
+    expect(m.dashes).toBe(0);
   });
 
   it("measures the writing: sentence lengths, typical phrases, dashes, names, repeated counts, cause words and guide overlaps", () => {
@@ -959,7 +1015,8 @@ describe("Spec 023: the writing-quality test", () => {
       ["SOZO"],
       "Contoh buruk: klinik ini tidak muncul di 3 dari 10 jawaban.",
     );
-    expect(m.sentences).toBe(6);
+    // Paragraphs only: verdict, conclusion, finding, recommendation.
+    expect(m.sentences).toBe(4);
     expect(m.typical_phrases).toEqual({
       "hal ini menunjukkan": 1,
       "selain itu": 1,

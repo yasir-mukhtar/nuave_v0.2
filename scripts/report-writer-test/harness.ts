@@ -538,10 +538,10 @@ export function productionSendsGoogleWords(
 
 /* --------------------------------- ledger --------------------------------- */
 
-/** Agent-run calls stop here: USD 5 by the founder's decision of
- * 2026-10-26, USD 7 on 2026-10-27, and USD 10 on 2026-10-28 (Spec 023 D-6
- * and Q-4: the writing-quality round counts in its own, fresh ledger). */
-export const HARD_STOP_USD = 10;
+/** Agent-run calls for tests A and B, together, stop here: USD 5 by the
+ * founder's decision of 2026-10-26, raised to USD 7 on 2026-10-27. Spec
+ * 023's round keeps its own ledger and stop (STYLE_HARD_STOP_USD). */
+export const HARD_STOP_USD = 7;
 
 type LedgerCall = {
   at: string;
