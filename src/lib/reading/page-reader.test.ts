@@ -174,6 +174,46 @@ describe("which pages are read (the reading test)", () => {
     );
   });
 
+  it("map, WhatsApp and long links keep only their label; short page links stay", () => {
+    const maps =
+      "https://www.google.com/maps/search/?api=1&query=Klinik%20Fiksi%20-%20Mal%20(3-23AB)%2C%20Jl.%20Contoh";
+    const wa = "https://api.whatsapp.com/send?text=Halo";
+    const long = `https://fiksi.example/promo?${"utm=iklan&".repeat(12)}`;
+    const branch = (name: string) => [
+      `### [${name}](https://fiksi.example/lokasi/${name.toLowerCase()}/)`,
+      `Jl. ${name} No. 1, Kota Fiksi`,
+      `[BUAT JADWAL](${wa}) [LIHAT MAPS >](${maps})`,
+    ];
+    const text = pageText(
+      [
+        ...branch("Dago"),
+        ...branch("Cimahi"),
+        `[Promo bulan ini](${long})`,
+        `Sumber: ${long}`,
+      ].join("\n"),
+    );
+    expect(text).not.toContain("google.com");
+    expect(text).not.toContain("whatsapp");
+    expect(text).not.toContain("utm=");
+    expect(text).toContain("### [Dago](https://fiksi.example/lokasi/dago/)");
+    expect(text).toContain("Promo bulan ini");
+    expect(text.match(/BUAT JADWAL LIHAT MAPS >/g)).toHaveLength(1);
+  });
+
+  it("a phone form's country list is dropped when a page has five or more", () => {
+    const codes = [
+      "- United States+1",
+      "- Albania (Shqipëri)+355",
+      "- Belarus (Беларусь)+375",
+      "- Brunei+673",
+      "- Indonesia+62",
+    ];
+    expect(pageText(["Cabang Dago", ...codes].join("\n"))).toBe("Cabang Dago");
+    expect(pageText(codes.slice(0, 4).join("\n"))).toBe(
+      codes.slice(0, 4).join("\n"),
+    );
+  });
+
   it("the own branch list is read at the longer limit, with the menu stripped first", async () => {
     const menu = "- [Promo](https://fiksi.example/promo/)";
     const branches = Array.from(

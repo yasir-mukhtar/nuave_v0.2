@@ -233,23 +233,57 @@ export function siteChrome(markdowns: readonly string[]): Set<string> {
   );
 }
 
+/** A link worth only its label: a map, a WhatsApp chat, or any address
+ * over 100 characters. Sozo's branch list ran past its cut on its map
+ * links (founder decision 2026-10-28). */
+const LABEL_ONLY_LINK =
+  /^(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps|waze\.com|api\.whatsapp\.com|wa\.me|wa\.link)/i;
+/** A markdown link, not an image; its address may hold one pair of
+ * brackets, as a map search for "AEON (3-23AB)" does. */
+const LINK = /(?<!!)\[([^\]]*)\]\(((?:[^()\s]|\([^()\s]*\))*)\)/g;
+const LONG_URL = /https?:\/\/\S{90,}/g;
+
+function shortLinks(line: string): string {
+  return line
+    .replace(LINK, (whole, label: string, url: string) =>
+      url.length > 100 || LABEL_ONLY_LINK.test(url.replace(/^https?:\/\//, ""))
+        ? label
+        : whole,
+    )
+    .replace(LONG_URL, "")
+    .trim();
+}
+
+/** A phone form's country list ("- Belarus (Беларусь)+375"), dropped when a
+ * page has five or more: Audy's chat form filled its branch page's cut. */
+const DIALING_CODE_ITEM = /^[-*]\s+\S.*\+\d{1,4}$/;
+
 /** A page's text for the writer: phone numbers and email addresses removed;
- * images, noise lines, the site's menu (`chrome`) and repeats of a linked
- * or long line dropped; blank runs closed; cut at the limit on a line end. */
+ * images, noise lines, the site's menu (`chrome`), a phone form's country
+ * list and repeats of a linked or long line dropped; map, chat and long
+ * links cut to their label; blank runs closed; cut at the limit on a line
+ * end. */
 export function pageText(
   markdown: string,
   max = PAGE_TEXT_MAX_CHARS,
   chrome: ReadonlySet<string> = new Set(),
 ): string {
+  const lines = markdown.split("\n");
+  const dialingCodes =
+    lines.filter((raw) => DIALING_CODE_ITEM.test(raw.trim())).length >= 5;
   const seen = new Set<string>();
-  const kept = markdown.split("\n").filter((raw) => {
+  const kept = lines.flatMap((raw) => {
     const line = raw.trim();
-    if (!line) return true;
-    if (NOISE_LINE.test(line) || chrome.has(line)) return false;
-    if (!repeatable(line)) return true;
-    if (seen.has(line)) return false;
-    seen.add(line);
-    return true;
+    if (!line) return [raw];
+    if (NOISE_LINE.test(line) || chrome.has(line)) return [];
+    if (dialingCodes && DIALING_CODE_ITEM.test(line)) return [];
+    const short = shortLinks(line);
+    if (!short) return [];
+    if (repeatable(line)) {
+      if (seen.has(short)) return [];
+      seen.add(short);
+    }
+    return [raw.replace(line, () => short)];
   });
   const clean = withoutContacts(kept.join("\n"))
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
