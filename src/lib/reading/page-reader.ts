@@ -246,10 +246,14 @@ const LINK = new RegExp(
   String.raw`(?<!!)\[([^\]]*)\]\((${ADDRESS_PART}*)\)`,
   "g",
 );
-/** A bare address; one of 90 characters or more after "://" goes. It takes
- * only whole bracket pairs, so cutting it never leaves a link or image
- * unclosed. */
-const BARE_URL = new RegExp(String.raw`https?:\/\/(${ADDRESS_PART}+)`, "g");
+/** A bare address; one of 90 characters or more after "://" goes. It
+ * stops at a square bracket and takes only whole round pairs, so cutting it
+ * never leaves a link or image unclosed, and an address written as a
+ * link's label ("[https://…](https://…)") is left to the link rule. */
+const BARE_URL = new RegExp(
+  String.raw`https?:\/\/((?:[^()[\]\s]|\((?:[^()\s]|\([^()\s]*\))*\))+)`,
+  "g",
+);
 /** A line of brackets only, nothing to read: the "[" and "](" of a link
  * that spans lines, once its address is cut. */
 const BRACKETS_ONLY = /^[[\]()]+$/;

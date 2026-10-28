@@ -238,6 +238,7 @@ describe("which pages are read (the reading test)", () => {
         `Lihat ${wiki} di sini`,
         "![Satu](https://fiksi.example/satu.png) Rp 100.000 per gigi",
         "![Dua](https://fiksi.example/dua.png) Rp 100.000 per gigi",
+        "Info: [https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/](https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/)",
       ].join("\n"),
     );
     expect(text).toBe(
@@ -246,6 +247,7 @@ describe("which pages are read (the reading test)", () => {
         "Lihat  di sini",
         "Rp 100.000 per gigi",
         "Rp 100.000 per gigi",
+        "Info: [https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/](https://fiksi.example/services/perawatan-saraf-gigi-untuk-anak-dan-dewasa/)",
       ].join("\n"),
     );
   });
