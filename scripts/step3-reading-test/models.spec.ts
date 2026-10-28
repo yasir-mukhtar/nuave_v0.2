@@ -10,13 +10,19 @@
  * - GPT-6 Luna low and medium, DeepSeek 4.1 Flash 1017 low and GLM 5.3
  *   Flash low, through Cheaper Inference;
  * - Claude Haiku 5.5 and Sonnet 5.5, low, through Anthropic.
+ * - GPT-6.1 Terra and GPT-6.1 Sol, low and medium, through Cheaper
+ *   Inference (founder request, second round).
  * A model that refuses low effort is asked again at medium, and the run
  * says so.
  *
  *   STEP3_MODELS_LIVE=1 npx vitest run --config vitest.live-provider.config.ts \
  *     scripts/step3-reading-test/models.spec.ts
+ *
+ * STEP3_MODELS (comma-separated keys) runs only those models;
+ * STEP3_PAGES=saved reuses the pages an earlier run saved (no Firecrawl
+ * credit); STEP3_OUT names the results file (default models.json).
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { describe, expect, it } from "vitest";
@@ -65,6 +71,14 @@ const MODELS = [
     model: "glm-5.3-flash",
     effort: "low",
   },
+  ...(["gpt-6.1-terra", "gpt-6.1-sol"] as const).flatMap((model) =>
+    (["low", "medium"] as const).map((effort) => ({
+      key: `${model}-${effort}`,
+      via: "cheaper" as const,
+      model,
+      effort,
+    })),
+  ),
   {
     key: "haiku-5.5-low",
     via: "anthropic",
@@ -79,6 +93,12 @@ const MODELS = [
   },
 ] as const;
 type Model = (typeof MODELS)[number];
+
+const ONLY = process.env.STEP3_MODELS?.split(",").map((key) => key.trim());
+const SAVED_PAGES = process.env.STEP3_PAGES === "saved";
+const OUT_FILE = process.env.STEP3_OUT?.trim() || "models.json";
+const pagesFile = (site: Site) =>
+  join(OUT, `models-pages-${new URL(site.url).hostname}.json`);
 
 /** USD per million tokens (claude-api skill table, cached 2026-10-06). */
 const CLAUDE_PRICE: Record<string, { input: number; output: number }> = {
@@ -342,23 +362,33 @@ describe("step 3 model comparison", () => {
         "OPENAI_API_KEY",
         "CHEAPERINFERENCE_API_KEY",
         "NUAVE_ANTHROPIC_API_KEY",
-        "FIRECRAWL_API_KEY",
+        ...(SAVED_PAGES ? [] : ["FIRECRAWL_API_KEY"]),
       ])
         expect(process.env[key], key).toBeTruthy();
+      const models = MODELS.filter(
+        (candidate) => !ONLY || ONLY.includes(candidate.key),
+      );
+      expect(models.length).toBeGreaterThan(0);
       mkdirSync(OUT, { recursive: true });
       const reads: Record<string, unknown>[] = [];
       const results: Result[] = [];
       const save = () =>
         writeFileSync(
-          join(OUT, "models.json"),
+          join(OUT, OUT_FILE),
           JSON.stringify({ reads, results }, null, 2),
         );
       for (const site of SITES) {
         const start = performance.now();
-        const own = await readOwnSiteLive({
-          apiKey: process.env.FIRECRAWL_API_KEY,
-          website: site.url,
-        });
+        const own: OwnPages | null = SAVED_PAGES
+          ? {
+              pages: JSON.parse(readFileSync(pagesFile(site), "utf8")),
+              unread: [],
+              requests: 0,
+            }
+          : await readOwnSiteLive({
+              apiKey: process.env.FIRECRAWL_API_KEY,
+              website: site.url,
+            });
         reads.push({
           site: site.url,
           seconds: seconds(start),
@@ -368,12 +398,10 @@ describe("step 3 model comparison", () => {
         });
         save();
         if (!own) continue;
-        writeFileSync(
-          join(OUT, `models-pages-${new URL(site.url).hostname}.json`),
-          JSON.stringify(own.pages, null, 2),
-        );
+        if (!SAVED_PAGES)
+          writeFileSync(pagesFile(site), JSON.stringify(own.pages, null, 2));
         for (let run = 1; run <= RUNS; run += 1)
-          for (const candidate of MODELS) {
+          for (const candidate of models) {
             results.push(await runModel(candidate, site, own, run));
             save();
           }
