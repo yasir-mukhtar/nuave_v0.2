@@ -1,4 +1,5 @@
 import type { ParsedSourceInput } from "./source-input";
+import { pickBusinessName } from "./business-name";
 import {
   SafeSourceFetchError,
   bytesToDataUrl,
@@ -155,6 +156,17 @@ function titleValue(html: string): string {
   return cleanText(titleMatch?.[1]);
 }
 
+function structuredDataBlocks(html: string): string[] {
+  const blocks: string[] = [];
+  const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+  for (const match of headHtml(html).matchAll(pattern)) {
+    const type = parseAttributes(`<script ${match[1] ?? ""}>`).get("type");
+    if (type?.trim().toLowerCase() === "application/ld+json")
+      blocks.push(match[2] ?? "");
+  }
+  return blocks;
+}
+
 function iconValue(html: string): string | null {
   for (const tag of findTags(headHtml(html), "link")) {
     const attributes = parseAttributes(tag);
@@ -171,6 +183,7 @@ function iconValue(html: string): string | null {
 export function parseSourceMetadata(
   html: string,
   sourceType: ParsedSourceInput["sourceType"],
+  pageUrl = "",
 ): ParsedSourceMetadata {
   const metadata = metadataMaps(html);
   const ogTitle = firstMetadataValue(metadata, "og:title");
@@ -185,9 +198,16 @@ export function parseSourceMetadata(
   }
 
   return {
-    displayName:
-      firstMetadataValue(metadata, "og:site_name", "og:title") ||
-      titleValue(html),
+    displayName: pickBusinessName(
+      {
+        siteName: firstMetadataValue(metadata, "og:site_name"),
+        shareTitle: ogTitle,
+        pageTitle: titleValue(html),
+        applicationName: firstMetadataValue(metadata, "application-name"),
+        structuredData: structuredDataBlocks(html),
+      },
+      pageUrl,
+    ).name,
     description: firstMetadataValue(metadata, "og:description", "description"),
     iconHref: iconValue(html),
   };
@@ -236,6 +256,7 @@ export async function fetchSourceIdentity(
   const metadata = parseSourceMetadata(
     new TextDecoder().decode(page.bytes),
     source.sourceType,
+    page.url,
   );
   const displayName = metadata.displayName;
 

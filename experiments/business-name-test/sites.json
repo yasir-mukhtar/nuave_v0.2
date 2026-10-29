@@ -1,0 +1,1252 @@
+[
+  {
+    "url": "https://mhdc.co.id/",
+    "expected_name": "MHDC Clinic",
+    "also_correct": [
+      "MHDC",
+      "Klinik Gigi MHDC"
+    ],
+    "kind": "dental",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "heading 'MHDC Clinic'; footer '© Copyright 2026 CV Kelola MHDC'; og:site_name is SEO phrase 'Klinik Dokter Gigi Terdekat'"
+  },
+  {
+    "url": "https://www.audydental.com/",
+    "expected_name": "Audy Dental",
+    "also_correct": [
+      "Audy Dental Clinic",
+      "Klinik Gigi Audy Dental"
+    ],
+    "kind": "dental",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer '© 2026 PT Audy Mandiri Indonesia'; brand 'Audy Dental' throughout; title leads with 'Klinik Gigi Terbaik dan Terpercaya di Indonesia'"
+  },
+  {
+    "url": "https://www.doktergigimedan.com/",
+    "expected_name": "Royal Dental Center",
+    "also_correct": [
+      "Klinik Gigi Royal Dental Center",
+      "Royal Dental Centre",
+      "Royal Dental Center by drg. Martyn"
+    ],
+    "kind": "dental",
+    "city": "Medan",
+    "certainty": "high",
+    "evidence": "logo alt 'Royal Dental Center'; text 'Klinik Gigi Royal Dental Center'; footer says 'Copyright ©2023 Dokter Gigi Medan' (SEO phrase, not the name)"
+  },
+  {
+    "url": "https://senyumdansenyum.com/",
+    "expected_name": "Senyum dan Senyum",
+    "also_correct": [
+      "Klinik Gigi Senyum dan Senyum",
+      "Senyum & Senyum"
+    ],
+    "kind": "dental",
+    "city": "Medan",
+    "certainty": "high",
+    "evidence": "footer '© Senyum & Senyum 2026'; logo alt 'Logo Senyum dan Senyum'; title starts 'Klinik Gigi Medan Terbaik dan Terpercaya'"
+  },
+  {
+    "url": "https://dentaloffice.id/",
+    "expected_name": "Dental Office by drg. Peiter",
+    "also_correct": [
+      "Dental Office",
+      "Dental Office By Dr. Peiter",
+      "Dental Office by Peiter Gozali"
+    ],
+    "kind": "dental",
+    "city": "Medan",
+    "certainty": "medium",
+    "evidence": "logo alt 'Dental Office By Dr. Peiter'; visible heading 'Dental Office By Drg. Peiter'; footer copyright has no name"
+  },
+  {
+    "url": "https://happydentalclinic.com/",
+    "expected_name": "Happy Dental Clinic",
+    "also_correct": [
+      "Happy Dental"
+    ],
+    "kind": "dental",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer 'Copyright © 2026 Happy Dental Clinic'; logo alt 'Happy Dental Clinic'; about text 'Happy Dental Clinic adalah klinik gigi terpercaya'"
+  },
+  {
+    "url": "https://makassardentalcare.com/",
+    "expected_name": "Makassar Dental Care",
+    "also_correct": [
+      "MDC"
+    ],
+    "kind": "dental",
+    "city": "Makassar",
+    "certainty": "high",
+    "evidence": "footer 'Copyright © 2024 Makassar Dental Care'; logo alt 'logo of Makassar Dental Care'; about text"
+  },
+  {
+    "url": "https://klinikjoydental.com/",
+    "expected_name": "Joy Dental",
+    "also_correct": [
+      "Klinik Gigi Joy Dental"
+    ],
+    "kind": "dental",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "footer '© 2025 Joy Dental. All Rights Reserved.'; text 'Klinik Gigi Joy Dental'; title is 'Klinik & Dokter Gigi Jogja Terbaik Joy Dental'"
+  },
+  {
+    "url": "https://haigigi.com/",
+    "expected_name": "Hai Gigi",
+    "also_correct": [
+      "Hai Gigi Dental Care"
+    ],
+    "kind": "dental",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "body 'Hai Gigi adalah klinik gigi di Semarang'; branches 'Hai Gigi Banyumanik / Hai Gigi Premier'; <title> is just 'Home'"
+  },
+  {
+    "url": "https://csdental.id/",
+    "expected_name": "CS Dental",
+    "also_correct": [
+      "CS Dental Aesthetic Clinic",
+      "CS DENTAL"
+    ],
+    "kind": "dental",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "about 'CS DENTAL, founded by Rieta Amilia & Drg. Cindy Saconk ... operates 8 modern clinics'; footer '© PT CSDENTAL MESARI JAKARTA'; Surabaya (Panjang Jiwo) branch"
+  },
+  {
+    "url": "https://bali911dentalclinic.com/",
+    "expected_name": "Bali 911 Dental Clinic",
+    "also_correct": [
+      "Bali911 Dental Clinic",
+      "Bali 911 Dental"
+    ],
+    "kind": "dental",
+    "city": "Bali",
+    "certainty": "high",
+    "evidence": "logo alt 'Bali911 Dental Clinic'; heading 'Welcome to Bali 911 Dental Clinic'"
+  },
+  {
+    "url": "https://sunsetdentalbali.com/",
+    "expected_name": "Sunset Dental Bali",
+    "also_correct": [
+      "Sunset Dental"
+    ],
+    "kind": "dental",
+    "city": "Bali",
+    "certainty": "high",
+    "evidence": "logo alt 'Sunset Dental Bali Logo'; body 'Why Choose Sunset Dental Bali?'"
+  },
+  {
+    "url": "https://fidelitydentalbali.com/",
+    "expected_name": "Fidelity Dental Bali",
+    "also_correct": [
+      "Fidelity Dental",
+      "Fidelity"
+    ],
+    "kind": "dental",
+    "city": "Bali",
+    "certainty": "high",
+    "evidence": "footer 'Copyright © Fidelity Dental Bali (PT Danta Saddha Kirana)'; title is 'Professional Dentist & Dental Clinic in Bali | Fidelity'"
+  },
+  {
+    "url": "https://passiondentalcare.com/",
+    "expected_name": "Passion Dental Care",
+    "also_correct": [
+      "Klinik Gigi Passion Dental Care",
+      "PDC"
+    ],
+    "kind": "dental",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "logo alt 'Logo Passion Dental Care'; body 'Passion Dental Care mengutamakan pelayanan terbaik...'"
+  },
+  {
+    "url": "https://kiraridentalcare.com/",
+    "expected_name": "Kirari Dental Care",
+    "also_correct": [
+      "Kirari",
+      "Klinik Gigi Kirari"
+    ],
+    "kind": "dental",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "footer '© 2025 by Kirari Dental Care'; title mixes sister brand 'Raga by Kirari' plus 'Klinik Gigi Terbaik di Bandung'"
+  },
+  {
+    "url": "https://tamidentalcare.com/",
+    "expected_name": "Tami Dental Care",
+    "also_correct": [
+      "Klinik Gigi Tami Dental Care"
+    ],
+    "kind": "dental",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "body 'Tami Dental Care adalah klinik gigi terbaik di Bandung'; logo alt and title both carry long SEO tail '– Klinik Gigi Dokter Gigi Terbaik Terpercaya di Bandung dan Cimahi'"
+  },
+  {
+    "url": "https://palapadentists.com/",
+    "expected_name": "Palapa Dentists",
+    "also_correct": [
+      "Dokter Gigi Palapa"
+    ],
+    "kind": "dental",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer '2018 Palapa Dentists'; text 'Mengapa Memilih Dokter Gigi Palapa?'; logo alt is a tagline 'Professional and Homey Dental Specialist Clinic'"
+  },
+  {
+    "url": "https://www.okdentalclinic.com/",
+    "expected_name": "OK Dental Clinic",
+    "also_correct": [
+      "OK Dental"
+    ],
+    "kind": "dental",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer '©2020 by OK Dental Clinic' (Wix); about 'Since ... 2017, OK Dental Clinic has been a trusted Dental Clinic ... South Jakarta'"
+  },
+  {
+    "url": "https://natasha-skin.com/",
+    "expected_name": "Natasha Skin Care",
+    "also_correct": [
+      "Natasha",
+      "Natasha Skin Clinic",
+      "Natasha Skin Clinic Center"
+    ],
+    "kind": "aesthetic",
+    "city": "Jakarta",
+    "certainty": "medium",
+    "evidence": "og/brand 'Natasha Skin Care'; body 'Natasha Skin Clinic'; footer '© 2026 Natasha, Inc.'"
+  },
+  {
+    "url": "https://zapclinic.com/",
+    "expected_name": "ZAP Clinic",
+    "also_correct": [
+      "ZAP"
+    ],
+    "kind": "aesthetic",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'zapLogo'; 'Tentang ZAP'; footer 'Copyright © 2026 PT.Zulu Alpha Papa'"
+  },
+  {
+    "url": "https://larissa.co.id/",
+    "expected_name": "Larissa Aesthetic Center",
+    "also_correct": [
+      "Larissa",
+      "Larissa Aesthetic"
+    ],
+    "kind": "aesthetic",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "footer '© 2026 Larissa Aesthetic Center'; 'Tentang Larissa'; title leads with 'Klinik Kecantikan Natural & Perawatan Kulit Estetika'"
+  },
+  {
+    "url": "https://miracle-clinic.com/",
+    "expected_name": "Miracle Aesthetic Clinic",
+    "also_correct": [
+      "Miracle",
+      "Miracle Clinic"
+    ],
+    "kind": "aesthetic",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "footer '© 2026 Miracle Aesthetic Clinic — PT. Grahadhika Sarana Purnajati'; raw <title> is empty"
+  },
+  {
+    "url": "https://dermaster.co.id/",
+    "expected_name": "Dermaster",
+    "also_correct": [
+      "Dermaster Indonesia",
+      "Dermaster Clinic"
+    ],
+    "kind": "aesthetic",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Dermaster'; footer 'Copyright © 2026 Dermaster Indonesia'; title 'Welcome to Dermaster Indonesia'"
+  },
+  {
+    "url": "https://eternamoore.com/",
+    "expected_name": "EternaMoore",
+    "also_correct": [
+      "Klinik Kecantikan EternaMoore",
+      "Eterna Moore"
+    ],
+    "kind": "aesthetic",
+    "city": "Makassar",
+    "certainty": "high",
+    "evidence": "body 'Selamat Datang di EternaMoore'; address Jl. Botolempangan 20 Makassar; title adds 'Klinik Kecantikan dan Slimming', og/logo alt add 'Klinik Kecantikan dan Bedah Plastik'"
+  },
+  {
+    "url": "https://upscalebali.com/",
+    "expected_name": "Upscale Bali",
+    "also_correct": [
+      "Upscale"
+    ],
+    "kind": "aesthetic",
+    "city": "Bali",
+    "certainty": "high",
+    "evidence": "footer '© Upscale Bali'; logo alt 'Logo - upscalebali'; address Jl. Gatot Subroto Tengah, Denpasar"
+  },
+  {
+    "url": "https://bodylabbali.com/",
+    "expected_name": "Body Lab Bali",
+    "also_correct": [
+      "Body Lab"
+    ],
+    "kind": "aesthetic",
+    "city": "Bali",
+    "certainty": "high",
+    "evidence": "footer '© 2026 Body Lab Bali'; about 'Founded in 2017 in Seminyak, Body Lab Bali is a doctor-led aesthetic clinic'"
+  },
+  {
+    "url": "https://airinskinclinic.com/",
+    "expected_name": "Airin Skin Clinic",
+    "also_correct": [
+      "Airin",
+      "Airin Skin Care"
+    ],
+    "kind": "aesthetic",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "logo alt 'Airin Skin Clinic'; body 'konsultasikan kebutuhan kulitmu di Airin Skin Clinic'; footer copyright has no name"
+  },
+  {
+    "url": "https://tiuwoo.com/",
+    "expected_name": "TIUwoo",
+    "also_correct": [
+      "TIUwoo Korean Beauty Skin Care",
+      "Tiuwoo"
+    ],
+    "kind": "aesthetic",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "logo alt 'TIUwoo'; company 'PT TIUWOO GLOBAL INVESTAMA'; title 'Home - TIUwoo - Klinik Kecantikan ala Korea di Bandung'"
+  },
+  {
+    "url": "https://bandungskincentre.com/",
+    "expected_name": "Bandung Skin Centre",
+    "also_correct": [
+      "Bandung Skin Center",
+      "BSC"
+    ],
+    "kind": "aesthetic",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "footer '© Bandung Skin Centre'; body 'Kenapa melakukan perawatan di Bandung Skin Centre?'; raw <title> is empty"
+  },
+  {
+    "url": "https://ederma.co.id/",
+    "expected_name": "Ederma Clinic",
+    "also_correct": [
+      "Ederma",
+      "E'derma Clinic",
+      "Ederma Clinic Indonesia"
+    ],
+    "kind": "aesthetic",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "about 'Ederma Clinic Indonesia berdiri sejak tahun 2019'; branches 'Ederma Clinic Semarang / Lombok'; og:site_name 'EDERMA CLINIC OFFICIAL'; logo alt 'Logo not found'"
+  },
+  {
+    "url": "https://graciaskinclinic.com/",
+    "expected_name": "Gracia Skin Clinic",
+    "also_correct": [
+      "Gracia",
+      "Gracia Skin"
+    ],
+    "kind": "aesthetic",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "footer 'Copyright © 2015 Gracia Skin Clinic'; 'Lokasi Gracia Skin Clinic (Jl. Pandanaran I No. 29A, Semarang)'"
+  },
+  {
+    "url": "https://lviors.com/",
+    "expected_name": "L'Viors Beauty Clinic",
+    "also_correct": [
+      "L'Viors",
+      "Lviors",
+      "Lviors Beauty Clinic"
+    ],
+    "kind": "aesthetic",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "body 'L'VIORS BEAUTY CLINIC telah menjadi jawaban ... sejak 5 November 2004'; title 'I Choose Lviors | ...' is a campaign slogan"
+  },
+  {
+    "url": "https://nmwclinic.co.id/",
+    "expected_name": "NMW Skincare & Aesthetic Clinic",
+    "also_correct": [
+      "NMW Clinic",
+      "NMW"
+    ],
+    "kind": "aesthetic",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer '© 2026 NMW Skincare & Aesthetic Clinic'; body 'NMW Clinic', 'Tentang NMW'; title leads with 'Klinik Kecantikan & Dermatologi di Indonesia'"
+  },
+  {
+    "url": "https://jakartaaestheticclinic.co.id/",
+    "expected_name": "Jakarta Aesthetic Clinic",
+    "also_correct": [
+      "JAC"
+    ],
+    "kind": "aesthetic",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "body 'Jakarta Aesthetic Clinic', 'Perawatan di JAC'; title 'Klinik Estetika Non-Bedah Standar Internasional - JAC'; footer has no name"
+  },
+  {
+    "url": "https://surabaya-skincentre.com/",
+    "expected_name": "Surabaya Skin Centre",
+    "also_correct": [
+      "Surabaya Skin Center",
+      "SSC"
+    ],
+    "kind": "aesthetic",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "logo alt 'Surabaya Skin Centre'; about 'Surabaya Skin Centre adalah klinik kulit dan kecantikan di Surabaya'"
+  },
+  {
+    "url": "https://estetikadraffandi.com/",
+    "expected_name": "Klinik Estetika dr. Affandi",
+    "also_correct": [
+      "Estetika dr. Affandi",
+      "Klinik Affandi"
+    ],
+    "kind": "aesthetic",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "body 'Ketua Komite Medis Klinik Estetika dr. Affandi'; <title> is just the domain 'estetikadraffandi.com'"
+  },
+  {
+    "url": "https://www.mayapadahospital.com/",
+    "expected_name": "Mayapada Hospital",
+    "also_correct": [
+      "RS Mayapada",
+      "Mayapada Healthcare"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Mayapada Logo'; body text 'Mayapada Hospital Tangerang...'; footer '© 2015 - 2026, Mayapada Healthcare'"
+  },
+  {
+    "url": "https://primayahospital.com/",
+    "expected_name": "Primaya Hospital",
+    "also_correct": [
+      "RS Primaya",
+      "Rumah Sakit Primaya"
+    ],
+    "kind": "hospital",
+    "city": "Tangerang",
+    "certainty": "high",
+    "evidence": "footer: Copyright ©2026 - Primaya Hospital; logo alt 'Logo Primaya Hospital'"
+  },
+  {
+    "url": "https://www.bethsaidahospitals.com/",
+    "expected_name": "Bethsaida Hospital",
+    "also_correct": [
+      "RS Bethsaida",
+      "Bethsaida Hospitals"
+    ],
+    "kind": "hospital",
+    "city": "Tangerang",
+    "certainty": "high",
+    "evidence": "footer: Copyright © 2026 Bethsaida Hospital"
+  },
+  {
+    "url": "https://www.awalbros.com/",
+    "expected_name": "RS Awal Bros",
+    "also_correct": [
+      "Rumah Sakit Awal Bros",
+      "Awal Bros Hospital"
+    ],
+    "kind": "hospital",
+    "city": "Pekanbaru",
+    "certainty": "high",
+    "evidence": "footer: ©RS Awal Bros 2025 All right reserved"
+  },
+  {
+    "url": "https://www.rsmurniteguh.com/",
+    "expected_name": "Murni Teguh Hospitals",
+    "also_correct": [
+      "Murni Teguh Memorial Hospital",
+      "RS Murni Teguh",
+      "Murni Teguh"
+    ],
+    "kind": "hospital",
+    "city": "Medan",
+    "certainty": "high",
+    "evidence": "footer: © Hak Cipta 2026 oleh Murni Teguh Hospitals; logo alt 'Murni Teguh Hospitals'"
+  },
+  {
+    "url": "https://jec.co.id/",
+    "expected_name": "JEC Eye Hospitals",
+    "also_correct": [
+      "JEC",
+      "RS Mata JEC",
+      "JEC Eye Hospitals and Clinics"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "medium",
+    "evidence": "footer: Copyright © 1984-2022 JEC Eye Hospitals and Clinics; logo alt 'JEC'"
+  },
+  {
+    "url": "https://www.rspermata.co.id/",
+    "expected_name": "Permata Hospital",
+    "also_correct": [
+      "RS Permata",
+      "Rumah Sakit Permata"
+    ],
+    "kind": "hospital",
+    "city": "Depok",
+    "certainty": "medium",
+    "evidence": "footer: © 2026 Permata Hospital; nav lists RS Permata Depok / Bekasi / Palembang"
+  },
+  {
+    "url": "https://www.rs-jih.co.id/",
+    "expected_name": "Rumah Sakit JIH",
+    "also_correct": [
+      "RS JIH",
+      "JIH",
+      "Jogja International Hospital"
+    ],
+    "kind": "hospital",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "footer: © Rumah Sakit JIH. All rights reserved; logo alt 'Logo Rumah Sakit JIH'"
+  },
+  {
+    "url": "https://bimcbali.com/",
+    "expected_name": "BIMC Hospital Bali",
+    "also_correct": [
+      "BIMC Hospital",
+      "BIMC"
+    ],
+    "kind": "hospital",
+    "city": "Bali",
+    "certainty": "high",
+    "evidence": "footer: © 2026 BIMC Hospital Bali. All rights reserved; logo alt 'BIMC Hospital'"
+  },
+  {
+    "url": "https://www.rscm.co.id/",
+    "expected_name": "RSUP Nasional Dr. Cipto Mangunkusumo",
+    "also_correct": [
+      "RSCM",
+      "RSUPN Dr. Cipto Mangunkusumo",
+      "RS Cipto Mangunkusumo"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2026 RSUP Nasional Dr. Cipto Mangunkusumo"
+  },
+  {
+    "url": "https://sardjito.co.id/",
+    "expected_name": "RSUP Dr Sardjito",
+    "also_correct": [
+      "RSUP Dr. Sardjito",
+      "RS Sardjito"
+    ],
+    "kind": "hospital",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2026 RSUP Dr Sardjito · All Rights Reserved"
+  },
+  {
+    "url": "https://www.pantirapih.or.id/",
+    "expected_name": "Rumah Sakit Panti Rapih",
+    "also_correct": [
+      "RS Panti Rapih",
+      "RS Panti Rapih Yogyakarta",
+      "Rumah Sakit Panti Rapih Yogyakarta"
+    ],
+    "kind": "hospital",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Rumah Sakit Panti Rapih Logo'; footer: Copyright © Yayasan RS. PANTI RAPIH"
+  },
+  {
+    "url": "https://www.bethesda.or.id/",
+    "expected_name": "RS Bethesda Yogyakarta",
+    "also_correct": [
+      "RS Bethesda",
+      "Rumah Sakit Bethesda",
+      "Rumah Sakit Bethesda Yogyakarta"
+    ],
+    "kind": "hospital",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "header text 'RS BETHESDA YOGYAKARTA'; body 'Bagaimana Pelayanan dari RS Bethesda?'"
+  },
+  {
+    "url": "https://rsadventbandung.com/",
+    "expected_name": "Rumah Sakit Advent Bandung",
+    "also_correct": [
+      "RS Advent Bandung",
+      "Rumah Sakit Advent",
+      "RS Advent"
+    ],
+    "kind": "hospital",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "footer: Copyright © 2026 Rumah Sakit Advent; social alt '@RS ADVENT BANDUNG'"
+  },
+  {
+    "url": "https://www.rsborromeus.com/",
+    "expected_name": "Rumah Sakit Santo Borromeus",
+    "also_correct": [
+      "RS Santo Borromeus",
+      "RS Borromeus"
+    ],
+    "kind": "hospital",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "header and footer text: 'Rumah Sakit Santo Borromeus - Persekutuan dan Perkumpulan Perhimpunan Santo Borromeus'"
+  },
+  {
+    "url": "https://rsmataundaan.co.id/",
+    "expected_name": "RS Mata Undaan",
+    "also_correct": [
+      "Rumah Sakit Mata Undaan"
+    ],
+    "kind": "hospital",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "footer: 'RS Mata Undaan, Surabaya'; 'RS Mata Undaan' appears 15x in visible text"
+  },
+  {
+    "url": "https://rsgm.ugm.ac.id/",
+    "expected_name": "RSGM UGM Prof. Soedomo",
+    "also_correct": [
+      "RSGM Prof. Soedomo",
+      "RSGM UGM",
+      "Rumah Sakit Gigi dan Mulut UGM Prof. Soedomo"
+    ],
+    "kind": "hospital",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "footer: © RSGM UGM Prof. Soedomo"
+  },
+  {
+    "url": "https://rsgm.unair.ac.id/",
+    "expected_name": "RSGM Universitas Airlangga",
+    "also_correct": [
+      "RSGM Unair",
+      "Rumah Sakit Gigi dan Mulut Universitas Airlangga",
+      "RSGM UNAIR"
+    ],
+    "kind": "hospital",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "footer: Copyright 2026 © RSGM Universitas Airlangga; header 'Rumah Sakit Gigi dan Mulut Universitas Airlangga'"
+  },
+  {
+    "url": "https://www.rs-elisabeth.com/",
+    "expected_name": "Rumah Sakit St. Elisabeth Semarang",
+    "also_correct": [
+      "RS St. Elisabeth Semarang",
+      "Rumah Sakit Santa Elisabeth Semarang",
+      "RS Elisabeth Semarang"
+    ],
+    "kind": "hospital",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "footer: © 2026 Rumah Sakit Santa Elisabeth Semarang; about text 'Rumah Sakit St. Elisabeth Semarang' (Elisameds is the app name, not the hospital)"
+  },
+  {
+    "url": "https://rspkujogja.com/",
+    "expected_name": "RS PKU Muhammadiyah Yogyakarta",
+    "also_correct": [
+      "Rumah Sakit PKU Muhammadiyah Yogyakarta",
+      "RS PKU Muhammadiyah Jogja",
+      "PKU Muhammadiyah Yogyakarta"
+    ],
+    "kind": "hospital",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2026 RS PKU Muhammadiyah Yogyakarta; logo alt same"
+  },
+  {
+    "url": "https://rsdarmo.co.id/",
+    "expected_name": "Rumah Sakit Darmo",
+    "also_correct": [
+      "RS Darmo",
+      "RS Darmo Surabaya",
+      "Rumah Sakit Darmo Surabaya"
+    ],
+    "kind": "hospital",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "logo alt 'Rumah Sakit Darmo'; footer: © 2025 maintenance by Rumah Sakit Darmo"
+  },
+  {
+    "url": "https://www.rscarolus.or.id/",
+    "expected_name": "RS St. Carolus",
+    "also_correct": [
+      "Rumah Sakit St. Carolus",
+      "Rumah Sakit Sint Carolus",
+      "RS Sint Carolus"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer: 'RS St. Carolus · Perkumpulan Perhimpunan St. Carolus Vereeniging' and '© 2026 Rumah Sakit Sint Carolus'"
+  },
+  {
+    "url": "https://rspelni.co.id/",
+    "expected_name": "RS PELNI",
+    "also_correct": [
+      "Rumah Sakit PELNI",
+      "RS Pelni"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2020 RS PELNI; logo alt 'Logo RS Pelni - IHC'"
+  },
+  {
+    "url": "https://gadingpluit-hospital.com/",
+    "expected_name": "Rumah Sakit Gading Pluit",
+    "also_correct": [
+      "RS Gading Pluit",
+      "Gading Pluit Hospital"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2026 Rumah Sakit GADING PLUIT"
+  },
+  {
+    "url": "https://www.medistra.com/",
+    "expected_name": "Medistra Hospital",
+    "also_correct": [
+      "RS Medistra",
+      "Rumah Sakit Medistra"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "medium",
+    "evidence": "body: 'Medistra Hospital: Leading Healthcare & Specialist Center'; 'Center of Excellence Medistra Hospital' (no footer in static HTML)"
+  },
+  {
+    "url": "https://rsupwahidin.com/",
+    "expected_name": "RSUP Dr. Wahidin Sudirohusodo",
+    "also_correct": [
+      "RSUP Dr. Wahidin Sudirohusodo Makassar",
+      "RS Wahidin Sudirohusodo",
+      "RS Wahidin"
+    ],
+    "kind": "hospital",
+    "city": "Makassar",
+    "certainty": "high",
+    "evidence": "footer: Copyright © 2025 RSUP Dr.Wahidin Sudirohusodo Makassar; logo alt 'RS Wahidin Sudirohusodo Makassar'"
+  },
+  {
+    "url": "https://rsmh.co.id/",
+    "expected_name": "RSUP Dr. Mohammad Hoesin Palembang",
+    "also_correct": [
+      "RSUP Dr. Mohammad Hoesin",
+      "RSMH",
+      "RS Mohammad Hoesin"
+    ],
+    "kind": "hospital",
+    "city": "Palembang",
+    "certainty": "high",
+    "evidence": "footer: © 2026 RSUP Dr. Mohammad Hoesin Palembang; logo alt 'Logo RSMH'"
+  },
+  {
+    "url": "https://www.rsudwangaya.denpasarkota.go.id/",
+    "expected_name": "RSUD Wangaya",
+    "also_correct": [
+      "RSUD Wangaya Kota Denpasar",
+      "Rumah Sakit Umum Daerah Wangaya"
+    ],
+    "kind": "hospital",
+    "city": "Denpasar",
+    "certainty": "high",
+    "evidence": "header text 'RSUD Wangaya'; footer 'Tim IT Rumah Sakit Umum Daerah Wangaya Kota Denpasar'"
+  },
+  {
+    "url": "https://rsiatambak.com/",
+    "expected_name": "RSIA Tambak",
+    "also_correct": [
+      "Rumah Sakit Ibu dan Anak Tambak",
+      "RS Ibu dan Anak Tambak"
+    ],
+    "kind": "hospital",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo image RSIA-Tambak-.png; body text 'RSIA Tambak' 6x (title is generic 'Rumah Sakit Ibu Anak - Jakarta Pusat')"
+  },
+  {
+    "url": "https://www.rspantiwaluyo.com/",
+    "expected_name": "RS Panti Waluyo Surakarta",
+    "also_correct": [
+      "RS Panti Waluyo",
+      "Rumah Sakit Panti Waluyo",
+      "Rumah Sakit Panti Waluyo Surakarta"
+    ],
+    "kind": "hospital",
+    "city": "Surakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2026 RS Panti Waluyo Surakarta"
+  },
+  {
+    "url": "https://www.rspantinirmala.com/",
+    "expected_name": "Rumah Sakit Panti Nirmala",
+    "also_correct": [
+      "RS Panti Nirmala",
+      "RS Panti Nirmala Malang"
+    ],
+    "kind": "hospital",
+    "city": "Malang",
+    "certainty": "high",
+    "evidence": "logo alt 'rumah sakit panti nirmala'; footer 'Yayasan RUMAH SAKIT PANTI NIRMALA' (copyright line names the web developer)"
+  },
+  {
+    "url": "https://www.rsmelatiperbaungan.com/",
+    "expected_name": "RSU Melati Perbaungan",
+    "also_correct": [
+      "RSU Melati",
+      "Rumah Sakit Umum Melati Perbaungan",
+      "RS Melati Perbaungan"
+    ],
+    "kind": "hospital",
+    "city": "Serdang Bedagai (North Sumatra)",
+    "certainty": "high",
+    "evidence": "footer: © Copyright RSU Melati Perbaungan; header 'RSU Melati Perbaungan'"
+  },
+  {
+    "url": "https://klinikmatatritya.co.id/",
+    "expected_name": "Klinik Mata Tritya",
+    "also_correct": [
+      "Tritya"
+    ],
+    "kind": "eye",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "footer: Copyright © 2026 Klinik Mata Tritya. All rights reserved.; header address Jl. Barata Jaya No. 59 Surabaya"
+  },
+  {
+    "url": "https://granostic.com/",
+    "expected_name": "Granostic",
+    "also_correct": [
+      "Granostic Diagnostic Center",
+      "Klinik Granostic"
+    ],
+    "kind": "lab",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "logo alt 'Granostic Logo'; header 'Granostic Diagnostic Center', Jl. Dharmahusada No.146 Surabaya; footer © 2026 www.granostic.com (PT. Persada Medika Utama)"
+  },
+  {
+    "url": "https://www.conquerapsikologi.com/",
+    "expected_name": "Conquera Psikologi",
+    "also_correct": [
+      "Conquera"
+    ],
+    "kind": "mental-health",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "body: 'Welcome to Layanan Kesehatan Mental CONQUERA PSIKOLOGI Surabaya'; footer copyright repeats the long title phrase 'LAYANAN KESEHATAN MENTAL CONQUERA PSIKOLOGI SURABAYA'"
+  },
+  {
+    "url": "https://www.mindharmonyindonesia.com/",
+    "expected_name": "MindHarmony Psychology",
+    "also_correct": [
+      "MindHarmony",
+      "Mind Harmony"
+    ],
+    "kind": "mental-health",
+    "city": "Sidoarjo",
+    "certainty": "high",
+    "evidence": "logo alt 'MindHarmony Psychology'; footer © 2024 MindHarmony Psychology; title is SEO 'Layanan Konseling di Surabaya | Klinik Psikotes & Hipnoterapi'"
+  },
+  {
+    "url": "https://www.invirahumania.com/",
+    "expected_name": "Invira Humania",
+    "also_correct": [],
+    "kind": "mental-health",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "logo alt 'Invira Humania'; footer © 2026 Invira Humania, Kantor Pusat Royal Residence Wiyung Surabaya"
+  },
+  {
+    "url": "https://www.klinikutamabenecia.com/",
+    "expected_name": "Klinik Utama Benecia",
+    "also_correct": [
+      "Benecia",
+      "Klinik Benecia"
+    ],
+    "kind": "physio",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "logo alt 'Logo Klinik Utama Benecia'; footer © 2026 oleh Klinik Utama Benecia; Jl. Semarang Indah Blok C IV No 22"
+  },
+  {
+    "url": "https://bidanviandika.com/",
+    "expected_name": "Klinik Bidan Viandika",
+    "also_correct": [
+      "Bidan Viandika"
+    ],
+    "kind": "mother-baby",
+    "city": "Malang",
+    "certainty": "high",
+    "evidence": "logo alt 'Klinik Bidan Viandika'; footer © 2026 Klinik Bidan Viandika; address Pakisaji, Kab. Malang"
+  },
+  {
+    "url": "https://hfcmedan.id/",
+    "expected_name": "Halim Fertility Center",
+    "also_correct": [
+      "HFC",
+      "HFC Medan"
+    ],
+    "kind": "fertility",
+    "city": "Medan",
+    "certainty": "high",
+    "evidence": "footer: Copyright © 2026 Halim Fertility Center; title is SEO 'Klinik Bayi Tabung di Indonesia - IVF Medan - Halim Fertility Center'"
+  },
+  {
+    "url": "https://www.kliniksimpangpemda.com/",
+    "expected_name": "Klinik Simpang Pemda",
+    "also_correct": [
+      "TPMD dr. Bram Natanael",
+      "Simpang Pemda"
+    ],
+    "kind": "general",
+    "city": "Medan",
+    "certainty": "medium",
+    "evidence": "footer: '© 2026 All rights reserved. KLINIK SIMPANG PEMDA', email kliniksimpangpemda@gmail.com; but hero/body says 'Website Resmi TPMD dr. Bram Natanael' throughout"
+  },
+  {
+    "url": "https://www.klinikandamari.web.id/",
+    "expected_name": "Klinik Pratama Andamari",
+    "also_correct": [
+      "Klinik Andamari",
+      "Klinik Anda Mari",
+      "Andamari"
+    ],
+    "kind": "general",
+    "city": "Sleman (Yogyakarta)",
+    "certainty": "high",
+    "evidence": "body: 'Selamat Datang di Website Klinik Pratama Andamari'; footer © 2026 Klinik Anda Mari (spaced spelling); logo alt is generic 'logo klinik-kesehatan-sleman baru'"
+  },
+  {
+    "url": "http://easycareklinik.co.id/",
+    "expected_name": "Easycare Klinik",
+    "also_correct": [
+      "EasyCare Klinik",
+      "Easy Care Klinik",
+      "Klinik Pratama Easycare",
+      "Klinik Easycare"
+    ],
+    "kind": "general",
+    "city": "Bandung",
+    "certainty": "high",
+    "evidence": "hero 'EASYCARE KLINIK'; footer © 2024 Easy Care Klinik, info@easycareklinik.co.id"
+  },
+  {
+    "url": "https://klinik.kusumamedikacirebon.com/",
+    "expected_name": "Klinik Pratama Kusuma Medika",
+    "also_correct": [
+      "Kusuma Medika",
+      "Klinik Kusuma Medika"
+    ],
+    "kind": "general",
+    "city": "Cirebon",
+    "certainty": "high",
+    "evidence": "site header/logo alt 'KLINIK PRATAMA KUSUMA MEDIKA'; footer Copyright © 2024 · KLINIK PRATAMA KUSUMA MEDIKA"
+  },
+  {
+    "url": "https://refahmedika.com/",
+    "expected_name": "Klinik Refah Medika",
+    "also_correct": [
+      "Refah Medika"
+    ],
+    "kind": "general",
+    "city": "Palembang",
+    "certainty": "high",
+    "evidence": "h1 'Selamat datang di Klinik Refah Medika Palembang'; footer Copyright © 2026 Refah Medika, Jakabaring Palembang"
+  },
+  {
+    "url": "https://klinikbethesda.id/",
+    "expected_name": "Klinik Bethesda",
+    "also_correct": [
+      "Klinik Pratama Bethesda",
+      "Klinik Bethesda Palembang"
+    ],
+    "kind": "general",
+    "city": "Palembang",
+    "certainty": "high",
+    "evidence": "logo alt 'Klinik Bethesda Palembang'; body 'Klinik bethesda dilengkapi dengan beberapa layanan poli'; footer copyright has no name"
+  },
+  {
+    "url": "https://pratama-mandiri.com/",
+    "expected_name": "Klinik Pratama Rawat Inap Mandiri",
+    "also_correct": [
+      "Klinik Pratama Mandiri",
+      "Klinik Pratama Mandiri Makassar"
+    ],
+    "kind": "general",
+    "city": "Makassar",
+    "certainty": "high",
+    "evidence": "about: 'Klinik Pratama Mandiri Makassar berlamat di Jl. Batara Bira No 25 ... Klinik Pratama Rawat Inap Mandiri telah beroperasi sejak 12 desember 2005'; footer garbled '© 2023, K linik Pratama Rawat Inap Makassar'"
+  },
+  {
+    "url": "https://www.klinikoptima.id/",
+    "expected_name": "Klinik Optima",
+    "also_correct": [
+      "Klinik Pratama Optima",
+      "Klinik Utama Optima",
+      "Optima"
+    ],
+    "kind": "general",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "logo alt 'Klinik Optima | Klinik BPJS Kesehatan'; footer lists Klinik Pratama Optima and Klinik Utama Optima, Rungkut Surabaya; copyright line names only the web developer"
+  },
+  {
+    "url": "https://prospine.id/",
+    "expected_name": "Prospine Clinic",
+    "also_correct": [
+      "ProSpine",
+      "Prospine",
+      "ProSpine Clinic Surabaya"
+    ],
+    "kind": "other",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "og:site_name and body 'ProSpine Clinic Surabaya'; footer Copyrights © 2026 All Rights Reserved by Prospine; spine/scoliosis orthopedic clinic, Jl. Kahuripan 7 Surabaya"
+  },
+  {
+    "url": "https://beningpsikologi.com/",
+    "expected_name": "Bening Psikologi",
+    "also_correct": [
+      "Bening Klinik Psikologi",
+      "Bening"
+    ],
+    "kind": "mental-health",
+    "city": "Yogyakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Bening Psikologi'; footer addresses Gamping Sleman Yogyakarta + Bening Psikologi Jakarta; copyright line has no name"
+  },
+  {
+    "url": "https://www.klinikannisagroup.com/",
+    "expected_name": "Klinik Annisa Group",
+    "also_correct": [
+      "Klinik Annisa"
+    ],
+    "kind": "general",
+    "city": "Kabupaten Bekasi",
+    "certainty": "high",
+    "evidence": "nav/brand 'Klinik Annisa Group'; footer © Klinik Annisa Group; branches Klinik Annisa II/III/IV, Serang Baru, Kab. Bekasi"
+  },
+  {
+    "url": "https://klinikmakmurjaya.com/",
+    "expected_name": "Klinik Pratama Makmur Jaya",
+    "also_correct": [
+      "Klinik Makmur Jaya",
+      "Makmur Jaya"
+    ],
+    "kind": "general",
+    "city": "Tangerang Selatan",
+    "certainty": "high",
+    "evidence": "logo alt 'Klinik Pratama Makmur Jaya'; footer © 2019, Klinik Pratama Makmur Jaya; Jl. W R Supratman, Ciputat Timur"
+  },
+  {
+    "url": "https://www.lingkarmedika.com/",
+    "expected_name": "Klinik Lingkar Medika",
+    "also_correct": [
+      "Lingkar Medika"
+    ],
+    "kind": "general",
+    "city": "Bali (Denpasar/Nusa Dua)",
+    "certainty": "high",
+    "evidence": "footer: Copyright 2026. Klinik Lingkar Medika; branches Nusa Dua, Gianyar, Denpasar; title is SEO 'Bali Health Care Clinic – Lingkar Medika'; redirects to /en/"
+  },
+  {
+    "url": "https://nikidiagnosticcenter.com/",
+    "expected_name": "Niki Diagnostic Center",
+    "also_correct": [
+      "Klinik Niki",
+      "Niki"
+    ],
+    "kind": "lab",
+    "city": "Denpasar",
+    "certainty": "high",
+    "evidence": "og:site_name and footer © 2023. Niki Diagnostic Center; branches Niki Gatsu Denpasar and Niki Sunset Seminyak"
+  },
+  {
+    "url": "https://simalab.co.id/",
+    "expected_name": "SIMA Lab",
+    "also_correct": [
+      "Laboratorium Klinik SIMA",
+      "Lab SIMA"
+    ],
+    "kind": "lab",
+    "city": "Malang",
+    "certainty": "high",
+    "evidence": "logo alt 'SIMA Lab'; hero 'Laboratorium Klinik SIMA'; footer © 2026 PT. SIMA LAKSANA CIPTA NUSANTARA (company name, not brand)"
+  },
+  {
+    "url": "https://www.morulaivf.co.id/",
+    "expected_name": "Morula IVF",
+    "also_correct": [
+      "Klinik Morula IVF",
+      "Morula"
+    ],
+    "kind": "fertility",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer: © Copyright Morula IVF 2026. All Right Reserved."
+  },
+  {
+    "url": "https://bocahindonesia.com/",
+    "expected_name": "Bocah Indonesia",
+    "also_correct": [
+      "Klinik Bocah Indonesia"
+    ],
+    "kind": "fertility",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Logo Bocah Indonesia'; footer 'Bocah Indonesia © 2019-2026 PT. Ibu Daya Lestari'; title is SEO 'Klinik Fertilitas Jakarta & Tangerang Bocah Indonesia'"
+  },
+  {
+    "url": "https://labcito.co.id/",
+    "expected_name": "CITO",
+    "also_correct": [
+      "Klinik Utama CITO",
+      "Laboratorium Klinik CITO",
+      "Lab CITO"
+    ],
+    "kind": "lab",
+    "city": "Semarang",
+    "certainty": "high",
+    "evidence": "logo alt 'Laboratorium Medis - Klinik Utama CITO'; body 'Chat dengan CITO', Kantor Pusat Jl. Indraprasta Semarang; footer PT CITO PUTRA UTAMA"
+  },
+  {
+    "url": "https://www.labparahita.com/",
+    "expected_name": "Parahita",
+    "also_correct": [
+      "Klinik Parahita",
+      "Parahita Diagnostic Center",
+      "Lab Parahita"
+    ],
+    "kind": "lab",
+    "city": "Surabaya",
+    "certainty": "high",
+    "evidence": "footer: '© 2026 Parahita . All rights reserved' and 'Copyright © 2026 PT Cita Mulia'; h1 'Bersama Parahita'"
+  },
+  {
+    "url": "https://ciputrasmgeyeclinic.com/",
+    "expected_name": "Ciputra SMG Eye Clinic",
+    "also_correct": [
+      "Ciputra SMG"
+    ],
+    "kind": "eye",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "footer: © 2026 Ciputra SMG Eye Clinic. All Rights Reserved.; title/og are SEO 'LASIK & Katarak Center Jakarta - Klinik Mata | Ciputra SMG Eye Clinic'"
+  },
+  {
+    "url": "https://vio.co.id/",
+    "expected_name": "VIO Optical Clinic",
+    "also_correct": [
+      "VIO"
+    ],
+    "kind": "eye",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'logo vio optical'; footer © 2025 VIO Optical Clinic | Owned by PT Darsana Adijaya Optika; title is SEO 'Terapi Mata Minus Ortho-K & Klinik Mata Tanpa Operasi'"
+  },
+  {
+    "url": "https://sasana.physio/",
+    "expected_name": "Klinik Sasana Husada",
+    "also_correct": [
+      "Sasana Husada"
+    ],
+    "kind": "physio",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Sasana Husada'; footer © 2026 Sasana Husada, info@sasanahusada.com (sasanahusada.com redirects to sasana.physio)"
+  },
+  {
+    "url": "https://www.nkhealth.fit/",
+    "expected_name": "NK Health",
+    "also_correct": [
+      "Klinik NK Health"
+    ],
+    "kind": "physio",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt / h1 'Klinik NK Health'; branches NK Health Kebon Jeruk, Kelapa Gading, Surabaya, Makassar...; footer © 2026 PT TATA BHAKTI MEDIKA (company name)"
+  },
+  {
+    "url": "https://inharmonyclinic.com/",
+    "expected_name": "inHARMONY Clinic",
+    "also_correct": [
+      "inHARMONY",
+      "In Harmony Clinic"
+    ],
+    "kind": "vaccination",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'inHARMONY'; client logos say 'klien korporat inHARMONY Clinic'; footer Copyright © 2026 inHARMONY"
+  },
+  {
+    "url": "https://rumahvaksinasi.id/",
+    "expected_name": "Rumah Vaksinasi",
+    "also_correct": [
+      "Rumah Vaksinasi Pusat"
+    ],
+    "kind": "vaccination",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "h1 'RUMAH VAKSINASI'; footer Copyright © 2026 Rumah Vaksinasi Pusat ('Pusat' = head office, Kramat Jati); logo has no alt"
+  },
+  {
+    "url": "https://kasoemhearingcenter.com/",
+    "expected_name": "Kasoem Hearing Center",
+    "also_correct": [
+      "Kasoem",
+      "Kasoem Hearing"
+    ],
+    "kind": "other",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "body repeatedly 'Kasoem Hearing Center merupakan...'; footer Copyright 2022 © Kasoem, Jl. Cikini Raya No. 18 Jakarta Pusat; title is generic 'Alat Bantu Dengar Terbaik Harga Terjangkau di Indonesia'"
+  },
+  {
+    "url": "https://nobelaudiology.com/",
+    "expected_name": "Nobel Audiology Center",
+    "also_correct": [
+      "Nobel Audiology",
+      "Nobel"
+    ],
+    "kind": "other",
+    "city": "Jakarta",
+    "certainty": "high",
+    "evidence": "logo alt 'Nobel Audiology Center'; footer © 2026 Nobel Audiology Center; title starts 'LANDING PAGE - Pusat Alat Bantu Dengar'"
+  },
+  {
+    "url": "https://kehamilansehat.com/",
+    "expected_name": "KS Women & Children Clinic",
+    "also_correct": [
+      "Kehamilan Sehat",
+      "KS Women and Children Clinic",
+      "Klinik Kehamilan Sehat"
+    ],
+    "kind": "mother-baby",
+    "city": "Tangerang",
+    "certainty": "medium",
+    "evidence": "og:site_name and footer © 2025 KS Women & Children Clinic; branch names 'KS Women & Children Clinic Serpong/Ciputat'; but title/domain brand 'Kehamilan Sehat'; redirects to /en/"
+  }
+]
