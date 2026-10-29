@@ -529,10 +529,15 @@ function namedGroup(
       new RegExp(taken.map(escapeRegExp).join("\\s+"), "iu"),
     )?.[0];
     if (!qualifier) continue;
+    // "pertanyaan tentang klinik di [kota]" names a group; "jawaban yang
+    // menyebut klinik" may mean the owner, so it falls back to today.
+    const yang = /^yang\b/i.test(qualifier);
+    // The word after it too: "jawaban tentang klinik ini" is the owner.
+    const after = next[taken.length];
     if (
-      refersToOwner(qualifier, facts) ||
+      refersToOwner(after ? `${qualifier} ${after}` : qualifier, facts, yang) ||
       competitorsIn(qualifier, facts).length ||
-      /\b(?:bisnis|klinik|usaha|merek|tempat)\b/i.test(qualifier)
+      (yang && /\b(?:bisnis|klinik|usaha|merek|tempat)\b/i.test(qualifier))
     )
       return null;
     return qualifier;
@@ -554,9 +559,15 @@ function namesOwnerExplicitly(
 
 /** The owner in any form the writer may use (R-05): its name or an alias,
  * "klinik Anda", "klinik ini", a bare "Anda" that is not a detail's owner,
- * or "menyebutnya". Other businesses' names are set aside first, so a
- * competitor called "Klinik …" never reads as the owner. */
-function refersToOwner(clause: string, facts: TwoSourceReportFacts): boolean {
+ * or "menyebutnya", and (unless `bareNoun` is false, as for a topic such
+ * as "tentang klinik di [kota]") a bare "klinik" that is not "klinik lain".
+ * Other businesses' names are set aside first, so a competitor called
+ * "Klinik …" never reads as the owner. */
+function refersToOwner(
+  clause: string,
+  facts: TwoSourceReportFacts,
+  bareNoun = true,
+): boolean {
   if (namesOwnerExplicitly(clause, facts)) return true;
   let rest = clause;
   for (const name of facts.writer?.businesses ?? [])
@@ -569,6 +580,7 @@ function refersToOwner(clause: string, facts: TwoSourceReportFacts): boolean {
   // A bare "klinik" reads as the owner, as namesBusiness reads it, unless it
   // is "klinik lain" or part of a competitor's name ("klinik ERHA").
   if (
+    bareNoun &&
     /\b(?:bisnis|klinik|usaha)\b(?!\s+\u0001)/i.test(rest) &&
     !OTHER_BUSINESS.test(rest)
   )

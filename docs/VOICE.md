@@ -41,7 +41,7 @@ verbatim, even when it does not follow the general prose rules.
 
 | Meaning | Prefer (customer-facing) | Avoid |
 |---|---|---|
-| Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**). In the two-source report writer's prose (Spec 023 R-05): the confirmed name where a section opens or where the business must be told apart from others, then **klinik ini** or **Anda** while it is the subject; never a short form that is not a confirmed alias. Settled labels and code-built sentences are unchanged | brand Anda (except **Seluruh brand**, see the notes) |
+| Your business (prose) | **bisnis Anda**, or the business type when it is known (**klinik Anda**); **usaha** in form labels (**nama usaha**, **jenis usaha**). In the two-source report writer's prose (Spec 023 R-05): the confirmed name where a section opens or where the business must be told apart from others, then **klinik ini** or **klinik Anda** for the clinic and **Anda** for the owner acting, repeating the name whenever "klinik ini" could mean two clinics; never a short form that is not a confirmed alias. Settled labels and code-built sentences are unchanged | brand Anda (except **Seluruh brand**, see the notes) |
 | Settled exact labels (verbatim) | **Tanpa menyebut bisnis Anda** · **Menyebut bisnis Anda** · **Bisnis Anda muncul di X dari N pertanyaan** · **Bisnis Anda direkomendasikan di Y dari N pertanyaan** (N is the source's completed checks, 10 when all completed; Spec 018) · **Tidak diuji** · **Download PDF**. In a Spec 018 report for a clinic (confirmed category contains "klinik") the two count labels read **Klinik Anda muncul di X dari N pertanyaan** and **Klinik Anda direkomendasikan di Y dari N pertanyaan** (founder, 2026-10-24) | any paraphrase or spelling variant of these six |
 | Prospective customer | **calon pelanggan** | calon klien, calon customer, customer potensial, bare "customer" |
 | Existing customer | **pelanggan** | klien, customer |
@@ -106,10 +106,11 @@ alarmist or all-knowing.** Apply these invariants to every surface:
   written as `08.00–21.00`, or the report plan's week labels (`Minggu 1–2`,
   Spec 023).
 - **Short sentences.** One idea per sentence; no multi-clause sentences that
-  are one English sentence in disguise. The two-source report writer
-  follows a range instead of a ceiling (Spec 023 D-2): most sentences 8 to 20
-  words, about 14 on average, an occasional very short one (3 to 7 words) to
-  land a point, and now and then a longer one up to about 30 words.
+  are one English sentence in disguise. The two-source report writer has no
+  ceiling (Spec 023 D-2, as revised by the founder on 2026-10-29): one clear
+  point per sentence, lengths varied by what the ideas need, an occasional
+  short sentence to land a point; word counts are measured in the test, not
+  given to the writer as targets.
 - **Think in Indonesian first.** Write the line the way an Indonesian owner
   would say it, not as a translated English sentence. Say "Cuma semenit", not
   "Hasil dalam detik". Say "Pelanggan tidak lagi cek website satu per satu.

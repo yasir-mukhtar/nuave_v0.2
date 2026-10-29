@@ -66,8 +66,11 @@ describe("report writing guide (Spec 023 R-10, AC-07)", () => {
   });
 
   it("names no business, competitor or city from a Nuave order", () => {
+    // Whole words only: "ERHA" is inside "terhadap".
     for (const name of ORDER_NAMES)
-      expect(file.toLowerCase(), name).not.toContain(name.toLowerCase());
+      expect(file, name).not.toMatch(
+        new RegExp(`(?<![\\p{L}\\p{N}])${name}(?![\\p{L}\\p{N}])`, "iu"),
+      );
   });
 
   it("follows its own punctuation rule, stays short, and has its four parts", () => {

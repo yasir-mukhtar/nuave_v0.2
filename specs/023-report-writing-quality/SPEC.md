@@ -133,6 +133,9 @@ today's fact safety stays, and the checker becomes more precise, not looser.
   everywhere.
 - **D-2** No hard sentence limit. Guidance: 3 to 30 words, average about 14,
   a mix of lengths, an occasional very short sentence to land a point.
+  *Revised 2026-10-29 (founder's editorial review of the guide):* the guide
+  gives no word-count targets; one point per sentence, lengths varied by
+  what the ideas need. The test still measures lengths.
 - **D-3** The guide sits at the report-writing step, next to the playbook,
   and the writer reads it with every report.
 - **D-4** Em dashes are banned (as `VOICE.md` §3 already says).
@@ -529,6 +532,29 @@ Two pull requests, so the free and safe part can merge first.
 
 Because this session pushes to one branch, PR 1 (the harness) rides on the
 spec's own pull request; PR 2 starts from `main` after it merges.
+
+## Founder review of the guide (2026-10-29)
+
+The founder's editorial review of the first guide draft was applied to the
+second draft (`WRITING_GUIDE.md`), with these alignments:
+
+- **Numbers.** The review allows a number to be repeated so a section
+  stands alone. Kept within R-04a: a finding may repeat a count it needs;
+  the verdict carries at most one proportion; the conclusion none.
+- **Source name.** The review's "ringkasan AI Google" is written "Google AI
+  Overview" (VOICE §2).
+- **Re-audit timing.** The guide leaves it to the playbook, which sets about
+  eight weeks (its item 9); the examples carry no schedule.
+- **Checkable wording.** The examples keep a limit in the same clause as its
+  verb ("ChatGPT tidak menyebut Klinik A dalam keempat jawaban tentang
+  [perawatan]"), the form R-03 can check; a finding that compares two groups
+  counts one of them at most.
+
+The writer's rules follow the review: the storyline is settled after reading
+all the evidence and may hold a limiting point; two to six findings, as many
+as the evidence supports; each recommendation says what it is for. VOICE §2
+and §3 are amended to match. R-03 now also reads "pertanyaan tentang klinik
+di [kota]" as a group, and "tentang klinik ini" as the owner.
 
 ## Verification record
 
