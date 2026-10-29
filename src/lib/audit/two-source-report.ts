@@ -327,7 +327,7 @@ const RECOMMEND = /\bdirekomendasikan|merekomendasikan\b/i;
  * needs or searches ("pada kebutuhan lain", "untuk pertanyaan tentang
  * harga", "di 5 ringkasan lainnya"), never "klinik lain". */
 const LIMITED =
-  /\b(?:pertanyaan|kebutuhan|jawaban|ringkasan|topik|pencarian|layanan)\s+(?:lain(?:nya)?|tentang|soal|mengenai|untuk)\b|\b(?:sebagian|beberapa)\s+(?:pertanyaan|jawaban|ringkasan|topik|kebutuhan|pencarian)\b|\bkecuali\b|\b(?:untuk|pada|dalam|di)\s+(?:pertanyaan|kebutuhan|topik|pencarian)\b|\bketika\b|\bsebagai\b|\bsaat\s+(?:pelanggan|orang|pasien|calon)\b|\bpertanyaan\s+(?:ke-?\s*)?\d/i;
+  /\b(?:pertanyaan|kebutuhan|jawaban|ringkasan|topik|pencarian|layanan)\s+(?:lain(?:nya)?|tentang|soal|mengenai|untuk)\b|\b(?:sebagian|beberapa)\s+(?:pertanyaan|jawaban|ringkasan|topik|kebutuhan|pencarian)\b|\bkecuali\b|\b(?:untuk|pada|dalam|di)\s+(?:pertanyaan|kebutuhan|topik|pencarian)\b|\bketika\b|\bsebagai\b|\bsaat\s+(?:pelanggan|orang|pasien|calon)\b|\bpertanyaan\s+(?:ke-?\s*)?\d|\bke(?:dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\s+(?:itu|tersebut|tadi)\b)/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
@@ -336,7 +336,7 @@ const ABSOLUTE =
 const COUNT = /\b(\d+)\s+dari\s+(\d+)\b/g;
 /** "di 6 jawaban", "pada 5 ringkasan": a count with no "dari". */
 const BARE_COUNT =
-  /\b(?:di|dalam|pada|untuk)\s+(\d+)\s+(?:jawaban|ringkasan|pertanyaan)\b/g;
+  /\b(?:di|dalam|pada|untuk)\s+(\d+)\s+(?:jawaban|ringkasan|pertanyaan)\b/gi;
 const NUMBER_WORDS: Record<string, string> = {
   nol: "0",
   satu: "1",
@@ -373,7 +373,12 @@ const COVERAGE =
 const namesChatGpt = (text: string) => text.includes(SOURCE_CHATGPT);
 /** "AI Overview" alone names Google too (N-26). */
 const namesGoogle = (text: string) => /Google|AI Overview/.test(text);
-const namesSource = (text: string) => namesChatGpt(text) || namesGoogle(text);
+/** "ringkasan" in a two-source report is an AI Overview summary (ChatGPT
+ * gives "jawaban"), when the text names no other source (Spec 023, founder's
+ * guide, 2026-10-29). */
+const meansGoogle = (text: string) =>
+  namesGoogle(text) || (!namesChatGpt(text) && /\bringkasan\b/i.test(text));
+const namesSource = (text: string) => namesChatGpt(text) || meansGoogle(text);
 
 type Source = "chatgpt" | "google";
 type ClauseSources = { sources: Source[]; explicit: boolean };
@@ -423,7 +428,7 @@ function clauseKind(clause: string, facts: TwoSourceReportFacts): ClauseKind {
 function sourcesOf(text: string): Source[] {
   return [
     ...(namesChatGpt(text) ? (["chatgpt"] as const) : []),
-    ...(namesGoogle(text) ? (["google"] as const) : []),
+    ...(meansGoogle(text) ? (["google"] as const) : []),
   ];
 }
 
@@ -626,12 +631,38 @@ function competitorIn(
  * longest first; a name inside a longer one found already counts once. */
 function competitorsIn(clause: string, facts: TwoSourceReportFacts): string[] {
   const found: string[] = [];
-  for (const name of [...(facts.writer?.businesses ?? [])].sort(
+  const businesses = [...(facts.writer?.businesses ?? [])].sort(
     (a, b) => b.length - a.length,
-  ))
+  );
+  for (const name of businesses)
     if (hasName(clause, name) && !found.some((longer) => hasName(longer, name)))
       found.push(name);
+  // A short form the writer uses after the full name ("Seruni" for "Klinik
+  // Seruni", "ERHA" for "ERHA Ultimate Batam"): the name's first distinctive
+  // word, when no owner name and no other listed business shares it.
+  for (const name of businesses) {
+    if (found.includes(name)) continue;
+    const short = shortName(name);
+    if (
+      short &&
+      hasName(clause, short) &&
+      !(facts.names ?? []).some((own) => hasName(own, short)) &&
+      businesses.every((other) => other === name || !hasName(other, short))
+    )
+      found.push(name);
+  }
   return found;
+}
+
+/** Words that do not tell one clinic from another. */
+const GENERIC_NAME_WORD =
+  /^(?:klinik|clinic|praktik|praktek|dr|drg|dokter|rumah|sakit|rs|skin|beauty|aesthetic|aesthetics|estetika|estetik|kecantikan|center|centre|care|the|and|dan|&|sp|spkk|spdve|cabang)$/i;
+
+function shortName(name: string): string | null {
+  const word = name
+    .split(/[\s,.|()]+/)
+    .find((part) => part.length >= 3 && !GENERIC_NAME_WORD.test(part));
+  return word && word !== name.trim() ? word : null;
 }
 
 /** Per question, for one source: was it checked, and was the owner (or the
@@ -731,6 +762,40 @@ function failedSources(
  * Clauses about a detail ("harga layanan Anda"), unnamed other businesses or
  * recommendations are not checked.
  */
+/** Spec 023, founder's guide (2026-10-29): a leading clause that only
+ * limits the claim ("Dalam empat jawaban tentang bekas jerawat, ChatGPT
+ * tidak menyebut Aruna") is read with the clause after its comma, as
+ * "ChatGPT tidak menyebut Aruna dalam empat jawaban tentang bekas jerawat"
+ * is. Only a sentence's opening clauses join; a count clause after a claim
+ * keeps the claim's polarity as before. */
+function clausesOf(sentence: string): string[] {
+  const text = digitsForWords(sentence);
+  const out: string[] = [];
+  let at = 0;
+  let lead = "";
+  for (const m of text.matchAll(new RegExp(CLAUSE_SPLIT.source, "gi"))) {
+    const part = text.slice(at, m.index);
+    at = m.index! + m[0].length;
+    if (!out.length && /^\s*,\s*$/.test(m[0]) && leadingLimit(part)) {
+      lead = lead ? `${lead} ${part}` : part;
+      continue;
+    }
+    out.push(lead ? `${lead} ${part}` : part);
+    lead = "";
+  }
+  const last = text.slice(at);
+  out.push(lead ? `${lead} ${last}` : last);
+  return out;
+}
+
+const leadingLimit = (clause: string) =>
+  !NEGATIVE.test(clause) &&
+  !POSITIVE.test(clause) &&
+  (LIMITED.test(clause) ||
+    /\b(?:dalam|di|pada|untuk)\s+\d+\s+(?:jawaban|ringkasan|pertanyaan)\b/i.test(
+      clause,
+    ));
+
 function contradictedSources(
   sentence: string,
   facts: TwoSourceReportFacts,
@@ -743,7 +808,7 @@ function contradictedSources(
   // A clause with a count but no verb ("…; di Google AI Overview, di 3 dari
   // 8 ringkasan") takes the polarity of the clause before it.
   let carriedPolarity: "negative" | "positive" | null = null;
-  for (const clause of digitsForWords(sentence).split(CLAUSE_SPLIT)) {
+  for (const clause of clausesOf(sentence)) {
     if (!clause.trim()) continue;
     const own = sourcesOf(clause);
     const at: ClauseSources = own.length
@@ -960,12 +1025,23 @@ export function sentences(text: string): string[] {
   return out;
 }
 
+/** Spec 023, founder's guide (2026-10-29): a conclusion that only gives
+ * the next step need not name a source; one that says the business was or
+ * was not named, or counts, does. */
+function makesNamingClaim(text: string): boolean {
+  return (
+    NEGATIVE.test(text) ||
+    POSITIVE.test(text) ||
+    /\b\d+\s+dari\s+\d+\b/.test(digitsForWords(text))
+  );
+}
+
 /**
  * B-4: what the pipeline does when the writer's one revision still breaks the
  * source checks. A paid order is never failed for it. A sentence that
  * contradicts the counts about the whole test is replaced by the code-built
- * count sentence for its source; a conclusion that names no source gets the
- * count sentence in front; a finding that names no source speaks about the
+ * count sentence for its source; a conclusion that makes a naming claim but
+ * names no source gets the count sentence in front; a finding that names no source speaks about the
  * ChatGPT answers it cites, so its explanation is marked "Di ChatGPT".
  * Spec 023 R-03: a false count about a group of questions or another
  * business is dropped instead (the owner's count sentence would be out of
@@ -1041,7 +1117,7 @@ export function repairTwoSourceWriting<
   const conclusionFix = fix(content.conclusion);
   sentencesDropped += conclusionFix.dropped;
   let conclusion = conclusionFix.text;
-  if (!names(conclusion)) {
+  if (!names(conclusion) && makesNamingClaim(conclusion)) {
     conclusion = `${twoSourceCountSentence(facts)} ${conclusion}`.trim();
     changed = true;
     sentencesReplaced += 1;
@@ -1122,7 +1198,7 @@ export function twoSourceWritingViolations(
 ): string[] {
   const violations: string[] = [];
   const names = namesSource;
-  if (!names(content.conclusion))
+  if (!names(content.conclusion) && makesNamingClaim(content.conclusion))
     violations.push(
       `The conclusion must say which source it is about, in natural words that include "${SOURCE_CHATGPT}" or "Google".`,
     );

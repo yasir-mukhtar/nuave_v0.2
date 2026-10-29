@@ -53,6 +53,8 @@ const ORDER_NAMES = [
   "Kedai Fiksi",
   "Klinik Satu",
   "Klinik Dua",
+  // A real clinic chain named in NV-3WDSAY's Google AI Overview answers.
+  "Bening",
 ];
 
 describe("report writing guide (Spec 023 R-10, AC-07)", () => {
@@ -73,14 +75,19 @@ describe("report writing guide (Spec 023 R-10, AC-07)", () => {
       );
   });
 
-  it("follows its own punctuation rule, stays short, and has its four parts", () => {
-    expect(file).not.toMatch(/—|\s–\s|\s-\s/);
-    expect(file.split(/\s+/).length).toBeLessThan(2_500);
+  it("follows its own punctuation rule, keeps a bounded length, and has its parts", () => {
+    // List markers ("- ") are not dashes; prose is checked without them.
+    const prose = file.replace(/^\s*- /gm, "");
+    expect(prose).not.toMatch(/—|\s–\s|\s-\s/);
+    // The founder's fourth version (2026-10-29) is longer than the first
+    // drafts; it is read with every report, so it stays bounded.
+    expect(file.split(/\s+/).length).toBeLessThan(4_500);
     for (const part of [
-      "## 1. Cara berpikir konsultan",
-      "## 2. Cara menulis seperti editor",
-      "## 3. Jujur tanpa berbelit",
-      "## 4. Contoh",
+      "## 1. Baca sampai tahu perkaranya",
+      "## 2. Temukan pokok ceritanya",
+      "## 7. Jaga batas makna",
+      "## 10. Satu bahan, satu laporan yang utuh",
+      "## 11. Sunting dengan mata pembaca",
     ])
       expect(file).toContain(part);
   });

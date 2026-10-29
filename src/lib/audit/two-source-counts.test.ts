@@ -308,35 +308,97 @@ describe("Spec 023 R-03: groups that mention 'klinik', and the guide's model sen
       ).join(" "),
     ).toMatch(/contradicts the counts/);
   });
+});
 
-  it("passes the guide's model sentences when they are true", () => {
-    const content = {
-      conclusion:
-        "Saat ditanya soal botox, ChatGPT menyebut ERHA. Langkah pertama ada di halaman botox SOZO yang sudah ada. Sesudah itu, audit ulang dengan pertanyaan yang sama menunjukkan apakah jawaban ChatGPT berubah.",
-      key_findings: [
-        {
-          title: "ChatGPT tidak menyebut SOZO dalam jawaban tentang botox",
-          explanation:
-            "Ditanya 'botox di Batam yang dokternya berpengalaman di mana ya?', ChatGPT menjawab: 'Aku sarankan ERHA, dokternya spesialis kulit dan jadwal konsultasinya jelas.' Ketiga jawaban lain tentang botox juga menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: sebagian jawabannya menyebut SOZO. Penyebab perbedaan itu tidak diketahui.",
-          evidence_prompt_ids: ids,
+describe("Spec 023 AC-08: the brand name", () => {
+  it("checks a sentence that names the business by its exact name like 'klinik Anda'", () => {
+    const content = withFinding("SOZO tidak disebut ChatGPT sama sekali.", ids);
+    expect(violations(content).join(" ")).toMatch(
+      /contradicts the counts: ChatGPT named the business in 3 of 10/,
+    );
+  });
+
+  it("still checks a short form that is not an alias as being about the owner", () => {
+    const content = withFinding("Sozo-SC tidak disebut ChatGPT.", ids);
+    expect(violations(content).join(" ")).toMatch(/contradicts the counts/);
+  });
+});
+
+// The founder's fourth guide (2026-10-29) and its practice material: six
+// general questions (q1 to q6; ChatGPT names Aruna in q1 to q3) and four
+// about bekas jerawat (q7 to q10; ChatGPT names Klinik Seruni in each).
+// Google shows a summary for q1 to q6, none naming Aruna.
+describe("Spec 023: the founder's guide, read by the checker", () => {
+  const gIds = Array.from({ length: 10 }, (_, i) => `q${i + 1}`);
+  const bekas = gIds.slice(6);
+  const guideFacts = (named = 3, seruni = 4): TwoSourceReportFacts => ({
+    subject: "klinik",
+    names: ["Klinik Aruna", "Aruna"],
+    counts: {
+      chatgpt: { completed: 10, named },
+      google: { completed: 10, summaries: 6, named: 0 },
+    },
+    google: gIds.map((prompt_id, i) => ({
+      prompt_id,
+      outcome: i < 6 ? "summary" : "not_shown",
+      business_named: i < 6 ? false : null,
+      cited_domains: [],
+    })),
+    writer: {
+      questions: gIds.map((prompt_id, i) => ({
+        prompt_id,
+        ordinal: i + 1,
+        topic: null,
+        volume: null,
+        named: {
+          chatgpt: i < named ? "named" : "absent",
+          google: i < 6 ? "absent" : null,
         },
-        {
-          title: "ChatGPT menyebut ERHA untuk botox",
-          explanation:
-            "ChatGPT menyebut ERHA dalam keempat jawaban tentang botox; SOZO tidak disebut dalam jawaban tentang botox. ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang botox.",
-          evidence_prompt_ids: treatment,
+        google_text: "",
+        businesses: {
+          chatgpt: i >= 6 && i - 6 < seruni ? ["Klinik Seruni"] : [],
+          google: [],
         },
-      ],
-      two_source_writing: {
-        verdict:
-          "Saat ditanya soal botox, ChatGPT menyebut ERHA; SOZO hanya muncul di sebagian jawaban tentang klinik di Batam. Google AI Overview tidak menyebutnya.",
+      })),
+      businesses: ["Klinik Seruni"],
+    },
+  });
+  const report = {
+    conclusion:
+      "Mulai dari informasi yang bisa diperiksa di halaman bekas jerawat. Sesudah pembaruan selesai, ulangi pengujian dengan pertanyaan dan cara yang sama untuk melihat apakah jawabannya berbeda.",
+    key_findings: [
+      {
+        title: "Untuk bekas jerawat, empat jawaban ChatGPT menyebut Seruni",
+        explanation:
+          "Pertanyaan “Di mana saya bisa konsultasi bekas jerawat di Depok?” mendapat jawaban: “Untuk konsultasi bekas jerawat di Depok, Klinik Seruni bisa menjadi pilihan.” Tiga jawaban ChatGPT lain tentang topik yang sama juga menyebut Seruni. Aruna tidak disebut dalam keempat jawaban itu. Hasilnya berbeda pada pertanyaan umum tentang klinik di Depok. Di kelompok enam pertanyaan ini, ChatGPT menyebut Aruna dalam tiga jawaban.",
+        evidence_prompt_ids: gIds,
       },
-    };
-    expect(contradiction(content)).toEqual([]);
-    // The model verdict with long real names stays within the verdict's
-    // own limits (two sentences, 220 characters).
-    const verdict =
-      "Saat ditanya soal perawatan jerawat, ChatGPT menyebut ERHA Ultimate Batam; SOZO Skin Clinic hanya muncul di sebagian jawaban tentang klinik di Surabaya. Google AI Overview tidak menyebutnya.";
+      {
+        title: "Enam ringkasan Google AI Overview tidak menyebut Aruna",
+        explanation:
+          "Google AI Overview tampil untuk enam dari sepuluh pertanyaan yang diuji. Tidak satu pun dari enam ringkasan itu menyebut Aruna. Pada empat pertanyaan lainnya, ringkasan tidak tampil.",
+        evidence_prompt_ids: gIds,
+      },
+    ],
+    two_source_writing: {
+      verdict:
+        "ChatGPT menyebut Aruna dalam tiga jawaban, semuanya pertanyaan umum tentang klinik di Depok, bukan bekas jerawat. Google AI Overview tidak menyebut Aruna dalam 6 ringkasan yang tampil.",
+    },
+  };
+  const contradictions = (
+    content: typeof report,
+    facts: TwoSourceReportFacts,
+  ) =>
+    twoSourceWritingViolations(content, facts).filter((v) =>
+      /contradicts|is not true/.test(v),
+    );
+
+  it("passes the model report when it is true, and catches it when it is not", () => {
+    expect(twoSourceWritingViolations(report, guideFacts())).toEqual([]);
+    // The model verdict stays within its own limits with long real names.
+    const verdict = report.two_source_writing.verdict
+      .replaceAll("Aruna", "Aruna Skin Clinic")
+      .replace("Depok", "Surabaya");
     expect(
       partBWritingViolations({
         conclusion: "",
@@ -353,19 +415,79 @@ describe("Spec 023 R-03: groups that mention 'klinik', and the guide's model sen
         },
       } as never),
     ).toEqual([]);
-  });
-});
-
-describe("Spec 023 AC-08: the brand name", () => {
-  it("checks a sentence that names the business by its exact name like 'klinik Anda'", () => {
-    const content = withFinding("SOZO tidak disebut ChatGPT sama sekali.", ids);
-    expect(violations(content).join(" ")).toMatch(
-      /contradicts the counts: ChatGPT named the business in 3 of 10/,
-    );
+    expect(contradictions(report, guideFacts(0)).length).toBeGreaterThan(0);
+    expect(contradictions(report, guideFacts(5)).length).toBeGreaterThan(0);
   });
 
-  it("still checks a short form that is not an alias as being about the owner", () => {
-    const content = withFinding("Sozo-SC tidak disebut ChatGPT.", ids);
-    expect(violations(content).join(" ")).toMatch(/contradicts the counts/);
+  it("reads a limit that opens the sentence like one after the verb", () => {
+    const finding = (explanation: string, ids: string[]) => ({
+      ...report,
+      key_findings: [
+        { title: "ChatGPT", explanation, evidence_prompt_ids: ids },
+      ],
+    });
+    const opening =
+      "Dalam empat jawaban tentang bekas jerawat, ChatGPT tidak menyebut Aruna.";
+    expect(contradictions(finding(opening, bekas), guideFacts())).toEqual([]);
+    // Aruna was named in q1 to q3: four cited questions, one not naming it.
+    expect(
+      contradictions(finding(opening, ["q1", "q2", "q3", "q7"]), guideFacts()),
+    ).not.toEqual([]);
+    // An opening that does not limit stays a claim about the whole test.
+    expect(
+      contradictions(
+        finding(
+          "Saat ditanya soal bekas jerawat, ChatGPT tidak menyebut Aruna.",
+          bekas,
+        ),
+        guideFacts(),
+      ),
+    ).not.toEqual([]);
+  });
+
+  it("reads a short competitor name, and 'ringkasan' as Google only alone", () => {
+    const finding = (explanation: string) => ({
+      ...report,
+      key_findings: [
+        { title: "ChatGPT", explanation, evidence_prompt_ids: bekas },
+      ],
+    });
+    expect(
+      contradictions(
+        finding(
+          "ChatGPT menyebut Seruni di 4 dari 4 jawaban tentang bekas jerawat.",
+        ),
+        guideFacts(),
+      ),
+    ).toEqual([]);
+    expect(
+      contradictions(
+        finding(
+          "ChatGPT menyebut Seruni di 4 dari 4 jawaban tentang bekas jerawat.",
+        ),
+        guideFacts(3, 2),
+      ),
+    ).not.toEqual([]);
+    // "ringkasan" beside "ChatGPT" does not make the claim about Google.
+    expect(
+      contradictions(
+        finding("ChatGPT menyebut Seruni di 2 dari 6 ringkasan."),
+        guideFacts(),
+      ),
+    ).not.toEqual([]);
+  });
+
+  it("asks a source of a conclusion only when it makes a claim about naming", () => {
+    expect(twoSourceWritingViolations(report, guideFacts())).toEqual([]);
+    expect(
+      twoSourceWritingViolations(
+        {
+          ...report,
+          conclusion:
+            "Aruna tidak disebut. Mulailah dari halaman bekas jerawat.",
+        },
+        guideFacts(),
+      ).join(" "),
+    ).toMatch(/The conclusion must say which source/);
   });
 });

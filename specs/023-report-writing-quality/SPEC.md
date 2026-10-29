@@ -590,6 +590,48 @@ sentences are not checked, as before Spec 023. Reading "ke<N>" as a count
 would check it against every question a finding cites, which drops true
 sentences in a finding that compares two groups, so it is left for later.
 
+## The founder's fourth guide (2026-10-29)
+
+The founder revised the guide with another model and approved the result
+("Writing Guide 4") with an editorial note on the third draft. It replaces
+`WRITING_GUIDE.md` and changes R-04, R-04a and R-10 as follows.
+
+- **R-10.** The guide's parts are now the eleven steps of the founder's
+  version (reading, the main point, the order of thought, the opening, what
+  the reader can see, words, limits of meaning, recommendations, the
+  ending, a worked example, editing). Its length bound is 4,500 words.
+- **R-04 and R-04a.** The verdict carries a number only when it is the
+  point; the conclusion uses a count only when it is needed to be clear,
+  has no fixed shape, and names a source only when it says the business
+  was or was not named. Recommendations are one to six, as many as the
+  checked evidence supports.
+- **Edits to the founder's text, each for a product reason:**
+  - "Klinik Bening" became "Klinik Seruni": "Bening's Clinic" is a real
+    chain named in an order's Google AI Overview answers (AC-07).
+  - The model verdict and one sentence of the model finding give the counts
+    in a form R-03 can check: a count about a group belongs in a finding
+    that cites exactly that group, so the verdict says "dalam tiga jawaban,
+    semuanya pada pertanyaan umum" rather than "3 dari 6 jawaban umum".
+  - The worked example notes that the product has no separate "Batas
+    pengujian" part.
+  - The closing note says the guide was checked against VOICE, this spec,
+    the writer's rules and the checker.
+- **R-03 changes so the checker reads the guide's forms:**
+  - a leading clause that only limits the claim ("Dalam empat jawaban
+    tentang bekas jerawat, ChatGPT tidak menyebut Aruna") is read with the
+    clause after its comma;
+  - "keempat jawaban itu" and "keempatnya" limit a claim, as "jawaban tentang
+    harga" does (not checked further);
+  - "ringkasan" names Google AI Overview when the text names no other
+    source;
+  - a competitor's short form ("Seruni" for "Klinik Seruni") is read as that
+    competitor when no owner name and no other listed business shares it;
+  - counts at a sentence's start ("Dalam 4 jawaban") are read.
+  The old-versus-new comparison over the generated cases accepts the same
+  350 true sentences as before; the deliberate additions are the leading
+  limit and the anaphoric "keempat jawaban itu", which today's code read as
+  claims about the whole test.
+
 ## Verification record
 
 Complete after implementation:

@@ -26,7 +26,7 @@ fiksi, tetapi disusun supaya enak dibaca dan perlu (hlm. 8).
    (hlm. 37 sampai 39). Di laporan Nuave, sudut adalah pesan utama.
 3. **Kerangka sebelum menulis.** Penulis yang langsung "menukilkan" teras
    hebat akan tertumbuk masalah beberapa alinea kemudian. Tentukan "alif"-nya,
-   lalu urutan bagian sampai penutup (hlm. 63 sampai 64). Di Nuave, ini
+   lalu urutan bagian sampai penutup (hlm. 64). Di Nuave, ini
    kerangka alur (`storyline`).
 4. **Teras yang mengail.** Kunci tulisan ada di paragraf pertama; tanpa teras
    yang baik, menangkap pembaca sama dengan mengail tanpa umpan (hlm. 20).
@@ -64,8 +64,8 @@ fiksi, tetapi disusun supaya enak dibaca dan perlu (hlm. 8).
 11. **Tubuh, transisi, urutan.** Transisi adalah adukan semen yang tidak
     boleh terasa (hlm. 30 sampai 31). Urutan bisa kronologis, ruang, atau
     logis: sebab akibat, khusus ke umum, umum ke khusus, pemecahan masalah
-    (hlm. 64 sampai 66). Bahan yang mengganggu arus dipindah ke "boks"
-    (hlm. 66).
+    (hlm. 65 sampai 67). Bahan yang mengganggu arus dipindah ke "boks"
+    (hlm. 67 sampai 68).
 12. **Penutup (_ending_).** _Feature_ mutlak memerlukan penutup: ikhtisar
     yang menunjuk kembali ke teras, penutup yang mengagetkan, klimaks, atau
     pertanyaan pokok yang tak terjawab (hlm. 29 sampai 30). Penutup harus
@@ -122,3 +122,33 @@ Kutipan dari jawaban akan lebih sering muncul. Saat ini kode tidak memeriksa
 bahwa teks dalam tanda kutip benar-benar ada di jawaban tersimpan. Bila
 kutipan menjadi bagian penting gaya laporan, pemeriksaan itu layak
 ditambahkan (usulan, belum dikerjakan).
+
+## Catatan tambahan dari founder (2026-10-29)
+
+Founder menelaah catatan ini dan panduan versi ketiga. Penilaiannya: catatan
+ini setia pada ajaran utama buku, dengan pengayaan dan pelurusan berikut.
+Semuanya sudah masuk ke panduan versi keempat.
+
+1. **Mengembangkan tubuh tulisan.** Tiga teknik di hlm. 32: spiral
+   (memperinci hal yang dibuka sebelumnya), blok (menuntaskan satu bagian
+   sebelum beralih), dan mengikuti tema (memperlihatkan sisi-sisi yang
+   menegaskan pokok cerita).
+2. **Pekerjaan transisi.** Transisi memberi tahu perpindahan materi dan
+   menempatkan materi baru pada perspektif yang tepat (hlm. 30 sampai 31).
+   Yang dihindari ialah gangguan pada pembacaan, bukan kata penghubung itu
+   sendiri.
+3. **Konteks kutipan.** Kutipan yang persis dapat memberi gambaran keliru bila
+   konteksnya dibuang (hlm. 44 sampai 47). Pujian ChatGPT kepada sebuah
+   klinik adalah isi jawaban, bukan fakta tentang mutu klinik.
+4. **Mutu pengamatan.** Deskripsi yang hidup lahir dari reportase dan seleksi
+   bahan (hlm. 40 sampai 42). Kata yang lebih berwarna tidak mengganti
+   pengamatan yang kurang.
+5. **Prinsip buku dan keputusan Nuave dibedakan.** Kutipan yang disalin
+   persis, larangan tanda pisah, dan batas 220 karakter adalah keputusan
+   Nuave, bukan hukum penulisan Tempo.
+
+Pelurusan: patokan empat baris untuk teras (hlm. 27) berlaku dalam konteks
+tata letak; buku menyebut penutup mutlak bagi banyak _feature_, bukan semua;
+daya hibur tidak menomorduakan informasi (hlm. 8); pertanyaan uji dirancang
+menyerupai kebutuhan pasien, bukan pertanyaan pasien sungguhan; dan larangan
+menebak mekanisme AI tidak menghapus penalaran dalam rekomendasi.

@@ -1,308 +1,318 @@
 # Panduan menulis laporan Nuave
 
-> Status: **Draf ketiga untuk dibaca founder** (Spec 023 R-10): ulasan
-> editorial founder (2026-10-29) ditambah gaya redaksi Tempo
-> (`GAYA_TEMPO.md`). Penulis laporan membacanya setelah pedoman kerja
-> (playbook), di setiap laporan. Bila panduan ini berbeda dengan
-> `docs/VOICE.md`, yang berlaku adalah VOICE.md.
+Versi 4 · 29 Oktober 2026
 
-Pembacanya pemilik klinik, bukan orang pemasaran. Ia sibuk, sering membaca di
-ponsel, dan ingin tahu dua hal: bagaimana kliniknya muncul dalam jawaban
-ChatGPT dan Google AI Overview, dan langkah apa yang masuk akal.
+Di hadapan penulis Nuave ada sepuluh pertanyaan, jawaban yang terkumpul, dan halaman yang telah diperiksa. Bahan itu belum menjadi laporan. Pemilik klinik masih perlu tahu di mana nama usahanya disebut, apa yang patut ia perhatikan, dan pekerjaan mana yang layak didahulukan.
 
-Tulis laporan seperti wartawan Tempo menulis _feature_: bertutur, jujur,
-jelas, jernih. Bedanya, bahan kita hanya bahan audit: pertanyaan, jawaban,
-situs yang dikutip, dan halaman klinik. Tidak ada yang boleh direka.
+Tugas Anda menyusun bahan itu menjadi cerita yang terang. Pembaca perlu bisa mengikuti pikiran Anda: melihat bukti, memahami simpulan, lalu menimbang anjuran. Kelancaran bertutur membantu pekerjaan ini. Ketelitian menentukan apakah laporan layak dipercaya.
 
-Istilah kerja: **kerangka alur** (`storyline`) ialah pesan utama dan
-pendukungnya, disusun sebelum menulis dan tidak dibaca pemilik. **Simpulan
-utama** (`verdict`) ialah paragraf pertama laporan. **Pedoman kerja**
-(`playbook`) ialah dasar setiap anjuran.
+Pembacanya pemilik klinik atau orang yang membantu mengelola usahanya. Ia mungkin membaca di sela pekerjaan, lewat layar ponsel. Hormati waktunya. Jelaskan perkara sampai ia mengerti, lalu berhenti ketika penjelasan sudah cukup.
 
-## 1. Cara berpikir konsultan
+Panduan ini mengambil pelajaran dari _Seandainya Saya Wartawan Tempo_: menguasai bahan, memilih sudut, bertutur dengan hidup, dan memeriksa setiap fakta. Seluruh contoh klinik dalam panduan ini adalah rekaan untuk latihan. Nama, angka, pertanyaan, dan kalimat contohnya tidak boleh terbawa ke laporan sungguhan.
 
-1. **Baca bukti dulu, lalu temukan sudutnya.** Setelah memeriksa seluruh
-   hasil, cari benang yang menghubungkan kebanyakan jawaban. Itulah pesan
-   utama. Jika ada bukti penting yang bertentangan, perbaiki pesan utamanya.
-   Jangan memilih simpulan lalu mencari temuan yang mendukungnya.
-2. **Pesan utama ialah simpulan tentang pola, bukan penetapan sebab.**
-   "ChatGPT menyebut Klinik A dalam jawaban tentang klinik di [kota], tetapi
-   tidak dalam jawaban tentang [perawatan]" lebih berguna daripada mengulang
-   angka yang sudah ada di kartu.
-3. **Pakai pesan utama sebagai unting-unting.** Setiap temuan harus lurus
-   terhadapnya atau membatasinya. Bahan yang tidak menolong pemilik
-   memahami hasil atau mengambil keputusan, buang. Keterbatasan pengujian
-   yang penting tetap ditulis.
-4. **Jumlah temuan mengikuti bahan.** Dua temuan yang kuat cukup bila memang
-   hanya itu yang tersedia. Jangan memenuhi kuota dengan mengulang gagasan.
-   Urutkan dari yang paling penting.
-5. **Tunjukkan perbedaan yang berarti, lalu jelaskan batasnya.** Bandingkan:
-   pertanyaan yang menyebut kota dan yang menyebut perawatan; ChatGPT dan
-   Google AI Overview; situs yang dikutip dan situs klinik sendiri.
-6. **Susun alurnya sebelum menulis.** Temuan enak dibaca bila bergerak dari
-   khusus ke umum: satu jawaban yang paling mewakili, lalu polanya.
-   Rekomendasi bergerak dari masalah yang terlihat ke tindakan dan
-   tujuannya.
-7. **Urutkan langkah dari bukti dan pedoman kerja.** Angka pencarian bulanan
-   membantu bila tersedia, tetapi tidak cukup sendirian. Jangan mengarang
-   biaya atau upaya untuk memperkuat urutan.
-8. **Setiap rekomendasi menjawab temuan dan menjelaskan tujuannya,** dengan
-   kalimat biasa, bukan label seperti "Temuan 2:". Menjalankan saran tidak
-   menjamin nama klinik akan disebut, dan laporan tidak boleh
-   menyiratkannya.
+## 1. Baca sampai tahu perkaranya
 
-## 2. Cara menulis seperti editor
+Mulailah dengan membaca seluruh hasil. Lihat apa yang ditanyakan, bagaimana masing-masing sistem menjawab, nama siapa yang muncul, dan sumber apa yang dikutip. Periksa pula halaman klinik yang tersedia dalam bahan audit. Kalimat terbaik sering ditemukan setelah sesuatu yang semula tampak biasa diperhatikan lebih saksama.
 
-**Bertutur dalam bahasa Indonesia.** Tulis seperti konsultan yang
-menjelaskan di depan pemilik, langsung dalam bahasa Indonesia. Jangan
-mempertahankan pola kalimat Inggris hanya karena setiap katanya sudah
-diterjemahkan. Sebut siapa melakukan apa; letakkan keterangan dekat dengan
-hal yang diterangkannya.
+Saat membaca, simpan jejak tiap fakta: pertanyaan asal, sistem yang menjawab, tanggal pengujian, jawaban lengkap, serta halaman atau tautan yang mendukungnya. Jejak ini membantu Anda kembali ke bahan ketika sebuah kalimat terasa terlalu berani.
 
-| Kalimat yang perlu dibenahi                                                                      | Suntingan                                                          |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| "Klinik A memiliki kebutuhan untuk melakukan pembaruan informasi."                               | "Klinik A perlu memperbarui informasi."                            |
-| "Dalam konteks pertanyaan terkait perawatan, Klinik A tidak memperoleh penyebutan dari ChatGPT." | "ChatGPT tidak menyebut Klinik A dalam jawaban tentang perawatan." |
-| "Tidak terdapat pencantuman harga pada halaman perawatan Klinik A."                              | "Halaman perawatan Klinik A tidak mencantumkan harga."             |
+Bedakan tiga hal sejak awal:
 
-**Simpulan utama adalah teras.** Ia menentukan apakah paragraf berikutnya
-dibaca. Buka dengan hal yang paling konkret dari bahan: siapa yang disebut
-saat ditanya apa, kontras yang paling tajam, atau potongan pendek jawaban yang
-tetap memusat pada pesan utama. Jangan membuka dengan metode atau sampel
-("Dalam sampel ini", "Audit ini menanyakan"), apalagi "Seperti telah
-diketahui" atau "Dalam rangka". Satu atau dua kalimat, paling panjang 220
-karakter; paling banyak satu proporsi, dan hanya bila proporsi itulah intinya.
-Angka per sumber sudah tampil di kartu.
+- **Apa yang terlihat.** Nama klinik disebut dalam jawaban tertentu; sebuah halaman mencantumkan harga; suatu ringkasan tidak tampil.
+- **Apa artinya dalam pengujian.** Penyebutan terkumpul pada kelompok pertanyaan tertentu; hasil dua sistem berbeda; bahan belum cukup untuk melihat pola.
+- **Apa yang layak dikerjakan.** Sebuah langkah yang bertumpu pada keadaan yang diperiksa dan pedoman kerja Nuave.
 
-**Tunjukkan, jangan melabeli.** "Visibilitas Klinik A rendah" adalah label.
-"Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B" adalah gambaran.
-Ganti setiap kata sifat yang menilai ("lemah", "tertinggal", "kurang optimal")
-dengan apa yang tampak di bahan. Detail kita: kata-kata pertanyaan, yang
-ditulis seperti calon pasien bertanya; nama klinik yang disebut; kalimat
-jawaban; situs yang dikutip; isi halaman klinik.
+Perbedaan ini menjaga pikiran tetap bersih. Hasil pengujian dapat menunjukkan pola, tetapi tidak membuka seluruh proses yang menghasilkan jawaban. Kalimat ChatGPT tentang keunggulan sebuah klinik membuktikan bahwa kalimat itu muncul dalam jawabannya. Kebenaran keunggulan tersebut memerlukan pemeriksaan tersendiri.
 
-**Kutipan.** Kutip jawaban ChatGPT atau Google AI Overview bila kata-katanya
-sendiri paling jelas menunjukkan pola. Salin persis, huruf demi huruf; boleh
-dipotong dengan "..." asal maknanya tidak berubah. Jangan merapikan,
-menerjemahkan, atau menggabungkan dua jawaban. Sebut sumbernya, dan pakai
-hanya jawaban dari pertanyaan yang menjadi bukti temuan itu. Pilih potongan
-yang pendek dan paling tajam, paling banyak satu kutipan per temuan.
+Catat juga bahan yang membantah dugaan awal. Jika nama klinik ternyata muncul dalam satu jawaban yang semula terlewat, perbaiki simpulannya. Jangan menganggap pengecualian sebagai gangguan yang boleh disisihkan demi cerita yang rapi.
 
-**Satu pertanyaan sebagai contoh.** Di dalam temuan, ceritakan dulu satu
-pertanyaan yang paling mewakili: apa yang ditanyakan, siapa yang disebut.
-Lalu tarik polanya ke kelompok pertanyaan itu. Pertanyaan yang diceritakan
-harus termasuk yang dikutip temuan.
+Jika halaman gagal dibuka, tulis bahwa halaman itu belum dapat diperiksa. Kegagalan membuka halaman tidak membuktikan bahwa informasi di dalamnya tidak ada.
 
-**Kalimat dan alinea.** Setiap kalimat membawa satu pokok. Gabungkan
-keterangan yang saling bergantung; pecah kalimat ketika pokoknya berganti.
-Variasikan panjangnya: kalimat pendek untuk menegaskan, tetapi pecahan yang
-terlalu sering membuat bacaan tersendat. Satu paragraf temuan cukup tiga atau
-empat kalimat. Baca dengan suara pelan, lalu benahi bagian yang tersendat.
+## 2. Temukan pokok ceritanya
 
-**Kata kerja adalah busi.** Pilih kata kerja aktif yang ringkas. Pilih kata
-dasar daripada kata bentukan panjang. Kalimat pasif boleh untuk menjaga
-fokus: "Klinik A tidak disebut dalam keempat jawaban itu" wajar bila
-paragraf sedang membahas Klinik A. Tulis tindakan yang tercatat: ChatGPT
-"menyebut", Google AI Overview "mengutip", jawaban "merekomendasikan" bila
-memang memuat rekomendasi. Jangan menulis apa yang AI "kenal", "pahami",
-atau "percayai".
+Sebelum menulis paragraf pertama, jawab satu pertanyaan: **apa yang paling perlu dipahami pemilik dari hasil ini?**
 
-**Kata yang tepat.** Satu kata yang salah mengubah arti. "Disebut",
-"direkomendasikan", dan "situsnya dikutip" adalah tiga keadaan berbeda; jangan
-dipertukarkan demi variasi. Pakai satu istilah untuk satu hal di seluruh
-laporan. Istilah teknis dijelaskan sekali dengan kata sehari-hari, misalnya
-Google AI Overview sebagai ringkasan AI di hasil pencarian Google. Gunakan
-"perawatan", "layanan", atau "tindakan" menurut maknanya.
+“Hasil pengujian Klinik Aruna” baru menyebut topik. “Dalam pengujian ChatGPT ini, nama Aruna muncul pada pertanyaan umum tentang klinik, tetapi tidak pada pertanyaan tentang bekas jerawat” sudah memperlihatkan perkara yang bisa dijelaskan.
 
-**Sumber dan nama.** Sebut sumbernya dengan tepat: ChatGPT, atau Google AI
-Overview, bukan "AI" atau "Google" saja. Setiap temuan berangkat dari
-jawaban dan menyebut sumbernya; keadaan situs klinik sendiri ditulis di
-rekomendasi yang membahasnya. Sebut nama klinik di awal bagian dan setiap
-kali "klinik ini" dapat menunjuk dua klinik. Di antaranya pakai "klinik ini"
-atau "klinik Anda" untuk kliniknya, dan "Anda" untuk pemilik yang bertindak.
+Itulah sudut cerita. Ia menyatukan bahan yang paling berarti dan menentukan apa yang perlu mendapat tempat lebih banyak. Sudut bisa berupa perbedaan, kemunculan yang berulang, ketidakhadiran, atau hasil yang belum cukup jelas. Pilih menurut bukti dan kepentingannya bagi pemilik.
 
-**Angka.** Pakai angka bila membantu pembaca memahami besarnya temuan,
-perbandingan, atau urutan pekerjaan. Angka boleh diulang dalam temuan agar
-temuan itu dapat dipahami sendiri. Setiap proporsi jelas pembilang,
-penyebut, dan kelompoknya: "di 4 dari 4 pertanyaan tentang [perawatan]"
-menghitung tepat pertanyaan yang dikutip temuan itu. Temuan yang
-membandingkan dua kelompok memberi angka untuk satu kelompok saja.
+Tidak setiap laporan membutuhkan pertentangan. Jika hasilnya serupa pada kedua sistem, jelaskan keserupaan itu. Jika klinik banyak disebut, terangkan dalam konteks apa. Jangan menciptakan kekurangan untuk menyediakan alasan bagi rekomendasi.
 
-**Judul.** Judul temuan menyatakan isinya, bukan topiknya: "Untuk
-[perawatan], ChatGPT menyebut klinik lain", bukan "Analisis perawatan".
-Judul rekomendasi diawali kata kerja yang tegas. Judul dan isi sama
-cakupannya.
+Tulis kerangka singkat untuk diri sendiri:
 
-**Transisi yang tidak terasa.** Sambungkan kalimat dan paragraf lewat hal yang
-sedang dibahas, bukan dengan "selain itu" atau "lebih lanjut" berulang kali.
+1. Pokok yang ingin disampaikan, dalam satu kalimat.
+2. Bukti yang paling kuat untuk menopangnya.
+3. Bukti atau keterbatasan yang mempersempitnya.
+4. Urutan penjelasan yang akan membantu pembaca.
+5. Langkah yang layak dibahas, beserta dasar dan tujuannya.
 
-**Penutup yang tinggal di kepala.** Penutup tidak meringkas ulang. Kembali ke
-gambar di teras, lalu bawa pemilik ke langkah berikutnya. Kalimat terakhirnya
-menghentak karena tepat, bukan karena dramatis: benar menurut bahan, tanpa
-angka, tanpa janji, tanpa seruan, dan tanpa mempertentangkan apa yang tetap
-dengan apa yang bisa diubah, karena itu menyiratkan sebab. Penutup menyebut
-ChatGPT atau Google AI Overview. Jadwal audit ulang mengikuti pedoman kerja.
+Kerangka ini disebut `storyline` dalam alur kerja. Ia tidak ditampilkan kepada pemilik. Bila sebuah bagian tidak menambah pemahaman, tidak memberi batas penting, dan tidak membantu keputusan, singkirkan. Bila bahan hanya menopang dua temuan, tulislah dua temuan yang selesai dijelaskan.
 
-**Tanda baca dan nada.** Jangan pakai tanda pisah panjang atau tanda pisah
-sebagai jeda dalam kalimat; kadang kalimatnya perlu disusun ulang. Di antara
-angka, tulis "sampai". Nada tenang dan langsung: tidak menggurui, tidak
-dramatis, tidak berjualan.
+## 3. Susun jalan pikiran sebelum memperindah kalimat
 
-**Ungkapan yang perlu diperiksa saat menyunting.**
+Laporan perlu bergerak. Sesudah mengetahui hasil utama, pembaca ingin melihat buktinya. Sesudah melihat bukti, ia ingin memahami artinya. Sesudah itu, ia menimbang pekerjaan berikutnya.
 
-| Ungkapan                                                      | Cara membenahi                                                                                                      |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| "Hal ini menunjukkan bahwa", "dapat disimpulkan bahwa"        | Hapus pengantarnya; langsung ke isinya, lalu periksa apakah simpulannya mengikuti bukti.                            |
-| "melakukan", "mengadakan", "dalam rangka", "pihak", "terkait" | Bahasa birokrat. Pakai kata kerja langsung: "melakukan pembaruan" menjadi "memperbarui".                            |
-| "memastikan"                                                  | Ganti dengan tindakannya: "Pastikan harga tercantum" menjadi "Cantumkan harga".                                     |
-| "secara signifikan", "jauh lebih"                             | Gunakan angka atau perbandingan yang tersedia. Jika tidak ada, hapus klaim besarnya.                                |
-| "komprehensif", "optimal", "visibilitas rendah"               | Label. Sebut apa yang perlu dicantumkan, atau apa yang tampak di jawaban.                                           |
-| "bukan hanya ... tetapi juga ..."                             | Pertahankan bila perlu menunjukkan penambahan dengan penekanan. Hapus bila sekadar membuat kalimat terdengar megah. |
-| "AI memilih", "pemenang"                                      | Tulis tindakan yang terlihat: menyebut, merekomendasikan, atau mengutip.                                            |
+Bagian-bagian laporan mempunyai tugas berbeda:
 
-## 3. Jujur tanpa berbelit
+| Bagian                     | Pekerjaannya                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| Simpulan utama (`verdict`) | Menyampaikan hal terpenting yang ditopang hasil pengujian.                              |
+| Temuan                     | Memperlihatkan bukti, menjelaskan pola, dan menempatkan batasnya.                       |
+| Rekomendasi                | Menunjukkan pekerjaan yang relevan, dasar pemilihannya, dan hasil langsung yang dituju. |
+| Penutup                    | Menyelesaikan penjelasan dan memberi arah yang wajar bagi pembaca.                      |
+| Rincian bukti              | Menyediakan pertanyaan, jawaban, sumber, dan keterangan metode untuk diperiksa kembali. |
 
-**Akurat adalah mahkota.** Setiap fakta, nama, angka, dan kutipan harus ada
-di bahan audit. Gaya bercerita tidak boleh mewarnai fakta. Penyuntingan
-boleh mengubah susunan, pilihan kata, dan penekanan; jangan menambah fakta,
-perbandingan, keadaan situs, atau hubungan sebab akibat. Jika suatu
-simpulan membutuhkan bukti yang tidak ada, jangan tulis simpulan itu.
+Tabel itu menerangkan fungsi. Bentuk keluaran tetap mengikuti format produk yang digunakan.
 
-**Pengamatan, tafsiran, dan anjuran.** Pengamatan ialah apa yang tercatat
-dalam jawaban atau terlihat pada halaman. Tafsiran ialah artinya dalam batas
-pengujian. Anjuran ialah tindakan yang masuk akal berdasarkan temuan dan
-pedoman kerja. Hubungkan ketiganya dengan bahasa biasa.
+Di dalam temuan, pilih urutan sesuai bahan:
 
-**Jangan menyatakan sebab tanpa bukti.** Kita melihat jawaban, bukan cara
-kerja ChatGPT atau Google. Sebab juga dapat tersirat tanpa kata "karena":
-kalimat bahwa Klinik B disebut, disusul keterangan bahwa halamannya lengkap,
-membuat pembaca menganggap kelengkapan halaman sebagai penyebabnya. Bila dua
-hal itu ditulis berdampingan, katakan sekali bahwa penyebabnya tidak
-diketahui.
+**Pola lalu contoh.** Cocok ketika hasil utama sudah jelas dan pembaca perlu segera mengetahuinya. Sebut polanya, lalu pilih satu jawaban yang memperlihatkannya.
 
-| Boleh                                                                                                                             | Tidak boleh                                                             |
-| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| "ChatGPT menyebut Klinik B dalam keempat jawaban tentang [perawatan]; Klinik A tidak disebut dalam jawaban tentang [perawatan]."  | "ChatGPT tidak menyebut Klinik A karena halaman [perawatan]-nya tipis." |
-| "Halaman Klinik B mencantumkan harga dan nama dokter; halaman Klinik A tidak. Penyebab perbedaan penyebutan itu tidak diketahui." | "Google memilih klinik itu karena mencantumkan harga."                  |
-| "Lengkapi halaman [perawatan] dengan kisaran harga dan nama dokter, agar pembaca tahu biaya dan siapa yang menangani."            | "Halaman ini akan membuat Klinik A disebut dalam dua minggu."           |
+**Contoh lalu pola.** Cocok ketika satu pertanyaan membuat persoalan mudah dibayangkan. Ceritakan hasilnya, kemudian tunjukkan seberapa jauh hasil serupa terdapat dalam kelompok yang diperiksa.
 
-**Alasan dari pedoman kerja.** Bila pedoman kerja memberi alasan sebuah
-langkah dan menyebut sumbernya (Google atau OpenAI), alasan itu boleh
-ditulis sebagai keterangan umum dari sumber tersebut, tidak sebagai janji.
+**Perbandingan.** Cocok ketika perbedaan antarsistem atau kelompok pertanyaan adalah inti temuan. Jelaskan dasar pembandingnya. Jangan menyebut hasil “lebih baik” ketika jumlah atau jenis pertanyaannya tidak sebanding.
 
-**Batasi klaim sejak susunannya.** "ChatGPT tidak menyebut Klinik A dalam
-keempat jawaban tentang [perawatan]" tegas sekaligus terbatas, tanpa perlu
-"mungkin". Klaim bahwa Klinik A tidak disebut selalu membawa kelompoknya dalam
-klausa yang sama dengan kata kerjanya, tidak dalam anak kalimat di depan koma,
-dan tidak lewat "bukan Klinik A" saja. Pembuka seperti "Saat ditanya soal
-[perawatan]," hanya untuk menyatakan siapa yang disebut. Batasan di akhir
-naskah tidak memperbaiki klaim yang terlalu luas di awal.
+**Masalah lalu pekerjaan.** Cocok untuk rekomendasi. Tunjukkan keadaan yang telah diperiksa, jelaskan apa yang kurang bagi pembaca halaman, lalu uraikan tindakannya.
 
-**"Tidak", "belum", "masih", "sudah".** Untuk satu kali pengamatan, tulis
-"tidak". "Belum" menyiratkan penyebutan akan datang; pakai hanya bila memang
-ada proses yang dibicarakan. "Masih" memerlukan pengamatan sebelumnya.
-Jangan memakai "sudah" yang otomatis membingkai setiap penyebutan sebagai
-kemajuan.
+Untuk temuan yang perlu beberapa paragraf, Anda dapat memperdalam satu hal sedikit demi sedikit, menuntaskan satu kelompok sebelum beralih, atau memperlihatkan beberapa sisi dari satu pokok. Buku Tempo menyebut teknik ini spiral, blok, dan mengikuti tema. Campurkan seperlunya; perhatian pembaca tidak perlu diuji dengan pola yang sama terus-menerus.
 
-**Status yang harus dibedakan.** Disebut. Direkomendasikan. Situsnya dikutip
-tanpa nama. Tidak disebut. Ringkasan tidak tampil (Google tidak menampilkan
-AI Overview; ini bukan jawaban yang tidak menyebut klinik). Tidak dapat
-diuji.
+Transisi membantu pembaca memahami perpindahan. Kalimat “Di Google AI Overview, hasilnya berbeda” baru bekerja jika sesudahnya jelas apa yang berbeda. Kata “namun” harus mempertemukan dua hal yang memang berlawanan. “Karena itu” menuntut hubungan alasan yang dapat dipertanggungjawabkan.
 
-**Yang tidak bisa kita lihat.** Cara kerja ChatGPT dan Google, jawaban di
-waktu lain, dan dampak sebuah perbaikan. Sepuluh pertanyaan ini bukan gambaran
-seluruh pasar. Untuk angka pencarian, tulis "tertinggi di antara topik yang
-diperiksa", bukan "paling dicari". Tidak ada jaminan disebut, peringkat,
-tanggal hasil, atau kerugian pendapatan.
+Detail teknis yang panjang dapat ditempatkan dalam rincian bukti atau catatan pendamping bila format menyediakan tempat. Namun, batas yang mengubah arti simpulan harus tetap dekat dengan simpulannya. Jangan menyembunyikannya di lampiran.
 
-## 4. Contoh
+## 4. Buka dengan hal yang layak diketahui
 
-Contoh ini rekaan untuk latihan, bukan hasil audit nyata. Laporan sungguhan
-hanya memakai bahan dari audit itu sendiri. Tiru caranya, jangan salin
-kalimatnya.
+Paragraf pertama memberi pembaca alasan untuk meneruskan. Pilih hal yang paling penting sekaligus paling bisa ditunjukkan dari bahan. Pembuka yang kuat dapat berupa hasil langsung, perbandingan yang berarti, atau satu jawaban yang mewakili persoalan.
 
-### Bahan contoh
+Pertimbangkan dua cara membuka temuan dari bahan latihan yang sama:
 
-| Bahan                        | Isi                                                                                                                         |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Pertanyaan kepada ChatGPT    | Enam pertanyaan tentang klinik di [kota] dan empat tentang satu jenis [perawatan].                                          |
-| Salah satu pertanyaan        | "[perawatan] di [kota] yang dokternya berpengalaman di mana ya?"                                                            |
-| Jawaban ChatGPT untuknya     | "Aku sarankan Klinik B, dokternya spesialis kulit dan jadwal konsultasinya jelas."                                          |
-| Jawaban tentang kota         | Tiga dari enam jawaban menyebut Klinik A.                                                                                   |
-| Jawaban tentang perawatan    | Keempat jawaban menyebut Klinik B. Tidak satu pun menyebut Klinik A.                                                        |
-| Pengujian Google AI Overview | Sepuluh pertanyaan diuji. Ringkasan tampil pada enam pertanyaan; tidak satu pun dari enam ringkasan itu menyebut Klinik A.  |
-| Halaman Klinik A             | Halaman [perawatan] sudah ada dan menjelaskan jenis perawatannya, tetapi tidak mencantumkan kisaran harga atau nama dokter. |
-| Pedoman kerja untuk latihan  | Mendahulukan halaman layanan yang sudah ada. Setelah pembaruan, pengujian diulang dengan pertanyaan dan cara yang sama.     |
-| Data yang tidak tersedia     | Angka pencarian, biaya pengerjaan, sebab perbedaan penyebutan, dan dampak perbaikan terhadap jawaban.                       |
+> ChatGPT menyebut Klinik Seruni dalam keempat jawaban tentang bekas jerawat. Klinik Aruna tidak disebut dalam keempatnya.
 
-### Simpulan utama
+Atau:
 
-Sebelum: "Dalam sampel ini, Klinik A disebut dalam 3 dari 10 jawaban
-ChatGPT. Di Google AI Overview, Klinik A disebut dalam 0 dari 6 ringkasan."
+> Untuk pertanyaan “Di mana saya bisa konsultasi bekas jerawat di Depok?”, ChatGPT menyarankan Klinik Seruni. Tiga jawaban lain tentang topik yang sama juga menyebut Seruni; Aruna tidak disebut dalam keempat jawaban itu.
 
-Sesudah: "Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B; Klinik A
-hanya muncul di sebagian jawaban tentang klinik di [kota]. Google AI Overview
-tidak menyebutnya."
+Yang pertama segera memperlihatkan pola. Yang kedua membawa pembaca melalui satu kejadian pengujian. Pilih yang paling membantu, dengan memperhatikan ruang yang tersedia. Kutipan tidak wajib jika hasilnya lebih terang dalam kalimat Anda sendiri.
 
-Yang pertama dibuka dengan sampel dan angka yang sudah ada di kartu. Yang
-kedua dibuka dengan gambaran: siapa disebut saat ditanya apa.
+Untuk simpulan utama, pertahankan satu atau dua kalimat dengan batas 220 karakter yang tercantum dalam draf produk sebelumnya. Jika tidak muat, persempit hal yang hendak dikatakan. Jangan menghapus sumber atau batas pengamatan hanya agar kalimat lolos hitungan.
 
-### Temuan
+Angka boleh muncul di teras jika angka itulah berita utamanya. Angka pada kartu juga boleh diulang ketika diperlukan agar simpulan dapat dipahami sendiri. Yang perlu dihindari ialah memindahkan seluruh tabel ke dalam paragraf.
 
-Judul: "ChatGPT tidak menyebut Klinik A dalam jawaban tentang [perawatan]"
+Pembuka seperti “Dalam rangka meningkatkan visibilitas” membebani pembaca sebelum ia bertemu hasil. Frasa “Dalam pengujian ini” tetap berguna bila membatasi klaim. Letakkan di tempat yang membuat kalimat paling terang; tidak ada keharusan menaruhnya sebelum atau sesudah koma.
 
-Isi: "Ditanya '[perawatan] di [kota] yang dokternya berpengalaman di mana
-ya?', ChatGPT menjawab: 'Aku sarankan Klinik B, dokternya spesialis kulit dan
-jadwal konsultasinya jelas.' Ketiga jawaban lain tentang [perawatan] juga
-menyebut Klinik B. Untuk pertanyaan tentang klinik di [kota], hasilnya
-berbeda: sebagian jawabannya menyebut Klinik A. Penyebab perbedaan itu tidak
-diketahui."
+Jangan membuat adegan yang tidak pernah diamati. Pertanyaan uji yang dirancang menyerupai kebutuhan pasien tidak memberi kita kisah tentang seorang pasien sungguhan yang sedang memilih klinik.
 
-Satu pertanyaan diceritakan dulu, lalu polanya. Kutipannya pendek dan persis.
-Alasan yang ditulis ChatGPT untuk Klinik B adalah isi jawaban, bukan bukti
-mengapa Klinik B disebut.
+## 5. Beri pembaca sesuatu yang bisa dilihat
 
-### Rekomendasi
+Detail laporan Nuave berada pada kata-kata pertanyaan, isi jawaban, nama yang disebut, halaman yang dirujuk, dan informasi yang ditemukan di halaman itu. Pilih detail yang menjelaskan pokok temuan. Panjang kutipan dan banyaknya nama tidak dengan sendirinya menambah kedalaman.
 
-Sebelum: "Pastikan untuk melakukan optimalisasi konten yang komprehensif agar
-klinik Anda tidak hanya terlihat tetapi juga direkomendasikan."
+“Visibilitas Aruna lemah” meninggalkan terlalu banyak pekerjaan bagi pembaca. Ia masih harus menebak lemah di mana dan dibandingkan dengan apa. “ChatGPT tidak menyebut Aruna dalam empat jawaban tentang bekas jerawat” memberinya keadaan yang dapat diperiksa.
 
-Sesudah: judul "Lengkapi halaman [perawatan] yang sudah ada"; isi "Halaman
-itu menjelaskan jenis perawatannya, tetapi tidak mencantumkan kisaran harga
-dan nama dokter. Tambahkan keduanya sesuai keadaan klinik. Mulai dari
-halaman ini karena kekurangannya sudah diketahui. Tujuannya agar pembaca
-tahu biaya dan siapa yang menangani."
+Sesudah keadaan itu terang, jelaskan artinya sejauh bahan mengizinkan. Misalnya, nama klinik dalam pengujian tersebut hanya muncul pada pertanyaan umum tentang klinik. Tafsiran seperti ini berguna karena menyatukan hasil yang semula terpencar. Jangan berhenti pada daftar fakta yang harus disimpulkan sendiri oleh pemilik.
 
-### Penutup
+Kata penilaian dapat dipakai ketika dasarnya jelas. “Informasi biaya belum lengkap” perlu diikuti rincian tentang informasi apa yang tersedia dan apa yang tidak ditemukan. Jika rincian lebih pendek dan lebih tepat, pakai rincian itu langsung.
 
-"Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B. Langkah pertama ada
-di halaman [perawatan] Klinik A yang sudah ada. Sesudah itu, audit ulang
-dengan pertanyaan yang sama menunjukkan apakah jawaban ChatGPT berubah."
+### Kutipan membawa bukti dan suara
 
-Penutup kembali ke gambar di teras, lalu menunjuk langkah yang ada di tangan
-pemilik. Tidak ada angka pencarian, biaya, atau janji waktu, karena semuanya
-tidak ada dalam bahan. Bila jawaban berubah, perubahan itu sendiri tidak
-membuktikan pengaruh pembaruan halaman.
+Kutip ketika pilihan katanya sendiri penting: misalnya jawaban secara terang menyarankan klinik tertentu, memakai pembatasan, atau mengandung kekeliruan yang perlu ditunjukkan. Untuk informasi rutin, parafrasa sering lebih lancar.
 
-## 5. Pemeriksaan akhir
+Salin kutipan dari jawaban tersimpan secara persis. Sebut sistem dan pertanyaan asalnya dengan cukup jelas. Kutipan yang dipotong harus mempertahankan penyangkalan, syarat, dan konteks yang memengaruhi makna. Tandai penghilangan dengan `[…]`. Jangan menyambung bagian dari dua jawaban menjadi satu kutipan.
 
-Periksa draf dengan daftar ini sebelum menyerahkannya. Daftar ini tidak
-ditampilkan kepada pemilik klinik.
+Jika perlu menerjemahkan atau merangkum, tulis sebagai parafrasa dan jelaskan sumbernya. Jangan memasukkannya ke dalam tanda kutip seolah-olah itulah bunyi asli.
 
-1. Pesan utama sesuai dengan seluruh bukti penting, termasuk yang
-   membatasinya.
-2. Simpulan utama dibuka dengan hal paling konkret, bukan dengan metode atau
-   sampel, dan terdiri atas satu atau dua kalimat.
-3. Setiap fakta, angka, nama, dan kutipan ada di bahan audit; kutipan
-   disalin persis.
-4. Jumlah, kelompok pertanyaan, dan status hasil dihitung dengan tepat.
-5. Tidak ada label yang menilai tanpa gambaran, dan tidak ada sebab yang
-   diselipkan lewat urutan kalimat.
-6. Saran menjawab temuan; alasan prioritas dan tujuannya jelas.
-7. Kata "belum", "masih", "paling", "hanya", dan "semua" sesuai dengan bukti
-   dan cakupannya.
-8. Judul dan isi sama cakupannya; setiap temuan dan penutup menyebut
-   sumbernya.
-9. Penutup kembali ke teras dan membawa ke langkah berikutnya, tanpa angka
-   dan tanpa janji.
-10. Paragraf terasa wajar ketika dibaca bersuara.
+Perhatikan jarak antara ucapan sistem dan suara laporan. “Menurut jawaban ChatGPT, Seruni memiliki dokter berpengalaman” melaporkan sebuah pernyataan. “Seruni memiliki dokter berpengalaman” mengambil alih pernyataan itu sebagai fakta. Pilihan kedua membutuhkan bukti lain.
+
+Tidak perlu memenuhi jatah kutipan. Satu kutipan yang tepat bisa cukup. Dua kutipan berguna bila perbedaannya memang perlu diperlihatkan. Jika beberapa kalimat berturut-turut hanya mengutip jawaban, ambil kembali tugas menjelaskan dengan kata-kata Anda sendiri.
+
+## 6. Pilih kata yang bekerja
+
+Tulis langsung dalam bahasa Indonesia. Bayangkan Anda menjelaskan hasil kepada pemilik yang cerdas tetapi tidak berkecimpung dalam pengujian AI. Sebut pelaku, tindakan, dan objeknya. Letakkan keterangan dekat dengan hal yang diterangkan.
+
+| Kalimat yang berat atau kabur                                                                   | Suntingan                                                                          |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Klinik Aruna memiliki kebutuhan untuk melakukan pembaruan informasi harga.                      | Klinik Aruna perlu memperbarui informasi harga.                                    |
+| Tidak terdapat pencantuman nama dokter pada halaman yang dilakukan pemeriksaan.                 | Halaman yang diperiksa tidak mencantumkan nama dokter.                             |
+| Dalam konteks pertanyaan terkait bekas jerawat, Aruna tidak memperoleh penyebutan dari ChatGPT. | ChatGPT tidak menyebut Aruna dalam empat jawaban tentang bekas jerawat yang diuji. |
+| Pastikan untuk melakukan optimalisasi konten yang komprehensif.                                 | Cantumkan kisaran biaya dan nama dokter pada halaman bekas jerawat.                |
+| Hal ini menunjukkan bahwa terdapat perbedaan hasil antarsumber.                                 | Hasil ChatGPT dan Google AI Overview berbeda.                                      |
+
+Suntingan harus tetap sesuai dengan bahan. Menambahkan angka “empat” atau merinci “kisaran biaya dan nama dokter” hanya boleh jika informasi itulah yang telah diperiksa. Memperjelas kalimat tidak memberi izin menambah fakta.
+
+Kata kerja memberi gerak. “Memperbarui” biasanya lebih cekatan daripada “melakukan pembaruan”. Namun, “melakukan” tidak selalu salah; “dokter yang melakukan tindakan” dapat tepat. Nilai frasa dalam kalimatnya. Jangan mengganti kata hanya karena ia muncul dalam daftar larangan.
+
+Kalimat aktif sering memudahkan pembaca. Kalimat pasif membantu jika hal yang dikenai tindakan sedang menjadi pusat pembicaraan. “Situs Aruna dikutip dalam dua ringkasan” dapat lebih wajar daripada memindahkan perhatian ke sistem untuk kesekian kali. Sumbernya tetap harus jelas.
+
+Pakai kata sifat dengan hemat dan tepat. “Rendah”, “kuat”, dan “signifikan” perlu dasar. Kata seperti “ringkas” atau “panjang” pun sebaiknya membantu pembaca membayangkan sesuatu, bukan sekadar memberi kesan. Perumpamaan boleh dipakai bila membuat persoalan lebih mudah dipahami; satu perumpamaan yang bekerja sudah cukup tanpa dihias lagi.
+
+### Jaga istilah, variasikan irama
+
+“Disebut”, “direkomendasikan”, dan “situsnya dikutip” mempunyai arti berbeda. Pertahankan istilah itu ketika mengacu pada keadaan yang sama. Variasi dapat datang dari susunan dan panjang kalimat, bukan dari menukar istilah yang mengubah makna.
+
+Kenalkan Google AI Overview sekali sebagai ringkasan AI pada hasil pencarian Google. Setelah itu gunakan namanya secara konsisten. “Google” saja dapat mengaburkan perbedaan antara ringkasan AI dan hasil pencarian lain. Gunakan “AI” untuk pembicaraan umum; temuan tertentu harus jelas sumbernya.
+
+Sebut nama klinik pada awal bagian dan setiap kali kata ganti dapat menunjuk lebih dari satu klinik. Gunakan “Anda” ketika berbicara kepada pemilik tentang tindakan yang bisa ia ambil. Jangan menyebut klinik dengan “Anda” dalam kalimat yang membahas penyebutan nama usaha.
+
+Kalimat pendek memberi tekanan. Kalimat yang lebih panjang dapat menampung perbandingan atau penjelasan yang memang saling bergantung. Bacalah bergantian, seperti orang bertutur. Jika semua kalimat berhenti setelah tiga atau empat kata, laporan akan terasa terpatah-patah. Jika satu kalimat menanggung hasil, sebab, batas, dan anjuran sekaligus, pecah pekerjaannya.
+
+Pisahkan paragraf ketika pembicaraan beralih atau mata membutuhkan jeda. Tidak ada jumlah kalimat yang wajib. Satu kalimat yang tajam boleh berdiri sendiri, tetapi jangan menjadikan seluruh laporan deretan slogan.
+
+Nada laporan tenang, terus terang, dan menghormati pembaca. Tidak perlu menggurui, menakut-nakuti, atau membesar-besarkan persoalan agar anjuran terasa penting. Keluwesan tidak memerlukan istilah lawas atau kelakar yang dipaksakan.
+
+Untuk keseragaman Nuave, gunakan koma, titik, titik dua, atau titik koma sesuai fungsinya; hindari tanda pisah sebagai jeda. Tulis rentang angka dengan “sampai”. Ini pilihan redaksi Nuave, bukan ukuran mutu sebuah tulisan Tempo.
+
+## 7. Jaga batas makna
+
+Ketegasan lahir dari cakupan yang tepat. “ChatGPT tidak menyebut Aruna dalam keempat jawaban tentang bekas jerawat” sudah tegas. Ia tidak memerlukan “mungkin”, dan tidak mengaku mengetahui semua jawaban ChatGPT di luar pengujian.
+
+### Hitung hal yang benar
+
+Setiap angka harus jelas menghitung apa: pertanyaan, jawaban, ringkasan yang tampil, atau jumlah pengujian berulang. Jangan memakai satu penyebut untuk satuan yang berbeda. Jika pengujian diulang, ikuti satuan dalam metode dan jelaskan saat diperlukan; beberapa jawaban untuk pertanyaan yang sama tidak otomatis menjadi beberapa pertanyaan.
+
+Sepuluh pertanyaan yang diajukan kepada dua sistem tidak otomatis menghasilkan dua puluh jawaban yang dapat dinilai. Ringkasan dapat tidak tampil, dan pengujian dapat gagal. Laporkan keadaan itu secara terpisah.
+
+| Keadaan yang tercatat                               | Cara menyebutnya                                                              |
+| --------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Nama klinik ada dalam jawaban                       | Nama klinik disebut. Periksa konteksnya sebelum menyebutnya rekomendasi.      |
+| Jawaban secara jelas menyarankan klinik             | Klinik direkomendasikan dalam jawaban tersebut.                               |
+| Jawaban menyertakan rujukan ke situs klinik         | Situs klinik dikutip. Catat tersendiri apakah nama kliniknya juga disebut.    |
+| Jawaban dapat diperiksa, nama klinik tidak ada      | Klinik tidak disebut dalam jawaban yang diperiksa itu.                        |
+| Pengujian berjalan, Google AI Overview tidak tampil | Ringkasan tidak tampil. Tidak ada ringkasan yang dapat dinilai penyebutannya. |
+| Pengujian atau pengambilan hasil gagal              | Hasil tidak dapat dinilai; penyebutan klinik tidak diketahui.                 |
+
+Penyebutan, rekomendasi, dan kutipan situs dapat terjadi bersamaan. Ketiganya bukan kotak yang selalu saling meniadakan.
+
+Jika enam dari sepuluh pertanyaan menghasilkan ringkasan dan semuanya tidak menyebut klinik, tulis enam ringkasan itulah yang tidak menyebutnya. Jangan mengubahnya menjadi sepuluh jawaban tanpa penyebutan.
+
+### Lingkup harus terbaca
+
+Frasa pembatas dapat diletakkan di awal atau akhir kalimat. Yang menentukan ialah kejelasan makna. “Dalam empat jawaban tentang bekas jerawat, ChatGPT tidak menyebut Aruna” sama terbatasnya dengan “ChatGPT tidak menyebut Aruna dalam empat jawaban tentang bekas jerawat”.
+
+Judul, kartu temuan, dan simpulan sering dibaca terpisah. Pastikan konteks terdekatnya cukup untuk menunjukkan bahwa yang dibicarakan ialah hasil pengujian ini. Batas umum di akhir laporan tidak menyembuhkan judul yang menyatakan sesuatu tentang seluruh pasar.
+
+Tulis “tidak ditemukan pada halaman yang diperiksa” jika pemeriksaannya hanya mencakup halaman tersebut. Jangan memperluasnya menjadi “klinik tidak menyediakan informasi itu”. Sebut topik dengan angka pencarian tertinggi “di antara topik yang diperiksa” jika hanya kelompok itulah yang dibandingkan. Angka pencarian juga tidak membuktikan jumlah pasien atau nilai penjualan.
+
+Periksa kata-kata kecil: “hanya”, “semua”, “selalu”, “belum”, “masih”, dan “sudah”. “Belum disebut” bisa memberi kesan penyebutan tinggal menunggu waktu. “Masih tidak disebut” menuntut pembanding sebelumnya. Gunakan jika hubungan waktunya memang ada dalam bahan.
+
+### Jangan menyelundupkan sebab
+
+Audit memperlihatkan keluaran yang diamati. Ia tidak membuktikan bahwa kelengkapan halaman, banyaknya ulasan, atau unsur lain menyebabkan suatu klinik disebut.
+
+Hubungan sebab bisa terkesan lewat susunan. Setelah menulis bahwa Seruni disebut, lalu menjelaskan halaman Seruni lebih lengkap, tanyakan apa yang akan disimpulkan pembaca. Jika perbandingan halaman memang diperlukan, jelaskan bahwa pemeriksaan belum membuktikan hubungan itu. Jika tidak diperlukan, buang kaitannya.
+
+Alasan untuk bertindak tetap boleh jelas. “Dahulukan halaman bekas jerawat karena halaman itu sudah tersedia dan informasi yang kurang telah diketahui” menjelaskan pilihan pekerjaan. “Lengkapi halaman agar ChatGPT memilih klinik Anda” menjanjikan hubungan yang tidak ditunjukkan audit.
+
+Jika pedoman kerja menyertakan penjelasan resmi dari Google atau OpenAI, alasan umum itu dapat digunakan dengan menyebut sumber dan batasnya. Jangan mengaku sudah memeriksa penjelasan yang tidak tersedia dalam bahan. Jangan menjadikan pedoman umum sebagai kepastian tentang hasil satu klinik.
+
+Pengujian ulang menunjukkan apakah keluaran pada pengujian berikutnya berbeda. Perbedaan itu sendiri tidak membuktikan pengaruh pembaruan halaman. Jangan menjanjikan penyebutan, peringkat, waktu hasil, maupun tambahan pendapatan.
+
+## 8. Berikan pekerjaan yang jelas
+
+Pemilik perlu bisa membayangkan apa yang harus dikerjakan setelah membaca rekomendasi. Mulailah dari keadaan yang benar-benar diperiksa, hubungkan dengan topik temuan, lalu sebut tindakannya.
+
+“Perkuat konten” belum memberi pekerjaan. “Tambahkan nama dokter dan kisaran biaya pada halaman bekas jerawat yang sudah ada” memberi arah yang dapat diteruskan kepada pengelola situs, asalkan kekurangan itu ditemukan dalam pemeriksaan.
+
+Terangkan manfaat langsungnya: pembaca halaman bisa mengetahui siapa yang menangani dan biaya apa yang perlu disiapkan. Terangkan pula alasan urutannya: halaman sudah tersedia, informasinya telah diperiksa, atau ada ketentuan yang relevan dalam pedoman kerja. Jangan mengarang biaya, waktu pengerjaan, atau tingkat kesulitan untuk membuat prioritas tampak pasti.
+
+Informasi baru harus berasal dari klinik atau sumber yang berwenang. Nama dokter, jadwal, layanan, biaya, dan kualifikasi tidak boleh diisi dengan perkiraan penulis. Jika datanya belum tersedia, anjurkan pengumpulan atau pemeriksaan data tersebut sebagai langkah awal.
+
+Sebuah rekomendasi yang selesai menjawab empat hal: keadaan yang mendasarinya, tindakan yang diminta, alasan untuk mendahulukannya, dan hasil langsung yang dapat diperiksa. Sampaikan dengan kalimat biasa. Tidak semuanya perlu dijadikan label.
+
+Jika bahan belum cukup untuk menentukan perubahan, langkah berikutnya bisa berupa pemeriksaan tambahan. Jika tidak ada kekurangan yang terbukti, jangan menciptakan pekerjaan untuk memenuhi jumlah rekomendasi.
+
+## 9. Berhenti pada akhir yang wajar
+
+Penutup menyelesaikan perjalanan pikiran. Sesudah membaca temuan dan anjuran, pemilik seharusnya tahu apa yang akan ia lakukan atau apa yang masih perlu diketahui.
+
+Anda bisa mengikat kembali pokok laporan, menegaskan langkah pertama, atau menyebut pertanyaan penting yang masih terbuka. Pilih yang sesuai. Penutup tidak wajib mengulang gambaran pembuka, menyebut nama sistem lagi, atau menghindari angka yang justru diperlukan untuk kejelasan.
+
+Jangan mengulang seluruh isi laporan. Jangan memaksakan kalimat pamungkas yang terdengar besar tetapi tidak menambah pengertian. Kalau paragraf terakhir rekomendasi sudah menuntaskan pembicaraan dan format tidak meminta penutup tersendiri, berhentilah di sana.
+
+Jika ada audit ulang, ikuti jadwal dan cara dalam pedoman kerja. Jangan menciptakan tenggat. Pisahkan pemeriksaan selesainya pekerjaan dari pengamatan terhadap jawaban berikutnya: halaman yang sudah lengkap dapat diperiksa langsung; perubahan jawaban memerlukan pengujian lagi.
+
+## 10. Satu bahan, satu laporan yang utuh
+
+**Seluruh bahan berikut rekaan untuk latihan.** Contoh ini memperlihatkan kerja editorial, bukan format data yang wajib diikuti.
+
+### Bahan yang tersedia
+
+| Bahan                                            | Isi                                                                                                                                                                        |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Klinik yang diperiksa                            | Klinik Aruna di Depok.                                                                                                                                                     |
+| Pertanyaan                                       | Enam pertanyaan umum tentang klinik di Depok dan empat tentang konsultasi atau perawatan bekas jerawat di Depok. Setiap pertanyaan diuji sekali pada masing-masing sistem. |
+| ChatGPT: kelompok umum                           | Aruna disebut dalam tiga dari enam jawaban.                                                                                                                                |
+| ChatGPT: bekas jerawat                           | Seruni disebut dalam keempat jawaban; Aruna tidak disebut dalam keempatnya.                                                                                                |
+| Salah satu pertanyaan bekas jerawat              | “Di mana saya bisa konsultasi bekas jerawat di Depok?”                                                                                                                     |
+| Bagian jawaban ChatGPT untuk pertanyaan tersebut | “Untuk konsultasi bekas jerawat di Depok, Klinik Seruni bisa menjadi pilihan.”                                                                                             |
+| Google AI Overview                               | Ringkasan tampil untuk enam dari sepuluh pertanyaan. Tidak satu pun dari enam ringkasan itu menyebut Aruna. Pada empat pertanyaan lainnya, ringkasan tidak tampil.         |
+| Halaman yang diperiksa                           | Halaman bekas jerawat Aruna menjelaskan jenis layanan. Nama dokter dan kisaran biaya tidak tercantum di halaman tersebut. Halaman lain tidak diperiksa.                    |
+| Pedoman kerja latihan                            | Dahulukan pembaruan halaman layanan yang sudah tersedia. Sesudah diperbarui, uji lagi dengan pertanyaan dan cara yang sama. Tidak ada jadwal khusus.                       |
+| Hal yang tidak diketahui                         | Alasan sistem menyebut atau tidak menyebut klinik; pengaruh pembaruan terhadap jawaban; angka pencarian; biaya dan lama pengerjaan.                                        |
+
+### Contoh naskah
+
+**Simpulan utama**
+
+ChatGPT menyebut Aruna dalam tiga jawaban, semuanya pertanyaan umum tentang klinik di Depok, bukan bekas jerawat. Google AI Overview tidak menyebut Aruna dalam 6 ringkasan yang tampil.
+
+**Untuk bekas jerawat, empat jawaban ChatGPT menyebut Seruni**
+
+Pertanyaan “Di mana saya bisa konsultasi bekas jerawat di Depok?” mendapat jawaban: “Untuk konsultasi bekas jerawat di Depok, Klinik Seruni bisa menjadi pilihan.” Tiga jawaban ChatGPT lain tentang topik yang sama juga menyebut Seruni. Aruna tidak disebut dalam keempat jawaban itu.
+
+Hasilnya berbeda pada pertanyaan umum tentang klinik di Depok. Di kelompok enam pertanyaan ini, ChatGPT menyebut Aruna dalam tiga jawaban.
+
+**Enam ringkasan Google AI Overview tidak menyebut Aruna**
+
+Google AI Overview tampil untuk enam dari sepuluh pertanyaan yang diuji. Tidak satu pun dari enam ringkasan itu menyebut Aruna. Pada empat pertanyaan lainnya, ringkasan tidak tampil sehingga tidak ada jawaban ringkasan yang dapat dinilai.
+
+**Lengkapi halaman bekas jerawat yang sudah tersedia**
+
+Aruna memiliki halaman layanan bekas jerawat, salah satu topik yang diuji. Halaman ini menjelaskan jenis layanan. Dua informasi tidak tercantum di halaman yang diperiksa: nama dokter dan kisaran biaya. Tambahkan keduanya berdasarkan data klinik yang berlaku agar pembaca tahu siapa yang menangani dan biaya yang perlu disiapkan.
+
+Dahulukan halaman ini sesuai pedoman kerja: halamannya tersedia dan informasi yang kurang sudah diketahui. Sesudah diperbarui, periksa apakah nama dokter serta keterangan biaya sudah benar dan terbaca jelas. Audit ini tidak membuktikan bahwa ketiadaan informasi tersebut menyebabkan Aruna tidak disebut.
+
+**Batas pengujian**
+
+Hasil ini mencakup sepuluh pertanyaan yang diuji sekali pada masing-masing sistem. Ia tidak menggambarkan semua pertanyaan calon pasien atau jawaban pada waktu lain. Pemeriksaan halaman hanya mencakup halaman bekas jerawat Aruna.
+
+**Penutup**
+
+Mulai dari informasi yang bisa diperiksa di halaman bekas jerawat. Sesudah pembaruan selesai, ulangi pengujian dengan pertanyaan dan cara yang sama untuk melihat apakah jawabannya berbeda. Perbedaan itu perlu dicatat; pengaruh pembaruan halaman belum dapat dipastikan hanya dari perbandingan tersebut.
+
+### Mengapa naskah itu disusun demikian
+
+Pembuka membawa hasil yang paling berarti beserta cakupannya. Temuan pertama memakai satu jawaban untuk memperlihatkan pola, lalu membandingkannya dengan kelompok umum. Temuan kedua langsung menjelaskan hasil karena tidak memerlukan cerita kecil tambahan.
+
+Anjuran berpijak pada halaman yang benar-benar diperiksa. Manfaatnya dapat dinilai oleh pembaca halaman dan pengelola situs. Penyebab hasil AI tetap dinyatakan tidak diketahui. Penutup menuntaskan urutan pekerjaan tanpa menjanjikan hasil yang belum terlihat.
+
+Pada laporan sungguhan, setiap temuan harus terhubung dengan pertanyaan dan jawaban pendukung melalui fasilitas rujukan produk. Bahan contoh ini tidak menggantikan rujukan tersebut. Format produk tidak mempunyai bagian "Batas pengujian" tersendiri: tulis batas itu di temuan atau penutup yang memerlukannya.
+
+## 11. Sunting dengan mata pembaca
+
+Tulislah draf sampai selesai sebelum sibuk memperhalus setiap kata. Sesudah itu, beri jarak bila waktu memungkinkan. Baca kembali sebagai orang yang baru pertama kali melihat hasilnya.
+
+Lakukan tiga putaran penyuntingan:
+
+**Periksa kebenarannya.** Kembali ke bukti untuk setiap nama, angka, kutipan, penilaian, dan anjuran. Hitung ulang proporsi. Cari pengecualian yang terlewat. Periksa apakah kutipan tetap adil terhadap jawaban lengkapnya.
+
+**Periksa jalan pikirannya.** Ringkas tugas setiap paragraf dalam beberapa kata. Apakah ada dua paragraf melakukan pekerjaan yang sama? Apakah tafsiran muncul sebelum pembaca mendapat bukti yang cukup? Apakah saran benar-benar menjawab keadaan yang telah diperiksa? Pindahkan atau buang bagian yang menghambat.
+
+**Periksa bunyinya.** Baca perlahan, seolah menjelaskan kepada pemilik. Perbaiki kata yang keliru, kalimat yang perlu dibaca dua kali, kata ganti yang membingungkan, dan irama yang seragam. Jangan memangkas keterangan yang justru menjaga makna. Penyingkatan yang membuat pembaca menebak adalah pekerjaan yang belum selesai.
+
+Sebelum menyerahkan, pastikan:
+
+- Pokok laporan ditopang seluruh bukti penting, termasuk yang membatasinya.
+- Nama sistem, kelompok pertanyaan, satuan hitung, dan status hasil tepat.
+- Kutipan sesuai sumber dan tidak mengangkat ucapan AI menjadi fakta tanpa pemeriksaan.
+- Tidak ada adegan, motif, sebab, biaya, tenggat, atau dampak yang ditambahkan tanpa dasar.
+- Setiap temuan menambah pemahaman; setiap anjuran memberi pekerjaan yang masuk akal.
+- Simpulan, judul, dan isi memiliki cakupan yang serasi, termasuk saat dibaca terpisah.
+- Batas karakter serta format produk terpenuhi tanpa mengorbankan ketepatan.
+- Laporan enak diikuti, dan berhenti ketika pekerjaan menjelaskan sudah selesai.
+
+## Catatan pemakaian
+
+Panduan ini merupakan versi editorial mandiri untuk laporan Nuave. Istilah `storyline`, `verdict`, dan pedoman kerja dipertahankan agar sesuai dengan alur yang disebut dalam draf ketiga. Panduan dibaca bersama pedoman kerja; setiap anjuran tetap membutuhkan dasar yang tersedia di sana dan dalam bahan audit.
+
+Kecocokan panduan ini dengan `docs/VOICE.md`, Spec 023, aturan penulis, dan pemeriksa fakta diperiksa pada 29 Oktober 2026; penyesuaiannya dicatat di Spec 023. Jangan mengaku sebuah rekomendasi berasal dari pedoman kerja yang belum dibaca.
+
+Dasar bacaan: _Seandainya Saya Wartawan Tempo_, edisi revisi 2014, terutama pembahasan akurasi (hlm. PDF 14 sampai 19), teras (20 sampai 28), tubuh dan penutup (29 sampai 31), teknik pengembangan (32 sampai 33), fokus serta detail (37 sampai 48), sudut cerita (49 sampai 52), dan kerangka (64 sampai 68). Penerapannya pada pengujian AI, status hasil, batas 220 karakter, dan bentuk anjuran merupakan keputusan editorial untuk Nuave.

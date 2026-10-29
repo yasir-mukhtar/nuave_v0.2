@@ -230,9 +230,13 @@ describe("Spec 023: the writer's rules (AC-01)", () => {
     expect(developer).not.toContain("with the per-source result");
     expect(developer).not.toMatch(/Copy every "X dari Y"/);
     expect(developer).not.toContain("why it suggested it");
-    // The conclusion carries no counts; the verdict at most one number.
-    expect(developer).toContain("No counts here");
-    expect(developer).toContain("add at most one number");
+    // Founder's guide (2026-10-29): numbers only when they are the point
+    // or needed to be clear; no fixed shape for the conclusion; no quota of
+    // recommendations; the limit may open the sentence.
+    expect(developer).toContain("add a number only when it is the point");
+    expect(developer).toContain("Use a count only when it is needed");
+    expect(developer).toContain("never invent work to fill a number");
+    expect(developer).not.toContain("never in a clause of its own");
   });
 
   it("names the business by its confirmed name like an editor, and keeps the count rules", () => {
