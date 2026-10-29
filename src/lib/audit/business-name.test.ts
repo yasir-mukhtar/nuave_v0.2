@@ -104,6 +104,89 @@ describe("business name from page labels", () => {
     ).toBe("Klinik Mata Nusantara");
   });
 
+  // Cases from the 104-site test (experiments/business-name-test).
+  it("never takes a web address or a blocked-page notice as the name", () => {
+    expect(
+      pickBusinessName(
+        labels({
+          siteName: "https://rs-jih.co.id/",
+          pageTitle: "Request Rejected",
+        }),
+        "https://rs-jih.co.id/",
+      ).name,
+    ).toBe("");
+  });
+
+  it("drops a welcome prefix and an official suffix", () => {
+    expect(
+      pickBusinessName(
+        labels({ pageTitle: "Welcome to Dermaster Indonesia" }),
+        "https://dermaster.co.id/",
+      ).name,
+    ).toBe("Dermaster Indonesia");
+    expect(
+      pickBusinessName(
+        labels({ siteName: "EDERMA CLINIC OFFICIAL" }),
+        "https://ederma.co.id/",
+      ).name,
+    ).toBe("EDERMA CLINIC");
+  });
+
+  it("splits a label at a colon", () => {
+    expect(
+      pickBusinessName(
+        labels({
+          pageTitle:
+            "Kehamilan Sehat: Pro-Normal Clinic with Complete Services",
+        }),
+        "https://kehamilansehat.com/",
+      ).name,
+    ).toBe("Kehamilan Sehat");
+  });
+
+  it("gives the address credit to the part that matches, not the whole label", () => {
+    expect(
+      pickBusinessName(
+        labels({
+          siteName: "Royal Dental Center - Dokter Gigi Medan Terbaik",
+          pageTitle: "Dokter Gigi Medan - Royal Dental Center",
+        }),
+        "https://www.doktergigimedan.com/",
+      ).name,
+    ).toBe("Royal Dental Center");
+  });
+
+  it("uses a site-made clinic type but not a nickname or a specialty", () => {
+    expect(
+      pickBusinessName(
+        labels({
+          structuredData: [
+            JSON.stringify({
+              "@type": ["Hospital", "LocalBusiness"],
+              name: "RS PKU Muhammadiyah Yogyakarta",
+              alternateName: "RSPKU Jogja",
+              medicalSpecialty: {
+                "@type": "MedicalSpecialty",
+                name: "Cardiology",
+              },
+            }),
+          ],
+        }),
+        "https://rspkujogja.com/",
+      ).name,
+    ).toBe("RS PKU Muhammadiyah Yogyakarta");
+    expect(
+      pickBusinessName(
+        labels({
+          structuredData: [
+            '{"@type":"CosmeticClinic","name":"L\'VIORS BEAUTY CLINIC - Surabaya Pusat"}',
+          ],
+        }),
+        "https://lviors.com/",
+      ).name,
+    ).toBe("L'VIORS BEAUTY CLINIC");
+  });
+
   it("reads the name part of a web address", () => {
     expect(addressName("https://www.mhdc.co.id/")).toBe("mhdc");
     expect(addressName("https://jakarta.siloamhospitals.com/x")).toBe(

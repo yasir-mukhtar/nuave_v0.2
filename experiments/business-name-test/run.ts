@@ -18,7 +18,10 @@ const here = "experiments/business-name-test/";
 const sites = JSON.parse(readFileSync(`${here}sites.json`, "utf8")) as Site[];
 
 function same(a: string): string {
-  return a.toLocaleLowerCase("id-ID").replace(/[^\p{L}\p{N}]+/gu, "");
+  return a
+    .toLocaleLowerCase("id-ID")
+    .replace(/\s*&\s*|\sdan\s/g, " and ")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
 async function readName(url: string) {

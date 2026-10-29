@@ -20,6 +20,8 @@ export type SourceIdentityFetchOptions = Omit<SafeFetchOptions, "kind">;
 
 export interface ParsedSourceMetadata {
   displayName: string;
+  /** False when the name is missing or another label came close to it. */
+  nameConfident: boolean;
   description: string;
   iconHref: string | null;
 }
@@ -190,24 +192,30 @@ export function parseSourceMetadata(
 
   if (sourceType === "instagram") {
     const marker = ogTitle.indexOf(" (@");
+    const displayName = cleanText(
+      marker >= 0 ? ogTitle.slice(0, marker) : ogTitle,
+    );
     return {
-      displayName: cleanText(marker >= 0 ? ogTitle.slice(0, marker) : ogTitle),
+      displayName,
+      nameConfident: Boolean(displayName),
       description: "",
       iconHref: iconValue(html),
     };
   }
 
+  const pick = pickBusinessName(
+    {
+      siteName: firstMetadataValue(metadata, "og:site_name"),
+      shareTitle: ogTitle,
+      pageTitle: titleValue(html),
+      applicationName: firstMetadataValue(metadata, "application-name"),
+      structuredData: structuredDataBlocks(html),
+    },
+    pageUrl,
+  );
   return {
-    displayName: pickBusinessName(
-      {
-        siteName: firstMetadataValue(metadata, "og:site_name"),
-        shareTitle: ogTitle,
-        pageTitle: titleValue(html),
-        applicationName: firstMetadataValue(metadata, "application-name"),
-        structuredData: structuredDataBlocks(html),
-      },
-      pageUrl,
-    ).name,
+    displayName: pick.name,
+    nameConfident: pick.confident,
     description: firstMetadataValue(metadata, "og:description", "description"),
     iconHref: iconValue(html),
   };
@@ -266,6 +274,6 @@ export async function fetchSourceIdentity(
     canonical_url: page.url,
     icon_data_url: await inlineIcon(page.url, metadata.iconHref, options),
     source_type: source.sourceType,
-    confidence: Boolean(displayName),
+    confidence: metadata.nameConfident,
   };
 }

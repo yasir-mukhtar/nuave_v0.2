@@ -18,9 +18,7 @@ export type NameSource =
   | "site-name"
   | "application-name"
   | "share-title"
-  | "share-title-part"
-  | "page-title"
-  | "page-title-part";
+  | "page-title";
 
 export interface NameLabels {
   siteName: string;
@@ -51,8 +49,6 @@ const SOURCE_POINTS: Record<NameSource, number> = {
   "site-name": 3,
   "organization-data": 2,
   "application-name": 2,
-  "share-title-part": 2,
-  "page-title-part": 2,
   "website-data": 1,
   "share-title": 1,
   "page-title": 1,
@@ -81,6 +77,13 @@ const BUSINESS_TYPES = new Set(
     "ProfessionalService",
   ].map((type) => type.toLowerCase()),
 );
+// Site-made types such as "CosmeticClinic" that still name the business.
+const BUSINESS_TYPE_WORDS =
+  /clinic|hospital|dentist|physician|business|salon|spa$|pharmacy|optician/;
+// A label split into parts scores each part like this, and the whole like
+// a plain title: the parts are where the name usually is.
+const PART_POINTS = 2;
+const SPLIT_LABEL_POINTS = 1;
 const ORGANIZATION_TYPES = new Set(["organization", "corporation"]);
 
 // Words that only describe: a name made only of these (and city names) is a
@@ -127,6 +130,12 @@ const PAGE_LABELS = new Set([
   "maintenance mode",
 ]);
 
+// Text a blocked or broken page shows instead of the site.
+const ERROR_PAGE =
+  /^(request rejected|access denied|forbidden|403|404|just a moment|attention required|page not found|not found|account suspended|error)\b/;
+
+const WEB_ADDRESS = /^(https?:\/\/|www\.)|^[\w-]+(\.[\w-]+)+\/?$/i;
+
 // Endings of a web address that are not part of the name.
 const ADDRESS_ENDINGS = new Set(
   "id co or ac go sch web my biz net com org info io xyz site online clinic health care".split(
@@ -134,7 +143,7 @@ const ADDRESS_ENDINGS = new Set(
   ),
 );
 
-const TITLE_SEPARATOR = /\s+[-–—:]\s+|\s*[|·•»~]\s*/;
+const TITLE_SEPARATOR = /\s+[-–—]\s+|\s*:\s+|\s*[|·•»~]\s*/;
 
 function words(value: string): string[] {
   return value
@@ -190,6 +199,8 @@ function cleanCandidate(value: string): string {
   return value
     .replace(/\s+/g, " ")
     .replace(/^["'“”‘’\s]+|["'“”‘’\s]+$/g, "")
+    .replace(/^(welcome to|selamat datang (di|ke)) /i, "")
+    .replace(/ (official( website| site)?|(website|situs) resmi)$/i, "")
     .trim();
 }
 
@@ -209,8 +220,8 @@ function structuredNames(
     )
       .filter((type): type is string => typeof type === "string")
       .map((type) => type.toLowerCase());
-    const source: NameSource | null = types.some((type) =>
-      BUSINESS_TYPES.has(type),
+    const source: NameSource | null = types.some(
+      (type) => BUSINESS_TYPES.has(type) || BUSINESS_TYPE_WORDS.test(type),
     )
       ? "business-data"
       : types.some((type) => ORGANIZATION_TYPES.has(type))
@@ -219,10 +230,9 @@ function structuredNames(
           ? "website-data"
           : null;
     if (source) {
-      for (const key of ["name", "alternateName"]) {
-        const value = record[key];
-        if (typeof value === "string") found.push({ name: value, source });
-      }
+      // Only the main name: `alternateName` is a nickname ("RSPKU Jogja").
+      if (typeof record.name === "string")
+        found.push({ name: record.name, source });
     }
     for (const value of Object.values(record)) visit(value, depth + 1);
   };
@@ -240,54 +250,97 @@ export function rankBusinessNames(
   labels: NameLabels,
   pageUrl: string,
 ): NameCandidate[] {
-  const raw: Array<{ name: string; source: NameSource }> = [
+  const labelList: Array<{ name: string; source: NameSource }> = [
     ...structuredNames(labels.structuredData),
     { name: labels.siteName, source: "site-name" },
     { name: labels.applicationName, source: "application-name" },
     { name: labels.shareTitle, source: "share-title" },
     { name: labels.pageTitle, source: "page-title" },
   ];
-  for (const [title, source] of [
-    [labels.shareTitle, "share-title-part"],
-    [labels.pageTitle, "page-title-part"],
-  ] as const) {
-    const parts = title.split(TITLE_SEPARATOR);
-    if (parts.length > 1)
-      for (const part of parts) raw.push({ name: part, source });
+  // `whole`: a label that splits into parts, which compete for the name.
+  const raw: Array<{
+    name: string;
+    source: NameSource;
+    points: number;
+    whole: boolean;
+  }> = [];
+  for (const { name, source } of labelList) {
+    const parts = name.split(TITLE_SEPARATOR);
+    if (parts.length < 2) {
+      raw.push({ name, source, points: SOURCE_POINTS[source], whole: false });
+      continue;
+    }
+    raw.push({ name, source, points: SPLIT_LABEL_POINTS, whole: true });
+    for (const part of parts)
+      raw.push({ name: part, source, points: PART_POINTS, whole: false });
   }
 
-  const byKey = new Map<string, { name: string; sources: Set<NameSource> }>();
-  for (const { name: value, source } of raw) {
+  const byKey = new Map<
+    string,
+    {
+      name: string;
+      sources: Set<NameSource>;
+      points: number;
+      whole: boolean;
+    }
+  >();
+  for (const { name: value, source, points, whole } of raw) {
     const name = cleanCandidate(value);
     const key = words(name).join(" ");
-    if (name.length < 2 || name.length > 100 || !key || PAGE_LABELS.has(key))
+    if (
+      name.length < 2 ||
+      name.length > 100 ||
+      !key ||
+      PAGE_LABELS.has(key) ||
+      ERROR_PAGE.test(key) ||
+      WEB_ADDRESS.test(name)
+    )
       continue;
     const existing = byKey.get(key);
-    if (existing) existing.sources.add(source);
-    else byKey.set(key, { name, sources: new Set([source]) });
+    if (existing) {
+      existing.sources.add(source);
+      existing.points = Math.max(existing.points, points);
+      existing.whole &&= whole;
+    } else byKey.set(key, { name, sources: new Set([source]), points, whole });
   }
 
   const address = addressName(pageUrl);
-  const ranked = [...byKey.values()].map(({ name, sources }) => {
-    const sourceList = [...sources];
-    const kinds = new Set(sourceList.map((source) => source.split("-")[0]));
-    const matches = matchesAddress(name, address);
-    const generic = looksGeneric(name);
-    const wordCount = words(name).length;
-    const score =
-      Math.max(...sourceList.map((source) => SOURCE_POINTS[source])) +
-      (kinds.size > 1 ? 1 : 0) +
-      (matches ? 4 : 0) -
-      (generic ? 5 : 0) -
-      (name.length > 50 || wordCount > 6 ? 2 : 0);
-    return {
-      name,
-      score,
-      sources: sourceList,
-      matchesAddress: matches,
-      looksGeneric: generic,
-    };
-  });
+  const keys = [...byKey.keys()].map((key) => ` ${key} `);
+  const ranked = [...byKey.entries()].map(
+    ([key, { name, sources, points, whole }]) => {
+      const sourceList = [...sources];
+      // A split label matches the address through one of its parts, which
+      // gets the credit instead: "Dokter Gigi Medan - Royal Dental Center".
+      const matches = !whole && matchesAddress(name, address);
+      const generic = looksGeneric(name);
+      const wordCount = words(name).length;
+      // The short core that longer labels repeat: "EternaMoore" inside
+      // "Klinik Kecantikan dan Slimming EternaMoore".
+      const repeated =
+        matches && !generic
+          ? Math.min(
+              2,
+              keys.filter(
+                (other) => other !== ` ${key} ` && other.includes(` ${key} `),
+              ).length,
+            )
+          : 0;
+      const score =
+        points +
+        (sourceList.length > 1 ? 1 : 0) +
+        repeated +
+        (matches ? 4 : 0) -
+        (generic ? 5 : 0) -
+        (name.length > 50 || wordCount > 6 ? 2 : 0);
+      return {
+        name,
+        score,
+        sources: sourceList,
+        matchesAddress: matches,
+        looksGeneric: generic,
+      };
+    },
+  );
   // Ties keep the order labels were read in.
   return ranked.sort((a, b) => b.score - a.score);
 }

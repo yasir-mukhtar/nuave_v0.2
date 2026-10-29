@@ -30,3 +30,45 @@ npx esbuild experiments/business-name-test/run.ts --bundle --platform=node --for
 ```
 
 Each site's result goes to `results.tsv` in this folder.
+
+## Results, 2026-10-29
+
+99 of the 104 homepages could be read; 5 refused or timed out on the day
+(kiraridentalcare.com, okdentalclinic.com, pantirapih.or.id,
+rspantinirmala.com, klinikutamabenecia.com).
+
+| Method | Right, of 99 |
+| --- | --- |
+| Old: first of site name label, share title, page title | 59 |
+| New picker, first version (the code as first proposed) | 82 |
+| New picker after fixes from the misses below | **92** |
+
+The last row is measured on the same sites the fixes came from, so it
+flatters the picker; a fresh list would score somewhat lower. No site the
+old method got right is wrong now.
+
+Fixes made after the first run: ignore labels that are a web address or a
+blocked-page notice ("Request Rejected"); drop "Welcome to" and "Official";
+split labels at a colon too; read site-made clinic types such as
+`CosmeticClinic` but not `MedicalSpecialty` or the `alternateName` nickname;
+give the web-address credit to the part of a label that matches, not the
+whole label.
+
+The 7 still wrong:
+
+- Name plus extra words (3): "Klinik Kecantikan dan Bedah Plastik
+  EternaMoore", "LAYANAN KESEHATAN MENTAL CONQUERA PSIKOLOGI SURABAYA",
+  "Klinik Pratama Rawat Inap Mandiri Makassar".
+- No name in any label (4): estetikadraffandi.com, kasoemhearingcenter.com
+  and rsmelatiperbaungan.com put only a web address, a search phrase or
+  "Home" in their labels; rsgm.unair.ac.id blocks the reader. The picker
+  returns nothing and the free check shows a name made from the web address.
+
+The picker also says whether it is sure. Of the 92 right, it was sure of 81;
+of the 7 wrong, it was unsure of 5 (the four empty ones and Pratama
+Mandiri). Asking the customer to confirm the name when it is unsure would
+have caught all but EternaMoore and Conquera, and those two still contain
+the right name.
+
+`results.tsv` has every site: expected name, picked name, sure or not, and
+roughly what the old method picked.
