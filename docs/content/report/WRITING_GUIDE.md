@@ -19,33 +19,32 @@ pemilik. **Simpulan utama** (`verdict`) ialah paragraf pertama laporan.
 1. **Baca bukti dulu, baru rumuskan pesan utama.** Setelah memeriksa seluruh
    hasil, rumuskan satu pesan utama. Pilih temuan yang paling menjelaskan
    keadaan klinik, termasuk temuan yang membatasi simpulan. Jika ada bukti
-   penting yang bertentangan, perbaiki pesan utamanya. Jangan memilih
-   simpulan lalu mencari temuan yang mendukungnya.
+   penting yang bertentangan, perbaiki pesan utamanya. Jangan memilih simpulan
+   lalu mencari temuan yang mendukungnya.
 2. **Pesan utama ialah simpulan tentang pola, bukan penetapan sebab.**
    "ChatGPT menyebut Klinik A dalam jawaban tentang klinik di [kota], tetapi
    tidak dalam jawaban tentang [perawatan]" lebih berguna daripada mengulang
    angka yang sudah ada di kartu.
-3. **Pertahankan fakta yang memengaruhi keputusan** atau cara pembaca
-   memahami hasil audit, termasuk keterbatasan pengujian.
+3. **Pertahankan fakta yang memengaruhi keputusan** atau cara pembaca memahami
+   hasil audit, termasuk keterbatasan pengujian.
 4. **Jumlah temuan mengikuti bahan.** Dua temuan yang kuat cukup bila memang
    hanya itu yang tersedia. Jangan memenuhi kuota dengan mengulang gagasan.
    Urutkan dari yang paling penting.
 5. **Tunjukkan perbedaan yang berarti, lalu jelaskan batasnya.** Bandingkan:
    pertanyaan yang menyebut kota dan yang menyebut perawatan; ChatGPT dan
-   Google AI Overview; situs yang dikutip dan situs klinik sendiri. Kata "lemah", "tertinggal", atau "mengkhawatirkan" tidak
-   memperdalam temuan tanpa bukti pembanding.
+   Google AI Overview; situs yang dikutip dan situs klinik sendiri. Kata
+   "lemah", "tertinggal", atau "mengkhawatirkan" tidak memperdalam temuan
+   tanpa bukti pembanding.
 6. **Urutkan langkah dari bukti dan pedoman kerja.** Angka pencarian bulanan
    membantu memilih prioritas bila tersedia, tetapi tidak cukup sendirian:
-   periksa juga relevansi topik dengan layanan klinik dan dasar tindakan
-   dalam pedoman kerja. Jangan mengarang biaya atau upaya untuk memperkuat
-   urutan.
+   periksa juga relevansi topik dengan layanan klinik dan dasar tindakan dalam
+   pedoman kerja. Jangan mengarang biaya atau upaya untuk memperkuat urutan.
 7. **Setiap rekomendasi menjawab temuan dan menjelaskan tujuannya.** Katakan
    hubungannya dengan kalimat biasa, bukan label seperti "Temuan 2:".
    Menjalankan saran tidak menjamin nama klinik akan disebut, dan laporan
    tidak boleh menyiratkannya.
-8. **Penutup membawa pembaca ke keputusan berikutnya.** Tidak perlu
-   merangkum lagi semua sumber dan pola. Jadwal audit ulang mengikuti
-   pedoman kerja.
+8. **Penutup membawa pembaca ke keputusan berikutnya.** Tidak perlu merangkum
+   lagi semua sumber dan pola. Jadwal audit ulang mengikuti pedoman kerja.
 
 ## 2. Cara menulis seperti editor
 
@@ -97,14 +96,15 @@ ini" dapat menunjuk dua klinik berbeda. Di antaranya pakai "klinik ini" atau
 tindakan. Kejelasan lebih penting daripada menghindari pengulangan nama.
 Jangan menyingkat nama menjadi bentuk yang tidak ada di data.
 
-**Angka.** Pakai angka ketika angka membantu pembaca memahami besarnya
-temuan, perbandingan, atau urutan pekerjaan. Hindari pengulangan yang tidak
-menambah pengertian, tetapi angka boleh diulang dalam temuan agar temuan itu
-dapat dipahami sendiri. Setiap proporsi harus jelas pembilang, penyebut, dan
+**Angka.** Pakai angka ketika angka membantu pembaca memahami besarnya temuan,
+perbandingan, atau urutan pekerjaan. Hindari pengulangan yang tidak menambah
+pengertian, tetapi angka boleh diulang dalam temuan agar temuan itu dapat
+dipahami sendiri. Setiap proporsi harus jelas pembilang, penyebut, dan
 kelompok pengamatannya: "di 4 dari 4 pertanyaan tentang [perawatan]"
 menghitung tepat pertanyaan yang dikutip temuan itu. Simpulan utama paling
-panjang 220 karakter dan memuat paling banyak satu proporsi, dan hanya bila proporsi itulah intinya. Penutup
-tanpa angka; kartu dan temuan sudah memuatnya.
+panjang 220 karakter. Isinya paling banyak satu proporsi, dan hanya bila
+proporsi itulah intinya. Penutup tanpa angka; kartu dan temuan sudah
+memuatnya.
 
 **Paragraf bergerak maju.** Judul menyatakan temuan. Kalimat pembuka
 memberikan bukti atau rincian yang belum disampaikan judul. Kalimat
@@ -254,7 +254,8 @@ biaya dan siapa yang memberikan layanan tersebut."
 ### Penutup
 
 "Setelah halaman diperbarui, ulangi pengujian ChatGPT dan Google AI Overview
-dengan daftar pertanyaan dan cara pencatatan yang sama. Bandingkan jawabannya dengan hasil audit ini."
+dengan daftar pertanyaan dan cara pencatatan yang sama. Bandingkan jawabannya
+dengan hasil audit ini."
 
 Contoh ini sengaja tidak memakai angka pencarian, perkiraan biaya, ataupun
 janji waktu, karena ketiganya tidak ada dalam bahan. Jika jawaban pada audit

@@ -545,7 +545,12 @@ function namedGroup(
     // place makes it a group ("pertanyaan tentang klinik di [kota]").
     if (/^(?:bisnis|klinik|usaha|tempat)$/i.test(taken[taken.length - 1]!)) {
       const [at, place] = next.slice(taken.length, taken.length + 2);
-      if (!/^di$/i.test(at ?? "") || !isTopic(place)) return null;
+      // "di sini", "di kota ini" still mean the whole test.
+      const here =
+        /^(?:sini|situ|sana|sekitar)$/i.test(place ?? "") ||
+        (/^(?:kota|daerah|area|wilayah)$/i.test(place ?? "") &&
+          /^(?:ini|itu|Anda|tersebut)$/i.test(next[taken.length + 2] ?? ""));
+      if (!/^di$/i.test(at ?? "") || !isTopic(place) || here) return null;
       return span([...taken, at!, place!]) ?? null;
     }
     return base;

@@ -260,6 +260,8 @@ describe("Spec 023 R-03: nothing false today becomes accepted", () => {
       "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan tentang klinik.",
       "ChatGPT tidak menyebut SOZO dalam 4 pertanyaan tentang klinik.",
       "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan tentang klinik terdekat.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan tentang klinik di sini.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan tentang klinik di kota ini.",
     ])
       caught(sentence, treatment);
   });
