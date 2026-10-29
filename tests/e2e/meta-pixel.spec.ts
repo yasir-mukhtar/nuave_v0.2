@@ -19,7 +19,7 @@ import {
 const META_SCRIPT = "https://connect.facebook.net/en_US/fbevents.js";
 
 function notice(page: Page) {
-  return page.getByRole("region", { name: "Help us understand what works" });
+  return page.getByRole("region", { name: "🍪 Allow ad cookies?" });
 }
 
 async function setUp(page: Page, baseURL: string) {
@@ -65,7 +65,7 @@ test("before a choice nothing loads from Meta; Allow loads the Pixel and sends P
   await page.goto("/");
   await expect(notice(page)).toBeVisible();
   await expect(notice(page)).toContainText(
-    "Your report and business answers are never shared with advertising partners.",
+    "Your report and answers are never shared.",
   );
   await expect(
     page.getByRole("button", { name: "Pengaturan cookie" }),
@@ -258,21 +258,15 @@ for (const size of [
   { name: "a phone", width: 390, height: 844 },
   { name: "a laptop", width: 1280, height: 800 },
 ]) {
-  test(`Spec 022 AC-11a: How it works opens inside the notice on ${size.name}, with both choices still tappable and nothing from Meta`, async ({
+  test(`the notice links to the privacy page's cookie section on ${size.name}, with both choices still tappable and nothing from Meta`, async ({
     page,
     baseURL,
   }) => {
     const meta = await setUp(page, baseURL!);
     await page.setViewportSize({ width: size.width, height: size.height });
     await page.goto("/audit");
-    await notice(page).getByRole("button", { name: "How it works" }).click();
-    const panel = page.locator("#cookie-notice-how");
-    await expect(panel).toBeVisible();
-    await expect(panel).toContainText(
-      "your order email in coded (hashed) form",
-    );
     await expect(
-      panel.getByRole("link", { name: "Privacy policy" }),
+      notice(page).getByRole("link", { name: "Privacy policy" }),
     ).toHaveAttribute("href", "/privacy#cookie");
     for (const name of ["Allow", "Don't allow"]) {
       const button = notice(page).getByRole("button", { name, exact: true });
