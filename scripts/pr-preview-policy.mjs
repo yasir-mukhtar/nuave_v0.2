@@ -5,7 +5,9 @@
 // non-Dependabot author. Dependabot-authored PRs never deploy previews —
 // Dependabot-triggered runs receive Dependabot-scoped secrets and cannot see
 // the repository's Cloudflare credentials — so there is also nothing for
-// cleanup to remove on their close events. The check keys on the PR AUTHOR
+// cleanup to remove on their close events. Draft PRs get no preview either,
+// to save GitHub Actions minutes; one deploys when the PR is marked ready.
+// The check keys on the PR AUTHOR
 // (`pull_request.user.login`), not the event actor: a human who closes a
 // Dependabot PR must not trigger a guaranteed-failing cleanup.
 //
@@ -20,11 +22,12 @@ export function previewPolicy({
   prAuthorLogin,
   headRepoFullName,
   repoFullName,
+  draft = false,
 }) {
   const sameRepo = headRepoFullName === repoFullName;
   const botAuthored = prAuthorLogin === DEPENDABOT_AUTHOR;
   return {
-    deploy: action !== "closed" && sameRepo && !botAuthored,
+    deploy: action !== "closed" && sameRepo && !botAuthored && !draft,
     cleanup: action === "closed" && sameRepo && !botAuthored,
   };
 }

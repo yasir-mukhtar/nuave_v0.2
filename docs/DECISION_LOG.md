@@ -21,6 +21,21 @@ check for a name correction only; its `Kembali` and `Lanjut` return to the
 review. `Ganti website` stays hidden and the sheet says "Website sudah
 terkunci untuk pesanan ini." Nothing new is read or paid for.
 
+## 2026-10-28 — CI runs only what a PR needs, to fit 2,000 Actions minutes
+
+Yasir approved, because the monthly 2,000 GitHub Actions minutes ran out
+mid-month:
+
+1. A PR that changes only docs (`docs/` or `.md` files) runs code checks and
+   unit tests, but no build, browser tests or preview.
+2. `main` is not tested again after a merge; it checks the merge came from a
+   PR, then builds and deploys.
+3. A draft PR runs only code checks and unit tests, and gets no preview. The
+   full set and the preview run when it is marked ready for review.
+4. The Meta Pixel browser suite runs only when a file it depends on changes.
+
+Not approved: fewer test machines per run (the browser suite stays split).
+
 ## 2026-10-28 — Spec 023 approved: report writing quality
 
 After four rounds of independent review (Opus, extra-high effort; the last
