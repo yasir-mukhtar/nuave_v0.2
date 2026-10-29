@@ -568,6 +568,21 @@ di [kota]" as a group (a bare "tentang klinik" stays the whole test), and
 "tentang klinik ini" as the owner. The harness no longer counts
 "memanfaatkan" as a typical phrase.
 
+## Tempo style in the guide (2026-10-29)
+
+The founder asked that the guide also carry Tempo's newsroom style, from
+_Seandainya Saya Wartawan Tempo_ and Tempo's editors' principles.
+`docs/content/report/GAYA_TEMPO.md` records what was taken, how each
+principle maps to an audit report, and what does not transfer (the "aku"
+voice, physical description, teasing leads, staged scenes, causes). The
+third draft of the guide adds: the verdict as a lead that opens with the
+most concrete fact; show, don't label; short exact quotes from the saved
+answers; one question told first, then the pattern; plain verbs instead of
+bureaucratic ones; and a closing that returns to the lead. The examples
+gain a sample question and answer in the practice material. Every model
+sentence still passes R-03 when true. A code check that quoted text exists
+in the saved answers is proposed, not built.
+
 ## Verification record
 
 Complete after implementation:

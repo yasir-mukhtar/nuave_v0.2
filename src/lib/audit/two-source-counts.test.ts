@@ -310,25 +310,28 @@ describe("Spec 023 R-03: groups that mention 'klinik', and the guide's model sen
 
   it("passes the guide's model sentences when they are true", () => {
     const content = {
-      ...withFinding(
-        "Keempat jawaban itu menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: sebagian jawabannya menyebut SOZO. Penyebab perbedaan itu tidak diketahui.",
-        ids,
-        "ChatGPT tidak menyebut SOZO dalam jawaban tentang botox",
-      ),
+      conclusion:
+        "Saat ditanya soal botox, ChatGPT menjawab dengan nama ERHA. Pertanyaan itu tidak akan berubah bila audit diulang. Yang bisa berubah adalah halaman botox SOZO sendiri.",
+      key_findings: [
+        {
+          title: "ChatGPT tidak menyebut SOZO dalam jawaban tentang botox",
+          explanation:
+            "Ditanya 'botox di Batam yang dokternya berpengalaman di mana ya?', ChatGPT menjawab: 'Aku sarankan ERHA, dokternya spesialis kulit dan jadwal konsultasinya jelas.' Ketiga jawaban lain tentang botox juga menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: sebagian jawabannya menyebut SOZO.",
+          evidence_prompt_ids: ids,
+        },
+        {
+          title: "ChatGPT menyebut ERHA untuk botox",
+          explanation:
+            "ChatGPT menyebut ERHA dalam keempat jawaban tentang botox, bukan SOZO. ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang botox.",
+          evidence_prompt_ids: treatment,
+        },
+      ],
       two_source_writing: {
         verdict:
-          "ChatGPT menyebut SOZO dalam sebagian jawaban tentang klinik di Batam, tetapi tidak dalam jawaban tentang botox. Google AI Overview tidak menyebutnya.",
+          "Saat ditanya soal botox, ChatGPT menyebut ERHA, bukan SOZO. SOZO muncul di jawaban ChatGPT tentang klinik di Batam. Google AI Overview tidak menyebutnya.",
       },
     };
     expect(contradiction(content)).toEqual([]);
-    expect(
-      contradiction(
-        withFinding(
-          "ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang botox. ChatGPT menyebut ERHA dalam keempat jawaban tentang botox, bukan SOZO.",
-          treatment,
-        ),
-      ),
-    ).toEqual([]);
   });
 });
 
