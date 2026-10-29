@@ -1,10 +1,30 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-28
+> Updated: 2026-10-29
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-29 — Cookie notice: one short layer, without naming Meta
+
+Yasir found the layered notice still too long and intimidating. The notice
+now reads: title "🍪 Allow ad cookies?", text "We share visits and purchases
+with our ad partner to measure our ads and reach similar customers. Your
+report and answers are never shared.", a **Privacy policy** link that opens
+the privacy page's cookie section (`/privacy#cookie`), and the buttons
+Don't allow and Allow. The How it works second layer is removed; the
+privacy page's section 10 names Meta and the coded order email, and the link
+takes the visitor straight to it before they choose. The privacy page is
+unchanged, so its version stays 1.4 and no one is asked again.
+
+This supersedes the 2026-10-26 layered notice and Spec 022 R-19, R-19a,
+AC-11 (How it works text) and AC-11a. An independent opinion (GPT-6-Astra,
+2026-10-29) judged that the visible text must name both purposes (measuring
+ads and reaching similar customers), which this text does, and was least
+sure whether a privacy-page link alone is enough for the coded email. Not
+naming Meta in the notice keeps the 2026-10-25 reasoning. Recorded as a
+decision for the lawyer's check, not a claim that it is compliant.
 
 ## 2026-10-28 — Spec 023 approved: report writing quality
 

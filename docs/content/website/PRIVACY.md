@@ -30,11 +30,10 @@
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
   1. show a cookie notice with **Allow** and **Don't allow** (English since
-     2026-10-25), and load nothing from Meta until the visitor taps Allow; a
-     How it works link opens, inside the notice and before the choice, a
-     short explanation that names the hashed order email and Meta (Spec 022
-     layered notice, founder 2026-10-26; this replaces "the notice names
-     it", and is for the lawyer's check);
+     2026-10-25), and load nothing from Meta until the visitor taps Allow;
+     its Privacy policy link opens section 10, which names the hashed order
+     email and Meta, before the choice (founder 2026-10-29, replacing the
+     Spec 022 How it works layer; for the lawyer's check);
   2. send server events (Conversions API) only for visitors who agreed, and
      send no fields beyond those section 10 lists (event, value, IP address,
      browser type, Meta cookie codes, hashed email for purchases);
