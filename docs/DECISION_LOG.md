@@ -6,6 +6,21 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-29 — After payment the business name can be fixed; the website stays locked
+
+Order NV-8XAPUF was placed under its Google listing name, "Klinik Dokter
+Gigi Terdekat", and the customer could not correct it: after payment the
+review's Bisnis sheet locked the name and the website together (Spec 017
+R-19, AC-13). Yasir decided that only the website stays locked. The website
+is what the order is for (the server checks it at approval, and the reading
+and search data come from it); the name is a label, and approval already
+saves the name the customer confirmed.
+
+After payment the Bisnis sheet keeps `Ubah nama`, which opens the business
+check for a name correction only; its `Kembali` and `Lanjut` return to the
+review. `Ganti website` stays hidden and the sheet says "Website sudah
+terkunci untuk pesanan ini." Nothing new is read or paid for.
+
 ## 2026-10-28 — Spec 023 approved: report writing quality
 
 After four rounds of independent review (Opus, extra-high effort; the last
