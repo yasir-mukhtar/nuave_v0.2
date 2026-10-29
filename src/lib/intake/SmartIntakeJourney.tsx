@@ -551,6 +551,8 @@ export default function SmartIntakeJourney({
     "lookup" | "reading" | "paying" | "questions" | "approving" | null
   >(null);
   const [error, setError] = useState<string | null>(null);
+  // Bumped to open the name sheet when the name needs checking.
+  const [askName, setAskName] = useState(0);
   const [interrupted, setInterrupted] = useState(false);
   // Spec 016 R-31: the email is typed here and never stored in the browser.
   const [email, setEmail] = useState("");
@@ -1162,6 +1164,7 @@ export default function SmartIntakeJourney({
         display_name?: string;
         description?: string;
         icon_data_url?: string | null;
+        confidence?: boolean;
         preparation_mode?: string;
         error?: string;
       };
@@ -1205,6 +1208,10 @@ export default function SmartIntakeJourney({
             : ("synthetic-local" as const),
         description: description || null,
         iconDataUrl: icon,
+        // Only a real reading can be unsure; the synthetic one never reads.
+        ...(result.preparation_mode === "live" && result.confidence === false
+          ? { nameUnsure: true as const }
+          : {}),
       };
       // Every step ticks off before the card appears.
       setLookupFinished(true);
@@ -2057,6 +2064,14 @@ export default function SmartIntakeJourney({
     };
   };
 
+  // The free check read the website but could not tell its name for sure:
+  // the owner saves the name once before going on.
+  const nameToCheck =
+    session.stage === "brand" &&
+    !prepared &&
+    session.identity?.nameUnsure === true &&
+    session.brand?.origin !== "owner";
+
   // ── Top bar per stage ──
   let top: ReactNode = null;
   if (session.stage === "entry")
@@ -2124,20 +2139,30 @@ export default function SmartIntakeJourney({
       <BottomBar
         progress={progress ?? undefined}
         back={back}
-        action={{
-          label: "Ya, ini bisnis saya",
-          disabled: !brandName.trim(),
-          onClick: () => {
-            // Spec 016 D1: the free brand check is followed by the order
-            // screens; the paid reading starts only after the order.
-            goStage({
-              ...session,
-              stage: "steps",
-              entry: { ...session.entry, name: brandName },
-              brand: session.brand ?? { name: brandName, origin: "owner" },
-            });
-          },
-        }}
+        action={
+          nameToCheck
+            ? {
+                label: "Periksa nama bisnis",
+                onClick: () => setAskName((count) => count + 1),
+              }
+            : {
+                label: "Ya, ini bisnis saya",
+                disabled: !brandName.trim(),
+                onClick: () => {
+                  // Spec 016 D1: the free brand check is followed by the order
+                  // screens; the paid reading starts only after the order.
+                  goStage({
+                    ...session,
+                    stage: "steps",
+                    entry: { ...session.entry, name: brandName },
+                    brand: session.brand ?? {
+                      name: brandName,
+                      origin: "owner",
+                    },
+                  });
+                },
+              }
+        }
       />
     );
   } else if (session.stage === "brand" && prepared && selection) {
@@ -2333,6 +2358,8 @@ export default function SmartIntakeJourney({
         description={session.identity.description}
         iconDataUrl={session.identity.iconDataUrl}
         guessed={session.identity.guessed === true}
+        nameUnsure={nameToCheck}
+        askName={askName}
         onRename={(name) => {
           if (unsafeSmartName(name)) {
             stopSensitiveInput();

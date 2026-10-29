@@ -1,8 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   CONFIRM_BRAND,
   CONTINUE_WITH_NAME,
   entryScreen,
+  expectBrandConfirm,
   expectOrderScreen,
   expectStepsScreen,
   fillEntry,
@@ -139,4 +140,102 @@ test("Kembali cancels the free check, and a check cut off by a reload is never r
   // Give a replay every chance to show up: none comes.
   await page.waitForTimeout(1_000);
   expect(calls).toEqual({ "GET /api/audit/identity": 2 });
+});
+
+/** The free check read the site but its name labels were unclear. */
+async function stubUnsureIdentity(page: Page) {
+  await page.route("**/api/audit/identity?**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        canonical_url: FICTIONAL_BUSINESS.url,
+        display_name: "Kedai Fiksi Terdekat",
+        description: "",
+        icon_data_url: null,
+        confidence: false,
+        preparation_mode: "live",
+      }),
+    }),
+  );
+}
+
+test("an unsure business name is checked by the owner before going on", async ({
+  page,
+}) => {
+  await stubUnsureIdentity(page);
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page, "Kedai Fiksi Terdekat");
+  await expect(
+    page.getByText(
+      "Website Anda tidak menyebut namanya dengan jelas. Pastikan nama bisnis di bawah benar sebelum lanjut.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  // The usual confirm is replaced by a check of the name.
+  await expect(
+    page.getByRole("button", { name: CONFIRM_BRAND, exact: true }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Periksa nama bisnis", exact: true })
+    .click();
+  const sheet = page.getByRole("dialog", { name: "Pastikan nama bisnis" });
+  const field = sheet.getByRole("textbox", {
+    name: "Nama bisnis",
+    exact: true,
+  });
+  await expect(field).toHaveValue("Kedai Fiksi Terdekat");
+  await field.fill(FICTIONAL_BUSINESS.name);
+  await sheet.getByRole("button", { name: "Simpan", exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  await expectBrandConfirm(page);
+  // Saved once, the name is the owner's: the usual confirm returns.
+  await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
+  await expectStepsScreen(page);
+  expect((await intakeSession(page))?.brand).toEqual({
+    name: FICTIONAL_BUSINESS.name,
+    origin: "owner",
+  });
+});
+
+test("an unsure name kept as it is still counts as checked", async ({
+  page,
+}) => {
+  await stubUnsureIdentity(page);
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await page
+    .getByRole("button", { name: "Periksa nama bisnis", exact: true })
+    .click();
+  const sheet = page.getByRole("dialog", { name: "Pastikan nama bisnis" });
+  await sheet.getByRole("button", { name: "Simpan", exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  // A reload keeps the check done.
+  await page.reload();
+  await expectBrandConfirm(page, "Kedai Fiksi Terdekat");
+  await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
+  await expectStepsScreen(page);
+});
+
+test("a sure business name keeps the usual one-tap confirm", async ({
+  page,
+}) => {
+  await page.route("**/api/audit/identity?**", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        canonical_url: FICTIONAL_BUSINESS.url,
+        display_name: FICTIONAL_BUSINESS.name,
+        confidence: true,
+        preparation_mode: "live",
+      }),
+    }),
+  );
+  await fillEntry(page);
+  await pressPeriksa(page);
+  await expectBrandConfirm(page);
+  await page.getByRole("button", { name: CONFIRM_BRAND, exact: true }).click();
+  await expectStepsScreen(page);
 });

@@ -248,6 +248,7 @@ describe("business name from page labels", () => {
     expect(addressName("https://jakarta.siloamhospitals.com/x")).toBe(
       "siloamhospitals",
     );
+    expect(addressName("https://sasana.physio/")).toBe("sasana");
     expect(addressName("not a url")).toBe("");
   });
 });

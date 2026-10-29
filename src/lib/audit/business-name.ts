@@ -175,6 +175,8 @@ export function addressName(pageUrl: string): string {
     return "";
   }
   const labels = hostname.split(".").filter((label) => label !== "www");
+  // The last part is never the name, known ending or not (.physio, .fit).
+  if (labels.length > 1) labels.pop();
   while (labels.length > 1 && ADDRESS_ENDINGS.has(labels[labels.length - 1]!))
     labels.pop();
   return (labels[labels.length - 1] ?? "").replace(/[^a-z0-9]/g, "");
