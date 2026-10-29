@@ -707,7 +707,11 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   check proves the words were saved, not that the quotation keeps the
   answer's context (the guide's rule, and the founder's read in the blind
   test); the dash repair may turn a dash inside a kept quotation into a
-  comma.
+  comma; an initial before a capital ("vitamin C. Lalu") does not end a
+  sentence, so a dropped sentence may take its neighbour with it; the
+  page's card sentences ("Klinik Anda muncul di 1 dari 3 pertanyaan") are
+  not quotable.
+- Reviewed independently over five rounds (10 to 14); round 14: PASS.
 
 ## Verification record
 
