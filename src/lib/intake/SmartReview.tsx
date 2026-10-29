@@ -630,9 +630,12 @@ export default function SmartReview({
                       </button>
                     ) : null}
                   </div>
-                ) : (
+                ) : null}
+                {onEditSource ? null : (
                   <p className="type-copy-sm m-0 text-ink-500">
-                    Nama dan website sudah terkunci untuk pesanan ini.
+                    {onEditBrand
+                      ? "Website sudah terkunci untuk pesanan ini."
+                      : "Nama dan website sudah terkunci untuk pesanan ini."}
                   </p>
                 )}
               </SheetBlock>
