@@ -679,7 +679,7 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   topics and the report's labels ("Tidak disebut", "Peta Pesaing") are
   always allowed, and so is a name from the confirmed profile (its other
   names, the product or branch, category, offerings, named comparators,
-  market areas) quoted whole; the owner's own claims (what sets it apart,
+  market areas; six words at most) quoted whole; the owner's own claims (what sets it apart,
   a public fact, customers' needs) never are;
   pages Nuave read, and their titles, only when the sentence names no
   source or speaks of a page or site.
@@ -687,7 +687,7 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   words, so punctuation, dashes, Markdown, nested quotation marks, link
   citations and ChatGPT's citation markers never matter, and "Aruna" is
   never found inside "Karuna"; letters and digits are split ("Rp500" is
-  "rp 500"). Texts are compared as the writer read them,
+  "rp 500"), and "Rp7 sampai Rp8" matches "Rp7–Rp8". Texts are compared as the writer read them,
   without phone numbers. "sampai" between two numbers matches a dash.
 - A cut is marked "[…]" (or "…"): at most two cuts, each piece at least
   two words, all pieces in order in one paragraph of one text.

@@ -182,6 +182,11 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     expect(
       quoteFound("biayanya Rp7 sampai 8,5 juta", ["Biayanya Rp7–8,5 juta."]),
     ).toBe(true);
+    expect(
+      quoteFound("Rp500.000 sampai Rp750.000 per sesi", [
+        "| Klinik Seruni | Rp500.000–Rp750.000 per sesi |",
+      ]),
+    ).toBe(true);
   });
 
   it("matches whole words only", () => {
@@ -359,7 +364,15 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
         texts,
       ),
     ).toHaveLength(1);
-    // A profile name is quoted only whole: never part of a longer claim.
+    // A profile name is quoted only whole, and a long entry is a claim.
+    expect(
+      unfoundQuoteSentences(
+        "ChatGPT tidak menyebut “Facial dengan hasil terbaik untuk kulit berjerawat”.",
+        quotableTexts(["q1"], facts, observations, questions, [
+          "Facial dengan hasil terbaik untuk kulit berjerawat",
+        ]),
+      ),
+    ).toHaveLength(1);
     expect(
       unfoundQuoteSentences(
         "ChatGPT menulis “Acne Peeling terbaik”.",

@@ -23,6 +23,8 @@ const MIN_QUOTE_WORDS = 2;
 /** A cut quotation: at most this many cuts, each piece this many words. */
 const MAX_CUTS = 2;
 const MIN_PIECE_WORDS = 2;
+/** A profile entry longer than this is not a name. */
+const MAX_NAME_WORDS = 6;
 
 /** The report's own labels, which the writer may put in quotation marks. */
 const LABELS = [
@@ -50,7 +52,8 @@ const isWordChar = (ch: string | undefined) =>
 /** Text as compared: links, link citations and ChatGPT's citation markers
  * removed (a link keeps its words unless they are only a domain), paragraphs
  * apart, each a list of lower-case words. "sampai" or "hingga" between two
- * numbers is left out, since the dash rule writes "7–8" as "7 sampai 8". */
+ * numbers is left out, since the dash rule writes "7–8" as "7 sampai 8"
+ * (and "Rp7–Rp8" as "Rp7 sampai Rp8"). */
 export function quoteWords(text: string): string[][] {
   const known = wordCache.get(text);
   if (known) return known;
@@ -83,7 +86,11 @@ function splitWords(text: string): string[][] {
           !(
             (word === "sampai" || word === "hingga") &&
             /\d/.test(words[i - 1] ?? "") &&
-            /\d/.test(words[i + 1] ?? "")
+            /\d/.test(
+              words[i + 1] === "rp"
+                ? (words[i + 2] ?? "")
+                : (words[i + 1] ?? ""),
+            )
           ),
       );
     })
@@ -315,10 +322,15 @@ function textsForSentence(sentence: string, texts: QuotableTexts): string[] {
   ];
 }
 
-/** Whether a quotation is one of the profile's names, whole. */
+/** Whether a quotation is one of the profile's names, whole. A longer
+ * entry ("Facial dengan hasil terbaik untuk kulit berjerawat") reads as a
+ * claim, not a name. */
 function isProfileName(quote: string, names: readonly string[]): boolean {
-  const words = joined(quoteWords(quote).flat());
-  return names.some((name) => joined(quoteWords(name).flat()) === words);
+  const words = quoteWords(quote).flat();
+  return (
+    words.length <= MAX_NAME_WORDS &&
+    names.some((name) => joined(quoteWords(name).flat()) === joined(words))
+  );
 }
 
 /** Sentences of a text whose quotations are not found, and the rest. */
