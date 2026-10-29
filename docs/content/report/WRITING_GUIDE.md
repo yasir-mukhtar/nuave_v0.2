@@ -67,11 +67,12 @@ hal yang diterangkannya.
 
 **Simpulan utama adalah teras.** Ia menentukan apakah paragraf berikutnya
 dibaca. Buka dengan hal yang paling konkret dari bahan: siapa yang disebut
-saat ditanya apa, kontras yang paling tajam, atau potongan pendek jawaban.
-Jangan membuka dengan metode atau sampel ("Dalam sampel ini", "Audit ini
-menanyakan"), apalagi "Seperti telah diketahui" atau "Dalam rangka".
-Paling panjang 220 karakter; paling banyak satu proporsi, dan hanya bila
-proporsi itulah intinya. Angka per sumber sudah tampil di kartu.
+saat ditanya apa, kontras yang paling tajam, atau potongan pendek jawaban yang
+tetap memusat pada pesan utama. Jangan membuka dengan metode atau sampel
+("Dalam sampel ini", "Audit ini menanyakan"), apalagi "Seperti telah
+diketahui" atau "Dalam rangka". Satu atau dua kalimat, paling panjang 220
+karakter; paling banyak satu proporsi, dan hanya bila proporsi itulah intinya.
+Angka per sumber sudah tampil di kartu.
 
 **Tunjukkan, jangan melabeli.** "Visibilitas Klinik A rendah" adalah label.
 "Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B" adalah gambaran.
@@ -84,9 +85,10 @@ detail yang tepat lebih kuat daripada tiga kata sifat.
 **Kutipan.** Kutip jawaban ChatGPT atau Google AI Overview bila kata-katanya
 sendiri paling jelas menunjukkan pola. Salin persis, huruf demi huruf; boleh
 dipotong dengan "..." asal maknanya tidak berubah. Jangan merapikan,
-menerjemahkan, atau menggabungkan dua jawaban. Sebut sumbernya. Pilih
-potongan yang pendek dan paling tajam, paling banyak satu kutipan per
-temuan; laporan yang penuh kutipan kehilangan suara penulisnya.
+menerjemahkan, atau menggabungkan dua jawaban. Sebut sumbernya, dan kutip
+hanya jawaban dari pertanyaan yang dikutip temuan itu. Pilih potongan yang
+pendek dan paling tajam, paling banyak satu kutipan per temuan; laporan yang
+penuh kutipan kehilangan suara penulisnya.
 
 **Satu pertanyaan sebagai contoh.** Di dalam temuan, ceritakan dulu satu
 pertanyaan yang paling mewakili: apa yang ditanyakan, siapa yang disebut.
@@ -109,10 +111,11 @@ memang memuat rekomendasi. Jangan menulis apa yang AI "kenal", "pahami",
 atau "percayai".
 
 **Kata yang tepat.** Satu kata yang salah mengubah arti. "Disebut",
-"direkomendasikan", dan "situsnya dikutip" adalah tiga keadaan berbeda;
-jangan dipertukarkan demi variasi. Pakai satu istilah untuk satu hal di
-seluruh laporan. Gunakan "perawatan", "layanan", atau "tindakan" menurut
-maknanya.
+"direkomendasikan", dan "situsnya dikutip" adalah tiga keadaan berbeda; jangan
+dipertukarkan demi variasi. Pakai satu istilah untuk satu hal di seluruh
+laporan. Istilah teknis dijelaskan sekali dengan kata sehari-hari, misalnya
+Google AI Overview sebagai ringkasan AI di hasil pencarian Google. Gunakan
+"perawatan", "layanan", atau "tindakan" menurut maknanya.
 
 **Sumber dan nama.** Sebut sumbernya dengan tepat: ChatGPT, atau Google AI
 Overview, bukan "AI" atau "Google" saja. Setiap temuan berangkat dari
@@ -138,11 +141,12 @@ yang sedang dibahas, bukan dengan "selain itu" atau "lebih lanjut" berulang
 kali. Jangan mengganti istilah yang tepat dengan sinonim hanya supaya
 beragam.
 
-**Penutup yang tinggal di kepala.** Penutup tidak meringkas ulang. Kembali
-ke gambar di teras, lalu bawa pemilik ke langkah berikutnya. Kalimat
-terakhirnya boleh menghentak, tetapi harus benar menurut bahan: tanpa angka,
-tanpa janji, tanpa seruan. Penutup menyebut ChatGPT atau Google AI Overview.
-Jadwal audit ulang mengikuti pedoman kerja.
+**Penutup yang tinggal di kepala.** Penutup tidak meringkas ulang. Kembali ke
+gambar di teras, lalu bawa pemilik ke langkah berikutnya. Kalimat terakhirnya
+menghentak karena tepat, bukan karena dramatis: benar menurut bahan, tanpa
+angka, tanpa janji, tanpa seruan, dan tanpa mempertentangkan apa yang tetap
+dengan apa yang bisa diubah, karena itu menyiratkan sebab. Penutup menyebut
+ChatGPT atau Google AI Overview. Jadwal audit ulang mengikuti pedoman kerja.
 
 **Tanda baca dan nada.** Jangan pakai tanda pisah panjang atau tanda pisah
 sebagai jeda dalam kalimat; kadang kalimatnya perlu disusun ulang. Di antara
@@ -181,10 +185,11 @@ membuat pembaca menganggap kelengkapan halaman sebagai penyebabnya. Bila dua
 hal itu ditulis berdampingan, katakan sekali bahwa penyebabnya tidak
 diketahui.
 
-| Boleh                                                                                                                  | Tidak boleh                                                             |
-| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| "ChatGPT menyebut Klinik B dalam keempat jawaban tentang [perawatan], bukan Klinik A."                                 | "ChatGPT tidak menyebut Klinik A karena halaman [perawatan]-nya tipis." |
-| "Lengkapi halaman [perawatan] dengan kisaran harga dan nama dokter, agar pembaca tahu biaya dan siapa yang menangani." | "Halaman ini akan membuat Klinik A disebut dalam dua minggu."           |
+| Boleh                                                                                                                             | Tidak boleh                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| "ChatGPT menyebut Klinik B dalam keempat jawaban tentang [perawatan]; Klinik A tidak disebut dalam jawaban tentang [perawatan]."  | "ChatGPT tidak menyebut Klinik A karena halaman [perawatan]-nya tipis." |
+| "Halaman Klinik B mencantumkan harga dan nama dokter; halaman Klinik A tidak. Penyebab perbedaan penyebutan itu tidak diketahui." | "Google memilih klinik itu karena mencantumkan harga."                  |
+| "Lengkapi halaman [perawatan] dengan kisaran harga dan nama dokter, agar pembaca tahu biaya dan siapa yang menangani."            | "Halaman ini akan membuat Klinik A disebut dalam dua minggu."           |
 
 **Alasan dari pedoman kerja.** Bila pedoman kerja memberi alasan sebuah
 langkah dan menyebut sumbernya (Google atau OpenAI), alasan itu boleh
@@ -192,8 +197,11 @@ ditulis sebagai keterangan umum dari sumber tersebut, tidak sebagai janji.
 
 **Batasi klaim sejak susunannya.** "ChatGPT tidak menyebut Klinik A dalam
 keempat jawaban tentang [perawatan]" tegas sekaligus terbatas, tanpa perlu
-"mungkin". Letakkan batasnya dalam klausa yang sama dengan kata kerjanya.
-Batasan di akhir naskah tidak memperbaiki klaim yang terlalu luas di awal.
+"mungkin". Klaim bahwa Klinik A tidak disebut selalu membawa kelompoknya dalam
+klausa yang sama dengan kata kerjanya, tidak dalam anak kalimat di depan koma,
+dan tidak lewat "bukan Klinik A" saja. Pembuka seperti "Saat ditanya soal
+[perawatan]," hanya untuk menyatakan siapa yang disebut. Batasan di akhir
+naskah tidak memperbaiki klaim yang terlalu luas di awal.
 
 **"Tidak", "belum", "masih", "sudah".** Untuk satu kali pengamatan, tulis
 "tidak". "Belum" menyiratkan penyebutan akan datang; pakai hanya bila memang
@@ -237,9 +245,9 @@ kalimatnya.
 Sebelum: "Dalam sampel ini, Klinik A disebut dalam 3 dari 10 jawaban
 ChatGPT. Di Google AI Overview, Klinik A disebut dalam 0 dari 6 ringkasan."
 
-Sesudah: "Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B, bukan
-Klinik A. Klinik A muncul di jawaban ChatGPT tentang klinik di [kota]. Google
-AI Overview tidak menyebutnya."
+Sesudah: "Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B; Klinik A
+hanya muncul di sebagian jawaban tentang klinik di [kota]. Google AI Overview
+tidak menyebutnya."
 
 Yang pertama dibuka dengan sampel dan angka yang sudah ada di kartu. Yang
 kedua dibuka dengan gambaran: siapa disebut saat ditanya apa.
@@ -249,13 +257,15 @@ kedua dibuka dengan gambaran: siapa disebut saat ditanya apa.
 Judul: "ChatGPT tidak menyebut Klinik A dalam jawaban tentang [perawatan]"
 
 Isi: "Ditanya '[perawatan] di [kota] yang dokternya berpengalaman di mana
-ya?', ChatGPT menjawab: 'Aku sarankan Klinik B, dokternya spesialis kulit
-dan jadwal konsultasinya jelas.' Ketiga jawaban lain tentang [perawatan]
-juga menyebut Klinik B. Untuk pertanyaan tentang klinik di [kota], hasilnya
-berbeda: sebagian jawabannya menyebut Klinik A."
+ya?', ChatGPT menjawab: 'Aku sarankan Klinik B, dokternya spesialis kulit dan
+jadwal konsultasinya jelas.' Ketiga jawaban lain tentang [perawatan] juga
+menyebut Klinik B. Untuk pertanyaan tentang klinik di [kota], hasilnya
+berbeda: sebagian jawabannya menyebut Klinik A. Penyebab perbedaan itu tidak
+diketahui."
 
-Satu pertanyaan diceritakan dulu, lalu polanya. Kutipannya pendek dan
-persis. Tidak ada kalimat yang menebak mengapa Klinik B disebut.
+Satu pertanyaan diceritakan dulu, lalu polanya. Kutipannya pendek dan persis.
+Alasan yang ditulis ChatGPT untuk Klinik B adalah isi jawaban, bukan bukti
+mengapa Klinik B disebut.
 
 ### Rekomendasi
 
@@ -270,13 +280,14 @@ tahu biaya dan siapa yang menangani."
 
 ### Penutup
 
-"Saat ditanya soal [perawatan], ChatGPT menjawab dengan nama Klinik B.
-Pertanyaan itu tidak akan berubah bila audit diulang. Yang bisa berubah
-adalah halaman [perawatan] Klinik A sendiri."
+"Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B. Langkah pertama ada
+di halaman [perawatan] Klinik A yang sudah ada. Sesudah itu, audit ulang
+dengan pertanyaan yang sama menunjukkan apakah jawaban ChatGPT berubah."
 
-Penutup kembali ke gambar di teras, lalu menunjuk satu hal yang ada di
-tangan pemilik. Tidak ada angka pencarian, biaya, atau janji waktu, karena
-semuanya tidak ada dalam bahan.
+Penutup kembali ke gambar di teras, lalu menunjuk langkah yang ada di tangan
+pemilik. Tidak ada angka pencarian, biaya, atau janji waktu, karena semuanya
+tidak ada dalam bahan. Bila jawaban berubah, perubahan itu sendiri tidak
+membuktikan pengaruh pembaruan halaman.
 
 ## 5. Pemeriksaan akhir
 
@@ -286,7 +297,7 @@ ditampilkan kepada pemilik klinik.
 1. Pesan utama sesuai dengan seluruh bukti penting, termasuk yang
    membatasinya.
 2. Simpulan utama dibuka dengan hal paling konkret, bukan dengan metode atau
-   sampel.
+   sampel, dan terdiri atas satu atau dua kalimat.
 3. Setiap fakta, angka, nama, dan kutipan ada di bahan audit; kutipan
    disalin persis.
 4. Jumlah, kelompok pertanyaan, dan status hasil dihitung dengan tepat.

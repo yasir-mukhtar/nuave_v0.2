@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { partBWritingViolations } from "./two-source-writing";
 import {
   repairTwoSourceWriting,
   twoSourceWritingViolations,
@@ -311,27 +312,47 @@ describe("Spec 023 R-03: groups that mention 'klinik', and the guide's model sen
   it("passes the guide's model sentences when they are true", () => {
     const content = {
       conclusion:
-        "Saat ditanya soal botox, ChatGPT menjawab dengan nama ERHA. Pertanyaan itu tidak akan berubah bila audit diulang. Yang bisa berubah adalah halaman botox SOZO sendiri.",
+        "Saat ditanya soal botox, ChatGPT menyebut ERHA. Langkah pertama ada di halaman botox SOZO yang sudah ada. Sesudah itu, audit ulang dengan pertanyaan yang sama menunjukkan apakah jawaban ChatGPT berubah.",
       key_findings: [
         {
           title: "ChatGPT tidak menyebut SOZO dalam jawaban tentang botox",
           explanation:
-            "Ditanya 'botox di Batam yang dokternya berpengalaman di mana ya?', ChatGPT menjawab: 'Aku sarankan ERHA, dokternya spesialis kulit dan jadwal konsultasinya jelas.' Ketiga jawaban lain tentang botox juga menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: sebagian jawabannya menyebut SOZO.",
+            "Ditanya 'botox di Batam yang dokternya berpengalaman di mana ya?', ChatGPT menjawab: 'Aku sarankan ERHA, dokternya spesialis kulit dan jadwal konsultasinya jelas.' Ketiga jawaban lain tentang botox juga menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: sebagian jawabannya menyebut SOZO. Penyebab perbedaan itu tidak diketahui.",
           evidence_prompt_ids: ids,
         },
         {
           title: "ChatGPT menyebut ERHA untuk botox",
           explanation:
-            "ChatGPT menyebut ERHA dalam keempat jawaban tentang botox, bukan SOZO. ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang botox.",
+            "ChatGPT menyebut ERHA dalam keempat jawaban tentang botox; SOZO tidak disebut dalam jawaban tentang botox. ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang botox.",
           evidence_prompt_ids: treatment,
         },
       ],
       two_source_writing: {
         verdict:
-          "Saat ditanya soal botox, ChatGPT menyebut ERHA, bukan SOZO. SOZO muncul di jawaban ChatGPT tentang klinik di Batam. Google AI Overview tidak menyebutnya.",
+          "Saat ditanya soal botox, ChatGPT menyebut ERHA; SOZO hanya muncul di sebagian jawaban tentang klinik di Batam. Google AI Overview tidak menyebutnya.",
       },
     };
     expect(contradiction(content)).toEqual([]);
+    // The model verdict with long real names stays within the verdict's
+    // own limits (two sentences, 220 characters).
+    const verdict =
+      "Saat ditanya soal perawatan jerawat, ChatGPT menyebut ERHA Ultimate Batam; SOZO Skin Clinic hanya muncul di sebagian jawaban tentang klinik di Surabaya. Google AI Overview tidak menyebutnya.";
+    expect(
+      partBWritingViolations({
+        conclusion: "",
+        key_findings: [],
+        priorities: [],
+        details: [],
+        two_source_writing: {
+          verdict,
+          plan: [],
+          topic_names: [],
+          competitor_reasons: [],
+          takeaways: [],
+          google_readings: [],
+        },
+      } as never),
+    ).toEqual([]);
   });
 });
 

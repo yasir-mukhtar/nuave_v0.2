@@ -20,32 +20,32 @@ fiksi, tetapi disusun supaya enak dibaca dan perlu (hlm. 8).
    Anda sedang bertutur" (hlm. 13). Laporan dibaca pemilik klinik seperti
    mendengar konsultan menjelaskan, bukan membaca formulir.
 2. **Sudut dan fokus.** Sebelum menulis, pilih satu sudut (_angle_): benang
-   yang menghubungkan kebanyakan bahan (hlm. 50 sampai 52). Fokus adalah
+   yang menghubungkan kebanyakan bahan (hlm. 49 sampai 50). Fokus adalah
    unting-unting tukang bangunan: setiap potong informasi harus lurus
    terhadapnya; bahan yang tidak relevan dibuang tanpa belas kasihan
    (hlm. 37 sampai 39). Di laporan Nuave, sudut adalah pesan utama.
 3. **Kerangka sebelum menulis.** Penulis yang langsung "menukilkan" teras
-   hebat akan tersesat di alinea keempat. Tentukan "alif"-nya, lalu urutan
-   bagian sampai penutup (hlm. 63 sampai 64). Di Nuave, ini kerangka alur
-   (`storyline`).
+   hebat akan tertumbuk masalah beberapa alinea kemudian. Tentukan "alif"-nya,
+   lalu urutan bagian sampai penutup (hlm. 63 sampai 64). Di Nuave, ini
+   kerangka alur (`storyline`).
 4. **Teras yang mengail.** Kunci tulisan ada di paragraf pertama; tanpa teras
    yang baik, menangkap pembaca sama dengan mengail tanpa umpan (hlm. 20).
    Teras harus ringkas (jangan lebih dari empat baris), memakai kata kerja
-   aktif, dan menggaet pada beberapa kata pertama (hlm. 28 sampai 29).
+   aktif, dan menggaet pada beberapa kata pertama (hlm. 27 sampai 28).
    Pembuka yang membunuh minat: "Beberapa minggu yang lalu", "Dalam
-   rangka", "Seperti telah diketahui", "Sebagaimana lazimnya" (hlm. 30).
+   rangka", "Seperti telah diketahui", "Sebagaimana lazimnya" (hlm. 28).
 5. **Jenis teras.** Ringkasan, bercerita, deskriptif, kutipan, bertanya,
    menuding langsung ("Anda"), menggoda, nyentrik, dan kombinasi (hlm. 20
-   sampai 28). Teras kutipan kuat bila kutipannya tajam dan memusat pada
+   sampai 26). Teras kutipan kuat bila kutipannya tajam dan memusat pada
    sifat cerita; teras bertanya dan nyentrik paling berisiko.
 6. **Empat senjata: fokus, deskripsi, anekdot, kutipan** (hlm. 37 sampai 48).
    Deskripsi menjadikan penulis "mata, telinga, hidung pembaca"; jangan
    memberi kesimpulan sebagai ganti gambaran ("cantik" diganti apa yang
    terlihat, hlm. 42). Anekdot adalah "cerita dalam cerita", permata yang
-   ditaburkan di seluruh tulisan (hlm. 43 sampai 44). Kutipan memberi
+   ditaburkan di seluruh tulisan (hlm. 42 sampai 43). Kutipan memberi
    selingan dan wawasan, tetapi jangan berlebihan (_over-quote_) atau terlalu
    sedikit (_under-quote_); kutipan panjang dipangkas ke bagian yang paling
-   kuat (hlm. 46 sampai 48).
+   kuat (hlm. 43 sampai 47).
 7. **Akurat adalah mahkota profesi.** Imajinasi tidak boleh mewarnai fakta;
    tidak ada fiksi, tidak ada "pewarnaan" yang menipu pembaca; jangan
    menaruh kalimat ke mulut narasumber (hlm. 14 sampai 15). Statistik bisa
@@ -55,21 +55,26 @@ fiksi, tetapi disusun supaya enak dibaca dan perlu (hlm. 8).
    arti dan merusak nama baik (hlm. 17). Buku pedoman membuat istilah
    seragam (hlm. 18).
 9. **Kata kerja adalah busi.** Pilih kata kerja yang ringkas dan hidup;
-   hindari kata bentukan panjang ("kesuksesan" cukup "sukses", hlm. 29). Kata
+   hindari kata bentukan panjang ("kesuksesan" cukup "sukses", hlm. 27). Kata
    sifat yang tegas boleh, bila tepat.
 10. **Alinea pendek, kalimat sederhana, tidak monoton.** Alinea panjang
     membuat pembaca segan; kalimat majemuk yang menyesatkan pembaca berarti
     penulis gagal; tetapi kalimat pendek melulu membuat pembaca mengantuk
-    (hlm. 33).
+    (hlm. 32).
 11. **Tubuh, transisi, urutan.** Transisi adalah adukan semen yang tidak
-    boleh terasa (hlm. 31 sampai 32). Urutan bisa kronologis, ruang, atau
+    boleh terasa (hlm. 30 sampai 31). Urutan bisa kronologis, ruang, atau
     logis: sebab akibat, khusus ke umum, umum ke khusus, pemecahan masalah
     (hlm. 64 sampai 66). Bahan yang mengganggu arus dipindah ke "boks"
     (hlm. 66).
 12. **Penutup (_ending_).** _Feature_ mutlak memerlukan penutup: ikhtisar
     yang menunjuk kembali ke teras, penutup yang mengagetkan, klimaks, atau
-    pertanyaan pokok yang tak terjawab (hlm. 30 sampai 31). Penutup harus
+    pertanyaan pokok yang tak terjawab (hlm. 29 sampai 30). Penutup harus
     logis dan tidak dibikin-bikin.
+
+Tiga pelajaran kecil lain: istilah teknis diterangkan dengan kata yang
+dipahami orang awam (hlm. 16); teras kutipan bisa keluar dari isi cerita bila
+kutipannya tidak memusat pada pokoknya (hlm. 23); dan naskah dibaca ulang
+setelah diberi jarak, sebagai pembaca (hlm. 18 sampai 19).
 
 Dari catatan founder: Tempo menghindari bahasa birokrat dan eufemisme
 ("mengadakan peninjauan", "mengambil langkah-langkah kebijaksanaan"),
