@@ -65,7 +65,7 @@ test("before a choice nothing loads from Meta; Allow loads the Pixel and sends P
   await page.goto("/");
   await expect(notice(page)).toBeVisible();
   await expect(notice(page)).toContainText(
-    "Your report and business answers are never shared with advertising partners.",
+    "Your report and answers are never shared.",
   );
   await expect(
     page.getByRole("button", { name: "Pengaturan cookie" }),
