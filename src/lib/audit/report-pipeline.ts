@@ -1,5 +1,6 @@
 import {
   repairTwoSourceWriting,
+  twoSourceCountSentence,
   twoSourceWritingViolations,
   type TwoSourceReportFacts,
 } from "./two-source-report";
@@ -11,6 +12,7 @@ import {
   saveableTwoSourceWriting,
 } from "./two-source-writing";
 import { hasWriterFacts } from "./two-source-writer";
+import { quoteViolations, repairQuotes } from "./quote-check";
 import {
   buildAuditReport,
   normalizeReportEvidence,
@@ -473,12 +475,24 @@ export async function createValidatedAuditReport(
 
   const isIndonesian = lockedInput.language === "id";
   const sourceFacts = lockedInput.two_source_facts;
+  const questions = new Map(
+    lockedInput.prompts.map((prompt) => [prompt.prompt_id, prompt.question]),
+  );
   const sourceErrorsFor = (draft: typeof content) =>
     sourceFacts
       ? [
           ...twoSourceWritingViolations(draft, sourceFacts),
           // Spec 021 B-04/B-06: the new writer's own fields.
           ...partBWritingViolations(draft),
+          // Spec 023: a quotation must be the saved words it cites.
+          ...(hasWriterFacts(sourceFacts)
+            ? quoteViolations(
+                draft,
+                sourceFacts,
+                lockedInput.observations,
+                questions,
+              )
+            : []),
         ]
       : [];
   const languageErrors = [
@@ -600,6 +614,19 @@ export async function createValidatedAuditReport(
   // it cannot confirm, a reason, topic name or reading it cannot place, and
   // removes a banned title start the revision left. Never a failed order.
   if (hasWriterFacts(sourceFacts) && content.two_source_writing) {
+    // Spec 023: past the revision, a sentence whose quotation is not in the
+    // saved texts is dropped. Never a failed order.
+    const quotes = repairQuotes(
+      content,
+      sourceFacts,
+      lockedInput.observations,
+      questions,
+      twoSourceCountSentence(sourceFacts),
+    );
+    if (quotes.dropped) {
+      content = quotes.content;
+      diagnostics.add("quote_dropped");
+    }
     const dashes = repairDashes(content, sourceFacts);
     if (dashes.changed) {
       content = dashes.content;

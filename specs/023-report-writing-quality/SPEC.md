@@ -659,6 +659,31 @@ The founder revised the guide with another model and approved the result
   limit and the anaphoric "keempat jawaban itu", which today's code read as
   claims about the whole test.
 
+## Quotation check (founder approval, 2026-10-29)
+
+The guide lets the writer quote answers, so code now checks that a
+quotation is real (`src/lib/audit/quote-check.ts`):
+
+- Words in quotation marks (curly or straight; three words or more) must
+  appear in a saved text the passage cites: a completed ChatGPT answer, a
+  Google AI Overview or a question, by the finding's or recommendation's
+  `evidence_prompt_ids`. Passages that cite nothing may quote any of them.
+  Pages Nuave read, the business's names, the other businesses and the
+  search topics may always be quoted. Texts are compared as the writer read
+  them: without phone numbers, Markdown or extra spaces, and in lower case.
+- A cut is marked "[…]" (or "…"); each piece must appear in the same text,
+  in order. Pieces from two answers never make one quotation.
+- A quotation that is not found is listed for the one revision. Past it,
+  code drops the sentence and records `quote_dropped`: a finding a drop
+  empties goes while another remains; an emptied conclusion or
+  recommendation paragraph gets the per-source count sentence; an emptied
+  verdict is left for the page's own; a plan step keeps its words without
+  the quotation marks. Never a failed order.
+- Known limits: a quotation shorter than three words (a label such as
+  "Disebut") is not checked; the check proves the words were saved, not
+  that the quotation keeps the answer's context (the guide's rule, and the
+  founder's read in the blind test).
+
 ## Verification record
 
 Complete after implementation:

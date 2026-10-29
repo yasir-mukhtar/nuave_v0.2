@@ -32,6 +32,8 @@ export const REPORT_DIAGNOSTIC_CODES = [
   "source_sentence_dropped",
   "finding_dropped",
   "dash_replaced",
+  // Spec 023, founder's guide: a quotation not found in the saved texts.
+  "quote_dropped",
 ] as const;
 
 export type ReportDiagnosticCode = (typeof REPORT_DIAGNOSTIC_CODES)[number];

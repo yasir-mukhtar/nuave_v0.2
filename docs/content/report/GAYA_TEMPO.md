@@ -118,10 +118,10 @@ klinik yang dibaca. Jadi setiap prinsip diterjemahkan ke bahan itu:
 
 ## Satu catatan untuk pemeriksaan kode
 
-Kutipan dari jawaban akan lebih sering muncul. Saat ini kode tidak memeriksa
-bahwa teks dalam tanda kutip benar-benar ada di jawaban tersimpan. Bila
-kutipan menjadi bagian penting gaya laporan, pemeriksaan itu layak
-ditambahkan (usulan, belum dikerjakan).
+Kutipan dari jawaban akan lebih sering muncul. Sejak 2026-10-29 kode
+memeriksa bahwa teks dalam tanda kutip benar-benar ada di jawaban, ringkasan
+Google, atau pertanyaan yang dirujuk; kalimat dengan kutipan yang tidak
+ditemukan dibuang (Spec 023, "Quotation check").
 
 ## Catatan tambahan dari founder (2026-10-29)
 
