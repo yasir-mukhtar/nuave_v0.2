@@ -62,7 +62,7 @@ Bagian-bagian laporan mempunyai tugas berbeda:
 | Penutup                    | Menyelesaikan penjelasan dan memberi arah yang wajar bagi pembaca.                      |
 | Rincian bukti              | Menyediakan pertanyaan, jawaban, sumber, dan keterangan metode untuk diperiksa kembali. |
 
-Tabel itu menerangkan fungsi. Bentuk keluaran tetap mengikuti format produk yang digunakan.
+Tabel itu menerangkan fungsi. Bentuk keluaran tetap mengikuti format produk yang digunakan: setiap temuan dan rekomendasi ditulis sebagai satu paragraf.
 
 Di dalam temuan, pilih urutan sesuai bahan:
 
@@ -94,7 +94,7 @@ Atau:
 
 Yang pertama segera memperlihatkan pola. Yang kedua membawa pembaca melalui satu kejadian pengujian. Pilih yang paling membantu, dengan memperhatikan ruang yang tersedia. Kutipan tidak wajib jika hasilnya lebih terang dalam kalimat Anda sendiri.
 
-Untuk simpulan utama, pertahankan satu atau dua kalimat dengan batas 220 karakter yang tercantum dalam draf produk sebelumnya. Jika tidak muat, persempit hal yang hendak dikatakan. Jangan menghapus sumber atau batas pengamatan hanya agar kalimat lolos hitungan.
+Untuk simpulan utama, pertahankan satu atau dua kalimat dengan batas produk 220 karakter. Jika tidak muat, persempit hal yang hendak dikatakan. Jangan menghapus sumber atau batas pengamatan hanya agar kalimat lolos hitungan.
 
 Angka boleh muncul di teras jika angka itulah berita utamanya. Angka pada kartu juga boleh diulang ketika diperlukan agar simpulan dapat dipahami sendiri. Yang perlu dihindari ialah memindahkan seluruh tabel ke dalam paragraf.
 
@@ -150,7 +150,7 @@ Pakai kata sifat dengan hemat dan tepat. “Rendah”, “kuat”, dan “signif
 
 Kenalkan Google AI Overview sekali sebagai ringkasan AI pada hasil pencarian Google. Setelah itu gunakan namanya secara konsisten. “Google” saja dapat mengaburkan perbedaan antara ringkasan AI dan hasil pencarian lain. Gunakan “AI” untuk pembicaraan umum; temuan tertentu harus jelas sumbernya.
 
-Sebut nama klinik pada awal bagian dan setiap kali kata ganti dapat menunjuk lebih dari satu klinik. Gunakan “Anda” ketika berbicara kepada pemilik tentang tindakan yang bisa ia ambil. Jangan menyebut klinik dengan “Anda” dalam kalimat yang membahas penyebutan nama usaha.
+Sebut nama klinik pada awal bagian dan setiap kali kata ganti dapat menunjuk lebih dari satu klinik. Gunakan “Anda” ketika berbicara kepada pemilik tentang tindakan yang bisa ia ambil. Jangan menyebut klinik dengan “Anda” saja dalam kalimat yang membahas penyebutan nama usaha; “klinik Anda” tetap boleh.
 
 Kalimat pendek memberi tekanan. Kalimat yang lebih panjang dapat menampung perbandingan atau penjelasan yang memang saling bergantung. Bacalah bergantian, seperti orang bertutur. Jika semua kalimat berhenti setelah tiga atau empat kata, laporan akan terasa terpatah-patah. Jika satu kalimat menanggung hasil, sebab, batas, dan anjuran sekaligus, pecah pekerjaannya.
 
@@ -158,7 +158,7 @@ Pisahkan paragraf ketika pembicaraan beralih atau mata membutuhkan jeda. Tidak a
 
 Nada laporan tenang, terus terang, dan menghormati pembaca. Tidak perlu menggurui, menakut-nakuti, atau membesar-besarkan persoalan agar anjuran terasa penting. Keluwesan tidak memerlukan istilah lawas atau kelakar yang dipaksakan.
 
-Untuk keseragaman Nuave, gunakan koma, titik, titik dua, atau titik koma sesuai fungsinya; hindari tanda pisah sebagai jeda. Tulis rentang angka dengan “sampai”. Ini pilihan redaksi Nuave, bukan ukuran mutu sebuah tulisan Tempo.
+Untuk keseragaman Nuave, gunakan koma, titik, titik dua, atau titik koma sesuai fungsinya; hindari tanda pisah sebagai jeda. Tulis rentang angka dengan “sampai”, kecuali label minggu pada rencana kerja seperti “Minggu 1–2”. Ini pilihan redaksi Nuave, bukan ukuran mutu sebuah tulisan Tempo.
 
 ## 7. Jaga batas makna
 
@@ -166,7 +166,7 @@ Ketegasan lahir dari cakupan yang tepat. “ChatGPT tidak menyebut Aruna dalam k
 
 ### Hitung hal yang benar
 
-Setiap angka harus jelas menghitung apa: pertanyaan, jawaban, ringkasan yang tampil, atau jumlah pengujian berulang. Jangan memakai satu penyebut untuk satuan yang berbeda. Jika pengujian diulang, ikuti satuan dalam metode dan jelaskan saat diperlukan; beberapa jawaban untuk pertanyaan yang sama tidak otomatis menjadi beberapa pertanyaan.
+Setiap angka harus jelas menghitung apa: pertanyaan, jawaban, ringkasan yang tampil, atau jumlah pengujian berulang. Jangan memakai satu penyebut untuk satuan yang berbeda. Jika pengujian diulang, ikuti satuan dalam metode dan jelaskan saat diperlukan; beberapa jawaban untuk pertanyaan yang sama tidak otomatis menjadi beberapa pertanyaan. Hitungan tentang satu kelompok pertanyaan ditempatkan di temuan yang merujuk tepat pertanyaan kelompok itu; di simpulan utama dan penutup, hitungan tentang klinik memakai jumlah seluruh pengujian.
 
 Sepuluh pertanyaan yang diajukan kepada dua sistem tidak otomatis menghasilkan dua puluh jawaban yang dapat dinilai. Ringkasan dapat tidak tampil, dan pengujian dapat gagal. Laporkan keadaan itu secara terpisah.
 
@@ -215,7 +215,7 @@ Terangkan manfaat langsungnya: pembaca halaman bisa mengetahui siapa yang menang
 
 Informasi baru harus berasal dari klinik atau sumber yang berwenang. Nama dokter, jadwal, layanan, biaya, dan kualifikasi tidak boleh diisi dengan perkiraan penulis. Jika datanya belum tersedia, anjurkan pengumpulan atau pemeriksaan data tersebut sebagai langkah awal.
 
-Sebuah rekomendasi yang selesai menjawab empat hal: keadaan yang mendasarinya, tindakan yang diminta, alasan untuk mendahulukannya, dan hasil langsung yang dapat diperiksa. Sampaikan dengan kalimat biasa. Tidak semuanya perlu dijadikan label.
+Sebuah rekomendasi yang selesai menjawab empat hal: keadaan yang mendasarinya, tindakan yang diminta, alasan untuk mendahulukannya, dan hasil langsung yang dapat diperiksa. Sampaikan dengan kalimat biasa. Tidak semuanya perlu dijadikan label. Judul rekomendasi diawali kata kerja yang tegas, tetapi tidak dengan “Periksa”, “Pertahankan”, “Pertimbangkan”, atau “Pastikan”.
 
 Jika bahan belum cukup untuk menentukan perubahan, langkah berikutnya bisa berupa pemeriksaan tambahan. Jika tidak ada kekurangan yang terbukti, jangan menciptakan pekerjaan untuk memenuhi jumlah rekomendasi.
 
@@ -252,13 +252,11 @@ Jika ada audit ulang, ikuti jadwal dan cara dalam pedoman kerja. Jangan mencipta
 
 **Simpulan utama**
 
-ChatGPT menyebut Aruna dalam tiga jawaban, semuanya pertanyaan umum tentang klinik di Depok, bukan bekas jerawat. Google AI Overview tidak menyebut Aruna dalam 6 ringkasan yang tampil.
+ChatGPT menyebut Aruna dalam tiga jawaban untuk pertanyaan umum, tidak satu pun tentang bekas jerawat. Aruna juga tidak disebut dalam 6 ringkasan Google AI Overview yang tampil.
 
 **Untuk bekas jerawat, empat jawaban ChatGPT menyebut Seruni**
 
-Pertanyaan “Di mana saya bisa konsultasi bekas jerawat di Depok?” mendapat jawaban: “Untuk konsultasi bekas jerawat di Depok, Klinik Seruni bisa menjadi pilihan.” Tiga jawaban ChatGPT lain tentang topik yang sama juga menyebut Seruni. Aruna tidak disebut dalam keempat jawaban itu.
-
-Hasilnya berbeda pada pertanyaan umum tentang klinik di Depok. Di kelompok enam pertanyaan ini, ChatGPT menyebut Aruna dalam tiga jawaban.
+Pertanyaan “Di mana saya bisa konsultasi bekas jerawat di Depok?” mendapat jawaban: “Untuk konsultasi bekas jerawat di Depok, Klinik Seruni bisa menjadi pilihan.” Tiga jawaban ChatGPT lain tentang topik yang sama juga menyebut Seruni. Aruna tidak disebut dalam keempat jawaban itu. Hasilnya berbeda pada pertanyaan umum tentang klinik di Depok. Di kelompok enam pertanyaan ini, ChatGPT menyebut Aruna dalam tiga jawaban.
 
 **Enam ringkasan Google AI Overview tidak menyebut Aruna**
 
@@ -266,9 +264,7 @@ Google AI Overview tampil untuk enam dari sepuluh pertanyaan yang diuji. Tidak s
 
 **Lengkapi halaman bekas jerawat yang sudah tersedia**
 
-Aruna memiliki halaman layanan bekas jerawat, salah satu topik yang diuji. Halaman ini menjelaskan jenis layanan. Dua informasi tidak tercantum di halaman yang diperiksa: nama dokter dan kisaran biaya. Tambahkan keduanya berdasarkan data klinik yang berlaku agar pembaca tahu siapa yang menangani dan biaya yang perlu disiapkan.
-
-Dahulukan halaman ini sesuai pedoman kerja: halamannya tersedia dan informasi yang kurang sudah diketahui. Sesudah diperbarui, periksa apakah nama dokter serta keterangan biaya sudah benar dan terbaca jelas. Audit ini tidak membuktikan bahwa ketiadaan informasi tersebut menyebabkan Aruna tidak disebut.
+Aruna memiliki halaman layanan bekas jerawat, salah satu topik yang diuji. Halaman ini menjelaskan jenis layanan. Dua informasi tidak tercantum di halaman yang diperiksa: nama dokter dan kisaran biaya. Tambahkan keduanya berdasarkan data klinik yang berlaku agar pembaca tahu siapa yang menangani dan biaya yang perlu disiapkan. Dahulukan halaman ini sesuai pedoman kerja: halamannya tersedia dan informasi yang kurang sudah diketahui. Sesudah diperbarui, periksa apakah nama dokter serta keterangan biaya sudah benar dan terbaca jelas. Audit ini tidak membuktikan bahwa ketiadaan informasi tersebut menyebabkan Aruna tidak disebut.
 
 **Batas pengujian**
 
@@ -284,7 +280,7 @@ Pembuka membawa hasil yang paling berarti beserta cakupannya. Temuan pertama mem
 
 Anjuran berpijak pada halaman yang benar-benar diperiksa. Manfaatnya dapat dinilai oleh pembaca halaman dan pengelola situs. Penyebab hasil AI tetap dinyatakan tidak diketahui. Penutup menuntaskan urutan pekerjaan tanpa menjanjikan hasil yang belum terlihat.
 
-Pada laporan sungguhan, setiap temuan harus terhubung dengan pertanyaan dan jawaban pendukung melalui fasilitas rujukan produk. Bahan contoh ini tidak menggantikan rujukan tersebut. Format produk tidak mempunyai bagian "Batas pengujian" tersendiri: tulis batas itu di temuan atau penutup yang memerlukannya.
+Pada laporan sungguhan, setiap temuan harus terhubung dengan pertanyaan dan jawaban pendukung melalui fasilitas rujukan produk. Bahan contoh ini tidak menggantikan rujukan tersebut. Format produk tidak mempunyai bagian “Batas pengujian” tersendiri: tulis batas itu di temuan atau penutup yang memerlukannya.
 
 ## 11. Sunting dengan mata pembaca
 
@@ -311,7 +307,7 @@ Sebelum menyerahkan, pastikan:
 
 ## Catatan pemakaian
 
-Panduan ini merupakan versi editorial mandiri untuk laporan Nuave. Istilah `storyline`, `verdict`, dan pedoman kerja dipertahankan agar sesuai dengan alur yang disebut dalam draf ketiga. Panduan dibaca bersama pedoman kerja; setiap anjuran tetap membutuhkan dasar yang tersedia di sana dan dalam bahan audit.
+Panduan ini merupakan versi editorial mandiri untuk laporan Nuave. Istilah `storyline`, `verdict`, dan pedoman kerja dipertahankan agar sesuai dengan alur kerja penulis. Panduan dibaca bersama pedoman kerja; setiap anjuran tetap membutuhkan dasar yang tersedia di sana dan dalam bahan audit.
 
 Kecocokan panduan ini dengan `docs/VOICE.md`, Spec 023, aturan penulis, dan pemeriksa fakta diperiksa pada 29 Oktober 2026; penyesuaiannya dicatat di Spec 023. Jangan mengaku sebuah rekomendasi berasal dari pedoman kerja yang belum dibaca.
 

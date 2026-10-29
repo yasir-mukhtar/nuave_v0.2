@@ -331,17 +331,21 @@ describe("Spec 023 AC-08: the brand name", () => {
 describe("Spec 023: the founder's guide, read by the checker", () => {
   const gIds = Array.from({ length: 10 }, (_, i) => `q${i + 1}`);
   const bekas = gIds.slice(6);
-  const guideFacts = (named = 3, seruni = 4): TwoSourceReportFacts => ({
+  const guideFacts = (
+    named = 3,
+    seruni = 4,
+    googleNamed = 0,
+  ): TwoSourceReportFacts => ({
     subject: "klinik",
     names: ["Klinik Aruna", "Aruna"],
     counts: {
       chatgpt: { completed: 10, named },
-      google: { completed: 10, summaries: 6, named: 0 },
+      google: { completed: 10, summaries: 6, named: googleNamed },
     },
     google: gIds.map((prompt_id, i) => ({
       prompt_id,
       outcome: i < 6 ? "summary" : "not_shown",
-      business_named: i < 6 ? false : null,
+      business_named: i < 6 ? i < googleNamed : null,
       cited_domains: [],
     })),
     writer: {
@@ -352,7 +356,7 @@ describe("Spec 023: the founder's guide, read by the checker", () => {
         volume: null,
         named: {
           chatgpt: i < named ? "named" : "absent",
-          google: i < 6 ? "absent" : null,
+          google: i < 6 ? (i < googleNamed ? "named" : "absent") : null,
         },
         google_text: "",
         businesses: {
@@ -382,7 +386,7 @@ describe("Spec 023: the founder's guide, read by the checker", () => {
     ],
     two_source_writing: {
       verdict:
-        "ChatGPT menyebut Aruna dalam tiga jawaban, semuanya pertanyaan umum tentang klinik di Depok, bukan bekas jerawat. Google AI Overview tidak menyebut Aruna dalam 6 ringkasan yang tampil.",
+        "ChatGPT menyebut Aruna dalam tiga jawaban untuk pertanyaan umum, tidak satu pun tentang bekas jerawat. Aruna juga tidak disebut dalam 6 ringkasan Google AI Overview yang tampil.",
     },
   };
   const contradictions = (
@@ -489,5 +493,87 @@ describe("Spec 023: the founder's guide, read by the checker", () => {
         guideFacts(),
       ).join(" "),
     ).toMatch(/The conclusion must say which source/);
+  });
+
+  it("never lets a generic opening, an 'all' ordinal or a loose 'ringkasan' excuse a false claim (review round 7)", () => {
+    const asVerdict = (verdict: string, facts = guideFacts()) =>
+      contradictions({ ...report, two_source_writing: { verdict } }, facts);
+    const asFinding = (explanation: string, facts = guideFacts()) =>
+      contradictions(
+        {
+          ...report,
+          key_findings: [
+            { title: "Temuan", explanation, evidence_prompt_ids: gIds },
+          ],
+        },
+        facts,
+      );
+    for (const sentence of [
+      "Ketika audit ini dijalankan, ChatGPT tidak menyebut Aruna.",
+      "Saat calon pasien bertanya, ChatGPT tidak menyebut Aruna.",
+      "Sebagai klinik di Depok, Aruna tidak disebut ChatGPT.",
+      "Pada pencarian klinik, ChatGPT tidak menyebut Aruna.",
+      "Untuk pertanyaan di Depok, ChatGPT tidak menyebut Aruna.",
+      "Keduanya tidak menyebut Aruna.",
+      "ChatGPT dan Google AI Overview, keduanya tidak menyebut Aruna.",
+      "ChatGPT tidak menyebut Aruna dalam kesepuluh jawaban itu.",
+      "Ringkasan hasil: Aruna tidak disebut dalam jawaban yang diuji.",
+      "Ringkasan jawabannya tidak menyebut Aruna.",
+    ]) {
+      expect(asVerdict(sentence), sentence).not.toEqual([]);
+      expect(asFinding(sentence), sentence).not.toEqual([]);
+    }
+    const google2 = guideFacts(3, 4, 2);
+    expect(
+      asVerdict(
+        "Google AI Overview tidak menyebut Aruna dalam keenam ringkasan itu.",
+        google2,
+      ),
+    ).not.toEqual([]);
+    // A true group-size opening with its own count stays true.
+    expect(
+      asFinding(
+        "Pada enam pertanyaan umum tentang klinik di Depok, ChatGPT menyebut Aruna dalam tiga jawaban.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("does not read a common word as a competitor's short name", () => {
+    const facts = guideFacts(3);
+    facts.writer!.businesses.push("Rumah Sakit Umum Daerah Depok");
+    const titled = (title: string, f = facts) =>
+      contradictions(
+        {
+          ...report,
+          key_findings: [
+            {
+              title,
+              explanation: "ChatGPT menjawab pertanyaan ini.",
+              evidence_prompt_ids: gIds,
+            },
+          ],
+        },
+        f,
+      );
+    expect(titled("Tidak muncul di ChatGPT secara umum")).not.toEqual([]);
+  });
+
+  it("asks a source of a conclusion for any claim about naming, not for a page detail", () => {
+    const needs = (conclusion: string) =>
+      twoSourceWritingViolations({ ...report, conclusion }, guideFacts()).some(
+        (v) => /The conclusion must say which source/.test(v),
+      );
+    for (const conclusion of [
+      "Aruna direkomendasikan dalam dua jawaban, Seruni dalam empat.",
+      "Situs Aruna dikutip, tetapi namanya tidak tercantum dalam jawaban.",
+      "Aruna hadir dalam 3 jawaban.",
+      "AI menyarankan Seruni, bukan Aruna.",
+    ])
+      expect(needs(conclusion), conclusion).toBe(true);
+    expect(
+      needs(
+        "Nama dokter tidak ditemukan pada halaman yang diperiksa. Lengkapi halaman itu lebih dulu.",
+      ),
+    ).toBe(false);
   });
 });

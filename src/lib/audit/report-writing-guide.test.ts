@@ -6,10 +6,11 @@ import { twoSourceWriterMessages } from "./two-source-writer";
 import { REPORT_PLAYBOOK } from "./report-playbook";
 
 // Names from Nuave orders and test fixtures that must never appear in the
-// guide (Spec 023 R-10, AC-07): its examples use placeholders only, so no
-// real business, competitor or city can leak into another report. The list
-// holds NV-3WDSAY's own name, the businesses its answers named and their
-// cities (read 2026-10-28), and the fixture businesses.
+// guide (Spec 023 R-10, AC-07), so no real business, competitor or city from
+// an order can leak into another report. The list holds NV-3WDSAY's own
+// name, the businesses its ChatGPT answers named and their cities (read
+// 2026-10-28), a real chain its Google answers named, and the fixture
+// businesses. The guide's practice clinics and city are fictional or generic.
 const ORDER_NAMES = [
   "Sozo",
   "ERHA",

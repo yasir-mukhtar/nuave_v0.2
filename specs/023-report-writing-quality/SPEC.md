@@ -608,25 +608,48 @@ The founder revised the guide with another model and approved the result
 - **Edits to the founder's text, each for a product reason:**
   - "Klinik Bening" became "Klinik Seruni": "Bening's Clinic" is a real
     chain named in an order's Google AI Overview answers (AC-07).
-  - The model verdict and one sentence of the model finding give the counts
-    in a form R-03 can check: a count about a group belongs in a finding
-    that cites exactly that group, so the verdict says "dalam tiga jawaban,
-    semuanya pada pertanyaan umum" rather than "3 dari 6 jawaban umum".
+  - The model verdict gives its count as a whole-test count R-03 can check
+    ("dalam tiga jawaban untuk pertanyaan umum, tidak satu pun tentang bekas
+    jerawat") rather than "3 dari 6 jawaban umum", which the verdict cannot
+    check (it cites no questions). The model finding's "dalam tiga jawaban"
+    for the general group is read against the whole test, true here only
+    because every mention falls in that group (known limit below).
+  - The model finding and recommendation are one paragraph each, as the
+    product renders them; the guide says so, names the banned title starts,
+    keeps "klinik Anda", allows "Minggu 1–2", and places group counts in
+    findings.
   - The worked example notes that the product has no separate "Batas
     pengujian" part.
   - The closing note says the guide was checked against VOICE, this spec,
     the writer's rules and the checker.
-- **R-03 changes so the checker reads the guide's forms:**
-  - a leading clause that only limits the claim ("Dalam empat jawaban
-    tentang bekas jerawat, ChatGPT tidak menyebut Aruna") is read with the
-    clause after its comma;
-  - "keempat jawaban itu" and "keempatnya" limit a claim, as "jawaban tentang
-    harga" does (not checked further);
-  - "ringkasan" names Google AI Overview when the text names no other
-    source;
+- **R-03 changes so the checker reads the guide's forms** (tightened after
+  review round 7, which found false whole-test claims passing):
+  - an opening clause joins the claim after its comma only when it names a
+    group of questions ("Dalam empat jawaban tentang bekas jerawat", "Untuk
+    pertanyaan tentang harga"); "Ketika audit ini dijalankan", "Sebagai
+    klinik di Depok" or "Untuk pertanyaan di Depok" limit nothing; an
+    opening group size is not read as a naming count;
+  - "keempat jawaban itu" and "keempatnya" limit a claim only when the
+    number is below the source's total; "kesepuluh jawaban itu" is every
+    answer; "keduanya" (both sources) never limits;
+  - "ringkasan" names Google AI Overview only in AI Overview forms ("enam
+    ringkasan", "ringkasan itu", "ringkasan yang tampil") and never beside
+    "jawaban", "sebagai ringkasan" or "ringkasan hasil";
   - a competitor's short form ("Seruni" for "Klinik Seruni") is read as that
-    competitor when no owner name and no other listed business shares it;
+    competitor when it is capitalised as in the name, is not a generic or
+    topic word ("Umum", "Jerawat", "Laser"), and no owner name and no other
+    listed business shares it;
+  - a conclusion names a source when any clause about the owner or another
+    business says named, recommended, cited, suggested, present or listed,
+    or counts; a page detail ("Nama dokter tidak ditemukan pada halaman")
+    does not need one;
   - counts at a sentence's start ("Dalam 4 jawaban") are read.
+- **Known limits:** a plain count about one group in a finding that cites
+  two groups ("Di kelompok ini, ChatGPT menyebut Aruna dalam tiga jawaban")
+  is read against the whole test; an "X dari Y" count for a second group in
+  the same finding is not supported; limited claims without a count stay
+  unchecked, as before. Counting two groups in one finding would need the
+  writer to say which questions form each group (a later change).
   The old-versus-new comparison over the generated cases accepts the same
   350 true sentences as before; the deliberate additions are the leading
   limit and the anaphoric "keempat jawaban itu", which today's code read as

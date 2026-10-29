@@ -327,7 +327,12 @@ const RECOMMEND = /\bdirekomendasikan|merekomendasikan\b/i;
  * needs or searches ("pada kebutuhan lain", "untuk pertanyaan tentang
  * harga", "di 5 ringkasan lainnya"), never "klinik lain". */
 const LIMITED =
-  /\b(?:pertanyaan|kebutuhan|jawaban|ringkasan|topik|pencarian|layanan)\s+(?:lain(?:nya)?|tentang|soal|mengenai|untuk)\b|\b(?:sebagian|beberapa)\s+(?:pertanyaan|jawaban|ringkasan|topik|kebutuhan|pencarian)\b|\bkecuali\b|\b(?:untuk|pada|dalam|di)\s+(?:pertanyaan|kebutuhan|topik|pencarian)\b|\bketika\b|\bsebagai\b|\bsaat\s+(?:pelanggan|orang|pasien|calon)\b|\bpertanyaan\s+(?:ke-?\s*)?\d|\bke(?:dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\s+(?:itu|tersebut|tadi)\b)/i;
+  /\b(?:pertanyaan|kebutuhan|jawaban|ringkasan|topik|pencarian|layanan)\s+(?:lain(?:nya)?|tentang|soal|mengenai|untuk)\b|\b(?:sebagian|beberapa)\s+(?:pertanyaan|jawaban|ringkasan|topik|kebutuhan|pencarian)\b|\bkecuali\b|\b(?:untuk|pada|dalam|di)\s+(?:pertanyaan|kebutuhan|topik|pencarian)\b|\bketika\b|\bsebagai\b|\bsaat\s+(?:pelanggan|orang|pasien|calon)\b|\bpertanyaan\s+(?:ke-?\s*)?\d/i;
+/** "keempat jawaban itu", "keempatnya": a group named before (Spec 023,
+ * founder's guide). "keduanya" is left out: in this report it means both
+ * sources. */
+const ORDINAL_GROUP =
+  /\bke(tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\s+(?:itu|tersebut|tadi)\b)/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
@@ -377,7 +382,13 @@ const namesGoogle = (text: string) => /Google|AI Overview/.test(text);
  * gives "jawaban"), when the text names no other source (Spec 023, founder's
  * guide, 2026-10-29). */
 const meansGoogle = (text: string) =>
-  namesGoogle(text) || (!namesChatGpt(text) && /\bringkasan\b/i.test(text));
+  namesGoogle(text) ||
+  (!namesChatGpt(text) &&
+    !/\bjawaban/i.test(text) &&
+    !/\bsebagai\s+ringkasan|\bringkasan\s+(?:hasil|jawaban)\b/i.test(text) &&
+    /\b(?:\d+|ke\p{L}+|semua|setiap)\s+ringkasan\b|\bringkasan\s+(?:itu|tersebut|yang\s+tampil|AI)\b/iu.test(
+      digitsForWords(text),
+    ));
 const namesSource = (text: string) => namesChatGpt(text) || meansGoogle(text);
 
 type Source = "chatgpt" | "google";
@@ -645,7 +656,13 @@ function competitorsIn(clause: string, facts: TwoSourceReportFacts): string[] {
     const short = shortName(name);
     if (
       short &&
-      hasName(clause, short) &&
+      new RegExp(
+        `(?:^|[^\\p{L}\\p{N}])${escapeRegExp(short)}(?![\\p{L}\\p{N}])`,
+        "u",
+      ).test(clause) &&
+      !(facts.writer?.questions ?? []).some(
+        (q) => q.topic && hasName(q.topic, short),
+      ) &&
       !(facts.names ?? []).some((own) => hasName(own, short)) &&
       businesses.every((other) => other === name || !hasName(other, short))
     )
@@ -656,13 +673,13 @@ function competitorsIn(clause: string, facts: TwoSourceReportFacts): string[] {
 
 /** Words that do not tell one clinic from another. */
 const GENERIC_NAME_WORD =
-  /^(?:klinik|clinic|praktik|praktek|dr|drg|dokter|rumah|sakit|rs|skin|beauty|aesthetic|aesthetics|estetika|estetik|kecantikan|center|centre|care|the|and|dan|&|sp|spkk|spdve|cabang)$/i;
+  /^(?:klinik|clinic|praktik|praktek|dr|drg|dokter|rumah|sakit|rs|rsud|rsu|skin|beauty|aesthetic|aesthetics|estetika|estetik|kecantikan|center|centre|care|the|and|dan|&|sp|spkk|spdve|cabang|umum|utama|pratama|daerah|kota|kulit|jerawat|laser|wajah|gigi|mata|anak|bedah|plastik|medika|medical|medis|kesehatan|sehat|spesialis|indonesia|group|grup)$/i;
 
 function shortName(name: string): string | null {
   const word = name
     .split(/[\s,.|()]+/)
     .find((part) => part.length >= 3 && !GENERIC_NAME_WORD.test(part));
-  return word && word !== name.trim() ? word : null;
+  return word && word !== name.trim() && /^\p{Lu}/u.test(word) ? word : null;
 }
 
 /** Per question, for one source: was it checked, and was the owner (or the
@@ -768,7 +785,7 @@ function failedSources(
  * "ChatGPT tidak menyebut Aruna dalam empat jawaban tentang bekas jerawat"
  * is. Only a sentence's opening clauses join; a count clause after a claim
  * keeps the claim's polarity as before. */
-function clausesOf(sentence: string): string[] {
+function clausesOf(sentence: string, facts: TwoSourceReportFacts): string[] {
   const text = digitsForWords(sentence);
   const out: string[] = [];
   let at = 0;
@@ -776,25 +793,39 @@ function clausesOf(sentence: string): string[] {
   for (const m of text.matchAll(new RegExp(CLAUSE_SPLIT.source, "gi"))) {
     const part = text.slice(at, m.index);
     at = m.index! + m[0].length;
-    if (!out.length && /^\s*,\s*$/.test(m[0]) && leadingLimit(part)) {
+    if (!out.length && /^\s*,\s*$/.test(m[0]) && leadingLimit(part, facts)) {
       lead = lead ? `${lead} ${part}` : part;
       continue;
     }
-    out.push(lead ? `${lead} ${part}` : part);
+    out.push(joinLead(lead, part));
     lead = "";
   }
-  const last = text.slice(at);
-  out.push(lead ? `${lead} ${last}` : last);
+  out.push(joinLead(lead, text.slice(at)));
   return out;
 }
 
-const leadingLimit = (clause: string) =>
+const GROUP_SIZE =
+  /\b(dalam|di|pada|untuk)\s+(?:\d+|ke\p{L}+|sebagian|beberapa)\s+(jawaban|ringkasan|pertanyaan)\b/iu;
+
+/** The opening limit before the claim. When the claim has its own count
+ * ("Pada 6 pertanyaan umum, ChatGPT menyebut Aruna dalam 3 jawaban"), the
+ * opening's size is the group's size, not a naming count, and is left out. */
+function joinLead(lead: string, part: string): string {
+  if (!lead) return part;
+  const counted =
+    /\b\d+\s+dari\s+\d+\b/.test(part) ||
+    new RegExp(BARE_COUNT.source, "i").test(part);
+  return `${counted ? lead.replace(GROUP_SIZE, "$1 $2") : lead} ${part}`;
+}
+
+/** An opening clause limits the claim only when it names a group of
+ * questions ("Dalam empat jawaban tentang bekas jerawat", "Untuk pertanyaan
+ * tentang harga"); "Ketika audit ini dijalankan" or "Sebagai klinik di
+ * Depok" limits nothing. */
+const leadingLimit = (clause: string, facts: TwoSourceReportFacts) =>
   !NEGATIVE.test(clause) &&
   !POSITIVE.test(clause) &&
-  (LIMITED.test(clause) ||
-    /\b(?:dalam|di|pada|untuk)\s+\d+\s+(?:jawaban|ringkasan|pertanyaan)\b/i.test(
-      clause,
-    ));
+  (!!namedGroup(clause, facts) || GROUP_SIZE.test(clause));
 
 function contradictedSources(
   sentence: string,
@@ -808,7 +839,7 @@ function contradictedSources(
   // A clause with a count but no verb ("…; di Google AI Overview, di 3 dari
   // 8 ringkasan") takes the polarity of the clause before it.
   let carriedPolarity: "negative" | "positive" | null = null;
-  for (const clause of clausesOf(sentence)) {
+  for (const clause of clausesOf(sentence, facts)) {
     if (!clause.trim()) continue;
     const own = sourcesOf(clause);
     const at: ClauseSources = own.length
@@ -825,7 +856,7 @@ function contradictedSources(
     else if (
       carriedPolarity &&
       (/\b\d+\s+dari\s+\d+\b/.test(clause) ||
-        new RegExp(BARE_COUNT.source).test(clause))
+        new RegExp(BARE_COUNT.source, "i").test(clause))
     ) {
       negative = carriedPolarity === "negative";
       positive = !negative;
@@ -834,7 +865,20 @@ function contradictedSources(
       ...[...clause.matchAll(COUNT)].map((m) => `${m[1]}/${m[2]}`),
       ...[...clause.matchAll(BARE_COUNT)].map((m) => `${m[1]}/*`),
     ];
-    const unlimited = ABSOLUTE.test(clause) || !LIMITED.test(clause);
+    // An ordinal group limits the claim only when it is smaller than the
+    // source's own total; "kesepuluh jawaban itu" is every answer.
+    const ordinal = clause.match(ORDINAL_GROUP)?.[1];
+    const ordinalLimits =
+      !!ordinal &&
+      at.sources.every(
+        (source) =>
+          Number(NUMBER_WORDS[ordinal.toLowerCase()]) <
+          (source === "chatgpt"
+            ? facts.counts.chatgpt.completed
+            : facts.counts.google.summaries),
+      );
+    const unlimited =
+      ABSOLUTE.test(clause) || (!LIMITED.test(clause) && !ordinalLimits);
 
     // R-03: a group's own naming verb ("jawaban yang tidak menyebut kota")
     // is not the claim's. Only when the rest of the clause has its own
@@ -1028,12 +1072,21 @@ export function sentences(text: string): string[] {
 /** Spec 023, founder's guide (2026-10-29): a conclusion that only gives
  * the next step need not name a source; one that says the business was or
  * was not named, or counts, does. */
-function makesNamingClaim(text: string): boolean {
-  return (
-    NEGATIVE.test(text) ||
-    POSITIVE.test(text) ||
-    /\b\d+\s+dari\s+\d+\b/.test(digitsForWords(text))
-  );
+const CLAIM_VERB =
+  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|hadir|tercantum)\b/i;
+
+function makesNamingClaim(text: string, facts: TwoSourceReportFacts): boolean {
+  return digitsForWords(text)
+    .split(CLAUSE_SPLIT)
+    .some(
+      (clause) =>
+        (NEGATIVE.test(clause) ||
+          POSITIVE.test(clause) ||
+          CLAIM_VERB.test(clause) ||
+          /\b\d+\s+dari\s+\d+\b/.test(clause) ||
+          new RegExp(BARE_COUNT.source, "i").test(clause)) &&
+        clauseKind(clause, facts) !== "other",
+    );
 }
 
 /**
@@ -1117,7 +1170,7 @@ export function repairTwoSourceWriting<
   const conclusionFix = fix(content.conclusion);
   sentencesDropped += conclusionFix.dropped;
   let conclusion = conclusionFix.text;
-  if (!names(conclusion) && makesNamingClaim(conclusion)) {
+  if (!names(conclusion) && makesNamingClaim(conclusion, facts)) {
     conclusion = `${twoSourceCountSentence(facts)} ${conclusion}`.trim();
     changed = true;
     sentencesReplaced += 1;
@@ -1198,7 +1251,7 @@ export function twoSourceWritingViolations(
 ): string[] {
   const violations: string[] = [];
   const names = namesSource;
-  if (!names(content.conclusion) && makesNamingClaim(content.conclusion))
+  if (!names(content.conclusion) && makesNamingClaim(content.conclusion, facts))
     violations.push(
       `The conclusion must say which source it is about, in natural words that include "${SOURCE_CHATGPT}" or "Google".`,
     );
