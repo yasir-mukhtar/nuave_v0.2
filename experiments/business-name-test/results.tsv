@@ -1,105 +1,105 @@
-url	expected	picked	sure	result	old_method
-https://mhdc.co.id/	MHDC Clinic	MHDC Clinic	yes	right	Klinik Dokter Gigi Terdekat
-https://www.audydental.com/	Audy Dental	Audy Dental	yes	right	Klinik Gigi Terbaik dan Terpercaya di Indonesia | Audy Dental
-https://www.doktergigimedan.com/	Royal Dental Center	Royal Dental Center	no	right	Royal Dental Center - Dokter Gigi Medan Terbaik
-https://senyumdansenyum.com/	Senyum dan Senyum	Senyum dan Senyum	yes	right	Senyum dan Senyum
-https://dentaloffice.id/	Dental Office by drg. Peiter	Dental Office By Dr. Peiter	yes	right	Dental Office By Dr. Peiter &#8211; Your Premium Dental Care
-https://happydentalclinic.com/	Happy Dental Clinic	Happy Dental Clinic	yes	right	Happy Dental Clinic
-https://makassardentalcare.com/	Makassar Dental Care	Makassar Dental Care	no	right	Makassar Dental Care | Home
-https://klinikjoydental.com/	Joy Dental	Klinik Gigi Joy Dental	yes	right	Klinik Gigi Joy Dental
-https://haigigi.com/	Hai Gigi	Hai Gigi Dental Care	yes	right	Hai Gigi Dental Care
-https://csdental.id/	CS Dental	CS Dental	yes	right	CS Dental
-https://bali911dentalclinic.com/	Bali 911 Dental Clinic	Bali911 Dental Clinic	yes	right	Bali911 Dental Clinic &#8211; Implant Center
-https://sunsetdentalbali.com/	Sunset Dental Bali	Sunset Dental Bali	yes	right	Sunset Dental Bali
-https://fidelitydentalbali.com/	Fidelity Dental Bali	Fidelity	yes	right	Fidelity Dental Bali
-https://passiondentalcare.com/	Passion Dental Care	Passion Dental Care	yes	right	Nuxt Shadcn-Vue TailwindCSS 4 - Dashboard Template
-https://kiraridentalcare.com/				unread (500)	
-https://tamidentalcare.com/	Tami Dental Care	Tami Dental Care	yes	right	Tami Dental Care – Klinik Gigi Dokter Gigi Terbaik Terpercaya di Bandung dan Cimahi – Klinik Gigi Terbaik di Bandung
-https://palapadentists.com/	Palapa Dentists	Palapa Dentists	yes	right	Palapa Dentists
-https://www.okdentalclinic.com/				unread (429)	
-https://natasha-skin.com/	Natasha Skin Care	Natasha Skin Care	yes	right	Natasha Skin Care
-https://zapclinic.com/	ZAP Clinic	ZAP Clinic	yes	right	ZAP Clinic
-https://larissa.co.id/	Larissa Aesthetic Center	Larissa Aesthetic Center	yes	right	Larissa Aesthetic Center
-https://miracle-clinic.com/	Miracle Aesthetic Clinic	Miracle Aesthetic Clinic	yes	right	Miracle Aesthetic Clinic
-https://dermaster.co.id/	Dermaster	Dermaster Indonesia	yes	right	Welcome to Dermaster Indonesia
-https://eternamoore.com/	EternaMoore	Klinik Kecantikan dan Bedah Plastik EternaMoore	yes	wrong	Klinik Kecantikan dan Bedah Plastik EternaMoore
-https://upscalebali.com/	Upscale Bali	Upscale Bali	yes	right	Upscale Bali
-https://bodylabbali.com/	Body Lab Bali	Body Lab Bali	yes	right	Body Lab Bali
-https://airinskinclinic.com/	Airin Skin Clinic	Airin Skin Clinic	yes	right	Airin Skin Clinic
-https://tiuwoo.com/	TIUwoo	TIUwoo	yes	right	TIUwoo
-https://bandungskincentre.com/	Bandung Skin Centre	Bandung Skin Centre	no	right	Bandung Skin Centre
-https://ederma.co.id/	Ederma Clinic	EDERMA CLINIC	yes	right	EDERMA CLINIC OFFICIAL
-https://graciaskinclinic.com/	Gracia Skin Clinic	Gracia Skin Clinic	yes	right	Gracia Skin Clinic
-https://lviors.com/	L'Viors Beauty Clinic	L'VIORS BEAUTY CLINIC	yes	right	
-https://nmwclinic.co.id/	NMW Skincare & Aesthetic Clinic	NMW Clinic	yes	right	NMW Skincare & Aesthetic Clinic
-https://jakartaaestheticclinic.co.id/	Jakarta Aesthetic Clinic	JAC	no	right	JAC
-https://surabaya-skincentre.com/	Surabaya Skin Centre	Surabaya Skin Centre	yes	right	Surabaya Skin Centre
-https://estetikadraffandi.com/	Klinik Estetika dr. Affandi		no	wrong	estetikadraffandi.com
-https://www.mayapadahospital.com/	Mayapada Hospital	Mayapada Hospital	yes	right	Mayapada Hospital
-https://primayahospital.com/	Primaya Hospital	Primaya Hospital	yes	right	Primaya Hospital
-https://www.bethsaidahospitals.com/	Bethsaida Hospital	Bethsaida Hospital	yes	right	Bethsaida Hospital - Hospital With Heart
-https://www.awalbros.com/	RS Awal Bros	RS Awal Bros	yes	right	RS Awal Bros
-https://www.rsmurniteguh.com/	Murni Teguh Hospitals	Murni Teguh Memorial Hospital	yes	right	Murni Teguh Memorial Hospital
-https://jec.co.id/	JEC Eye Hospitals	JEC Eye Hospitals & Clinics	no	right	JEC Eye Hospitals &amp; Clinics Best Eye Hospital in Indonesia LASIK Cataract Dry Eye Relex SMILE Glaucoma Low Vision Retina
-https://www.rspermata.co.id/	Permata Hospital	Rumah Sakit Permata	yes	right	Rumah Sakit Permata
-https://www.rs-jih.co.id/	Rumah Sakit JIH	Rumah Sakit JIH	yes	right	https://rs-jih.co.id/
-https://bimcbali.com/	BIMC Hospital Bali	BIMC Hospital Bali	yes	right	BIMC Hospital Bali
-https://www.rscm.co.id/	RSUP Nasional Dr. Cipto Mangunkusumo	RSUP Nasional Dr. Cipto Mangunkusumo	yes	right	RSUP Nasional Dr. Cipto Mangunkusumo
-https://sardjito.co.id/	RSUP Dr Sardjito	RSUP Dr Sardjito	yes	right	RSUP Dr Sardjito
-https://www.pantirapih.or.id/				unread (UND_ERR_CONNECT_TIMEOUT)	
-https://www.bethesda.or.id/	RS Bethesda Yogyakarta	RS BETHESDA YOGYAKARTA	yes	right	RS BETHESDA YOGYAKARTA
-https://rsadventbandung.com/	Rumah Sakit Advent Bandung	Rumah Sakit Advent Bandung	yes	right	Rumah Sakit Advent Bandung
-https://www.rsborromeus.com/	Rumah Sakit Santo Borromeus	Rumah Sakit Santo Borromeus	yes	right	Rumah Sakit Santo Borromeus
-https://rsmataundaan.co.id/	RS Mata Undaan	RS Mata Undaan	yes	right	RS Mata Undaan
-https://rsgm.ugm.ac.id/	RSGM UGM Prof. Soedomo	RSGM UGM Prof. Soedomo	yes	right	RSGM UGM Prof. Soedomo &#8211; Profesional Dalam Tugas dan Melayani Dengan Sepenuh Hati
-https://rsgm.unair.ac.id/	RSGM Universitas Airlangga		no	wrong	Request Rejected
-https://www.rs-elisabeth.com/	Rumah Sakit St. Elisabeth Semarang	Rumah Sakit St. Elisabeth Semarang	yes	right	Rumah Sakit St. Elisabeth Semarang | Elisameds
-https://rspkujogja.com/	RS PKU Muhammadiyah Yogyakarta	RS PKU Muhammadiyah Yogyakarta	yes	right	RS PKU Muhammadiyah Yogyakarta
-https://rsdarmo.co.id/	Rumah Sakit Darmo	Rumah Sakit Darmo	no	right	Rs Darmo
-https://www.rscarolus.or.id/	RS St. Carolus	RUMAH SAKIT St. Carolus	yes	right	RUMAH SAKIT St. Carolus
-https://rspelni.co.id/	RS PELNI	Rumah Sakit PELNI	yes	right	Rumah Sakit PELNI
-https://gadingpluit-hospital.com/	Rumah Sakit Gading Pluit	Rumah Sakit GADING PLUIT	yes	right	Rumah Sakit GADING PLUIT
-https://www.medistra.com/	Medistra Hospital	Medistra Hospital	yes	right	Medistra Hospital - Rumah Sakit Rujukan di Jakarta Selatan
-https://rsupwahidin.com/	RSUP Dr. Wahidin Sudirohusodo	RSUP Dr. Wahidin Sudirohusodo Makassar	yes	right	RSUP Dr. Wahidin Sudirohusodo Makassar - Home | Dashboard
-https://rsmh.co.id/	RSUP Dr. Mohammad Hoesin Palembang	RSUP Dr. Mohammad Hoesin Palembang	no	right	RSUP Dr. Mohammad Hoesin Palembang - Rumah Sakit Kementerian Kesehatan
-https://www.rsudwangaya.denpasarkota.go.id/	RSUD Wangaya	RSUD Wangaya	yes	right	RSUD Wangaya
-https://rsiatambak.com/	RSIA Tambak	RSIA Tambak	yes	right	RSIA Tambak
-https://www.rspantiwaluyo.com/	RS Panti Waluyo Surakarta	RS Panti Waluyo Surakarta	yes	right	RS Panti Waluyo Surakarta
-https://www.rspantinirmala.com/				unread (ECONNRESET)	
-https://www.rsmelatiperbaungan.com/	RSU Melati Perbaungan		no	wrong	Home
-https://klinikmatatritya.co.id/	Klinik Mata Tritya	Klinik Mata Tritya	yes	right	Klinik Mata Tritya - Beranda
-https://granostic.com/	Granostic	Granostic	yes	right	Granostic
-https://www.conquerapsikologi.com/	Conquera Psikologi	LAYANAN KESEHATAN MENTAL CONQUERA PSIKOLOGI SURABAYA	yes	wrong	LAYANAN KESEHATAN MENTAL CONQUERA PSIKOLOGI SURABAYA
-https://www.mindharmonyindonesia.com/	MindHarmony Psychology	MindHarmony Psychology	yes	right	MindHarmony Psychology
-https://www.invirahumania.com/	Invira Humania	Invira Humania	yes	right	Invira Humania &#8211; One Stop Psychological Service
-https://www.klinikutamabenecia.com/				unread (429)	
-https://bidanviandika.com/	Klinik Bidan Viandika	Klinik Bidan Viandika	yes	right	Klinik Bidan Viandika
-https://hfcmedan.id/	Halim Fertility Center	Halim Fertility Center	yes	right	Halim Fertility Center
-https://www.kliniksimpangpemda.com/	Klinik Simpang Pemda	Klinik Simpang Pemda	yes	right	Klinik Simpang Pemda
-https://www.klinikandamari.web.id/	Klinik Pratama Andamari	Klinik Anda Mari	yes	right	Klinik Anda Mari &#8211; Klinik Pelayanan Kesehatan Sleman
-http://easycareklinik.co.id/	Easycare Klinik	EasyCare Klinik	yes	right	EasyCare Klinik
-https://klinik.kusumamedikacirebon.com/	Klinik Pratama Kusuma Medika	KLINIK PRATAMA KUSUMA MEDIKA	yes	right	KLINIK PRATAMA KUSUMA MEDIKA
-https://refahmedika.com/	Klinik Refah Medika	Refah Medika	yes	right	Refah Medika
-https://klinikbethesda.id/	Klinik Bethesda	Klinik Bethesda Palembang	no	right	Klinik Bethesda Palembang &#8211; Klinik Pratama Bethesda
-https://pratama-mandiri.com/	Klinik Pratama Rawat Inap Mandiri	Klinik Pratama Rawat Inap Mandiri Makassar	no	wrong	Klinik Pratama Rawat Inap Mandiri Makassar &#8211; Kesehatan Anda, Prioritas Kami
-https://www.klinikoptima.id/	Klinik Optima	Klinik Optima	yes	right	Klinik Optima | Klinik BPJS Kesehatan
-https://prospine.id/	Prospine Clinic	Prospine Clinic	yes	right	Prospine Clinic
-https://beningpsikologi.com/	Bening Psikologi	Bening Psikologi	yes	right	Bening Psikologi
-https://www.klinikannisagroup.com/	Klinik Annisa Group	Klinik Annisa Group	yes	right	Fasilitas Kesehatan Tingkat Pertama - Klinik Annisa Group
-https://klinikmakmurjaya.com/	Klinik Pratama Makmur Jaya	Klinik Pratama Makmur Jaya	yes	right	Home - Klinik Pratama Makmur Jaya
-https://www.lingkarmedika.com/	Klinik Lingkar Medika	Lingkar Medika	yes	right	Bali Health Care Clinic – Lingkar Medika
-https://nikidiagnosticcenter.com/	Niki Diagnostic Center	Niki Diagnostic Center	yes	right	Niki Diagnostic Center
-https://simalab.co.id/	SIMA Lab	SIMA Lab	no	right	SIMA Lab &#8211; Laboratorium Klinik SIMA
-https://www.morulaivf.co.id/	Morula IVF	Morula IVF	yes	right	Morula IVF
-https://bocahindonesia.com/	Bocah Indonesia	Bocah Indonesia	yes	right	Bocah Indonesia
-https://labcito.co.id/	CITO	Klinik Utama CITO	yes	right	Laboratorium Medis - Klinik Utama CITO
-https://www.labparahita.com/	Parahita	Klinik Parahita	no	right	Parahita Diagnostic Center
-https://ciputrasmgeyeclinic.com/	Ciputra SMG Eye Clinic	Ciputra SMG Eye Clinic	yes	right	LASIK & Katarak Center Jakarta - Klinik Mata | Ciputra SMG Eye Clinic
-https://vio.co.id/	VIO Optical Clinic	VIO Optical Clinic	yes	right	VIO Optical Clinic - Klinik Gangguan dan Periksa Mata Jakarta
-https://sasana.physio/	Klinik Sasana Husada	Klinik Sasana Husada	no	right	Klinik Sasana Husada | Fisioterapi / General Physiotherapy, Stroke Services, Sport Physio, Lab Physio, Tele Physio, Pediatric Services & Home Care Services
-https://www.nkhealth.fit/	NK Health	Klinik NK Health	yes	right	Klinik NK Health
-https://inharmonyclinic.com/	inHARMONY Clinic	inHARMONY	yes	right	inHARMONY
-https://rumahvaksinasi.id/	Rumah Vaksinasi	Rumah Vaksinasi Pusat	yes	right	Rumah Vaksinasi Pusat
-https://kasoemhearingcenter.com/	Kasoem Hearing Center		no	wrong	Alat Bantu Dengar Terbaik Harga Terjangkau di Indonesia
-https://nobelaudiology.com/	Nobel Audiology Center	Nobel Audiology Center	yes	right	Pusat Alat Bantu Dengar - Nobel Audiology Center
-https://kehamilansehat.com/	KS Women & Children Clinic	Kehamilan Sehat	yes	right	KS Women & Children Clinic
+url	expected	picked	sure	result	old_method	old_result
+https://mhdc.co.id/	MHDC Clinic	MHDC Clinic	yes	right	Klinik Dokter Gigi Terdekat	wrong
+https://www.audydental.com/	Audy Dental	Audy Dental	yes	right	Klinik Gigi Terbaik dan Terpercaya di Indonesia | Audy Dental	wrong
+https://www.doktergigimedan.com/	Royal Dental Center	Royal Dental Center	no	right	Royal Dental Center - Dokter Gigi Medan Terbaik	wrong
+https://senyumdansenyum.com/	Senyum dan Senyum	Senyum dan Senyum	yes	right	Senyum dan Senyum	right
+https://dentaloffice.id/	Dental Office by drg. Peiter	Dental Office By Dr. Peiter	yes	right	Dental Office By Dr. Peiter – Your Premium Dental Care	wrong
+https://happydentalclinic.com/	Happy Dental Clinic	Happy Dental Clinic	yes	right	Happy Dental Clinic	right
+https://makassardentalcare.com/	Makassar Dental Care	Makassar Dental Care	no	right	Makassar Dental Care | Home	wrong
+https://klinikjoydental.com/	Joy Dental	Klinik Gigi Joy Dental	yes	right	Klinik Gigi Joy Dental	right
+https://haigigi.com/	Hai Gigi	Hai Gigi Dental Care	yes	right	Hai Gigi Dental Care	right
+https://csdental.id/	CS Dental	CS Dental	yes	right	CS Dental	right
+https://bali911dentalclinic.com/	Bali 911 Dental Clinic	Bali911 Dental Clinic	yes	right	Bali911 Dental Clinic – Implant Center	wrong
+https://sunsetdentalbali.com/	Sunset Dental Bali	Sunset Dental Bali	yes	right	Sunset Dental Bali	right
+https://fidelitydentalbali.com/	Fidelity Dental Bali	Fidelity	yes	right	Fidelity Dental Bali	right
+https://passiondentalcare.com/	Passion Dental Care	Passion Dental Care	yes	right	Nuxt Shadcn-Vue TailwindCSS 4 - Dashboard Template	wrong
+https://kiraridentalcare.com/	Kirari Dental Care	Kirari Dental Care	yes	right	Kirari Dental Care	right
+https://tamidentalcare.com/	Tami Dental Care	Tami Dental Care	yes	right	Tami Dental Care – Klinik Gigi Dokter Gigi Terbaik Terpercaya di Bandung dan Cimahi – Klinik Gigi Terbaik di Bandung	wrong
+https://palapadentists.com/	Palapa Dentists	Palapa Dentists	yes	right	Palapa Dentists	right
+https://www.okdentalclinic.com/	OK Dental Clinic	OK Dental Clinic	yes	right	OK Dental Clinic	right
+https://natasha-skin.com/	Natasha Skin Care	Natasha Skin Care	yes	right	Natasha Skin Care	right
+https://zapclinic.com/	ZAP Clinic	ZAP Clinic	yes	right	ZAP Clinic	right
+https://larissa.co.id/	Larissa Aesthetic Center	Larissa Aesthetic Center	yes	right	Larissa Aesthetic Center	right
+https://miracle-clinic.com/	Miracle Aesthetic Clinic	Miracle Aesthetic Clinic	yes	right	Miracle Aesthetic Clinic	right
+https://dermaster.co.id/	Dermaster	Dermaster Indonesia	yes	right	Welcome to Dermaster Indonesia	wrong
+https://eternamoore.com/	EternaMoore	Klinik Kecantikan dan Bedah Plastik EternaMoore	yes	wrong	Klinik Kecantikan dan Bedah Plastik EternaMoore	wrong
+https://upscalebali.com/	Upscale Bali	Upscale Bali	yes	right	Upscale Bali	right
+https://bodylabbali.com/	Body Lab Bali	Body Lab Bali	yes	right	Body Lab Bali	right
+https://airinskinclinic.com/	Airin Skin Clinic	Airin Skin Clinic	yes	right	Airin Skin Clinic	right
+https://tiuwoo.com/	TIUwoo	TIUwoo	yes	right	TIUwoo	right
+https://bandungskincentre.com/	Bandung Skin Centre	Bandung Skin Centre	no	right	Bandung Skin Centre	right
+https://ederma.co.id/	Ederma Clinic	EDERMA CLINIC	yes	right	EDERMA CLINIC OFFICIAL	wrong
+https://graciaskinclinic.com/	Gracia Skin Clinic	Gracia Skin Clinic	yes	right	Gracia Skin Clinic	right
+https://lviors.com/	L'Viors Beauty Clinic	L'VIORS BEAUTY CLINIC	yes	right		wrong
+https://nmwclinic.co.id/	NMW Skincare & Aesthetic Clinic	NMW Clinic	yes	right	NMW Skincare & Aesthetic Clinic	right
+https://jakartaaestheticclinic.co.id/	Jakarta Aesthetic Clinic	JAC	no	right	JAC	right
+https://surabaya-skincentre.com/	Surabaya Skin Centre	Surabaya Skin Centre	yes	right	Surabaya Skin Centre	right
+https://estetikadraffandi.com/	Klinik Estetika dr. Affandi		no	wrong	estetikadraffandi.com	wrong
+https://www.mayapadahospital.com/	Mayapada Hospital	Mayapada Hospital	yes	right	Mayapada Hospital	right
+https://primayahospital.com/	Primaya Hospital	Primaya Hospital	yes	right	Primaya Hospital	right
+https://www.bethsaidahospitals.com/	Bethsaida Hospital	Bethsaida Hospital	yes	right	Bethsaida Hospital - Hospital With Heart	wrong
+https://www.awalbros.com/	RS Awal Bros	RS Awal Bros	yes	right	RS Awal Bros	right
+https://www.rsmurniteguh.com/	Murni Teguh Hospitals	Murni Teguh Memorial Hospital	yes	right	Murni Teguh Memorial Hospital	right
+https://jec.co.id/	JEC Eye Hospitals	JEC Eye Hospitals & Clinics	no	right	JEC Eye Hospitals &amp; Clinics Best Eye Hospital in Indonesia LASIK Cataract Dry Eye Relex SMILE Glaucoma Low Vision Retina	wrong
+https://www.rspermata.co.id/	Permata Hospital	Rumah Sakit Permata	yes	right	Rumah Sakit Permata	right
+https://www.rs-jih.co.id/	Rumah Sakit JIH	Rumah Sakit JIH	yes	right	https://rs-jih.co.id/	wrong
+https://bimcbali.com/	BIMC Hospital Bali	BIMC Hospital Bali	yes	right	BIMC Hospital Bali	right
+https://www.rscm.co.id/	RSUP Nasional Dr. Cipto Mangunkusumo	RSUP Nasional Dr. Cipto Mangunkusumo	yes	right	RSUP Nasional Dr. Cipto Mangunkusumo	right
+https://sardjito.co.id/	RSUP Dr Sardjito	RSUP Dr Sardjito	yes	right	RSUP Dr Sardjito	right
+https://www.pantirapih.or.id/	Rumah Sakit Panti Rapih	Rumah Sakit Panti Rapih	yes	right	Rumah Sakit Panti Rapih	right
+https://www.bethesda.or.id/	RS Bethesda Yogyakarta	RS BETHESDA YOGYAKARTA	yes	right	RS BETHESDA YOGYAKARTA	right
+https://rsadventbandung.com/	Rumah Sakit Advent Bandung	Rumah Sakit Advent Bandung	yes	right	Rumah Sakit Advent Bandung	right
+https://www.rsborromeus.com/	Rumah Sakit Santo Borromeus	Rumah Sakit Santo Borromeus	yes	right	Rumah Sakit Santo Borromeus	right
+https://rsmataundaan.co.id/	RS Mata Undaan	RS Mata Undaan	yes	right	RS Mata Undaan	right
+https://rsgm.ugm.ac.id/	RSGM UGM Prof. Soedomo	RSGM UGM Prof. Soedomo	yes	right	RSGM UGM Prof. Soedomo – Profesional Dalam Tugas dan Melayani Dengan Sepenuh Hati	wrong
+https://rsgm.unair.ac.id/	RSGM Universitas Airlangga		no	wrong	Request Rejected	wrong
+https://www.rs-elisabeth.com/	Rumah Sakit St. Elisabeth Semarang	Rumah Sakit St. Elisabeth Semarang	yes	right	Rumah Sakit St. Elisabeth Semarang | Elisameds	wrong
+https://rspkujogja.com/	RS PKU Muhammadiyah Yogyakarta	RS PKU Muhammadiyah Yogyakarta	yes	right	RS PKU Muhammadiyah Yogyakarta	right
+https://rsdarmo.co.id/	Rumah Sakit Darmo	Rumah Sakit Darmo	no	right	Rs Darmo	right
+https://www.rscarolus.or.id/	RS St. Carolus	RUMAH SAKIT St. Carolus	yes	right	RUMAH SAKIT St. Carolus	right
+https://rspelni.co.id/	RS PELNI	Rumah Sakit PELNI	yes	right	Rumah Sakit PELNI	right
+https://gadingpluit-hospital.com/	Rumah Sakit Gading Pluit	Rumah Sakit GADING PLUIT	yes	right	Rumah Sakit GADING PLUIT	right
+https://www.medistra.com/	Medistra Hospital	Medistra Hospital	yes	right	Medistra Hospital - Rumah Sakit Rujukan di Jakarta Selatan	wrong
+https://rsupwahidin.com/	RSUP Dr. Wahidin Sudirohusodo	RSUP Dr. Wahidin Sudirohusodo Makassar	yes	right	RSUP Dr. Wahidin Sudirohusodo Makassar - Home | Dashboard	wrong
+https://rsmh.co.id/	RSUP Dr. Mohammad Hoesin Palembang	RSUP Dr. Mohammad Hoesin Palembang	no	right	RSUP Dr. Mohammad Hoesin Palembang - Rumah Sakit Kementerian Kesehatan	wrong
+https://www.rsudwangaya.denpasarkota.go.id/	RSUD Wangaya	RSUD Wangaya	yes	right	RSUD Wangaya	right
+https://rsiatambak.com/	RSIA Tambak	RSIA Tambak	yes	right	RSIA Tambak	right
+https://www.rspantiwaluyo.com/	RS Panti Waluyo Surakarta	RS Panti Waluyo Surakarta	yes	right	RS Panti Waluyo Surakarta	right
+https://www.rspantinirmala.com/	Rumah Sakit Panti Nirmala			unread (ECONNRESET)		
+https://www.rsmelatiperbaungan.com/	RSU Melati Perbaungan		no	wrong	Home	wrong
+https://klinikmatatritya.co.id/	Klinik Mata Tritya	Klinik Mata Tritya	yes	right	Klinik Mata Tritya - Beranda	wrong
+https://granostic.com/	Granostic	Granostic	yes	right	Granostic	right
+https://www.conquerapsikologi.com/	Conquera Psikologi	LAYANAN KESEHATAN MENTAL CONQUERA PSIKOLOGI SURABAYA	yes	wrong	LAYANAN KESEHATAN MENTAL CONQUERA PSIKOLOGI SURABAYA	wrong
+https://www.mindharmonyindonesia.com/	MindHarmony Psychology	MindHarmony Psychology	yes	right	MindHarmony Psychology	right
+https://www.invirahumania.com/	Invira Humania	Invira Humania	yes	right	Invira Humania – One Stop Psychological Service	wrong
+https://www.klinikutamabenecia.com/	Klinik Utama Benecia	Klinik Utama Benecia	yes	right	Klinik Utama Benecia	right
+https://bidanviandika.com/	Klinik Bidan Viandika	Klinik Bidan Viandika	yes	right	Klinik Bidan Viandika	right
+https://hfcmedan.id/	Halim Fertility Center	Halim Fertility Center	yes	right	Halim Fertility Center	right
+https://www.kliniksimpangpemda.com/	Klinik Simpang Pemda	Klinik Simpang Pemda	yes	right	Klinik Simpang Pemda	right
+https://www.klinikandamari.web.id/	Klinik Pratama Andamari	Klinik Anda Mari	yes	right	Klinik Anda Mari – Klinik Pelayanan Kesehatan Sleman	wrong
+http://easycareklinik.co.id/	Easycare Klinik	EasyCare Klinik	yes	right	EasyCare Klinik	right
+https://klinik.kusumamedikacirebon.com/	Klinik Pratama Kusuma Medika	KLINIK PRATAMA KUSUMA MEDIKA	yes	right	KLINIK PRATAMA KUSUMA MEDIKA	right
+https://refahmedika.com/	Klinik Refah Medika	Refah Medika	yes	right	Refah Medika	right
+https://klinikbethesda.id/	Klinik Bethesda	Klinik Bethesda Palembang	no	right	Klinik Bethesda Palembang – Klinik Pratama Bethesda	wrong
+https://pratama-mandiri.com/	Klinik Pratama Rawat Inap Mandiri	Klinik Pratama Rawat Inap Mandiri Makassar	no	wrong	Klinik Pratama Rawat Inap Mandiri Makassar – Kesehatan Anda, Prioritas Kami	wrong
+https://www.klinikoptima.id/	Klinik Optima	Klinik Optima	yes	right	Klinik Optima | Klinik BPJS Kesehatan	wrong
+https://prospine.id/	Prospine Clinic	Prospine Clinic	yes	right	Prospine Clinic	right
+https://beningpsikologi.com/	Bening Psikologi	Bening Psikologi	yes	right	Bening Psikologi	right
+https://www.klinikannisagroup.com/	Klinik Annisa Group	Klinik Annisa Group	yes	right	Fasilitas Kesehatan Tingkat Pertama - Klinik Annisa Group	wrong
+https://klinikmakmurjaya.com/	Klinik Pratama Makmur Jaya	Klinik Pratama Makmur Jaya	yes	right	Home - Klinik Pratama Makmur Jaya	wrong
+https://www.lingkarmedika.com/	Klinik Lingkar Medika	Lingkar Medika	yes	right	Bali Health Care Clinic – Lingkar Medika	wrong
+https://nikidiagnosticcenter.com/	Niki Diagnostic Center	Niki Diagnostic Center	yes	right	Niki Diagnostic Center	right
+https://simalab.co.id/	SIMA Lab	SIMA Lab	no	right	SIMA Lab – Laboratorium Klinik SIMA	wrong
+https://www.morulaivf.co.id/	Morula IVF	Morula IVF	yes	right	Morula IVF	right
+https://bocahindonesia.com/	Bocah Indonesia	Bocah Indonesia	yes	right	Bocah Indonesia	right
+https://labcito.co.id/	CITO	Klinik Utama CITO	yes	right	Laboratorium Medis - Klinik Utama CITO	wrong
+https://www.labparahita.com/	Parahita	Klinik Parahita	no	right	Parahita Diagnostic Center	right
+https://ciputrasmgeyeclinic.com/	Ciputra SMG Eye Clinic	Ciputra SMG Eye Clinic	yes	right	LASIK & Katarak Center Jakarta - Klinik Mata | Ciputra SMG Eye Clinic	wrong
+https://vio.co.id/	VIO Optical Clinic	VIO Optical Clinic	yes	right	VIO Optical Clinic - Klinik Gangguan dan Periksa Mata Jakarta	wrong
+https://sasana.physio/	Klinik Sasana Husada	Klinik Sasana Husada	no	right	Klinik Sasana Husada | Fisioterapi / General Physiotherapy, Stroke Services, Sport Physio, Lab Physio, Tele Physio, Pediatric Services & Home Care Services	wrong
+https://www.nkhealth.fit/	NK Health	Klinik NK Health	yes	right	Klinik NK Health	right
+https://inharmonyclinic.com/	inHARMONY Clinic	inHARMONY	yes	right	inHARMONY	right
+https://rumahvaksinasi.id/	Rumah Vaksinasi	Rumah Vaksinasi Pusat	yes	right	Rumah Vaksinasi Pusat	right
+https://kasoemhearingcenter.com/	Kasoem Hearing Center		no	wrong	Alat Bantu Dengar Terbaik Harga Terjangkau di Indonesia	wrong
+https://nobelaudiology.com/	Nobel Audiology Center	Nobel Audiology Center	yes	right	Pusat Alat Bantu Dengar - Nobel Audiology Center	wrong
+https://kehamilansehat.com/	KS Women & Children Clinic	Kehamilan Sehat	yes	right	KS Women & Children Clinic	right

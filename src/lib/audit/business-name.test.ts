@@ -165,10 +165,6 @@ describe("business name from page labels", () => {
               "@type": ["Hospital", "LocalBusiness"],
               name: "RS PKU Muhammadiyah Yogyakarta",
               alternateName: "RSPKU Jogja",
-              medicalSpecialty: {
-                "@type": "MedicalSpecialty",
-                name: "Cardiology",
-              },
             }),
           ],
         }),
@@ -185,6 +181,66 @@ describe("business name from page labels", () => {
         "https://lviors.com/",
       ).name,
     ).toBe("L'VIORS BEAUTY CLINIC");
+  });
+
+  it("never takes a medical specialty as the name", () => {
+    expect(
+      pickBusinessName(
+        labels({
+          structuredData: [
+            '{"@type":"MedicalSpecialty","name":"Klinik Mata Nusantara"}',
+          ],
+        }),
+        "https://klinikmatanusantara.com/",
+      ).name,
+    ).toBe("");
+  });
+
+  // Found by independent review of PR 203.
+  it("decodes entities in structured data names", () => {
+    expect(
+      parseSourceMetadata(
+        `<head><script type="application/ld+json">{"@type":"Dentist","name":"Senyum &amp; Sehat"}</script></head>`,
+        "website",
+        "https://senyumsehat.id/",
+      ).displayName,
+    ).toBe("Senyum & Sehat");
+  });
+
+  it("reads structured data whose script tag has a > inside an attribute", () => {
+    expect(
+      parseSourceMetadata(
+        `<head><script data-x="a>b" type='application/ld+json'>{"@type":"Dentist","name":"Kirana Dental"}</script></head>`,
+        "website",
+        "https://kirana.id/",
+      ).displayName,
+    ).toBe("Kirana Dental");
+  });
+
+  it("keeps names that only look like an address or an error", () => {
+    expect(
+      pickBusinessName(labels({ siteName: "dr.Affandi" }), "https://x.id/")
+        .name,
+    ).toBe("dr.Affandi");
+    expect(
+      pickBusinessName(
+        labels({ siteName: "Error Free Dental" }),
+        "https://errorfree.id/",
+      ).name,
+    ).toBe("Error Free Dental");
+  });
+
+  it("stays quick on a head stuffed with structured data", () => {
+    const stores = Array.from({ length: 12_000 }, () => ({
+      "@type": "Store",
+      name: "Brand Store",
+    }));
+    const started = performance.now();
+    pickBusinessName(
+      labels({ structuredData: [JSON.stringify({ "@graph": stores })] }),
+      "https://brand.id/",
+    );
+    expect(performance.now() - started).toBeLessThan(500);
   });
 
   it("reads the name part of a web address", () => {

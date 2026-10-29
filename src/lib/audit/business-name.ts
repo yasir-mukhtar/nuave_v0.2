@@ -11,6 +11,8 @@
  * left empty and the caller falls back to the web address.
  */
 
+import { cleanText } from "./html-text";
+
 export type NameSource =
   | "business-data"
   | "organization-data"
@@ -131,10 +133,18 @@ const PAGE_LABELS = new Set([
 ]);
 
 // Text a blocked or broken page shows instead of the site.
+// The whole label only: "Error Free Dental" is a name.
 const ERROR_PAGE =
-  /^(request rejected|access denied|forbidden|403|404|just a moment|attention required|page not found|not found|account suspended|error)\b/;
+  /^(request rejected|access denied|(403 )?forbidden|(404 )?not found|403|404|just a moment|attention required( cloudflare)?|page not found|account suspended|error)$/;
 
-const WEB_ADDRESS = /^(https?:\/\/|www\.)|^[\w-]+(\.[\w-]+)+\/?$/i;
+// Lower case with a domain ending: "dr.Affandi" is a name.
+const WEB_ADDRESS =
+  /^(https?:\/\/|www\.)|^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}\/?$/;
+
+// Limits that keep a huge page head from making the scoring slow.
+const MAX_STRUCTURED_NAMES = 20;
+const MAX_PARTS = 10;
+const MAX_LABEL_LENGTH = 200;
 
 // Endings of a web address that are not part of the name.
 const ADDRESS_ENDINGS = new Set(
@@ -209,7 +219,13 @@ function structuredNames(
 ): Array<{ name: string; source: NameSource }> {
   const found: Array<{ name: string; source: NameSource }> = [];
   const visit = (node: unknown, depth: number) => {
-    if (depth > 6 || !node || typeof node !== "object") return;
+    if (
+      depth > 6 ||
+      found.length >= MAX_STRUCTURED_NAMES ||
+      !node ||
+      typeof node !== "object"
+    )
+      return;
     if (Array.isArray(node)) {
       for (const item of node) visit(item, depth + 1);
       return;
@@ -232,7 +248,7 @@ function structuredNames(
     if (source) {
       // Only the main name: `alternateName` is a nickname ("RSPKU Jogja").
       if (typeof record.name === "string")
-        found.push({ name: record.name, source });
+        found.push({ name: cleanText(record.name), source });
     }
     for (const value of Object.values(record)) visit(value, depth + 1);
   };
@@ -265,7 +281,8 @@ export function rankBusinessNames(
     whole: boolean;
   }> = [];
   for (const { name, source } of labelList) {
-    const parts = name.split(TITLE_SEPARATOR);
+    if (name.length > MAX_LABEL_LENGTH) continue;
+    const parts = name.split(TITLE_SEPARATOR).slice(0, MAX_PARTS);
     if (parts.length < 2) {
       raw.push({ name, source, points: SOURCE_POINTS[source], whole: false });
       continue;

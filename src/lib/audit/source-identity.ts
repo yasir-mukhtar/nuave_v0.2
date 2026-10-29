@@ -1,5 +1,6 @@
 import type { ParsedSourceInput } from "./source-input";
 import { pickBusinessName } from "./business-name";
+import { cleanText } from "./html-text";
 import {
   SafeSourceFetchError,
   bytesToDataUrl,
@@ -24,39 +25,6 @@ export interface ParsedSourceMetadata {
   nameConfident: boolean;
   description: string;
   iconHref: string | null;
-}
-
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&",
-  apos: "'",
-  gt: ">",
-  lt: "<",
-  nbsp: " ",
-  quot: '"',
-};
-
-function decodeHtmlEntities(value: string): string {
-  return value
-    .replace(/&#(x[\da-f]+|\d+);?/gi, (_match, digits: string) => {
-      const radix = digits.toLowerCase().startsWith("x") ? 16 : 10;
-      const number = Number.parseInt(
-        radix === 16 ? digits.slice(1) : digits,
-        radix,
-      );
-      return Number.isInteger(number) && number >= 0 && number <= 0x10ffff
-        ? String.fromCodePoint(number)
-        : "";
-    })
-    .replace(/&([a-z][a-z\d]+);?/gi, (match, name: string) => {
-      return NAMED_ENTITIES[name.toLowerCase()] ?? match;
-    });
-}
-
-function cleanText(value: string | undefined): string {
-  if (!value) return "";
-  return decodeHtmlEntities(value.replace(/<[^>]*>/g, " "))
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function findTags(html: string, tagName: string): string[] {
@@ -159,12 +127,17 @@ function titleValue(html: string): string {
 }
 
 function structuredDataBlocks(html: string): string[] {
+  const head = headHtml(html);
   const blocks: string[] = [];
-  const pattern = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
-  for (const match of headHtml(html).matchAll(pattern)) {
-    const type = parseAttributes(`<script ${match[1] ?? ""}>`).get("type");
+  let searchFrom = 0;
+  for (const tag of findTags(head, "script")) {
+    const start = head.indexOf(tag, searchFrom) + tag.length;
+    const end = head.slice(start).search(/<\/script\s*>/i);
+    if (end < 0) break;
+    searchFrom = start + end;
+    const type = parseAttributes(tag).get("type");
     if (type?.trim().toLowerCase() === "application/ld+json")
-      blocks.push(match[2] ?? "");
+      blocks.push(head.slice(start, start + end));
   }
   return blocks;
 }

@@ -29,30 +29,34 @@ repository root:
 npx esbuild experiments/business-name-test/run.ts --bundle --platform=node --format=esm --outfile=/tmp/name-test.mjs && node /tmp/name-test.mjs
 ```
 
+Behind a proxy, add `NODE_USE_ENV_PROXY=1` before `node`.
+
 Each site's result goes to `results.tsv` in this folder.
 
 ## Results, 2026-10-29
 
-99 of the 104 homepages could be read; 5 refused or timed out on the day
-(kiraridentalcare.com, okdentalclinic.com, pantirapih.or.id,
-rspantinirmala.com, klinikutamabenecia.com).
+`results.tsv` is the output of `run.ts` on the code in this PR: every site's
+expected name, the picked name, whether the picker was sure, and what the
+old method (first of site name label, share title, page title) picked.
 
-| Method | Right, of 99 |
+| | Right |
 | --- | --- |
-| Old: first of site name label, share title, page title | 59 |
-| New picker, first version (the code as first proposed) | 82 |
-| New picker after fixes from the misses below | **92** |
+| Old method | 63 of 103 |
+| New picker | **96 of 103** |
 
-The last row is measured on the same sites the fixes came from, so it
-flatters the picker; a fresh list would score somewhat lower. No site the
-old method got right is wrong now.
+103 of 104 homepages were read (rspantinirmala.com reset the connection). No
+site the old method got right is wrong now. The picker was sure of 85 of its
+96 right answers, and unsure of 5 of its 7 wrong ones.
 
-Fixes made after the first run: ignore labels that are a web address or a
-blocked-page notice ("Request Rejected"); drop "Welcome to" and "Official";
-split labels at a colon too; read site-made clinic types such as
+An earlier run the same day read 99 sites. The first version of the picker
+scored 82 of those 99. The misses led to these fixes, so the 96 is measured
+on the sites the fixes came from and flatters the picker; a fresh list would
+score somewhat lower. The fixes were: ignore labels that are a web address
+or a blocked-page notice ("Request Rejected"); drop "Welcome to" and
+"Official"; split labels at a colon too; read site-made clinic types such as
 `CosmeticClinic` but not `MedicalSpecialty` or the `alternateName` nickname;
 give the web-address credit to the part of a label that matches, not the
-whole label.
+whole label. That first version is not kept, so its score can't be re-run.
 
 The 7 still wrong:
 
@@ -64,11 +68,11 @@ The 7 still wrong:
   "Home" in their labels; rsgm.unair.ac.id blocks the reader. The picker
   returns nothing and the free check shows a name made from the web address.
 
-The picker also says whether it is sure. Of the 92 right, it was sure of 81;
-of the 7 wrong, it was unsure of 5 (the four empty ones and Pratama
-Mandiri). Asking the customer to confirm the name when it is unsure would
-have caught all but EternaMoore and Conquera, and those two still contain
-the right name.
+Asking the customer to confirm the name when the picker is unsure would
+catch all but EternaMoore and Conquera, and those two still contain the
+right name.
 
-`results.tsv` has every site: expected name, picked name, sure or not, and
-roughly what the old method picked.
+`run.ts` reads each whole page with a plain request; the picker only looks
+at the page head, as the free check does. The free check's own reader also
+stops at 512 KB and refuses private addresses, so a site could read
+differently there.
