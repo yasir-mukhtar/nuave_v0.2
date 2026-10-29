@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
-  normalizeForQuote,
   quotableTexts,
+  type QuotableTexts,
   quoteFound,
   quoteViolations,
   repairQuotes,
   unfoundQuoteSentences,
+  withoutUnfoundQuotes,
 } from "./quote-check";
-import type {
-  TwoSourceReportFacts,
-  TwoSourceWriterFacts,
+import {
+  repairTwoSourceWriting,
+  twoSourceWritingViolations,
+  type TwoSourceReportFacts,
+  type TwoSourceWriterFacts,
 } from "./two-source-report";
 import {
   TWO_SOURCE_WRITING_VERSION,
@@ -134,37 +137,115 @@ function content(overrides: Partial<ReportContent> = {}): ReportContent {
 
 const textsFor = (ids?: string[]) =>
   quotableTexts(ids, facts, observations, questions);
+const every = (t: QuotableTexts) => [
+  ...t.chatgpt,
+  ...t.google,
+  ...t.shared,
+  ...t.pages,
+];
+const onlyChatGPT = (...chatgpt: string[]): QuotableTexts => ({
+  chatgpt,
+  google: [],
+  shared: [],
+  pages: [],
+});
 
 describe("Spec 023: a quotation must be the saved words it cites", () => {
-  it("reads the answer without its Markdown, and any kind of quotation mark", () => {
-    expect(
-      normalizeForQuote("**Klinik Seruni** dikenal\\! [Dua](https://x.y)"),
-    ).toBe("klinik seruni dikenal! dua");
-    const texts = textsFor(["q1"]);
+  it("compares words: Markdown, punctuation, dashes and quotation marks never matter", () => {
+    const texts = every(textsFor(["q1"]));
     expect(quoteFound("Klinik Seruni dikenal dengan laser", texts)).toBe(true);
     expect(quoteFound("dokter yang ramah!", texts)).toBe(true);
     expect(quoteFound("Pilihan lain: Klinik Dua.", texts)).toBe(true);
+    // Review round 10: nested quotation marks, a dash the dash rule turned
+    // into a comma, a ChatGPT citation link and a number range.
+    expect(
+      quoteFound("Klinik ‘Seruni’ juga punya paket peeling", [
+        'Klinik "Seruni" juga punya paket peeling.',
+      ]),
+    ).toBe(true);
+    expect(
+      quoteFound("Klinik Seruni, dokter spesialis kulit", [
+        "- **Klinik Seruni** – dokter spesialis kulit.",
+      ]),
+    ).toBe(true);
+    expect(
+      quoteFound("Klinik Seruni buka setiap hari", [
+        "Klinik Seruni ([seruni.id](https://seruni.id/?utm_source=chatgpt.com)) buka setiap hari citeturn0search2.",
+      ]),
+    ).toBe(true);
+    expect(
+      quoteFound("biayanya Rp7 sampai 8,5 juta", ["Biayanya Rp7–8,5 juta."]),
+    ).toBe(true);
   });
 
-  it("finds each piece of a cut quotation, in order", () => {
-    const texts = textsFor(["q1"]);
+  it("matches whole words only", () => {
+    expect(
+      quoteFound("Aruna Clinic adalah pilihan tepat", [
+        "Karuna Clinic adalah pilihan tepat untuk laser.",
+      ]),
+    ).toBe(false);
+  });
+
+  it("finds each piece of a cut quotation, in order, in one paragraph", () => {
+    const texts = every(textsFor(["q1"]));
     expect(quoteFound("Klinik Seruni […] dokter yang ramah", texts)).toBe(true);
     expect(quoteFound("Klinik Seruni ... dokter yang ramah", texts)).toBe(true);
     expect(
       quoteFound("dokter yang ramah […] Klinik Seruni dikenal", texts),
     ).toBe(false);
+    // A one-word piece, more than two cuts, or pieces from two paragraphs
+    // could make a new meaning.
+    expect(quoteFound("Klinik Seruni […] ramah", texts)).toBe(false);
+    expect(
+      quoteFound("Klinik A […] adalah yang […] terbaik di […] kota ini", [
+        "Klinik A adalah yang terbaik di kota ini.",
+      ]),
+    ).toBe(false);
+    expect(
+      quoteFound("Klinik Seruni bisa […] adalah yang terbaik", [
+        "Klinik Seruni bisa menjadi pilihan.\n\nKlinik X adalah yang terbaik.",
+      ]),
+    ).toBe(false);
   });
 
   it("quotes only the answers, AI Overviews and questions the passage cites", () => {
-    expect(quoteFound("harga botox di Depok", textsFor(["q1"]))).toBe(false);
-    expect(quoteFound("harga botox di Depok", textsFor(["q2"]))).toBe(true);
-    expect(quoteFound("Berapa harga botox di Depok?", textsFor(["q2"]))).toBe(
+    expect(quoteFound("harga botox di Depok", every(textsFor(["q1"])))).toBe(
+      false,
+    );
+    expect(quoteFound("harga botox di Depok", every(textsFor(["q2"])))).toBe(
       true,
     );
+    expect(
+      quoteFound("Berapa harga botox di Depok?", every(textsFor(["q2"]))),
+    ).toBe(true);
     // A failed answer is not a saved answer.
-    expect(quoteFound("Jawaban gagal yang", textsFor(["q2"]))).toBe(false);
+    expect(quoteFound("Jawaban gagal yang", every(textsFor(["q2"])))).toBe(
+      false,
+    );
     // A passage that cites nothing may quote any of them.
-    expect(quoteFound("harga botox di Depok", textsFor())).toBe(true);
+    expect(quoteFound("harga botox di Depok", every(textsFor()))).toBe(true);
+  });
+
+  it("words credited to ChatGPT must be in its answers, to Google in its AI Overview", () => {
+    const texts = textsFor();
+    expect(
+      unfoundQuoteSentences(
+        "Google menulis “harga botox di Depok mulai dari Rp1.500.000”.",
+        texts,
+      ),
+    ).toEqual([]);
+    expect(
+      unfoundQuoteSentences(
+        "ChatGPT menulis “harga botox di Depok mulai dari Rp1.500.000”.",
+        texts,
+      ),
+    ).toHaveLength(1);
+    expect(
+      unfoundQuoteSentences(
+        "Google menulis “Klinik Seruni dikenal dengan laser fraksional”.",
+        texts,
+      ),
+    ).toHaveLength(1);
   });
 
   it("reads each text as the writer did: without phone numbers", () => {
@@ -174,20 +255,44 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     expect(
       quoteFound(
         "Hubungi Klinik Seruni di [nomor telepon dihapus]",
-        quotableTexts(["q1"], facts, withPhone, questions),
+        every(quotableTexts(["q1"], facts, withPhone, questions)),
       ),
     ).toBe(true);
   });
 
-  it("allows a name or a topic in quotation marks, and ignores a quoted short term", () => {
+  it("allows a name, a topic or a label in quotation marks, and ignores one quoted word", () => {
     expect(
       unfoundQuoteSentences(
-        "Pertanyaan tentang “perawatan bekas jerawat” menyebut “Klinik Seruni”.",
+        "Pertanyaan tentang “perawatan bekas jerawat” menyebut “Klinik Seruni”, dengan status “Tidak disebut”.",
         textsFor(["q2"]),
       ),
     ).toEqual([]);
     expect(
-      unfoundQuoteSentences("Statusnya “Disebut”, bukan “Tidak disebut”.", []),
+      unfoundQuoteSentences("Statusnya “Disebut”.", onlyChatGPT()),
+    ).toEqual([]);
+    // Two words are a quotation: "pilihan terbaik" is in no answer.
+    expect(
+      unfoundQuoteSentences(
+        "ChatGPT menyebut Aruna “pilihan terbaik”.",
+        textsFor(),
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("reads every kind of quotation mark, and never an inch mark or an apostrophe", () => {
+    const texts = onlyChatGPT("Klinik Seruni dikenal dengan laser.");
+    for (const sentence of [
+      "ChatGPT menulis 'Aruna adalah klinik paling direkomendasikan'.",
+      'ChatGPT menulis “Aruna adalah klinik paling direkomendasikan".',
+      "ChatGPT menulis ‘Aruna adalah klinik paling direkomendasikan’.",
+      'ChatGPT menulis "Aruna adalah klinik paling direkomendasikan".',
+    ])
+      expect(unfoundQuoteSentences(sentence, texts)).toEqual([sentence]);
+    expect(
+      unfoundQuoteSentences(
+        'Alat laser 5" dipakai hari Jum\'at, bukan alat 7" yang lama.',
+        texts,
+      ),
     ).toEqual([]);
   });
 
@@ -210,6 +315,21 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     expect(violations[0]).toContain(
       'Finding 1 paragraph: "Jawabannya menulis “Seruni adalah klinik terbaik di Depok”."',
     );
+  });
+
+  it("never ends a sentence inside a quotation or after an abbreviation", () => {
+    expect(
+      unfoundQuoteSentences(
+        "Awal. ChatGPT menulis “Satu. Dua tiga empat.” Akhir.",
+        onlyChatGPT(),
+      ),
+    ).toEqual(["ChatGPT menulis “Satu. Dua tiga empat.”"]);
+    expect(
+      withoutUnfoundQuotes(
+        "ChatGPT menyebut dr. Rina sebagai “dokter terbaik se-Depok untuk jerawat”. Aruna tidak disebut dalam jawaban itu.",
+        onlyChatGPT(),
+      ).text,
+    ).toBe("Aruna tidak disebut dalam jawaban itu.");
   });
 
   it("past the revision, drops the sentence and keeps the rest", () => {
@@ -239,7 +359,7 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     ).toEqual({ content: content(), dropped: 0 });
   });
 
-  it("a finding emptied by a drop goes while another remains; otherwise it keeps the fallback", () => {
+  it("a finding or recommendation emptied by a drop goes while another remains", () => {
     const empty = {
       title: "ChatGPT memilih Seruni",
       explanation: "Jawabannya menulis “Seruni adalah klinik terbaik”.",
@@ -264,11 +384,41 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     expect(one.content.key_findings).toEqual([
       { ...empty, explanation: fallback },
     ]);
+
+    const keptAction = content().priorities[0]!;
+    const priorities = repairQuotes(
+      content({
+        priorities: [
+          {
+            order: 1,
+            action: "Tulis halaman harga",
+            why: "ChatGPT menulis “Aruna belum punya halaman harga”.",
+            evidence_prompt_ids: ["q1"],
+          },
+          { ...keptAction, order: 2 },
+        ],
+      }),
+      facts,
+      observations,
+      questions,
+      fallback,
+    );
+    expect(priorities.content.priorities).toEqual([keptAction]);
   });
 
-  it("required paragraphs get the fallback; a plan step keeps its words without the marks", () => {
+  it("a lone recommendation keeps the fallback; a plan step keeps its words without the marks; a failed caption drops its headline", () => {
     const made = content({
       conclusion: "Google menulis “Aruna klinik paling murah di Depok”.",
+      key_findings: [
+        {
+          ...content().key_findings[0]!,
+          headline: {
+            number: "1",
+            caption: "jawaban yang menulis “Aruna paling murah”",
+            basis: "chatgpt_named",
+          },
+        } as ReportContent["key_findings"][number],
+      ],
       priorities: [
         {
           order: 1,
@@ -287,20 +437,32 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
       questions,
       fallback,
     );
-    expect(dropped).toBe(3);
+    expect(dropped).toBe(4);
     expect(next.conclusion).toBe(fallback);
+    expect(next.key_findings[0]!.headline).toBeUndefined();
     expect(next.priorities[0]!.why).toBe(fallback);
     expect(next.two_source_writing!.plan[0]!.text).toBe(
       "Jawab berapa harga laser di Depok.",
     );
   });
+});
 
-  it("never ends a sentence inside a quotation", () => {
-    expect(
-      unfoundQuoteSentences(
-        "Awal. ChatGPT menulis “Satu. Dua tiga empat.” Akhir.",
-        [],
-      ),
-    ).toEqual(["ChatGPT menulis “Satu. Dua tiga empat.”"]);
+describe("the quotation repair runs before the source repair", () => {
+  it("a finding a drop leaves without its source is still repaired", () => {
+    const made = content({
+      key_findings: [
+        {
+          title: "Bekas jerawat jatuh ke Seruni",
+          explanation:
+            "ChatGPT menulis “Seruni adalah klinik terbaik untuk semua jenis jerawat”. Aruna tidak disebut dalam jawaban itu.",
+          evidence_prompt_ids: ["q1"],
+        },
+      ],
+    });
+    expect(twoSourceWritingViolations(made, facts)).toEqual([]);
+    const quoted = repairQuotes(made, facts, observations, questions, fallback);
+    expect(twoSourceWritingViolations(quoted.content, facts)).not.toEqual([]);
+    const repaired = repairTwoSourceWriting(quoted.content, facts);
+    expect(twoSourceWritingViolations(repaired.content, facts)).toEqual([]);
   });
 });

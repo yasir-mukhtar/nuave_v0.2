@@ -2,171 +2,272 @@
  * Spec 023, founder's guide (2026-10-29): a quotation in the writer's prose
  * must be the saved words of a ChatGPT answer, a Google AI Overview or a
  * question the passage cites, or of a page Nuave read. The writer may cut a
- * quotation with "[…]"; every piece must then appear, in order, in one of
- * those texts. A sentence whose quotation cannot be found is listed for the
- * one revision, and dropped after it.
+ * quotation with "[…]"; every piece must then appear, in order, in one
+ * paragraph of one of those texts. Words are compared, not characters, so
+ * punctuation, dashes, Markdown and quotation marks never matter. A
+ * sentence whose quotation cannot be found is listed for the one revision,
+ * and dropped after it.
  */
 import { stripPhoneNumbers } from "../checks/phones";
-import type { TwoSourceReportFacts } from "./two-source-report";
+import { ABBREVIATION, type TwoSourceReportFacts } from "./two-source-report";
 import type { AuditObservation, ReportContent } from "./types";
 
 /** A quotation is checked when it has at least this many words; a quoted
- * term or label ("Disebut") is not a quotation of an answer. */
-const MIN_QUOTE_WORDS = 3;
+ * word ("Disebut") is a label, not a quotation of an answer. */
+const MIN_QUOTE_WORDS = 2;
+/** A cut quotation: at most this many cuts, each piece this many words. */
+const MAX_CUTS = 2;
+const MIN_PIECE_WORDS = 2;
 
-/** Double quotation marks, curly or straight, and curly single ones. */
-const QUOTE = /“([^”]+)”|"([^"]+)"|‘([^’]+)’/g;
+/** The report's own labels, which the writer may put in quotation marks. */
+const LABELS = [
+  "Tidak disebut",
+  "Situs dikutip",
+  "Hanya situs",
+  "Celah Topik",
+  "Peta Pesaing",
+  "Menurut jawaban AI",
+  "Google AI Overview",
+];
 
 /** A cut inside a quotation: "[…]", "[...]", "…" or "...". */
-const CUT = /\s*(?:\[\s*(?:…|\.\.\.)\s*\]|…|\.\.\.)\s*/;
+const CUT = /\[\s*(?:…|\.\.\.)\s*\]|…|\.\.\./;
 
-/** Text as compared: no markdown, links reduced to their words, one kind of
- * quotation mark and apostrophe, one space, lower case. */
-export function normalizeForQuote(text: string): string {
+const isWordChar = (ch: string | undefined) =>
+  ch !== undefined && /[\p{L}\p{N}]/u.test(ch);
+
+/** Text as compared: links, link citations and ChatGPT's citation markers
+ * removed (a link keeps its words unless they are only a domain), paragraphs
+ * apart, each a list of lower-case words. "sampai" or "hingga" between two
+ * numbers is left out, since the dash rule writes "7–8" as "7 sampai 8". */
+export function quoteWords(text: string): string[][] {
   return text
+    .replace(/[-]/g, " ")
+    .replace(/\bcite(?:turn\d+[a-z]+\d+)+/gi, " ")
+    .replace(/\(\s*\[[^\]]*\]\([^)]*\)\s*\)/g, " ")
+    .replace(/\[([^\]\s]+\.[^\]\s]+)\]\([^)]*\)/g, " ")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\\([^\s])/g, "$1")
-    .replace(/\*\*|__|`/g, "")
-    .replace(/[*_](?=\S)|(?<=\S)[*_]/g, "")
-    .replace(/[“”«»„]/g, '"')
-    .replace(/[‘’‚]/g, "'")
-    .replace(/[–—]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLocaleLowerCase("id-ID");
+    .replace(/https?:\/\/\S+/g, " ")
+    .split(/\n\s*\n/)
+    .map((paragraph) => {
+      const words =
+        paragraph.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]+/gu) ?? [];
+      return words.filter(
+        (word, i) =>
+          !(
+            (word === "sampai" || word === "hingga") &&
+            /\d/.test(words[i - 1] ?? "") &&
+            /\d/.test(words[i + 1] ?? "")
+          ),
+      );
+    })
+    .filter((words) => words.length);
 }
 
-const words = (text: string) => text.match(/[\p{L}\p{N}]+/gu)?.length ?? 0;
+const joined = (words: string[]) => ` ${words.join(" ")} `;
 
-/** Whether one quotation is found in one of the texts: each piece, in
- * order, after punctuation the writer closed the quotation with. */
+/** Whether one quotation is found in one paragraph of one of the texts:
+ * each piece, whole words, in order. */
 export function quoteFound(quote: string, texts: readonly string[]): boolean {
   const pieces = quote
     .split(CUT)
-    .map((piece) =>
-      normalizeForQuote(piece).replace(/^[\s,.;:!?]+|[\s,.;:!?]+$/g, ""),
-    )
-    .filter((piece) => piece.length > 1);
+    .map((piece) => quoteWords(piece).flat())
+    .filter((words) => words.length);
   if (!pieces.length) return true;
-  return texts.some((raw) => {
-    const text = normalizeForQuote(raw);
-    let at = 0;
-    for (const piece of pieces) {
-      const found = text.indexOf(piece, at);
-      if (found < 0) return false;
-      at = found + piece.length;
+  if (
+    pieces.length > MAX_CUTS + 1 ||
+    (pieces.length > 1 && pieces.some((p) => p.length < MIN_PIECE_WORDS))
+  )
+    return false;
+  return texts.some((text) =>
+    quoteWords(text).some((paragraph) => {
+      const haystack = joined(paragraph);
+      let at = 0;
+      for (const piece of pieces) {
+        const needle = joined(piece);
+        const found = haystack.indexOf(needle, at);
+        if (found < 0) return false;
+        at = found + needle.length - 1;
+      }
+      return true;
+    }),
+  );
+}
+
+type Quotation = { quote: string; start: number; end: number };
+
+/** Every quotation in a text, with where it sits. A quotation opens with
+ * “, ‘, " or ' not after a letter or digit (so 5" or Jum'at never open
+ * one) and closes with a mark of the same kind not before one; quotation
+ * marks of the other kind inside it are part of it. */
+function allQuotations(text: string): Quotation[] {
+  const out: Quotation[] = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    const double = ch === "“" || ch === '"';
+    if (!double && ch !== "‘" && ch !== "'") continue;
+    if (isWordChar(text[i - 1])) continue;
+    const closers = double ? ["”", '"'] : ["’", "'"];
+    let close = -1;
+    for (let j = i + 1; j < text.length; j++) {
+      if (/^\n\s*\n/.test(text.slice(j, j + 8))) break;
+      if (closers.includes(text[j]!) && !isWordChar(text[j + 1])) {
+        close = j;
+        break;
+      }
     }
-    return true;
-  });
+    if (close < 0) continue;
+    out.push({ quote: text.slice(i + 1, close), start: i, end: close + 1 });
+    i = close;
+  }
+  return out;
 }
 
-/** The quotations in a text that are long enough to check, with where they
- * sit. */
-function quotations(text: string) {
-  return [...text.matchAll(QUOTE)]
-    .map((m) => ({
-      quote: m[1] ?? m[2] ?? m[3] ?? "",
-      start: m.index!,
-      end: m.index! + m[0].length,
-    }))
-    .filter((q) => words(q.quote) >= MIN_QUOTE_WORDS);
-}
+const wordCount = (text: string) => quoteWords(text).flat().length;
 
-/** Sentence spans, never ending inside a quotation. A sentence ends at ".",
- * "!" or "?" before a space, or at a quotation closed by one of them. */
-function sentenceSpans(text: string): [number, number][] {
+/** Sentence spans. A sentence ends at ".", "!" or "?" before a space, never
+ * inside a quotation or after an abbreviation ("dr.", "Jl."), or at a
+ * quotation closed by one of them. */
+function sentenceSpans(
+  text: string,
+  quotes: readonly Quotation[],
+): [number, number][] {
   const spans: [number, number][] = [];
   let start = 0;
-  let open: string | null = null;
   const end = (i: number) => {
     if (!/\s/.test(text[i + 1] ?? "")) return;
     spans.push([start, i + 1]);
     start = i + 1;
   };
   for (let i = 0; i < text.length; i++) {
-    const ch = text[i]!;
-    if (open) {
-      if (
-        (open === "“" && ch === "”") ||
-        (open === '"' && ch === '"') ||
-        (open === "‘" && ch === "’")
-      ) {
-        open = null;
-        if (/[.!?]/.test(text[i - 1] ?? "")) end(i);
-      }
+    const quote = quotes.find((q) => q.start === i);
+    if (quote) {
+      i = quote.end - 1;
+      if (/[.!?]/.test(text[i - 1] ?? "")) end(i);
       continue;
     }
-    if (ch === "“" || ch === '"' || ch === "‘") open = ch;
-    else if (/[.!?]/.test(ch)) end(i);
+    const ch = text[i]!;
+    if (ch === "." && ABBREVIATION.test(text.slice(start, i + 1))) continue;
+    if (/[.!?]/.test(ch)) end(i);
   }
   if (text.slice(start).trim()) spans.push([start, text.length]);
   return spans;
 }
 
-/** The texts a passage may quote: the saved answers, Google AI Overviews
- * and questions for these prompt IDs (all of them when none are given),
- * every page Nuave read, and the names and topics the report may put in
- * quotation marks as labels. Each as the writer read it: without phone
- * numbers. */
+/** The saved texts a passage may quote, by where they come from. Each as
+ * the writer read it: without phone numbers. */
+export type QuotableTexts = {
+  chatgpt: string[];
+  google: string[];
+  /** Questions, names, topics and the report's labels. */
+  shared: string[];
+  pages: string[];
+};
+
+/** The texts a passage may quote: for these prompt IDs (all of them when
+ * none are given) the completed ChatGPT answers and the titles of the
+ * sources they cite, the Google AI Overviews and the questions; every page
+ * Nuave read; and the names, topics and labels the report may put in
+ * quotation marks. */
 export function quotableTexts(
   ids: readonly string[] | undefined,
   facts: TwoSourceReportFacts,
   observations: readonly AuditObservation[],
   questions: ReadonlyMap<string, string>,
-): string[] {
+): QuotableTexts {
   const all = facts.writer?.questions.map((q) => q.prompt_id) ?? [
     ...questions.keys(),
   ];
   const wanted = new Set(ids?.length ? ids : all);
+  const clean = (texts: string[]) =>
+    texts.filter(Boolean).map(stripPhoneNumbers);
+  const answered = observations.filter(
+    (o) => wanted.has(o.prompt_id) && o.run_status === "completed",
+  );
+  return {
+    chatgpt: clean([
+      ...answered.map((o) => o.raw_answer),
+      ...answered.flatMap((o) => (o.sources ?? []).map((s) => s.title ?? "")),
+    ]),
+    google: clean(
+      (facts.writer?.questions ?? [])
+        .filter((q) => wanted.has(q.prompt_id))
+        .map((q) => q.google_text),
+    ),
+    shared: clean([
+      ...[...questions]
+        .filter(([id]) => wanted.has(id))
+        .map(([, question]) => question),
+      ...(facts.names ?? []),
+      ...(facts.writer?.businesses ?? []),
+      ...(facts.writer?.questions ?? []).map((q) => q.topic ?? ""),
+      ...LABELS,
+    ]),
+    pages: clean(
+      (facts.writer?.pages ?? []).flatMap((page) => [page.title, page.text]),
+    ),
+  };
+}
+
+/** The texts one sentence may quote: a sentence that credits ChatGPT alone
+ * quotes its answers, one that credits Google alone its AI Overviews; pages
+ * only when the sentence names no source or speaks of a page or site. */
+function textsForSentence(sentence: string, texts: QuotableTexts): string[] {
+  const chatgpt = /\bchatgpt\b/i.test(sentence);
+  const google = /\bgoogle\b|\bai overview\b/i.test(sentence);
+  const page =
+    !(chatgpt || google) ||
+    /\b(?:situs|halaman|laman|website)\b/i.test(sentence);
   return [
-    ...observations
-      .filter((o) => wanted.has(o.prompt_id) && o.run_status === "completed")
-      .map((o) => o.raw_answer),
-    ...(facts.writer?.questions ?? [])
-      .filter((q) => wanted.has(q.prompt_id))
-      .map((q) => q.google_text),
-    ...[...questions]
-      .filter(([id]) => wanted.has(id))
-      .map(([, question]) => question),
-    ...(facts.writer?.pages ?? []).map((page) => page.text),
-    ...(facts.names ?? []),
-    ...(facts.writer?.businesses ?? []),
-    ...(facts.writer?.questions ?? []).map((q) => q.topic ?? ""),
-  ]
-    .filter(Boolean)
-    .map(stripPhoneNumbers);
+    ...(chatgpt && !google ? texts.chatgpt : []),
+    ...(google && !chatgpt ? texts.google : []),
+    ...(chatgpt === google ? [...texts.chatgpt, ...texts.google] : []),
+    ...texts.shared,
+    ...(page ? texts.pages : []),
+  ];
+}
+
+/** Sentences of a text whose quotations are not found, and the rest. */
+function splitByQuotes(text: string, texts: QuotableTexts) {
+  const quotes = allQuotations(text);
+  const spans = sentenceSpans(text, quotes);
+  const bad = spans.filter(([s, e]) => {
+    const sentence = text.slice(s, e);
+    return quotes.some(
+      (q) =>
+        q.start >= s &&
+        q.end <= e &&
+        wordCount(q.quote) >= MIN_QUOTE_WORDS &&
+        !quoteFound(q.quote, textsForSentence(sentence, texts)),
+    );
+  });
+  return {
+    bad: bad.map(([s, e]) => text.slice(s, e).trim()),
+    kept: spans
+      .filter((span) => !bad.includes(span))
+      .map(([s, e]) => text.slice(s, e).trim())
+      .join(" ")
+      .trim(),
+  };
 }
 
 /** The sentences of a text whose quotations are not found. */
 export function unfoundQuoteSentences(
   text: string,
-  texts: readonly string[],
+  texts: QuotableTexts,
 ): string[] {
-  const bad = quotations(text).filter((q) => !quoteFound(q.quote, texts));
-  if (!bad.length) return [];
-  return sentenceSpans(text)
-    .filter(([s, e]) => bad.some((q) => q.start < e && q.end > s))
-    .map(([s, e]) => text.slice(s, e).trim());
+  return splitByQuotes(text, texts).bad;
 }
 
 /** The text without the sentences whose quotations are not found. */
 export function withoutUnfoundQuotes(
   text: string,
-  texts: readonly string[],
+  texts: QuotableTexts,
 ): { text: string; dropped: number } {
-  const bad = quotations(text).filter((q) => !quoteFound(q.quote, texts));
-  if (!bad.length) return { text, dropped: 0 };
-  const spans = sentenceSpans(text);
-  const kept = spans.filter(
-    ([s, e]) => !bad.some((q) => q.start < e && q.end > s),
-  );
-  return {
-    text: kept
-      .map(([s, e]) => text.slice(s, e).trim())
-      .join(" ")
-      .trim(),
-    dropped: spans.length - kept.length,
-  };
+  const { bad, kept } = splitByQuotes(text, texts);
+  return bad.length
+    ? { text: kept, dropped: bad.length }
+    : { text, dropped: 0 };
 }
 
 type Field = { label: string; text: string; ids?: readonly string[] };
@@ -176,35 +277,46 @@ function quoteFields(content: ReportContent): Field[] {
   return [
     ...(writing ? [{ label: "The verdict", text: writing.verdict }] : []),
     { label: "The conclusion", text: content.conclusion },
-    ...content.key_findings.flatMap((f, i): Field[] => [
+    ...content.key_findings.flatMap((f, i): Field[] => {
+      const ids = f.evidence_prompt_ids;
+      return [
+        { label: `Finding ${i + 1} title`, text: f.title, ids },
+        { label: `Finding ${i + 1} paragraph`, text: f.explanation, ids },
+        ...(f.headline
+          ? [
+              {
+                label: `Finding ${i + 1} headline caption`,
+                text: f.headline.caption,
+                ids,
+              },
+            ]
+          : []),
+      ];
+    }),
+    ...content.priorities.flatMap((p, i): Field[] => [
       {
-        label: `Finding ${i + 1} title`,
-        text: f.title,
-        ids: f.evidence_prompt_ids,
+        label: `Recommendation ${i + 1} title`,
+        text: p.action,
+        ids: p.evidence_prompt_ids,
       },
       {
-        label: `Finding ${i + 1} paragraph`,
-        text: f.explanation,
-        ids: f.evidence_prompt_ids,
+        label: `Recommendation ${i + 1} paragraph`,
+        text: p.why,
+        ids: p.evidence_prompt_ids,
       },
     ]),
-    ...content.priorities.map((p, i): Field => ({
-      label: `Recommendation ${i + 1} paragraph`,
-      text: p.why,
-      ids: p.evidence_prompt_ids,
-    })),
     ...(writing?.competitor_reasons ?? []).map((r, i): Field => ({
       label: `Competitor line ${i + 1}`,
       text: r.reason,
     })),
-    ...(writing?.takeaways ?? []).map((t, i): Field => ({
-      label: `Takeaway ${i + 1}`,
-      text: t.text,
-    })),
-    ...(writing?.plan ?? []).map((s, i): Field => ({
-      label: `Plan step ${i + 1}`,
-      text: s.text,
-    })),
+    ...(writing?.takeaways ?? []).flatMap((t, i): Field[] => [
+      { label: `Takeaway ${i + 1} title`, text: t.title },
+      { label: `Takeaway ${i + 1}`, text: t.text },
+    ]),
+    ...(writing?.plan ?? []).flatMap((s, i): Field[] => [
+      { label: `Plan step ${i + 1} title`, text: s.title },
+      { label: `Plan step ${i + 1}`, text: s.text },
+    ]),
   ];
 }
 
@@ -221,21 +333,28 @@ export function quoteViolations(
       quotableTexts(ids, facts, observations, questions),
     ).map(
       (sentence) =>
-        `${label}: "${sentence}" puts in quotation marks words that are not in the saved answers or questions it cites. Copy the words exactly (mark a cut with […]), or say it in your own words without quotation marks.`,
+        `${label}: "${sentence}" puts in quotation marks words that are not in the saved answers or questions it cites (words credited to ChatGPT must be in its answers, words credited to Google in its AI Overview). Copy the words exactly from one answer (mark a cut with […]), or say it in your own words without quotation marks.`,
     ),
   );
 }
 
 /** A text's quotations without their quotation marks. */
 const unquoted = (text: string) =>
-  text.replace(QUOTE, (_, a, b, c) => a ?? b ?? c).trim();
+  allQuotations(text)
+    .reverse()
+    .reduce(
+      (out, q) => out.slice(0, q.start) + q.quote + out.slice(q.end),
+      text,
+    )
+    .trim();
 
 /**
  * Past the revision: a sentence whose quotation is not found is dropped. A
- * finding a drop empties goes while another finding remains. A required
- * paragraph a drop empties gets the caller's fallback sentence; an emptied
- * verdict stays empty (the page shows its own); a plan step or a lone
- * finding title keeps its words without the quotation marks.
+ * finding or recommendation a drop empties goes while another remains;
+ * otherwise a required paragraph gets the caller's fallback sentence and a
+ * title keeps its words without the quotation marks. A headline whose
+ * caption fails goes. An emptied verdict stays empty (the page shows its
+ * own); a plan step keeps its words without the quotation marks.
  */
 export function repairQuotes(
   content: ReportContent,
@@ -253,41 +372,67 @@ export function repairQuotes(
     dropped += result.dropped;
     return result.text;
   };
-  const findings = content.key_findings.map((f) => ({
-    ...f,
-    title: fix(f.title, f.evidence_prompt_ids),
-    explanation: fix(f.explanation, f.evidence_prompt_ids),
-  }));
-  const whole = findings.filter((f) => f.title && f.explanation);
-  const key_findings = (whole.length ? whole : findings).map((f, i) => ({
-    ...f,
-    title: f.title || unquoted(content.key_findings[i]!.title) || fallback,
-    explanation: f.explanation || fallback,
-  }));
+
+  const findings = content.key_findings.map((f) => {
+    const { headline, ...rest } = f;
+    const caption = headline && fix(headline.caption, f.evidence_prompt_ids);
+    return {
+      ...rest,
+      title: fix(f.title, f.evidence_prompt_ids),
+      explanation: fix(f.explanation, f.evidence_prompt_ids),
+      ...(headline && caption === headline.caption ? { headline } : {}),
+    };
+  });
+  const wholeFindings = findings.filter((f) => f.title && f.explanation);
+  const key_findings = wholeFindings.length
+    ? wholeFindings
+    : findings.map((f, i) => ({
+        ...f,
+        title: f.title || unquoted(content.key_findings[i]!.title) || fallback,
+        explanation: f.explanation || fallback,
+      }));
+
   const priorities = content.priorities.map((p) => ({
     ...p,
-    why: fix(p.why, p.evidence_prompt_ids) || fallback,
+    action: fix(p.action, p.evidence_prompt_ids),
+    why: fix(p.why, p.evidence_prompt_ids),
   }));
+  const wholePriorities = priorities.filter((p) => p.action && p.why);
+  const keptPriorities = (
+    wholePriorities.length || !priorities.length
+      ? wholePriorities
+      : priorities.map((p, i) => ({
+          ...p,
+          action: p.action || unquoted(content.priorities[i]!.action),
+          why: p.why || fallback,
+        }))
+  ).map((p, i) => ({ ...p, order: i + 1 }));
+
   const writing = content.two_source_writing;
   const next: ReportContent = {
     ...content,
     conclusion: fix(content.conclusion) || fallback,
     key_findings,
-    priorities,
-    two_source_writing: writing && {
-      ...writing,
-      verdict: fix(writing.verdict),
-      competitor_reasons: writing.competitor_reasons
-        .map((r) => ({ ...r, reason: fix(r.reason) }))
-        .filter((r) => r.reason),
-      takeaways: writing.takeaways
-        .map((t) => ({ ...t, text: fix(t.text) }))
-        .filter((t) => t.text),
-      plan: writing.plan.map((s) => ({
-        ...s,
-        text: fix(s.text) || unquoted(s.text),
-      })),
-    },
+    priorities: keptPriorities,
+    ...(writing
+      ? {
+          two_source_writing: {
+            ...writing,
+            verdict: fix(writing.verdict),
+            competitor_reasons: writing.competitor_reasons
+              .map((r) => ({ ...r, reason: fix(r.reason) }))
+              .filter((r) => r.reason),
+            takeaways: writing.takeaways
+              .map((t) => ({ title: fix(t.title), text: fix(t.text) }))
+              .filter((t) => t.title && t.text),
+            plan: writing.plan.map((s) => ({
+              ...s,
+              title: fix(s.title) || unquoted(s.title),
+              text: fix(s.text) || unquoted(s.text),
+            })),
+          },
+        }
+      : {}),
   };
   return { content: dropped ? next : content, dropped };
 }

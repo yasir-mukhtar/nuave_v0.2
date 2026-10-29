@@ -664,25 +664,40 @@ The founder revised the guide with another model and approved the result
 The guide lets the writer quote answers, so code now checks that a
 quotation is real (`src/lib/audit/quote-check.ts`):
 
-- Words in quotation marks (curly or straight; three words or more) must
-  appear in a saved text the passage cites: a completed ChatGPT answer, a
-  Google AI Overview or a question, by the finding's or recommendation's
-  `evidence_prompt_ids`. Passages that cite nothing may quote any of them.
-  Pages Nuave read, the business's names, the other businesses and the
-  search topics may always be quoted. Texts are compared as the writer read
-  them: without phone numbers, Markdown or extra spaces, and in lower case.
-- A cut is marked "[…]" (or "…"); each piece must appear in the same text,
-  in order. Pieces from two answers never make one quotation.
+- Words in quotation marks (“…”, "…", ‘…’ or '…', two words or more; a
+  mark after a letter or digit, as in 5" or Jum'at, opens none) must
+  appear in a saved text the passage cites, by the finding's or
+  recommendation's `evidence_prompt_ids`; passages that cite nothing may
+  quote any of them.
+- Where a quotation may come from: a sentence that credits ChatGPT alone
+  quotes its completed answers or the titles of the sources they cite; one
+  that credits Google alone quotes its AI Overview; questions, the
+  business's names, the other businesses, the search topics and the
+  report's labels ("Tidak disebut", "Peta Pesaing") are always allowed;
+  pages Nuave read only when the sentence names no source or speaks of a
+  page or site.
+- Words are compared, not characters: lower-case letters and digits, whole
+  words, so punctuation, dashes, Markdown, nested quotation marks, link
+  citations and ChatGPT's citation markers never matter, and "Aruna" is
+  never found inside "Karuna". Texts are compared as the writer read them,
+  without phone numbers. "sampai" between two numbers matches a dash.
+- A cut is marked "[…]" (or "…"): at most two cuts, each piece at least
+  two words, all pieces in order in one paragraph of one text.
 - A quotation that is not found is listed for the one revision. Past it,
-  code drops the sentence and records `quote_dropped`: a finding a drop
-  empties goes while another remains; an emptied conclusion or
-  recommendation paragraph gets the per-source count sentence; an emptied
-  verdict is left for the page's own; a plan step keeps its words without
-  the quotation marks. Never a failed order.
-- Known limits: a quotation shorter than three words (a label such as
-  "Disebut") is not checked; the check proves the words were saved, not
-  that the quotation keeps the answer's context (the guide's rule, and the
-  founder's read in the blind test).
+  and before the source repair (so a finding a drop leaves without its
+  source is still repaired), code drops the sentence and records
+  `quote_dropped`. A finding or recommendation a drop empties goes while
+  another remains; otherwise an emptied paragraph gets the per-source
+  count sentence and a title keeps its words without the quotation marks.
+  A headline whose caption fails goes; an emptied verdict is left for the
+  page's own; a plan step keeps its words without the quotation marks.
+  Never a failed order. Sentences never end inside a quotation or after an
+  abbreviation ("dr.", "Jl.").
+- Known limits: a quoted single word is a label and is not checked; the
+  check proves the words were saved, not that the quotation keeps the
+  answer's context (the guide's rule, and the founder's read in the blind
+  test); the dash repair may turn a dash inside a kept quotation into a
+  comma.
 
 ## Verification record
 

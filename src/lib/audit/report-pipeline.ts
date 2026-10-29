@@ -592,6 +592,24 @@ export async function createValidatedAuditReport(
     }
   }
 
+  // Spec 023: past the revision, a sentence whose quotation is not in the
+  // saved texts is dropped, before the source repair below, so a finding
+  // the drop leaves without its source is still repaired. Never a failed
+  // order.
+  if (hasWriterFacts(sourceFacts)) {
+    const quotes = repairQuotes(
+      content,
+      sourceFacts,
+      lockedInput.observations,
+      questions,
+      twoSourceCountSentence(sourceFacts),
+    );
+    if (quotes.dropped) {
+      content = quotes.content;
+      diagnostics.add("quote_dropped");
+    }
+  }
+
   // Spec 018 (B-4): a two-source report never ships a conclusion or finding
   // that speaks for no source or contradicts the code counts. The one revision
   // call above was the writer's chance; past it, code replaces the offending
@@ -614,19 +632,6 @@ export async function createValidatedAuditReport(
   // it cannot confirm, a reason, topic name or reading it cannot place, and
   // removes a banned title start the revision left. Never a failed order.
   if (hasWriterFacts(sourceFacts) && content.two_source_writing) {
-    // Spec 023: past the revision, a sentence whose quotation is not in the
-    // saved texts is dropped. Never a failed order.
-    const quotes = repairQuotes(
-      content,
-      sourceFacts,
-      lockedInput.observations,
-      questions,
-      twoSourceCountSentence(sourceFacts),
-    );
-    if (quotes.dropped) {
-      content = quotes.content;
-      diagnostics.add("quote_dropped");
-    }
     const dashes = repairDashes(content, sourceFacts);
     if (dashes.changed) {
       content = dashes.content;
