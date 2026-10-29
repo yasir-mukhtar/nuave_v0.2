@@ -6,6 +6,17 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-10-29 — The free check picks the real name and asks when unsure; spec gate waived
+
+The free check showed mhdc.co.id as "Klinik Dokter Gigi Terdekat", a search
+phrase in its site name label. Yasir approved PR #203: the name is picked by
+scoring every label in the page head, and when the pick is unsure the
+business-found screen asks the owner to check the name ("Periksa nama
+bisnis") before going on. On 104 hand-checked Indonesian clinic and hospital
+sites the old method got 61 of 101 readable sites right, the new one 94
+(`experiments/business-name-test/`). Yasir waived the specification gate for
+this customer-visible change.
+
 ## 2026-10-29 — After payment the business name can be fixed; the website stays locked
 
 Order NV-8XAPUF was placed under its Google listing name, "Klinik Dokter
