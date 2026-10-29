@@ -257,6 +257,9 @@ describe("Spec 023 R-03: nothing false today becomes accepted", () => {
       "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan pasien.",
       "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan pelanggan.",
       "ChatGPT tidak menyebut SOZO di 4 dari 4 jawaban asli.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan tentang klinik.",
+      "ChatGPT tidak menyebut SOZO dalam 4 pertanyaan tentang klinik.",
+      "ChatGPT tidak menyebut SOZO di 4 dari 4 pertanyaan tentang klinik terdekat.",
     ])
       caught(sentence, treatment);
   });
@@ -306,13 +309,13 @@ describe("Spec 023 R-03: groups that mention 'klinik', and the guide's model sen
   it("passes the guide's model sentences when they are true", () => {
     const content = {
       ...withFinding(
-        "Keempat jawaban itu menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: tiga jawabannya menyebut SOZO. Penyebab perbedaan itu tidak diketahui.",
+        "Keempat jawaban itu menyebut ERHA. Untuk pertanyaan tentang klinik di Batam, hasilnya berbeda: sebagian jawabannya menyebut SOZO. Penyebab perbedaan itu tidak diketahui.",
         ids,
         "ChatGPT tidak menyebut SOZO dalam jawaban tentang botox",
       ),
       two_source_writing: {
         verdict:
-          "Dalam audit ini, ChatGPT menyebut SOZO pada sebagian jawaban tentang klinik di Batam, tetapi tidak pada jawaban tentang botox. Nama SOZO juga tidak muncul dalam ringkasan Google AI Overview yang diperiksa.",
+          "ChatGPT menyebut SOZO dalam sebagian jawaban tentang klinik di Batam, tetapi tidak dalam jawaban tentang botox. Google AI Overview tidak menyebutnya.",
       },
     };
     expect(contradiction(content)).toEqual([]);

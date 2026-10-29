@@ -525,22 +525,30 @@ function namedGroup(
       }
     } else if (isTopic(next[0])) taken = [next[0]!];
     if (!taken.length) continue;
-    const qualifier = clause.match(
-      new RegExp(taken.map(escapeRegExp).join("\\s+"), "iu"),
-    )?.[0];
-    if (!qualifier) continue;
-    // "pertanyaan tentang klinik di [kota]" names a group; "jawaban yang
-    // menyebut klinik" may mean the owner, so it falls back to today.
-    const yang = /^yang\b/i.test(qualifier);
-    // The word after it too: "jawaban tentang klinik ini" is the owner.
+    const span = (list: string[]) =>
+      clause.match(new RegExp(list.map(escapeRegExp).join("\\s+"), "iu"))?.[0];
+    const base = span(taken);
+    if (!base) continue;
+    // A qualifier about the owner or any business is the claim itself
+    // ("jawaban yang menyebut klinik ini"); the word after it counts too
+    // ("jawaban tentang klinik ini"). "jawaban yang menyebut klinik" may mean
+    // the owner. Each falls back to today's reading.
+    const yang = /^yang\b/i.test(base);
     const after = next[taken.length];
     if (
-      refersToOwner(after ? `${qualifier} ${after}` : qualifier, facts, yang) ||
-      competitorsIn(qualifier, facts).length ||
-      (yang && /\b(?:bisnis|klinik|usaha|merek|tempat)\b/i.test(qualifier))
+      refersToOwner(after ? `${base} ${after}` : base, facts, yang) ||
+      competitorsIn(base, facts).length ||
+      (yang && /\b(?:bisnis|klinik|usaha|merek|tempat)\b/i.test(base))
     )
       return null;
-    return qualifier;
+    // In a clinic audit "pertanyaan tentang klinik" is the whole test; only a
+    // place makes it a group ("pertanyaan tentang klinik di [kota]").
+    if (/^(?:bisnis|klinik|usaha|tempat)$/i.test(taken[taken.length - 1]!)) {
+      const [at, place] = next.slice(taken.length, taken.length + 2);
+      if (!/^di$/i.test(at ?? "") || !isTopic(place)) return null;
+      return span([...taken, at!, place!]) ?? null;
+    }
+    return base;
   }
   return null;
 }

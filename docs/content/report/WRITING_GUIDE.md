@@ -30,10 +30,9 @@ pemilik. **Simpulan utama** (`verdict`) ialah paragraf pertama laporan.
 4. **Jumlah temuan mengikuti bahan.** Dua temuan yang kuat cukup bila memang
    hanya itu yang tersedia. Jangan memenuhi kuota dengan mengulang gagasan.
    Urutkan dari yang paling penting.
-5. **Tunjukkan perbedaan yang berarti, lalu jelaskan batasnya.** Bandingkan
-   kelompok pertanyaan: yang menyebut kota dan yang menyebut perawatan;
-   ChatGPT dan Google AI Overview; situs yang dikutip dan situs klinik
-   sendiri. Kata "lemah", "tertinggal", atau "mengkhawatirkan" tidak
+5. **Tunjukkan perbedaan yang berarti, lalu jelaskan batasnya.** Bandingkan:
+   pertanyaan yang menyebut kota dan yang menyebut perawatan; ChatGPT dan
+   Google AI Overview; situs yang dikutip dan situs klinik sendiri. Kata "lemah", "tertinggal", atau "mengkhawatirkan" tidak
    memperdalam temuan tanpa bukti pembanding.
 6. **Urutkan langkah dari bukti dan pedoman kerja.** Angka pencarian bulanan
    membantu memilih prioritas bila tersedia, tetapi tidak cukup sendirian:
@@ -88,8 +87,9 @@ tebakan tentang cara kerja AI.
 
 **Sumber.** Sebut sumbernya dengan tepat: ChatGPT, atau Google AI Overview
 (ringkasan AI di hasil pencarian Google), bukan "AI" atau "Google" saja.
-Setiap temuan menyebut sumbernya. Jangan membuka semua temuan dengan pola
-yang sama.
+Setiap temuan berangkat dari jawaban dan menyebut sumbernya. Keadaan situs
+klinik sendiri ditulis di rekomendasi yang membahasnya, bukan sebagai temuan
+tanpa sumber. Jangan membuka semua temuan dengan pola yang sama.
 
 **Nama klinik.** Sebut nama klinik di awal bagian, dan setiap kali "klinik
 ini" dapat menunjuk dua klinik berbeda. Di antaranya pakai "klinik ini" atau
@@ -102,8 +102,8 @@ temuan, perbandingan, atau urutan pekerjaan. Hindari pengulangan yang tidak
 menambah pengertian, tetapi angka boleh diulang dalam temuan agar temuan itu
 dapat dipahami sendiri. Setiap proporsi harus jelas pembilang, penyebut, dan
 kelompok pengamatannya: "di 4 dari 4 pertanyaan tentang [perawatan]"
-menghitung tepat pertanyaan yang dikutip temuan itu. Simpulan utama memuat
-paling banyak satu proporsi, dan hanya bila proporsi itulah intinya. Penutup
+menghitung tepat pertanyaan yang dikutip temuan itu. Simpulan utama paling
+panjang 220 karakter dan memuat paling banyak satu proporsi, dan hanya bila proporsi itulah intinya. Penutup
 tanpa angka; kartu dan temuan sudah memuatnya.
 
 **Paragraf bergerak maju.** Judul menyatakan temuan. Kalimat pembuka
@@ -155,8 +155,8 @@ biasa, tanpa label di setiap paragraf.
 kerja ChatGPT atau Google. Sebab juga dapat tersirat tanpa kata "karena":
 kalimat bahwa Klinik B disebut, disusul keterangan bahwa halamannya lengkap,
 membuat pembaca menganggap kelengkapan halaman sebagai penyebabnya. Bila
-dua hal itu ditulis berdampingan, katakan bahwa penyebab perbedaannya tidak
-diketahui.
+dua hal itu ditulis berdampingan, katakan sekali bahwa penyebab perbedaannya
+tidak diketahui; jangan jadikan kalimat itu penutup setiap temuan.
 
 | Boleh                                                                                                                             | Tidak boleh                                                             |
 | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -180,8 +180,8 @@ sendiri-sendiri.
 "tidak": "Nama Klinik A tidak muncul dalam enam ringkasan Google AI Overview
 yang diperiksa." "Belum" menyiratkan penyebutan akan datang; pakai hanya
 bila memang ada proses yang sedang dibicarakan. "Masih" memerlukan
-pengamatan sebelumnya sebagai pembanding. "Sudah" jangan otomatis membingkai
-setiap penyebutan sebagai kemajuan.
+pengamatan sebelumnya sebagai pembanding. Jangan memakai "sudah" yang otomatis
+membingkai setiap penyebutan sebagai kemajuan.
 
 **Status yang harus dibedakan.** Disebut. Direkomendasikan. Situsnya dikutip
 tanpa nama. Tidak disebut. Ringkasan tidak tampil (Google tidak menampilkan
@@ -228,41 +228,33 @@ kalimatnya.
 Sebelum: "Di ChatGPT, klinik Anda disebut di 3 dari 10 jawaban. Di Google AI
 Overview, klinik Anda disebut di 0 dari 6 ringkasan."
 
-Sesudah: "Dalam audit ini, ChatGPT menyebut Klinik A pada sebagian jawaban
-tentang klinik di [kota], tetapi tidak pada jawaban tentang [perawatan].
-Nama Klinik A juga tidak muncul dalam ringkasan Google AI Overview yang
-diperiksa."
+Sesudah: "ChatGPT menyebut Klinik A dalam sebagian jawaban tentang klinik di
+[kota], tetapi tidak dalam jawaban tentang [perawatan]. Google AI Overview
+tidak menyebutnya."
 
-### Temuan pertama
+### Temuan
 
 Judul: "ChatGPT tidak menyebut Klinik A dalam jawaban tentang [perawatan]"
 
 Isi: "Keempat jawaban itu menyebut Klinik B. Untuk pertanyaan tentang klinik
-di [kota], hasilnya berbeda: tiga jawabannya menyebut Klinik A. Penyebab
+di [kota], hasilnya berbeda: sebagian jawabannya menyebut Klinik A. Penyebab
 perbedaan itu tidak diketahui."
-
-### Temuan kedua
-
-Judul: "Dua informasi layanan tidak tersedia pada halaman [perawatan] Klinik
-A"
-
-Isi: "Halaman itu menjelaskan jenis perawatannya. Namun, kisaran harga dan
-nama dokter yang memberikan layanan tidak tercantum."
 
 ### Rekomendasi
 
 Sebelum: "Pastikan untuk melakukan optimalisasi konten yang komprehensif agar
 klinik Anda tidak hanya terlihat tetapi juga direkomendasikan."
 
-Sesudah: judul "Lengkapi halaman [perawatan] yang sudah ada"; isi "Tambahkan
-kisaran harga dan nama dokter sesuai keadaan klinik. Mulai dari halaman ini
-karena dua kekurangan informasinya sudah diketahui. Tujuannya agar pembaca
-mengetahui biaya dan siapa yang memberikan layanan tersebut."
+Sesudah: judul "Lengkapi halaman [perawatan] yang sudah ada"; isi "Halaman
+itu menjelaskan jenis perawatannya, tetapi tidak mencantumkan kisaran harga
+dan nama dokter. Tambahkan keduanya sesuai keadaan klinik. Mulai dari halaman
+ini karena kekurangannya sudah diketahui. Tujuannya agar pembaca mengetahui
+biaya dan siapa yang memberikan layanan tersebut."
 
 ### Penutup
 
-"Setelah halaman diperbarui, ulangi pengujian dengan daftar pertanyaan dan
-cara pencatatan yang sama. Bandingkan jawabannya dengan hasil audit ini."
+"Setelah halaman diperbarui, ulangi pengujian ChatGPT dan Google AI Overview
+dengan daftar pertanyaan dan cara pencatatan yang sama. Bandingkan jawabannya dengan hasil audit ini."
 
 Contoh ini sengaja tidak memakai angka pencarian, perkiraan biaya, ataupun
 janji waktu, karena ketiganya tidak ada dalam bahan. Jika jawaban pada audit
@@ -285,5 +277,5 @@ ditampilkan kepada pemilik klinik.
    dan cakupannya.
 8. Pelaku, rujukan kata ganti, dan hubungan antarkalimat mudah diikuti.
 9. Judul dan isi mempunyai cakupan yang sama; setiap kalimat menambah
-   informasi.
+   informasi; setiap temuan dan penutup menyebut sumbernya.
 10. Paragraf terasa wajar ketika dibaca bersuara.

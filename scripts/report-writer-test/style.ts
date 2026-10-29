@@ -135,7 +135,6 @@ export const TYPICAL_PHRASES = [
   "holistik",
   "krusial",
   "lanskap",
-  "memanfaatkan",
   "melakukan optimalisasi",
   "bukan hanya",
   "tidak hanya",

@@ -545,6 +545,16 @@ second draft (`WRITING_GUIDE.md`), with these alignments:
   Overview" (VOICE §2).
 - **Re-audit timing.** The guide leaves it to the playbook, which sets about
   eight weeks (its item 9); the examples carry no schedule.
+- **No notes field.** The review's "tandai kebutuhan itu dalam catatan
+  kerja" becomes "do not write that conclusion": the writer has no notes
+  field.
+- **Search volume details.** The review's source, period and region for a
+  search figure are left out of the guide: the code-built topic line shows
+  them.
+- **Site-only findings.** The review's second model finding rested only on
+  the clinic's own page. R-02 asks every finding to name ChatGPT or Google,
+  so the page facts sit in the recommendation that answers them. Allowing a
+  site-only finding would change R-02 and the checker (founder's call).
 - **Checkable wording.** The examples keep a limit in the same clause as its
   verb ("ChatGPT tidak menyebut Klinik A dalam keempat jawaban tentang
   [perawatan]"), the form R-03 can check; a finding that compares two groups
@@ -554,7 +564,9 @@ The writer's rules follow the review: the storyline is settled after reading
 all the evidence and may hold a limiting point; two to six findings, as many
 as the evidence supports; each recommendation says what it is for. VOICE §2
 and §3 are amended to match. R-03 now also reads "pertanyaan tentang klinik
-di [kota]" as a group, and "tentang klinik ini" as the owner.
+di [kota]" as a group (a bare "tentang klinik" stays the whole test), and
+"tentang klinik ini" as the owner. The harness no longer counts
+"memanfaatkan" as a typical phrase.
 
 ## Verification record
 
