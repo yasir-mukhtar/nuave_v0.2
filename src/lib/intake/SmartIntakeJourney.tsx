@@ -551,8 +551,9 @@ export default function SmartIntakeJourney({
     "lookup" | "reading" | "paying" | "questions" | "approving" | null
   >(null);
   const [error, setError] = useState<string | null>(null);
-  // Bumped to open the name sheet when the name needs checking.
-  const [askName, setAskName] = useState(0);
+  // The owner asked to check the name; the sheet opens once the brand
+  // screen has mounted, even if the tap came while it was sliding in.
+  const [askName, setAskName] = useState(false);
   const [interrupted, setInterrupted] = useState(false);
   // Spec 016 R-31: the email is typed here and never stored in the browser.
   const [email, setEmail] = useState("");
@@ -2143,7 +2144,8 @@ export default function SmartIntakeJourney({
           nameToCheck
             ? {
                 label: "Periksa nama bisnis",
-                onClick: () => setAskName((count) => count + 1),
+                opensDialog: true,
+                onClick: () => setAskName(true),
               }
             : {
                 label: "Ya, ini bisnis saya",
@@ -2360,6 +2362,7 @@ export default function SmartIntakeJourney({
         guessed={session.identity.guessed === true}
         nameUnsure={nameToCheck}
         askName={askName}
+        onAsked={() => setAskName(false)}
         onRename={(name) => {
           if (unsafeSmartName(name)) {
             stopSensitiveInput();

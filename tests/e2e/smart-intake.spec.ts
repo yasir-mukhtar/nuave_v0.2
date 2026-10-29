@@ -199,6 +199,29 @@ test("an unsure business name is checked by the owner before going on", async ({
   });
 });
 
+test("a tap on Periksa nama bisnis while the screen slides in still opens the sheet", async ({
+  page,
+}) => {
+  await stubUnsureIdentity(page);
+  await fillEntry(page);
+  await pressPeriksa(page);
+  const check = page.getByRole("button", {
+    name: "Periksa nama bisnis",
+    exact: true,
+  });
+  await expect(check).toHaveAttribute("aria-haspopup", "dialog");
+  const sheet = page.getByRole("dialog", { name: "Pastikan nama bisnis" });
+  await check.click();
+  await sheet.getByRole("button", { name: "Batal", exact: true }).click();
+  await expect(sheet).toHaveCount(0);
+  // Back to the entry and the same check again: the button is pressed the
+  // moment it shows, before the found screen has finished sliding in.
+  await pressKembali(page);
+  await pressPeriksa(page);
+  await check.click();
+  await expect(sheet).toBeVisible();
+});
+
 test("an unsure name kept as it is still counts as checked", async ({
   page,
 }) => {

@@ -126,18 +126,27 @@ function titleValue(html: string): string {
   return cleanText(titleMatch?.[1]);
 }
 
+const MAX_SCRIPTS = 50;
+
 function structuredDataBlocks(html: string): string[] {
   const head = headHtml(html);
   const blocks: string[] = [];
-  let searchFrom = 0;
+  const closing = /<\/script\s*>/gi;
+  let cursor = 0;
+  let read = 0;
   for (const tag of findTags(head, "script")) {
-    const start = head.indexOf(tag, searchFrom) + tag.length;
-    const end = head.slice(start).search(/<\/script\s*>/i);
-    if (end < 0) break;
-    searchFrom = start + end;
+    const at = head.indexOf(tag, cursor);
+    // A tag found inside an earlier script's body is not a script.
+    if (at < 0) continue;
+    if (++read > MAX_SCRIPTS) break;
+    const start = at + tag.length;
+    closing.lastIndex = start;
+    const close = closing.exec(head);
+    if (!close) break;
+    cursor = close.index + close[0].length;
     const type = parseAttributes(tag).get("type");
     if (type?.trim().toLowerCase() === "application/ld+json")
-      blocks.push(head.slice(start, start + end));
+      blocks.push(head.slice(start, close.index));
   }
   return blocks;
 }

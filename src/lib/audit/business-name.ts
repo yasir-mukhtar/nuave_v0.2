@@ -201,10 +201,15 @@ function matchesAddress(name: string, address: string): boolean {
   );
 }
 
+function readsLikeSearch(name: string): boolean {
+  return words(name).some((word) => SEARCH_PHRASE_WORDS.has(word));
+}
+
 function looksGeneric(name: string): boolean {
-  const nameWords = words(name);
-  if (nameWords.some((word) => SEARCH_PHRASE_WORDS.has(word))) return true;
-  return nameWords.every((word) => DESCRIPTIVE_WORDS.has(word));
+  return (
+    readsLikeSearch(name) ||
+    words(name).every((word) => DESCRIPTIVE_WORDS.has(word))
+  );
 }
 
 function cleanCandidate(value: string): string {
@@ -220,18 +225,26 @@ function structuredNames(
   blocks: string[],
 ): Array<{ name: string; source: NameSource }> {
   const found: Array<{ name: string; source: NameSource }> = [];
-  const visit = (node: unknown, depth: number) => {
+  // Only the page's own entries (top level or in `@graph`): a nested entry is
+  // something the page mentions, such as a doctor or an audience.
+  const entries = (parsed: unknown): unknown[] => {
+    const list = Array.isArray(parsed) ? parsed : [parsed];
+    return list.flatMap((item) =>
+      item &&
+      typeof item === "object" &&
+      Array.isArray((item as Record<string, unknown>)["@graph"])
+        ? [item, ...((item as Record<string, unknown>)["@graph"] as unknown[])]
+        : [item],
+    );
+  };
+  const visit = (node: unknown) => {
     if (
-      depth > 6 ||
       found.length >= MAX_STRUCTURED_NAMES ||
       !node ||
-      typeof node !== "object"
+      typeof node !== "object" ||
+      Array.isArray(node)
     )
       return;
-    if (Array.isArray(node)) {
-      for (const item of node) visit(item, depth + 1);
-      return;
-    }
     const record = node as Record<string, unknown>;
     const types = (
       Array.isArray(record["@type"]) ? record["@type"] : [record["@type"]]
@@ -252,11 +265,11 @@ function structuredNames(
       if (typeof record.name === "string")
         found.push({ name: cleanText(record.name), source });
     }
-    for (const value of Object.values(record)) visit(value, depth + 1);
   };
   for (const block of blocks) {
     try {
-      visit(JSON.parse(block), 0);
+      for (const entry of entries(JSON.parse(block)).slice(0, 200))
+        visit(entry);
     } catch {
       // Broken structured data is common; the other labels still count.
     }
@@ -370,8 +383,15 @@ export function pickBusinessName(
 ): BusinessNamePick {
   const candidates = rankBusinessNames(labels, pageUrl);
   const [best] = candidates;
-  if (!best || best.score <= 0)
-    return { name: "", confident: false, candidates };
+  if (!best || best.score <= 0) {
+    // Nothing reads as a name. A plain description the site uses ("Klinik
+    // Gigi Keluarga") is still closer than the web address; a search phrase
+    // is not. The owner is asked either way.
+    const plain = candidates.find(
+      (candidate) => !readsLikeSearch(candidate.name),
+    );
+    return { name: plain?.name ?? "", confident: false, candidates };
+  }
   // A full title that contains the winner ("… - MHDC Clinic") is not a rival.
   const bestKey = ` ${words(best.name).join(" ")} `;
   const next = candidates.find((candidate) => {

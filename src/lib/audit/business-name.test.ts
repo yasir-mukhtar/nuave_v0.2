@@ -243,6 +243,54 @@ describe("business name from page labels", () => {
     expect(performance.now() - started).toBeLessThan(500);
   });
 
+  // Found by the second independent review of PR 203.
+  it("never takes a doctor or audience the page mentions as the name", () => {
+    const pick = pickBusinessName(
+      labels({
+        pageTitle: "Beranda",
+        structuredData: [
+          JSON.stringify({
+            "@graph": [
+              { "@type": "WebSite", name: "Klinik Gigi Sehat Senyum" },
+              {
+                "@type": "Dentist",
+                name: "Klinik Gigi Sehat Senyum",
+                employee: { "@type": "Physician", name: "drg. Budi Santoso" },
+                audience: { "@type": "BusinessAudience", name: "Perusahaan" },
+              },
+            ],
+          }),
+        ],
+      }),
+      "https://dentalku.id/",
+    );
+    expect(pick.name).toBe("Klinik Gigi Sehat Senyum");
+    expect(pick.candidates.map((candidate) => candidate.name)).not.toContain(
+      "drg. Budi Santoso",
+    );
+  });
+
+  it("offers a plain description over the web address when nothing reads as a name", () => {
+    expect(
+      pickBusinessName(
+        labels({ siteName: "Klinik Gigi Keluarga" }),
+        "https://keluargasehat.id/",
+      ),
+    ).toMatchObject({ name: "Klinik Gigi Keluarga", confident: false });
+  });
+
+  it("stays quick on a head of unclosed script tags", () => {
+    const html = `<head>${"<script>".repeat(60_000)}</script><title>Kirana Dental</title></head>`;
+    const started = performance.now();
+    const name = parseSourceMetadata(
+      html,
+      "website",
+      "https://kirana.id/",
+    ).displayName;
+    expect(performance.now() - started).toBeLessThan(1_000);
+    expect(name).toBe("Kirana Dental");
+  });
+
   it("reads the name part of a web address", () => {
     expect(addressName("https://www.mhdc.co.id/")).toBe("mhdc");
     expect(addressName("https://jakarta.siloamhospitals.com/x")).toBe(

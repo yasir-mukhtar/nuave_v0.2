@@ -41,16 +41,16 @@ old method (first of site name label, share title, page title) picked.
 
 | | Right |
 | --- | --- |
-| Old method | 60 of 100 |
-| New picker | **93 of 100** |
+| Old method | 61 of 101 |
+| New picker | **94 of 101** |
 
-100 of 104 homepages were read; four refused or reset the connection on the
+101 of 104 homepages were read; three refused or reset the connection on the
 day, and which ones varies from run to run. No site the old method got right
-is wrong now. The picker was sure of 83 of its 93 right answers, and unsure
+is wrong now. The picker was sure of 84 of its 94 right answers, and unsure
 of 5 of its 7 wrong ones.
 
 An earlier run the same day read 99 sites. The first version of the picker
-scored 82 of those 99. The misses led to these fixes, so the 93 is measured
+scored 82 of those 99. The misses led to these fixes, so the 94 is measured
 on the sites the fixes came from and flatters the picker; a fresh list would
 score somewhat lower. The fixes were: ignore labels that are a web address
 or a blocked-page notice ("Request Rejected"); drop "Welcome to" and
@@ -72,7 +72,7 @@ The 7 still wrong:
 When the picker is unsure, the free check now asks the owner to check the
 name before going on (the "Periksa nama bisnis" step). That catches all but
 EternaMoore and Conquera, and those two still contain the right name. It also
-asks on 10 of the 93 right answers, where the owner just saves the name as
+asks on 10 of the 94 right answers, where the owner just saves the name as
 it is.
 
 `run.ts` reads each whole page with a plain request; the picker only looks

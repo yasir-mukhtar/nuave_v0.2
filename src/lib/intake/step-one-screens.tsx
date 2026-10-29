@@ -688,7 +688,8 @@ export function BusinessFoundScreen({
   error,
   guessed = false,
   nameUnsure = false,
-  askName = 0,
+  askName = false,
+  onAsked,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   name: string;
@@ -700,8 +701,9 @@ export function BusinessFoundScreen({
   guessed?: boolean;
   /** The website's name labels were unclear: the owner checks the name. */
   nameUnsure?: boolean;
-  /** Opens the name sheet each time it goes up. */
-  askName?: number;
+  /** Open the name sheet now; `onAsked` says it was opened. */
+  askName?: boolean;
+  onAsked?: () => void;
   /** Save a corrected name (J05b). Returns false when it was refused. */
   onRename: (name: string) => boolean;
   /** Absent once the website is locked by a payment (R-19). */
@@ -718,13 +720,17 @@ export function BusinessFoundScreen({
     if (!next) return;
     if (onRename(next)) setEditing(false);
   };
-  // A new request opens the sheet with the current name.
-  const [seenAsk, setSeenAsk] = useState(askName);
-  if (askName !== seenAsk) {
-    setSeenAsk(askName);
+  // Kept from the moment the sheet opens, so its title does not change
+  // while it closes after the name is saved.
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    if (!askName) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens on the parent's request
     setDraft(name);
+    setChecking(true);
     setEditing(true);
-  }
+    onAsked?.();
+  }, [askName, name, onAsked]);
   return (
     <section className="grid gap-3" data-intake-screen="brand">
       <ScreenHeader
@@ -771,6 +777,7 @@ export function BusinessFoundScreen({
           aria-haspopup="dialog"
           onClick={() => {
             setDraft(name);
+            setChecking(nameUnsure);
             setEditing(true);
           }}
         >
@@ -807,11 +814,11 @@ export function BusinessFoundScreen({
       <BottomSheet
         open={editing}
         onOpenChange={setEditing}
-        title={nameUnsure ? "Pastikan nama bisnis" : "Nama bisnis"}
+        title={checking ? "Pastikan nama bisnis" : "Nama bisnis"}
         initialFocus={fieldRef}
         header={
           <SheetActionsHeader
-            title={nameUnsure ? "Pastikan nama bisnis" : "Nama bisnis"}
+            title={checking ? "Pastikan nama bisnis" : "Nama bisnis"}
             onCancel={() => setEditing(false)}
             onSave={save}
             saveDisabled={!draft.trim()}
