@@ -22,8 +22,14 @@ const MIN_PIECE_WORDS = 2;
 /** The report's own labels, which the writer may put in quotation marks. */
 const LABELS = [
   "Tidak disebut",
+  "Tidak direkomendasikan",
+  "Tidak diuji",
+  "Tidak tersedia",
   "Situs dikutip",
+  "Situsnya dikutip",
   "Hanya situs",
+  "Temuan Utama",
+  "Analisis Nuave",
   "Celah Topik",
   "Peta Pesaing",
   "Menurut jawaban AI",
@@ -41,6 +47,18 @@ const isWordChar = (ch: string | undefined) =>
  * apart, each a list of lower-case words. "sampai" or "hingga" between two
  * numbers is left out, since the dash rule writes "7–8" as "7 sampai 8". */
 export function quoteWords(text: string): string[][] {
+  const known = wordCache.get(text);
+  if (known) return known;
+  if (wordCache.size > 2_000) wordCache.clear();
+  const words = splitWords(text);
+  wordCache.set(text, words);
+  return words;
+}
+
+/** Each text is read once per order, not once per quotation. */
+const wordCache = new Map<string, string[][]>();
+
+function splitWords(text: string): string[][] {
   return text
     .replace(/[-]/g, " ")
     .replace(/\bcite(?:turn\d+[a-z]+\d+)+/gi, " ")
@@ -96,34 +114,70 @@ export function quoteFound(quote: string, texts: readonly string[]): boolean {
 
 type Quotation = { quote: string; start: number; end: number };
 
-/** Every quotation in a text, with where it sits. A quotation opens with
- * “, ‘, " or ' not after a letter or digit (so 5" or Jum'at never open
- * one) and closes with a mark of the same kind not before one; quotation
- * marks of the other kind inside it are part of it. */
+const DOUBLE = { open: "“", close: "”", straight: '"' };
+const SINGLE = { open: "‘", close: "’", straight: "'" };
+
+/** Every quotation in a text, with where it sits. A curly mark says which
+ * way it faces; a straight one opens after a space or bracket and before a
+ * word, and closes after a word or punctuation and before none ("5" or
+ * "Jum'at" do neither). Quotations of the same kind inside one are
+ * counted, so an inner "Seruni" never ends the outer quotation; “ closes
+ * at ” where the paragraph has one, else at ". A quotation never crosses a
+ * blank line. */
 function allQuotations(text: string): Quotation[] {
+  const opens = (i: number, kind: typeof DOUBLE) =>
+    text[i] === kind.open ||
+    (text[i] === kind.straight &&
+      !isWordChar(text[i - 1]) &&
+      /[^\s]/.test(text[i + 1] ?? " ") &&
+      (isWordChar(text[i + 1]) || /["'“‘(\[]/.test(text[i + 1]!)));
+  const closes = (i: number, kind: typeof DOUBLE) =>
+    (text[i] === kind.close && (kind === DOUBLE || !isWordChar(text[i + 1]))) ||
+    (text[i] === kind.straight &&
+      /[^\s]/.test(text[i - 1] ?? " ") &&
+      !isWordChar(text[i + 1]));
+  const closeOf = (i: number, kind: typeof DOUBLE, curlyOnly: boolean) => {
+    let depth = 1;
+    for (let j = i + 1; j < text.length; j++) {
+      if (/^\n[^\S\n]*\n/.test(text.slice(j, j + 12))) return -1;
+      if (curlyOnly) {
+        if (text[j] === kind.open) depth++;
+        else if (text[j] === kind.close && --depth === 0) return j;
+        continue;
+      }
+      if (closes(j, kind)) {
+        if (--depth === 0) return j;
+      } else if (opens(j, kind)) depth++;
+    }
+    return -1;
+  };
   const out: Quotation[] = [];
   for (let i = 0; i < text.length; i++) {
-    const ch = text[i]!;
-    const double = ch === "“" || ch === '"';
-    if (!double && ch !== "‘" && ch !== "'") continue;
-    if (isWordChar(text[i - 1])) continue;
-    const closers = double ? ["”", '"'] : ["’", "'"];
-    let close = -1;
-    for (let j = i + 1; j < text.length; j++) {
-      if (/^\n\s*\n/.test(text.slice(j, j + 8))) break;
-      if (closers.includes(text[j]!) && !isWordChar(text[j + 1])) {
-        close = j;
-        break;
-      }
-    }
-    if (close < 0) continue;
-    out.push({ quote: text.slice(i + 1, close), start: i, end: close + 1 });
-    i = close;
+    const kind =
+      text[i] === "“" || text[i] === '"'
+        ? DOUBLE
+        : text[i] === "‘" || text[i] === "'"
+          ? SINGLE
+          : null;
+    if (!kind || !opens(i, kind)) continue;
+    const close = text[i] === "“" ? closeOf(i, kind, true) : -1;
+    const end = close >= 0 ? close : closeOf(i, kind, false);
+    if (end < 0) continue;
+    out.push({ quote: text.slice(i + 1, end), start: i, end: end + 1 });
+    i = end;
   }
   return out;
 }
 
 const wordCount = (text: string) => quoteWords(text).flat().length;
+
+/** "dll." or "vitamin C." before a capital letter ends a sentence; "dr.",
+ * "Jl." or an initial in a name ("dr. A.", "Rina S.") does not. */
+function endsAnyway(before: string, after: string): boolean {
+  if (!/^\s+\p{Lu}/u.test(after)) return false;
+  if (/(?:^|\s)(?:dll|dsb|dst)\.$/i.test(before)) return true;
+  return /(?:^|\s)\p{Ll}+\s\p{Lu}\.$/u.test(before);
+}
 
 /** Sentence spans. A sentence ends at ".", "!" or "?" before a space, never
  * inside a quotation or after an abbreviation ("dr.", "Jl."), or at a
@@ -147,7 +201,12 @@ function sentenceSpans(
       continue;
     }
     const ch = text[i]!;
-    if (ch === "." && ABBREVIATION.test(text.slice(start, i + 1))) continue;
+    if (
+      ch === "." &&
+      ABBREVIATION.test(text.slice(start, i + 1)) &&
+      !endsAnyway(text.slice(start, i + 1), text.slice(i + 1))
+    )
+      continue;
     if (/[.!?]/.test(ch)) end(i);
   }
   if (text.slice(start).trim()) spans.push([start, text.length]);
@@ -159,7 +218,9 @@ function sentenceSpans(
 export type QuotableTexts = {
   chatgpt: string[];
   google: string[];
-  /** Questions, names, topics and the report's labels. */
+  questions: string[];
+  /** Names, topics, the business's confirmed profile and the report's
+   * labels. */
   shared: string[];
   pages: string[];
 };
@@ -167,13 +228,15 @@ export type QuotableTexts = {
 /** The texts a passage may quote: for these prompt IDs (all of them when
  * none are given) the completed ChatGPT answers and the titles of the
  * sources they cite, the Google AI Overviews and the questions; every page
- * Nuave read; and the names, topics and labels the report may put in
+ * Nuave read and its title; and the names, topics, the confirmed profile's
+ * words (services, doctors, branches) and labels the report may put in
  * quotation marks. */
 export function quotableTexts(
   ids: readonly string[] | undefined,
   facts: TwoSourceReportFacts,
   observations: readonly AuditObservation[],
   questions: ReadonlyMap<string, string>,
+  profile: readonly string[] = [],
 ): QuotableTexts {
   const all = facts.writer?.questions.map((q) => q.prompt_id) ?? [
     ...questions.keys(),
@@ -194,10 +257,13 @@ export function quotableTexts(
         .filter((q) => wanted.has(q.prompt_id))
         .map((q) => q.google_text),
     ),
-    shared: clean([
-      ...[...questions]
+    questions: clean(
+      [...questions]
         .filter(([id]) => wanted.has(id))
         .map(([, question]) => question),
+    ),
+    shared: clean([
+      ...profile,
       ...(facts.names ?? []),
       ...(facts.writer?.businesses ?? []),
       ...(facts.writer?.questions ?? []).map((q) => q.topic ?? ""),
@@ -210,18 +276,26 @@ export function quotableTexts(
 }
 
 /** The texts one sentence may quote: a sentence that credits ChatGPT alone
- * quotes its answers, one that credits Google alone its AI Overviews; pages
- * only when the sentence names no source or speaks of a page or site. */
+ * quotes its answers, one that credits Google alone its AI Overviews; a
+ * question when the sentence credits neither alone or speaks of the
+ * question; pages only when it names no source or speaks of a page or
+ * site. */
 function textsForSentence(sentence: string, texts: QuotableTexts): string[] {
   const chatgpt = /\bchatgpt\b/i.test(sentence);
   const google = /\bgoogle\b|\bai overview\b/i.test(sentence);
   const page =
     !(chatgpt || google) ||
     /\b(?:situs|halaman|laman|website)\b/i.test(sentence);
+  const question =
+    chatgpt === google ||
+    /\b(?:pertanyaan|ditanya|ditanyakan|bertanya|menanyakan|tanya)\b/i.test(
+      sentence,
+    );
   return [
     ...(chatgpt && !google ? texts.chatgpt : []),
     ...(google && !chatgpt ? texts.google : []),
     ...(chatgpt === google ? [...texts.chatgpt, ...texts.google] : []),
+    ...(question ? texts.questions : []),
     ...texts.shared,
     ...(page ? texts.pages : []),
   ];
@@ -326,16 +400,30 @@ export function quoteViolations(
   facts: TwoSourceReportFacts,
   observations: readonly AuditObservation[],
   questions: ReadonlyMap<string, string>,
+  profile: readonly string[] = [],
 ): string[] {
   return quoteFields(content).flatMap(({ label, text, ids }) =>
     unfoundQuoteSentences(
       text,
-      quotableTexts(ids, facts, observations, questions),
+      quotableTexts(ids, facts, observations, questions, profile),
     ).map(
       (sentence) =>
         `${label}: "${sentence}" puts in quotation marks words that are not in the saved answers or questions it cites (words credited to ChatGPT must be in its answers, words credited to Google in its AI Overview). Copy the words exactly from one answer (mark a cut with […]), or say it in your own words without quotation marks.`,
     ),
   );
+}
+
+/** The short words of a confirmed profile or brief (names of services,
+ * doctors and branches), which the report may put in quotation marks. */
+export function profileWords(value: unknown): string[] {
+  if (typeof value === "string")
+    return value.length <= 300 && !/^(?:data:|https?:)/.test(value)
+      ? [value]
+      : [];
+  if (Array.isArray(value)) return value.flatMap(profileWords);
+  if (value && typeof value === "object")
+    return Object.values(value).flatMap(profileWords);
+  return [];
 }
 
 /** A text's quotations without their quotation marks. */
@@ -362,12 +450,13 @@ export function repairQuotes(
   observations: readonly AuditObservation[],
   questions: ReadonlyMap<string, string>,
   fallback: string,
+  profile: readonly string[] = [],
 ): { content: ReportContent; dropped: number } {
   let dropped = 0;
   const fix = (text: string, ids?: readonly string[]) => {
     const result = withoutUnfoundQuotes(
       text,
-      quotableTexts(ids, facts, observations, questions),
+      quotableTexts(ids, facts, observations, questions, profile),
     );
     dropped += result.dropped;
     return result.text;

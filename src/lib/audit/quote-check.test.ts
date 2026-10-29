@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   quotableTexts,
+  profileWords,
   type QuotableTexts,
   quoteFound,
   quoteViolations,
@@ -140,12 +141,14 @@ const textsFor = (ids?: string[]) =>
 const every = (t: QuotableTexts) => [
   ...t.chatgpt,
   ...t.google,
+  ...t.questions,
   ...t.shared,
   ...t.pages,
 ];
 const onlyChatGPT = (...chatgpt: string[]): QuotableTexts => ({
   chatgpt,
   google: [],
+  questions: [],
   shared: [],
   pages: [],
 });
@@ -294,6 +297,76 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
         texts,
       ),
     ).toEqual([]);
+  });
+
+  it("counts quotation marks inside a quotation, so the rest is still checked", () => {
+    const texts = onlyChatGPT('Klinik "Seruni" dikenal dengan laser.');
+    for (const sentence of [
+      'ChatGPT menulis “Klinik "Seruni" adalah klinik terbaik dan termurah di Depok”.',
+      'ChatGPT menulis "Klinik "Seruni" adalah klinik terbaik dan termurah di Depok".',
+      "ChatGPT menulis “Klinik “Seruni” adalah klinik terbaik dan termurah di Depok”.",
+      'ChatGPT menulis “Klinik Seruni adalah klinik terbaik dan termurah di Depok".',
+    ])
+      expect(unfoundQuoteSentences(sentence, texts)).toEqual([sentence]);
+    expect(
+      unfoundQuoteSentences(
+        'ChatGPT menulis “Klinik "Seruni" dikenal dengan laser”.',
+        texts,
+      ),
+    ).toEqual([]);
+    // A suffix after a closing mark never joins two quotations.
+    expect(
+      unfoundQuoteSentences(
+        "Nama “Klinik Seruni”nya ada, dan ChatGPT menulis “dikenal dengan laser”.",
+        onlyChatGPT("Klinik Seruni dikenal dengan laser."),
+      ),
+    ).toEqual([]);
+  });
+
+  it("allows the confirmed profile's names in any sentence, and a question only where the sentence speaks of it", () => {
+    const profile = profileWords({
+      services: [{ name: "Acne Peeling", source: "owner" }],
+      logo: "data:image/png;base64,AAAA",
+    });
+    expect(profile).toEqual(["Acne Peeling", "owner"]);
+    const texts = quotableTexts(
+      ["q1"],
+      facts,
+      observations,
+      questions,
+      profile,
+    );
+    expect(
+      unfoundQuoteSentences(
+        "ChatGPT tidak menyebut layanan “Acne Peeling” milik Aruna.",
+        texts,
+      ),
+    ).toEqual([]);
+    expect(
+      unfoundQuoteSentences(
+        "Saat ditanya “Klinik mana yang bagus untuk bekas jerawat di Depok?”, ChatGPT menyebut Seruni.",
+        texts,
+      ),
+    ).toEqual([]);
+    expect(
+      unfoundQuoteSentences(
+        "ChatGPT menulis “klinik mana yang bagus untuk bekas jerawat”.",
+        texts,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("ends a sentence at 'dll.' or 'vitamin C.' before a capital, never at 'dr.'", () => {
+    for (const first of [
+      "Krim ini mengandung vitamin C.",
+      "Ada laser, peeling, dll.",
+    ])
+      expect(
+        withoutUnfoundQuotes(
+          `${first} ChatGPT menulis “Aruna adalah klinik terbaik”. Seruni disebut.`,
+          onlyChatGPT(),
+        ).text,
+      ).toBe(`${first} Seruni disebut.`);
   });
 
   it("the guide's model finding passes; a made-up quotation is listed", () => {

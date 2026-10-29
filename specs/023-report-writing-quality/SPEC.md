@@ -664,18 +664,22 @@ The founder revised the guide with another model and approved the result
 The guide lets the writer quote answers, so code now checks that a
 quotation is real (`src/lib/audit/quote-check.ts`):
 
-- Words in quotation marks (“…”, "…", ‘…’ or '…', two words or more; a
-  mark after a letter or digit, as in 5" or Jum'at, opens none) must
+- Words in quotation marks (“…”, "…", ‘…’ or '…', two words or more) must
   appear in a saved text the passage cites, by the finding's or
   recommendation's `evidence_prompt_ids`; passages that cite nothing may
-  quote any of them.
+  quote any of them. A straight mark inside a word (5" or Jum'at) neither
+  opens nor closes one; marks of the same kind inside a quotation are
+  counted, so an inner "Seruni" never ends the outer quotation and leaves
+  the rest unchecked.
 - Where a quotation may come from: a sentence that credits ChatGPT alone
   quotes its completed answers or the titles of the sources they cite; one
-  that credits Google alone quotes its AI Overview; questions, the
-  business's names, the other businesses, the search topics and the
+  that credits Google alone quotes its AI Overview; a question only when
+  the sentence credits neither alone or speaks of the question ("Saat
+  ditanya"); the business's names and confirmed profile (services,
+  doctors, branches), the other businesses, the search topics and the
   report's labels ("Tidak disebut", "Peta Pesaing") are always allowed;
-  pages Nuave read only when the sentence names no source or speaks of a
-  page or site.
+  pages Nuave read, and their titles, only when the sentence names no
+  source or speaks of a page or site.
 - Words are compared, not characters: lower-case letters and digits, whole
   words, so punctuation, dashes, Markdown, nested quotation marks, link
   citations and ChatGPT's citation markers never matter, and "Aruna" is
@@ -692,7 +696,8 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   A headline whose caption fails goes; an emptied verdict is left for the
   page's own; a plan step keeps its words without the quotation marks.
   Never a failed order. Sentences never end inside a quotation or after an
-  abbreviation ("dr.", "Jl.").
+  abbreviation ("dr.", "Jl."), but do end at "dll." or "vitamin C." before
+  a capital letter.
 - Known limits: a quoted single word is a label and is not checked; the
   check proves the words were saved, not that the quotation keeps the
   answer's context (the guide's rule, and the founder's read in the blind
