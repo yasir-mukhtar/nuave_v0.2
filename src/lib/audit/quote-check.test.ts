@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   quotableTexts,
-  profileWords,
+  profileNames,
   type QuotableTexts,
   quoteFound,
   quoteViolations,
@@ -15,6 +15,7 @@ import {
   type TwoSourceReportFacts,
   type TwoSourceWriterFacts,
 } from "./two-source-report";
+import type { AuditSubject } from "./direct-ten-context-v2";
 import {
   TWO_SOURCE_WRITING_VERSION,
   type AuditObservation,
@@ -143,6 +144,7 @@ const every = (t: QuotableTexts) => [
   ...t.google,
   ...t.questions,
   ...t.shared,
+  ...t.profile,
   ...t.pages,
 ];
 const onlyChatGPT = (...chatgpt: string[]): QuotableTexts => ({
@@ -150,6 +152,7 @@ const onlyChatGPT = (...chatgpt: string[]): QuotableTexts => ({
   google: [],
   questions: [],
   shared: [],
+  profile: [],
   pages: [],
 });
 
@@ -324,11 +327,13 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
   });
 
   it("allows the confirmed profile's names in any sentence, and a question only where the sentence speaks of it", () => {
-    const profile = profileWords({
-      services: [{ name: "Acne Peeling", source: "owner" }],
-      logo: "data:image/png;base64,AAAA",
-    });
-    expect(profile).toEqual(["Acne Peeling", "owner"]);
+    const profile = ["Acne Peeling", "Klinik Aruna"];
+    expect(
+      profileNames({
+        brand_name: "Klinik Aruna",
+        brand_name_variants: ["Aruna"],
+      } as AuditSubject),
+    ).toEqual(["Klinik Aruna", "Aruna"]);
     const texts = quotableTexts(
       ["q1"],
       facts,
@@ -354,19 +359,44 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
         texts,
       ),
     ).toHaveLength(1);
+    // A profile name is quoted only whole: never part of a longer claim.
+    expect(
+      unfoundQuoteSentences(
+        "ChatGPT menulis “Acne Peeling terbaik”.",
+        quotableTexts(["q1"], facts, observations, questions, [
+          "Acne Peeling terbaik di Depok",
+        ]),
+      ),
+    ).toHaveLength(1);
   });
 
-  it("ends a sentence at 'dll.' or 'vitamin C.' before a capital, never at 'dr.'", () => {
-    for (const first of [
-      "Krim ini mengandung vitamin C.",
-      "Ada laser, peeling, dll.",
+  it("ends a sentence at 'dll.' before a capital, never at an initial", () => {
+    expect(
+      withoutUnfoundQuotes(
+        "Ada laser, peeling, dll. ChatGPT menulis “Aruna adalah klinik terbaik”. Seruni disebut.",
+        onlyChatGPT(),
+      ).text,
+    ).toBe("Ada laser, peeling, dll. Seruni disebut.");
+    expect(
+      withoutUnfoundQuotes(
+        "Klinik dipimpin dokter S. Wijaya yang menurut ChatGPT “paling berpengalaman di Depok”. Seruni disebut.",
+        onlyChatGPT(),
+      ).text,
+    ).toBe("Seruni disebut.");
+  });
+
+  it("checks a straight quotation opened before a cut, and a curly one never closed", () => {
+    for (const sentence of [
+      'ChatGPT menulis "… Aruna adalah klinik terbaik di Depok".',
+      'ChatGPT menulis "...Aruna adalah klinik terbaik di Depok".',
+      "ChatGPT menulis “Aruna adalah klinik terbaik di Depok.",
     ])
       expect(
-        withoutUnfoundQuotes(
-          `${first} ChatGPT menulis “Aruna adalah klinik terbaik”. Seruni disebut.`,
-          onlyChatGPT(),
-        ).text,
-      ).toBe(`${first} Seruni disebut.`);
+        unfoundQuoteSentences(sentence, onlyChatGPT("Klinik Seruni.")),
+      ).toEqual([sentence]);
+    expect(
+      quoteFound("500.000 per sesi", ["Klinik Seruni Rp500.000 per sesi."]),
+    ).toBe(true);
   });
 
   it("the guide's model finding passes; a made-up quotation is listed", () => {

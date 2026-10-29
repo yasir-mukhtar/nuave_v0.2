@@ -675,15 +675,19 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   quotes its completed answers or the titles of the sources they cite; one
   that credits Google alone quotes its AI Overview; a question only when
   the sentence credits neither alone or speaks of the question ("Saat
-  ditanya"); the business's names and confirmed profile (services,
-  doctors, branches), the other businesses, the search topics and the
-  report's labels ("Tidak disebut", "Peta Pesaing") are always allowed;
+  ditanya"); the business's names, the other businesses, the search
+  topics and the report's labels ("Tidak disebut", "Peta Pesaing") are
+  always allowed, and so is a name from the confirmed profile (its other
+  names, the product or branch, category, offerings, named comparators,
+  market areas) quoted whole; the owner's own claims (what sets it apart,
+  a public fact, customers' needs) never are;
   pages Nuave read, and their titles, only when the sentence names no
   source or speaks of a page or site.
 - Words are compared, not characters: lower-case letters and digits, whole
   words, so punctuation, dashes, Markdown, nested quotation marks, link
   citations and ChatGPT's citation markers never matter, and "Aruna" is
-  never found inside "Karuna". Texts are compared as the writer read them,
+  never found inside "Karuna"; letters and digits are split ("Rp500" is
+  "rp 500"). Texts are compared as the writer read them,
   without phone numbers. "sampai" between two numbers matches a dash.
 - A cut is marked "[…]" (or "…"): at most two cuts, each piece at least
   two words, all pieces in order in one paragraph of one text.
@@ -696,8 +700,9 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   A headline whose caption fails goes; an emptied verdict is left for the
   page's own; a plan step keeps its words without the quotation marks.
   Never a failed order. Sentences never end inside a quotation or after an
-  abbreviation ("dr.", "Jl."), but do end at "dll." or "vitamin C." before
-  a capital letter.
+  abbreviation or initial ("dr.", "Jl.", "dokter S. Wijaya"), but do end at
+  "dll." before a capital letter. A “ never closed runs to the end of its
+  sentence and is checked.
 - Known limits: a quoted single word is a label and is not checked; the
   check proves the words were saved, not that the quotation keeps the
   answer's context (the guide's rule, and the founder's read in the blind

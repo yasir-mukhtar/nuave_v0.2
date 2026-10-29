@@ -12,7 +12,7 @@ import {
   saveableTwoSourceWriting,
 } from "./two-source-writing";
 import { hasWriterFacts } from "./two-source-writer";
-import { profileWords, quoteViolations, repairQuotes } from "./quote-check";
+import { profileNames, quoteViolations, repairQuotes } from "./quote-check";
 import {
   buildAuditReport,
   normalizeReportEvidence,
@@ -478,7 +478,7 @@ export async function createValidatedAuditReport(
   const questions = new Map(
     lockedInput.prompts.map((prompt) => [prompt.prompt_id, prompt.question]),
   );
-  const profile = profileWords(lockedInput.brief);
+  const profile = profileNames(lockedInput.brief);
   const sourceErrorsFor = (draft: typeof content) =>
     sourceFacts
       ? [

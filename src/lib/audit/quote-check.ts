@@ -9,6 +9,11 @@
  * and dropped after it.
  */
 import { stripPhoneNumbers } from "../checks/phones";
+import {
+  contextNamedComparators,
+  isDirectTenAuditContext,
+  type AuditSubject,
+} from "./direct-ten-context-v2";
 import { ABBREVIATION, type TwoSourceReportFacts } from "./two-source-report";
 import type { AuditObservation, ReportContent } from "./types";
 
@@ -69,7 +74,10 @@ function splitWords(text: string): string[][] {
     .split(/\n\s*\n/)
     .map((paragraph) => {
       const words =
-        paragraph.toLocaleLowerCase("id-ID").match(/[\p{L}\p{N}]+/gu) ?? [];
+        paragraph
+          .toLocaleLowerCase("id-ID")
+          .replace(/(\p{L})(?=\p{N})|(\p{N})(?=\p{L})/gu, "$1$2 ")
+          .match(/[\p{L}\p{N}]+/gu) ?? [];
       return words.filter(
         (word, i) =>
           !(
@@ -129,8 +137,7 @@ function allQuotations(text: string): Quotation[] {
     text[i] === kind.open ||
     (text[i] === kind.straight &&
       !isWordChar(text[i - 1]) &&
-      /[^\s]/.test(text[i + 1] ?? " ") &&
-      (isWordChar(text[i + 1]) || /["'“‘(\[]/.test(text[i + 1]!)));
+      /[^\s]/.test(text[i + 1] ?? " "));
   const closes = (i: number, kind: typeof DOUBLE) =>
     (text[i] === kind.close && (kind === DOUBLE || !isWordChar(text[i + 1]))) ||
     (text[i] === kind.straight &&
@@ -162,21 +169,28 @@ function allQuotations(text: string): Quotation[] {
     if (!kind || !opens(i, kind)) continue;
     const close = text[i] === "“" ? closeOf(i, kind, true) : -1;
     const end = close >= 0 ? close : closeOf(i, kind, false);
-    if (end < 0) continue;
-    out.push({ quote: text.slice(i + 1, end), start: i, end: end + 1 });
-    i = end;
+    if (end >= 0) {
+      out.push({ quote: text.slice(i + 1, end), start: i, end: end + 1 });
+      i = end;
+    } else if (text[i] === "“") {
+      // Never closed: it runs to the end of its sentence, so it is checked.
+      const rest = text.slice(i + 1).search(/[.!?](?=\s|$)|\n\s*\n/);
+      const stop = rest < 0 ? text.length : i + 1 + rest;
+      out.push({ quote: text.slice(i + 1, stop), start: i, end: stop });
+      i = stop - 1;
+    }
   }
   return out;
 }
 
 const wordCount = (text: string) => quoteWords(text).flat().length;
 
-/** "dll." or "vitamin C." before a capital letter ends a sentence; "dr.",
- * "Jl." or an initial in a name ("dr. A.", "Rina S.") does not. */
+/** "dll." before a capital letter ends a sentence; "dr.", "Jl." or an
+ * initial ("dokter S. Wijaya", and so "vitamin C." too) does not. */
 function endsAnyway(before: string, after: string): boolean {
-  if (!/^\s+\p{Lu}/u.test(after)) return false;
-  if (/(?:^|\s)(?:dll|dsb|dst)\.$/i.test(before)) return true;
-  return /(?:^|\s)\p{Ll}+\s\p{Lu}\.$/u.test(before);
+  return (
+    /^\s+\p{Lu}/u.test(after) && /(?:^|\s)(?:dll|dsb|dst)\.$/i.test(before)
+  );
 }
 
 /** Sentence spans. A sentence ends at ".", "!" or "?" before a space, never
@@ -219,18 +233,18 @@ export type QuotableTexts = {
   chatgpt: string[];
   google: string[];
   questions: string[];
-  /** Names, topics, the business's confirmed profile and the report's
-   * labels. */
+  /** Names, topics and the report's labels. */
   shared: string[];
+  /** The confirmed profile's names, quoted only whole. */
+  profile: string[];
   pages: string[];
 };
 
 /** The texts a passage may quote: for these prompt IDs (all of them when
  * none are given) the completed ChatGPT answers and the titles of the
  * sources they cite, the Google AI Overviews and the questions; every page
- * Nuave read and its title; and the names, topics, the confirmed profile's
- * words (services, doctors, branches) and labels the report may put in
- * quotation marks. */
+ * Nuave read and its title; the names, topics and labels the report may
+ * put in quotation marks; and the confirmed profile's names. */
 export function quotableTexts(
   ids: readonly string[] | undefined,
   facts: TwoSourceReportFacts,
@@ -262,8 +276,8 @@ export function quotableTexts(
         .filter(([id]) => wanted.has(id))
         .map(([, question]) => question),
     ),
+    profile: clean([...profile]),
     shared: clean([
-      ...profile,
       ...(facts.names ?? []),
       ...(facts.writer?.businesses ?? []),
       ...(facts.writer?.questions ?? []).map((q) => q.topic ?? ""),
@@ -301,6 +315,12 @@ function textsForSentence(sentence: string, texts: QuotableTexts): string[] {
   ];
 }
 
+/** Whether a quotation is one of the profile's names, whole. */
+function isProfileName(quote: string, names: readonly string[]): boolean {
+  const words = joined(quoteWords(quote).flat());
+  return names.some((name) => joined(quoteWords(name).flat()) === words);
+}
+
 /** Sentences of a text whose quotations are not found, and the rest. */
 function splitByQuotes(text: string, texts: QuotableTexts) {
   const quotes = allQuotations(text);
@@ -312,6 +332,7 @@ function splitByQuotes(text: string, texts: QuotableTexts) {
         q.start >= s &&
         q.end <= e &&
         wordCount(q.quote) >= MIN_QUOTE_WORDS &&
+        !isProfileName(q.quote, texts.profile) &&
         !quoteFound(q.quote, textsForSentence(sentence, texts)),
     );
   });
@@ -413,17 +434,24 @@ export function quoteViolations(
   );
 }
 
-/** The short words of a confirmed profile or brief (names of services,
- * doctors and branches), which the report may put in quotation marks. */
-export function profileWords(value: unknown): string[] {
-  if (typeof value === "string")
-    return value.length <= 300 && !/^(?:data:|https?:)/.test(value)
-      ? [value]
-      : [];
-  if (Array.isArray(value)) return value.flatMap(profileWords);
-  if (value && typeof value === "object")
-    return Object.values(value).flatMap(profileWords);
-  return [];
+/** The names in a confirmed profile or brief: the business and its other
+ * names, the product or branch audited, the category, the offerings, the
+ * named comparators and the market areas. Never the owner's own claims
+ * (what sets it apart, a public fact, customers' needs). A quotation must
+ * be one of them whole. */
+export function profileNames(subject: AuditSubject): string[] {
+  if (!isDirectTenAuditContext(subject))
+    return [subject.brand_name, ...subject.brand_name_variants].filter(Boolean);
+  const focus = subject.focus.value;
+  return [
+    subject.identity.name,
+    ...subject.identity.aliases,
+    ...(focus.kind === "brand" ? [] : [focus.name]),
+    subject.category.value,
+    ...subject.offerings.value,
+    ...contextNamedComparators(subject),
+    ...(subject.market?.value.areas ?? []),
+  ].filter(Boolean);
 }
 
 /** A text's quotations without their quotation marks. */
