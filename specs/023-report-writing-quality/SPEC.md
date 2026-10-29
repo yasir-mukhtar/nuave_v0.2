@@ -636,9 +636,13 @@ The founder revised the guide with another model and approved the result
     ringkasan", "ringkasan itu", "ringkasan yang tampil") and never beside
     "jawaban", "sebagai ringkasan" or "ringkasan hasil";
   - a competitor's short form ("Seruni" for "Klinik Seruni") is read as that
-    competitor when it is capitalised as in the name, is not a generic or
+    competitor only when its full name appears in the same finding, verdict
+    or conclusion, it is capitalised as in the name, it is not a generic or
     topic word ("Umum", "Jerawat", "Laser"), and no owner name and no other
-    listed business shares it;
+    listed business shares it (so a city ending a clinic's name is never
+    read alone);
+  - R-02's "names its source" needs "ChatGPT" or "Google"; "ringkasan"
+    alone reads a claim as Google's but does not name the source;
   - a conclusion names a source when any clause about the owner or another
     business says named, recommended, cited, suggested, present or listed,
     or counts; a page detail ("Nama dokter tidak ditemukan pada halaman")

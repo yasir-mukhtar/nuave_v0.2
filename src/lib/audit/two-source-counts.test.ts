@@ -453,7 +453,11 @@ describe("Spec 023: the founder's guide, read by the checker", () => {
     const finding = (explanation: string) => ({
       ...report,
       key_findings: [
-        { title: "ChatGPT", explanation, evidence_prompt_ids: bekas },
+        {
+          title: "ChatGPT menyebut Klinik Seruni",
+          explanation,
+          evidence_prompt_ids: bekas,
+        },
       ],
     });
     expect(
@@ -575,5 +579,51 @@ describe("Spec 023: the founder's guide, read by the checker", () => {
         "Nama dokter tidak ditemukan pada halaman yang diperiksa. Lengkapi halaman itu lebih dulu.",
       ),
     ).toBe(false);
+  });
+
+  it("reads a short competitor name only after its full name, never a city alone (review round 8)", () => {
+    const facts = guideFacts(0);
+    facts.writer!.businesses.push("Klinik Kecantikan Depok");
+    facts.writer!.questions[6]!.businesses.chatgpt.push(
+      "Klinik Kecantikan Depok",
+    );
+    const titled = (title: string, explanation: string) =>
+      contradictions(
+        {
+          ...report,
+          key_findings: [{ title, explanation, evidence_prompt_ids: gIds }],
+          two_source_writing: { verdict: "ChatGPT dan Google diuji." },
+        },
+        facts,
+      );
+    // Aruna was never named: a claim with no subject is about Aruna.
+    expect(
+      titled("Disebut ChatGPT di Depok", "ChatGPT menjawab pertanyaan ini."),
+    ).not.toEqual([]);
+    // After the full name, the short form is that clinic.
+    expect(
+      titled(
+        "ChatGPT menyebut Seruni",
+        "ChatGPT menyebut Klinik Seruni dalam jawaban tentang bekas jerawat.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("names a source only with ChatGPT or Google, not with 'ringkasan' alone", () => {
+    expect(
+      twoSourceWritingViolations(
+        {
+          ...report,
+          key_findings: [
+            {
+              title: "Aruna tidak ada di ringkasan",
+              explanation: "Dalam semua ringkasan, Aruna tidak disebut.",
+              evidence_prompt_ids: gIds,
+            },
+          ],
+        },
+        guideFacts(),
+      ).join(" "),
+    ).toMatch(/Key finding 1 must say which source/);
   });
 });

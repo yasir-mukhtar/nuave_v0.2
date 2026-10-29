@@ -389,7 +389,10 @@ const meansGoogle = (text: string) =>
     /\b(?:\d+|ke\p{L}+|semua|setiap)\s+ringkasan\b|\bringkasan\s+(?:itu|tersebut|yang\s+tampil|AI)\b/iu.test(
       digitsForWords(text),
     ));
-const namesSource = (text: string) => namesChatGpt(text) || meansGoogle(text);
+/** R-02: a finding or conclusion names its source with "ChatGPT" or
+ * "Google"; "ringkasan" alone reads a claim as Google's but does not name
+ * the source. */
+const namesSource = (text: string) => namesChatGpt(text) || namesGoogle(text);
 
 type Source = "chatgpt" | "google";
 type ClauseSources = { sources: Source[]; explicit: boolean };
@@ -524,6 +527,7 @@ const isTopic = (word: string | undefined) =>
 function namedGroup(
   clause: string,
   facts: TwoSourceReportFacts,
+  context = clause,
 ): string | null {
   if (ABSOLUTE.test(clause)) return null;
   const words = clause.match(/[\p{L}\p{N}][\p{L}\p{N}-]*/gu) ?? [];
@@ -553,7 +557,7 @@ function namedGroup(
     const after = next[taken.length];
     if (
       refersToOwner(after ? `${base} ${after}` : base, facts, yang) ||
-      competitorsIn(base, facts).length ||
+      competitorsIn(base, facts, context).length ||
       (yang && /\b(?:bisnis|klinik|usaha|merek|tempat)\b/i.test(base))
     )
       return null;
@@ -634,13 +638,18 @@ function hasName(clause: string, name: string): boolean {
 function competitorIn(
   clause: string,
   facts: TwoSourceReportFacts,
+  context = clause,
 ): string | null {
-  return competitorsIn(clause, facts)[0] ?? null;
+  return competitorsIn(clause, facts, context)[0] ?? null;
 }
 
 /** Every other business the answers name that the clause names, the
  * longest first; a name inside a longer one found already counts once. */
-function competitorsIn(clause: string, facts: TwoSourceReportFacts): string[] {
+function competitorsIn(
+  clause: string,
+  facts: TwoSourceReportFacts,
+  context = clause,
+): string[] {
   const found: string[] = [];
   const businesses = [...(facts.writer?.businesses ?? [])].sort(
     (a, b) => b.length - a.length,
@@ -650,9 +659,11 @@ function competitorsIn(clause: string, facts: TwoSourceReportFacts): string[] {
       found.push(name);
   // A short form the writer uses after the full name ("Seruni" for "Klinik
   // Seruni", "ERHA" for "ERHA Ultimate Batam"): the name's first distinctive
-  // word, when no owner name and no other listed business shares it.
+  // word, when the full name appears in the same text (a finding, the
+  // verdict, the conclusion) and no owner name and no other listed business
+  // shares it. A city that ends a clinic's name is never read on its own.
   for (const name of businesses) {
-    if (found.includes(name)) continue;
+    if (found.includes(name) || !hasName(context, name)) continue;
     const short = shortName(name);
     if (
       short &&
@@ -785,7 +796,11 @@ function failedSources(
  * "ChatGPT tidak menyebut Aruna dalam empat jawaban tentang bekas jerawat"
  * is. Only a sentence's opening clauses join; a count clause after a claim
  * keeps the claim's polarity as before. */
-function clausesOf(sentence: string, facts: TwoSourceReportFacts): string[] {
+function clausesOf(
+  sentence: string,
+  facts: TwoSourceReportFacts,
+  context: string,
+): string[] {
   const text = digitsForWords(sentence);
   const out: string[] = [];
   let at = 0;
@@ -793,7 +808,11 @@ function clausesOf(sentence: string, facts: TwoSourceReportFacts): string[] {
   for (const m of text.matchAll(new RegExp(CLAUSE_SPLIT.source, "gi"))) {
     const part = text.slice(at, m.index);
     at = m.index! + m[0].length;
-    if (!out.length && /^\s*,\s*$/.test(m[0]) && leadingLimit(part, facts)) {
+    if (
+      !out.length &&
+      /^\s*,\s*$/.test(m[0]) &&
+      leadingLimit(part, facts, context)
+    ) {
       lead = lead ? `${lead} ${part}` : part;
       continue;
     }
@@ -822,15 +841,20 @@ function joinLead(lead: string, part: string): string {
  * questions ("Dalam empat jawaban tentang bekas jerawat", "Untuk pertanyaan
  * tentang harga"); "Ketika audit ini dijalankan" or "Sebagai klinik di
  * Depok" limits nothing. */
-const leadingLimit = (clause: string, facts: TwoSourceReportFacts) =>
+const leadingLimit = (
+  clause: string,
+  facts: TwoSourceReportFacts,
+  context: string,
+) =>
   !NEGATIVE.test(clause) &&
   !POSITIVE.test(clause) &&
-  (!!namedGroup(clause, facts) || GROUP_SIZE.test(clause));
+  (!!namedGroup(clause, facts, context) || GROUP_SIZE.test(clause));
 
 function contradictedSources(
   sentence: string,
   facts: TwoSourceReportFacts,
   scope?: CheckScope,
+  context = sentence,
 ): Contradiction {
   const out = new Set<Source>();
   let droppable = false;
@@ -839,7 +863,7 @@ function contradictedSources(
   // A clause with a count but no verb ("…; di Google AI Overview, di 3 dari
   // 8 ringkasan") takes the polarity of the clause before it.
   let carriedPolarity: "negative" | "positive" | null = null;
-  for (const clause of clausesOf(sentence, facts)) {
+  for (const clause of clausesOf(sentence, facts, context)) {
     if (!clause.trim()) continue;
     const own = sourcesOf(clause);
     const at: ClauseSources = own.length
@@ -884,7 +908,7 @@ function contradictedSources(
     // is not the claim's. Only when the rest of the clause has its own
     // ("SOZO muncul di 3 dari 4 …") does the rest decide, and only in the
     // two precise readings below; today's reading keeps the whole clause.
-    const group = facts.writer ? namedGroup(clause, facts) : null;
+    const group = facts.writer ? namedGroup(clause, facts, context) : null;
     let groupNegative = negative;
     let groupPositive = positive;
     if (group && POSITIVE.test(group)) {
@@ -900,7 +924,7 @@ function contradictedSources(
     // as today).
     const competitor =
       facts.writer && !refersToOwner(clause, facts)
-        ? competitorIn(clause, facts)
+        ? competitorIn(clause, facts, context)
         : null;
     if (competitor) {
       if (RECOMMEND.test(clause)) continue;
@@ -949,7 +973,7 @@ function contradictedSources(
       const cited = new Set(scope.ids);
       // A clause about the owner and another business ("ERHA dan klinik
       // ini") must hold for each of them.
-      const subjects = [null, ...competitorsIn(clause, facts)];
+      const subjects = [null, ...competitorsIn(clause, facts, context)];
       const verdict = (source: Source) =>
         subjects.every((subject) => {
           const asked = perQuestion(facts, source, subject);
@@ -1015,8 +1039,14 @@ function contradictedSource(
   sentence: string,
   facts: TwoSourceReportFacts,
   scope?: CheckScope,
+  context = sentence,
 ): { source: "chatgpt" | "google" | "both" | null; droppable: boolean } {
-  const { sources, droppable } = contradictedSources(sentence, facts, scope);
+  const { sources, droppable } = contradictedSources(
+    sentence,
+    facts,
+    scope,
+    context,
+  );
   if (sources.size === 0) return { source: null, droppable: false };
   // A sentence about both sources is replaced by both count sentences, so its
   // true half is not lost.
@@ -1073,7 +1103,7 @@ export function sentences(text: string): string[] {
  * the next step need not name a source; one that says the business was or
  * was not named, or counts, does. */
 const CLAIM_VERB =
-  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|hadir|tercantum)\b/i;
+  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|dipilih|memilih|hadir|tercantum)\b/i;
 
 function makesNamingClaim(text: string, facts: TwoSourceReportFacts): boolean {
   return digitsForWords(text)
@@ -1133,7 +1163,12 @@ export function repairTwoSourceWriting<
   // full stop (N-26).
   const fix = (
     text: string,
-    options: { title?: boolean; scope?: CheckScope; noDrop?: boolean } = {},
+    options: {
+      title?: boolean;
+      scope?: CheckScope;
+      noDrop?: boolean;
+      context?: string;
+    } = {},
   ) => {
     const parts = sentences(text);
     let dropped = 0;
@@ -1142,6 +1177,7 @@ export function repairTwoSourceWriting<
         sentence,
         facts,
         options.scope,
+        options.context ?? text,
       );
       if (!source) return [sentence];
       changed = true;
@@ -1177,11 +1213,13 @@ export function repairTwoSourceWriting<
   }
   const repaired = content.key_findings.map((finding) => {
     const scope = { ids: finding.evidence_prompt_ids ?? [] };
-    const title = fix(finding.title, { title: true, scope });
-    const explanation = fix(finding.explanation, { scope });
+    const context = `${finding.title}. ${finding.explanation}`;
+    const title = fix(finding.title, { title: true, scope, context });
+    const explanation = fix(finding.explanation, { scope, context });
     return {
       finding,
       scope,
+      context,
       title,
       explanation,
       empty: !title.text.trim() || !explanation.text.trim(),
@@ -1197,10 +1235,15 @@ export function repairTwoSourceWriting<
           title: true,
           scope: item.scope,
           noDrop: true,
+          context: item.context,
         });
     const explanationFix = kept.length
       ? item.explanation
-      : fix(item.finding.explanation, { scope: item.scope, noDrop: true });
+      : fix(item.finding.explanation, {
+          scope: item.scope,
+          noDrop: true,
+          context: item.context,
+        });
     if (kept.length) sentencesDropped += title.dropped + explanationFix.dropped;
     let explanation = explanationFix.text;
     if (!names(`${title.text} ${explanation}`)) {
@@ -1261,22 +1304,34 @@ export function twoSourceWritingViolations(
         `Key finding ${index + 1} must say which source it is about, in natural words that include "${SOURCE_CHATGPT}" or "Google".`,
       );
   });
-  const texts: [string, CheckScope | undefined][] = [
-    [content.conclusion, undefined],
-    ...content.key_findings.flatMap((f): [string, CheckScope][] => {
+  const texts: [string, CheckScope | undefined, string][] = [
+    [content.conclusion, undefined, content.conclusion],
+    ...content.key_findings.flatMap((f): [string, CheckScope, string][] => {
       const scope = { ids: f.evidence_prompt_ids ?? [] };
+      const context = `${f.title}. ${f.explanation}`;
       return [
-        [f.title, scope],
-        [f.explanation, scope],
+        [f.title, scope, context],
+        [f.explanation, scope, context],
       ];
     }),
     ...(content.two_source_writing
-      ? [[content.two_source_writing.verdict, undefined] as [string, undefined]]
+      ? [
+          [
+            content.two_source_writing.verdict,
+            undefined,
+            content.two_source_writing.verdict,
+          ] as [string, undefined, string],
+        ]
       : []),
   ];
-  for (const [text, scope] of texts)
+  for (const [text, scope, context] of texts)
     for (const sentence of sentences(text)) {
-      const { source, droppable } = contradictedSource(sentence, facts, scope);
+      const { source, droppable } = contradictedSource(
+        sentence,
+        facts,
+        scope,
+        context,
+      );
       if (!source) continue;
       if (droppable)
         violations.push(
