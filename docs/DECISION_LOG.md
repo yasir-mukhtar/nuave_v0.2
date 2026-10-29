@@ -26,6 +26,36 @@ sure whether a privacy-page link alone is enough for the coded email. Not
 naming Meta in the notice keeps the 2026-10-25 reasoning. Recorded as a
 decision for the lawyer's check, not a claim that it is compliant.
 
+## 2026-10-29 — After payment the business name can be fixed; the website stays locked
+
+Order NV-8XAPUF was placed under its Google listing name, "Klinik Dokter
+Gigi Terdekat", and the customer could not correct it: after payment the
+review's Bisnis sheet locked the name and the website together (Spec 017
+R-19, AC-13). Yasir decided that only the website stays locked. The website
+is what the order is for (the server checks it at approval, and the reading
+and search data come from it); the name is a label, and approval already
+saves the name the customer confirmed.
+
+After payment the Bisnis sheet keeps `Ubah nama`, which opens the business
+check for a name correction only; its `Kembali` and `Lanjut` return to the
+review. `Ganti website` stays hidden and the sheet says "Website sudah
+terkunci untuk pesanan ini." Nothing new is read or paid for.
+
+## 2026-10-28 — CI runs only what a PR needs, to fit 2,000 Actions minutes
+
+Yasir approved, because the monthly 2,000 GitHub Actions minutes ran out
+mid-month:
+
+1. A PR that changes only docs (`docs/` or `.md` files) runs code checks and
+   unit tests, but no build, browser tests or preview.
+2. `main` is not tested again after a merge; it checks the merge came from a
+   PR, then builds and deploys.
+3. A draft PR runs only code checks and unit tests, and gets no preview. The
+   full set and the preview run when it is marked ready for review.
+4. The Meta Pixel browser suite runs only when a file it depends on changes.
+
+Not approved: fewer test machines per run (the browser suite stays split).
+
 ## 2026-10-28 — Spec 023 approved: report writing quality
 
 After four rounds of independent review (Opus, extra-high effort; the last

@@ -299,9 +299,9 @@ function backTargetFor(
   // them.
   switch (session.stage) {
     case "brand":
-      // A review-opened name edit backs out to the review (J7); the normal
-      // brand check still steps back to the entry screen.
-      return locked ? null : (marker ?? "entry");
+      // A review-opened name edit backs out to the review (J7), also after
+      // payment; the normal brand check still steps back to the entry screen.
+      return marker ?? (locked ? null : "entry");
     case "steps":
       return locked ? null : "brand";
     case "intro-business":
@@ -2510,21 +2510,20 @@ export default function SmartIntakeJourney({
         onChange={updateSelection}
         confirmed={reviewConfirmed}
         onConfirmedChange={setReviewConfirmed}
-        onEditBrand={
-          lockedAfterPayment
-            ? undefined
-            : () => {
-                // The business row's name edit opens the brand screen; its
-                // Lanjut and Back then return to the review (J7).
-                goStage({
-                  ...session,
-                  stage: "brand",
-                  editReturn: "summary",
-                  editBaseline: undefined,
-                });
-                setError(null);
-              }
-        }
+        onEditBrand={() => {
+          // The business row's name edit opens the brand screen; its Lanjut
+          // and Back then return to the review (J7). It stays open after
+          // payment: only the website identifies the order, and a Google
+          // listing name such as "Klinik Dokter Gigi Terdekat" needs fixing
+          // (2026-10-29).
+          goStage({
+            ...session,
+            stage: "brand",
+            editReturn: "summary",
+            editBaseline: undefined,
+          });
+          setError(null);
+        }}
         onEditSource={
           lockedAfterPayment
             ? undefined
