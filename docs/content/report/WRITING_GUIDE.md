@@ -76,19 +76,17 @@ Angka per sumber sudah tampil di kartu.
 
 **Tunjukkan, jangan melabeli.** "Visibilitas Klinik A rendah" adalah label.
 "Saat ditanya soal [perawatan], ChatGPT menyebut Klinik B" adalah gambaran.
-Ganti setiap kata sifat yang menilai ("lemah", "tertinggal", "kurang
-optimal") dengan apa yang tampak di bahan. Detail kita: kata-kata
-pertanyaan, yang ditulis seperti calon pasien bertanya; nama klinik yang
-disebut; kalimat jawaban; situs yang dikutip; isi halaman klinik. Satu
-detail yang tepat lebih kuat daripada tiga kata sifat.
+Ganti setiap kata sifat yang menilai ("lemah", "tertinggal", "kurang optimal")
+dengan apa yang tampak di bahan. Detail kita: kata-kata pertanyaan, yang
+ditulis seperti calon pasien bertanya; nama klinik yang disebut; kalimat
+jawaban; situs yang dikutip; isi halaman klinik.
 
 **Kutipan.** Kutip jawaban ChatGPT atau Google AI Overview bila kata-katanya
 sendiri paling jelas menunjukkan pola. Salin persis, huruf demi huruf; boleh
 dipotong dengan "..." asal maknanya tidak berubah. Jangan merapikan,
-menerjemahkan, atau menggabungkan dua jawaban. Sebut sumbernya, dan kutip
-hanya jawaban dari pertanyaan yang dikutip temuan itu. Pilih potongan yang
-pendek dan paling tajam, paling banyak satu kutipan per temuan; laporan yang
-penuh kutipan kehilangan suara penulisnya.
+menerjemahkan, atau menggabungkan dua jawaban. Sebut sumbernya, dan pakai
+hanya jawaban dari pertanyaan yang menjadi bukti temuan itu. Pilih potongan
+yang pendek dan paling tajam, paling banyak satu kutipan per temuan.
 
 **Satu pertanyaan sebagai contoh.** Di dalam temuan, ceritakan dulu satu
 pertanyaan yang paling mewakili: apa yang ditanyakan, siapa yang disebut.
@@ -98,9 +96,8 @@ harus termasuk yang dikutip temuan.
 **Kalimat dan alinea.** Setiap kalimat membawa satu pokok. Gabungkan
 keterangan yang saling bergantung; pecah kalimat ketika pokoknya berganti.
 Variasikan panjangnya: kalimat pendek untuk menegaskan, tetapi pecahan yang
-terlalu sering membuat bacaan tersendat, dan kalimat pendek melulu
-membosankan. Satu paragraf temuan cukup tiga atau empat kalimat. Baca dengan
-suara pelan, lalu benahi bagian yang tersendat.
+terlalu sering membuat bacaan tersendat. Satu paragraf temuan cukup tiga atau
+empat kalimat. Baca dengan suara pelan, lalu benahi bagian yang tersendat.
 
 **Kata kerja adalah busi.** Pilih kata kerja aktif yang ringkas. Pilih kata
 dasar daripada kata bentukan panjang. Kalimat pasif boleh untuk menjaga
@@ -136,10 +133,8 @@ membandingkan dua kelompok memberi angka untuk satu kelompok saja.
 Judul rekomendasi diawali kata kerja yang tegas. Judul dan isi sama
 cakupannya.
 
-**Transisi yang tidak terasa.** Sambungkan kalimat dan paragraf lewat hal
-yang sedang dibahas, bukan dengan "selain itu" atau "lebih lanjut" berulang
-kali. Jangan mengganti istilah yang tepat dengan sinonim hanya supaya
-beragam.
+**Transisi yang tidak terasa.** Sambungkan kalimat dan paragraf lewat hal yang
+sedang dibahas, bukan dengan "selain itu" atau "lebih lanjut" berulang kali.
 
 **Penutup yang tinggal di kepala.** Penutup tidak meringkas ulang. Kembali ke
 gambar di teras, lalu bawa pemilik ke langkah berikutnya. Kalimat terakhirnya
@@ -214,11 +209,11 @@ tanpa nama. Tidak disebut. Ringkasan tidak tampil (Google tidak menampilkan
 AI Overview; ini bukan jawaban yang tidak menyebut klinik). Tidak dapat
 diuji.
 
-**Yang tidak bisa kita lihat.** Cara kerja ChatGPT dan Google, jawaban untuk
-orang lain atau di waktu lain, dan dampak sebuah perbaikan. Sepuluh
-pertanyaan ini bukan gambaran seluruh pasar. Untuk angka pencarian, tulis
-"tertinggi di antara topik yang diperiksa", bukan "paling dicari". Tidak ada
-jaminan disebut, peringkat, tanggal hasil, atau kerugian pendapatan.
+**Yang tidak bisa kita lihat.** Cara kerja ChatGPT dan Google, jawaban di
+waktu lain, dan dampak sebuah perbaikan. Sepuluh pertanyaan ini bukan gambaran
+seluruh pasar. Untuk angka pencarian, tulis "tertinggi di antara topik yang
+diperiksa", bukan "paling dicari". Tidak ada jaminan disebut, peringkat,
+tanggal hasil, atau kerugian pendapatan.
 
 ## 4. Contoh
 

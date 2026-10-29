@@ -583,6 +583,13 @@ gain a sample question and answer in the practice material. Every model
 sentence still passes R-03 when true. A code check that quoted text exists
 in the saved answers is proposed, not built.
 
+Known limit (review round 6): R-03 does not read counts written as ordinals
+("keempat jawaban", "ketiga jawaban lain") or groups without a count
+("sebagian", "tidak disebut dalam jawaban tentang [perawatan]"); such
+sentences are not checked, as before Spec 023. Reading "ke<N>" as a count
+would check it against every question a finding cites, which drops true
+sentences in a finding that compares two groups, so it is left for later.
+
 ## Verification record
 
 Complete after implementation:
