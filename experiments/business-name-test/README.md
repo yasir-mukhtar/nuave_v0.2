@@ -41,15 +41,16 @@ old method (first of site name label, share title, page title) picked.
 
 | | Right |
 | --- | --- |
-| Old method | 63 of 103 |
-| New picker | **96 of 103** |
+| Old method | 60 of 100 |
+| New picker | **93 of 100** |
 
-103 of 104 homepages were read (rspantinirmala.com reset the connection). No
-site the old method got right is wrong now. The picker was sure of 85 of its
-96 right answers, and unsure of 5 of its 7 wrong ones.
+100 of 104 homepages were read; four refused or reset the connection on the
+day, and which ones varies from run to run. No site the old method got right
+is wrong now. The picker was sure of 83 of its 93 right answers, and unsure
+of 5 of its 7 wrong ones.
 
 An earlier run the same day read 99 sites. The first version of the picker
-scored 82 of those 99. The misses led to these fixes, so the 96 is measured
+scored 82 of those 99. The misses led to these fixes, so the 93 is measured
 on the sites the fixes came from and flatters the picker; a fresh list would
 score somewhat lower. The fixes were: ignore labels that are a web address
 or a blocked-page notice ("Request Rejected"); drop "Welcome to" and
@@ -68,9 +69,11 @@ The 7 still wrong:
   "Home" in their labels; rsgm.unair.ac.id blocks the reader. The picker
   returns nothing and the free check shows a name made from the web address.
 
-Asking the customer to confirm the name when the picker is unsure would
-catch all but EternaMoore and Conquera, and those two still contain the
-right name.
+When the picker is unsure, the free check now asks the owner to check the
+name before going on (the "Periksa nama bisnis" step). That catches all but
+EternaMoore and Conquera, and those two still contain the right name. It also
+asks on 10 of the 93 right answers, where the owner just saves the name as
+it is.
 
 `run.ts` reads each whole page with a plain request; the picker only looks
 at the page head, as the free check does. The free check's own reader also
