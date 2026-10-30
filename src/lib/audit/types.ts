@@ -188,6 +188,10 @@ export const extractionRequestSchema = z.object({
  * `source_url` is the public page that publishes the address; it may be empty
  * when the draft cannot name a more specific page than the supplied website.
  */
+/** The most branches the paid reading offers the quiz (founder decision of
+ * 2026-10-28; it was 8). The owner still picks one. */
+export const MAX_PUBLISHED_LOCATIONS = 20;
+
 export const publishedLocationSchema = z.object({
   name: z.string().trim().min(1).max(160),
   address: z.string().trim().min(1).max(300),
@@ -223,7 +227,10 @@ export const extractionDraftSchema = z.object({
     .enum(["sekitar", "beberapa", "seluruh", "luar", ""])
     .default(""),
   market_areas: z.array(z.string().trim().min(1).max(160)).max(8).default([]),
-  published_locations: z.array(publishedLocationSchema).max(8).default([]),
+  published_locations: z
+    .array(publishedLocationSchema)
+    .max(MAX_PUBLISHED_LOCATIONS)
+    .default([]),
   category_suggestions: z
     .array(z.string().trim().min(1).max(200))
     .max(3)
@@ -484,6 +491,11 @@ const priorityItemSchema = z.object({
 export const TWO_SOURCE_WRITING_VERSION =
   "nuave-two-source-writing-v1" as const;
 
+/** Spec 023 R-12: the two-source writer's prompt version, recorded in the
+ * report's provenance so a delivered report shows which writer wrote it.
+ * The saved block keeps TWO_SOURCE_WRITING_VERSION (its shape is unchanged). */
+export const TWO_SOURCE_PROMPT_VERSION = "nuave-two-source-prompt-v2" as const;
+
 /**
  * Spec 021 Part B: what the new writer adds to a two-source report, saved
  * with it. Absent on every report written before Part B.
@@ -492,7 +504,7 @@ export const twoSourceWritingSchema = z.object({
   version: z.literal(TWO_SOURCE_WRITING_VERSION),
   /** One or two sentences for the header. */
   verdict: z.string(),
-  /** "Disebut AI karena: …", per business named in the answers. */
+  /** "Menurut jawaban AI: …" (Spec 023 R-07), per business named in the answers. */
   competitor_reasons: z
     .array(z.object({ name: z.string(), reason: z.string() }))
     .max(20),
@@ -583,6 +595,13 @@ export const TWO_SOURCE_WRITING_MAX_ITEMS = 6;
  * and wording are checked by code afterwards.
  */
 export const twoSourceWritingSynthesisSchema = z.object({
+  // Spec 023 R-08: the plan before writing, first so it is written first.
+  // Never saved. No bounds: the Claude SDK moves array bounds into
+  // descriptions, and the check after it would then fail a paid call.
+  storyline: z.object({
+    main_message: z.string(),
+    support: z.array(z.string()),
+  }),
   verdict: z.string(),
   conclusion: z.string(),
   accuracy_status: reportContentSchema.shape.accuracy_status,

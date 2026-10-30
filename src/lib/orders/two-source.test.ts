@@ -9,7 +9,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 }));
 
 import { generateSyntheticLocalReport } from "../audit/local-direct-ten-audit";
-import type { AuditReport } from "../audit/types";
+import { TWO_SOURCE_PROMPT_VERSION, type AuditReport } from "../audit/types";
 import { makeSmartCustomerEvidenceExport } from "../audit/customer-evidence-export";
 import { buildReportPresentation } from "../audit/report-presentation";
 import { containsPhoneNumber } from "../checks/phones";
@@ -427,6 +427,57 @@ describe("source-aware writing and search-data claims (R-28, AC-05, B-2, B-3)", 
     expect(orderRow(id).state).toBe("delivered");
     const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
     expect(report.conclusion).toContain("tidak disebut di 5 ringkasan lainnya");
+  });
+
+  it("Spec 023 AC-02: a long sentence is neither sent back nor cut", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const long =
+      "Di ChatGPT, jawaban untuk pertanyaan umum tentang kota dan untuk pertanyaan yang lebih spesifik tentang layanan serta harga masih mengarah ke tempat lain yang menulis halamannya dengan lebih lengkap dan lebih jelas.";
+    expect(long.split(/\s+/).length).toBeGreaterThan(30);
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return { ...result, content: { ...result.content, conclusion: long } };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(0);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.conclusion).toBe(long);
+  });
+
+  it("Spec 023 AC-04 and AC-10: a dash alone is replaced by code without a revision, and the report records the new writer", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    const revisions: unknown[] = [];
+    const t = deps(undefined, {
+      generateReport: async (...args) => {
+        const result = await generateSyntheticLocalReport(...args);
+        if (args[1]) revisions.push(args[1].violations);
+        return {
+          ...result,
+          content: {
+            ...result.content,
+            conclusion: `${result.content.conclusion} Langkah pertama jelas — mulai dari halaman layanan.`,
+          },
+        };
+      },
+    });
+    await runUntilEnded(t, id);
+    expect(revisions).toHaveLength(0);
+    const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
+    expect(report.conclusion).toContain(
+      "Langkah pertama jelas, mulai dari halaman layanan.",
+    );
+    expect(report.conclusion).not.toContain("—");
+    expect(report.provenance.report_prompt_version).toBe(
+      TWO_SOURCE_PROMPT_VERSION,
+    );
+    // The storyline is never saved.
+    expect(orderRow(id).report_json).not.toContain("storyline");
   });
 
   it("B-5: a plain negation the counts contradict is revised once, then repaired by code, and the order is delivered", async () => {
@@ -964,9 +1015,10 @@ describe("Spec 021 Part B: the new writer on the whole path (AC-B1, AC-B2)", () 
     const report = JSON.parse(orderRow(id).report_json!) as AuditReport;
     const writing = report.two_source_writing!;
     expect(writing.version).toBe("nuave-two-source-writing-v1");
-    // The report says which writer wrote it (the side-by-side test reads it).
+    // The report says which writer wrote it (the side-by-side test reads it;
+    // Spec 023 R-12 gives the new instructions their own version).
     expect(report.provenance.report_prompt_version).toBe(
-      "nuave-two-source-writing-v1",
+      "nuave-two-source-prompt-v2",
     );
     expect(writing.verdict).toMatch(/^Uji alur sintetis/);
     expect(writing.plan).toHaveLength(3);
@@ -1144,6 +1196,74 @@ describe("Spec 021 B-08: the pages read before the report (AC-B5)", () => {
         "SELECT kind FROM founder_notices WHERE kind != 'checks_failed'",
       ).map((n) => n.kind),
     ).toEqual(["pages_unread"]);
+  });
+
+  const ownRead = (id: string) => {
+    const own = {
+      pages: [{ ...page("https://fiksi.example/"), kind: "own", cited_in: [] }],
+      unread: ["https://fiksi.example/harga"],
+      requests: 3,
+    };
+    rows(
+      `UPDATE orders SET pages_json = '${JSON.stringify({ status: "own_read", own })}' WHERE id = '${id}' RETURNING 1`,
+    );
+  };
+
+  it("with the own site read at step 3, only the cited pages are read; the writer gets both", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    ownRead(id);
+    const reader = vi.fn<Reader>(async () => ({
+      pages: [page("https://hadirr.example/a")],
+      unread: [],
+      requests: 1,
+    }));
+    const t = deps(undefined, { pages: { reader } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(1);
+    expect(reader.mock.calls[0]![0].readOwn).toBe(false);
+    expect(writerPages(t.reportInputs[0])!.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+      "https://hadirr.example/a",
+    ]);
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "kept_addresses",
+      read: "read",
+      urls: ["https://fiksi.example/", "https://hadirr.example/a"],
+      unread: ["https://fiksi.example/harga"],
+    });
+  });
+
+  it("a cited reading that never finishes still leaves the step 3 pages to the writer", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    ownRead(id);
+    const reader = vi.fn<Reader>(async () => {
+      throw new Error("the run died mid-read");
+    });
+    const t = deps(undefined, { pages: { reader } });
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(reader).toHaveBeenCalledTimes(2);
+    expect(writerPages(t.reportInputs[0])!.map((p) => p.url)).toEqual([
+      "https://fiksi.example/",
+    ]);
+  });
+
+  it("without the page reader, the step 3 page text is still dropped when the report is saved", async () => {
+    const id = await makeOrder(d1.db, { now: clock });
+    await approveTwoSource(d1.db, id, { now: clock });
+    ownRead(id);
+    const t = deps();
+    await runUntilEnded(t, id);
+    expect(orderRow(id).state).toBe("delivered");
+    expect(JSON.parse(orderRow(id).pages_json!)).toEqual({
+      status: "kept_addresses",
+      read: "read",
+      urls: ["https://fiksi.example/"],
+      unread: ["https://fiksi.example/harga"],
+    });
   });
 
   it("without the page reader (synthetic mode) there is no pages step", async () => {

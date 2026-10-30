@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   backButton,
   cancelReviewSheet,
+  editBusinessFromReview,
   CONFIRM_BRAND,
   confirmFocus,
   continueToOrder,
@@ -18,7 +19,6 @@ import {
   holdAnswers,
   INTAKE_SESSION_KEY,
   intakeSession,
-  NAME_LOCKED_NOTE,
   openAuditFromLanding,
   openReviewSheet,
   ORDER_EMAIL,
@@ -35,9 +35,11 @@ import {
   READING_HEADING,
   READING_INTERRUPTED_NOTICE,
   renameBusiness,
+  reviewFact,
   stepsScreen,
   submitOrder,
   TEST_PASS_SESSION_KEY,
+  WEBSITE_LOCKED_NOTE,
   throughDetailScreens,
   trackApiCalls as track,
   useTestPass,
@@ -136,7 +138,7 @@ test("the order summary shows the price, the promise, the Terms and Privacy link
   expect(calls["POST /api/audit/extract"]).toBeUndefined();
 });
 
-test("pay with the simulated payment: the order number shows, the paid reading starts by itself once, and the website and business are locked", async ({
+test("pay with the simulated payment: the order number shows, the paid reading starts by itself once, and the website is locked", async ({
   page,
 }) => {
   const calls = track(page);
@@ -181,23 +183,40 @@ test("pay with the simulated payment: the order number shows, the paid reading s
   await confirmFocus(page);
   await throughDetailScreens(page);
   await expectSummary(page);
-  // None from the review: the Bisnis sheet says the name and website are
-  // locked and offers neither change.
+  // From the review the website is locked, but the name can still be fixed
+  // (a Google listing name such as "Klinik Dokter Gigi Terdekat",
+  // 2026-10-29).
   const sheet = await openReviewSheet(page, "Bisnis");
   await expect(
-    sheet.getByText(NAME_LOCKED_NOTE, { exact: true }),
+    sheet.getByText(WEBSITE_LOCKED_NOTE, { exact: true }),
   ).toBeVisible();
-  await expect(sheet.getByRole("button", { name: "Ubah nama" })).toHaveCount(0);
   await expect(
     sheet.getByRole("button", { name: "Ganti website" }),
   ).toHaveCount(0);
+  await expect(sheet.getByRole("button", { name: "Ubah nama" })).toBeVisible();
   await cancelReviewSheet(page, "Bisnis");
-  // The same on a reload: still locked, still one order and one reading.
+  await editBusinessFromReview(page);
+  await expectBrandConfirm(page);
+  await expect(
+    page.getByRole("button", { name: "Ganti tautan bisnis" }),
+  ).toHaveCount(0);
+  // Kembali goes back to the review, never to the entry.
+  await pressKembali(page);
+  await expectSummary(page);
+  await editBusinessFromReview(page);
+  await renameBusiness(page, "Kedai Fiksi Baru");
+  await pressLanjut(page);
+  await expectSummary(page);
+  await expect(reviewFact(page, "Nama")).toHaveText("Kedai Fiksi Baru");
+  expect((await intakeSession(page)).order.paid).toBe(true);
+  // The same on a reload: the website still locked, still one order and one
+  // reading.
   await page.reload();
   await expectSummary(page);
+  await expect(reviewFact(page, "Nama")).toHaveText("Kedai Fiksi Baru");
   const again = await openReviewSheet(page, "Bisnis");
   await expect(
-    again.getByText(NAME_LOCKED_NOTE, { exact: true }),
+    again.getByText(WEBSITE_LOCKED_NOTE, { exact: true }),
   ).toBeVisible();
   await expect(
     again.getByRole("button", { name: "Ganti website" }),

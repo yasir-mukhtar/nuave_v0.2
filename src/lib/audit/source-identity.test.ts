@@ -127,6 +127,7 @@ describe("source identity metadata", () => {
 
     expect(metadata).toEqual({
       displayName: "Document & title",
+      nameConfident: false,
       description: "Meta description",
       iconHref: null,
     });
@@ -147,6 +148,7 @@ describe("source identity metadata", () => {
 
     expect(metadata).toEqual({
       displayName: "Kopi Taman Senja",
+      nameConfident: true,
       description: "",
       iconHref: null,
     });

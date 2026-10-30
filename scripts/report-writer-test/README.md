@@ -5,16 +5,16 @@ Test B of the [audit stack plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYF
 side-by-side writer test (B-07): eight writers on the same saved orders, each
 running today's production writer, judged blind by the founder.
 
-| Blind entry | Model | Effort |
-| --- | --- | --- |
-| `luna-low` | GPT-5.6 Luna | low |
-| `luna-high` | GPT-5.6 Luna | high |
-| `sonnet-medium` | Claude Sonnet 5.5 | medium |
-| `sonnet-high` | Claude Sonnet 5.5 | high |
-| `haiku-medium` | Claude Haiku 5.5 | medium |
-| `glm-low` | GLM 5.3 Flash (Cheaper Inference; added 2026-10-27) | low |
-| `opus-low` | Claude Opus 5.5 (added 2026-10-27) | low |
-| `opus-medium` | Claude Opus 5.5 (added 2026-10-27) | medium |
+| Blind entry     | Model                                               | Effort |
+| --------------- | --------------------------------------------------- | ------ |
+| `luna-low`      | GPT-5.6 Luna                                        | low    |
+| `luna-high`     | GPT-5.6 Luna                                        | high   |
+| `sonnet-medium` | Claude Sonnet 5.5                                   | medium |
+| `sonnet-high`   | Claude Sonnet 5.5                                   | high   |
+| `haiku-medium`  | Claude Haiku 5.5                                    | medium |
+| `glm-low`       | GLM 5.3 Flash (Cheaper Inference; added 2026-10-27) | low    |
+| `opus-low`      | Claude Opus 5.5 (added 2026-10-27)                  | low    |
+| `opus-medium`   | Claude Opus 5.5 (added 2026-10-27)                  | medium |
 
 Every entry reads the new input: today's input plus the words of Google's AI
 Overview for each question (phone numbers removed, answers longer than 3,000
@@ -101,6 +101,7 @@ whose letters are redrawn is kept aside as `scores-superseded-<time>.csv`.
 Two more writers, `luna-high-pages` and `opus-medium-pages`, are their twins
 (`luna-high`, `opus-medium`) with the same input plus the pages Firecrawl
 read for the order:
+
 - the business's own site, plus up to four of its pages about prices,
   doctors, treatments or the business, found by its site map;
 - the ten pages the ChatGPT and Google answers cited most. Social profiles,
@@ -157,3 +158,64 @@ each entry's cost, calls, wording-fix call, code repairs and cut-off answers.
 
 Pass rule (plan): the writer with the most "yes"; on a tie, the cheaper one.
 If Luna high ties Sonnet, keep Luna.
+
+## 5. Spec 023: the writing-quality test (before and after)
+
+[Spec 023](../../specs/023-report-writing-quality/SPEC.md) R-14 and R-15:
+Claude Opus 5.5 medium with pages, the writer before Spec 023 against the
+writer after it, on the same evidence and pages, from one ledger.
+`style.spec.ts` runs it; nothing is live unless `REPORT_TEST_LIVE=1`.
+
+1. **Folders.** One shared folder (an absolute path) holds `raw/` (the
+   exported evidence, as in step 1), `pages/` and `spend.json`, the one
+   ledger for both writers (`STYLE_HARD_STOP_USD`, USD 10, fresh for this
+   round; the run refuses a ledger that holds test B's unlabelled calls).
+   Each writer has its own results folder. Where an earlier test already
+   saved Sozo's evidence and pages (`raw/NV-3WDSAY-*.json`,
+   `pages/NV-3WDSAY.json`), copy them into the shared folder, so Sozo is not
+   read again.
+2. **Two checkouts.** The "after" writer runs from the frozen commit of the
+   writer change; the "before" writer from a git worktree of `main` at the
+   commit before it (`git worktree add ../before <commit>`). Both commits are
+   recorded in each results folder (`commit.json`) and in every result.
+3. **Dry run, each writer** (free): prints each report's worst case (the
+   report and one revision carrying the draft, both at 24,000 output tokens)
+   and the ledger.
+
+   ```sh
+   REPORT_TEST_SHARED_DIR=/abs/shared REPORT_TEST_RESULTS_DIR=/abs/before \
+   REPORT_TEST_LABEL=before ORDERS=NV-3WDSAY RUN=1 \
+   npx vitest run --config vitest.live-provider.config.ts scripts/report-writer-test/style.spec.ts
+   ```
+
+4. **Live, after the founder's go**, one writer at a time, pair by pair
+   (before then after for each order and run), so a refused call still
+   leaves complete pairs. Add `REPORT_TEST_LIVE=1` and
+   `REPORT_TEST_MAX_OUTPUT_TOKENS=24000` (production's Claude allowance; the
+   run refuses any other). The first live run on an order reads its pages
+   with Firecrawl (at most 16 requests) into the shared folder; every later
+   run reuses them. Orders: NV-3WDSAY with `RUN=1` and `RUN=2`, and the
+   founder's second order with `RUN=1`. A report that failed is kept (its
+   cost is real) and is not run again; move `runs/<order>/run-N.json` aside
+   to redo it.
+5. **Pairs** (free), from the after writer's checkout (where the guide's
+   examples are): with `REPORT_TEST_SHARED_DIR`, `REPORT_TEST_BEFORE_DIR`
+   and `REPORT_TEST_AFTER_DIR` set, the same command lists any pair with a
+   missing side and writes
+   `style-review/<order>/Pasangan <run> - 1.json` and `- 2.json` in random
+   order, adding a row to `style-review/scores.csv` for each new pair (a
+   redrawn pair sets the old sheet aside). `style-key/key.json` and
+   `style-key/metrics.csv` name before and after: open them only after
+   scoring.
+6. **Print** from the after writer's checkout, so both reports of a pair are
+   printed by the same page: run `review.spec.ts` with
+   `REPORT_TEST_SHARED_DIR` set.
+7. **Score** each pair in `scores.csv`: for the three questions (main message
+   after the first paragraph? every finding answers "so what"? would an
+   editor change less?) write 1, 2 or sama; then the overall pick; then,
+   for each report, whether it fails the safety gate (a new causal claim, a
+   claim about AI's intent, a guarantee, or the ten questions treated as the
+   market). The storyline (from the writer change on) stays in the results
+   files until scoring is done.
+
+The pass rule is the spec's AC-11; the metrics are AC-12.

@@ -240,6 +240,11 @@ background and its outcome is never shown.
 
 ### Words and records
 
+> Superseded in part (founder, 2026-10-29): the notice is now one short layer
+> with a Privacy policy link to `/privacy#cookie` and no How it works layer.
+> R-19, R-19a, AC-11's How it works text and AC-11a no longer apply; see
+> `docs/DECISION_LOG.md`, 2026-10-29.
+
 - **R-19 Cookie notice, first layer.** Before this ships, the notice shows
   the exact Q-1 text: short and about the purpose, with a visible
   **How it works** link and the buttons Don't allow and Allow, both one tap

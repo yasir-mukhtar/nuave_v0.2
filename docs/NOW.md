@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-27
+> Updated: 2026-10-30
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -44,6 +44,13 @@
 
 ## Next action
 
+- **Report writing quality** (2026-10-28,
+  [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
+  [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The
+  test harness merged with #194. The writer change (draft PR #195) passed the
+  founder's blind test on 2026-10-30 (two pairs, Sozo and NV-8XAPUF; the
+  after writer won both). The review's fact-safety notes are fixed on the PR.
+  Waiting on the founder: the merge decision.
 - **Report v2 before G1** (2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score)):
   [Spec 021](../specs/021-report-v2/SPEC.md) reworks the report in four
@@ -69,6 +76,14 @@
 
   After the deploy, the first live order or two measure the time, cost,
   pages and CPU per report.
+
+- **Step 3 reads with Firecrawl** (2026-10-28,
+  [#189](https://github.com/yasir-mukhtar/nuave_v0.2/pull/189),
+  [decision](./DECISION_LOG.md#2026-10-28--firecrawl-reads-the-own-site-at-the-paid-website-reading)),
+  then GPT-5.6 Luna at medium effort drafts the quiz, with up to 20
+  branches
+  ([decision](./DECISION_LOG.md#2026-10-28--step-3-at-medium-effort-20-branches-and-an-easy-model-switch)).
+  To switch the step 3 or step 7 model, read [`MODELS.md`](./MODELS.md).
 - **Audit stack plan** (approved 2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--audit-stack-plan-report-test-before-g1-reading-after),
   [plan](https://claude.ai/artifact/BJ3gmR68chCiczK8CwYFR8)): its blind
@@ -111,7 +126,7 @@
   12 November. From then, check one failed order older than 30 days with
   `npm run support -- show <order>`: it should print "Made anonymous".
 - **Support commands (2026-10-25):** `npm run support -- email <order>
-  <new-email>` fixes a mistyped order email after the founder checks the
+<new-email>` fixes a mistyped order email after the founder checks the
   receipt, and sends a new report link to the new address;
   `npm run support -- norefund <order> <declined|delivered|settled>` closes a
   refund case without a refund
@@ -286,11 +301,14 @@
   2026-10-26; the Workers Free limits recorded below are history, not a
   blocker), not Pages (Pages could not serve the static assets); worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
-- CI (`.github/workflows/ci.yml`): on every PR, code checks, unit tests, the
-  build and the browser suites (the largest split in four) run side by side,
-  and `validate` passes only when all of them pass; on `main`,
-  `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
-  Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.
+- CI (`.github/workflows/ci.yml`): on every PR, code checks and unit tests;
+  the build and the browser suites (the largest split in four) run too unless
+  the PR is a draft or changes only docs, and the Meta Pixel suite only when a
+  file it depends on changes. `validate` passes only when every check the PR
+  needs passes. On `main`, no tests run again: `verify-main-origin` (fails a
+  commit without a merged PR), then `deploy`. Each non-draft PR that changes
+  code gets a `nuave-pr-<number>` preview worker with dummy keys
+  ([decision](./DECISION_LOG.md#2026-10-28--ci-runs-only-what-a-pr-needs-to-fit-2000-actions-minutes)).
 - **Since Spec 016 (PR #129, deployed 2026-10-13):** the deploy job also writes the
   runtime settings as **Worker secrets** (mode, emergency switch, daily cap,
   order limit, email list, Resend key and sender, provider keys). At run time a

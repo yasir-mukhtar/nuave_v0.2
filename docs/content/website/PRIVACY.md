@@ -1,7 +1,10 @@
 # Kebijakan Privasi dan Data
 
 > Route: `/privacy` (`src/app/privacy/page.tsx`)
-> Status: version 1.5 (2026-10-28, Spec 021 PR 6b) adds the page reader
+> Status: version 1.6 (2026-10-28) says the business's own pages are also
+> read for the business summary at the paid website reading (step 3);
+> approved by the founder on 2026-10-28 (PR #189). Version 1.5 (2026-10-28,
+> Spec 021 PR 6b) adds the page reader
 > (Firecrawl) and the public pages read for the report; waits for the
 > founder's approval in PR #185. Version 1.4 (2026-10-26, Spec 022) adds a short summary of what
 > goes to Meta at the start of the Meta part of section 10 and narrows server
@@ -27,11 +30,10 @@
   2026-10-24: keep the promise of a choice before tracking), the tracking
   change must:
   1. show a cookie notice with **Allow** and **Don't allow** (English since
-     2026-10-25), and load nothing from Meta until the visitor taps Allow; a
-     How it works link opens, inside the notice and before the choice, a
-     short explanation that names the hashed order email and Meta (Spec 022
-     layered notice, founder 2026-10-26; this replaces "the notice names
-     it", and is for the lawyer's check);
+     2026-10-25), and load nothing from Meta until the visitor taps Allow;
+     its Privacy policy link opens section 10, which names the hashed order
+     email and Meta, before the choice (founder 2026-10-29, replacing the
+     Spec 022 How it works layer; for the lawyer's check);
   2. send server events (Conversions API) only for visitors who agreed, and
      send no fields beyond those section 10 lists (event, value, IP address,
      browser type, Meta cookie codes, hashed email for purchases);
@@ -90,6 +92,11 @@
   For a paid order, the bare row and the payment records still carry Midtrans
   IDs that Midtrans can link to the customer, so paid orders are pseudonymous
   rather than anonymous; unpaid orders become effectively anonymous.
+- **Version 1.6 (2026-10-28):** the business's own pages are read with the
+  page reader at the paid website reading (step 3), so the AI provider
+  prepares the business summary from them as well as the report. Section 2's
+  "Data audit", section 6 and section 7's page-reader row say so. Approved by
+  the founder on 2026-10-28 (PR #189).
 - **Version 1.5 (2026-10-28):** Spec 021 PR 6b reads the business's own site
   and the pages the AI answers cited (Firecrawl), and the report writer
   (Anthropic) reads them. Section 2's "Data audit" adds the public pages
@@ -178,8 +185,8 @@ dalam 1 hari kerja (Senin sampai Jumat, WIB).
   calon pelanggan, pesaing, dan fakta publik lain yang Anda konfirmasi.
 - **Data audit:** sepuluh pertanyaan yang Anda setujui, jawaban ChatGPT dan
   Google AI Overview, sumber yang disebut, isi halaman web publik yang dibaca
-  untuk laporan (website bisnis Anda dan halaman yang dikutip jawaban AI), dan
-  laporan.
+  untuk ringkasan bisnis dan laporan (website bisnis Anda dan halaman yang
+  dikutip jawaban AI), dan laporan.
 - **Data teknis:** penyedia hosting kami memproses alamat IP dan
   informasi browser untuk menjalankan situs dan menahan serangan. Nuave sendiri
   tidak menyimpan alamat IP Anda.
@@ -234,8 +241,8 @@ Anda ke ChatGPT dan Google, lalu mengembalikan jawabannya kepada kami.
 
 Penyedia pembaca halaman web membaca halaman website bisnis Anda dan halaman web
 publik yang dikutip jawaban AI. Isinya, tanpa nomor telepon dan alamat email,
-kami berikan ke penyedia layanan AI untuk menyusun laporan. Isi halaman itu kami
-hapus setelah laporan selesai, atau bersama pesanan jika laporannya tidak
+kami berikan ke penyedia layanan AI untuk menyiapkan ringkasan bisnis Anda dan
+menyusun laporan. Isi halaman itu kami hapus setelah laporan selesai, atau bersama pesanan jika laporannya tidak
 selesai. Alamat halamannya disimpan bersama pesanan.
 
 Halaman yang dibaca bisa memuat nama dokter atau staf yang dicantumkan sendiri
@@ -249,7 +256,7 @@ memproses data di luar Indonesia sesuai kebijakan masing-masing.
 |---|---|---|
 | Penyedia hosting dan penyimpanan cloud | Menjalankan situs, menjaga keamanannya, dan menyimpan data pesanan serta laporan | Permintaan ke situs (termasuk alamat IP), data pesanan, data audit, dan laporan |
 | Penyedia layanan AI | Membaca website bisnis, menyiapkan ringkasan dan draf pertanyaan, dan menyusun laporan | Alamat dan isi website, data bisnis yang Anda konfirmasi, data pencarian, pertanyaan, jawaban yang diperiksa, dan isi halaman web publik yang dikutip jawaban AI |
-| Penyedia pembaca halaman web | Membaca halaman website bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan laporan | Alamat website bisnis Anda dan alamat halaman yang dikutip |
+| Penyedia pembaca halaman web | Membaca halaman website bisnis Anda, untuk ringkasan bisnis dan laporan, dan halaman web publik yang dikutip jawaban AI, untuk laporan | Alamat website bisnis Anda dan alamat halaman yang dikutip |
 | Penyedia data pencarian | Mengambil data pencarian Google dan menanyakan pertanyaan Anda ke ChatGPT dan Google | Kata kunci layanan, kota pencarian, dan sepuluh pertanyaan |
 | Midtrans | Pembayaran | Email pesanan, nomor pesanan, jumlah, dan data yang Anda isi langsung di halaman Midtrans |
 | Penyedia pengiriman email | Mengirim email pesanan dan link laporan | Email pesanan, nama bisnis, nomor pesanan, dan link laporan |

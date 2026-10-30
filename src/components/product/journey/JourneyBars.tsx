@@ -257,6 +257,8 @@ type BarAction = {
    * `outline` is the quiet way out once nothing is left to do (J29). */
   tone?: "ink" | "commit" | "outline";
   ariaDescribedBy?: string;
+  /** The action opens a dialog, such as a sheet. */
+  opensDialog?: boolean;
 };
 
 /**
@@ -355,6 +357,7 @@ export function BottomBar({
               disabled={action.disabled || action.busy}
               aria-busy={action.busy || undefined}
               aria-describedby={action.ariaDescribedBy}
+              aria-haspopup={action.opensDialog ? "dialog" : undefined}
               onClick={action.onClick}
             >
               {action.busy ? (

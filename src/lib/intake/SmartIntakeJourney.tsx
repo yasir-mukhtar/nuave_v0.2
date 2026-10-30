@@ -299,9 +299,9 @@ function backTargetFor(
   // them.
   switch (session.stage) {
     case "brand":
-      // A review-opened name edit backs out to the review (J7); the normal
-      // brand check still steps back to the entry screen.
-      return locked ? null : (marker ?? "entry");
+      // A review-opened name edit backs out to the review (J7), also after
+      // payment; the normal brand check still steps back to the entry screen.
+      return marker ?? (locked ? null : "entry");
     case "steps":
       return locked ? null : "brand";
     case "intro-business":
@@ -551,6 +551,9 @@ export default function SmartIntakeJourney({
     "lookup" | "reading" | "paying" | "questions" | "approving" | null
   >(null);
   const [error, setError] = useState<string | null>(null);
+  // The owner asked to check the name; the sheet opens once the brand
+  // screen has mounted, even if the tap came while it was sliding in.
+  const [askName, setAskName] = useState(false);
   const [interrupted, setInterrupted] = useState(false);
   // Spec 016 R-31: the email is typed here and never stored in the browser.
   const [email, setEmail] = useState("");
@@ -1162,6 +1165,7 @@ export default function SmartIntakeJourney({
         display_name?: string;
         description?: string;
         icon_data_url?: string | null;
+        confidence?: boolean;
         preparation_mode?: string;
         error?: string;
       };
@@ -1205,6 +1209,10 @@ export default function SmartIntakeJourney({
             : ("synthetic-local" as const),
         description: description || null,
         iconDataUrl: icon,
+        // Only a real reading can be unsure; the synthetic one never reads.
+        ...(result.preparation_mode === "live" && result.confidence === false
+          ? { nameUnsure: true as const }
+          : {}),
       };
       // Every step ticks off before the card appears.
       setLookupFinished(true);
@@ -2057,6 +2065,14 @@ export default function SmartIntakeJourney({
     };
   };
 
+  // The free check read the website but could not tell its name for sure:
+  // the owner saves the name once before going on.
+  const nameToCheck =
+    session.stage === "brand" &&
+    !prepared &&
+    session.identity?.nameUnsure === true &&
+    session.brand?.origin !== "owner";
+
   // ── Top bar per stage ──
   let top: ReactNode = null;
   if (session.stage === "entry")
@@ -2124,20 +2140,31 @@ export default function SmartIntakeJourney({
       <BottomBar
         progress={progress ?? undefined}
         back={back}
-        action={{
-          label: "Ya, ini bisnis saya",
-          disabled: !brandName.trim(),
-          onClick: () => {
-            // Spec 016 D1: the free brand check is followed by the order
-            // screens; the paid reading starts only after the order.
-            goStage({
-              ...session,
-              stage: "steps",
-              entry: { ...session.entry, name: brandName },
-              brand: session.brand ?? { name: brandName, origin: "owner" },
-            });
-          },
-        }}
+        action={
+          nameToCheck
+            ? {
+                label: "Periksa nama bisnis",
+                opensDialog: true,
+                onClick: () => setAskName(true),
+              }
+            : {
+                label: "Ya, ini bisnis saya",
+                disabled: !brandName.trim(),
+                onClick: () => {
+                  // Spec 016 D1: the free brand check is followed by the order
+                  // screens; the paid reading starts only after the order.
+                  goStage({
+                    ...session,
+                    stage: "steps",
+                    entry: { ...session.entry, name: brandName },
+                    brand: session.brand ?? {
+                      name: brandName,
+                      origin: "owner",
+                    },
+                  });
+                },
+              }
+        }
       />
     );
   } else if (session.stage === "brand" && prepared && selection) {
@@ -2333,6 +2360,9 @@ export default function SmartIntakeJourney({
         description={session.identity.description}
         iconDataUrl={session.identity.iconDataUrl}
         guessed={session.identity.guessed === true}
+        nameUnsure={nameToCheck}
+        askName={askName}
+        onAsked={() => setAskName(false)}
         onRename={(name) => {
           if (unsafeSmartName(name)) {
             stopSensitiveInput();
@@ -2510,21 +2540,20 @@ export default function SmartIntakeJourney({
         onChange={updateSelection}
         confirmed={reviewConfirmed}
         onConfirmedChange={setReviewConfirmed}
-        onEditBrand={
-          lockedAfterPayment
-            ? undefined
-            : () => {
-                // The business row's name edit opens the brand screen; its
-                // Lanjut and Back then return to the review (J7).
-                goStage({
-                  ...session,
-                  stage: "brand",
-                  editReturn: "summary",
-                  editBaseline: undefined,
-                });
-                setError(null);
-              }
-        }
+        onEditBrand={() => {
+          // The business row's name edit opens the brand screen; its Lanjut
+          // and Back then return to the review (J7). It stays open after
+          // payment: only the website identifies the order, and a Google
+          // listing name such as "Klinik Dokter Gigi Terdekat" needs fixing
+          // (2026-10-29).
+          goStage({
+            ...session,
+            stage: "brand",
+            editReturn: "summary",
+            editBaseline: undefined,
+          });
+          setError(null);
+        }}
         onEditSource={
           lockedAfterPayment
             ? undefined

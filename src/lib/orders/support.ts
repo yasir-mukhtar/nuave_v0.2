@@ -631,6 +631,8 @@ export function pagesSummary(json: string): string {
       return `${saved.status}, try ${saved.tries}`;
     case "no_key":
       return "not read (no Firecrawl key)";
+    case "own_read":
+      return `own site read at step 3, ${saved.own.pages.length} read, ${saved.own.unread.length} unread, ${saved.own.requests} Firecrawl requests${saved.own.stopped ? `, stopped by ${saved.own.stopped}` : ""}`;
   }
 }
 

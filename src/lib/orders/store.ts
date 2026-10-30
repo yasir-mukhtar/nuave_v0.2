@@ -1149,6 +1149,22 @@ export async function savePages(
   return result.meta?.changes === 1;
 }
 
+/** The own site's pages read at the paid website reading (step 3, founder
+ * decision 2026-10-28), saved while the order is open and has no pages yet,
+ * for its report's pages step to build on. */
+export async function saveOwnPages(
+  db: SpendDb,
+  input: { orderId: string; pagesJson: string },
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE orders SET pages_json = ?2
+       WHERE id = ?1 AND state = 'open' AND pages_json IS NULL`,
+    )
+    .bind(input.orderId, input.pagesJson)
+    .run();
+}
+
 /** R-24: each send of the ready email makes a new secret and replaces the
  * stored hash in the same write. Only the hash is stored. */
 export async function replaceLinkHash(

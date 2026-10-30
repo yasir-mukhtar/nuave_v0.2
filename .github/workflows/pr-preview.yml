@@ -2,7 +2,9 @@ name: PR Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    # ready_for_review: drafts get no preview, so the first one deploys when
+    # the PR is marked ready.
+    types: [opened, synchronize, reopened, ready_for_review, closed]
 
 concurrency:
   group: pr-preview-${{ github.event.pull_request.number }}
@@ -21,27 +23,53 @@ jobs:
     # repo's Cloudflare credentials are unavailable to them; attempting the
     # deploy would fail predictably. The author check (not the event actor)
     # keeps this true even when a human triggers the event on a bot PR.
+    # Drafts get no preview, to save GitHub Actions minutes.
     if: >-
       github.event.action != 'closed' &&
+      github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
+      # A PR that changes only docs has nothing new to preview, so the job
+      # stops here (as a pass) to save GitHub Actions minutes.
+      - name: Check whether the PR changes code
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          files="$(
+            gh api --paginate "/repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" \
+              --jq '.[] | .filename, (.previous_filename // empty)'
+          )"
+          code=false
+          if printf '%s\n' "${files}" | grep -Ev '^docs/|\.md$' | grep -q .; then
+            code=true
+          fi
+          echo "Changes code: ${code}."
+          echo "code=${code}" >> "${GITHUB_OUTPUT}"
+
       - name: Check out PR head
+        if: steps.scope.outputs.code == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Use Node.js 22
+        if: steps.scope.outputs.code == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
+        if: steps.scope.outputs.code == 'true'
         run: npm ci
 
       - name: Prepare safe preview build env
+        if: steps.scope.outputs.code == 'true'
         run: |
           cat > .env.production.local <<'EOF'
           NUAVE_PROVIDER=openai
@@ -55,6 +83,7 @@ jobs:
           EOF
 
       - name: Build OpenNext worker
+        if: steps.scope.outputs.code == 'true'
         run: npm run build:cf
 
       # Spec 016 R-14: previews use their own D1 database (nuave-v2-preview)
@@ -62,6 +91,7 @@ jobs:
       # applied to it before the preview deploys. The database must exist and
       # its id must be set in wrangler.jsonc env.preview (founder action Q5).
       - name: Apply D1 migrations (preview database)
+        if: steps.scope.outputs.code == 'true'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -71,6 +101,7 @@ jobs:
 
       - name: Deploy isolated preview worker
         id: deploy
+        if: steps.scope.outputs.code == 'true'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -80,6 +111,7 @@ jobs:
 
       - name: Normalize preview URL
         id: preview-url
+        if: steps.scope.outputs.code == 'true'
         env:
           RAW_DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
         run: |
@@ -95,6 +127,7 @@ jobs:
           echo "url=${preview_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Publish review link on the PR
+        if: steps.scope.outputs.code == 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -128,6 +161,7 @@ jobs:
           fi
 
       - name: Add preview links to job summary
+        if: steps.scope.outputs.code == 'true'
         env:
           PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
         run: |

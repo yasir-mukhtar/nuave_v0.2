@@ -1043,7 +1043,7 @@ describe("the new writer's block (Spec 021 Part B)", () => {
     expect(
       container.querySelector("[data-competitor-reason]"),
     ).toHaveTextContent(
-      "Disebut AI karena: ChatGPT menyebut menu kopi susunya.",
+      "Menurut jawaban AI: ChatGPT menyebut menu kopi susunya.",
     );
     const takeaways = container.querySelector("[data-takeaways]")!;
     expect(takeaways.querySelectorAll("li")).toHaveLength(2);

@@ -15,6 +15,7 @@ import {
 } from "../audit/source-input";
 import {
   INTAKE_TEXT_RESTRICTED_MESSAGE,
+  MAX_PUBLISHED_LOCATIONS,
   type ExtractionDraft,
 } from "../audit/types";
 import { prefillSearchPlace, type SearchPlace } from "../discovery/places";
@@ -284,11 +285,15 @@ export function prepareUnderstanding(input: {
       if (!itemSource || !locationPublishedOnCanonical(source, itemSource))
         return [];
       const key = `${name.toLocaleLowerCase("id-ID")}::${address.toLocaleLowerCase("id-ID")}`;
-      if (seenLocations.has(key) || seenLocations.size >= 8) return [];
+      if (
+        seenLocations.has(key) ||
+        seenLocations.size >= MAX_PUBLISHED_LOCATIONS
+      )
+        return [];
       seenLocations.add(key);
       return [{ name, address, sourceUrl: itemSource.normalizedUrl }];
     })
-    .slice(0, 8);
+    .slice(0, MAX_PUBLISHED_LOCATIONS);
   // A suggestion binds to its offering by repeating the offering's text; an
   // entry whose offering is not in the prepared list is dropped, and only the
   // first suggestion per offering survives (Spec 013 R-24).

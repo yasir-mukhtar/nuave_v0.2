@@ -50,7 +50,7 @@ const PROVIDERS: Array<[string, string, string]> = [
   ],
   [
     "Penyedia pembaca halaman web",
-    "Membaca halaman website bisnis Anda dan halaman web publik yang dikutip jawaban AI, untuk bahan laporan",
+    "Membaca halaman website bisnis Anda, untuk ringkasan bisnis dan laporan, dan halaman web publik yang dikutip jawaban AI, untuk laporan",
     "Alamat website bisnis Anda dan alamat halaman yang dikutip",
   ],
   [
@@ -161,8 +161,9 @@ export default function PrivacyPage() {
             <li>
               <strong>Data audit:</strong> sepuluh pertanyaan yang Anda setujui,
               jawaban ChatGPT dan Google AI Overview, sumber yang disebut, isi
-              halaman web publik yang dibaca untuk laporan (website bisnis Anda
-              dan halaman yang dikutip jawaban AI), dan laporan.
+              halaman web publik yang dibaca untuk ringkasan bisnis dan laporan
+              (website bisnis Anda dan halaman yang dikutip jawaban AI), dan
+              laporan.
             </li>
             <li>
               <strong>Data teknis:</strong> penyedia hosting kami memproses
@@ -249,9 +250,10 @@ export default function PrivacyPage() {
             Penyedia pembaca halaman web membaca halaman website bisnis Anda dan
             halaman web publik yang dikutip jawaban AI. Isinya, tanpa nomor
             telepon dan alamat email, kami berikan ke penyedia layanan AI untuk
-            menyusun laporan. Isi halaman itu kami hapus setelah laporan
-            selesai, atau bersama pesanan jika laporannya tidak selesai. Alamat
-            halamannya disimpan bersama pesanan.
+            menyiapkan ringkasan bisnis Anda dan menyusun laporan. Isi halaman
+            itu kami hapus setelah laporan selesai, atau bersama pesanan jika
+            laporannya tidak selesai. Alamat halamannya disimpan bersama
+            pesanan.
           </p>
           <p>
             Halaman yang dibaca bisa memuat nama dokter atau staf yang

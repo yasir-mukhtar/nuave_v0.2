@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractionDraftSchema,
+  MAX_PUBLISHED_LOCATIONS,
   type ExtractionDraft,
   type AuditReport,
 } from "../audit/types";
@@ -731,6 +732,23 @@ describe("Spec 013 J3 preparation additions", () => {
     expect(rich).toEqual(plain);
   });
 
+  it("offers up to twenty published branches to the quiz (founder decision 2026-10-28)", () => {
+    const many = Array.from({ length: 20 }, (_, i) => ({
+      name: `Kedai Contoh ${i + 1}`,
+      address: `Jl. Contoh No. ${i + 1}, Bandung`,
+      source_url: "https://kedai-contoh.example/lokasi",
+    }));
+    // The repeated first branch takes no place of its own.
+    const proposal = prepared({
+      published_locations: [many[0]!, ...many.slice(0, 19)],
+    });
+    expect(MAX_PUBLISHED_LOCATIONS).toBe(20);
+    expect(proposal.locations.proposed).toHaveLength(19);
+    expect(
+      prepared({ published_locations: many.slice(0, 20) }).locations.proposed,
+    ).toHaveLength(20);
+  });
+
   it("leaves every new field empty for a draft that does not carry them", () => {
     const proposal = prepared({
       published_locations: undefined,
@@ -896,13 +914,9 @@ describe("Spec 013 J3 preparation additions", () => {
         ...base,
         [key]: Array.from({ length: count }, () => item),
       });
-    expect(
-      tooMany("published_locations", 9, {
-        name: "Gerai",
-        address: "Jl. Contoh",
-        source_url: "",
-      }).success,
-    ).toBe(false);
+    const gerai = { name: "Gerai", address: "Jl. Contoh", source_url: "" };
+    expect(tooMany("published_locations", 20, gerai).success).toBe(true);
+    expect(tooMany("published_locations", 21, gerai).success).toBe(false);
     expect(tooMany("category_suggestions", 4, "kafe").success).toBe(false);
     expect(
       tooMany("offering_category_suggestions", 13, {
