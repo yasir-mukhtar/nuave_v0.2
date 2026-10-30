@@ -726,31 +726,38 @@ no report failed the gate. **PASS.** Spend USD 4.72 for four reports.
 
 **Independent review of the head after the guide rounds (e73907d):
 PASS+NOTES.** Three notes could let a paid report state something untrue,
-and are fixed here (076910e, then the exact-head review of 076910e, also
-PASS+NOTES, found gaps in those fixes, closed in the commit after it).
-None changes the writer's instructions; the revision sees the checker's
-messages, which now catch more false sentences:
+and are fixed here (076910e; the exact-head reviews of 076910e and 4232d2a,
+both PASS+NOTES, found gaps and regressions in those fixes, closed in the
+commits after each). None changes the writer's instructions; the revision
+sees the checker's messages, which now catch more false sentences. The
+four blind-test reports pass the final checker unchanged.
 
 - **R-03 ordinals.** In a key finding, "keempatnya" or "dalam keempat
   jawaban …" about the owner or a named business is checked against the
   finding's cited questions when the finding cites that many for the
   source (a "not named" claim needs none of them named; a positive one,
   all). A part of the group ("tiga dari keempat", "hanya", "salah satu",
-  "tidak selalu") is not read as all of it. A source the sentence names
-  whose cited questions number otherwise is read as before; with no source
-  in the sentence, every source must match or none is read this way. A
-  finding that cites more (two groups) stays unchecked, as before.
-- **"Not named" in other words.** "tidak/belum" with "mengenal(i)",
-  "dikenal(i)", "memuat", "dimuat", "menampilkan", "ditampilkan",
-  "mencantumkan" or "dicantumkan", and "belum ada … yang memuat", read as
-  "not named": a false one in the conclusion, verdict or a finding is
-  caught and, past the revision, replaced by the count sentence, and such
-  a conclusion must name its source. Without a negation ("agar AI mengenal
-  SOZO", "halaman yang memuat harga") they claim nothing.
-- **Quotation repair.** An emptied lone title gets a code-built one, only
-  the first emptied finding or recommendation is kept, and an emptied plan
-  step goes, so an invented quotation never stays as a plain claim (see
-  the quotation check above).
+  "tidak selalu") is not read as all of it; "selalu" and "sama sekali"
+  are. A source the sentence names whose cited questions number otherwise
+  is read as before. A sentence with no source speaks of the sources its
+  finding names; when that is both, both must match or neither is read
+  this way. A finding that cites more (two groups) stays unchecked, as
+  before.
+- **"Not named" in other words.** "ChatGPT belum mengenal SOZO", "tidak
+  memuat / menampilkan / mencantumkan SOZO", "belum ada jawaban yang memuat
+  SOZO" and "SOZO belum dikenal / dimuat / ditampilkan / dicantumkan" read
+  as "not named", but only when the owner (or a business the answers name)
+  is the whole object, followed by the clause's end, "sama sekali" or "di
+  jawabannya", and no page does the not-showing. A false one in the
+  conclusion, verdict or a finding is caught and, past the revision,
+  replaced by the count sentence, and such a conclusion must name its
+  source. "Halaman yang dikutip ChatGPT tidak memuat SOZO", "tidak
+  mencantumkan harga SOZO", "belum mengenal SOZO untuk treatment" and
+  "agar AI mengenal SOZO" are not read as such.
+- **Quotation repair.** An emptied lone title gets a code-built one, one
+  emptied finding or recommendation is kept (the first that kept any of
+  its words), and an emptied plan step goes, so an invented quotation
+  never stays as a plain claim (see the quotation check above).
 
 Still open, for later changes: suggested wording in quotation marks costs
 a revision (the writer's instructions should say to write it without

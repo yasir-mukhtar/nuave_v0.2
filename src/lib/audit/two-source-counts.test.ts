@@ -469,6 +469,68 @@ describe("Spec 023 review: ordinal groups and the conclusion's naming verbs", ()
       ),
     ).toEqual([]);
   });
+
+  it("reads a sentence with no source as about the source its finding names", () => {
+    // q1, q2, q3, q7: 4 ChatGPT answers, 3 of them naming SOZO; only 3
+    // Google summaries, so Google's count never matches "keempat".
+    expect(
+      violations(
+        withFinding(
+          "ChatGPT menyebut ERHA dalam keempat jawaban tentang harga. SOZO tidak disebut dalam keempatnya.",
+          ["q1", "q2", "q3", "q7"],
+        ),
+      ).join(" "),
+    ).toMatch(/is not true for the questions it counts/);
+  });
+
+  it("reads 'selalu' and 'sama sekali' as all of the group, not a part", () => {
+    for (const sentence of [
+      "ChatGPT selalu menyebut SOZO dalam keempat jawaban tentang harga.",
+      "ChatGPT tidak sekali pun menyebut SOZO dalam keempat jawaban tentang harga.",
+    ])
+      expect(
+        violations(withFinding(sentence, qualityIds)).join(" "),
+        sentence,
+      ).toMatch(/is not true for the questions it counts/);
+    expect(
+      violations(
+        withFinding("SOZO sama sekali tidak disebut dalam keempatnya."),
+      ),
+    ).toEqual([]);
+  });
+
+  it("never reads a page or a detail that is missing as the business not named", () => {
+    for (const sentence of [
+      "Halaman klinik Anda tidak mencantumkan harga.",
+      "Website SOZO belum mencantumkan harga treatment.",
+      "Halaman layanan SOZO tidak memuat jadwal dokter.",
+      "Situs SOZO tidak menampilkan alamat cabang.",
+      "Beranda SOZO belum menampilkan harga.",
+      "Belum ada halaman SOZO yang memuat harga.",
+      "Halaman daftar aido.id yang dikutip ChatGPT tidak memuat SOZO.",
+      "Artikel yang dikutip ChatGPT tidak mencantumkan SOZO.",
+      "ChatGPT tidak memuat harga SOZO dalam jawabannya.",
+      "Jawaban ChatGPT tidak mencantumkan alamat SOZO.",
+      "ChatGPT menyebut SOZO, tetapi tidak mencantumkan harganya.",
+      "ChatGPT menyebut SOZO tetapi tidak menampilkan tautan ke situsnya.",
+      "ChatGPT menyebut SOZO tetapi tidak mengenali cabangnya di Depok.",
+      "ChatGPT tidak mencantumkan sumber untuk jawabannya.",
+      "ChatGPT belum mengenal SOZO untuk treatment jerawat.",
+    ]) {
+      expect(violations(withFinding(sentence, ids)), sentence).toEqual([]);
+      expect(
+        violations({ ...withFinding("Pola ini jelas."), conclusion: sentence }),
+        sentence,
+      ).toEqual([]);
+    }
+    const advice =
+      "Website SOZO belum mencantumkan harga, jadi mulailah dari halaman harga.";
+    const repaired = repairTwoSourceWriting(
+      { ...withFinding("Pola ini jelas."), conclusion: advice },
+      facts,
+    );
+    expect(repaired.content.conclusion).toBe(advice);
+  });
 });
 
 describe("Spec 023 AC-08: the brand name", () => {

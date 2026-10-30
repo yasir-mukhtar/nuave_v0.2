@@ -315,17 +315,58 @@ export const SOURCE_GOOGLE = "Google AI Overview";
 
 const NAMING_VERB =
   "(?:disebut(?:kan)?|muncul|menyebut(?:kan)?(?:nya)?|ditemukan|terlihat|tampil|menyinggung|disinggung)";
-/** Review of PR 2: "belum mengenal", "tidak memuat", "tidak menampilkan"
- * say the business was not named, in other words. Only negated: "agar AI
- * mengenal SOZO" or "halaman yang memuat harga" make no claim. */
-const NOT_NAMING_VERB =
-  "(?:mengenal(?:i)?|dikenal(?:i)?|memuat|dimuat|menampilkan|ditampilkan|mencantumkan|dicantumkan)";
 /** "tidak/tak/belum/bukan (pernah/sama sekali) disebut…", "tidak ada jawaban
  * yang menyebut…", "tidak satu pun ringkasan menyebut…", "absen". */
 const NEGATIVE = new RegExp(
-  `\\b(?:tidak|tak|belum|bukan)\\s+(?:(?:pernah|lagi)\\s+)?(?:(?:sama\\s+sekali|sekali\\s+pun)\\s+)?(?:${NAMING_VERB}|${NOT_NAMING_VERB})\\b|\\b(?:tidak|belum)\\s+(?:ada|satu\\s+pun)\\b.*\\b(?:menyebut(?:kan)?|${NOT_NAMING_VERB})\\b|\\babsen\\b`,
+  `\\b(?:tidak|tak|belum|bukan)\\s+(?:(?:pernah|lagi)\\s+)?(?:(?:sama\\s+sekali|sekali\\s+pun)\\s+)?${NAMING_VERB}\\b|\\btidak\\s+(?:ada|satu\\s+pun)\\b.*\\b(?:menyebut(?:kan)?|memuat|mencantumkan)\\b|\\babsen\\b`,
   "i",
 );
+const NOT_NAMING_ACTIVE = "(?:mengenal(?:i)?|memuat|menampilkan|mencantumkan)";
+const NOT_NAMING_PASSIVE = "(?:dikenal(?:i)?|dimuat|ditampilkan|dicantumkan)";
+const NEGATION =
+  "(?:tidak|tak|belum)\\s+(?:(?:pernah|lagi)\\s+)?(?:(?:sama\\s+sekali|sekali\\s+pun)\\s+)?";
+/** What may follow the business in a whole claim: the clause's end, "sama
+ * sekali", or "di jawabannya". Anything else ("untuk treatment") limits it,
+ * and "harga SOZO" is a detail. */
+const NOT_NAMING_END =
+  "(?=\\s*(?:$|[.,;:!?)]|sama\\s+sekali\\b|sekali\\s+pun\\b|(?:di|dalam|pada)\\s+(?:jawaban|ringkasan)(?:nya)?\\b))";
+const PAGE_SUBJECT =
+  /\b(?:halaman|laman|situs|website|web|beranda|artikel|daftar|direktori|profil|sumber|tautan|postingan|ulasan)\b/i;
+
+/**
+ * Review of PR 2: "ChatGPT belum mengenal SOZO", "Belum ada jawaban yang
+ * memuat SOZO", "SOZO belum dikenal ChatGPT" say the business was not named,
+ * in other words. Only with the owner or a business the answers name as the
+ * verb's whole object (or its passive subject), and never when a page does
+ * the not-showing ("Halaman yang dikutip ChatGPT tidak memuat SOZO") or the
+ * object is a detail ("tidak mencantumkan harga SOZO", "harganya"). Without
+ * a negation ("agar AI mengenal SOZO") there is no claim.
+ */
+function notNamedInOtherWords(
+  clause: string,
+  facts: TwoSourceReportFacts,
+): boolean {
+  const names = [...(facts.names ?? []), ...(facts.writer?.businesses ?? [])]
+    .map((name) => name.trim())
+    .filter((name) => name.length > 1)
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp);
+  const name = `(?:${[...names, "(?:klinik|bisnis|usaha)\\s+(?:ini|anda)"].join("|")})`;
+  const match =
+    clause.match(
+      new RegExp(
+        `(?:\\b${NEGATION}|\\b(?:tidak|belum)\\s+(?:ada|satu\\s+pun)\\b.*\\b)${NOT_NAMING_ACTIVE}\\s+${name}${NOT_NAMING_END}`,
+        "iu",
+      ),
+    ) ??
+    clause.match(
+      new RegExp(`${name}\\s+${NEGATION}${NOT_NAMING_PASSIVE}\\b`, "iu"),
+    );
+  return (
+    !!match &&
+    !PAGE_SUBJECT.test(clause.slice(0, match.index! + match[0].length))
+  );
+}
 const POSITIVE = new RegExp(`\\b${NAMING_VERB}\\b`, "i");
 const RECOMMEND = /\bdirekomendasikan|merekomendasikan\b/i;
 /** N-31: a negation is limited only when the limit is about questions,
@@ -345,7 +386,7 @@ const ORDINAL_CITED =
 /** A part of an ordinal group: "tiga dari keempat jawaban", "hanya",
  * "tidak selalu", "salah satu". Such a claim is not about every one. */
 const ORDINAL_PART =
-  /\bdari\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|sekali|selalu|kadang|jarang)\b/i;
+  /\bdari\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|kadang|jarang|tidak\s+selalu)\b/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
@@ -860,6 +901,7 @@ const leadingLimit = (
   context: string,
 ) =>
   !NEGATIVE.test(clause) &&
+  !notNamedInOtherWords(clause, facts) &&
   !POSITIVE.test(clause) &&
   (!!namedGroup(clause, facts, context) || GROUP_SIZE.test(clause));
 
@@ -886,7 +928,7 @@ function contradictedSources(
           explicit: whole.length > 0,
         });
     if (own.length) carried = at;
-    let negative = NEGATIVE.test(clause);
+    let negative = NEGATIVE.test(clause) || notNamedInOtherWords(clause, facts);
     let positive = !negative && POSITIVE.test(clause);
     if (negative || positive)
       carriedPolarity = negative ? "negative" : "positive";
@@ -946,8 +988,9 @@ function contradictedSources(
     // number, so the claim must hold for each of them. A part of the group
     // ("tiga dari keempat", "hanya", "tidak selalu") is not checked. A source
     // whose cited questions number otherwise (a finding that compares two
-    // groups) is read as before; with no source in the sentence, every
-    // source must match, or none is read this way.
+    // groups) is read as before. A sentence with no source speaks of the
+    // sources its finding names; when that is both, both must match, or
+    // neither is read this way.
     const cardinal = clause.match(ORDINAL_CITED)?.[1];
     if (
       cardinal &&
@@ -966,13 +1009,21 @@ function contradictedSources(
         const ids = [...asked.keys()].filter((id) => cited.has(id));
         return { ids, named: ids.filter((id) => asked.get(id)).length };
       };
-      const checked = at.sources.filter(
+      // A sentence with no source ("SOZO tidak disebut dalam keempatnya")
+      // speaks of the sources its finding names.
+      const inFinding = at.explicit ? [] : sourcesOf(context);
+      const reading: ClauseSources = inFinding.length
+        ? { sources: inFinding, explicit: inFinding.length === 1 }
+        : at;
+      const checked = reading.sources.filter(
         (source) => citedOf(source).ids.length === size,
       );
-      const rest = at.sources.filter((source) => !checked.includes(source));
-      if (checked.length && (at.explicit || !rest.length)) {
+      const rest = reading.sources.filter(
+        (source) => !checked.includes(source),
+      );
+      if (checked.length && (reading.explicit || !rest.length)) {
         const failed = failedSources(
-          { ...at, sources: checked },
+          { ...reading, sources: checked },
           (source) =>
             holds({
               named: citedOf(source).named,
@@ -988,7 +1039,7 @@ function contradictedSources(
         failed.forEach((s) => out.add(s));
         if (failed.length) droppable = true;
         if (!rest.length) continue;
-        at = { ...at, sources: rest };
+        at = { ...reading, sources: rest };
       }
     }
 
@@ -1177,6 +1228,7 @@ function makesNamingClaim(text: string, facts: TwoSourceReportFacts): boolean {
     .some(
       (clause) =>
         (NEGATIVE.test(clause) ||
+          notNamedInOtherWords(clause, facts) ||
           POSITIVE.test(clause) ||
           CLAIM_VERB.test(clause) ||
           /\b\d+\s+dari\s+\d+\b/.test(clause) ||

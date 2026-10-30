@@ -487,6 +487,11 @@ const fallbackAction = (
     : FALLBACK_PRIORITY_ACTION;
 };
 
+/** The one card kept when every card lost a part: the first that kept any of
+ * the writer's words, else the first. */
+const mostKept = <T>(items: T[], kept: (item: T) => boolean): T[] =>
+  items.length ? [items.find(kept) ?? items[0]!] : [];
+
 /**
  * Past the revision: a sentence whose quotation is not found is dropped. A
  * finding or recommendation a drop empties goes while another remains;
@@ -526,7 +531,7 @@ export function repairQuotes(
   const wholeFindings = findings.filter((f) => f.title && f.explanation);
   const key_findings = wholeFindings.length
     ? wholeFindings
-    : findings.slice(0, 1).map((f) => ({
+    : mostKept(findings, (f) => !!(f.title || f.explanation)).map((f) => ({
         ...f,
         title: f.title || FALLBACK_FINDING_TITLE,
         explanation: f.explanation || fallback,
@@ -541,7 +546,7 @@ export function repairQuotes(
   const keptPriorities = (
     wholePriorities.length || !priorities.length
       ? wholePriorities
-      : priorities.slice(0, 1).map((p) => ({
+      : mostKept(priorities, (p) => !!(p.action || p.why)).map((p) => ({
           ...p,
           action: p.action || fallbackAction(p.evidence_prompt_ids, questions),
           why: p.why || fallback,
