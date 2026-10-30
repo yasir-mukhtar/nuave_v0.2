@@ -469,6 +469,10 @@ export function syntheticTwoSourceWriting(
   );
   const first = facts.writer.businesses[0];
   return {
+    storyline: {
+      main_message: "Uji alur sintetis; bukan bukti visibilitas.",
+      support: ["Jawaban contoh berlabel."],
+    },
     verdict: `Uji alur sintetis: di ChatGPT, ${brandName} disebut di ${chatgpt.named} dari ${chatgpt.completed} jawaban; ini bukan bukti visibilitas.`,
     conclusion: base.conclusion,
     accuracy_status: base.accuracy_status,

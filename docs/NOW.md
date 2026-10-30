@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-27
+> Updated: 2026-10-30
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -46,10 +46,11 @@
 
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
-  [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. Next:
-  the test harness (PR 1), then the writer change, held as a draft until the
-  founder's blind test passes. Waiting on the founder: one free test-pass
-  order for a different clinic.
+  [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The
+  test harness merged with #194. The writer change (draft PR #195) passed the
+  founder's blind test on 2026-10-30 (two pairs, Sozo and NV-8XAPUF; the
+  after writer won both). The review's fact-safety notes are fixed on the PR.
+  Waiting on the founder: the merge decision.
 - **Report v2 before G1** (2026-10-26,
   [decision](./DECISION_LOG.md#2026-10-26--report-v2-before-g1-confident-advice-no-score)):
   [Spec 021](../specs/021-report-v2/SPEC.md) reworks the report in four

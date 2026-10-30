@@ -6,7 +6,9 @@ import type {
 import {
   captionFitsBasis,
   cutVerdict,
+  dashViolations,
   finishTwoSourceWriting,
+  repairDashes,
   saveableTwoSourceWriting,
   headlineConfirmed,
   partBWritingViolations,
@@ -20,6 +22,7 @@ import {
   type ReportContent,
 } from "./types";
 import { zodTextFormat } from "openai/helpers/zod";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 
 /* Four questions:
  * q1: ChatGPT named and recommended; Google named (cited reference a.example).
@@ -728,5 +731,86 @@ describe("answer shapes (B-04)", () => {
         evidence_prompt_ids: ["q1"],
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("Spec 023 R-11: dashes (AC-04)", () => {
+  const withDashes = content({
+    conclusion: "ChatGPT mengenal Klinik Fiksi — tetapi belum untuk botox.",
+    key_findings: [
+      {
+        title: "Google memakai situs Anda - tanpa nama",
+        explanation: "Ringkasan AI Google mengutip Klinik Satu - Cabang Dago.",
+        evidence_prompt_ids: ["q2", "q3"],
+        headline: { number: "1-2", caption: "pertanyaan", basis: "verbatim" },
+      },
+    ],
+  });
+  const dashFacts = {
+    ...facts,
+    writer: { ...facts.writer, businesses: ["Klinik Satu - Cabang Dago"] },
+  };
+
+  it("lists a dash used as punctuation, never one inside a business name", () => {
+    const listed = dashViolations(withDashes, dashFacts);
+    expect(listed.join(" ")).toContain("The conclusion uses a dash");
+    expect(listed.join(" ")).toContain("Finding 1 title uses a dash");
+    expect(listed.join(" ")).not.toContain("Finding 1 paragraph");
+  });
+
+  it("replaces them with a comma, and leaves names, headline numbers and week labels alone", () => {
+    const { content: fixed, changed } = repairDashes(withDashes, dashFacts);
+    expect(changed).toBe(true);
+    expect(fixed.conclusion).toBe(
+      "ChatGPT mengenal Klinik Fiksi, tetapi belum untuk botox.",
+    );
+    expect(fixed.key_findings[0]!.title).toBe(
+      "Google memakai situs Anda, tanpa nama",
+    );
+    expect(fixed.key_findings[0]!.explanation).toBe(
+      "Ringkasan AI Google mengutip Klinik Satu - Cabang Dago.",
+    );
+    expect(fixed.key_findings[0]!.headline!.number).toBe("1-2");
+    expect(fixed.two_source_writing!.plan[0]!.weeks).toBe("Minggu 1–2");
+    // Nothing to change: the same object back.
+    expect(repairDashes(fixed, dashFacts).changed).toBe(false);
+  });
+
+  it("turns a dash between two numbers into 'sampai', never a list", () => {
+    const ranges = content({
+      conclusion:
+        "Harga di situs Rp250.000 - Rp500.000 per sesi. Klinik buka 08.00 – 21.00.",
+    });
+    expect(repairDashes(ranges, dashFacts).content.conclusion).toBe(
+      "Harga di situs Rp250.000 sampai Rp500.000 per sesi. Klinik buka 08.00 sampai 21.00.",
+    );
+  });
+});
+
+describe("Spec 023 R-08: the storyline (AC-05)", () => {
+  it("is the answer's first property, with no bounds a provider could move", () => {
+    expect(Object.keys(twoSourceWritingSynthesisSchema.shape)[0]).toBe(
+      "storyline",
+    );
+    const format = zodTextFormat(
+      twoSourceWritingSynthesisSchema,
+      "nuave_audit_report",
+    ) as unknown as {
+      schema: { properties: Record<string, unknown> };
+    };
+    expect(Object.keys(format.schema.properties)[0]).toBe("storyline");
+    const claude = zodOutputFormat(
+      twoSourceWritingSynthesisSchema,
+    ) as unknown as {
+      schema: {
+        properties: {
+          storyline: { properties: { support: Record<string, unknown> } };
+        };
+      };
+    };
+    expect(Object.keys(claude.schema.properties)[0]).toBe("storyline");
+    const support = claude.schema.properties.storyline.properties.support;
+    expect(support).not.toHaveProperty("minItems");
+    expect(support).not.toHaveProperty("maxItems");
   });
 });

@@ -1,14 +1,18 @@
 import {
   repairTwoSourceWriting,
+  twoSourceCountSentence,
   twoSourceWritingViolations,
   type TwoSourceReportFacts,
 } from "./two-source-report";
 import {
+  dashViolations,
   finishTwoSourceWriting,
   partBWritingViolations,
+  repairDashes,
   saveableTwoSourceWriting,
 } from "./two-source-writing";
 import { hasWriterFacts } from "./two-source-writer";
+import { profileNames, quoteViolations, repairQuotes } from "./quote-check";
 import {
   buildAuditReport,
   normalizeReportEvidence,
@@ -84,7 +88,7 @@ import {
 import { validateDirectTenQuestions } from "./questions-id-direct-ten";
 import {
   SYNTHETIC_LOCAL_FIXTURE_SYSTEM,
-  TWO_SOURCE_WRITING_VERSION,
+  TWO_SOURCE_PROMPT_VERSION,
 } from "./types";
 
 export type ReportPipelineInput = {
@@ -407,8 +411,14 @@ function normalizeAndRepairReport(
 }
 
 function languageErrorsFor(input: ReportPipelineInput, content: ReportContent) {
+  // Spec 023 R-01: the two-source writer has no hard sentence limit; a long
+  // sentence is neither sent back nor cut. The legacy writer keeps its rule.
   return input.language === "id"
-    ? validateIndonesianReportLanguage(content).errors
+    ? validateIndonesianReportLanguage(
+        content,
+        {},
+        !hasWriterFacts(input.two_source_facts),
+      ).errors
     : validateReportLanguage(content);
 }
 
@@ -465,18 +475,37 @@ export async function createValidatedAuditReport(
 
   const isIndonesian = lockedInput.language === "id";
   const sourceFacts = lockedInput.two_source_facts;
+  const questions = new Map(
+    lockedInput.prompts.map((prompt) => [prompt.prompt_id, prompt.question]),
+  );
+  const profile = profileNames(lockedInput.brief);
   const sourceErrorsFor = (draft: typeof content) =>
     sourceFacts
       ? [
           ...twoSourceWritingViolations(draft, sourceFacts),
           // Spec 021 B-04/B-06: the new writer's own fields.
           ...partBWritingViolations(draft),
+          // Spec 023: a quotation must be the saved words it cites.
+          ...(hasWriterFacts(sourceFacts)
+            ? quoteViolations(
+                draft,
+                sourceFacts,
+                lockedInput.observations,
+                questions,
+                profile,
+              )
+            : []),
         ]
       : [];
   const languageErrors = [
     ...languageErrorsFor(lockedInput, content),
     ...sourceErrorsFor(content),
   ];
+  // Spec 023 R-11: a dash used as punctuation rides along when a revision
+  // runs for another reason; on its own it never triggers one (code
+  // replaces it below).
+  if (languageErrors.length && hasWriterFacts(sourceFacts))
+    languageErrors.push(...dashViolations(content, sourceFacts));
   if (languageErrors.length) {
     retryViolations = languageErrors;
     const original = content;
@@ -565,6 +594,25 @@ export async function createValidatedAuditReport(
     }
   }
 
+  // Spec 023: past the revision, a sentence whose quotation is not in the
+  // saved texts is dropped, before the source repair below, so a finding
+  // the drop leaves without its source is still repaired. Never a failed
+  // order.
+  if (hasWriterFacts(sourceFacts)) {
+    const quotes = repairQuotes(
+      content,
+      sourceFacts,
+      lockedInput.observations,
+      questions,
+      twoSourceCountSentence(sourceFacts),
+      profile,
+    );
+    if (quotes.dropped) {
+      content = quotes.content;
+      diagnostics.add("quote_dropped");
+    }
+  }
+
   // Spec 018 (B-4): a two-source report never ships a conclusion or finding
   // that speaks for no source or contradicts the code counts. The one revision
   // call above was the writer's chance; past it, code replaces the offending
@@ -574,13 +622,24 @@ export async function createValidatedAuditReport(
     const repairedSources = repairTwoSourceWriting(content, sourceFacts);
     if (repairedSources.changed) {
       content = repairedSources.content;
-      diagnostics.add("source_sentence_replaced");
+      if (repairedSources.sentencesReplaced)
+        diagnostics.add("source_sentence_replaced");
+      // Spec 023 R-03: a false count about a group of questions or another
+      // business is dropped, and a finding it empties goes with it.
+      if (repairedSources.sentencesDropped)
+        diagnostics.add("source_sentence_dropped");
+      if (repairedSources.findingsDropped) diagnostics.add("finding_dropped");
     }
   }
   // Spec 021 B-04 to B-06: past the revision, code drops a headline number
   // it cannot confirm, a reason, topic name or reading it cannot place, and
   // removes a banned title start the revision left. Never a failed order.
   if (hasWriterFacts(sourceFacts) && content.two_source_writing) {
+    const dashes = repairDashes(content, sourceFacts);
+    if (dashes.changed) {
+      content = dashes.content;
+      diagnostics.add("dash_replaced");
+    }
     const finished = finishTwoSourceWriting(
       content,
       sourceFacts,
@@ -669,7 +728,7 @@ export async function createValidatedAuditReport(
         ? {
             // Spec 021 Part B: a report from the new writer says so.
             report_prompt_version: content.two_source_writing
-              ? TWO_SOURCE_WRITING_VERSION
+              ? TWO_SOURCE_PROMPT_VERSION
               : REPORT_SYNTHESIS_PROMPT_VERSION_V2,
           }
         : {}),

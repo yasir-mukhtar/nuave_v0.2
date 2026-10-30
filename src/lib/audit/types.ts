@@ -491,6 +491,11 @@ const priorityItemSchema = z.object({
 export const TWO_SOURCE_WRITING_VERSION =
   "nuave-two-source-writing-v1" as const;
 
+/** Spec 023 R-12: the two-source writer's prompt version, recorded in the
+ * report's provenance so a delivered report shows which writer wrote it.
+ * The saved block keeps TWO_SOURCE_WRITING_VERSION (its shape is unchanged). */
+export const TWO_SOURCE_PROMPT_VERSION = "nuave-two-source-prompt-v2" as const;
+
 /**
  * Spec 021 Part B: what the new writer adds to a two-source report, saved
  * with it. Absent on every report written before Part B.
@@ -499,7 +504,7 @@ export const twoSourceWritingSchema = z.object({
   version: z.literal(TWO_SOURCE_WRITING_VERSION),
   /** One or two sentences for the header. */
   verdict: z.string(),
-  /** "Disebut AI karena: …", per business named in the answers. */
+  /** "Menurut jawaban AI: …" (Spec 023 R-07), per business named in the answers. */
   competitor_reasons: z
     .array(z.object({ name: z.string(), reason: z.string() }))
     .max(20),
@@ -590,6 +595,13 @@ export const TWO_SOURCE_WRITING_MAX_ITEMS = 6;
  * and wording are checked by code afterwards.
  */
 export const twoSourceWritingSynthesisSchema = z.object({
+  // Spec 023 R-08: the plan before writing, first so it is written first.
+  // Never saved. No bounds: the Claude SDK moves array bounds into
+  // descriptions, and the check after it would then fail a paid call.
+  storyline: z.object({
+    main_message: z.string(),
+    support: z.array(z.string()),
+  }),
   verdict: z.string(),
   conclusion: z.string(),
   accuracy_status: reportContentSchema.shape.accuracy_status,

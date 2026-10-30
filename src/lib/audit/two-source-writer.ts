@@ -6,6 +6,7 @@
 import { assembleReportContent } from "./contracts";
 import { reportAssessmentInstructions } from "./report-prompt-contract";
 import { REPORT_PLAYBOOK } from "./report-playbook";
+import { REPORT_WRITING_GUIDE } from "./report-writing-guide";
 import { stripPhoneNumbers } from "../checks/phones";
 import {
   contextForReportModel,
@@ -14,7 +15,6 @@ import {
 } from "./direct-ten-context-v2";
 import {
   SOURCE_CHATGPT,
-  SOURCE_GOOGLE,
   type TwoSourceReportFacts,
   type TwoSourceWriterFacts,
 } from "./two-source-report";
@@ -53,11 +53,18 @@ function writerInstructions(
   revision: boolean,
 ): string[] {
   const noun = facts.subject === "klinik" ? "klinik Anda" : "bisnis Anda";
+  const [name, ...aliases] = (facts.names ?? [])
+    .map((item) => item.trim())
+    .filter(Boolean);
+  // Spec 023 R-05: the brand name, used like an editor would.
+  const naming = name
+    ? `Name the business by its exact confirmed name, "${name}"${aliases.length ? ` (or a listed alias: ${aliases.map((alias) => `"${alias}"`).join(", ")})` : ""}, where a section opens or where it must be told apart from other businesses. In between, use "${facts.subject === "klinik" ? "klinik ini" : "bisnis ini"}" or "${noun}" for the business and "Anda" for the owner acting, and only while the business is the paragraph's subject; repeat the name whenever "${facts.subject === "klinik" ? "klinik ini" : "bisnis ini"}" could mean another business. Never shorten the name to a form that is not listed, and do not repeat it in every sentence.`
+    : `Call the audited business "${noun}" ("${noun.charAt(0).toUpperCase()}${noun.slice(1)}" at the start of a sentence).`;
   // The reading test (founder decision 2026-10-27): only when pages were
   // read. Without them every line is the production writer's, unchanged.
   const pages = Boolean(facts.writer?.pages?.length);
   return [
-    `Write Nuave's AI visibility report in natural, clear Indonesian, as an expert consultant writing for the owner. Use synthesis contract ${TWO_SOURCE_WRITING_VERSION}. Call the audited business "${noun}" ("${noun.charAt(0).toUpperCase()}${noun.slice(1)}" at the start of a sentence).`,
+    `Write Nuave's AI visibility report in natural, clear Indonesian, as an expert consultant writing for the owner. Use synthesis contract ${TWO_SOURCE_WRITING_VERSION}. ${naming}`,
     "What you read: confirmed_context (the owner's confirmed profile; their selection, not verified fact), prompts (the ten questions), observations (the ChatGPT app's answers and their sources), google_ai_overview (per question: whether Google showed an AI Overview, whether it named the business, the domains it cited), questions (per question: the search topic, monthly searches when known, Google's AI Overview text, and the other businesses each source's answer names), other_businesses, source_counts (code counts for both sources), and Nuave's playbook below." +
       (pages
         ? " Also pages_read: pages Nuave read, the business's own site (kind own) and the pages the AI answers cited most (kind cited; cited_in lists the questions whose answers cited it)."
@@ -75,24 +82,28 @@ function writerInstructions(
         ]
       : []),
     "Analyse; do not recap the answers one by one. Useful angles: which sites AI relies on and whether the business appears on them; which kinds of questions name the business and which do not; what AI says about the business that is wrong or missing; how ChatGPT and Google AI Overview differ; what the businesses AI favours have in common.",
-    `verdict: one or two sentences, at most ${limits.verdict_characters} characters: the big picture for the owner, with the per-source result.`,
-    `conclusion: the full closing paragraph, at most ${limits.conclusion_words} words. Say, for each source, how often the business was named in this tested sample ("Di ${SOURCE_CHATGPT} …; di ${SOURCE_GOOGLE} …"). Do not imply a wider or permanent result.`,
-    `key_findings: three to six findings, each new information for the owner. title: short, at most ${limits.finding_title_words} words. explanation: one paragraph of at most ${limits.finding_words} words. evidence_prompt_ids: every question the finding relies on.`,
+    // Spec 023 R-08: plan before writing.
+    'storyline: before any other field, and only after reading all the evidence, settle the report\'s storyline: main_message, the one sentence the owner must understand first; support, two or three short points that back it or limit it. The owner never sees it. If important evidence contradicts the main message, change the main message. The verdict states it. Write as many key findings as the evidence supports, strongest first: two strong ones beat a quota filled by repeating an idea; keep a finding that limits the main message. Each recommendation says, in natural words, which finding it answers and what it is for (never a label such as "Temuan 2:"). The conclusion takes the owner to the next decision.',
+    // Spec 023 R-09: interpretation without causes.
+    'You may describe a pattern across questions ("Polanya sama di …") and say how consistent it is, and say why a step comes first, from the evidence and from what the playbook says the step involves. Never say why this business got its result, never claim a cost, effort or impact the playbook does not support, never say what people search most ("paling dicari") beyond a monthly-search figure given in questions, and never treat the ten questions as the whole market.',
+    `verdict: one or two sentences, at most ${limits.verdict_characters} characters: the main message for the owner. The cards beside it already show each source's count; add a number only when it is the point.`,
+    `conclusion: the closing paragraph, at most ${limits.conclusion_words} words: finish the explanation and give the owner a sensible direction (the first step, the main point tied back, or what still needs checking). When it says the business was or was not named, it says which source in natural words. Use a count only when it is needed to be clear. Do not imply a wider or permanent result.`,
+    `key_findings: two to six findings, each new information for the owner. title: short, at most ${limits.finding_title_words} words. explanation: one paragraph of at most ${limits.finding_words} words. evidence_prompt_ids: every question the finding relies on.`,
     'headline: a number, a short caption ("0 dari 2" / "pertanyaan treatment medis yang menyebut Klinik Anda") and the basis code checks it against, or null. The caption must describe exactly what the basis counts: a "not" basis (not named, not recommended, not shown, named by neither) is captioned with a negation ("tidak", "belum", "tanpa"), any other per-question basis without one. Bases: a per-question fact (chatgpt_named, chatgpt_not_named, chatgpt_cited_only, chatgpt_recommended, chatgpt_not_recommended, google_shown, google_not_shown, google_named, google_not_named, google_cited_only, google_recommended, named_by_either, named_by_neither) as "X dari Y" where Y is the number of questions the finding cites and X those with the fact, or Y the source\'s completed count (ChatGPT answers; Google checks for shown or not shown; Google summaries otherwise) and X all questions with the fact, or as "N" / "N×" for the cited questions with the fact; chatgpt_cited_domains, google_cited_domains or cited_domains as "N", the distinct domains cited in the cited answers; chatgpt_named_businesses, google_named_businesses or named_businesses as "N", the distinct other businesses named in the cited answers; verbatim for a figure copied exactly from a cited answer ("75+"), or two such figures side by side ("70 vs 75+"). A number code cannot confirm by its basis is removed.' +
       (pages
         ? " verbatim may also copy a figure from the business's own pages, or from a page cited by the questions the finding cites."
         : ""),
-    `priorities: three to six recommendations, order from 1. action: a firm title of at most ${limits.recommendation_title_words} words that starts with a verb. why: one paragraph of at most ${limits.recommendation_words} words that says how it works and exactly what to do. evidence_prompt_ids: cite at least one question where the business was absent, its site was cited without its name, or it was not recommended, when such a question exists.`,
+    `priorities: one to six recommendations, as many as the checked evidence supports (never invent work to fill a number), order from 1. action: a firm title of at most ${limits.recommendation_title_words} words that starts with a verb. why: one paragraph of at most ${limits.recommendation_words} words that says how it works and exactly what to do. evidence_prompt_ids: cite at least one question where the business was absent, its site was cited without its name, or it was not recommended, when such a question exists.`,
     `Titles of findings and recommendations never start with ${BANNED_TITLE_STARTS.map((word) => `"${word}"`).join(", ")}. Never write the labels "Mengapa" or "Berdasarkan".`,
-    `competitor_reasons: for businesses in other_businesses (names copied exactly), one short reason of at most ${limits.reason_words} words, from what the answers say about that business (what AI said it offers or why it suggested it). Leave out a business the answers say nothing about.`,
-    `takeaways: two or three short cards on what the businesses AI favours have in common, from the answers: title (at most ${limits.takeaway_title_words} words, "Pemenang menjual keahlian, bukan harga") and text (at most ${limits.takeaway_words} words).`,
-    `plan: exactly three steps from the recommendations, in order, with week ranges ("Minggu 1–2", "Minggu 3–4", "Minggu 5–8"). title: a short verb-first title. text: at most ${limits.plan_words} words.`,
+    `competitor_reasons: for businesses in other_businesses (names copied exactly), one short line of at most ${limits.reason_words} words on what the answers say about that business (what AI said it offers or how it described it), never why AI chose it. Leave out a business the answers say nothing about.`,
+    `takeaways: two or three short cards on what the businesses AI favours have in common, from the answers: title (at most ${limits.takeaway_title_words} words) and text (at most ${limits.takeaway_words} words).`,
+    `plan: exactly three steps from the recommendations, in order (with fewer recommendations, the steps may be stages of the same action: do it, check the page, test again as the playbook says; never invent work), with week ranges ("Minggu 1–2", "Minggu 3–4", "Minggu 5–8"). title: a short verb-first title. text: at most ${limits.plan_words} words.`,
     `topic_names: for each question in questions whose topic is null, a short topic name of two to ${limits.topic_words} words ("Bekas jerawat dan bopeng"), never the question itself.`,
     "google_readings: for each question whose AI Overview names the business, recommended is true only when the AI Overview text explicitly suggests or endorses the business; a mention or a contact detail is not a recommendation.",
-    "Keep every sentence to 25 words or fewer. Use common words and active voice.",
-    `Name the source in the conclusion and in every key finding: write "Di ${SOURCE_CHATGPT}" or "Di ${SOURCE_GOOGLE}". Never state a result for both sources unless the counts support it for each.`,
-    'Do not contradict source_counts: when a source named the business at least once, never write that it did not name, mention or show the business ("tidak disebut", "tidak muncul", "tidak menyebut") unless the sentence is limited to some questions ("pada pertanyaan lain", "di 5 ringkasan lainnya") or gives that source\'s exact count from source_counts ("disebut di 3 dari 8 ringkasan").',
-    'Copy every "X dari Y" about a source exactly from source_counts: for ChatGPT, named of completed answers; for Google AI Overview, named of summaries. Never write a count for one source with the other source\'s numbers.',
+    "Use common words. Prefer the active voice; the passive is fine to keep the focus on the business. Vary sentence length as the writing guide below says; there is no hard limit.",
+    `Every key finding says which source it is about, in natural words that include "${SOURCE_CHATGPT}" or "Google" ("${SOURCE_CHATGPT} menyebut …", "Google AI Overview mengutip …"). Do not open every finding the same way. Never state a result for both sources unless the counts support it for each.`,
+    'Do not contradict source_counts: when a source named the business at least once, never write that it did not name, mention or show the business ("tidak disebut", "tidak muncul", "tidak menyebut") unless the sentence names the group of questions it is limited to ("pada pertanyaan tentang harga", "di pertanyaan treatment") or gives that source\'s exact count. The limit may open the sentence ("Dalam empat jawaban tentang harga, ChatGPT tidak menyebut …") or follow the verb.',
+    'Numbers: in a key finding, a count may cover the finding\'s own cited questions when the sentence names that group ("di 4 dari 4 pertanyaan treatment"); its evidence_prompt_ids then list exactly those questions, so a finding that compares two groups gives an "X dari Y" count for at most one of them. A count about a group of questions belongs in a finding. A count about another business comes from questions[].businesses. Every other number about a source is copied exactly from source_counts (ChatGPT: named of completed answers; Google AI Overview: named of summaries). In the verdict and the conclusion, a count about the business is always the source_counts one. Never write a count for one source with the other source\'s numbers.',
     "Do not claim a guaranteed result, a permanent or number-one ranking, lost revenue, or that the ChatGPT app gives every user the same answer.",
     "assessments: exactly one for each of the ten prompt IDs, with recommendation, comparison and information only.",
     ...reportAssessmentInstructions("direct-ten"),
@@ -105,6 +116,10 @@ function writerInstructions(
       : []),
     "Nuave's playbook (approved by the founder) follows.",
     REPORT_PLAYBOOK,
+    // Spec 023 R-10: how to think and write, read after the playbook. Its
+    // examples use placeholders; copy the way, never the sentences.
+    "Nuave's writing guide (in Indonesian) follows. Where it and the rules above differ on facts, counts or advice, the rules above win.",
+    REPORT_WRITING_GUIDE,
   ];
 }
 
