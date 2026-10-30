@@ -568,22 +568,21 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
   // Review of PR 2: an invented quotation must never survive as a plain
   // claim once its marks are taken off.
   it("an emptied lone title gets the code-built one, never the writer's words without the marks", () => {
+    const finding = {
+      title: "ChatGPT menyebut Aruna “klinik termurah di Depok”",
+      explanation: "ChatGPT menulis “Aruna klinik termurah di Depok”.",
+      evidence_prompt_ids: ["q1"],
+    };
+    const priority = {
+      order: 1,
+      action: "Tulis “halaman harga termurah se-Depok”",
+      why: "ChatGPT menulis “Aruna belum punya halaman harga”.",
+      evidence_prompt_ids: ["q1"],
+    };
+    // Two of each, all emptied: one card is kept, not two identical ones.
     const made = content({
-      key_findings: [
-        {
-          title: "ChatGPT menyebut Aruna “klinik termurah di Depok”",
-          explanation: "ChatGPT menulis “Aruna klinik termurah di Depok”.",
-          evidence_prompt_ids: ["q1"],
-        },
-      ],
-      priorities: [
-        {
-          order: 1,
-          action: "Tulis “halaman harga termurah se-Depok”",
-          why: "ChatGPT menulis “Aruna belum punya halaman harga”.",
-          evidence_prompt_ids: ["q1"],
-        },
-      ],
+      key_findings: [finding, { ...finding, evidence_prompt_ids: ["q2"] }],
+      priorities: [priority, { ...priority, order: 2 }],
     });
     made.two_source_writing!.plan[1]!.title = "Tulis “harga termurah di Depok”";
     const { content: next } = repairQuotes(
@@ -593,11 +592,27 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
       questions,
       fallback,
     );
+    expect(next.key_findings).toHaveLength(1);
     expect(next.key_findings[0]!.title).toBe(FALLBACK_FINDING_TITLE);
     expect(next.key_findings[0]!.explanation).toBe(fallback);
-    expect(next.priorities[0]!.action).toBe(FALLBACK_PRIORITY_ACTION);
+    expect(next.priorities).toHaveLength(1);
+    expect(next.priorities[0]!.action).toBe(
+      "Tulis halaman yang menjawab “Klinik mana yang bagus untuk bekas jerawat di Depok?”",
+    );
     expect(JSON.stringify(next)).not.toContain("termurah");
     expect(next.two_source_writing!.plan).toHaveLength(2);
+    // A recommendation that cites no saved question gets the plain title.
+    const bare = repairQuotes(
+      content({
+        key_findings: [finding],
+        priorities: [{ ...priority, evidence_prompt_ids: [] }],
+      }),
+      facts,
+      observations,
+      questions,
+      fallback,
+    );
+    expect(bare.content.priorities[0]!.action).toBe(FALLBACK_PRIORITY_ACTION);
   });
 });
 

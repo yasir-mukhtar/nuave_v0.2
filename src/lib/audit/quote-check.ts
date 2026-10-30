@@ -469,17 +469,31 @@ export function profileNames(subject: AuditSubject): string[] {
 /** Code-built titles for a required finding or recommendation a drop
  * empties. Never the writer's words without their quotation marks: those
  * would keep an invented quotation as a plain claim (review of PR 2). */
-export const FALLBACK_FINDING_TITLE = "Temuan dari jawaban ChatGPT dan Google";
+export const FALLBACK_FINDING_TITLE =
+  "Temuan dari ChatGPT dan Google AI Overview";
 export const FALLBACK_PRIORITY_ACTION =
-  "Tinjau jawaban AI untuk pertanyaan yang dikutip";
+  "Tulis halaman yang menjawab pertanyaan pelanggan";
+/** The recommendation's code-built title: the first question it cites,
+ * which a recommendation may always quote. */
+const fallbackAction = (
+  ids: readonly string[] | undefined,
+  questions: ReadonlyMap<string, string>,
+) => {
+  const question = ids
+    ?.map((id) => questions.get(id)?.trim())
+    .find((text) => text);
+  return question
+    ? `Tulis halaman yang menjawab “${question}”`
+    : FALLBACK_PRIORITY_ACTION;
+};
 
 /**
  * Past the revision: a sentence whose quotation is not found is dropped. A
  * finding or recommendation a drop empties goes while another remains;
- * otherwise a required paragraph gets the caller's fallback sentence and a
- * title the code-built one. A headline whose caption fails goes. An emptied
- * verdict stays empty (the page shows its own); a plan step a drop empties
- * goes.
+ * otherwise only the first is kept, its emptied paragraph gets the
+ * caller's fallback sentence and its emptied title a code-built one. A
+ * headline whose caption fails goes. An emptied verdict stays empty (the
+ * page shows its own); a plan step a drop empties goes.
  */
 export function repairQuotes(
   content: ReportContent,
@@ -512,7 +526,7 @@ export function repairQuotes(
   const wholeFindings = findings.filter((f) => f.title && f.explanation);
   const key_findings = wholeFindings.length
     ? wholeFindings
-    : findings.map((f) => ({
+    : findings.slice(0, 1).map((f) => ({
         ...f,
         title: f.title || FALLBACK_FINDING_TITLE,
         explanation: f.explanation || fallback,
@@ -527,9 +541,9 @@ export function repairQuotes(
   const keptPriorities = (
     wholePriorities.length || !priorities.length
       ? wholePriorities
-      : priorities.map((p) => ({
+      : priorities.slice(0, 1).map((p) => ({
           ...p,
-          action: p.action || FALLBACK_PRIORITY_ACTION,
+          action: p.action || fallbackAction(p.evidence_prompt_ids, questions),
           why: p.why || fallback,
         }))
   ).map((p, i) => ({ ...p, order: i + 1 }));

@@ -315,10 +315,15 @@ export const SOURCE_GOOGLE = "Google AI Overview";
 
 const NAMING_VERB =
   "(?:disebut(?:kan)?|muncul|menyebut(?:kan)?(?:nya)?|ditemukan|terlihat|tampil|menyinggung|disinggung)";
+/** Review of PR 2: "belum mengenal", "tidak memuat", "tidak menampilkan"
+ * say the business was not named, in other words. Only negated: "agar AI
+ * mengenal SOZO" or "halaman yang memuat harga" make no claim. */
+const NOT_NAMING_VERB =
+  "(?:mengenal(?:i)?|dikenal(?:i)?|memuat|dimuat|menampilkan|ditampilkan|mencantumkan|dicantumkan)";
 /** "tidak/tak/belum/bukan (pernah/sama sekali) disebut…", "tidak ada jawaban
  * yang menyebut…", "tidak satu pun ringkasan menyebut…", "absen". */
 const NEGATIVE = new RegExp(
-  `\\b(?:tidak|tak|belum|bukan)\\s+(?:(?:pernah|lagi)\\s+)?(?:(?:sama\\s+sekali|sekali\\s+pun)\\s+)?${NAMING_VERB}\\b|\\btidak\\s+(?:ada|satu\\s+pun)\\b.*\\b(?:menyebut(?:kan)?|memuat|mencantumkan)\\b|\\babsen\\b`,
+  `\\b(?:tidak|tak|belum|bukan)\\s+(?:(?:pernah|lagi)\\s+)?(?:(?:sama\\s+sekali|sekali\\s+pun)\\s+)?(?:${NAMING_VERB}|${NOT_NAMING_VERB})\\b|\\b(?:tidak|belum)\\s+(?:ada|satu\\s+pun)\\b.*\\b(?:menyebut(?:kan)?|${NOT_NAMING_VERB})\\b|\\babsen\\b`,
   "i",
 );
 const POSITIVE = new RegExp(`\\b${NAMING_VERB}\\b`, "i");
@@ -337,6 +342,10 @@ const ORDINAL_GROUP =
  * against the finding's cited questions (see `contradictedSources`). */
 const ORDINAL_CITED =
   /\bke(tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\b)/i;
+/** A part of an ordinal group: "tiga dari keempat jawaban", "hanya",
+ * "tidak selalu", "salah satu". Such a claim is not about every one. */
+const ORDINAL_PART =
+  /\bdari\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|sekali|selalu|kadang|jarang)\b/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
@@ -870,7 +879,7 @@ function contradictedSources(
   for (const clause of clausesOf(sentence, facts, context)) {
     if (!clause.trim()) continue;
     const own = sourcesOf(clause);
-    const at: ClauseSources = own.length
+    let at: ClauseSources = own.length
       ? { sources: own, explicit: true }
       : (carried ?? {
           sources: whole.length ? whole : ["chatgpt", "google"],
@@ -932,19 +941,23 @@ function contradictedSources(
         : null;
 
     // Review of PR 2: in a key finding, an ordinal group ("dalam keempat
-    // jawaban tentang harga", "keempatnya") is the finding's cited questions
-    // when their number for the source is that number, so the claim must
-    // hold for each of them. A source whose cited questions number more (a
-    // finding that compares two groups) stays unchecked, as before.
+    // jawaban tentang harga", "keempatnya") about a named business is the
+    // finding's cited questions when their number for the source is that
+    // number, so the claim must hold for each of them. A part of the group
+    // ("tiga dari keempat", "hanya", "tidak selalu") is not checked. A source
+    // whose cited questions number otherwise (a finding that compares two
+    // groups) is read as before; with no source in the sentence, every
+    // source must match, or none is read this way.
     const cardinal = clause.match(ORDINAL_CITED)?.[1];
     if (
       cardinal &&
       scope &&
       facts.writer &&
       !counts.length &&
+      !ORDINAL_PART.test(clause) &&
       (groupNegative || groupPositive) &&
       !(RECOMMEND.test(clause) && !groupNegative) &&
-      (competitor || clauseKind(clause, facts) === "business")
+      (competitor || refersToOwner(clause, facts))
     ) {
       const size = Number(NUMBER_WORDS[cardinal.toLowerCase()]);
       const cited = new Set(scope.ids);
@@ -956,7 +969,8 @@ function contradictedSources(
       const checked = at.sources.filter(
         (source) => citedOf(source).ids.length === size,
       );
-      if (checked.length) {
+      const rest = at.sources.filter((source) => !checked.includes(source));
+      if (checked.length && (at.explicit || !rest.length)) {
         const failed = failedSources(
           { ...at, sources: checked },
           (source) =>
@@ -973,7 +987,8 @@ function contradictedSources(
         );
         failed.forEach((s) => out.add(s));
         if (failed.length) droppable = true;
-        continue;
+        if (!rest.length) continue;
+        at = { ...at, sources: rest };
       }
     }
 
@@ -1154,7 +1169,7 @@ export function sentences(text: string): string[] {
  * the next step need not name a source; one that says the business was or
  * was not named, or counts, does. */
 const CLAIM_VERB =
-  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|dipilih|memilih|hadir|tercantum|dicantumkan|mencantumkan|memuat|dimuat|mengenal|mengenali|dikenal|dikenali|menampilkan|ditampilkan)\b/i;
+  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|dipilih|memilih|hadir|tercantum)\b/i;
 
 function makesNamingClaim(text: string, facts: TwoSourceReportFacts): boolean {
   return digitsForWords(text)

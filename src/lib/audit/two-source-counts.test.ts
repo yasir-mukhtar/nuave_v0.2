@@ -366,21 +366,108 @@ describe("Spec 023 review: ordinal groups and the conclusion's naming verbs", ()
     ).toEqual([]);
   });
 
-  it("a conclusion that says AI does not know or show the business must name its source", () => {
+  it("reads 'belum mengenal', 'tidak memuat' and 'tidak menampilkan' as 'not named', and replaces a false one", () => {
     for (const claim of [
       "Belum ada jawaban AI yang memuat SOZO.",
       "AI belum mengenal SOZO sama sekali.",
       "SOZO belum dikenal mesin pencari AI.",
       "Jawaban AI belum menampilkan SOZO.",
+      "ChatGPT belum mengenal SOZO sama sekali.",
+      "Belum ada jawaban ChatGPT yang memuat SOZO.",
+      "ChatGPT tidak mencantumkan SOZO di jawabannya.",
     ]) {
       const content = { ...withFinding("Pola ini jelas."), conclusion: claim };
       expect(violations(content).join(" "), claim).toMatch(
-        /The conclusion must say which source/,
+        /contradicts the counts/,
       );
       const repaired = repairTwoSourceWriting(content, facts);
-      expect(repaired.content.conclusion).toMatch(/^Di ChatGPT/);
-      expect(repaired.content.conclusion).toContain(claim);
+      expect(repaired.content.conclusion, claim).not.toContain(claim);
+      expect(repaired.content.conclusion).toContain(
+        "disebut di 3 dari 10 jawaban",
+      );
+      // The same false sentence in a key finding is caught too.
+      expect(
+        violations(withFinding(`Pola ini jelas. ${claim}`, ids)).join(" "),
+        claim,
+      ).toMatch(/contradicts the counts/);
     }
+    // True: Google named SOZO in none of its summaries.
+    expect(
+      violations({
+        ...withFinding("Pola ini jelas."),
+        conclusion: "Google AI Overview belum memuat SOZO.",
+      }),
+    ).toEqual([]);
+  });
+
+  it("leaves a next step alone: 'memuat' or 'mengenal' without a negation claims nothing", () => {
+    for (const step of [
+      "Buat halaman yang memuat nama dokter dan alamat klinik.",
+      "Tulis artikel yang mencantumkan nama SOZO dan kota Anda.",
+      "Mulailah dengan halaman yang menampilkan harga treatment SOZO.",
+      "Agar AI mengenal SOZO, mulailah dari halaman treatment.",
+    ])
+      expect(
+        violations({ ...withFinding("Pola ini jelas."), conclusion: step }),
+        step,
+      ).toEqual([]);
+  });
+
+  it("never reads a part of the group as all of it", () => {
+    for (const sentence of [
+      "ChatGPT menyebut SOZO di tiga dari keempat jawaban tentang harga.",
+      "SOZO hanya muncul di satu dari keempat jawaban ChatGPT.",
+      "ChatGPT menyebut SOZO di salah satu dari keempat jawaban tentang harga.",
+      "Dari keempat jawaban tentang harga, ChatGPT hanya menyebut SOZO sekali.",
+      "ChatGPT tidak selalu menyebut SOZO dalam keempat jawaban tentang harga.",
+      "ChatGPT menyebut SOZO di sebagian dari keempat jawaban tentang harga.",
+      "ChatGPT menyebut empat klinik lain, dan keempatnya muncul berulang kali.",
+    ])
+      expect(violations(withFinding(sentence, qualityIds)), sentence).toEqual(
+        [],
+      );
+  });
+
+  // Google named SOZO in q4 here: a "not named" claim about both sources is
+  // still checked for Google when only ChatGPT's cited questions match.
+  const googleNamedQ4: TwoSourceReportFacts = {
+    ...facts,
+    counts: { ...facts.counts, google: { ...facts.counts.google, named: 1 } },
+    google: facts.google.map((g) =>
+      g.prompt_id === "q4" ? { ...g, business_named: true } : g,
+    ),
+    writer: {
+      ...facts.writer!,
+      questions: facts.writer!.questions.map((q) =>
+        q.prompt_id === "q4"
+          ? { ...q, named: { ...q.named, google: "named" } }
+          : q,
+      ),
+    },
+  };
+
+  it("checks every source a sentence names, even when only one matches the ordinal", () => {
+    for (const sentence of [
+      "SOZO tidak disebut dalam keempat jawaban ChatGPT maupun di Google AI Overview.",
+      "SOZO tidak disebut di ChatGPT maupun Google AI Overview dalam keempat jawaban.",
+    ])
+      expect(
+        twoSourceWritingViolations(withFinding(sentence), googleNamedQ4).join(
+          " ",
+        ),
+        sentence,
+      ).toMatch(/Google AI Overview/);
+    // With no source in the sentence, Google alone is never read as the
+    // group: this follows a sentence about ChatGPT and is true for it.
+    expect(
+      twoSourceWritingViolations(
+        withFinding(
+          "ChatGPT menyebut ERHA dalam ketiga jawaban tentang harga. SOZO tidak disebut dalam ketiganya.",
+          ["q4", "q5", "q6", "q8", "q9", "q10"],
+        ),
+        googleNamedQ4,
+      ),
+    ).toEqual([]);
   });
 });
 
