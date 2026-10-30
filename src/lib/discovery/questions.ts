@@ -175,6 +175,9 @@ export type QuestionTry = {
   reason?: string;
   /** Only "finish_reason: <code>"; other detail texts can quote questions. */
   finish?: string;
+  /** For a failed check: which checks, as their fixed texts (they never
+   * quote a question). */
+  checks?: string[];
 };
 
 export type SearchGroundedOutcome = GlmQuestionsOutcome & {
@@ -182,6 +185,22 @@ export type SearchGroundedOutcome = GlmQuestionsOutcome & {
   /** Every call made, in order; never sent to the customer. */
   tries?: QuestionTry[];
 };
+
+const MAX_LOGGED_CHECKS = 8;
+
+/** The distinct checks a pack failed, with "Pertanyaan 3" folded to
+ * "Pertanyaan N" so one rule shows once. */
+function failedChecks(outcome: GlmQuestionsOutcome): { checks?: string[] } {
+  if (outcome.status !== "validation_failed") return {};
+  const checks = [
+    ...new Set(
+      outcome.issues.map((issue) =>
+        issue.replace(/^(Pertanyaan|Question) \d+\b/, "$1 N"),
+      ),
+    ),
+  ].slice(0, MAX_LOGGED_CHECKS);
+  return checks.length ? { checks } : {};
+}
 
 function finishCode(outcome: GlmQuestionsOutcome): { finish?: string } {
   const detail = "detail" in outcome ? outcome.detail : undefined;
@@ -266,6 +285,7 @@ export async function prepareSearchGroundedQuestions(input: {
         ? { reason: outcome.reason }
         : {}),
       ...finishCode(outcome),
+      ...failedChecks(outcome),
     });
     last = { ...outcome, mode, tries };
     const tryAgain =

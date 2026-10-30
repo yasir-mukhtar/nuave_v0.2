@@ -302,11 +302,14 @@
   2026-10-26; the Workers Free limits recorded below are history, not a
   blocker), not Pages (Pages could not serve the static assets); worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:
   `https://nuave-v2.mail-yasirmukhtar.workers.dev`. `nuave.ai` is untouched.
-- CI (`.github/workflows/ci.yml`): on every PR, code checks, unit tests, the
-  build and the browser suites (the largest split in four) run side by side,
-  and `validate` passes only when all of them pass; on `main`,
-  `verify-main-origin` (fails a commit without a merged PR), then `deploy`.
-  Each PR gets a `nuave-pr-<number>` preview worker with dummy keys.
+- CI (`.github/workflows/ci.yml`): on every PR, code checks and unit tests;
+  the build and the browser suites (the largest split in four) run too unless
+  the PR is a draft or changes only docs, and the Meta Pixel suite only when a
+  file it depends on changes. `validate` passes only when every check the PR
+  needs passes. On `main`, no tests run again: `verify-main-origin` (fails a
+  commit without a merged PR), then `deploy`. Each non-draft PR that changes
+  code gets a `nuave-pr-<number>` preview worker with dummy keys
+  ([decision](./DECISION_LOG.md#2026-10-28--ci-runs-only-what-a-pr-needs-to-fit-2000-actions-minutes)).
 - **Since Spec 016 (PR #129, deployed 2026-10-13):** the deploy job also writes the
   runtime settings as **Worker secrets** (mode, emergency switch, daily cap,
   order limit, email list, Resend key and sender, provider keys). At run time a

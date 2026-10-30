@@ -27,6 +27,23 @@ export const GENERIC_BUSINESS_WORDS: readonly string[] = [
   "fisioterapi",
   "physio",
   "physiotherapy",
+  "dokter",
+  "doctor",
+  "drg",
+  "dr",
+  // Words the question rules ask the writer to use (R-10). A Google listing
+  // named "Klinik Dokter Gigi Terdekat" made "dokter" and "terdekat" brand
+  // words, so every pack failed as "names your business" (NV-8XAPUF,
+  // 2026-10-29).
+  "rekomendasi",
+  "terbaik",
+  "terdekat",
+  "bagus",
+  "murah",
+  "harga",
+  "biaya",
+  "tarif",
+  "tempat",
 ];
 
 const FILLER_WORDS = new Set([

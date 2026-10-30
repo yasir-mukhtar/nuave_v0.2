@@ -1,10 +1,60 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-28
+> Updated: 2026-10-29
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-10-29 — Cookie notice: one short layer, without naming Meta
+
+Yasir found the layered notice still too long and intimidating. The notice
+now reads: title "🍪 Allow ad cookies?", text "We share visits and purchases
+with our ad partner to measure our ads and reach similar customers. Your
+report and answers are never shared.", a **Privacy policy** link that opens
+the privacy page's cookie section (`/privacy#cookie`), and the buttons
+Don't allow and Allow. The How it works second layer is removed; the
+privacy page's section 10 names Meta and the coded order email, and the link
+takes the visitor straight to it before they choose. The privacy page is
+unchanged, so its version stays 1.4 and no one is asked again.
+
+This supersedes the 2026-10-26 layered notice and Spec 022 R-19, R-19a,
+AC-11 (How it works text) and AC-11a. An independent opinion (GPT-6-Astra,
+2026-10-29) judged that the visible text must name both purposes (measuring
+ads and reaching similar customers), which this text does, and was least
+sure whether a privacy-page link alone is enough for the coded email. Not
+naming Meta in the notice keeps the 2026-10-25 reasoning. Recorded as a
+decision for the lawyer's check, not a claim that it is compliant.
+
+## 2026-10-29 — After payment the business name can be fixed; the website stays locked
+
+Order NV-8XAPUF was placed under its Google listing name, "Klinik Dokter
+Gigi Terdekat", and the customer could not correct it: after payment the
+review's Bisnis sheet locked the name and the website together (Spec 017
+R-19, AC-13). Yasir decided that only the website stays locked. The website
+is what the order is for (the server checks it at approval, and the reading
+and search data come from it); the name is a label, and approval already
+saves the name the customer confirmed.
+
+After payment the Bisnis sheet keeps `Ubah nama`, which opens the business
+check for a name correction only; its `Kembali` and `Lanjut` return to the
+review. `Ganti website` stays hidden and the sheet says "Website sudah
+terkunci untuk pesanan ini." Nothing new is read or paid for.
+
+## 2026-10-28 — CI runs only what a PR needs, to fit 2,000 Actions minutes
+
+Yasir approved, because the monthly 2,000 GitHub Actions minutes ran out
+mid-month:
+
+1. A PR that changes only docs (`docs/` or `.md` files) runs code checks and
+   unit tests, but no build, browser tests or preview.
+2. `main` is not tested again after a merge; it checks the merge came from a
+   PR, then builds and deploys.
+3. A draft PR runs only code checks and unit tests, and gets no preview. The
+   full set and the preview run when it is marked ready for review.
+4. The Meta Pixel browser suite runs only when a file it depends on changes.
+
+Not approved: fewer test machines per run (the browser suite stays split).
 
 ## 2026-10-28 — Spec 023 approved: report writing quality
 

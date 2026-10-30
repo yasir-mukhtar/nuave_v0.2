@@ -117,4 +117,37 @@ describe("question writer tries", () => {
     expect(outcome.tries!.length).toBeGreaterThan(0);
     expect(JSON.stringify(outcome.tries)).not.toContain("skin booster");
   });
+
+  // 2026-10-29 (NV-8XAPUF): three failed checks left only
+  // "validation_failed", so the cause needed the order's saved data.
+  it("records which checks failed, never the questions", async () => {
+    const { outcome } = await write(
+      "stop",
+      [
+        "## 1. Market interpretation",
+        "",
+        "Klinik kecantikan.",
+        "",
+        "## 2. Candidate questions",
+        "",
+        ...Array.from(
+          { length: 10 },
+          (_, i) => `${i + 1}. Klinik skin booster nomor ${i + 1} di Jakarta?`,
+        ),
+        "",
+        "## 3. Self-critique",
+        "",
+        "Tidak ada.",
+      ].join("\n"),
+    );
+    expect(outcome.status).toBe("validation_failed");
+    expect(outcome.tries).toHaveLength(3);
+    for (const entry of outcome.tries!) {
+      expect(entry.status).toBe("validation_failed");
+      expect(entry.checks).toContain(
+        "Pertanyaan ini menyebut kota. Hapus nama kotanya.",
+      );
+    }
+    expect(JSON.stringify(outcome.tries)).not.toContain("skin booster");
+  });
 });

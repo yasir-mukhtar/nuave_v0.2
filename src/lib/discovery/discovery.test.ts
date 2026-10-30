@@ -89,6 +89,15 @@ describe("R-04a search phrases (AC-03)", () => {
       "fiksi",
       "bandung",
     ]);
+    // A listing name made of search words (NV-8XAPUF) gives no brand words
+    // the question rules themselves ask for.
+    const listing = brand(
+      "Klinik Dokter Gigi Terdekat",
+      "Klinik gigi spesialis dan layanan kesehatan",
+      ["MHDC Clinic"],
+      "https://mhdc.co.id/",
+    );
+    expect(brandTokens(listing)).toEqual(["mhdc"]);
     expect(searchPhrase("Skin Booster", sozo)).toBe("skin booster");
     // Step 5 adds the subject word to a one-word phrase.
     expect(searchPhrase("Botox treatment", sozo)).toBe("botox kecantikan");

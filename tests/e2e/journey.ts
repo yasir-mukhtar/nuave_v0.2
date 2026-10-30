@@ -94,8 +94,8 @@ export const REVIEW_CONFIRMATION =
   "Saya sudah memeriksa informasi ini dan menyetujuinya untuk digunakan dalam pertanyaan audit.";
 export const CONFIRM_SUMMARY = "Buat pertanyaan audit";
 export const COMPLETE_GAPS = "Lengkapi yang perlu dipastikan";
-export const NAME_LOCKED_NOTE =
-  "Nama dan website sudah terkunci untuk pesanan ini.";
+/** After payment only the website is locked; the name can still be fixed. */
+export const WEBSITE_LOCKED_NOTE = "Website sudah terkunci untuk pesanan ini.";
 // J27/J27b/J28: the questions and the start sheet.
 export const QUESTIONS_HEADING = "10 pertanyaan untuk AI";
 export const RUN_AUDIT = "Jalankan audit";

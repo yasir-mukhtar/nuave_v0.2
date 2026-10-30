@@ -67,19 +67,13 @@ afterEach(() => {
 });
 
 const notice = () =>
-  screen.queryByRole("region", { name: "Help us understand what works" });
+  screen.queryByRole("region", { name: "🍪 Allow ad cookies?" });
 
 const normalised = (text: string | null | undefined) =>
   (text ?? "").replace(/\s+/g, " ").trim();
-/** Spec 022 Q-1 and Q-9, exactly as approved on 2026-10-26. */
-const FIRST_LAYER =
-  "We use cookies and limited purchase information to measure which ads lead to sales. Your report and business answers are never shared with advertising partners. How it works";
-const HOW_IT_WORKS = [
-  "If you allow, Meta (Facebook and Instagram), our advertising partner, sets cookies and learns which Nuave pages you open and when you finish the free check or open checkout, with your IP address and device type, so we can see which ads bring visitors.",
-  "If you buy, we also send Meta that a purchase happened and its value (Rp249.000), your IP address, browser type and Meta cookie codes, and your order email in coded (hashed) form, never as readable text. Meta uses these to match the purchase to your Facebook or Instagram account and the ad you saw, and to show our ads to people similar to our buyers.",
-  "We never send Meta your report, your questions, AI answers or your business details.",
-  "If you don't allow, none of your data is sent to Meta, from your browser or from our server. You can change your choice anytime under Pengaturan cookie, at the bottom of our home page and privacy page.",
-];
+/** The notice text, exactly as the founder settled it on 2026-10-29. */
+const NOTICE_TEXT =
+  "We share visits and purchases with our ad partner to measure our ads and reach similar customers. Your report and answers are never shared. Privacy policy";
 
 describe("without a Pixel ID (R-01)", () => {
   it("shows no notice and no link, and loads nothing from Meta", () => {
@@ -159,9 +153,9 @@ describe("with a Pixel ID", () => {
   it("asks first and loads nothing from Meta before a choice (R-02)", () => {
     app();
     expect(notice()).not.toBeNull();
-    // Spec 022 Q-1: the first layer, word for word (AC-11).
-    expect(normalised(screen.getByText(/We use cookies/).textContent)).toBe(
-      FIRST_LAYER,
+    // The notice text, word for word (AC-11).
+    expect(normalised(screen.getByText(/We share visits/).textContent)).toBe(
+      NOTICE_TEXT,
     );
     expect(metaScripts()).toHaveLength(0);
     expect(window.fbq).toBeUndefined();
@@ -420,26 +414,15 @@ describe("with a Pixel ID", () => {
   });
 });
 
-describe("Spec 022: the layered notice (R-19, R-19a, AC-11, AC-11a)", () => {
+describe("the one-layer notice (founder decision 2026-10-29)", () => {
   beforeEach(() => setUp());
 
-  it("How it works opens the Q-9 text inside the notice, before the choice, with nothing from Meta", () => {
+  it("links to the privacy page's cookie section, with no second layer and nothing from Meta", () => {
     app();
-    const toggle = screen.getByRole("button", { name: "How it works" });
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(document.getElementById("cookie-notice-how")).toBeNull();
-    act(() => toggle.click());
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    const panel = document.getElementById("cookie-notice-how")!;
-    expect(notice()!.contains(panel)).toBe(true);
-    const items = Array.from(panel.querySelectorAll("li"), (item) =>
-      normalised(item.textContent),
-    );
-    expect(items).toEqual(HOW_IT_WORKS);
     expect(
       screen.getByRole("link", { name: "Privacy policy" }).getAttribute("href"),
     ).toBe("/privacy#cookie");
-    // Both choices stay in reach, and nothing loaded from Meta.
+    expect(screen.queryByRole("button", { name: "How it works" })).toBeNull();
     expect(screen.getByRole("button", { name: "Allow" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Don't allow" })).toBeTruthy();
     expect(metaScripts()).toHaveLength(0);
@@ -452,13 +435,12 @@ describe("Spec 022: the layered notice (R-19, R-19a, AC-11, AC-11a)", () => {
     act(() =>
       screen.getByRole("button", { name: "Pengaturan cookie" }).click(),
     );
-    act(() => screen.getByRole("button", { name: "How it works" }).click());
-    const panel = document.getElementById("cookie-notice-how")!;
+    expect(normalised(screen.getByText(/We share visits/).textContent)).toBe(
+      NOTICE_TEXT,
+    );
     expect(
-      Array.from(panel.querySelectorAll("li"), (item) =>
-        normalised(item.textContent),
-      ),
-    ).toEqual(HOW_IT_WORKS);
+      screen.getByRole("link", { name: "Privacy policy" }).getAttribute("href"),
+    ).toBe("/privacy#cookie");
   });
 });
 
