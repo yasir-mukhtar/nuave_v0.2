@@ -191,6 +191,18 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
 
+      # Without the project's own wrangler installed, wrangler-action runs
+      # `npm i wrangler@4`, which the wrangler override in package.json
+      # refuses (EOVERRIDE), so the delete never ran.
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Remove isolated preview worker
         id: remove
         continue-on-error: true

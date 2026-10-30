@@ -284,7 +284,7 @@
   APIs return HTTP 403. Mandatory review/release rules remain, but enforcement
   readiness is unresolved; no visibility, billing or settings change is approved.
 - **Additional operational finding:** [PR #122 closed-preview removal failed](https://github.com/yasir-mukhtar/nuave_v0.2/pull/122#issuecomment-5979315878).
-  Existence, cause and exposure are not established; no remediation is authorized.
+  Cause found 2026-10-30; see the closed-preview cleanup note below.
 - **PR121 earlier release:** [main CI](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219597)
   validated/deployed `d7a2f50fddafae222eb62dbabaec5497010743b8`, the same tree as
   reviewed `7aa6fc9a08d141ecab03ff98e05a06408ade405d`.
@@ -295,8 +295,14 @@
   `/audit` HTTP 200. No browser JavaScript, business submission, provider call,
   rendered QA or fresh production report was exercised.
 - **Separate operational finding:** [closed-preview cleanup failed](https://github.com/yasir-mukhtar/nuave_v0.2/actions/runs/37192219083/job/111406635060).
-  Preview removal, cause and continuing exposure are not established. This does
-  not negate the successful main deployment; no cleanup/remediation is authorized.
+  This does not negate the successful main deployment. **Cause (found
+  2026-10-30, fix approved by Yasir):** the cleanup job never installed the
+  project, so the Cloudflare step tried to install wrangler on its own and the
+  package.json wrangler override refused it. Closed-PR removals failed, and
+  about 85 `nuave-pr-<number>` workers (dummy keys, synthetic mode) were left.
+  The fix installs the project first. **Preview cleanup** (Actions, run by
+  hand, dry run by default) removes previews whose PR is not open, keeping the
+  three parked PRs' previews.
 - Cloudflare **Workers** on the **Workers Paid** plan (founder-confirmed
   2026-10-26; the Workers Free limits recorded below are history, not a
   blocker), not Pages (Pages could not serve the static assets); worker `nuave-v2` serves `https://v2.nuave.ai` (noindex). Fallback:

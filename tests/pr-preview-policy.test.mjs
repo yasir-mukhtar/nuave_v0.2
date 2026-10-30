@@ -105,3 +105,17 @@ describe("workflow conditions match the policy", () => {
     expect(cleanupIf).toContain("pull_request.user.login != 'dependabot[bot]'");
   });
 });
+
+describe("cleanup job can run wrangler", () => {
+  const yaml = readFileSync(".github/workflows/pr-preview.yml", "utf8");
+  const cleanupJob = yaml.slice(yaml.indexOf("name: Remove closed PR preview"));
+
+  // Without the project's wrangler installed, wrangler-action runs
+  // `npm i wrangler@4`, which the package.json override refuses.
+  it("installs the project's dependencies before removing the worker", () => {
+    const install = cleanupJob.indexOf("run: npm ci");
+    const remove = cleanupJob.indexOf("uses: cloudflare/wrangler-action");
+    expect(install).toBeGreaterThan(-1);
+    expect(install).toBeLessThan(remove);
+  });
+});
