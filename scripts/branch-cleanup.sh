@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# Archive-then-delete for finished branches, used by
+# .github/workflows/branch-cleanup.yml.
+#
+# Every branch is first saved as a tag named archive/<branch>, so its work
+# can always be brought back. Only then is the branch deleted.
+#
+# Usage:
+#   branch-cleanup.sh closed-pr <branch>       one branch whose PR was closed
+#   branch-cleanup.sh sweep <min-age-days>     every branch without an open PR
+#
+# Environment:
+#   REPO            owner/name, for example yasir-mukhtar/nuave_v0.2
+#   KEEP_BRANCHES   extra newline-separated branch names that are never touched
+#   DRY_RUN         "true" lists what would happen without changing anything
+#   GH_TOKEN        token with contents: write (read by gh)
+set -euo pipefail
+
+: "${REPO:?REPO is required}"
+DRY_RUN="${DRY_RUN:-false}"
+SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+
+# Parked by founder decision 2026-10-03 (see AGENTS.md). Always kept, even
+# when the script runs without KEEP_BRANCHES.
+PARKED_BRANCHES="claude/website-build-575fvo
+chore/desktop-autonomous-workflow
+chore/pilot-ci-browser-artifacts"
+
+default_branch="$(gh api "repos/$REPO" --jq .default_branch)"
+
+# Prints why a branch must be left alone, or nothing when it may be cleaned up.
+# $2 is the list of branches open PRs use, from open_pr_refs.
+keep_reason() {
+  local branch="$1" open="$2"
+  if [[ "$branch" == "$default_branch" ]]; then
+    echo "default branch"
+  elif printf '%s\n%s\n' "$PARKED_BRANCHES" "${KEEP_BRANCHES:-}" |
+    sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -Fxq -- "$branch"; then
+    echo "on the keep list"
+  elif grep -Fxq -- "$branch" <<<"$open"; then
+    echo "an open PR uses it"
+  elif ! [[ "$branch" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+    # Names are put into API paths as they are; anything unusual is left
+    # for a person rather than risk acting on the wrong branch.
+    echo "unusual characters in its name, clean it up by hand"
+  fi
+}
+
+# Branches an open PR needs: its own branch, and the branch it merges into.
+open_pr_refs() {
+  gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+    --jq ".[] | (select(.head.repo.full_name == \"$REPO\") | .head.ref), .base.ref"
+}
+
+# gh prints the error body on stdout for a 404, so only trust a clean exit.
+ref_sha() {
+  local sha
+  if sha="$(gh api "repos/$REPO/git/ref/$1" --jq .object.sha 2>/dev/null)"; then
+    printf '%s' "$sha"
+  fi
+}
+
+# Prints the branch's current commit, or nothing when the branch is gone.
+branch_sha() { ref_sha "heads/$1"; }
+
+tag_sha() { ref_sha "tags/$1"; }
+
+archive_and_delete() {
+  local branch="$1" sha="$2" tag="archive/$1" existing
+  existing="$(tag_sha "$tag")"
+  if [[ -n "$existing" && "$existing" != "$sha" ]]; then
+    # An older archive with this name holds different work; keep both.
+    tag="archive/$branch--${sha:0:7}"
+    existing="$(tag_sha "$tag")"
+  fi
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "- would archive \`$branch\` as \`$tag\` and delete it" >>"$SUMMARY"
+    return
+  fi
+
+  if [[ -z "$existing" ]]; then
+    gh api -X POST "repos/$REPO/git/refs" \
+      -f ref="refs/tags/$tag" -f sha="$sha" >/dev/null || true
+  fi
+  # Never delete unless the archive tag really points at the branch's work.
+  if [[ "$(tag_sha "$tag")" != "$sha" ]]; then
+    echo "- **skipped** \`$branch\`: archive tag \`$tag\` could not be confirmed" >>"$SUMMARY"
+    return 1
+  fi
+  # Someone may have pushed since we looked; that work is not in the tag yet.
+  if [[ "$(branch_sha "$branch")" != "$sha" ]]; then
+    echo "- **skipped** \`$branch\`: it changed while being archived, run again later" >>"$SUMMARY"
+    return 1
+  fi
+  if ! gh api -X DELETE "repos/$REPO/git/refs/heads/$branch" >/dev/null; then
+    echo "- **failed** to delete \`$branch\` (archived as \`$tag\`)" >>"$SUMMARY"
+    return 1
+  fi
+  echo "- archived \`$branch\` as \`$tag\` and deleted it" >>"$SUMMARY"
+}
+
+cleanup_closed_pr() {
+  local branch="$1" open reason sha
+  open="$(open_pr_refs)"
+  reason="$(keep_reason "$branch" "$open")"
+  if [[ -n "$reason" ]]; then
+    echo "- kept \`$branch\` ($reason)" >>"$SUMMARY"
+    return
+  fi
+  sha="$(branch_sha "$branch")"
+  if [[ -z "$sha" ]]; then
+    echo "- \`$branch\` was already deleted" >>"$SUMMARY"
+    return
+  fi
+  archive_and_delete "$branch" "$sha"
+}
+
+sweep() {
+  local min_age_days="$1" now open branches branch sha reason date age failed=0
+  if ! [[ "$min_age_days" =~ ^[0-9]{1,4}$ ]]; then
+    echo "minimum age must be a whole number of days, got: $min_age_days" >&2
+    return 2
+  fi
+  # Base 10, so "08" means eight days rather than an invalid octal number.
+  min_age_days=$((10#$min_age_days))
+  now="$(date +%s)"
+  # Both lists are read in full first, so a failed lookup stops the run
+  # instead of treating every branch as unused.
+  open="$(open_pr_refs)"
+  branches="$(gh api --paginate "repos/$REPO/branches?per_page=100" \
+    --jq '.[] | "\(.name) \(.commit.sha)"')"
+  echo "### Branch cleanup (dry run: $DRY_RUN, minimum age: $min_age_days days)" >>"$SUMMARY"
+
+  while read -r branch sha; do
+    [[ -z "$branch" || "$branch" == "$default_branch" ]] && continue
+    reason="$(keep_reason "$branch" "$open")"
+    if [[ -n "$reason" ]]; then
+      echo "- kept \`$branch\` ($reason)" >>"$SUMMARY"
+      continue
+    fi
+    if ! date="$(gh api "repos/$REPO/commits/$sha" --jq .commit.committer.date)"; then
+      echo "- **skipped** \`$branch\`: could not read its last change date" >>"$SUMMARY"
+      failed=1
+      continue
+    fi
+    age=$(((now - $(date -d "$date" +%s)) / 86400))
+    if ((age < min_age_days)); then
+      echo "- kept \`$branch\` (last change $age days ago, may still be in progress)" >>"$SUMMARY"
+      continue
+    fi
+    archive_and_delete "$branch" "$sha" || failed=1
+  done <<<"$branches"
+
+  return "$failed"
+}
+
+case "${1:-}" in
+  closed-pr) cleanup_closed_pr "${2:?branch name required}" ;;
+  sweep) sweep "${2:-7}" ;;
+  *)
+    echo "usage: $0 closed-pr <branch> | sweep <min-age-days>" >&2
+    exit 2
+    ;;
+esac

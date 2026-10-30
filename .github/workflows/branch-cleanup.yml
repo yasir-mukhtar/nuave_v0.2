@@ -1,0 +1,81 @@
+name: Branch cleanup
+
+# Keeps the branch list tidy. GitHub already deletes a branch when its PR is
+# merged (repository setting). This covers the rest:
+# - a PR closed without merging: its branch is saved as the tag
+#   archive/<branch>, then deleted;
+# - "Run workflow" by hand: every branch without an open PR, older than the
+#   chosen number of days, gets the same treatment. Leave "dry run" ticked to
+#   see the list first.
+# A saved branch can be restored from its archive/<branch> tag at any time;
+# its closed PR can only be reopened after that.
+
+on:
+  pull_request_target:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only list what would be cleaned up, change nothing
+        type: boolean
+        default: true
+      min_age_days:
+        description: Skip branches changed within this many days
+        type: string
+        default: "7"
+
+# One queue per branch: a shared queue would drop runs when several PRs close
+# at once. Two runs on the same branch are safe either way.
+concurrency:
+  group: branch-cleanup-${{ github.event.pull_request.head.ref || 'sweep' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+env:
+  REPO: ${{ github.repository }}
+  # Extra branches that are never touched. The three parked by the founder
+  # decision of 2026-10-03 are already kept by the script itself.
+  KEEP_BRANCHES: ""
+
+jobs:
+  closed-pr:
+    name: Archive branch of closed PR
+    # Merged PRs are handled by GitHub's own auto-delete. Fork branches are
+    # not ours to delete.
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      !github.event.pull_request.merged &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      # pull_request_target checks out the default branch, never PR code.
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Archive and delete branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: bash scripts/branch-cleanup.sh closed-pr "$BRANCH"
+
+  sweep:
+    name: Archive branches without an open PR
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Archive and delete branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          MIN_AGE_DAYS: ${{ inputs.min_age_days }}
+        run: bash scripts/branch-cleanup.sh sweep "$MIN_AGE_DAYS"
