@@ -1,4 +1,6 @@
 import type { ParsedSourceInput } from "./source-input";
+import { pickBusinessName } from "./business-name";
+import { cleanText } from "./html-text";
 import {
   SafeSourceFetchError,
   bytesToDataUrl,
@@ -19,41 +21,10 @@ export type SourceIdentityFetchOptions = Omit<SafeFetchOptions, "kind">;
 
 export interface ParsedSourceMetadata {
   displayName: string;
+  /** False when the name is missing or another label came close to it. */
+  nameConfident: boolean;
   description: string;
   iconHref: string | null;
-}
-
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&",
-  apos: "'",
-  gt: ">",
-  lt: "<",
-  nbsp: " ",
-  quot: '"',
-};
-
-function decodeHtmlEntities(value: string): string {
-  return value
-    .replace(/&#(x[\da-f]+|\d+);?/gi, (_match, digits: string) => {
-      const radix = digits.toLowerCase().startsWith("x") ? 16 : 10;
-      const number = Number.parseInt(
-        radix === 16 ? digits.slice(1) : digits,
-        radix,
-      );
-      return Number.isInteger(number) && number >= 0 && number <= 0x10ffff
-        ? String.fromCodePoint(number)
-        : "";
-    })
-    .replace(/&([a-z][a-z\d]+);?/gi, (match, name: string) => {
-      return NAMED_ENTITIES[name.toLowerCase()] ?? match;
-    });
-}
-
-function cleanText(value: string | undefined): string {
-  if (!value) return "";
-  return decodeHtmlEntities(value.replace(/<[^>]*>/g, " "))
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function findTags(html: string, tagName: string): string[] {
@@ -155,6 +126,31 @@ function titleValue(html: string): string {
   return cleanText(titleMatch?.[1]);
 }
 
+const MAX_SCRIPTS = 50;
+
+function structuredDataBlocks(html: string): string[] {
+  const head = headHtml(html);
+  const blocks: string[] = [];
+  const closing = /<\/script\s*>/gi;
+  let cursor = 0;
+  let read = 0;
+  for (const tag of findTags(head, "script")) {
+    const at = head.indexOf(tag, cursor);
+    // A tag found inside an earlier script's body is not a script.
+    if (at < 0) continue;
+    if (++read > MAX_SCRIPTS) break;
+    const start = at + tag.length;
+    closing.lastIndex = start;
+    const close = closing.exec(head);
+    if (!close) break;
+    cursor = close.index + close[0].length;
+    const type = parseAttributes(tag).get("type");
+    if (type?.trim().toLowerCase() === "application/ld+json")
+      blocks.push(head.slice(start, close.index));
+  }
+  return blocks;
+}
+
 function iconValue(html: string): string | null {
   for (const tag of findTags(headHtml(html), "link")) {
     const attributes = parseAttributes(tag);
@@ -171,23 +167,37 @@ function iconValue(html: string): string | null {
 export function parseSourceMetadata(
   html: string,
   sourceType: ParsedSourceInput["sourceType"],
+  pageUrl = "",
 ): ParsedSourceMetadata {
   const metadata = metadataMaps(html);
   const ogTitle = firstMetadataValue(metadata, "og:title");
 
   if (sourceType === "instagram") {
     const marker = ogTitle.indexOf(" (@");
+    const displayName = cleanText(
+      marker >= 0 ? ogTitle.slice(0, marker) : ogTitle,
+    );
     return {
-      displayName: cleanText(marker >= 0 ? ogTitle.slice(0, marker) : ogTitle),
+      displayName,
+      nameConfident: Boolean(displayName),
       description: "",
       iconHref: iconValue(html),
     };
   }
 
+  const pick = pickBusinessName(
+    {
+      siteName: firstMetadataValue(metadata, "og:site_name"),
+      shareTitle: ogTitle,
+      pageTitle: titleValue(html),
+      applicationName: firstMetadataValue(metadata, "application-name"),
+      structuredData: structuredDataBlocks(html),
+    },
+    pageUrl,
+  );
   return {
-    displayName:
-      firstMetadataValue(metadata, "og:site_name", "og:title") ||
-      titleValue(html),
+    displayName: pick.name,
+    nameConfident: pick.confident,
     description: firstMetadataValue(metadata, "og:description", "description"),
     iconHref: iconValue(html),
   };
@@ -236,6 +246,7 @@ export async function fetchSourceIdentity(
   const metadata = parseSourceMetadata(
     new TextDecoder().decode(page.bytes),
     source.sourceType,
+    page.url,
   );
   const displayName = metadata.displayName;
 
@@ -245,6 +256,6 @@ export async function fetchSourceIdentity(
     canonical_url: page.url,
     icon_data_url: await inlineIcon(page.url, metadata.iconHref, options),
     source_type: source.sourceType,
-    confidence: Boolean(displayName),
+    confidence: metadata.nameConfident,
   };
 }

@@ -687,6 +687,9 @@ export function BusinessFoundScreen({
   notice,
   error,
   guessed = false,
+  nameUnsure = false,
+  askName = false,
+  onAsked,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
   name: string;
@@ -696,6 +699,11 @@ export function BusinessFoundScreen({
   /** The free check did not finish (J04): the name is the owner's, and
    * nothing was read from the website yet, so nothing claims it was. */
   guessed?: boolean;
+  /** The website's name labels were unclear: the owner checks the name. */
+  nameUnsure?: boolean;
+  /** Open the name sheet now; `onAsked` says it was opened. */
+  askName?: boolean;
+  onAsked?: () => void;
   /** Save a corrected name (J05b). Returns false when it was refused. */
   onRename: (name: string) => boolean;
   /** Absent once the website is locked by a payment (R-19). */
@@ -712,6 +720,17 @@ export function BusinessFoundScreen({
     if (!next) return;
     if (onRename(next)) setEditing(false);
   };
+  // Kept from the moment the sheet opens, so its title does not change
+  // while it closes after the name is saved.
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    if (!askName) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens on the parent's request
+    setDraft(name);
+    setChecking(true);
+    setEditing(true);
+    onAsked?.();
+  }, [askName, name, onAsked]);
   return (
     <section className="grid gap-3" data-intake-screen="brand">
       <ScreenHeader
@@ -722,7 +741,9 @@ export function BusinessFoundScreen({
         lead={
           guessed
             ? "Nama ini dari Anda. Website Anda belum terbaca; kami membacanya lengkap setelah pembayaran."
-            : "Ini yang kami baca dari website Anda. Hasil audit belum ada di sini."
+            : nameUnsure
+              ? "Website Anda tidak menyebut namanya dengan jelas. Pastikan nama bisnis di bawah benar sebelum lanjut."
+              : "Ini yang kami baca dari website Anda. Hasil audit belum ada di sini."
         }
       />
       {notice}
@@ -736,7 +757,7 @@ export function BusinessFoundScreen({
         <BusinessMark
           name={name}
           iconDataUrl={iconDataUrl}
-          verified={!guessed}
+          verified={!guessed && !nameUnsure}
         />
         <h2 className="type-heading-md m-0 mt-4 break-words text-ink-900">
           {name}
@@ -756,6 +777,7 @@ export function BusinessFoundScreen({
           aria-haspopup="dialog"
           onClick={() => {
             setDraft(name);
+            setChecking(nameUnsure);
             setEditing(true);
           }}
         >
@@ -792,11 +814,11 @@ export function BusinessFoundScreen({
       <BottomSheet
         open={editing}
         onOpenChange={setEditing}
-        title="Nama bisnis"
+        title={checking ? "Pastikan nama bisnis" : "Nama bisnis"}
         initialFocus={fieldRef}
         header={
           <SheetActionsHeader
-            title="Nama bisnis"
+            title={checking ? "Pastikan nama bisnis" : "Nama bisnis"}
             onCancel={() => setEditing(false)}
             onSave={save}
             saveDisabled={!draft.trim()}
