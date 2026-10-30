@@ -727,8 +727,9 @@ no report failed the gate. **PASS.** Spend USD 4.72 for four reports.
 **Independent review of the head after the guide rounds (e73907d):
 PASS+NOTES.** Three notes could let a paid report state something untrue,
 and are fixed here (076910e; the exact-head reviews of 076910e and 4232d2a,
-both PASS+NOTES, found gaps and regressions in those fixes, closed in the
-commits after each). None changes the writer's instructions; the revision
+both PASS+NOTES, and of f65c9ea, FAIL, found gaps and regressions in those
+fixes, closed in the commits after each). None changes the writer's
+instructions; the revision
 sees the checker's messages, which now catch more false sentences. The
 four blind-test reports pass the final checker unchanged.
 
@@ -736,9 +737,11 @@ four blind-test reports pass the final checker unchanged.
   jawaban …" about the owner or a named business is checked against the
   finding's cited questions when the finding cites that many for the
   source (a "not named" claim needs none of them named; a positive one,
-  all). A part of the group ("tiga dari keempat", "hanya", "salah satu",
-  "tidak selalu") is not read as all of it; "selalu" and "sama sekali"
-  are. A source the sentence names whose cited questions number otherwise
+  all), for every business the clause names ("SOZO dan ERHA"). A part of
+  the group ("tiga dari keempat", "di antara", "hanya", "salah satu",
+  "kecuali", "tidak semua", "tidak selalu", "tiga kali", "sekali") is not
+  read as all of it; "selalu", "sama sekali" and "sekali pun" are. A
+  source the sentence names whose cited questions number otherwise
   is read as before. A sentence with no source speaks of the sources its
   finding names; when that is both, both must match or neither is read
   this way. A finding that cites more (two groups) stays unchecked, as
@@ -747,8 +750,11 @@ four blind-test reports pass the final checker unchanged.
   memuat / menampilkan / mencantumkan SOZO", "belum ada jawaban yang memuat
   SOZO" and "SOZO belum dikenal / dimuat / ditampilkan / dicantumkan" read
   as "not named", but only when the owner (or a business the answers name)
-  is the whole object, followed by the clause's end, "sama sekali" or "di
-  jawabannya", and no page does the not-showing. A false one in the
+  is the whole object (or, in the passive, the subject, with only ChatGPT,
+  Google or AI after the verb), followed by the clause's end, "sama
+  sekali" or "di jawabannya", no page does the not-showing, and nothing
+  in the clause says named ("SOZO tampil di ringkasan yang tidak memuat
+  ZAP" stays a "named" claim). A false one in the
   conclusion, verdict or a finding is caught and, past the revision,
   replaced by the count sentence, and such a conclusion must name its
   source. "Halaman yang dikutip ChatGPT tidak memuat SOZO", "tidak

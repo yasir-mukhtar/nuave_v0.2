@@ -330,6 +330,9 @@ const NEGATION =
  * and "harga SOZO" is a detail. */
 const NOT_NAMING_END =
   "(?=\\s*(?:$|[.,;:!?)]|sama\\s+sekali\\b|sekali\\s+pun\\b|(?:di|dalam|pada)\\s+(?:jawaban|ringkasan)(?:nya)?\\b))";
+/** Who does the not-knowing in "SOZO belum dikenal ChatGPT". */
+const AI_AGENT =
+  "(?:ChatGPT|Google(?:\\s+AI\\s+Overview)?|AI(?:\\s+Overview)?|mesin\\s+pencari(?:\\s+AI)?)";
 const PAGE_SUBJECT =
   /\b(?:halaman|laman|situs|website|web|beranda|artikel|daftar|direktori|profil|sumber|tautan|postingan|ulasan)\b/i;
 
@@ -360,7 +363,10 @@ function notNamedInOtherWords(
       ),
     ) ??
     clause.match(
-      new RegExp(`${name}\\s+${NEGATION}${NOT_NAMING_PASSIVE}\\b`, "iu"),
+      new RegExp(
+        `${name}\\s+${NEGATION}${NOT_NAMING_PASSIVE}(?:\\s+(?:oleh\\s+)?${AI_AGENT}(?:\\s+(?:maupun|dan|atau)\\s+(?:oleh\\s+)?${AI_AGENT})?)?${NOT_NAMING_END}`,
+        "iu",
+      ),
     );
   return (
     !!match &&
@@ -384,9 +390,11 @@ const ORDINAL_GROUP =
 const ORDINAL_CITED =
   /\bke(tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\b)/i;
 /** A part of an ordinal group: "tiga dari keempat jawaban", "hanya",
- * "tidak selalu", "salah satu". Such a claim is not about every one. */
+ * "tidak selalu", "salah satu", "di antara", "kecuali", "tidak semua",
+ * "tiga kali", "sekali" (once). Such a claim is not about every one;
+ * "selalu", "sama sekali" and "sekali pun" are. */
 const ORDINAL_PART =
-  /\bdari\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|kadang|jarang|tidak\s+selalu)\b/i;
+  /\bdari\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|kadang|jarang|tidak\s+selalu|di\s+antara(?:nya)?|kecuali|tidak\s+semua(?:nya)?|(?:\d+|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan)\s+kali)\b|(?<!\bsama\s)\bsekali\b(?!\s+pun)/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
@@ -928,7 +936,11 @@ function contradictedSources(
           explicit: whole.length > 0,
         });
     if (own.length) carried = at;
-    let negative = NEGATIVE.test(clause) || notNamedInOtherWords(clause, facts);
+    // "SOZO tampil di ringkasan yang tidak memuat ZAP" is a "named" claim
+    // about SOZO: the other wording reads only where nothing says named.
+    let negative =
+      NEGATIVE.test(clause) ||
+      (!POSITIVE.test(clause) && notNamedInOtherWords(clause, facts));
     let positive = !negative && POSITIVE.test(clause);
     if (negative || positive)
       carriedPolarity = negative ? "negative" : "positive";
@@ -1004,8 +1016,16 @@ function contradictedSources(
     ) {
       const size = Number(NUMBER_WORDS[cardinal.toLowerCase()]);
       const cited = new Set(scope.ids);
-      const citedOf = (source: Source) => {
-        const asked = perQuestion(facts, source, competitor);
+      // A clause about the owner and another business ("SOZO dan ERHA")
+      // must hold for each of them, as in a named group.
+      const subjects = competitor
+        ? [competitor]
+        : [null, ...competitorsIn(clause, facts, context)];
+      const citedOf = (
+        source: Source,
+        subject: string | null = subjects[0]!,
+      ) => {
+        const asked = perQuestion(facts, source, subject);
         const ids = [...asked.keys()].filter((id) => cited.has(id));
         return { ids, named: ids.filter((id) => asked.get(id)).length };
       };
@@ -1025,15 +1045,17 @@ function contradictedSources(
         const failed = failedSources(
           { ...reading, sources: checked },
           (source) =>
-            holds({
-              named: citedOf(source).named,
-              denominators: [size],
-              counts: [],
-              all: true,
-              negative: groupNegative,
-              positive: groupPositive,
-              unlimited: false,
-            }),
+            subjects.every((subject) =>
+              holds({
+                named: citedOf(source, subject).named,
+                denominators: [size],
+                counts: [],
+                all: true,
+                negative: groupNegative,
+                positive: groupPositive,
+                unlimited: false,
+              }),
+            ),
           groupNegative,
         );
         failed.forEach((s) => out.add(s));

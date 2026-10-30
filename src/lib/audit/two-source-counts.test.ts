@@ -531,6 +531,77 @@ describe("Spec 023 review: ordinal groups and the conclusion's naming verbs", ()
     );
     expect(repaired.content.conclusion).toBe(advice);
   });
+
+  it("a 'named' claim stays a 'named' claim beside 'tidak memuat [another clinic]'", () => {
+    // Google named SOZO in none of its summaries.
+    for (const sentence of [
+      "Google AI Overview menyebut SOZO dalam ringkasan yang tidak mencantumkan ZAP.",
+      "SOZO tampil di ringkasan Google AI Overview yang tidak memuat ZAP.",
+      "Klinik Anda muncul di ringkasan Google AI Overview yang tidak mencantumkan ERHA.",
+    ]) {
+      expect(violations(withFinding(sentence, ids)), sentence).not.toEqual([]);
+      expect(
+        violations({ ...withFinding("Pola ini jelas."), conclusion: sentence }),
+        sentence,
+      ).not.toEqual([]);
+    }
+    // True: ChatGPT names ERHA in q1 to q7, SOZO only in q1 to q3.
+    for (const sentence of [
+      "ChatGPT menyebut ERHA di jawaban yang tidak memuat SOZO.",
+      "ChatGPT menyebut ERHA di jawaban yang belum menampilkan klinik Anda.",
+    ])
+      expect(violations(withFinding(sentence, ids)), sentence).toEqual([]);
+  });
+
+  it("reads 'di antara', 'kecuali', 'tidak semua', 'tiga kali' and 'sekali' as a part of the group", () => {
+    for (const sentence of [
+      "ChatGPT menyebut SOZO di tiga di antara keempat jawaban tentang harga.",
+      "Di antara keempat jawaban tentang harga, tiga menyebut SOZO.",
+      "SOZO disebut tiga kali dalam keempat jawaban ChatGPT tentang harga.",
+      "ChatGPT menyebut SOZO dalam keempat jawaban kecuali satu.",
+      "Keempat jawaban ChatGPT tentang harga tidak semuanya menyebut SOZO.",
+    ])
+      expect(violations(withFinding(sentence, qualityIds)), sentence).toEqual(
+        [],
+      );
+    expect(
+      violations(
+        withFinding(
+          "ChatGPT menyebut SOZO sekali dalam keempat jawaban tentang harga.",
+          ["q3", "q4", "q5", "q6"],
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("checks every business an ordinal claim names", () => {
+    // ERHA is named in q4 to q7, SOZO in none of them.
+    for (const sentence of [
+      "SOZO dan ERHA tidak disebut dalam keempatnya.",
+      "ChatGPT tidak menyebut SOZO maupun ERHA dalam keempatnya.",
+    ])
+      expect(violations(withFinding(sentence)).join(" "), sentence).toMatch(
+        /is not true for the questions it counts/,
+      );
+  });
+
+  it("reads a limit after the passive 'belum dikenal' as it does after 'belum mengenal'", () => {
+    for (const sentence of [
+      "SOZO belum dikenal ChatGPT untuk treatment jerawat.",
+      "SOZO belum dikenal luas oleh ChatGPT.",
+      "SOZO tidak ditampilkan di urutan teratas jawaban ChatGPT.",
+    ])
+      expect(violations(withFinding(sentence, ids)), sentence).toEqual([]);
+    for (const sentence of [
+      "SOZO belum dikenal ChatGPT.",
+      "Klinik ini belum dikenal ChatGPT maupun Google AI Overview.",
+      "SOZO belum dikenal oleh ChatGPT sama sekali.",
+    ])
+      expect(
+        violations(withFinding(sentence, ids)).join(" "),
+        sentence,
+      ).toMatch(/contradicts the counts/);
+  });
 });
 
 describe("Spec 023 AC-08: the brand name", () => {
