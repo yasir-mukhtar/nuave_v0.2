@@ -574,6 +574,20 @@ describe("Spec 023 review: ordinal groups and the conclusion's naming verbs", ()
     ).toEqual([]);
   });
 
+  it("never reads 'di antara klinik' or 'jelas sekali' as a part of the group", () => {
+    // ChatGPT named SOZO in 3 of the 4 cited questions.
+    for (const sentence of [
+      "SOZO tidak muncul di antara klinik yang disarankan ChatGPT dalam keempatnya.",
+      "SOZO tidak disebut di antara klinik pilihan ChatGPT dalam keempat jawaban itu.",
+      "Polanya jelas sekali: SOZO tidak disebut dalam keempatnya.",
+      "Sekali lagi SOZO tidak disebut dalam keempat jawaban itu.",
+    ])
+      expect(
+        violations(withFinding(sentence, qualityIds)).join(" "),
+        sentence,
+      ).toMatch(/is not true for the questions it counts/);
+  });
+
   it("checks every business an ordinal claim names", () => {
     // ERHA is named in q4 to q7, SOZO in none of them.
     for (const sentence of [

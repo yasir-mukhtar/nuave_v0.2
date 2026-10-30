@@ -728,7 +728,7 @@ no report failed the gate. **PASS.** Spend USD 4.72 for four reports.
 PASS+NOTES.** Three notes could let a paid report state something untrue,
 and are fixed here (076910e; the exact-head reviews of 076910e and 4232d2a,
 both PASS+NOTES, and of f65c9ea, FAIL, found gaps and regressions in those
-fixes, closed in the commits after each). None changes the writer's
+fixes, closed in the commits after each; the review of 66c89e7, FAIL, on one part-word pattern, closed in the commit after it). None changes the writer's
 instructions; the revision
 sees the checker's messages, which now catch more false sentences. The
 four blind-test reports pass the final checker unchanged.

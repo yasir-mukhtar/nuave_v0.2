@@ -390,11 +390,12 @@ const ORDINAL_GROUP =
 const ORDINAL_CITED =
   /\bke(tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\b)/i;
 /** A part of an ordinal group: "tiga dari keempat jawaban", "hanya",
- * "tidak selalu", "salah satu", "di antara", "kecuali", "tidak semua",
- * "tiga kali", "sekali" (once). Such a claim is not about every one;
- * "selalu", "sama sekali" and "sekali pun" are. */
+ * "tidak selalu", "salah satu", "di antara keempat", "kecuali", "tidak
+ * semua", "tiga kali", "sekali" as a count ("disebut sekali"). Such a claim
+ * is not about every one; "selalu", "sama sekali" and "sekali pun" are, and
+ * "di antara klinik …" or "jelas sekali" say nothing about the group. */
 const ORDINAL_PART =
-  /\bdari\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|kadang|jarang|tidak\s+selalu|di\s+antara(?:nya)?|kecuali|tidak\s+semua(?:nya)?|(?:\d+|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan)\s+kali)\b|(?<!\bsama\s)\bsekali\b(?!\s+pun)/i;
+  /\b(?:dari|di\s+antara)\s+ke(?:tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)|\b(?:salah\s+satu|sebagian|beberapa|hanya|cuma|kadang|jarang|tidak\s+selalu|di\s+antaranya|kecuali|tidak\s+semua(?:nya)?|(?:\d+|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan)\s+kali)\b|(?<!\bsama\s)\bsekali\s+(?:dalam|di|dari|pada|saja)\b|\b(?:disebut(?:kan)?|muncul|tampil|menyebut(?:kan)?\s+\S+)\s+sekali\b(?!\s+pun)/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
