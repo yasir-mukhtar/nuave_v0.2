@@ -127,6 +127,24 @@ describe("the new writer's request (AC-B1, B-01, B-03)", () => {
     expect(developer).toContain("This is a language-only revision.");
     expect(developer).toContain("Google readings exactly as supplied");
   });
+
+  it("Spec 023 AC-05: the revision is sent no storyline, and the first call is told to plan first", () => {
+    const { user } = twoSourceWriterMessages(input(), {
+      draft: {
+        conclusion: "x",
+        accuracy_status: "could_not_assess",
+        observed_competitors: [],
+        key_findings: [],
+        priorities: [],
+        details: [],
+      },
+      violations: ["x"],
+    });
+    expect(JSON.parse(user).report_draft).not.toHaveProperty("storyline");
+    const { developer } = twoSourceWriterMessages(input());
+    expect(developer).toContain("storyline: before any other field");
+    expect(developer).toContain("Never say why this business got its result");
+  });
 });
 
 describe("the reading test: pages read (founder decision 2026-10-27)", () => {
@@ -189,5 +207,55 @@ describe("the reading test: pages read (founder decision 2026-10-27)", () => {
     expect(empty).toEqual(plain);
     expect(plain.developer).not.toContain("pages_read");
     expect(plain.user).not.toContain("pages_read");
+  });
+});
+
+describe("Spec 023: the writer's rules (AC-01)", () => {
+  const named = (): TwoSourceWriterInput => {
+    const base = input();
+    return {
+      ...base,
+      two_source_facts: {
+        ...base.two_source_facts,
+        names: ["Klinik Fiksi", "Fiksi"],
+      },
+    };
+  };
+
+  it("drops the rules that forced a stiff style", () => {
+    const { developer } = twoSourceWriterMessages(named());
+    expect(developer).not.toContain("25 words");
+    expect(developer).not.toContain("Pemenang");
+    expect(developer).not.toMatch(/write "Di ChatGPT"/);
+    expect(developer).not.toContain("with the per-source result");
+    expect(developer).not.toMatch(/Copy every "X dari Y"/);
+    expect(developer).not.toContain("why it suggested it");
+    // Founder's guide (2026-10-29): numbers only when they are the point
+    // or needed to be clear; no fixed shape for the conclusion; no quota of
+    // recommendations; the limit may open the sentence.
+    expect(developer).toContain("add a number only when it is the point");
+    expect(developer).toContain("Use a count only when it is needed");
+    expect(developer).toContain("never invent work to fill a number");
+    expect(developer).not.toContain("never in a clause of its own");
+  });
+
+  it("names the business by its confirmed name like an editor, and keeps the count rules", () => {
+    const { developer } = twoSourceWriterMessages(named());
+    expect(developer).toContain(
+      'Name the business by its exact confirmed name, "Klinik Fiksi" (or a listed alias: "Fiksi")',
+    );
+    expect(developer).toContain('"klinik ini"');
+    expect(developer).not.toContain('Call the audited business "klinik Anda"');
+    // The core of the negative rule stays.
+    expect(developer).toContain(
+      "never write that it did not name, mention or show the business",
+    );
+    expect(developer).toContain(
+      "unless the sentence names the group of questions",
+    );
+    expect(developer).toContain(
+      "a count may cover the finding's own cited questions",
+    );
+    expect(developer).toContain("questions[].businesses");
   });
 });

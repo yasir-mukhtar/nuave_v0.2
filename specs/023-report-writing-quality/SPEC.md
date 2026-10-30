@@ -133,6 +133,9 @@ today's fact safety stays, and the checker becomes more precise, not looser.
   everywhere.
 - **D-2** No hard sentence limit. Guidance: 3 to 30 words, average about 14,
   a mix of lengths, an occasional very short sentence to land a point.
+  _Revised 2026-10-29 (founder's editorial review of the guide):_ the guide
+  gives no word-count targets; one point per sentence, lengths varied by
+  what the ideas need. The test still measures lengths.
 - **D-3** The guide sits at the report-writing step, next to the playbook,
   and the writer reads it with every report.
 - **D-4** Em dashes are banned (as `VOICE.md` §3 already says).
@@ -529,6 +532,265 @@ Two pull requests, so the free and safe part can merge first.
 
 Because this session pushes to one branch, PR 1 (the harness) rides on the
 spec's own pull request; PR 2 starts from `main` after it merges.
+
+## Founder review of the guide (2026-10-29)
+
+The founder's editorial review of the first guide draft was applied to the
+second draft (`WRITING_GUIDE.md`), with these alignments:
+
+- **Numbers.** The review allows a number to be repeated so a section
+  stands alone. Kept within R-04a: a finding may repeat a count it needs;
+  the verdict carries at most one proportion; the conclusion none.
+- **Source name.** The review's "ringkasan AI Google" is written "Google AI
+  Overview" (VOICE §2).
+- **Re-audit timing.** The guide leaves it to the playbook, which sets about
+  eight weeks (its item 9); the examples carry no schedule.
+- **No notes field.** The review's "tandai kebutuhan itu dalam catatan
+  kerja" becomes "do not write that conclusion": the writer has no notes
+  field.
+- **Search volume details.** The review's source, period and region for a
+  search figure are left out of the guide: the code-built topic line shows
+  them.
+- **Site-only findings.** The review's second model finding rested only on
+  the clinic's own page. R-02 asks every finding to name ChatGPT or Google,
+  so the page facts sit in the recommendation that answers them. Allowing a
+  site-only finding would change R-02 and the checker (founder's call).
+- **Checkable wording.** The examples keep a limit in the same clause as its
+  verb ("ChatGPT tidak menyebut Klinik A dalam keempat jawaban tentang
+  [perawatan]"), the form R-03 can check; a finding that compares two groups
+  counts one of them at most.
+
+The writer's rules follow the review: the storyline is settled after reading
+all the evidence and may hold a limiting point; two to six findings, as many
+as the evidence supports; each recommendation says what it is for. VOICE §2
+and §3 are amended to match. R-03 now also reads "pertanyaan tentang klinik
+di [kota]" as a group (a bare "tentang klinik" stays the whole test), and
+"tentang klinik ini" as the owner. The harness no longer counts
+"memanfaatkan" as a typical phrase.
+
+## Tempo style in the guide (2026-10-29)
+
+The founder asked that the guide also carry Tempo's newsroom style, from
+_Seandainya Saya Wartawan Tempo_ and Tempo's editors' principles.
+`docs/content/report/GAYA_TEMPO.md` records what was taken, how each
+principle maps to an audit report, and what does not transfer (the "aku"
+voice, physical description, teasing leads, staged scenes, causes). The
+third draft of the guide adds: the verdict as a lead that opens with the
+most concrete fact; show, don't label; short exact quotes from the saved
+answers; one question told first, then the pattern; plain verbs instead of
+bureaucratic ones; and a closing that returns to the lead. The examples
+gain a sample question and answer in the practice material. Every model
+sentence still passes R-03 when true. A code check that quoted text exists
+in the saved answers is proposed, not built.
+
+Known limit (review round 6): R-03 does not read counts written as ordinals
+("keempat jawaban", "ketiga jawaban lain") or groups without a count
+("sebagian", "tidak disebut dalam jawaban tentang [perawatan]"); such
+sentences are not checked, as before Spec 023. Reading "ke<N>" as a count
+would check it against every question a finding cites, which drops true
+sentences in a finding that compares two groups, so it is left for later.
+
+## The founder's fourth guide (2026-10-29)
+
+The founder revised the guide with another model and approved the result
+("Writing Guide 4") with an editorial note on the third draft. It replaces
+`WRITING_GUIDE.md` and changes R-04, R-04a and R-10 as follows.
+
+- **R-10.** The guide's parts are now the eleven steps of the founder's
+  version (reading, the main point, the order of thought, the opening, what
+  the reader can see, words, limits of meaning, recommendations, the
+  ending, a worked example, editing). Its length bound is 4,500 words.
+- **R-04 and R-04a.** The verdict carries a number only when it is the
+  point; the conclusion uses a count only when it is needed to be clear,
+  has no fixed shape, and names a source only when it says the business
+  was or was not named. Recommendations are one to six, as many as the
+  checked evidence supports.
+- **Edits to the founder's text, each for a product reason:**
+  - "Klinik Bening" became "Klinik Seruni": "Bening's Clinic" is a real
+    chain named in an order's Google AI Overview answers (AC-07).
+  - The model verdict gives its count as a whole-test count R-03 can check
+    ("dalam tiga jawaban untuk pertanyaan umum, tidak satu pun tentang bekas
+    jerawat") rather than "3 dari 6 jawaban umum", which the verdict cannot
+    check (it cites no questions). The model finding's "dalam tiga jawaban"
+    for the general group is read against the whole test, true here only
+    because every mention falls in that group (known limit below).
+  - The model finding and recommendation are one paragraph each, as the
+    product renders them; the guide says so, names the banned title starts,
+    keeps "klinik Anda", allows "Minggu 1–2", and places group counts in
+    findings.
+  - The worked example notes that the product has no separate "Batas
+    pengujian" part.
+  - The closing note says the guide was checked against VOICE, this spec,
+    the writer's rules and the checker.
+- **R-03 changes so the checker reads the guide's forms** (tightened after
+  review round 7, which found false whole-test claims passing):
+  - an opening clause joins the claim after its comma only when it names a
+    group of questions ("Dalam empat jawaban tentang bekas jerawat", "Untuk
+    pertanyaan tentang harga"); "Ketika audit ini dijalankan", "Sebagai
+    klinik di Depok" or "Untuk pertanyaan di Depok" limit nothing; an
+    opening group size is not read as a naming count;
+  - "keempat jawaban itu" and "keempatnya" limit a claim only when the
+    number is below the source's total; "kesepuluh jawaban itu" is every
+    answer; "keduanya" (both sources) never limits;
+  - "ringkasan" names Google AI Overview only in AI Overview forms ("enam
+    ringkasan", "ringkasan itu", "ringkasan yang tampil") and never beside
+    "jawaban", "sebagai ringkasan" or "ringkasan hasil";
+  - a competitor's short form ("Seruni" for "Klinik Seruni") is read as that
+    competitor only when its full name appears in the same finding, verdict
+    or conclusion, it is capitalised as in the name, it is not a generic or
+    topic word ("Umum", "Jerawat", "Laser"), and no owner name and no other
+    listed business shares it (so a city ending a clinic's name is never
+    read alone);
+  - R-02's "names its source" needs "ChatGPT" or "Google"; "ringkasan"
+    alone reads a claim as Google's but does not name the source;
+  - a conclusion names a source when any clause about the owner or another
+    business says named, recommended, cited, suggested, present or listed,
+    or counts; a page detail ("Nama dokter tidak ditemukan pada halaman")
+    does not need one;
+  - counts at a sentence's start ("Dalam 4 jawaban") are read.
+- **Known limits:** a plain count about one group in a finding that cites
+  two groups ("Di kelompok ini, ChatGPT menyebut Aruna dalam tiga jawaban")
+  is read against the whole test; an "X dari Y" count for a second group in
+  the same finding is not supported; limited claims without a count stay
+  unchecked, as before. Counting two groups in one finding would need the
+  writer to say which questions form each group (a later change).
+  The old-versus-new comparison over the generated cases accepts the same
+  350 true sentences as before; the deliberate additions are the leading
+  limit and the anaphoric "keempat jawaban itu", which today's code read as
+  claims about the whole test.
+
+## Quotation check (founder approval, 2026-10-29)
+
+The guide lets the writer quote answers, so code now checks that a
+quotation is real (`src/lib/audit/quote-check.ts`):
+
+- Words in quotation marks (“…”, "…", ‘…’ or '…', two words or more) must
+  appear in a saved text the passage cites, by the finding's or
+  recommendation's `evidence_prompt_ids`; passages that cite nothing may
+  quote any of them. A straight mark inside a word (5" or Jum'at) neither
+  opens nor closes one; marks of the same kind inside a quotation are
+  counted, so an inner "Seruni" never ends the outer quotation and leaves
+  the rest unchecked.
+- Where a quotation may come from: a sentence that credits ChatGPT alone
+  quotes its completed answers or the titles of the sources they cite; one
+  that credits Google alone quotes its AI Overview; a question only when
+  the sentence credits neither alone or speaks of the question ("Saat
+  ditanya"); the business's names, the other businesses, the search
+  topics and the report's labels ("Tidak disebut", "Peta Pesaing") are
+  always allowed, and so is a name from the confirmed profile (its other
+  names, the product or branch, category, offerings, named comparators,
+  market areas; six words at most) quoted whole; the owner's own claims (what sets it apart,
+  a public fact, customers' needs) never are;
+  pages Nuave read, and their titles, only when the sentence names no
+  source or speaks of a page or site.
+- Words are compared, not characters: lower-case letters and digits, whole
+  words, so punctuation, dashes, Markdown, nested quotation marks, link
+  citations and ChatGPT's citation markers never matter, and "Aruna" is
+  never found inside "Karuna"; letters and digits are split ("Rp500" is
+  "rp 500"), and "Rp7 sampai Rp8" matches "Rp7–Rp8". Texts are compared as the writer read them,
+  without phone numbers. "sampai" between two numbers matches a dash.
+- A cut is marked "[…]" (or "…"): at most two cuts, each piece at least
+  two words, all pieces in order in one paragraph of one text.
+- A quotation that is not found is listed for the one revision. Past it,
+  and before the source repair (so a finding a drop leaves without its
+  source is still repaired), code drops the sentence and records
+  `quote_dropped`. A finding or recommendation a drop empties goes while
+  another remains; otherwise only the first is kept, an emptied paragraph
+  gets the per-source count sentence and a title a code-built one ("Temuan
+  dari ChatGPT dan Google AI Overview"; for a recommendation, "Tulis halaman
+  yang menjawab “…”" with the first question it cites), never its own words
+  without the quotation marks. A headline whose caption
+  fails goes; an emptied verdict is left for the page's own; a plan step a
+  drop empties goes. Never a failed order. Sentences never end inside a quotation or after an
+  abbreviation or initial ("dr.", "Jl.", "dokter S. Wijaya"), but do end at
+  "dll." before a capital letter. A “ never closed runs to the end of its
+  sentence and is checked.
+- Known limits: a quoted single word is a label and is not checked; the
+  check proves the words were saved, not that the quotation keeps the
+  answer's context (the guide's rule, and the founder's read in the blind
+  test); the dash repair may turn a dash inside a kept quotation into a
+  comma; an initial before a capital ("vitamin C. Lalu") does not end a
+  sentence, so a dropped sentence may take its neighbour with it; the
+  page's card sentences ("Klinik Anda muncul di 1 dari 3 pertanyaan") are
+  not quotable.
+- Reviewed independently over five rounds (10 to 14); round 14: PASS.
+
+## Blind test and review fixes (2026-10-30)
+
+**Blind test (R-15, AC-11).** Opus 5.5 medium with pages; before `269c4ac`,
+after `b2fb5ea`; one fresh ledger. The founder cut it to two pairs (Sozo
+run 1 and NV-8XAPUF run 1) and set the pass rule for two pairs: the after
+writer wins both and no report fails the safety gate. The hard stop was
+USD 12 for this round only. Result: the after writer won both pairs and
+no report failed the gate. **PASS.** Spend USD 4.72 for four reports.
+
+**Independent review of the head after the guide rounds (e73907d):
+PASS+NOTES.** Three notes could let a paid report state something untrue,
+and are fixed here (076910e; the exact-head reviews of 076910e and 4232d2a,
+both PASS+NOTES, and of f65c9ea and 66c89e7, FAIL, found gaps and
+regressions in those fixes, closed in the commits after each; the review
+of 1f5a0ab: PASS+NOTES, its "satu kali" note fixed after it). None changes
+the writer's instructions; the revision
+sees the checker's messages, which now catch more false sentences. The
+four blind-test reports pass the final checker unchanged.
+
+- **R-03 ordinals.** In a key finding, "keempatnya" or "dalam keempat
+  jawaban …" about the owner or a named business is checked against the
+  finding's cited questions when the finding cites that many for the
+  source (a "not named" claim needs none of them named; a positive one,
+  all), for every business the clause names ("SOZO dan ERHA"). A part of
+  the group ("tiga dari keempat", "di antara", "hanya", "salah satu",
+  "kecuali", "tidak semua", "tidak selalu", "tiga kali", "sekali") is not
+  read as all of it; "selalu", "sama sekali" and "sekali pun" are. A
+  source the sentence names whose cited questions number otherwise
+  is read as before. A sentence with no source speaks of the sources its
+  finding names; when that is both, both must match or neither is read
+  this way. A finding that cites more (two groups) stays unchecked, as
+  before.
+- **"Not named" in other words.** "ChatGPT belum mengenal SOZO", "tidak
+  memuat / menampilkan / mencantumkan SOZO", "belum ada jawaban yang memuat
+  SOZO" and "SOZO belum dikenal / dimuat / ditampilkan / dicantumkan" read
+  as "not named", but only when the owner (or a business the answers name)
+  is the whole object (or, in the passive, the subject, with only ChatGPT,
+  Google or AI after the verb), followed by the clause's end, "sama
+  sekali" or "di jawabannya", no page does the not-showing, and nothing
+  in the clause says named ("SOZO tampil di ringkasan yang tidak memuat
+  ZAP" stays a "named" claim). A false one in the
+  conclusion, verdict or a finding is caught and, past the revision,
+  replaced by the count sentence, and such a conclusion must name its
+  source. "Halaman yang dikutip ChatGPT tidak memuat SOZO", "tidak
+  mencantumkan harga SOZO", "belum mengenal SOZO untuk treatment" and
+  "agar AI mengenal SOZO" are not read as such.
+- **Quotation repair.** An emptied lone title gets a code-built one, one
+  emptied finding or recommendation is kept (the first that kept any of
+  its words), and an emptied plan step goes, so an invented quotation
+  never stays as a plain claim (see the quotation check above).
+
+Still open, for later changes: suggested wording in quotation marks costs
+a revision (the writer's instructions should say to write it without
+marks; this changes the writer, so it needs a new blind test), and the
+review's lower notes on the quotation check (a cut joining list items, a
+one-word quotation, profile names and labels credited to a source, rare
+quotation marks). The last review's checker notes, none of which accepts
+a natural false sentence that 269c4ac rejected:
+
+- "yang tampil" or "yang muncul" in a clause turns off the "not named in
+  other words" reading ("Keenam ringkasan Google AI Overview yang tampil
+  tidak memuat SOZO" is rejected when true and accepted when false, as at
+  269c4ac).
+- An ordinal claim with a competitor that is not a co-subject ("SOZO tidak
+  disebut bersama ERHA dalam keempatnya", "menyebut ERHA alih-alih SOZO")
+  is rejected when true. Rare.
+- A limit the "not named" reading does not see ("Untuk treatment jerawat,
+  SOZO belum dikenal ChatGPT", "Jawaban ChatGPT soal treatment tidak memuat
+  SOZO") is read as a whole-test claim, as the "menyebut" forms are at
+  269c4ac.
+- Two ordinal groups in one clause ("di antara keempat klinik … dalam
+  keempatnya") are not checked. Contrived.
+- A sentence with no source, in a finding that names both sources, must
+  hold for both, which can reject a true sentence about ChatGPT only.
+- The code-built finding title names both sources even on a finding about
+  ChatGPT only.
 
 ## Verification record
 

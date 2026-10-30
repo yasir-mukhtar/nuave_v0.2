@@ -87,7 +87,7 @@ export function twoSourceView(
   };
 }
 
-/** Spec 021 Part B: the writer's "Disebut AI karena" reason per business. */
+/** Spec 021 Part B: the writer's line per business ("Menurut jawaban AI"). */
 export function competitorReasons(
   report: Pick<AuditReport, "two_source_writing">,
 ): Map<string, string> {

@@ -742,6 +742,9 @@ export type WriterContext = {
   entry: Entry;
   ledger: Ledger;
   calls: CallRecord[];
+  /** Spec 023 R-08: the first answer's storyline, kept beside the result
+   * (never saved in the report). */
+  storyline?: unknown;
 };
 
 function telemetryOf(input: {
@@ -1028,6 +1031,9 @@ export function claudeWriter(
         telemetryOf({ ...base, status: "failed", failure }),
       ]);
     }
+    const answer = parsed.data as { storyline?: unknown };
+    if (revision === undefined && answer.storyline !== undefined)
+      ctx.storyline = answer.storyline;
     return {
       content: contentOf(
         parsed.data as ReportSynthesis | TwoSourceWritingSynthesis,
@@ -1166,6 +1172,9 @@ export type EntryResult = {
   /** The reference only: whether re-running the delivered writing through today's
    * pipeline gave it back unchanged. */
   replay?: string;
+  /** Spec 023 R-08: the writer's storyline from its first answer, when it
+   * wrote one. Hidden from the founder until scoring is done. */
+  storyline?: unknown;
 };
 
 /** Writes one entry's report from the order's evidence through the order
@@ -1220,6 +1229,7 @@ export async function runEntry(
       status: "ok",
       failure: null,
       report,
+      ...(ctx.storyline !== undefined ? { storyline: ctx.storyline } : {}),
       calls: ctx.calls,
       checks: {
         report_calls: report.provenance.report_call_count,
