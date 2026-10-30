@@ -564,14 +564,14 @@ describe("Spec 023 review: ordinal groups and the conclusion's naming verbs", ()
       expect(violations(withFinding(sentence, qualityIds)), sentence).toEqual(
         [],
       );
-    expect(
-      violations(
-        withFinding(
-          "ChatGPT menyebut SOZO sekali dalam keempat jawaban tentang harga.",
-          ["q3", "q4", "q5", "q6"],
-        ),
-      ),
-    ).toEqual([]);
+    for (const sentence of [
+      "ChatGPT menyebut SOZO sekali dalam keempat jawaban tentang harga.",
+      "SOZO muncul satu kali dalam keempat jawaban ChatGPT tentang harga.",
+    ])
+      expect(
+        violations(withFinding(sentence, ["q3", "q4", "q5", "q6"])),
+        sentence,
+      ).toEqual([]);
   });
 
   it("never reads 'di antara klinik' or 'jelas sekali' as a part of the group", () => {

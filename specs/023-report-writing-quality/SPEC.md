@@ -727,9 +727,10 @@ no report failed the gate. **PASS.** Spend USD 4.72 for four reports.
 **Independent review of the head after the guide rounds (e73907d):
 PASS+NOTES.** Three notes could let a paid report state something untrue,
 and are fixed here (076910e; the exact-head reviews of 076910e and 4232d2a,
-both PASS+NOTES, and of f65c9ea, FAIL, found gaps and regressions in those
-fixes, closed in the commits after each; the review of 66c89e7, FAIL, on one part-word pattern, closed in the commit after it). None changes the writer's
-instructions; the revision
+both PASS+NOTES, and of f65c9ea and 66c89e7, FAIL, found gaps and
+regressions in those fixes, closed in the commits after each; the review
+of 1f5a0ab: PASS+NOTES, its "satu kali" note fixed after it). None changes
+the writer's instructions; the revision
 sees the checker's messages, which now catch more false sentences. The
 four blind-test reports pass the final checker unchanged.
 
@@ -770,7 +771,26 @@ a revision (the writer's instructions should say to write it without
 marks; this changes the writer, so it needs a new blind test), and the
 review's lower notes on the quotation check (a cut joining list items, a
 one-word quotation, profile names and labels credited to a source, rare
-quotation marks).
+quotation marks). The last review's checker notes, none of which accepts
+a natural false sentence that 269c4ac rejected:
+
+- "yang tampil" or "yang muncul" in a clause turns off the "not named in
+  other words" reading ("Keenam ringkasan Google AI Overview yang tampil
+  tidak memuat SOZO" is rejected when true and accepted when false, as at
+  269c4ac).
+- An ordinal claim with a competitor that is not a co-subject ("SOZO tidak
+  disebut bersama ERHA dalam keempatnya", "menyebut ERHA alih-alih SOZO")
+  is rejected when true. Rare.
+- A limit the "not named" reading does not see ("Untuk treatment jerawat,
+  SOZO belum dikenal ChatGPT", "Jawaban ChatGPT soal treatment tidak memuat
+  SOZO") is read as a whole-test claim, as the "menyebut" forms are at
+  269c4ac.
+- Two ordinal groups in one clause ("di antara keempat klinik … dalam
+  keempatnya") are not checked. Contrived.
+- A sentence with no source, in a finding that names both sources, must
+  hold for both, which can reject a true sentence about ChatGPT only.
+- The code-built finding title names both sources even on a finding about
+  ChatGPT only.
 
 ## Verification record
 
