@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  FALLBACK_FINDING_TITLE,
+  FALLBACK_PRIORITY_ACTION,
   quotableTexts,
   profileNames,
   type QuotableTexts,
@@ -522,7 +524,7 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     expect(priorities.content.priorities).toEqual([keptAction]);
   });
 
-  it("a lone recommendation keeps the fallback; a plan step keeps its words without the marks; a failed caption drops its headline", () => {
+  it("a lone recommendation keeps the fallback; a plan step a drop empties goes; a failed caption drops its headline", () => {
     const made = content({
       conclusion: "Google menulis “Aruna klinik paling murah di Depok”.",
       key_findings: [
@@ -557,9 +559,45 @@ describe("Spec 023: a quotation must be the saved words it cites", () => {
     expect(next.conclusion).toBe(fallback);
     expect(next.key_findings[0]!.headline).toBeUndefined();
     expect(next.priorities[0]!.why).toBe(fallback);
-    expect(next.two_source_writing!.plan[0]!.text).toBe(
-      "Jawab berapa harga laser di Depok.",
+    expect(next.two_source_writing!.plan.map((s) => s.title)).toEqual([
+      "Minta ulasan",
+      "Audit ulang",
+    ]);
+  });
+
+  // Review of PR 2: an invented quotation must never survive as a plain
+  // claim once its marks are taken off.
+  it("an emptied lone title gets the code-built one, never the writer's words without the marks", () => {
+    const made = content({
+      key_findings: [
+        {
+          title: "ChatGPT menyebut Aruna “klinik termurah di Depok”",
+          explanation: "ChatGPT menulis “Aruna klinik termurah di Depok”.",
+          evidence_prompt_ids: ["q1"],
+        },
+      ],
+      priorities: [
+        {
+          order: 1,
+          action: "Tulis “halaman harga termurah se-Depok”",
+          why: "ChatGPT menulis “Aruna belum punya halaman harga”.",
+          evidence_prompt_ids: ["q1"],
+        },
+      ],
+    });
+    made.two_source_writing!.plan[1]!.title = "Tulis “harga termurah di Depok”";
+    const { content: next } = repairQuotes(
+      made,
+      facts,
+      observations,
+      questions,
+      fallback,
     );
+    expect(next.key_findings[0]!.title).toBe(FALLBACK_FINDING_TITLE);
+    expect(next.key_findings[0]!.explanation).toBe(fallback);
+    expect(next.priorities[0]!.action).toBe(FALLBACK_PRIORITY_ACTION);
+    expect(JSON.stringify(next)).not.toContain("termurah");
+    expect(next.two_source_writing!.plan).toHaveLength(2);
   });
 });
 

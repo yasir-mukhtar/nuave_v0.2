@@ -133,7 +133,7 @@ today's fact safety stays, and the checker becomes more precise, not looser.
   everywhere.
 - **D-2** No hard sentence limit. Guidance: 3 to 30 words, average about 14,
   a mix of lengths, an occasional very short sentence to land a point.
-  *Revised 2026-10-29 (founder's editorial review of the guide):* the guide
+  _Revised 2026-10-29 (founder's editorial review of the guide):_ the guide
   gives no word-count targets; one point per sentence, lengths varied by
   what the ideas need. The test still measures lengths.
 - **D-3** The guide sits at the report-writing step, next to the playbook,
@@ -696,10 +696,11 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   source is still repaired), code drops the sentence and records
   `quote_dropped`. A finding or recommendation a drop empties goes while
   another remains; otherwise an emptied paragraph gets the per-source
-  count sentence and a title keeps its words without the quotation marks.
-  A headline whose caption fails goes; an emptied verdict is left for the
-  page's own; a plan step keeps its words without the quotation marks.
-  Never a failed order. Sentences never end inside a quotation or after an
+  count sentence and a title a code-built one ("Temuan dari jawaban ChatGPT
+  dan Google", "Tinjau jawaban AI untuk pertanyaan yang dikutip"), never
+  its own words without the quotation marks. A headline whose caption
+  fails goes; an emptied verdict is left for the page's own; a plan step a
+  drop empties goes. Never a failed order. Sentences never end inside a quotation or after an
   abbreviation or initial ("dr.", "Jl.", "dokter S. Wijaya"), but do end at
   "dll." before a capital letter. A “ never closed runs to the end of its
   sentence and is checked.
@@ -712,6 +713,41 @@ quotation is real (`src/lib/audit/quote-check.ts`):
   page's card sentences ("Klinik Anda muncul di 1 dari 3 pertanyaan") are
   not quotable.
 - Reviewed independently over five rounds (10 to 14); round 14: PASS.
+
+## Blind test and review fixes (2026-10-30)
+
+**Blind test (R-15, AC-11).** Opus 5.5 medium with pages; before `269c4ac`,
+after `b2fb5ea`; one fresh ledger. The founder cut it to two pairs (Sozo
+run 1 and NV-8XAPUF run 1) and set the pass rule for two pairs: the after
+writer wins both and no report fails the safety gate. The hard stop was
+USD 12 for this round only. Result: the after writer won both pairs and
+no report failed the gate. **PASS.** Spend USD 4.72 for four reports.
+
+**Independent review of the head after the guide rounds (e73907d):
+PASS+NOTES.** Three notes could let a paid report state something untrue,
+and are fixed here. None changes what the writer is told, so the blind
+test stands:
+
+- **R-03 ordinals.** In a key finding, "keempatnya" or "dalam keempat
+  jawaban …" is checked against the finding's cited questions when the
+  finding cites that many for the source (a "not named" claim needs none
+  of them named; a positive one, all). A finding that cites more (two
+  groups) stays unchecked, as before.
+- **Conclusion naming verbs.** "memuat", "mengenal", "dikenal",
+  "menampilkan", "mencantumkan" and their forms are naming claims, so a
+  conclusion such as "AI belum mengenal SOZO sama sekali" must name its
+  source, as before Spec 023, and the repair puts the count sentence in
+  front.
+- **Quotation repair.** An emptied lone title gets a code-built one, and an
+  emptied plan step goes, so an invented quotation never stays as a plain
+  claim (see the quotation check above).
+
+Still open, for later changes: suggested wording in quotation marks costs
+a revision (the writer's instructions should say to write it without
+marks; this changes the writer, so it needs a new blind test), and the
+review's lower notes on the quotation check (a cut joining list items, a
+one-word quotation, profile names and labels credited to a source, rare
+quotation marks).
 
 ## Verification record
 

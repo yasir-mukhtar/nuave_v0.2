@@ -310,6 +310,80 @@ describe("Spec 023 R-03: groups that mention 'klinik', and the guide's model sen
   });
 });
 
+// Review of PR 2: the guide's ordinal forms ("keempatnya", "dalam keempat
+// jawaban tentang …") are checked when the finding cites that many
+// questions for the source; false "not named" conclusions in other words
+// still need their source.
+describe("Spec 023 review: ordinal groups and the conclusion's naming verbs", () => {
+  const qualityIds = ["q1", "q2", "q3", "q4"];
+
+  it("catches a false ordinal claim when the finding cites that many questions", () => {
+    // ChatGPT named SOZO in q1 to q3: 3 of the 4 cited questions.
+    for (const sentence of [
+      "ChatGPT menyebut ERHA dalam keempat jawaban tentang harga. SOZO tidak disebut dalam keempatnya.",
+      "SOZO tidak disebut dalam keempat jawaban itu.",
+      "ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang harga.",
+    ]) {
+      const content = withFinding(sentence, qualityIds);
+      expect(violations(content).join(" "), sentence).toMatch(
+        /is not true for the questions it counts/,
+      );
+      const repaired = repairTwoSourceWriting(content, facts);
+      expect(repaired.content.key_findings[0]!.explanation).not.toMatch(
+        /SOZO tidak disebut|tidak menyebut SOZO/,
+      );
+    }
+    // ERHA is named only in q7 of q7 to q10.
+    expect(
+      violations(
+        withFinding("ChatGPT menyebut ERHA dalam keempat jawaban itu.", [
+          "q7",
+          "q8",
+          "q9",
+          "q10",
+        ]),
+      ).join(" "),
+    ).toMatch(/is not true for the questions it counts/);
+  });
+
+  it("passes a true ordinal claim and leaves a two-group finding unchecked, as before", () => {
+    for (const sentence of [
+      "ChatGPT tidak menyebut SOZO dalam keempat jawaban tentang treatment.",
+      "SOZO tidak disebut dalam keempatnya.",
+      "ChatGPT menyebut ERHA dalam keempat jawaban itu.",
+    ])
+      expect(violations(withFinding(sentence)), sentence).toEqual([]);
+    // Seven cited questions: "keempat" is one group of two, not checked.
+    expect(
+      violations(
+        withFinding("SOZO tidak disebut dalam keempat jawaban itu.", [
+          "q1",
+          "q2",
+          "q3",
+          ...treatment,
+        ]),
+      ),
+    ).toEqual([]);
+  });
+
+  it("a conclusion that says AI does not know or show the business must name its source", () => {
+    for (const claim of [
+      "Belum ada jawaban AI yang memuat SOZO.",
+      "AI belum mengenal SOZO sama sekali.",
+      "SOZO belum dikenal mesin pencari AI.",
+      "Jawaban AI belum menampilkan SOZO.",
+    ]) {
+      const content = { ...withFinding("Pola ini jelas."), conclusion: claim };
+      expect(violations(content).join(" "), claim).toMatch(
+        /The conclusion must say which source/,
+      );
+      const repaired = repairTwoSourceWriting(content, facts);
+      expect(repaired.content.conclusion).toMatch(/^Di ChatGPT/);
+      expect(repaired.content.conclusion).toContain(claim);
+    }
+  });
+});
+
 describe("Spec 023 AC-08: the brand name", () => {
   it("checks a sentence that names the business by its exact name like 'klinik Anda'", () => {
     const content = withFinding("SOZO tidak disebut ChatGPT sama sekali.", ids);

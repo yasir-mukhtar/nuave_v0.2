@@ -466,23 +466,20 @@ export function profileNames(subject: AuditSubject): string[] {
   ].filter(Boolean);
 }
 
-/** A text's quotations without their quotation marks. */
-const unquoted = (text: string) =>
-  allQuotations(text)
-    .reverse()
-    .reduce(
-      (out, q) => out.slice(0, q.start) + q.quote + out.slice(q.end),
-      text,
-    )
-    .trim();
+/** Code-built titles for a required finding or recommendation a drop
+ * empties. Never the writer's words without their quotation marks: those
+ * would keep an invented quotation as a plain claim (review of PR 2). */
+export const FALLBACK_FINDING_TITLE = "Temuan dari jawaban ChatGPT dan Google";
+export const FALLBACK_PRIORITY_ACTION =
+  "Tinjau jawaban AI untuk pertanyaan yang dikutip";
 
 /**
  * Past the revision: a sentence whose quotation is not found is dropped. A
  * finding or recommendation a drop empties goes while another remains;
  * otherwise a required paragraph gets the caller's fallback sentence and a
- * title keeps its words without the quotation marks. A headline whose
- * caption fails goes. An emptied verdict stays empty (the page shows its
- * own); a plan step keeps its words without the quotation marks.
+ * title the code-built one. A headline whose caption fails goes. An emptied
+ * verdict stays empty (the page shows its own); a plan step a drop empties
+ * goes.
  */
 export function repairQuotes(
   content: ReportContent,
@@ -515,9 +512,9 @@ export function repairQuotes(
   const wholeFindings = findings.filter((f) => f.title && f.explanation);
   const key_findings = wholeFindings.length
     ? wholeFindings
-    : findings.map((f, i) => ({
+    : findings.map((f) => ({
         ...f,
-        title: f.title || unquoted(content.key_findings[i]!.title) || fallback,
+        title: f.title || FALLBACK_FINDING_TITLE,
         explanation: f.explanation || fallback,
       }));
 
@@ -530,9 +527,9 @@ export function repairQuotes(
   const keptPriorities = (
     wholePriorities.length || !priorities.length
       ? wholePriorities
-      : priorities.map((p, i) => ({
+      : priorities.map((p) => ({
           ...p,
-          action: p.action || unquoted(content.priorities[i]!.action),
+          action: p.action || FALLBACK_PRIORITY_ACTION,
           why: p.why || fallback,
         }))
   ).map((p, i) => ({ ...p, order: i + 1 }));
@@ -554,11 +551,9 @@ export function repairQuotes(
             takeaways: writing.takeaways
               .map((t) => ({ title: fix(t.title), text: fix(t.text) }))
               .filter((t) => t.title && t.text),
-            plan: writing.plan.map((s) => ({
-              ...s,
-              title: fix(s.title) || unquoted(s.title),
-              text: fix(s.text) || unquoted(s.text),
-            })),
+            plan: writing.plan
+              .map((s) => ({ ...s, title: fix(s.title), text: fix(s.text) }))
+              .filter((s) => s.title && s.text),
           },
         }
       : {}),

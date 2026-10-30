@@ -333,6 +333,10 @@ const LIMITED =
  * sources. */
 const ORDINAL_GROUP =
   /\bke(tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\s+(?:itu|tersebut|tadi)\b)/i;
+/** "keempat jawaban tentang harga", "keempatnya": in a key finding, read
+ * against the finding's cited questions (see `contradictedSources`). */
+const ORDINAL_CITED =
+  /\bke(tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh)(?:nya\b|\s+(?:jawaban|ringkasan|pertanyaan)\b)/i;
 const ALL = /\b(?:semua|seluruh|setiap)\s+(?:jawaban|ringkasan|pertanyaan)\b/i;
 /** N-37: "di pertanyaan mana pun", "pertanyaan yang diuji" are absolute; a
  * question word next to them never limits the negation. */
@@ -926,6 +930,53 @@ function contradictedSources(
       facts.writer && !refersToOwner(clause, facts)
         ? competitorIn(clause, facts, context)
         : null;
+
+    // Review of PR 2: in a key finding, an ordinal group ("dalam keempat
+    // jawaban tentang harga", "keempatnya") is the finding's cited questions
+    // when their number for the source is that number, so the claim must
+    // hold for each of them. A source whose cited questions number more (a
+    // finding that compares two groups) stays unchecked, as before.
+    const cardinal = clause.match(ORDINAL_CITED)?.[1];
+    if (
+      cardinal &&
+      scope &&
+      facts.writer &&
+      !counts.length &&
+      (groupNegative || groupPositive) &&
+      !(RECOMMEND.test(clause) && !groupNegative) &&
+      (competitor || clauseKind(clause, facts) === "business")
+    ) {
+      const size = Number(NUMBER_WORDS[cardinal.toLowerCase()]);
+      const cited = new Set(scope.ids);
+      const citedOf = (source: Source) => {
+        const asked = perQuestion(facts, source, competitor);
+        const ids = [...asked.keys()].filter((id) => cited.has(id));
+        return { ids, named: ids.filter((id) => asked.get(id)).length };
+      };
+      const checked = at.sources.filter(
+        (source) => citedOf(source).ids.length === size,
+      );
+      if (checked.length) {
+        const failed = failedSources(
+          { ...at, sources: checked },
+          (source) =>
+            holds({
+              named: citedOf(source).named,
+              denominators: [size],
+              counts: [],
+              all: true,
+              negative: groupNegative,
+              positive: groupPositive,
+              unlimited: false,
+            }),
+          groupNegative,
+        );
+        failed.forEach((s) => out.add(s));
+        if (failed.length) droppable = true;
+        continue;
+      }
+    }
+
     if (competitor) {
       if (RECOMMEND.test(clause)) continue;
       const subset = group && scope ? new Set(scope.ids) : null;
@@ -1103,7 +1154,7 @@ export function sentences(text: string): string[] {
  * the next step need not name a source; one that says the business was or
  * was not named, or counts, does. */
 const CLAIM_VERB =
-  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|dipilih|memilih|hadir|tercantum)\b/i;
+  /\b(?:direkomendasikan|merekomendasikan|dikutip|mengutip|menyarankan|disarankan|dipilih|memilih|hadir|tercantum|dicantumkan|mencantumkan|memuat|dimuat|mengenal|mengenali|dikenal|dikenali|menampilkan|ditampilkan)\b/i;
 
 function makesNamingClaim(text: string, facts: TwoSourceReportFacts): boolean {
   return digitsForWords(text)
