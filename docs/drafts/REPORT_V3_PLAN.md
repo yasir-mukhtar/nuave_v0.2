@@ -6,8 +6,8 @@
 > [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
 > own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 2, after independent review
-> round 1 (FAIL; see "Review history" at the end).
+> `claude/inspiring-tesla-yox17h`. Revision 3, after independent review
+> rounds 1 (FAIL) and 2 (ALMOST); see "Review history" at the end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
 > [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
@@ -44,9 +44,10 @@ evidence first and no invented causes (`VISION.md` principle 1), counts with
 their denominators and no rankings or scores (`VISION.md` principle 2;
 `PRODUCT.md` non-goals), and no claim that a gap caused a result
 (`AUDIT.md`). Where the premium reports claim causes, Nuave shows a **checked
-fact and what official guidance says it means** ("Your robots.txt blocks
-ChatGPT's search reader; OpenAI says pages need that reader allowed to appear
-in ChatGPT search"). That is a diagnosis without an invented cause.
+fact and what official guidance says it means**, in the playbook's own words
+("Your robots.txt blocks OAI-SearchBot. The playbook, from OpenAI: summaries
+and snippets in ChatGPT search need OAI-SearchBot to be allowed in
+robots.txt"). That is a diagnosis without an invented cause.
 
 Part of the gap is Nuave's own method not yet built. `AUDIT.md` keeps
 factual accuracy as a separate observation, and its report acceptance
@@ -62,8 +63,8 @@ minutes:
 
 1. **Under the source cards:** one real AI answer where the clinic is
    missing or described differently from its own site (the "moment of
-   truth"), and how often AI named the most-named business compared with the
-   clinic, as counts.
+   truth"), and, for each source, how often AI named the most-named business
+   compared with the clinic, as counts with that source's own denominator.
 2. **"Cek fakta":** the claims AI made about the clinic, compared with its
    own website and, clearly labelled, with what the owner told Nuave, marked
    "sesuai", "berbeda" or "tidak bisa dicek".
@@ -90,14 +91,16 @@ are defaults the founder may change in F-1.
 | Gate | Before | Passes when |
 | ---- | ------ | ----------- |
 | 0 | Phase 0 | G1 is done and F-1 is approved. Phase 0 runs alongside the first sales and never holds them up. |
-| 1 | Phase 1 | At least **5 paid orders** from customers other than the founder; at least **3 of those owners** have answered the three Track V questions about the report they received (the baseline); and the claims count (P1.0) is done. |
-| 2 | Phase 2 | At least **5 more paid orders** received Phase 1; of the owners asked, at least **3 of 5** name a "Cek fakta" or website-check item as new information, and at least **1 of 5** says they did one recommendation within two weeks; refunds and complaints are no higher than for Gate 1's orders. |
-| 3 | P3.4 (paid re-check) | At least **2 of the first 10 owners asked** say they would pay the proposed re-check price. |
+| 1 | Phase 1; P3.0 and P3.1 | At least **5 paid orders** from customers other than the founder; at least **3 of those owners** have answered the three Track V questions about the report they received (the baseline, recorded with the report version each owner got: today's or Phase 0's); and the claims count (§6, "Before Gate 1") is done. |
+| 2 | Phase 2; P3.2 and P3.3 | At least **5 more paid orders** received Phase 1; of the owners asked, at least **3 of 5** name a "Cek fakta" or website-check item as new information, and at least **1 of 5** says they did one recommendation within two weeks; refunds and complaints are no higher than for Gate 1's orders. |
+| 3 | P3.4 (re-check as a product) | At least **2 owners have paid** for a re-check done by hand: a normal new order whose ten questions are edited to match the first report's, compared by the founder. What owners say they would pay does not count (`PRODUCT.md`: "Do not treat stated intent as completed action"). |
 | 4 | Phase 4 | About **20 paid orders**. |
 
 If a gate does not pass, stop, write down what owners said, and re-plan with
 the founder. The report page records nothing about readers (`/r` has no
 tracking, `NOW.md`), so these answers come only from asking owners (F-6).
+Only owners who agree to be asked will answer, so the answers lean towards
+engaged owners; read them with that in mind.
 
 ## 4. Rules for every package
 
@@ -107,8 +110,8 @@ tracking, `NOW.md`), so these answers come only from asking owners (F-6).
 2. **Code before AI opinion.** Counts, the website check and the grouping of
    sources are computed by code. The writer explains; it does not count.
 3. **Checked facts and their official meaning, never causes.** A finding may
-   state a checked fact and what the playbook's sources say it means. It
-   never says the fact caused an answer (`VISION.md` principle 1; `AUDIT.md`:
+   state a checked fact and what the playbook says it means, in the
+   playbook's own words. It never says the fact caused an answer (`VISION.md` principle 1; `AUDIT.md`:
    "Do not claim that a source gap caused exclusion unless causal evidence
    exists"; playbook rule 3; Spec 023 R-09). A value that also appears on a
    page AI cited is stated as an observation ("Angka yang sama ada di
@@ -161,10 +164,10 @@ approved document the decision would change.
 | - | -------- | ------- | -------------- |
 | F-1 | Approve this plan with its gates (§3) and their default numbers. | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/` | Yes, after G1. |
 | F-2 | Add to each playbook item ("What a clinic can do") who usually does it and roughly how long it takes; the report shows these, with the item's existing "Check" line, as small tags under each recommendation. No "impact" tag and no "do this first" line. | `PLAYBOOK.md`; Spec 021's Rekomendasi rule, which removed "Penanggung jawab yang disarankan" and "Selesai ketika" (SPEC.md, Rekomendasi). Spec 023 R-09 is kept, because the effort then comes from the playbook, not the writer. | Yes. `AUDIT.md`'s checklist still asks for an owner and completion check. |
-| F-3 | Website-check rows the playbook does not cover yet (a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader) need a playbook amendment, each backed by an official source. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
-| F-4 | Three fixed questions that name the business (its branches and the starting price of its main service; never safety), asked apart from the ten. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §3 ("sepuluh pertanyaan … 20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide at Gate 1, only if the claims count (P1.0) shows too few claims to check. |
+| F-3 | Website-check rows the playbook does not cover yet, or covers without a fix line (*noindex*; a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader), need a playbook amendment, each backed by an official source and its fix line. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
+| F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide at Gate 1, only if the claims count shows too few claims to check. |
 | F-5 | Show the owner's own answer to "Apa yang membuat bisnis Anda berbeda?" (already asked in the intake) next to how AI describes the clinic, labelled "Menurut Anda". | Spec 023's quotation rule, which never lets the owner's own claims be quoted | Yes; no new intake question is needed. |
-| F-6 | How owners are asked the gate questions: the founder asks only owners who said yes to one line in the report-ready email ("Boleh kami tanya pendapat Anda?"). Needed before Gate 1. | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
+| F-6 | How owners are asked the gate questions, and what Nuave may learn from paid orders: the founder asks only owners who said yes to one line in the report-ready email ("Boleh kami tanya pendapat Anda?"), and the claims count reads only the founder's own orders and orders whose owners agree. Decide together with F-1, and ship it before the first outside customer's report is delivered. The email change is visible to customers, so it needs a small spec or the founder's written waiver (`WORKFLOW.md`, specification gate). | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2, and §4 lists no "improve the service" purpose); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
 | F-7 | The kit as a deliverable, in two steps: (a) correction requests and a review invitation, fixed texts the founder approves once; (b) texts meant for publishing (a facts text, a page outline) only after the official Permenkes 1787/2010 text is read (the playbook used summaries) and the parking lot's legal review is done. No requests to be added to "best clinic" list articles. | Terms (new deliverable); `PLAYBOOK.md` if new advice | (a) with Phase 2; (b) only after the legal review. |
 | F-8 | A stability sample: three questions asked twice more, one try each, shown apart as variation. It never changes the counts, the "at least 5 of 10 checks" report rule, refunds or the dots. | Spec 018 (each question asked once). `AUDIT.md` already encourages "re-asking a small number of questions" as "variance measurement". | Decide after the variance study (P3.0). |
 | F-9 | Re-check price, timing and reminder email (the parking-lot wishlist). | Terms; privacy page; landing page | Decide at Gate 3. |
@@ -181,12 +184,22 @@ Writer instructions and layout. About three pull requests.
 **P0.0 Prototype on real two-source orders.** The Sozo prototype in
 `experiments/report-v2-poc/` asked each question to one source only and has
 no pages, owner facts or site files, so it cannot show Phases 1 and 2. Use
-the two-source orders NV-3WDSAY and NV-8XAPUF instead: re-export them with
-the report-writer test's read-only queries
-(`scripts/report-writer-test/README.md`, step 1; the founder runs them or
-approves the run). Plain page loads of those clinics' public pages and
-robots.txt feed the website-check mock, at no provider cost. Mock the
-sections of Phases 0 to 2 with that data; the founder judges it on a phone.
+the two-source orders NV-3WDSAY and NV-8XAPUF instead:
+
+- their answers and intake, re-exported with the report-writer test's
+  read-only queries (`scripts/report-writer-test/README.md`, step 1; the
+  founder runs them or approves the run);
+- their page text, which that export does not hold (it reads `intake_json`
+  and `report_json`, and page text is dropped when a report is saved,
+  `src/lib/orders/pages.ts`): the pages saved during the report-writer test
+  runs (the `pages/` folder of `.local-evidence/report-writer-test/`, for
+  example `pages/NV-3WDSAY.json`), or a small Firecrawl re-read the founder
+  approves;
+- plain page loads of those clinics' public pages and robots.txt, for the
+  website-check mock only, at no provider cost.
+
+Mock the sections of Phases 0 to 2 with that data; the founder judges it on a
+phone.
 
 **P0.1 The moment of truth.** Directly under the source cards: the patient's
 question, the businesses the AI named (first five), and "Klinik Anda: tidak
@@ -196,15 +209,18 @@ volume. If every answer names the clinic, it shows the answer that names it
 first. The writer may add one caption sentence (code has a fallback). Its
 link opens the full answer in the existing side panel.
 
-**P0.2 Counts side by side.** "Bisnis yang paling sering disebut: <nama>, di
-5 dari 20 jawaban. Klinik Anda: 4 dari 20." Counts with their denominator
-and the split by source; no rank number. Code only; the counts already exist
-in `src/app/audit/report/report-v2-data.ts`.
+**P0.2 Counts side by side, per source.** "ChatGPT: <nama> disebut di 5 dari
+10 jawaban, Klinik Anda di 3. Google: <nama> di 3 dari 6 ringkasan AI, Klinik
+Anda di 1." Each source keeps its own denominator, as the source cards do:
+completed ChatGPT answers, and AI Overviews Google actually showed, with
+failed checks counted apart (`AUDIT.md`; Spec 018 R-19). No pooled total and
+no rank number. Code only; the counts already exist in
+`src/app/audit/report/report-v2-data.ts`.
 
-**P0.3 Why it matters, from this report.** One code-written sentence: in the
-answers that named any business, how many businesses an answer named on
-average ("Jawaban yang menyebut bisnis rata-rata menyebut 4 nama"), with its
-denominator. No outside statistics.
+**P0.3 Why it matters, from this report.** One code-written sentence per
+source: in the answers that named any business, how many businesses an
+answer named on average ("Jawaban ChatGPT yang menyebut bisnis rata-rata
+menyebut 4 nama"), with its denominator. No outside statistics.
 
 **P0.4 The owner's decision inside the existing plan.** The three-step plan in
 Penutup (Spec 021 B-04) may say which decision the owner must make before a
@@ -247,15 +263,19 @@ menit: halaman 1"); page-break rules that avoid half-empty pages (pages 6 and
 - **Founder time:** about 4 to 6 hours (prototype, spec, merges, one order).
   About 1 to 2 weeks.
 
+### Before Gate 1: the claims count
+
+Free and without code. On the exported orders and the paid orders F-6 allows,
+count the claims AI made about the clinic and how many could be compared with
+the clinic's own pages. Spec 018's ten questions never name the business
+(R-02), so claims come only from answers that named it on their own. If most
+orders have almost none, P1.2 waits, and F-4 is decided. The result goes in
+the Gate 1 record (the pull request or `DECISION_LOG.md` entry that passes
+the gate).
+
 ### Phase 1: Check the basics
 
 About four or five pull requests. Starts at Gate 1.
-
-**P1.0 Claims count** (free, no code). On the exported orders and the first
-paid orders, count the claims AI made about the clinic and how many could be
-compared with the clinic's own pages. Spec 018's ten questions never name
-the business (R-02), so claims come only from answers that named it on their
-own. If most orders have almost none, P1.2 waits, and F-4 is decided.
 
 **P1.1 Website check: "Untuk tim web Anda".** Plain page loads only: no AI,
 and no request pretending to be an AI reader. Only rows the playbook supports
@@ -264,10 +284,12 @@ today:
 | Row | Playbook basis | Shown as |
 | --- | -------------- | -------- |
 | robots.txt allows Googlebot, Bingbot and OAI-SearchBot | item 6 | pass or fail for each |
-| A page carries a *noindex* tag or header | Google: a page must be indexed to appear in AI Overviews | pass or fail |
 | Prices, doctor names with titles, the address and opening hours appear as text on the pages read | items 1 and 2; "keep important content as text" | terdeteksi or tidak terdeteksi |
-| *Structured data*, if present, matches the confirmed name and address | "make any structured data match the visible text" | cocok, tidak cocok or tidak ada (neutral; Nuave never advises adding it, because the playbook says no special markup is needed) |
+| *Structured data*, if present, matches the page's own visible text (name, address) | "make any structured data match the visible text" | cocok, tidak cocok or tidak ada (neutral; Nuave never advises adding it, because the playbook says no special markup is needed) |
 | Ordinary readers are refused (the plain load gets a 403 or a *challenge page* while Firecrawl reads the page) | item 6, "bot protection" | an "indikasi" warning, never a checked fact about AI readers |
+
+A *noindex* row waits for F-3: the playbook says a page must be indexed to
+appear in AI Overviews, but it has no fix line for it yet.
 
 - Each row's fix line is fixed text taken from the playbook.
 - Results only are saved, never page text. Synthetic mode uses *fixtures*
@@ -275,13 +297,13 @@ today:
 - It runs in the runner's pages step or a small step of its own; the spec
   measures it against the pages step's 150-second deadline and the runner's
   work budget (§7, "Platform limits").
-- **Done when:** fixture sites (OAI-SearchBot blocked; a noindex page;
-  structured data naming another business; a 403) give the expected rows; no
-  row claims what AI did because of it; the worst-case test passes; it runs
+- **Done when:** fixture sites (OAI-SearchBot blocked; structured data that
+  differs from the page's text; a 403) give the expected rows; no row claims
+  what AI did because of it; the worst-case test passes; it runs
   within its step on the two exported orders' sites; older reports are
   unchanged.
 
-**P1.2 "Cek fakta"** (only if P1.0 finds enough claims).
+**P1.2 "Cek fakta"** (only if the claims count finds enough claims).
 
 - **References in `AUDIT.md`'s order:** first the clinic's official website
   (the pages Nuave read); then Indonesian third-party sources such as
@@ -354,14 +376,29 @@ tags as text for WhatsApp or notes. An Excel workbook like the premium one
 comes only if at least two owners or their agencies ask for one: it suits
 teams on laptops more than owners on phones.
 
-- **Done when:** each package's spec sets observable checks, plus the
-  worst-case test and unchanged older reports.
-- **Cost:** about USD 0.05 to 0.15 an order (writer output); up to nine more
-  Firecrawl requests, billed in credits outside the USD ledger.
+- **Done when**, besides the checks every package has (the worst-case test,
+  both protected report snapshots, delivery within 30 minutes on the first
+  three orders):
+  - P2.1: every cited site falls in exactly one group; a fixture order's
+    directory and portal rows get their next step, and its list-article rows
+    get none.
+  - P2.2: every tick comes from a page Nuave read; an unreadable page shows
+    "tidak terdeteksi"; no sentence gives a reason for AI's choice.
+  - P2.3: every word shown is found in the answers it counts; the owner's
+    text is labelled "Menurut Anda".
+  - P2.4: only texts the founder approved appear; no text meant for
+    publishing appears before the legal review.
+  - P2.5: the copied text matches the recommendations and their tags.
+- **Cost:** about USD 0.05 to 0.15 an order in all: USD 0.05 to 0.10 of
+  writer output, plus up to nine more Firecrawl requests (about USD 0.045,
+  billed in credits outside the USD ledger).
 - **Founder time:** about 8 to 12 hours, plus the legal review for P2.4's
   later texts. About 3 to 4 weeks.
 
 ### Phase 3: Make it measurable
+
+About five to seven pull requests. P3.0 and P3.1 are cheap and may start any
+time after Gate 1; P3.2 and P3.3 start at Gate 2; P3.4 starts at Gate 3.
 
 **P3.0 Variance study** (no code; a few dollars of live spend the founder
 approves). Ask three to five questions from two or three exported orders
@@ -374,14 +411,16 @@ at the same moment differ at all.
 customer's city instead of all of Indonesia (if the provider allows it;
 Spec 018 found its ChatGPT reader accepts countries only), check a missing
 AI Overview once more, and handle DataForSEO status 40101. They make every
-count sturdier than repeats do.
+count sturdier than repeats do. The second look at a missing AI Overview
+uses one of a check's existing three tries, so it adds nothing to the worst
+case.
 
 **P3.2 Stability sample** (needs F-8). Three questions asked twice more, one
 try each, shown apart as "Seberapa stabil". It never feeds the counts, the
 "at least 5 of 10 checks" rule (Spec 018), refunds or the dots.
 
 - Worst case: 12 calls × USD 0.006 = USD 0.072, so 4.785 + 0.072 = USD
-  4.857, under the hold. About USD 0.05 billed.
+  4.857 (USD 4.929 with F-4), under the hold. About USD 0.05 billed.
 - It needs its own table, with its own attempt and failure columns, and the
   cleanup job must cover it (`src/lib/orders/retention.ts`).
 - The spec measures it against the runner's work budget: a question step
@@ -399,6 +438,18 @@ and each check, before and after, and says what changed, never why. It needs
 a re-check order type linked to the first order, a price, a reminder email
 with consent, and updated terms and privacy pages.
 
+- **Done when**, besides the checks every package has:
+  - P3.0: a short written result, with each question's counts across the
+    runs and times, in the pull request or `DECISION_LOG.md` entry that
+    decides F-8.
+  - P3.1: each fix has a test, and a fixture order with a missing AI
+    Overview, a 40101 status and a city gives the expected results.
+  - P3.2: new reports show "Seberapa stabil"; on a fixture order the counts,
+    dots and refunds are identical with and without the sample; the step
+    stays inside the runner's work budget; the cleanup job empties the new
+    table.
+  - P3.3: new reports save "Titik awal"; older reports are unchanged.
+  - P3.4: its own spec, written after Gate 3.
 - **Founder time:** about 10 to 20 hours; the re-check is a small product of
   its own. About 4 to 6 weeks.
 
@@ -442,33 +493,47 @@ fees about 1–2% depending on the payment method, about Rp2.500 to Rp5.000
 **After Phases 0 to 3** (estimates, billed): add about USD 0.16 to 0.43
 (Phase 0, 0.02–0.08; Phase 1, 0.04–0.15; Phase 2, 0.05–0.15; Phase 3, about
 0.05), for about **USD 1.6 to 2.0** an order, about Rp26.500–33.500.
-The worst case rises only by the stability sample: USD 4.857, under the
-hold, provided the writer's new fields fit its existing allowance.
+F-4's two questions, if approved, add about USD 0.02 billed.
+
+The worst case rises by the stability sample (USD 0.072) and, if F-4 is
+approved, by F-4's questions (USD 0.072): at most **USD 4.929**, under the
+hold. That holds only if the writer's new fields fit its existing allowance
+and P3.1's second look at a missing AI Overview uses an existing try.
 
 **Per order, after Midtrans and provider costs, before tax:** about
 Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
 
 **Costs not in that line:**
 
-- **Tax:** if Nuave is VAT-registered (PKP), about Rp24.700 of the price is
-  VAT (11/111); if it pays the 0.5% final tax instead, about Rp1.250. The
-  founder confirms with an accountant.
+- **Tax:** VAT and income tax are separate taxes, and a business can owe
+  both. If Nuave is VAT-registered (PKP), about Rp24.700 of each price is
+  VAT (11/111). Income tax comes on top; for example, the 0.5% final tax on
+  turnover, if Nuave qualifies, is about Rp1.250 an order. The founder
+  confirms both with an accountant.
 - **Refunds:** Rp12.450 for each failed check that cannot be re-run (Terms
   §8), and a full refund for a failed order whose provider costs are already
   spent.
 - **Support:** answering owners and refunding bank transfers by hand is
   founder time.
-- **Monthly fees:** Cloudflare Workers Paid (about USD 5 a month at minimum;
-  check the bill); Firecrawl's USD 19 plan once orders pass about 160–200 a
-  month (decision 2026-10-26); Browser Run beyond its 10 included hours at
-  USD 0.09 an hour (Spec 021 P-01).
+- **Monthly fees:** Cloudflare Workers Paid, USD 5 a month (decision
+  2026-10-14, Q10); Browser Run beyond its 10 included hours at USD 0.09 an
+  hour (Spec 021 P-01); Firecrawl's plan. The figure of USD 19 a month past
+  about 160–200 orders (decision 2026-10-26) predates the go-live, which
+  reads up to 24 pages a reading and left Firecrawl's monthly credits for
+  after the first live orders (decision 2026-10-28). Take Firecrawl's real
+  cost from its bill, and count it once: either per order in credits, as in
+  the table above, or as the monthly plan.
 - **Per change:** a blind test of each writer change, about USD 5 (Spec 023:
   USD 4.72 for four reports); GitHub Actions minutes, 2,000 a month, which
-  ran out mid-month before the 2026-10-28 change. Docs-only and draft pull
-  requests now run only code checks and unit tests, under ten billed minutes
-  on this pull request; code pull requests marked ready run the full set.
+  ran out mid-month before the 2026-10-28 change. Each push to a docs-only or
+  draft pull request runs only code checks and unit tests, about 8 billed
+  minutes on this pull request's first push; code pull requests marked ready
+  run the full set.
 - **Founder time,** the largest cost: about 30 to 50 hours across Phases 0
-  to 3 (§6), and about 15 to 20 pull requests to review.
+  to 3 (§6), and about 15 to 20 pull requests to review. Treat this as a
+  lower bound: Spec 021, the closest precedent, took four prototype rounds
+  and three plan-review rounds. Record Phase 0's real hours and re-estimate
+  the rest at Gate 1.
 
 **What pays for it** (hypotheses the gates test, not forecasts):
 
@@ -485,8 +550,11 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
 **Platform limits** (each spec measures the ones it touches):
 
 - **Daily cap:** at the USD 5.00 hold, the USD 50 cap allows 10 orders in
-  progress at once; at about USD 2 billed, about 25 orders a day settle
-  under it. Revisit at about 15 orders a day.
+  progress at once. A new order is admitted only while a full USD 5.00 hold
+  still fits under the cap (`capRoomSql` in
+  `src/lib/spending/spend-ledger.ts`), so at about USD 2 billed an order,
+  about 22 orders fit in a day (2 × 22 + 5 ≤ 50). Revisit at about 15
+  orders a day.
 - **Runner work budget:** a question step costs 24 of a run's 80 units, and a
   run takes at most two orders (`src/lib/orders/runner.ts`).
 - **Pages step:** a 150-second deadline, and 24 Firecrawl requests a reading.
@@ -551,6 +619,16 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
 - **worst case:** the most an order could cost if every call used its full
   allowance and every retry happened; Nuave reserves it before each call.
 - **billed:** what the calls actually cost.
+- **hold:** the money Nuave sets aside for an order before its paid calls
+  run (up to USD 5.00), brought down to the real cost afterwards.
+- **units:** the runner's work budget; each database query or outside
+  request counts as one, and one run of the runner allows 80.
+- **language-fix call:** the report writer's second call, which corrects
+  the report's Indonesian; every report so far has needed it.
+- **synthetic mode:** the app's practice mode, which uses made-up answers and
+  makes no paid calls.
+- **protected report snapshots:** saved copies of how older reports look;
+  automatic tests compare against them so older reports never change.
 
 ## Appendix A: the benchmark (2026-11-06)
 
@@ -671,7 +749,7 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
 | 9 Official source beside the advice | P0.7 |
 | 10 "Cara membaca angka ini" | P0.8 |
 | 11 Website check | P1.1, playbook-supported rows only (F-3) |
-| 12 Fact check | P1.0 and P1.2; branded questions only through F-4 |
+| 12 Fact check | The claims count, then P1.2; branded questions only through F-4 |
 | 13 Source map | P2.1, next steps only for directories and portals |
 | 14 "Kenapa mereka" | Renamed and reframed as differences (P2.2) |
 | 15 Three runs per question | Changed: variance study, then a stability sample (P3.0, P3.2, F-8) |
@@ -700,3 +778,25 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   numbers come before each phase. Every package must stay inside the USD
   5.00 worst case. The unit economics are completed. The prototype now uses
   the two-source orders. Platform limits are named. A glossary is added.
+- **Round 2 (2026-11-06): ALMOST.** Every round-1 Blocker and Major was
+  resolved. Eight minor findings remained:
+  - P0.2 pooled both sources over 20;
+  - F-6's timing, spec and analysis purpose;
+  - the prototype's page text;
+  - F-4 missing from the worst case;
+  - the daily cap, Firecrawl, tax wording, the basis for founder hours, and
+    CI minutes;
+  - playbook wording, and the noindex and structured-data rows;
+  - start conditions and "done when" checks for Phases 2 and 3, and Gate 3
+    relying on stated intent;
+  - glossary gaps.
+- **Revision 3:** fixes all eight. Counts are now per source with their own
+  denominators. F-6 is decided with F-1 and shipped before the first outside
+  report, and it covers the analysis purpose. The prototype takes its page
+  text from the saved test pages. F-4 has two questions and a stated worst
+  case (at most USD 4.929 with the stability sample). The daily cap is about
+  22 orders. Tax, Firecrawl, founder hours and CI minutes are reworded. The
+  playbook is quoted word for word, and noindex moves to F-3. The claims
+  count moves before Gate 1. Phases 2 and 3 get start conditions and
+  observable checks. Gate 3 needs paid hand-run re-checks. The glossary is
+  extended.
