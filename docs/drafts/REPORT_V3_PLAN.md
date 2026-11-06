@@ -6,8 +6,9 @@
 > [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
 > own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 3, after independent review
-> rounds 1 (FAIL) and 2 (ALMOST); see "Review history" at the end.
+> `claude/inspiring-tesla-yox17h`. Revision 4, after independent review
+> rounds 1 (FAIL), 2 (ALMOST) and 3 (ALMOST); see "Review history" at the
+> end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
 > [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
@@ -47,7 +48,8 @@ their denominators and no rankings or scores (`VISION.md` principle 2;
 fact and what official guidance says it means**, in the playbook's own words
 ("Your robots.txt blocks OAI-SearchBot. The playbook, from OpenAI: summaries
 and snippets in ChatGPT search need OAI-SearchBot to be allowed in
-robots.txt"). That is a diagnosis without an invented cause.
+robots.txt"; in the report, that meaning is a fixed Indonesian line the
+founder approves once). That is a diagnosis without an invented cause.
 
 Part of the gap is Nuave's own method not yet built. `AUDIT.md` keeps
 factual accuracy as a separate observation, and its report acceptance
@@ -102,6 +104,32 @@ tracking, `NOW.md`), so these answers come only from asking owners (F-6).
 Only owners who agree to be asked will answer, so the answers lean towards
 engaged owners; read them with that in mind.
 
+**The hand-run re-check for Gate 3** works with today's product, under
+conditions:
+
+- **Offer and price:** the FAQ already suggests "cek ulang, sebagai pesanan
+  baru, setelah 6 sampai 8 minggu". The founder offers it to owners who said
+  yes in F-6's line (so that line, or the FAQ, must also allow an offer), as a
+  normal order at Rp249.000. Any discount is a separate founder decision.
+- **The owner edits, in their own browser:** the intake lives only in the
+  browser that paid (Terms §6), so the owner, not the founder, edits the ten
+  questions to match the first report's. Edited questions are free text, up
+  to 700 characters, and become "Diubah oleh Anda", so the rule for
+  search-sourced wording no longer applies.
+- **Founder's checklist:**
+  - the owner picks the same search city, or the city rule rejects the edits
+    (Spec 018 R-11a);
+  - the edits go in an order that never leaves fewer than seven "which place
+    to choose" questions, because that rule is checked after every edit;
+  - duplicates are cleared;
+  - any method or version difference between the two orders is told to the
+    owner (`VISION.md` principle 7: "discloses material differences instead
+    of presenting incompatible runs as progress").
+- **The comparison:** the founder compares the two reports by hand. The
+  Terms do not describe this extra, so the owner is told before paying.
+- **Timing:** Gate 3 cannot pass until about eight weeks after the first
+  outside orders.
+
 ## 4. Rules for every package
 
 1. **Nothing invented.** Every number comes from saved answers, code checks,
@@ -110,8 +138,11 @@ engaged owners; read them with that in mind.
 2. **Code before AI opinion.** Counts, the website check and the grouping of
    sources are computed by code. The writer explains; it does not count.
 3. **Checked facts and their official meaning, never causes.** A finding may
-   state a checked fact and what the playbook says it means, in the
-   playbook's own words. It never says the fact caused an answer (`VISION.md` principle 1; `AUDIT.md`:
+   state a checked fact and what the playbook says it means. Because the
+   playbook is in English and reports are in Indonesian, the meaning is one
+   fixed Indonesian line per playbook item, approved once by the founder
+   (F-2) and shown by code; the writer never translates it afresh. It never
+   says the fact caused an answer (`VISION.md` principle 1; `AUDIT.md`:
    "Do not claim that a source gap caused exclusion unless causal evidence
    exists"; playbook rule 3; Spec 023 R-09). A value that also appears on a
    page AI cited is stated as an observation ("Angka yang sama ada di
@@ -163,13 +194,13 @@ approved document the decision would change.
 | # | Decision | Changes | Recommendation |
 | - | -------- | ------- | -------------- |
 | F-1 | Approve this plan with its gates (§3) and their default numbers. | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/` | Yes, after G1. |
-| F-2 | Add to each playbook item ("What a clinic can do") who usually does it and roughly how long it takes; the report shows these, with the item's existing "Check" line, as small tags under each recommendation. No "impact" tag and no "do this first" line. | `PLAYBOOK.md`; Spec 021's Rekomendasi rule, which removed "Penanggung jawab yang disarankan" and "Selesai ketika" (SPEC.md, Rekomendasi). Spec 023 R-09 is kept, because the effort then comes from the playbook, not the writer. | Yes. `AUDIT.md`'s checklist still asks for an owner and completion check. |
+| F-2 | Add to each playbook item ("What a clinic can do") who usually does it, roughly how long it takes, and one fixed Indonesian line saying what the item's official source means (§4 rule 3); the report shows the first two, with the item's existing "Check" line, as small tags under each recommendation. No "impact" tag and no "do this first" line. | `PLAYBOOK.md`; Spec 021's Rekomendasi rule, which removed "Penanggung jawab yang disarankan" and "Selesai ketika" (SPEC.md, Rekomendasi). Spec 023 R-09 is kept, because the effort then comes from the playbook, not the writer. | Yes. `AUDIT.md`'s checklist still asks for an owner and completion check. |
 | F-3 | Website-check rows the playbook does not cover yet, or covers without a fix line (*noindex*; a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader), need a playbook amendment, each backed by an official source and its fix line. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
 | F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide at Gate 1, only if the claims count shows too few claims to check. |
 | F-5 | Show the owner's own answer to "Apa yang membuat bisnis Anda berbeda?" (already asked in the intake) next to how AI describes the clinic, labelled "Menurut Anda". | Spec 023's quotation rule, which never lets the owner's own claims be quoted | Yes; no new intake question is needed. |
-| F-6 | How owners are asked the gate questions, and what Nuave may learn from paid orders: the founder asks only owners who said yes to one line in the report-ready email ("Boleh kami tanya pendapat Anda?"), and the claims count reads only the founder's own orders and orders whose owners agree. Decide together with F-1, and ship it before the first outside customer's report is delivered. The email change is visible to customers, so it needs a small spec or the founder's written waiver (`WORKFLOW.md`, specification gate). | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2, and §4 lists no "improve the service" purpose); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
+| F-6 | How owners are asked the gate questions, and what Nuave may learn from paid orders: the founder asks only owners who said yes to one line in the report-ready email, and the claims count reads only the founder's own orders and orders whose owners agree. The line must cover both (for example "Boleh kami menghubungi Anda untuk minta pendapat, dan memakai laporan ini tanpa nama Anda untuk memperbaiki Nuave?"), or the privacy page's §4 gains the purpose. Decide together with F-1, and ship it before the first outside customer's report is delivered. The email change is visible to customers, so it needs a small spec or the founder's written waiver (`WORKFLOW.md`, specification gate). | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2, and §4 lists no "improve the service" purpose); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
 | F-7 | The kit as a deliverable, in two steps: (a) correction requests and a review invitation, fixed texts the founder approves once; (b) texts meant for publishing (a facts text, a page outline) only after the official Permenkes 1787/2010 text is read (the playbook used summaries) and the parking lot's legal review is done. No requests to be added to "best clinic" list articles. | Terms (new deliverable); `PLAYBOOK.md` if new advice | (a) with Phase 2; (b) only after the legal review. |
-| F-8 | A stability sample: three questions asked twice more, one try each, shown apart as variation. It never changes the counts, the "at least 5 of 10 checks" report rule, refunds or the dots. | Spec 018 (each question asked once). `AUDIT.md` already encourages "re-asking a small number of questions" as "variance measurement". | Decide after the variance study (P3.0). |
+| F-8 | A stability sample: three questions asked twice more, one try each, shown apart as variation. It never changes the counts, the "at least 5 of 10 checks" report rule, refunds or the dots. | Spec 018 (each question asked once). Terms §2 (a "pemeriksaan" is one question asked to one source; "Satu audit berisi 20 pemeriksaan"), §3 (what the report contains) and §8 (Rp12.450 for each failed check): the Terms must say that stability re-asks are not "pemeriksaan" and are never refunded. `AUDIT.md` already encourages "re-asking a small number of questions" as "variance measurement". | Decide after the variance study (P3.0). |
 | F-9 | Re-check price, timing and reminder email (the parking-lot wishlist). | Terms; privacy page; landing page | Decide at Gate 3. |
 | F-10 | Keep the USD 5.00 order hold, and design every package within it. | — | Yes. Raise it only if a package cannot fit: at USD 6.00 the USD 50 daily cap allows 8 orders in progress at once, not 10. |
 | F-11 | A price or offer test. | Landing page; terms | Phase 4. |
@@ -192,8 +223,10 @@ the two-source orders NV-3WDSAY and NV-8XAPUF instead:
 - their page text, which that export does not hold (it reads `intake_json`
   and `report_json`, and page text is dropped when a report is saved,
   `src/lib/orders/pages.ts`): the pages saved during the report-writer test
-  runs (the `pages/` folder of `.local-evidence/report-writer-test/`, for
-  example `pages/NV-3WDSAY.json`), or a small Firecrawl re-read the founder
+  runs, in the `pages/` folder of `.local-evidence/report-writer-test/` (for
+  example `pages/NV-3WDSAY.json`) or in the Spec 023 run's shared folder
+  (`REPORT_TEST_SHARED_DIR`, `scripts/report-writer-test/README.md`), where
+  NV-8XAPUF's pages may be; or a small Firecrawl re-read the founder
   approves;
 - plain page loads of those clinics' public pages and robots.txt, for the
   website-check mock only, at no provider cost.
@@ -235,7 +268,8 @@ each recommendation follows; code shows that item's "who", rough effort and
 "Check" line as one line of small tags. The writer never writes effort
 itself.
 
-**P0.7 "Dasar" link.** Code maps each playbook item to its source link. This
+**P0.7 "Dasar" line and link.** Code shows each recommendation's playbook
+item with its fixed Indonesian meaning line (F-2) and its source link. This
 is new code: `src/lib/audit/report-playbook.ts` holds only the playbook text
 today. Only sources Nuave read directly are linked; the OpenAI pages and
 Permenkes, read through summaries only (playbook, Sources), are re-read
@@ -443,7 +477,8 @@ with consent, and updated terms and privacy pages.
     runs and times, in the pull request or `DECISION_LOG.md` entry that
     decides F-8.
   - P3.1: each fix has a test, and a fixture order with a missing AI
-    Overview, a 40101 status and a city gives the expected results.
+    Overview and a 40101 status (and a city, where the provider allows one)
+    gives the expected results.
   - P3.2: new reports show "Seberapa stabil"; on a fixture order the counts,
     dots and refunds are identical with and without the sample; the step
     stays inside the runner's work budget; the cleanup job empties the new
@@ -519,8 +554,10 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
   2026-10-14, Q10); Browser Run beyond its 10 included hours at USD 0.09 an
   hour (Spec 021 P-01); Firecrawl's plan. The figure of USD 19 a month past
   about 160–200 orders (decision 2026-10-26) predates the go-live, which
-  reads up to 24 pages a reading and left Firecrawl's monthly credits for
-  after the first live orders (decision 2026-10-28). Take Firecrawl's real
+  allows up to 24 Firecrawl requests a reading, retries included (a reading
+  asks for at most 16 pages, and at report time only up to 10 cited pages),
+  and left Firecrawl's monthly credits for after the first live orders
+  (decision 2026-10-28). Take Firecrawl's real
   cost from its bill, and count it once: either per order in credits, as in
   the table above, or as the monthly plan.
 - **Per change:** a blind test of each writer change, about USD 5 (Spec 023:
@@ -800,3 +837,18 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   count moves before Gate 1. Phases 2 and 3 get start conditions and
   observable checks. Gate 3 needs paid hand-run re-checks. The glossary is
   extended.
+- **Round 3 (2026-11-06): ALMOST.** All round-2 findings were resolved, and
+  every figure re-checked was right (including the USD 4.929 worst case and
+  the 22-order daily cap). Four minor findings remained:
+  - F-8 left out the Terms clauses that would make a failed stability
+    re-ask refundable;
+  - the hand-run re-check needed its conditions written down;
+  - "the playbook's own words" cannot be quote-checked across languages;
+  - four wording nits (Firecrawl requests, the shared test folder, the
+    city check, and F-6's line).
+- **Revision 4:** fixes all four. F-8 lists Terms §2, §3 and §8 and says
+  stability re-asks are never refunded. §3 adds the hand-run re-check's
+  offer, price, owner-side edits, founder checklist, manual comparison and
+  timing. The meaning of each playbook item becomes one fixed Indonesian
+  line the founder approves (F-2) and code shows. The four nits are
+  corrected.
