@@ -6,9 +6,9 @@
 > [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
 > own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 5. Independent review: rounds 1
-> (FAIL), 2 and 3 (ALMOST), and round 4 **PASS**; see "Review history" at
-> the end.
+> `claude/inspiring-tesla-yox17h`. Revision 5.1. Independent review: rounds
+> 1 (FAIL), 2 and 3 (ALMOST), round 4 **PASS**, and PASS confirmed on
+> revision 5; see "Review history" at the end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
 > [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
@@ -131,7 +131,14 @@ conditions:
     owner (`VISION.md` principle 7: "discloses material differences instead
     of presenting incompatible runs as progress").
 - **The comparison:** the founder compares the two reports by hand. The
-  Terms do not describe this extra, so the owner is told before paying.
+  Terms do not describe this extra.
+- **What the owner must be told:** the FAQ's line alone is not enough on the
+  default path. Either the founder approves one FAQ (or Penutup) sentence
+  saying to choose the same search city, copy the ten questions from the
+  first report, and expect a comparison by hand, so the owner knows before
+  paying. Or the founder replies to a repeat order for the same website
+  before its questions are approved, as a support reply about the owner's
+  own order.
 - **Timing:** Gate 3 cannot pass until about eight weeks after the first
   outside orders.
 
@@ -867,3 +874,8 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   owners with an offer is optional under F-6. The app's on-screen "Minimal 7"
   message is noted in the `PAYING_CUSTOMER_PLAN.md` parking lot. The plan is
   routed from `INDEX.md`, `NOW.md` and the parking lot.
+- **Confirmation on revision 5: PASS.** The routing edits are accurate and
+  imply no approval. One minor gap: on the default path, the FAQ line does
+  not tell the owner to keep the same city, copy the questions, or expect a
+  hand comparison. A wording nit in `NOW.md` asked for F-1 and F-6 now and
+  the rest at their gates. Both fixed in revision 5.1.
