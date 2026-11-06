@@ -610,6 +610,11 @@ Noted so they are not lost. Nothing here may be worked on before G1 unless the
 founder moves it into a milestone.
 
 **Report and content**
+- Report v3, from the founder's benchmark against two premium agency sample
+  reports (2026-11-06): the draft plan
+  [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md). It covers the
+  work after G1, gated on paid orders. Nothing in it starts before G1 unless
+  the founder moves it.
 - Report format and reference-section simplification; AC-18 same-evidence
   comparison (deferred 2026-09-26).
 - Remaining English JSX in `/audit/fixture`; product-wide design pass (Spec
@@ -619,6 +624,13 @@ founder moves it into a milestone.
   2026-10-26.
 
 **Question generation and engine**
+- The question screen's split message says "Minimal 7 pertanyaan harus
+  tentang memilih tempat", but the rule also allows at most two advice
+  questions (`MIN_PROVIDER_QUESTIONS` 7, `MAX_ADVICE_QUESTIONS` 2 in
+  `src/lib/discovery/question-rules.ts`). With ten questions, at least eight
+  must be about choosing a place, so an edit leaving seven is refused under
+  a message that says seven is enough. Found in the Report v3 plan review,
+  2026-11-06.
 - GLM model name and billing field (copied from the former `NOW.md`,
   2026-09-17 connection check): the provider returned model name
   `zai/glm-5.3-flash` where `glm-5.3-flash` was requested, so the runner

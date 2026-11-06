@@ -6,9 +6,9 @@
 > [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
 > own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 4, after independent review
-> rounds 1 (FAIL), 2 (ALMOST) and 3 (ALMOST); see "Review history" at the
-> end.
+> `claude/inspiring-tesla-yox17h`. Revision 5. Independent review: rounds 1
+> (FAIL), 2 and 3 (ALMOST), and round 4 **PASS**; see "Review history" at
+> the end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
 > [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
@@ -107,10 +107,12 @@ engaged owners; read them with that in mind.
 **The hand-run re-check for Gate 3** works with today's product, under
 conditions:
 
-- **Offer and price:** the FAQ already suggests "cek ulang, sebagai pesanan
-  baru, setelah 6 sampai 8 minggu". The founder offers it to owners who said
-  yes in F-6's line (so that line, or the FAQ, must also allow an offer), as a
-  normal order at Rp249.000. Any discount is a separate founder decision.
+- **Offer and price:** by default, the FAQ's existing line does the offering
+  ("cek ulang, sebagai pesanan baru, setelah 6 sampai 8 minggu"): owners
+  order on their own and nobody is contacted. Contacting owners with an
+  offer is optional and needs F-6's line and the privacy purpose to cover
+  offers too ("…dan menawarkan cek ulang?"). Either way it is a normal order
+  at Rp249.000; any discount is a separate founder decision.
 - **The owner edits, in their own browser:** the intake lives only in the
   browser that paid (Terms §6), so the owner, not the founder, edits the ten
   questions to match the first report's. Edited questions are free text, up
@@ -119,8 +121,11 @@ conditions:
 - **Founder's checklist:**
   - the owner picks the same search city, or the city rule rejects the edits
     (Spec 018 R-11a);
-  - the edits go in an order that never leaves fewer than seven "which place
-    to choose" questions, because that rule is checked after every edit;
+  - the edits go in an order that never leaves more than two questions that
+    are not about choosing a place (so at least eight of ten), because that
+    rule is checked after every edit (`MIN_PROVIDER_QUESTIONS` and
+    `MAX_ADVICE_QUESTIONS` in `src/lib/discovery/question-rules.ts`; the
+    on-screen message says seven, a mismatch noted in the parking lot);
   - duplicates are cleared;
   - any method or version difference between the two orders is told to the
     owner (`VISION.md` principle 7: "discloses material differences instead
@@ -198,7 +203,7 @@ approved document the decision would change.
 | F-3 | Website-check rows the playbook does not cover yet, or covers without a fix line (*noindex*; a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader), need a playbook amendment, each backed by an official source and its fix line. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
 | F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide at Gate 1, only if the claims count shows too few claims to check. |
 | F-5 | Show the owner's own answer to "Apa yang membuat bisnis Anda berbeda?" (already asked in the intake) next to how AI describes the clinic, labelled "Menurut Anda". | Spec 023's quotation rule, which never lets the owner's own claims be quoted | Yes; no new intake question is needed. |
-| F-6 | How owners are asked the gate questions, and what Nuave may learn from paid orders: the founder asks only owners who said yes to one line in the report-ready email, and the claims count reads only the founder's own orders and orders whose owners agree. The line must cover both (for example "Boleh kami menghubungi Anda untuk minta pendapat, dan memakai laporan ini tanpa nama Anda untuk memperbaiki Nuave?"), or the privacy page's §4 gains the purpose. Decide together with F-1, and ship it before the first outside customer's report is delivered. The email change is visible to customers, so it needs a small spec or the founder's written waiver (`WORKFLOW.md`, specification gate). | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2, and §4 lists no "improve the service" purpose); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
+| F-6 | How owners are asked the gate questions, and what Nuave may learn from paid orders: the founder asks only owners who said yes to one line in the report-ready email, and the claims count reads only the founder's own orders and orders whose owners agree. The line must cover both (for example "Boleh kami menghubungi Anda untuk minta pendapat, dan memakai laporan ini tanpa nama Anda untuk memperbaiki Nuave?"), or the privacy page's §4 gains the purpose. Offering a re-check by message is optional and needs the line to cover offers too; by default the FAQ makes the offer (§3). Decide together with F-1, and ship it before the first outside customer's report is delivered. The email change is visible to customers, so it needs a small spec or the founder's written waiver (`WORKFLOW.md`, specification gate). | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2, and §4 lists no "improve the service" purpose); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
 | F-7 | The kit as a deliverable, in two steps: (a) correction requests and a review invitation, fixed texts the founder approves once; (b) texts meant for publishing (a facts text, a page outline) only after the official Permenkes 1787/2010 text is read (the playbook used summaries) and the parking lot's legal review is done. No requests to be added to "best clinic" list articles. | Terms (new deliverable); `PLAYBOOK.md` if new advice | (a) with Phase 2; (b) only after the legal review. |
 | F-8 | A stability sample: three questions asked twice more, one try each, shown apart as variation. It never changes the counts, the "at least 5 of 10 checks" report rule, refunds or the dots. | Spec 018 (each question asked once). Terms §2 (a "pemeriksaan" is one question asked to one source; "Satu audit berisi 20 pemeriksaan"), §3 (what the report contains) and §8 (Rp12.450 for each failed check): the Terms must say that stability re-asks are not "pemeriksaan" and are never refunded. `AUDIT.md` already encourages "re-asking a small number of questions" as "variance measurement". | Decide after the variance study (P3.0). |
 | F-9 | Re-check price, timing and reminder email (the parking-lot wishlist). | Terms; privacy page; landing page | Decide at Gate 3. |
@@ -852,3 +857,13 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   timing. The meaning of each playbook item becomes one fixed Indonesian
   line the founder approves (F-2) and code shows. The four nits are
   corrected.
+- **Round 4 (2026-11-06): PASS.** No material errors and no missing
+  decisions; the founder could approve it as written. Two small notes:
+  - the hand-run re-check needs at least eight place questions, not seven,
+    because at most two of ten may be advice questions;
+  - F-6 did not cover offers, though §3 relied on them.
+- **Revision 5:** applies both notes. The checklist says eight; the FAQ's
+  existing line is the default way to offer a re-check, and contacting
+  owners with an offer is optional under F-6. The app's on-screen "Minimal 7"
+  message is noted in the `PAYING_CUSTOMER_PLAN.md` parking lot. The plan is
+  routed from `INDEX.md`, `NOW.md` and the parking lot.
