@@ -1,7 +1,7 @@
 # Profil korpus
 
-Berkas ini mencatat dasar skill: tulisan mana yang dibaca, bagaimana angka
-dihitung, dan apa batas analisisnya. Bacalah berkas ini sebelum mengubah aturan
+Berkas ini mencatat dasar skill ini, yaitu tulisan mana yang dibaca, bagaimana
+angka dihitung, dan apa batas analisisnya. Bacalah berkas ini sebelum mengubah aturan
 di SKILL.md.
 
 ## 1. Sumber
@@ -68,8 +68,8 @@ Badan tulisan berisi 342 paragraf, 1.202 kalimat, dan 15.186 kata.
 | Lebih dari 25 kata | 1,9% | 4,0% |
 | Median kalimat per paragraf | 4 | 3,5 |
 
-Sebaran paragraf badan tulisan: 90 paragraf berisi tiga kalimat, 110 berisi
-empat, dan 52 berisi lima. Ada 49 paragraf satu kalimat, tetapi sekitar 34 di
+Di badan tulisan, 90 paragraf berisi tiga kalimat, 110 berisi empat, dan 52
+berisi lima. Ada 49 paragraf satu kalimat, tetapi sekitar 34 di
 antaranya butir daftar dan definisi. Sisanya, sekitar 15, adalah kalimat inti
 yang sengaja berdiri sendiri, terutama di esai pribadi.
 
@@ -109,15 +109,15 @@ Angka berikut berasal dari badan tulisan.
 | "saya" | 183 | "kita" | 89 |
 | "kami" | 34 | "Anda" | 0 |
 
-Kata dan frasa berikut tidak muncul sama sekali di korpus: "di era",
+Beberapa kata dan frasa tidak muncul sama sekali di korpus, yaitu "di era",
 "tidak dapat dipungkiri", "seperti yang kita ketahui", "pada dasarnya", "dalam
 rangka", "perlu diingat", "oleh sebab itu", "maka dari itu", "adapun",
 "bahwasanya", "guna", "tentunya", "mari kita", dan "maka".
 
 Kata lisan seperti "dong", "Eh", dan "mager" hanya muncul di dalam dialog atau
 di bagian Jurnal dan Kenangan. Partikel "ya" muncul sekali di badan tulisan,
-dalam kalimat yang sengaja bernada lisan: "Kalau sedang sendiri, ya, tidak
-apa-apa."
+dalam kalimat yang sengaja bernada lisan, yaitu "Kalau sedang sendiri, ya,
+tidak apa-apa."
 
 ## 5. Pasangan kata ingkar
 
@@ -143,6 +143,10 @@ Dihitung per kalimat yang memuat keduanya:
 | Tanda seru | 1 |
 | Titik koma | 0 |
 
+Ivan memakai titik dua dan tanda pisah panjang. Nuave tidak memakai tanda pisah
+panjang sama sekali, dan titik dua hanya dipakai untuk mengantar daftar butir.
+Keduanya keputusan founder pada 7 November 2026.
+
 Penanda di awal kalimat yang diikuti koma:
 
 | Penanda | Jumlah | Penanda | Jumlah |
@@ -156,8 +160,8 @@ Penanda di awal kalimat yang diikuti koma:
 | "Dengan begitu," | 4 | "Pada akhirnya," | 2 |
 | "Ternyata," | 4 | | |
 
-Kata ganti untuk benda dan gagasan: "Ia" membuka 19 kalimat, kebanyakan untuk
-bahasa, label, slogan, atau konsep.
+Untuk benda dan gagasan, kata ganti "Ia" membuka 19 kalimat. Kebanyakan merujuk
+ke bahasa, label, slogan, atau konsep.
 
 ## 7. Batas analisis
 

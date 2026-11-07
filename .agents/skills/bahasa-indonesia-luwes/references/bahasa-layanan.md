@@ -2,7 +2,7 @@
 
 Teks antarmuka adalah percakapan kecil antara Nuave dan pemilik usaha. Ivan
 menulis satu esai khusus tentang bahasa layanan, "Sopan Tidak Selalu Harus
-Minta Maaf". Pokoknya sederhana: kesantunan punya banyak pintu, dan "mohon
+Minta Maaf". Pokoknya sederhana. Kesantunan punya banyak pintu, dan "mohon
 maaf" hanya salah satunya.
 
 Semua contoh Nuave di berkas ini rekaan untuk latihan. Periksa fakta produk,
@@ -24,7 +24,7 @@ memberi pembaca sesuatu yang berbeda.
 | Kesepakatan | Titik temu | "Kami memahami bahwa waktu Ibu dan Bapak berharga." | ✓ Kami memahami bahwa waktu Anda berharga. |
 | Simpati | Kepedulian | "Kami memahami bahwa situasi ini kurang nyaman." | Alternatif yang Ivan tawarkan untuk "Maaf atas ketidaknyamanannya". |
 
-Sebelum menulis, tanyakan pertanyaan penutup esai itu: "Apa sebenarnya yang
+Sebelum menulis, ajukan pertanyaan yang menutup esai itu, "Apa sebenarnya yang
 sedang dibutuhkan orang lain: permohonan, tanggung jawab, penghargaan,
 kerendahan sikap, kesepahaman, atau kepedulian?"
 
@@ -41,7 +41,7 @@ Daftar itu contoh, bukan batas yang tertutup. Jika tidak ada kesalahan atau
 kerugian, pertimbangkan jalan santun yang lain. Jika memang perlu meminta maaf,
 buat maafnya berguna dengan empat bagian:
 
-1. Akui dengan jelas: "Maaf, ...".
+1. Akui dengan jelas, misalnya "Maaf, ...".
 2. Sebut apa yang terjadi, tanpa istilah teknis.
 3. Sebut apa yang tetap tersimpan, hanya jika sistem memang menjaminnya. Jangan
    menenangkan pembaca dengan klaim yang belum pasti.
@@ -87,7 +87,7 @@ sebelum pelaku.
 - ✗ Laporan kami akan kirim ke email Anda.
 - ✓ Kami akan mengirim laporan ke email Anda. (Bentuk aktif juga benar.)
 
-Ingat aturan VOICE.md: "kami" berarti tim atau perusahaan. Jangan menulis
+Ingat aturan VOICE.md bahwa "kami" berarti tim atau perusahaan. Jangan menulis
 "kami nilai" atau "kami simpulkan" untuk hasil yang dibuat model AI.
 
 ## 5. Perintah dan ajakan
@@ -97,14 +97,14 @@ Ingat aturan VOICE.md: "kami" berarti tim atau perusahaan. Jangan menulis
   Contohnya **Cek bisnis saya di AI**, **Lanjut ke pembayaran**, **Bayar
   Rp249.000**, **Buat pertanyaan audit**, **Jalankan audit**, dan **Download
   PDF**.
-- **Saran** memakai "Coba ...": "Coba simpan sekali lagi."
-- **Permintaan yang membebani pembaca** memakai "Mohon ...": "Mohon tunggu
-  sebentar."
-- **Langkah yang dipilih pembaca sendiri** cukup memakai kata kerja langsung:
-  "Periksa lagi data yang Anda isikan."
+- **Saran** memakai "Coba ...", misalnya "Coba simpan sekali lagi."
+- **Permintaan yang membebani pembaca** memakai "Mohon ...", misalnya "Mohon
+  tunggu sebentar."
+- **Langkah yang dipilih pembaca sendiri** cukup memakai kata kerja langsung,
+  misalnya "Periksa lagi data yang Anda isikan."
 - **Ragam santai** boleh memakai "ya" di akhir teks bantuan landing dan
-  pratinjau pesanan, sesuai VOICE.md §3: "Nama usahanya diisi dulu, ya." Jangan
-  memakainya di pesan galat, pembayaran, laporan, atau email.
+  pratinjau pesanan, sesuai VOICE.md §3. Contohnya "Nama usahanya diisi dulu,
+  ya." Jangan memakainya di pesan galat, pembayaran, laporan, atau email.
 - **Tanda seru** tidak dipakai. Ivan menulis bahwa tidak semua kalimat perintah
   perlu tanda seru.
 
@@ -180,7 +180,7 @@ Menurut VOICE.md §7.5, email laporan memuat hal berikut:
 - kabar bahwa laporan siap, beserta tindakan untuk membukanya melalui link
   pribadi
 - status PDF yang jujur, tanpa menjanjikan unduhan yang belum siap
-- batas potret: hasil mencerminkan jawaban pada waktu pengujian
+- batas potret, yaitu bahwa hasil mencerminkan jawaban pada waktu pengujian
 - keterangan bahwa akses berlaku terbatas
 - tanpa persetujuan pemasaran yang digabung dengan pembelian dan tanpa janji
   waktu balasan
@@ -202,11 +202,11 @@ Tanpa ketakutan, tanpa janji, tanpa deretan emoji (VOICE.md §3).
 ### FAQ dan halaman penjelasan
 
 Ragam konsultatif. Kalimat pertama menjawab pertanyaan (VOICE.md §3). Sesudah
-itu, pakai langkah berpikir Ivan: pisahkan dua hal yang sering disamakan,
+itu, pakai langkah berpikir Ivan. Pisahkan dua hal yang sering disamakan,
 batasi klaim sesuai bahan, dan tutup dengan hal yang dapat dilakukan pembaca.
 Dua sampai enam kalimat biasanya cukup.
 
-✓ Contoh rekaan untuk pertanyaan "Apa bedanya disebut dan direkomendasikan?":
+✓ Contoh rekaan untuk pertanyaan "Apa bedanya disebut dan direkomendasikan?"
 
 > Bisnis Anda disebut jika namanya muncul dalam jawaban AI. Bisnis Anda
 > direkomendasikan jika jawaban itu juga menyarankannya sebagai pilihan.
@@ -218,7 +218,7 @@ Jawabannya datang di dua kalimat pertama. Sesudah itu, paragraf meluruskan
 anggapan yang umum dan menarik simpulan yang dapat diperiksa sendiri oleh
 pembaca.
 
-✓ Contoh rekaan untuk pertanyaan "Apa itu cek ulang?":
+✓ Contoh rekaan untuk pertanyaan "Apa itu cek ulang?"
 
 > Cek ulang adalah audit kedua dengan pertanyaan dan cara yang sama seperti
 > audit pertama, dijalankan [kapan]. Dengan begitu, Anda dapat membandingkan
@@ -235,7 +235,7 @@ sebab. Fakta seperti jadwal dan harga diambil dari `docs/PRODUCT.md`.
 
 Dalam esai tentang menulis ulang cerita, Ivan menggambarkan tokoh yang "masih
 terdengar seperti orang asing yang sekadar memakai nama lokal". Teks antarmuka
-juga dapat begitu: kata-katanya Indonesia, susunannya Inggris.
+juga dapat begitu. Kata-katanya Indonesia, tetapi susunannya Inggris.
 
 | Terasa terjemahan | Lebih wajar |
 | --- | --- |

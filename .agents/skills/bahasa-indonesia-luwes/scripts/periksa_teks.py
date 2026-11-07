@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Pemeriksa mekanis untuk teks bahasa Indonesia (skill bahasa-indonesia-luwes).
 
-Pemeriksa ini menandai kesalahan yang bisa dikenali mesin: tanda pisah, bentuk
-tidak baku, kata sambung "di mana", kalimat yang terlalu panjang, dan
-sejenisnya. Ia tidak menilai rasa. Rasa tetap dinilai dengan membaca.
+Pemeriksa ini menandai kesalahan yang bisa dikenali mesin, seperti tanda baca,
+bentuk tidak baku, kata sambung "di mana", dan kalimat yang terlalu panjang. Ia
+tidak menilai rasa. Rasa tetap dinilai dengan membaca.
 
-Pakai, dari akar repo:
+Jalankan dari akar repo.
   P=.agents/skills/bahasa-indonesia-luwes/scripts/periksa_teks.py
   python3 $P berkas.md [berkas lain ...]
   python3 $P -                       # baca dari masukan standar
@@ -14,9 +14,12 @@ Pakai, dari akar repo:
   python3 $P --ketat berkas          # kode keluar 1 jika ada temuan
                                      # [Nuave] atau [kaidah]
 
-Yang tidak diperiksa: kepala YAML, blok kode, kode sebaris, tautan, tag HTML,
-dan teks sesudah tanda ✗ sampai tanda | atau ✓ berikutnya. Pakai tanda ✗ untuk
-contoh keliru di dokumen panduan.
+Bagian yang tidak diperiksa adalah kepala YAML, blok kode, kode sebaris, tautan,
+tag HTML, dan teks sesudah tanda ✗ sampai tanda | atau ✓ berikutnya. Pakai tanda
+✗ untuk contoh keliru di dokumen panduan.
+
+Titik dua hanya boleh mengantar daftar butir atau tabel. Titik dua di tengah
+kalimat, atau di ujung paragraf yang tidak disusul daftar, ikut ditandai.
 
 Teks di dalam tanda petik juga dilewati, kecuali dengan --periksa-kutipan.
 Kutipan jawaban AI, pertanyaan, dan bukti lain harus disalin persis
@@ -154,9 +157,14 @@ KATA_KERJA_DASAR = (
     "perbarui|tambahkan|pastikan|sampaikan|ucapkan|berikan|kirimkan"
 )
 
+PESAN_TITIK_DUA = "Titik dua hanya untuk mengantar daftar butir. Pakai titik, koma, atau susun ulang kalimatnya."
+
 ATURAN: list[Aturan] = [
+    # Dua aturan pertama berlaku di semua mode. Keputusan founder, 7 November 2026.
+    Aturan("Nuave", _r(r"—"), "Tanda pisah panjang tidak dipakai. Ganti dengan koma, kurung, atau kalimat baru."),
+    # Titik dua yang masih disusul teks di blok yang sama. Jam seperti 10:30 dilewati.
+    Aturan("gaya", _r(r"(?!(?<=\d):\d):(?=\s*[^\s|])"), PESAN_TITIK_DUA),
     # Nuave: tanda baca, angka, sapaan, istilah (docs/VOICE.md)
-    Aturan("Nuave", _r(r"—"), "Tanda pisah panjang. Ganti dengan koma, titik dua, kurung, atau kalimat baru.", True),
     Aturan("Nuave", _r(r"–"), "Tanda pisah pendek di prosa. Tulis rentang dengan 'sampai'.", True,
            lindungi=_r(r"\b\d{1,2}\.\d{2}–\d{1,2}\.\d{2}\b|\bMinggu \d+–\d+\b", peka_huruf=True)),
     Aturan("Nuave", _r(r"(?<=\w) - (?=\w)"), "Tanda hubung berspasi dipakai sebagai tanda pisah. Ganti dengan koma atau 'sampai'.", True),
@@ -228,7 +236,7 @@ ATURAN: list[Aturan] = [
 ]
 
 for _salah, _baku in BAKU:
-    ATURAN.append(Aturan("kaidah", _r(rf"\b(?:{_salah})\b"), f"Bentuk baku: {_baku}."))
+    ATURAN.append(Aturan("kaidah", _r(rf"\b(?:{_salah})\b"), f"Bentuk bakunya {_baku}."))
 
 
 @dataclass
@@ -236,7 +244,7 @@ class Blok:
     teks: str
     baris_awal: int
     statistik: bool = True
-    tabel: bool = False
+    jenis: str = "paragraf"  # paragraf, butir, kutipan, tabel, judul, atau kode
 
 
 @dataclass
@@ -273,9 +281,14 @@ def bersihkan(teks: str, periksa_kutipan: bool) -> str:
     teks = _kosongkan(r"(?<![\w*])\*(?=\S)|(?<=\S)\*(?![\w*])", teks)
     teks = _kosongkan(r"(?<!\w)_(?=\w)|(?<=\w)_(?!\w)", teks)
     if not periksa_kutipan:
-        teks = _kosongkan(r"“[^”]*”", teks)
-        teks = _kosongkan(r'"[^"]*"', teks)
-        teks = _kosongkan(r"‘[^’]*’", teks)
+        # Isi kutipan dikosongkan, tanda petiknya tetap, agar titik dua sebelum
+        # kutipan masih terbaca. Pasangan petik dibaca berurutan.
+        for buka, tutup in (("“", "”"), ('"', '"'), ("‘", "’")):
+            teks = re.sub(
+                re.escape(buka) + "([^" + re.escape(tutup) + "]*)" + re.escape(tutup),
+                lambda m, b=buka, t=tutup: b + re.sub(r"[^\n]", " ", m.group(1)) + t,
+                teks,
+            )
     return teks
 
 
@@ -284,13 +297,14 @@ def susun_blok(isi: str) -> list[Blok]:
     blok: list[Blok] = []
     sekarang: list[str] = []
     awal = 0
+    jenis = "paragraf"
     dalam_kode = False
     pagar_kode = ""
 
     def tutup() -> None:
         nonlocal sekarang
         if sekarang:
-            blok.append(Blok("\n".join(sekarang), awal))
+            blok.append(Blok("\n".join(sekarang), awal, jenis=jenis))
             sekarang = []
 
     mulai = 0
@@ -310,6 +324,7 @@ def susun_blok(isi: str) -> list[Blok]:
             continue
         if s.startswith("```") or s.startswith("~~~"):
             tutup()
+            blok.append(Blok("", nomor, statistik=False, jenis="kode"))
             dalam_kode = True
             pagar_kode = s[:3]
             continue
@@ -318,24 +333,27 @@ def susun_blok(isi: str) -> list[Blok]:
             continue
         if s.startswith("#"):
             tutup()
-            blok.append(Blok(s.lstrip("#").strip(), nomor, statistik=False))
+            blok.append(Blok(s.lstrip("#").strip(), nomor, statistik=False, jenis="judul"))
             continue
         if s.startswith("|"):
             tutup()
             if re.fullmatch(r"\|?[\s:|-]+\|?", s):
                 continue
-            blok.append(Blok(s, nomor, tabel=True))
+            blok.append(Blok(s, nomor, jenis="tabel"))
             continue
-        if s.startswith(">"):
+        kutipan = s.startswith(">")
+        if kutipan:
             s = s.lstrip(">").strip()
         butir = re.match(r"^(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?", s)
         if butir:
             tutup()
             awal = nomor
+            jenis = "butir"
             sekarang = [s[butir.end():]]
             continue
         if not sekarang:
             awal = nomor
+            jenis = "kutipan" if kutipan else "paragraf"
         sekarang.append(s)
     tutup()
     return blok
@@ -384,7 +402,10 @@ def kalimat_tanya(teks: str, posisi: int) -> bool:
 def periksa(isi: str, tanpa_nuave: bool, periksa_kutipan: bool) -> tuple[list[Temuan], list[int]]:
     temuan: list[Temuan] = []
     panjang: list[int] = []
-    for blok in susun_blok(isi):
+    semua = susun_blok(isi)
+    for i, blok in enumerate(semua):
+        if blok.jenis == "kode":
+            continue
         bersih = bersihkan(blok.teks, periksa_kutipan)
         for aturan in ATURAN:
             if tanpa_nuave and aturan.khusus_nuave:
@@ -399,9 +420,17 @@ def periksa(isi: str, tanpa_nuave: bool, periksa_kutipan: bool) -> tuple[list[Te
                     continue
                 temuan.append(Temuan(baris_dari(blok, m.start()), aturan.kategori, aturan.pesan,
                                      cuplik(bersih, m.start(), m.end())))
+        # Titik dua di ujung blok hanya boleh disusul daftar butir atau tabel.
+        ujung = bersih.rstrip()
+        if ujung.endswith(":"):
+            berikut = semua[i + 1].jenis if i + 1 < len(semua) else ""
+            if berikut not in ("butir", "tabel"):
+                posisi = len(ujung) - 1
+                temuan.append(Temuan(baris_dari(blok, posisi), "gaya", PESAN_TITIK_DUA,
+                                     cuplik(bersih, posisi, posisi + 1)))
         if not blok.statistik:
             continue
-        bagian = bersih.split("|") if blok.tabel else [bersih]
+        bagian = bersih.split("|") if blok.jenis == "tabel" else [bersih]
         geser = 0
         for sel in bagian:
             for posisi, kal in pecah_kalimat(sel):

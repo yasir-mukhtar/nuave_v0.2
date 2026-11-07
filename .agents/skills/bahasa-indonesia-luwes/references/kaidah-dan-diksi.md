@@ -13,7 +13,7 @@ tanda ✓.
 ### "tetapi" dan "namun"
 
 - "tetapi" menyambung dua klausa di dalam satu kalimat dan didahului koma
-  (90): "Perbedaan ini tampak kecil, tetapi penting."
+  (90), misalnya "Perbedaan ini tampak kecil, tetapi penting."
 - "Namun," membuka kalimat baru dan diikuti koma (15, semuanya di awal
   kalimat).
 - "Akan tetapi," juga membuka kalimat, tetapi jarang dipakai (1).
@@ -29,14 +29,14 @@ tanda ✓.
 ### "melainkan" dan "tetapi"
 
 - "melainkan" dipakai sesudah kata ingkar ("bukan" atau "tidak") jika bagian
-  kedua menggantikan bagian pertama. Di korpus, pola ini muncul 39 kali: "Yang
-  berubah bukan kebutuhan, melainkan cara kita memenuhinya."
-- "tetapi" dipakai jika kedua bagian tetap berlaku: "Pembagian ini bukan
-  satu-satunya yang dipakai akademisi, tetapi cukup membantu saya mengenali
-  wilayahnya."
+  kedua menggantikan bagian pertama. Di korpus, pola ini muncul 39 kali,
+  misalnya "Yang berubah bukan kebutuhan, melainkan cara kita memenuhinya."
+- "tetapi" dipakai jika kedua bagian tetap berlaku, misalnya "Pembagian ini
+  bukan satu-satunya yang dipakai akademisi, tetapi cukup membantu saya
+  mengenali wilayahnya."
 - Untuk tambahan, Ivan memakai "bukan hanya ..., melainkan juga ..." (17) atau
-  "tidak hanya ..., tetapi juga ..." (14): "Bahasa bukan hanya alat komunikasi,
-  melainkan juga bagian dari kepentingan antarnegara."
+  "tidak hanya ..., tetapi juga ..." (14). Ia menulis, "Bahasa bukan hanya alat
+  komunikasi, melainkan juga bagian dari kepentingan antarnegara."
 
 ✗ Masalahnya bukan pada harga, tetapi pada informasi dokter.
 
@@ -44,52 +44,55 @@ tanda ✓.
 
 ### "bukan" dan "tidak" (kaidah umum)
 
-- "bukan" mengingkari kata benda: "Peta ilmu bukanlah wilayah itu sendiri."
-- "tidak" mengingkari kata kerja dan kata sifat: "Ketiganya tidak saling
-  menggantikan."
+- "bukan" mengingkari kata benda, seperti dalam "Peta ilmu bukanlah wilayah itu
+  sendiri."
+- "tidak" mengingkari kata kerja dan kata sifat, seperti dalam "Ketiganya tidak
+  saling menggantikan."
 - "bukan" boleh mendahului kata kerja atau kata sifat jika diikuti koreksi
   dengan "melainkan".
 
 ### "sedangkan" dan "sementara"
 
 - "sedangkan" (41) dan "sementara" (12) menyejajarkan dua klausa yang berbeda.
-- Ivan memakai keduanya bergantian agar tidak monoton: "Kedokteran menangani
-  penyakit manusia, sedangkan kedokteran gigi memusatkan perhatian pada
-  kesehatan gigi dan mulut. Keperawatan berfokus pada asuhan pasien, sementara
-  kebidanan terutama menangani kehamilan, persalinan, dan kesehatan reproduksi
-  perempuan."
+- Ivan memakai keduanya bergantian agar tidak monoton. Ia menulis, "Kedokteran
+  menangani penyakit manusia, sedangkan kedokteran gigi memusatkan perhatian
+  pada kesehatan gigi dan mulut. Keperawatan berfokus pada asuhan pasien,
+  sementara kebidanan terutama menangani kehamilan, persalinan, dan kesehatan
+  reproduksi perempuan."
 - "Sementara itu," membuka kalimat baru (3).
 
 ### Pasangan tetap
 
-- **baik ... maupun ...**: "baik ketika sedang mengajarkan pelafalan kata,
-  menyunting naskah, maupun merancang tata letak majalah".
-- **lebih ... daripada ...**: "Saya lebih suka memeriksa kalimat daripada
-  menilai perpaduan warna." Kata "daripada" hanya dipakai untuk membandingkan.
-- **makin ... makin ...**: judul salah satu tulisan Ivan berbunyi "Makin jauh
-  hubungan, biasanya makin santun bahasa yang digunakan".
-- **antara ... dan ...**: "batas baru antara kendali dan kenyamanan".
+| Pasangan | Contoh dari korpus |
+| --- | --- |
+| baik ... maupun ... | "baik ketika sedang mengajarkan pelafalan kata, menyunting naskah, maupun merancang tata letak majalah" |
+| lebih ... daripada ... | "Saya lebih suka memeriksa kalimat daripada menilai perpaduan warna." |
+| makin ... makin ... | "Makin jauh hubungan, biasanya makin santun bahasa yang digunakan" (judul salah satu tulisan Ivan) |
+| antara ... dan ... | "batas baru antara kendali dan kenyamanan" |
+
+Kata "daripada" hanya dipakai untuk membandingkan.
 
 ### Sebab, akibat, dan tujuan
 
 - "karena", bukan "dikarenakan".
 - "Karena itu," (10) lebih sering daripada "Oleh karena itu," (1). "Maka dari
   itu" tidak dipakai.
-- "sehingga" tanpa koma di depannya: "Bentuk itu begitu biasa sehingga jarang
-  dipersoalkan."
+- "sehingga" ditulis tanpa koma di depannya, seperti dalam "Bentuk itu begitu
+  biasa sehingga jarang dipersoalkan."
 - "agar" (12) untuk tujuan. "Supaya" tidak dipakai.
 
 ### Penghubung lain
 
 - "Dengan begitu," (4) dan "Dengan demikian," (2). Keduanya juga dapat
-  disisipkan di antara koma: "Kesantunan, dengan demikian, bukan soal sopan
-  atau tidak sopan secara mutlak, melainkan soal kecocokan ujaran dengan
+  disisipkan di antara koma, misalnya "Kesantunan, dengan demikian, bukan soal
+  sopan atau tidak sopan secara mutlak, melainkan soal kecocokan ujaran dengan
   konteks sosialnya."
-- "Padahal," untuk menyanggah harapan: "Padahal, November biasanya saya
-  bayangkan sebagai bagian dari musim hujan."
+- "Padahal," dipakai untuk menyanggah harapan, misalnya "Padahal, November
+  biasanya saya bayangkan sebagai bagian dari musim hujan."
 - "yaitu" (13) dan "yakni" (6) untuk merinci.
-- "pada" untuk tempat yang bukan ruang: "Perbedaannya hanya pada pita suara."
-  "di" untuk ruang: "di warung kecil dekat rumah".
+- "pada" dipakai untuk tempat yang bukan ruang, misalnya "Perbedaannya hanya
+  pada pita suara." Untuk ruang, pakai "di", misalnya "di warung kecil dekat
+  rumah".
 
 ## 2. Pilihan kata
 
@@ -112,14 +115,14 @@ tanda ✓.
 
 ## 3. "adalah", "merupakan", dan "ialah"
 
-- "adalah" untuk definisi: "Bahasa yang benar adalah bahasa yang sesuai dengan
-  kaidah baku, dengan ejaan yang tepat, pembentukan kata yang taat asas, dan
-  kalimat yang berstruktur lengkap."
-- "merupakan" untuk variasi atau penggolongan: "Kalimat merupakan satuan
-  bahasa yang menyampaikan pikiran secara lengkap."
-- "ialah" untuk menyebut atau mengenali, sering sesudah frasa "Yang ...": "Yang
-  berubah ialah dampaknya."
-- **kaidah umum**: "adalah" tidak dipakai di depan kata kerja atau kata sifat.
+- "adalah" dipakai untuk definisi, misalnya "Bahasa yang benar adalah bahasa
+  yang sesuai dengan kaidah baku, dengan ejaan yang tepat, pembentukan kata
+  yang taat asas, dan kalimat yang berstruktur lengkap."
+- "merupakan" dipakai untuk variasi atau penggolongan, misalnya "Kalimat
+  merupakan satuan bahasa yang menyampaikan pikiran secara lengkap."
+- "ialah" dipakai untuk menyebut atau mengenali, sering sesudah frasa
+  "Yang ...", misalnya "Yang berubah ialah dampaknya."
+- "adalah" tidak dipakai di depan kata kerja atau kata sifat (**kaidah umum**).
 
 ✗ Harganya adalah terjangkau.
 
@@ -127,7 +130,8 @@ tanda ✓.
 
 Ivan pernah mengkritik sebuah peraturan karena definisinya memakai kopula yang
 berganti-ganti, genus yang tidak konsisten, dan definisi melingkar. Dalam satu
-daftar istilah atau FAQ, pakai satu pola definisi: "X adalah Y yang ...".
+daftar istilah atau FAQ, pakai satu pola definisi saja, seperti "X adalah Y
+yang ...".
 
 ## 4. Kata yang dihindari
 
@@ -142,7 +146,7 @@ daftar istilah atau FAQ, pakai satu pola definisi: "X adalah Y yang ...".
 | ✗ Dengan ini kami menyampaikan bahwa | langsung ke pokoknya | Contoh kalimat kaku dari Ivan |
 | ✗ melakukan pembayaran, melakukan pengecekan | membayar, memeriksa | "melakukan" hanya 3 kali di korpus |
 | ✗ sangat penting sekali | sangat penting, atau penting sekali | Kaidah umum (pleonasme) |
-| ✗ naik ke atas, mundur ke belakang | naik, mundur | Kaidah umum (pleonasme). Terapkan dengan luwes: Ivan sendiri menulis "masuk ke dalam predikat" |
+| ✗ naik ke atas, mundur ke belakang | naik, mundur | Kaidah umum (pleonasme). Terapkan dengan luwes karena Ivan sendiri menulis "masuk ke dalam predikat" |
 | ✗ agar supaya, demi untuk, sejak dari | agar, demi, sejak | Kaidah umum (pleonasme) |
 | ✗ para peserta-peserta | para peserta | Kaidah umum |
 | ✗ Maaf atas ketidaknyamanannya | lihat `bahasa-layanan.md` | Disebut Ivan sebagai terjemahan harfiah |
@@ -166,38 +170,40 @@ Bentuk berikut muncul di korpus dan dapat dijadikan acuan.
 | menyimulasikan, mengarakterisasi | Huruf awal k, p, t, s pada kata serapan ikut luluh |
 | memproduksi, mengkliping | Gugus konsonan seperti pr dan kl tidak luluh |
 
-Bentuk terikat ditulis serangkai: antarnegara, antargenerasi, praaksara,
-nonvisual, multibahasa, serbamudah, swasunting, interdisiplin, ekabahasa,
-dwibahasa.
+Bentuk terikat ditulis serangkai, seperti antarnegara, antargenerasi,
+praaksara, nonvisual, multibahasa, serbamudah, swasunting, interdisiplin,
+ekabahasa, dan dwibahasa.
 
-Gabungan kata tetap ditulis terpisah: kerja sama, tanggung jawab, terima kasih,
-tata bahasa, tata letak.
+Gabungan kata tetap ditulis terpisah, seperti kerja sama, tanggung jawab,
+terima kasih, tata bahasa, dan tata letak.
 
 Partikel "pun" ditulis terpisah ("Saya pun", "Kemampuan berpikir pun", "siapa
-pun"), kecuali pada kata hubung yang sudah padu: meskipun, walaupun,
-bagaimanapun, sekalipun.
+pun"), kecuali pada kata hubung yang sudah padu, seperti meskipun, walaupun,
+bagaimanapun, dan sekalipun.
 
-**Kaidah umum** untuk kata yang sering keliru di teks digital:
+Bentuk baku berikut sering keliru ditulis di teks digital (**kaidah umum**):
 
-- Kata sehari-hari: silakan, izin, nasihat, jadwal, sekadar, telanjur,
-  imbauan, utang, napas, antre, cedera, terampil.
-- Kata serapan: sistem, aktivitas, kualitas, frekuensi, teoretis, hipotesis,
-  konkret, standardisasi, apotek, provinsi.
-- Kata kerja dengan peluluhan: mengonfirmasi, mengonsumsi, mengoordinasi,
-  menyosialisasikan, menaati.
-- Nama bulan: Februari, November.
+- kata sehari-hari, seperti silakan, izin, nasihat, jadwal, sekadar, telanjur,
+  imbauan, utang, napas, antre, cedera, dan terampil
+- kata serapan, seperti sistem, aktivitas, kualitas, frekuensi, teoretis,
+  hipotesis, konkret, standardisasi, apotek, dan provinsi
+- kata kerja dengan peluluhan, seperti mengonfirmasi, mengonsumsi,
+  mengoordinasi, menyosialisasikan, dan menaati
+- nama bulan, seperti Februari dan November
 
 ## 6. Pasif dan pasif nol
 
-- **Pasif "di-"**: "buku itu dibaca oleh mereka".
-- **Pasif nol**: pelaku berupa kata ganti (saya, kami, Anda, mereka) diikuti
-  kata kerja dasar. "Buku itu mereka baca." "Atas perhatian Bapak/Ibu, kami
-  ucapkan terima kasih."
-- Kata bantu dan kata ingkar diletakkan sebelum pelaku: "akan kami ucapkan",
-  "tidak kami ucapkan". Contoh lain di korpus: "hal yang tidak saya duga",
-  "yang selama ini luput saya periksa", "November biasanya saya bayangkan".
-- Pasif nol tidak menonjolkan pelaku sehingga terasa lebih santun. Di Nuave:
-  "Link laporan akan kami kirim ke email Anda."
+- **Pasif "di-"** terlihat dalam "buku itu dibaca oleh mereka".
+- **Pasif nol** memakai pelaku berupa kata ganti (saya, kami, Anda, mereka)
+  yang diikuti kata kerja dasar, seperti dalam "Buku itu mereka baca".
+  Ungkapan "Atas perhatian Bapak/Ibu, kami ucapkan terima kasih" juga memakai
+  pasif nol.
+- Kata bantu dan kata ingkar diletakkan sebelum pelaku, seperti "akan kami
+  ucapkan" dan "tidak kami ucapkan". Korpus juga memuat "hal yang tidak saya
+  duga", "yang selama ini luput saya periksa", dan "November biasanya saya
+  bayangkan".
+- Pasif nol tidak menonjolkan pelaku sehingga terasa lebih santun. Di Nuave,
+  kalimatnya bisa berbunyi "Link laporan akan kami kirim ke email Anda."
 - Pilihan aktif atau pasif, kata Ivan, "sering berkaitan dengan penekanan
   informasi dan fokus pembicaraan, bukan sekadar perubahan bentuk gramatikal".
 
@@ -212,22 +218,21 @@ yang keliru jika pelakunya diketahui.
 
 ## 7. Tanda baca
 
-- **Koma sesudah penanda di awal kalimat**: "Namun,", "Karena itu,", "Selain
-  itu,", "Misalnya,", "Kini,", "Dulu,", "Rupanya,".
-- **Koma sesudah anak kalimat di depan**: "Karena sedang bersama teman, saya
-  meminjam kartu ATM-nya." Tanpa koma jika anak kalimat di belakang: "Saya
-  lebih nyaman membicarakan bahasa karena urusan politik sering membuat orang
-  terbelah."
-- **Koma sebelum kata hubung pertentangan**: tetapi, melainkan, sedangkan,
-  sementara.
-- **Tanpa koma sebelum "bahwa" dan "sehingga"**: "Saya bersyukur bahwa kini
-  proses ini lebih mudah karena diadakan melalui sesi daring."
-- **Keterangan sisipan diapit koma**: "Kata tanah, misalnya, disukukan dan
-  dipenggal dengan cara yang sama".
-- **Titik dua** memperkenalkan rincian atau penjelasan. Ivan menulis huruf
-  kapital sesudah titik dua jika yang menyusul berupa kalimat lengkap
-  ("menggarisbawahi satu hal: Kuliah mengajarkan cara berpikir") dan huruf
-  kecil untuk rincian ("dua ilmu berbeda: meteorologi dan klimatologi").
+- **Koma** dipakai sesudah penanda di awal kalimat, seperti "Namun,", "Karena
+  itu,", "Selain itu,", "Misalnya,", "Kini,", "Dulu,", dan "Rupanya,".
+- **Koma** juga dipakai sesudah anak kalimat yang ada di depan, seperti dalam
+  "Karena sedang bersama teman, saya meminjam kartu ATM-nya." Jika anak
+  kalimat ada di belakang, koma tidak dipakai, seperti dalam "Saya lebih nyaman
+  membicarakan bahasa karena urusan politik sering membuat orang terbelah."
+- **Koma** mendahului kata hubung pertentangan, yaitu tetapi, melainkan,
+  sedangkan, dan sementara.
+- **Koma tidak dipakai** sebelum "bahwa" dan "sehingga", seperti dalam "Saya
+  bersyukur bahwa kini proses ini lebih mudah karena diadakan melalui sesi
+  daring."
+- **Keterangan sisipan** diapit koma, seperti dalam "Kata tanah, misalnya,
+  disukukan dan dipenggal dengan cara yang sama".
+- **Titik dua** hanya mengantar daftar butir. Lihat subbagian "Titik dua" di
+  bawah.
 - **Titik koma** tidak muncul di badan tulisan Ivan. Dua kalimat biasanya lebih
   jernih.
 - **Tanda seru** hanya sekali di badan tulisan, dan itu pun untuk kelakar.
@@ -237,58 +242,81 @@ yang keliru jika pelakunya diketahui.
 - **Kurung** sering dipakai (116 kali) untuk istilah asing, singkatan, dan
   penjelasan pendek.
 - **Tanda petik ganda** untuk kutipan, kata yang dibahas, dan judul bab. Dalam
-  dialog, koma diletakkan di dalam petik: "Nanti di ATM tinggal masukkan nomor
-  ponsel dan token ini," katanya.
+  dialog, koma diletakkan di dalam petik, seperti dalam "Nanti di ATM tinggal
+  masukkan nomor ponsel dan token ini," katanya.
 
-### Mengganti tanda pisah untuk Nuave
+### Titik dua
 
-Ivan memakai tanda pisah panjang (`—`) 13 kali, kebanyakan untuk keterangan
-sisipan. VOICE.md melarangnya di prosa. Gantilah dengan koma, titik dua,
-"yaitu", kurung, atau kalimat baru.
+Di Nuave, titik dua hanya dipakai untuk mengantar daftar butir. Ini keputusan
+founder pada 7 November 2026. Kalimat yang diakhiri titik dua harus disusul
+butir-butir daftar. Di tengah kalimat, pakai titik, koma, "yaitu", atau
+"misalnya", atau susun ulang kalimatnya. Kutipan diantar dengan koma, seperti
+`Ia menulis, "..."`. Label yang ditetapkan, seperti baris "Topik: ..." di
+laporan, tetap disalin persis.
 
-✗ tiga jenis konten—obrolan kebahasaan, ulasan buku, dan tutorial penulisan—yang semuanya diambil dari tulisan Medium saya
+Untuk prosa laporan, WRITING_GUIDE.md §6 masih membolehkan titik dua sesuai
+fungsinya, dan panduan itu yang berlaku.
 
-✓ tiga jenis konten, yaitu obrolan kebahasaan, ulasan buku, dan tutorial
-penulisan. Semuanya diambil dari tulisan Medium saya.
+Ivan sendiri memakai titik dua untuk memperkenalkan rincian atau penjelasan.
+Ia menulis huruf kapital sesudahnya jika yang menyusul berupa kalimat lengkap
+("menggarisbawahi satu hal: Kuliah mengajarkan cara berpikir") dan huruf kecil
+untuk rincian ("dua ilmu berbeda: meteorologi dan klimatologi"). Kebiasaan ini
+dicatat sebagai fakta korpus dan tidak dipakai di Nuave.
 
-✗ logis dan gembira—sesuai dengan judul bukunya
+✗ Langkah pertama gratis: Nuave mencari klinik Anda.
 
-✓ logis dan gembira, sesuai dengan judul bukunya
+✓ Nuave mencari klinik Anda, gratis.
 
-✗ seperti sebuah halte kecil dalam perjalanan panjang—tempat untuk berhenti sejenak
+✗ Ivan membedakan dua ilmu: meteorologi dan klimatologi.
 
-✓ seperti halte kecil dalam perjalanan panjang: tempat untuk berhenti sejenak
+✓ Ivan membedakan dua ilmu, yaitu meteorologi dan klimatologi.
+
+### Mengganti tanda pisah panjang
+
+Ivan memakai tanda pisah panjang (em dash) 13 kali, kebanyakan untuk
+keterangan sisipan. Tanda ini tidak dipakai sama sekali, baik di teks Nuave
+maupun di tulisan lain. VOICE.md sudah melarangnya di prosa Nuave, dan founder
+memperluas larangan itu pada 7 November 2026. Gantilah dengan koma, kurung,
+atau kalimat baru. Titik dua bukan penggantinya karena titik dua hanya
+mengantar daftar butir.
+
+| Di kalimat asli, tanda pisah panjang dipakai untuk | Tulis ulang |
+| --- | --- |
+| mengapit rincian sesudah "tiga jenis konten" | ✓ tiga jenis konten, yaitu obrolan kebahasaan, ulasan buku, dan tutorial penulisan. Semuanya diambil dari tulisan Medium saya. |
+| menambahkan keterangan sesudah "logis dan gembira" | ✓ logis dan gembira, sesuai dengan judul bukunya |
+| menjelaskan "halte kecil dalam perjalanan panjang" | ✓ seperti halte kecil dalam perjalanan panjang, tempat untuk berhenti sejenak |
 
 ## 8. Angka, singkatan, dan huruf kapital
 
-- Ribuan memakai titik, desimal memakai koma: "1.372 peserta", "61,08 persen".
-  Di Nuave, tulis persen dengan lambang: `50%`, `14,2%` (VOICE.md §4).
-- Urutan dan jenjang: "S-2", "episode ke-36", "abad ke-20", "kuartal III 2026",
-  "hlm. 82".
-- Nama lembaga ditulis lengkap dulu, lalu singkatannya dalam kurung: "Badan
-  Meteorologi, Klimatologi, dan Geofisika (BMKG)". Nama lembaga asing boleh
-  diterjemahkan: "Organisasi Meteorologi Dunia (WMO)".
-- "bahasa Indonesia" dan "bahasa Jawa": kata "bahasa" berhuruf kecil di tengah
-  kalimat.
-- Sapaan berhuruf kapital ketika dipakai untuk menyapa atau merujuk orang: Pak
-  Umar, Bu Betty, Mas Iqbal. "Anda" selalu berhuruf kapital.
-- **Kaidah umum**: istilah asing yang belum diserap dan judul buku ditulis
-  miring. Ekspor teks korpus menghilangkan huruf miring, sehingga aturan ini
+- Ribuan memakai titik dan desimal memakai koma, seperti "1.372 peserta" dan
+  "61,08 persen". Di Nuave, persen ditulis dengan lambang, seperti `50%` dan
+  `14,2%` (VOICE.md §4).
+- Urutan dan jenjang ditulis seperti "S-2", "episode ke-36", "abad ke-20",
+  "kuartal III 2026", dan "hlm. 82".
+- Nama lembaga ditulis lengkap dulu, lalu singkatannya dalam kurung, misalnya
+  "Badan Meteorologi, Klimatologi, dan Geofisika (BMKG)". Nama lembaga asing
+  boleh diterjemahkan, misalnya "Organisasi Meteorologi Dunia (WMO)".
+- Di tengah kalimat, kata "bahasa" berhuruf kecil, seperti dalam "bahasa
+  Indonesia" dan "bahasa Jawa".
+- Sapaan berhuruf kapital ketika dipakai untuk menyapa atau merujuk orang,
+  seperti Pak Umar, Bu Betty, dan Mas Iqbal. "Anda" selalu berhuruf kapital.
+- Istilah asing yang belum diserap dan judul buku ditulis miring (**kaidah
+  umum**). Ekspor teks korpus menghilangkan huruf miring sehingga aturan ini
   tidak dapat dihitung dari korpus.
-- Format uang, tanggal, dan jam di Nuave mengikuti VOICE.md §4: `Rp249.000`,
-  `17 Agustus 2026`, `10.00`.
+- Format uang, tanggal, dan jam di Nuave mengikuti VOICE.md §4, seperti
+  `Rp249.000`, `17 Agustus 2026`, dan `10.00`.
 
 ## 9. Istilah asing dan padanan
 
 ### Cara memperkenalkan
 
-1. Padanan Indonesia lebih dulu, istilah asing dalam kurung pada penyebutan
-   pertama: "penyerahan kognitif (cognitive surrender)".
+1. Padanan Indonesia ditulis lebih dulu, dengan istilah asing dalam kurung pada
+   penyebutan pertama, misalnya "penyerahan kognitif (cognitive surrender)".
 2. Sesudah itu, pakai padanannya saja.
 3. Jika istilah asing lebih dikenal pembaca, tulis istilah itu lalu jelaskan
-   dalam kurung: "holistik (menyeluruh)".
+   dalam kurung, misalnya "holistik (menyeluruh)".
 4. Konsep yang belum punya padanan boleh diberi padanan baru dengan terus
-   terang: "tidur kilat, sebagai padanan power nap".
+   terang, misalnya "tidur kilat, sebagai padanan power nap".
 
 ### Padanan dari korpus
 
