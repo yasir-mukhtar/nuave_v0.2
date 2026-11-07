@@ -400,11 +400,11 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   - **Cara membaca laporan:** the method facts (places, dates,
     `checked_from`, `checked_to`), the per-source denominators and the dot
     legend; the method line chosen by `search_data_available`. v3 P0.8's
-    labels and the P3.2 stability box only when saved.
+    lines come with Part 5; the P3.2 stability box with that package.
   - **The section dividers** (shown as Q-4 decides).
   - **Penutup:** the saved `conclusion` always, and `two_source_writing.plan`
     as three phase columns; a report without a plan falls back as the web
-    Penutup does (Spec 021 A-07).
+    Penutup does (Spec 021 A-07). P0.4's decisions come with Part 5.
   - **Sampul belakang** as the last page: the logo, nuave.ai and the
     approved sentence (D-11).
 
@@ -447,9 +447,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   first plan step as "Yang dikerjakan dulu", left out when there is no plan.
   The other two columns are not shown.
 - **S-02: Peta jawaban.** The ten questions by the two sources, with the
-  clinic's state in each cell, and competitor columns for the first four
-  other businesses in `competitorRows` order (`report-v2-data.ts`), after
-  the clinic's own column.
+  clinic's state in each cell first, then competitor columns for the first
+  four other businesses in `competitorRows` order (`report-v2-data.ts`),
+  the clinic's own row skipped.
 - **S-03: Temuan.** One page per `key_findings` item, in saved order, in
   this order on the page: the title (the writer's meaning sentence), the
   headline number and caption when B-05 kept them (G-04), the text, then
@@ -470,10 +470,11 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   send Browser Run's requests to them and could delay `networkidle0`).
 - **S-05: Celah topik.** The rows the web report's Celah Topik shows (Spec
   021 A-05), at most five.
-- **S-06: Rencana.** Every recommendation in one list; v3 P0.6's who, time
-  and done-when only when saved.
+- **S-06: Rencana.** Every recommendation in one list. v3 P0.6's who, time
+  and done-when and P0.7's tags come with Part 5.
 - **S-07: Langkah.** One page per recommendation in the "Detail langkah"
-  layout: title and paragraph; v3 P0.6, P0.7 and P1.1 parts only when saved.
+  layout: title and paragraph. P0.6 and P0.7 parts come with Part 5; P1.1's
+  evidence block with that package's spec.
 - **S-08: Code headlines (D-6).** A page headline that states a conclusion
   is a code template built on the settled sentences, in the code's own words,
   for example "ChatGPT: Klinik Anda muncul di 4 dari 10 pertanyaan dan
@@ -529,8 +530,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   answer block; a block taller than its box is split at a paragraph, list
   item or table row onto "A3 · 2/2"; when both answers together are too
   tall, each source gets its own page. Text is never cut or shrunk.
-  Splitting ends before the ready marker (F-08). Only the appendix splits
-  this way, so the report pages and Daftar isi do not move.
+  This Part extends the ready rule (F-08): the marker is also held until the
+  split has finished. Only the appendix splits this way, so the report pages
+  and Daftar isi do not move.
 - **L-06: Long answers and long source lists.** The appendix holds answers
   of about 700 words (ChatGPT) and 450 (Google), the saved maxima, and
   longer. A source list of 40 or more items (saved maximum: 44) stays a
@@ -545,7 +547,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   line breaks and joining columns.
 - **AC-L2:** Given the longest saved answer and the answer with a table, the
   answers split cleanly at paragraphs, items or rows, and the labels
-  ("A3 · 1/2", "A3 · 2/2") equal the page list after splitting.
+  ("A3 · 1/2", "A3 · 2/2") equal the page list after splitting; a test shows
+  the ready marker is absent until the split has finished.
 - **AC-L3:** Given the 44-source fixture, every source appears once, in
   order, numbered without a gap across pages.
 - **AC-L4:** Given each empty-state fixture, its card shows; the "Minta
@@ -584,6 +587,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   with P0.10.
 - **K-02:** The button shows only on two-source reports and only once P0.10
   exists. Nothing else on the web report changes.
+- **K-03:** Part 4b is built and verified together with v3 P0.10, in the
+  same PR or verdict, because the button has nothing to download before
+  the worksheet exists.
 
 ### Acceptance criteria
 
