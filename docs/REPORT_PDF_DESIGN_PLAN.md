@@ -49,7 +49,7 @@ corrections the Figma needs before it becomes the reference.
 | `VOICE.md`, writing skill | Words and settled labels (for example **Download PDF**) | All fixed text follows them (D-7) |
 
 Both plans are approved (v3 F-1 and this plan's D-0), so v3 P0.9 ("PDF")
-is done by this plan's packages, and the two plans are laid out together so
+is done by this plan's Step 0 and PR 1 to PR 3 (PR 4 is only the web report's line), and the two plans are laid out together so
 the report is built once.
 
 ## 3. Finish line
@@ -152,12 +152,12 @@ waits for that package. A page whose data does not exist yet is left out.
 | Front | Saat calon pasien bertanya | v3 P0.1 to P0.3 | One answer in which the clinic is not named, chosen by code; the per-source bars; "Mengapa ini penting" with the average-names line |
 | Front | Peta jawaban | Today | The ten questions by the two sources, with the clinic's state in each cell and the competitors named by code |
 | 01 Posisi <klinik> hari ini | Temuan, one page per finding | Today | The writer's meaning sentence first, the code's count and its caption beneath, then the text and the cited questions as chips (v3 rule 14; §5.1) |
-| 01 | Pesaing | Today (Part C), partly | Per-source mention counts, "Menurut jawaban AI" and the takeaways are saved today. The competitors' recommendation counts wait for a v3 package that defines them; until then the page shows mentions only |
+| 01 | Pesaing | Today (Part C) | Each business's mentions per source, "Menurut jawaban AI" and the takeaways. "Direkomendasikan" appears only on the clinic's own row, per source, because the saved report does not keep whether an answer recommended another business and no v3 package adds it. Rows may keep the web report's order (`sortRows`); the sum that orders them is never printed |
 | 01 | Celah topik | Today | |
 | 02 Apa kata AI tentang <klinik> | Cek fakta | v3 P1.2 | Up to eight rows, "berbeda" first, with the count of all claims checked; the source column reads "<situs>, yang dikutip jawaban ini"; safety and licensing claims as "Tanpa penilaian" with no reference |
 | 02 | Kata AI dan kata Anda | v3 P2.3 (F-5) | AI's line and word counts next to "Menurut Anda", and the other clinics' lines |
 | 03 Apa yang dibaca AI | Halaman mereka | v3 P2.2 | |
-| 03 | Situs yang dibaca AI | v3 P2.1 | Key sites as rows, the rest in one line |
+| 03 | Situs yang dibaca AI | v3 P2.1 | Key sites as rows, the rest in one line; each site's ChatGPT answers and Google summaries counted apart, with no group totals |
 | 03 | Untuk tim web Anda | v3 P1.1 | Made to be shared alone with the web vendor |
 | 04 Rencana delapan minggu | Rencana | Today; tags with v3 P0.6, P0.7 | Every step in one list |
 | 04 | Langkah, one page per recommendation | Today | |
@@ -177,6 +177,9 @@ cover. Section titles state what the pages show, never a cause (v3 rule 3).
 Founder direction, 2026-11-07: **substance and format follow the Report v3
 session; aesthetics and delivery belong to this plan.**
 
+0. **The counting rule** for every page is v3's "Counts on the PDF pages"
+   (revision 6.4, in its "Approval and alignment"): each number keeps its
+   source and denominator, and answers are never added across the sources.
 1. **What v3 owns:** which pages exist and in what order, what each page
    holds, every claim, number, count rule and denominator, labels and what
    they mean, row limits, and when a page is shown. This plan never adds,
@@ -209,9 +212,11 @@ A finding's number is shown as saved and only in a form Spec 021 B-05 keeps:
 "X dari Y" where Y is the number of questions the finding cites or a
 source's own denominator, a whole number such as "2×", or a figure copied
 from an answer. The Figma's finding numbers are per question for that reason
-("0 dari 3 pertanyaan", not "0 dari 6 jawaban"). Two sample numbers have no
-B-05 form today and wait for a basis v3 defines: Temuan 3's "4 klaim" (v3
-P1.2) and Temuan 4's "3 pertanyaan" whose answers cite one site.
+("0 dari 3 pertanyaan", not "0 dari 6 jawaban"). Since v3 revision 6.4 the
+sample's finding numbers carry their source ("2 dari 7" ringkasan Google,
+"2 dari 10" jawaban ChatGPT) or their split per source beside them. One has
+no B-05 form today and waits for the basis v3 P1.2 defines: Temuan 3's
+"4 dari 8" klaim.
 
 ## 6. How the PDF is made
 
@@ -399,6 +404,8 @@ preview.
 
 - **2026-11-07, founder:** the five section titles are approved as fixed text (D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran". v3 F-13 is decided as option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (PR 4b). The reference was exported again from the Figma the same day: `experiments/report-pdf-design/reference.pdf`, 39 pages in the §5.2 order.
 
+- **2026-11-07, Report v3 revision 6.4:** "Counts on the PDF pages" becomes the counting rule (§5.3 rule 0). The Figma follows it: finding numbers with their source, Pesaing's "Direkomendasikan" only on the clinic's row, Situs yang dibaca AI counted per source without group totals, and the takeaways with denominators. The reference was exported again.
+
 ## Review history
 
 | Round | Head | Verdict | Findings, in short |
@@ -411,4 +418,5 @@ preview.
 | 6 | `cc1d94a` | FAIL | §5.2 followed the proof of concept's `render()` instead of v3's own page order; pooled finding counts and a false claim that they survive B-05; competitor recommendation counts marked as saved today; Cek fakta and A1 wording that turned "cited by this answer" into a cause and dropped the BPOM qualifiers; method lines missing from Cara membaca; card sentences not in the settled form; Titik awal and Cara membaca marked as waiting for v3; D-10's dark-page list. All addressed in `130090b` (§5.2, §5.3, D-10, the Figma). |
 | 7 | `130090b` | PASS+NOTES | Ringkasan and moment-page sentences not in the code's settled form; "Yang dikerjakan dulu" showed recommendation 1, not the first plan step; §5.1 had lost its Peta jawaban mappings and two stale names; Titik awal as a page v3 does not list; Temuan 1's question and answer counts; a Langkah 1 claim beyond the playbook line; the Celah topik headline for a question without AI Overview; the B-05 paragraph; revision numbers; topic names; four small sample issues. All addressed in `f0756c7`. |
 | 8 | `f0756c7` | PASS | All round 7 notes resolved. |
-| 9 | `3f8a0ca` | PASS+NOTES | Two exported pages with overlapping text (divider 02, Titik awal); the Lembar Kerja row and D-1 still treating the download as open; no checks for the button. All addressed in the next head (PR 4b, the frames, a new export). |
+| 9 | `3f8a0ca` | PASS+NOTES | Two exported pages with overlapping text (divider 02, Titik awal); the Lembar Kerja row and D-1 still treating the download as open; no checks for the button. All addressed in `f0efe5c`. |
+| 10 | `f0efe5c` | PASS | All round 9 notes resolved. |
