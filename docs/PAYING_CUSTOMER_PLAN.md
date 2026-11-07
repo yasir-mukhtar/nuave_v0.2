@@ -589,7 +589,9 @@ only if asked.
 3. Founder buys one real audit for a business they own or have permission for
    (Rp249.000), reaches the report on a phone, and refunds it from the Midtrans
    dashboard.
-4. Founder records "open for paying customers" in `DECISION_LOG.md`.
+4. Founder records "open for paying customers" in `DECISION_LOG.md`, after
+   the founder's verdict at the Report v3 launch gate
+   ([`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) §3, approved 2026-11-07).
 
 ### Track V — Owner feedback (optional, founder)
 
@@ -612,10 +614,9 @@ founder moves it into a milestone.
 **Report and content**
 - Report v3, from the founder's benchmark against two premium agency sample
   reports (2026-11-06): the draft plan
-  [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md). Revision 6
-  (founder direction, 2026-11-06) moves it before launch, the last step of
-  G1, with gates the founder judges. Nothing in it starts until the founder
-  approves it (F-1); until then this section and §5 are unchanged.
+  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md), approved 2026-11-07 (F-1). It
+  runs before launch, the last step of G1 (§5), with gates the founder
+  judges.
 - Report format and reference-section simplification; AC-18 same-evidence
   comparison (deferred 2026-09-26).
 - Remaining English JSX in `/audit/fixture`; product-wide design pass (Spec

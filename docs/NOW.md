@@ -44,17 +44,17 @@
 
 ## Next action
 
-- **Report v3 plan, draft** (2026-11-06, revision 6.1):
-  [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md) proposes the
-  report and worksheet work the founder wants done before launch (the last
-  step of G1). It comes from the founder's benchmark of two premium agency
-  sample reports; revision 5.1 passed independent review, and revision 6.1
-  follows the founder's direction of 2026-11-06 (founder-judged gates, a
-  worksheet with every report). Two proofs of concept are in
+- **Report v3 plan, approved** (2026-11-07,
+  [decision](./DECISION_LOG.md#2026-11-07--approve-the-report-v3-plan-f-1)):
+  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.2) sets the report
+  and worksheet work the founder wants done before launch (the last step of
+  G1), with gates the founder judges. It is aligned with the PDF design plan
+  (PR #207): the new sections appear in the 16:9 PDF, and the web report
+  stays frozen. Proofs of concept:
   [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md).
-  Waiting on the founder: F-1 (approve the plan after seeing them). Nothing
-  in it starts before F-1. Only this bullet was added on 2026-11-06; the rest
-  of this page is as of 2026-10-30.
+  Next: the Phase 0 spec, planned with the PDF design plan's Step 0 and PR 1
+  to PR 3; F-13 (where the worksheet is downloaded) before P0.10. This bullet
+  was updated on 2026-11-07; the rest of this page is as of 2026-10-30.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The

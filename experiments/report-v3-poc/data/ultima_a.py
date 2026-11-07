@@ -1,6 +1,6 @@
 """Proof of concept A: every fact, answer, clinic and site here is invented.
 
-It shows the ceiling of the Report v3 plan (docs/drafts/REPORT_V3_PLAN.md):
+It shows the ceiling of the Report v3 plan (docs/REPORT_V3_PLAN.md):
 every section filled with the sharpest material the plan's rules allow. The
 rules still hold: counts per source, no rank or score, no claimed causes,
 quotations found in the saved answers, safety claims without a verdict.

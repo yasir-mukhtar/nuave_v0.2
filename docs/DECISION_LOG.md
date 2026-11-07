@@ -1,10 +1,34 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-29
+> Updated: 2026-11-07
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-11-07 — Approve the Report v3 plan (F-1)
+
+Yasir approved [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.1,
+PR #205, independent review PASS on `1aa659f`) after seeing its two proofs
+of concept (`experiments/report-v3-poc/`). Gate 0 is passed. Yasir preferred
+proof A: its sentences say what a result means for the clinic, while proof B
+reads like facts listed one after another. The plan's §4 rule 14 ("Meaning
+first") records that preference for the writer.
+
+The same day Yasir approved the PDF design plan (PR #207, D-0 to D-10, its
+own entry of 2026-11-07). Revision 6.2 of the Report v3 plan aligns the two:
+with D-1 option A the web report stays frozen and the plan's new sections
+appear in the PDF; with D-2 the PDF is 16:9, so v3 P0.9 is done by the design
+plan's packages. Where the owner downloads the worksheet is a new decision,
+F-13 (recommended: a button next to "Unduh PDF" on the web report).
+
+The other F-decisions stay as recommended and are re-confirmed before each
+phase's spec (§4 rule 12). Launch stays the last step of G1, after the
+founder's verdict at the plan's launch gate, about 10 to 13 weeks from this
+approval.
+
+Next: the Phase 0 spec, planned together with the PDF design plan's Step 0
+spike and PR 1 to PR 3; F-13 before P0.10.
 
 ## 2026-10-29 — The free check picks the real name and asks when unsure; spec gate waived
 

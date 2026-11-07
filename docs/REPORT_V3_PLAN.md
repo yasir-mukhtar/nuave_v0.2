@@ -1,23 +1,24 @@
 # Plan: Report v3, from mirror to adviser
 
-> Status: **Draft, not approved.** Do not implement from this file
-> ([`docs/INDEX.md`](../INDEX.md), Working documents). It becomes the report
-> plan only when the founder approves it (F-1) in
-> [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
-> own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
+> Status: **Approved by the founder on 2026-11-07 (F-1)**
+> ([decision](./DECISION_LOG.md#2026-11-07--approve-the-report-v3-plan-f-1)).
+> Gate 0 is passed. Every package still needs its own approved spec
+> ([`WORKFLOW.md`](./WORKFLOW.md)); nothing is built from this file directly.
+> Layout belongs to the PDF design plan (see "Approval and alignment" below).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 6.1: revision 6 followed the
+> `claude/inspiring-tesla-yox17h`. Revision 6.2 records the approval and
+> aligns the plan with the PDF design plan. Revision 6.1: revision 6 followed the
 > founder's direction of 2026-11-06 (below), and 6.1 applies its first
 > independent review. Revision 5.1 passed independent review (rounds 1 to 4
 > and two confirmations); see "Review history" at the end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
-> [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
-> §5 and §6, [`VISION.md`](../VISION.md), [`PRODUCT.md`](../PRODUCT.md),
-> [`AUDIT.md`](../AUDIT.md), the [report playbook](../content/report/PLAYBOOK.md),
-> [Spec 018](../../specs/018-search-grounded-chatgpt-google-audit/SPEC.md),
-> [Spec 021](../../specs/021-report-v2/SPEC.md) and
-> [Spec 023](../../specs/023-report-writing-quality/SPEC.md).
+> [`NOW.md`](./NOW.md), [`PAYING_CUSTOMER_PLAN.md`](./PAYING_CUSTOMER_PLAN.md)
+> §5 and §6, [`VISION.md`](./VISION.md), [`PRODUCT.md`](./PRODUCT.md),
+> [`AUDIT.md`](./AUDIT.md), the [report playbook](./content/report/PLAYBOOK.md),
+> [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md),
+> [Spec 021](../specs/021-report-v2/SPEC.md) and
+> [Spec 023](../specs/023-report-writing-quality/SPEC.md).
 > Relationship: the founder wants this work done **before launch**, so that
 > paying customers get the best report Nuave can think of (direction
 > 2026-11-06, below). It starts only when the founder approves the plan
@@ -41,7 +42,7 @@ the plan and are reflected in revision 6:
    to show the ceiling; the other uses real saved answers, renamed "Ultima
    Clinic", and says only what the evidence supports.
 
-**Proofs of concept (built 2026-11-07).** [`experiments/report-v3-poc/`](../../experiments/report-v3-poc/README.md)
+**Proofs of concept (built 2026-11-07).** [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md)
 holds both, each as a report page, an A4 PDF and a worksheet built from the
 same data. Its `build.py` stops a report that breaks the checks listed in
 the folder's README (among them: every business named must appear in its
@@ -58,6 +59,34 @@ text on the clinic's own site); and the stability sample, the owner's own
 words and most search volumes stay empty because the test did not collect
 them. The proofs are examples, not specs: where one differs from §4 or a
 package's limits, §4 and the package win.
+
+**Approval and alignment, 2026-11-07 (revision 6.2).** The founder approved
+this plan (F-1) after seeing both proofs, and said proof A reads better
+because its sentences say what a result means, while proof B reads like
+facts listed one after another. §4 rule 14 turns that into a rule. The same
+day the founder approved the PDF design plan, [`REPORT_PDF_DESIGN_PLAN.md`](https://github.com/yasir-mukhtar/nuave_v0.2/pull/207) (PR #207; `docs/REPORT_PDF_DESIGN_PLAN.md` once merged)
+(D-0 to D-10). That plan owns how the report looks and how its pages are
+made; this plan owns what the report says and how it counts. Its decisions
+change parts of this plan:
+
+- **D-1, option A:** the web report stays frozen at Spec 021 v2, and every
+  new section of this plan appears in the PDF, not on the web page.
+  Wherever a package below says "on a phone", "under the source cards" or
+  "in the answer panel", its spec re-targets it to the PDF page the design
+  plan names (its §5.2). In particular: P0.1's moment of truth becomes the
+  evidence card of the PDF's Temuan pages; P0.8 becomes the PDF page "Cara
+  membaca laporan"; P1.2's marks inside answers go into the PDF appendix;
+  P2.5's "Salin daftar kerja" moves into the worksheet, because the web
+  page is frozen; and Phase 0's phone check is replaced by the PDF checks of
+  the design plan (its §8).
+- **D-2:** pages are 16:9 landscape (1440 × 810), not A4. P0.9 is done by
+  the design plan's packages (Step 0 spike, PR 1 to PR 4), and Phase 0's
+  layout work is planned together with them, so the report is built once.
+- **D-6 and D-9:** counts stay per source in the settled sentences, and the
+  PDF's Ringkasan is filled from saved fields. Nothing here changes.
+- **The worksheet** is outside the design plan (its §11). The PDF names it
+  and lists its tabs, but has no download button (its D-7); where the owner
+  downloads it is F-13.
 
 ## 1. Why
 
@@ -180,7 +209,7 @@ plan. Each verdict is recorded in the phase's pull request or a
    stable rank").
 5. **Old reports stay as they are.** The page draws only the parts a saved
    report has data for, and nothing is rewritten when a report is opened (S0;
-   the "rule for old reports" in [Spec 021's plan](../../specs/021-report-v2/PLAN.md)).
+   the "rule for old reports" in [Spec 021's plan](../specs/021-report-v2/PLAN.md)).
 6. **Spending stays inside today's limits.** The *worst case* of one order
    must stay at or under the USD 5.00 order hold (decision 2026-10-28). Today
    it is USD 4.785: USD 1.5452 before the report plus three report calls at
@@ -222,6 +251,18 @@ plan. Each verdict is recorded in the phase's pull request or a
     numbers, quotes and recommendations always equal the saved report's. The
     worksheet may also list rows the page folds away, such as every checked
     claim (P1.2).
+14. **Meaning first** (founder, 2026-11-07, preferring proof A's voice).
+    The verdict, each finding's headline and each recommendation start with
+    what the result means for the clinic: what a patient asking that
+    question sees, what the owner's own priority or claim meets in the
+    answers, or what the owner has to decide. The evidence follows. Meaning
+    is never a cause (rule 3): it says what is seen and what it costs the
+    clinic, not why AI chose. Each limit is said once, where it applies,
+    instead of a hedge after every sentence. Proof B shows why the owner's
+    own words matter: without them a finding has nothing to mean against,
+    so the writer leans on the intake's answers (F-5) and the owner's
+    priorities. The P0.5 spec and a Spec 023 amendment carry this rule into
+    the writer's instructions and its tests.
 
 ## 5. Decisions the founder owes
 
@@ -233,7 +274,7 @@ document the decision would change.
 
 | # | Decision | Changes | Recommendation |
 | - | -------- | ------- | -------------- |
-| F-1 | Approve this plan, after seeing the two proofs of concept, with its founder gates (§3) and the launch timing (§3: about 10 to 13 weeks after F-1). | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/`; `PAYING_CUSTOMER_PLAN.md` (launch, the last step of G1, waits for the founder's verdict at the launch gate) | Pending the proofs of concept. |
+| F-1 | Approve this plan, after seeing the two proofs of concept, with its founder gates (§3) and the launch timing (§3: about 10 to 13 weeks after F-1). | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/`; `PAYING_CUSTOMER_PLAN.md` (launch, the last step of G1, waits for the founder's verdict at the launch gate) | **Approved 2026-11-07.** |
 | F-2 | Add to each playbook item ("What a clinic can do") who usually does it, roughly how long it takes, and one fixed Indonesian line saying what the item's official source means (§4 rule 3); the report shows the first two, with the item's existing "Check" line, as small tags under each recommendation. No "impact" tag and no "do this first" line. | `PLAYBOOK.md`; Spec 021's Rekomendasi rule, which removed "Penanggung jawab yang disarankan" and "Selesai ketika" (SPEC.md, Rekomendasi). Spec 023 R-09 is kept, because the effort then comes from the playbook, not the writer. | Yes. `AUDIT.md`'s checklist still asks for an owner and completion check. |
 | F-3 | Website-check rows the playbook does not cover yet, or covers without a fix line (*noindex*; a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader), need a playbook amendment, each backed by an official source and its fix line. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
 | F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide before Phase 1, only if the claims count on the founder's own orders shows too few claims to check. |
@@ -245,6 +286,7 @@ document the decision would change.
 | F-10 | Keep the USD 5.00 order hold, and design every package within it. | — | Yes. Raise it only if a package cannot fit: at USD 6.00 the USD 50 daily cap allows 8 orders in progress at once, not 10. |
 | F-11 | **Moved to the next improvement project.** A price or offer test. | Landing page; terms | Decide in that project, from customer data. |
 | F-12 | **Moved to the next improvement project.** Google AI Mode or Gemini as another source. | Landing page, terms and FAQ ("ChatGPT dan Google AI Overview") | Decide in that project, after a trial of the provider. |
+| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7): **option A**, an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line; **option B**, a link in the report-ready email only. | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4; B: the approved report-ready email (`src/lib/orders/mail.ts`) | A, decided before P0.10's spec. The PDF names the worksheet and its tabs in either case. |
 
 ## 6. Phases
 
@@ -320,7 +362,8 @@ asked, from where, when and how many times; what "disebut",
 "direkomendasikan" and "dikutip" mean, and whether code or the writer decides
 each; what ten questions cannot show.
 
-**P0.9 PDF.** A cover page with the moment of truth; a contents box ("Baca 3
+**P0.9 PDF.** *Done by the PDF design plan (D-2: 16:9; its Step 0 and PR 1
+to PR 4); the A4 text in this item is kept only as history.* A cover page with the moment of truth; a contents box ("Baca 3
 menit: halaman 1"); page-break rules that avoid half-empty pages (pages 6 and
 8 of the prototype PDF); the owner's part first.
 
@@ -989,3 +1032,8 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   inconsistencies (Phase 0 pull requests, the worksheet's tabs in §2, P1.3's
   checks, F-2 behind P0.10's tags, wording). A separate evidence check of
   proof B found ten more over-claims in its data, all fixed.
+- **Approval (2026-11-07), revision 6.2:** the founder approved the plan
+  (F-1), preferring proof A's voice. Revision 6.2 records it: the file
+  leaves `drafts/`, §4 gains rule 14 ("Meaning first"), F-13 asks where the
+  worksheet is downloaded, and "Approval and alignment" maps the PDF design
+  plan's D-1 and D-2 onto this plan's packages.

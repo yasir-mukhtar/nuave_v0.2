@@ -1,8 +1,10 @@
 # Report v3: two proofs of concept
 
 Built on 2026-11-07 at the founder's request, before deciding whether to
-approve [`docs/drafts/REPORT_V3_PLAN.md`](../../docs/drafts/REPORT_V3_PLAN.md)
-(decision F-1). They show what a report and its worksheet ("Lembar Kerja")
+approve [`docs/REPORT_V3_PLAN.md`](../../docs/REPORT_V3_PLAN.md) (decision
+F-1). The founder approved the plan the same day, preferring proof A's voice
+(plan §4 rule 14). The PDF's look now comes from the PDF design plan (16:9);
+these pages remain the reference for content and counts. They show what a report and its worksheet ("Lembar Kerja")
 would look like under that plan. They are not product code: the product
 builds its report in the Next.js app, and every phase of the plan still needs
 its own approved spec.
