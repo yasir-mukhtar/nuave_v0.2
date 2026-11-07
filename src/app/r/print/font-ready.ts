@@ -21,7 +21,9 @@ export async function pdfFontsReady(
   families: readonly string[],
 ): Promise<boolean> {
   const wanted = new Set(families.map(familyName));
-  const faces = [...fonts].filter((face) => wanted.has(familyName(face.family)));
+  const faces = [...fonts].filter((face) =>
+    wanted.has(familyName(face.family)),
+  );
   await Promise.allSettled(faces.map((face) => face.load()));
   await fonts.ready;
   const present = new Set(faces.map((face) => familyName(face.family)));

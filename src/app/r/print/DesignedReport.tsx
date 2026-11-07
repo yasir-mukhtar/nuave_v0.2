@@ -601,8 +601,12 @@ function checkedDay(two: TwoSourceReport): string | null {
 }
 
 function askedWhen(two: TwoSourceReport): string {
-  const from = two.checked_from ? dayMonthYear.format(new Date(two.checked_from)) : null;
-  const to = two.checked_to ? dayMonthYear.format(new Date(two.checked_to)) : null;
+  const from = two.checked_from
+    ? dayMonthYear.format(new Date(two.checked_from))
+    : null;
+  const to = two.checked_to
+    ? dayMonthYear.format(new Date(two.checked_to))
+    : null;
   if (from && to && from !== to) return HOW_TO_READ.betweenDays(from, to);
   const day = to ?? from;
   return day ? HOW_TO_READ.onDay(day) : "";
@@ -634,7 +638,10 @@ function HowToReadPage({ page, ctx }: { page: PdfPage; ctx: Context }) {
       ],
     },
     { title: HOW_TO_READ.countingTitle, texts: [HOW_TO_READ.counting(name)] },
-    { title: HOW_TO_READ.limitsTitle, texts: [HOW_TO_READ.limits(two.subject)] },
+    {
+      title: HOW_TO_READ.limitsTitle,
+      texts: [HOW_TO_READ.limits(two.subject)],
+    },
   ];
   return (
     <Frame page={page} ctx={ctx} label={FRONT_LABEL.cara_membaca}>
@@ -687,9 +694,7 @@ function DividerPage({ page, ctx }: { page: PdfPage; ctx: Context }) {
     (p) => p.section === section && p.kind !== "divider",
   );
   const kinds = new Set<string>(inSection.map((p) => p.kind));
-  if (
-    inSection.some((p) => p.kind === "penutup" && (p.plan?.length ?? 0) > 0)
-  )
+  if (inSection.some((p) => p.kind === "penutup" && (p.plan?.length ?? 0) > 0))
     kinds.add("penutup_plan");
   const questions = SECTION_QUESTIONS[section].filter((q) =>
     q.answeredBy.some((kind) => kinds.has(kind)),
@@ -783,7 +788,11 @@ function ClosingPage({ page, ctx }: { page: PdfPage; ctx: Context }) {
 /* -------------------------- Sampul belakang -------------------------- */
 
 function BackCoverPage({ page, ctx }: { page: PdfPage; ctx: Context }) {
-  const parts = [REPORT_NAME, CONFIDENTIAL_LABEL, ...(ctx.month ? [ctx.month] : [])];
+  const parts = [
+    REPORT_NAME,
+    CONFIDENTIAL_LABEL,
+    ...(ctx.month ? [ctx.month] : []),
+  ];
   return (
     <section
       className={cn(styles.page, styles.dark)}
@@ -795,9 +804,20 @@ function BackCoverPage({ page, ctx }: { page: PdfPage; ctx: Context }) {
     >
       <div className={styles.body}>
         <div className={styles.back}>
-          <svg className={styles.backRings} viewBox="0 0 900 900" aria-hidden="true">
+          <svg
+            className={styles.backRings}
+            viewBox="0 0 900 900"
+            aria-hidden="true"
+          >
             {[220, 320, 420].map((r) => (
-              <circle key={r} cx={450} cy={450} r={r} fill="none" stroke="var(--pdf-dark-line)" />
+              <circle
+                key={r}
+                cx={450}
+                cy={450}
+                r={r}
+                fill="none"
+                stroke="var(--pdf-dark-line)"
+              />
             ))}
           </svg>
           <NuaveLogo className={styles.backLogo} />
