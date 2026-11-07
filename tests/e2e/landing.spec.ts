@@ -18,7 +18,7 @@ import {
 const SECTION_HEADINGS = [
   "Makin banyak pasien pilih dokter lewat AI",
   "Di jawaban AI, tidak ada halaman dua",
-  "Nuave bertanya ke AI dengan bahasa pasien Anda",
+  "Nuave bertanya ke AI seperti pasien Anda",
   "Lihat apa kata AI tentang klinik Anda",
   "Bisa dipercaya, bisa ditindaklanjuti",
   "Yang Anda dapat dari satu audit",

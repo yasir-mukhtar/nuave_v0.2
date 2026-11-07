@@ -93,7 +93,7 @@ langsung dipahami, persis teknik yang disarankan skill.
 
 | Teks | Sekarang | Usulan | Alasan |
 | --- | --- | --- | --- |
-| H2 | Kami tanya AI persis / seperti pasien Anda | Nuave bertanya ke AI / dengan bahasa pasien Anda | Kata "persis" berlebihan karena pertanyaan disusun dari data pencarian Google, bukan disalin dari pasien Anda. VOICE.md memakai "Nuave" untuk perilaku produk. Usulan juga menggemakan kartu "Bahasa pasien" di S6. |
+| H2 | Kami tanya AI persis / seperti pasien Anda | Nuave bertanya ke AI / seperti pasien Anda | Kata "persis" berlebihan karena pertanyaan disusun dari data pencarian Google, bukan disalin dari pasien Anda. VOICE.md memakai "Nuave" untuk perilaku produk. Versi "dengan bahasa pasien Anda" sempat dicoba, tetapi di ponsel kata "Anda" tertinggal sendirian di baris ketiga. |
 | Langkah 1, isi | Atau akun Instagram klinik Anda. Nuave membaca data yang tersedia. | Atau akun Instagram klinik Anda. Nuave mencarinya, lalu Anda memastikan hasilnya benar. | "Membaca data yang tersedia" samar. Usulan menyebut apa yang sungguh terjadi di langkah gratis (FAQ no. 6). |
 | Langkah 2, judul | Bayar dan cek | Bayar dan periksa | VOICE.md memakai "Periksa" untuk meninjau pertanyaan (**Periksa pertanyaan audit**). "Cek" tetap untuk ajakan gratis, jadi dua langkah ini tidak tertukar. |
 | Langkah 2, isi | Nuave siapkan 10 pertanyaan berdasarkan volume pencarian di Google. Anda tinggal cek. | Nuave menyiapkan 10 pertanyaan dari data pencarian Google. Anda tinggal memeriksa dan menyetujuinya. | "Menyiapkan" adalah bentuk baku. "Data pencarian" lebih akrab daripada "volume pencarian" dan sama dengan FAQ no. 5. "Menyetujui" menyebut langkah yang sebenarnya, karena pertanyaan dikunci setelah disetujui. |

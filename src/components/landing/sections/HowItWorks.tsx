@@ -15,8 +15,7 @@ export function HowItWorks() {
       <div className={shell.container}>
         <header className={shell.head}>
           <h2 id="s4-title" className={cn("type-heading-xl", shell.h2)}>
-            <span>Nuave bertanya ke AI</span>{" "}
-            <span>dengan bahasa pasien Anda</span>
+            <span>Nuave bertanya ke AI</span> <span>seperti pasien Anda</span>
           </h2>
         </header>
 
@@ -116,9 +115,9 @@ export function HowItWorks() {
               <h3 className={styles.title}>Terima laporan</h3>
             </div>
             <p className={styles.text}>
-              Pertanyaan diajukan ke ChatGPT dan
+              Pertanyaan diajukan ke
               <br />
-              Google AI Overview.
+              ChatGPT dan Google AI Overview.
               <br />
               Laporan lengkap siap dalam <b>30 menit.</b>
             </p>

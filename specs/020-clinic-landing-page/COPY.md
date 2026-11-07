@@ -149,7 +149,7 @@ Shown above the headline only when this browser has a saved journey:
 
 ## S4 · Cara kerja (`#cara-kerja`)
 
-- **H2:** "Nuave bertanya ke AI / dengan bahasa pasien Anda" (Luwes)
+- **H2:** "Nuave bertanya ke AI / seperti pasien Anda" (Luwes)
 - **Step 1:**
   - "Masukkan website", tag "Gratis".
   - "Atau akun Instagram klinik Anda. Nuave mencarinya, lalu Anda memastikan
