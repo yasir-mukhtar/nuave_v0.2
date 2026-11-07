@@ -6,8 +6,10 @@
 # Hermes desktop internal state
 .hermes/
 
-# Local Python virtualenvs
+# Local Python virtualenvs and bytecode caches
 .venv*/
+__pycache__/
+*.pyc
 
 # Next.js build output and installed dependencies
 .next/

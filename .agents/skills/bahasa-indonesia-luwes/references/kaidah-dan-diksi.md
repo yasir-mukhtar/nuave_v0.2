@@ -126,7 +126,7 @@ tanda ✓.
 ✓ Harganya terjangkau.
 
 Ivan pernah mengkritik sebuah peraturan karena definisinya memakai kopula yang
-tidak seragam, genus yang tidak konsisten, dan definisi melingkar. Dalam satu
+berganti-ganti, genus yang tidak konsisten, dan definisi melingkar. Dalam satu
 daftar istilah atau FAQ, pakai satu pola definisi: "X adalah Y yang ...".
 
 ## 4. Kata yang dihindari
@@ -197,7 +197,7 @@ bagaimanapun, sekalipun.
   "tidak kami ucapkan". Contoh lain di korpus: "hal yang tidak saya duga",
   "yang selama ini luput saya periksa", "November biasanya saya bayangkan".
 - Pasif nol tidak menonjolkan pelaku sehingga terasa lebih santun. Di Nuave:
-  "Tautan laporan akan kami kirim ke email Anda."
+  "Link laporan akan kami kirim ke email Anda."
 - Pilihan aktif atau pasif, kata Ivan, "sering berkaitan dengan penekanan
   informasi dan fokus pembicaraan, bukan sekadar perubahan bentuk gramatikal".
 
@@ -341,6 +341,11 @@ Istilah yang ditetapkan VOICE.md tetap dipakai walaupun ada padanannya:
 - **AI Visibility Report**
 - AI, model AI, ChatGPT, dan Google AI Overview
 - expertise, customer journey, dan touchpoint
+
+Kata yang dipakai VOICE.md di ragam pemasaran juga tetap dipakai, misalnya
+"cek", "tanya", dan "website". Jika teks Nuave yang sudah berjalan memakai satu
+istilah, misalnya "link" di email laporan, pertahankan istilah itu di
+permukaan yang sama.
 
 Campur kode yang tidak perlu tetap dihindari, misalnya "Submit", "Proses",
 "OK", dan "Review" (VOICE.md §6).

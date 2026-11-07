@@ -5,17 +5,23 @@ Pemeriksa ini menandai kesalahan yang bisa dikenali mesin: tanda pisah, bentuk
 tidak baku, kata sambung "di mana", kalimat yang terlalu panjang, dan
 sejenisnya. Ia tidak menilai rasa. Rasa tetap dinilai dengan membaca.
 
-Pakai:
-  python3 periksa_teks.py berkas.md [berkas lain ...]
-  python3 periksa_teks.py -                     # baca dari masukan standar
-  python3 periksa_teks.py --tanpa-nuave berkas  # lewati aturan khusus Nuave
-  python3 periksa_teks.py --abaikan-kutipan berkas
-  python3 periksa_teks.py --ketat berkas        # kode keluar 1 jika ada temuan
-                                                # [Nuave] atau [kaidah]
+Pakai, dari akar repo:
+  P=.agents/skills/bahasa-indonesia-luwes/scripts/periksa_teks.py
+  python3 $P berkas.md [berkas lain ...]
+  python3 $P -                       # baca dari masukan standar
+  python3 $P --tanpa-nuave berkas    # lewati aturan khusus Nuave
+  python3 $P --periksa-kutipan berkas
+  python3 $P --ketat berkas          # kode keluar 1 jika ada temuan
+                                     # [Nuave] atau [kaidah]
 
 Yang tidak diperiksa: kepala YAML, blok kode, kode sebaris, tautan, tag HTML,
 dan teks sesudah tanda ✗ sampai tanda | atau ✓ berikutnya. Pakai tanda ✗ untuk
 contoh keliru di dokumen panduan.
+
+Teks di dalam tanda petik juga dilewati, kecuali dengan --periksa-kutipan.
+Kutipan jawaban AI, pertanyaan, dan bukti lain harus disalin persis
+(docs/VOICE.md §5). Jangan memakai pemeriksa ini untuk pertanyaan audit,
+karena ragamnya sengaja lisan (docs/VOICE.md §7.3).
 
 Kategori temuan:
   [Nuave]  aturan docs/VOICE.md
@@ -85,6 +91,11 @@ def _hal_samar(teks: str, posisi: int) -> bool:
     return not re.fullmatch(r"ke\w+|beberapa|banyak|semua|segala|berbagai|\d+", sebelum)
 
 
+def _pasti_tegas(teks: str, posisi: int) -> bool:
+    """'tidak pasti' dan 'belum pasti' justru menyangkal kepastian."""
+    return _kata_sebelum(teks, posisi) not in {"tidak", "tak", "belum", "kurang"}
+
+
 BAKU = [
     (r"dikarenakan", "karena"),
     (r"merubah", "mengubah"),
@@ -96,7 +107,7 @@ BAKU = [
     (r"kadaluarsa|kadaluwarsa|kedaluarsa", "kedaluwarsa"),
     (r"(?:be)?resiko", "risiko atau berisiko"),
     (r"\w*praktek\w*", "praktik"),
-    (r"(?:meng)?analisa", "analisis atau menganalisis"),
+    (r"(?:meng|di)?analisa", "analisis, menganalisis, atau dianalisis"),
     (r"silahkan", "silakan"),
     (r"(?:per|meng|di)?ijin(?:an|kan)?", "izin, perizinan, mengizinkan"),
     (r"\w*nasehat\w*", "nasihat"),
@@ -152,12 +163,16 @@ ATURAN: list[Aturan] = [
     Aturan("Nuave", _r(r"\bRp\.?\s+\d|\bRp\.\d"), "Tulis uang tanpa spasi dan tanpa titik sesudah Rp, misalnya Rp249.000.", True),
     Aturan("Nuave", _r(r"\d\s+%"), "Tanpa spasi sebelum %, misalnya 50%.", True),
     Aturan("Nuave", _r(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b"), "Tulis tanggal dengan nama bulan, misalnya 17 Agustus 2026.", True),
-    Aturan("Nuave", _r(r"\b\d{1,2}:\d{2}\b"), "Tulis jam dengan titik, misalnya 10.00.", True),
+    Aturan("Nuave", _r(r"\b(?:pukul|jam)\s+\d{1,2}:\d{2}\b|\b\d{1,2}:\d{2}\s*(?:WIB|WITA|WIT)\b"),
+           "Tulis jam dengan titik, misalnya pukul 10.00.", True),
     Aturan("Nuave", _r(r"\bkamu\b"), "Sapa pembaca dengan 'Anda'.", True),
     Aturan("Nuave", _r(r"\bBapak\s*/\s*Ibu\b|\bIbu\s*/\s*Bapak\b|\bBapak dan Ibu\b|\bIbu dan Bapak\b"), "Sapa pembaca dengan 'Anda'.", True),
     Aturan("Nuave", _r(r"\bpengguna\b"), "Jika ini sapaan kepada pembaca, pakai 'Anda'.", True),
-    Aturan("Nuave", _r(r"\bkita\b"), "Di teks produk, 'kita' mengaburkan pelaku. Pakai Anda, Nuave, atau kami.", True),
-    Aturan("Nuave", _r(r"\bdi-?download\b|\bdi download\b"), "Hindari 'di-download'. Label tombol tetap 'Download PDF'.", True),
+    Aturan("gaya", _r(r"\bkita\b"), "Di teks produk, 'kita' dapat mengaburkan pelaku. Pakai Anda, Nuave, atau kami.", True),
+    Aturan("Nuave", _r(
+        r"\bdi-?(?:download|upload|update|review|submit|share|cancel|refund)\b|"
+        r"\bdi (?:download|upload|update|review|submit|share|cancel|refund)\b"
+    ), "Imbuhan Indonesia dengan kata Inggris. Pakai padanannya, misalnya 'diunduh' atau 'diperbarui'. Label tombol 'Download PDF' tetap.", True),
     Aturan("Nuave", _r(r"\bcustomers?\b(?!\s+journey)"), "Pakai 'pelanggan' atau 'calon pelanggan'.", True),
     Aturan("Nuave", _r(r"\bklien\b"), "Pakai 'pelanggan'.", True),
     Aturan("Nuave", _r(r"\bkompetitor\b"), "Pakai 'pesaing' jika pesaingnya terverifikasi, atau 'bisnis lain yang disebut'.", True),
@@ -168,8 +183,24 @@ ATURAN: list[Aturan] = [
     Aturan("Nuave", _r(r"\bterekspos\b"), "Pakai 'disebut'.", True),
     Aturan("Nuave", _r(r"\b(?:dll|dsb|dst)\.|\be\.g\.|\bi\.e\."), "Tulis frasanya secara lengkap.", True),
     Aturan("Nuave", _r(r"\bReview\b|\bSubmit\b", peka_huruf=True), "Hindari campur kode. Pakai 'Periksa' atau 'Kirim'.", True),
+    Aturan("Nuave", _r(r"\bOK\b", peka_huruf=True), "Pakai label kata kerja yang jelas, misalnya 'Lanjut' atau 'Simpan' (VOICE.md §6).", True),
+    Aturan("Nuave", _r(r"\banda\b", peka_huruf=True), "Tulis 'Anda' dengan huruf kapital.", True),
+    Aturan("Nuave", _r(r"\b\d+(?:,\d+)?\s+persen\b"), "Tulis persen dengan lambang, misalnya 50% (VOICE.md §4).", True),
+    Aturan("Nuave", _r(r"\b\d+\.\d+\s*%"), "Desimal memakai koma, misalnya 14,2% (VOICE.md §4).", True),
+    Aturan("Nuave", _r(r"\bmendominasi\b|\bjangan sampai tertinggal\b|\btak terlihat di dunia AI\b|\brevolusi\w*|\bgame changer\b"),
+           "Hype, ketakutan, atau klaim dominasi (VOICE.md §6).", True),
+    Aturan("Nuave", _r(r"\bdijamin\b|\bterbukti meningkatkan\b"), "Kepastian tanpa bukti (VOICE.md §6).", True),
+    Aturan("Nuave", _r(r"\bperingkat (?:teratas|pertama)\b|\bnomor satu\b|\bpaling dipercaya\b|\bpertama ditemukan\b"),
+           "Peringkat atau superlatif tanpa dasar (VOICE.md §3 dan §6).", True),
+    Aturan("Nuave", _r(r"\bvisibilitas nol\b"), "Uji yang gagal ditulis 'Tidak dapat diuji'. Jumlah nol tetap ditulis dengan penyebutnya.", True),
+    Aturan("Nuave", _r(r"\bprompt\b"), "Di teks pelanggan, pakai 'pertanyaan' (VOICE.md §7.3).", True),
+    Aturan("gaya", _r(r"\bpasti\b"), "Kepastian perlu dasar (VOICE.md §6). Abaikan jika kalimatnya memang menyangkal kepastian.", True,
+           saring=_pasti_tegas),
+    Aturan("gaya", _r(r"\bseragam\w*"), "Jika ini tentang data, VOICE.md memakai 'sinkron', 'samakan', atau 'konsisten'.", True),
     # Kaidah
     Aturan("kaidah", _r(r"\bdimana\b"), "Tulis 'di mana' terpisah. Sebagai kata sambung, pakai 'yang' atau 'tempat'."),
+    Aturan("kaidah", _r(r"\b(?:disini|disana|disitu|kemana|darimana)\b"),
+           "Kata depan ditulis terpisah: di sini, di sana, di situ, ke mana, dari mana."),
     Aturan("kaidah", _r(r"\bdi mana\b(?![-\s]+(?:pun|mana)\b)"), "Jika ini kata sambung, pakai 'yang' atau 'tempat', atau pecah kalimatnya.",
            bukan_tanya=True, saring=_di_mana_relatif),
     Aturan("kaidah", _r(r",\s*yang mana\b"), "'yang mana' sebagai kata sambung. Pakai 'yang', atau pecah kalimatnya.", bukan_tanya=True),
@@ -193,7 +224,7 @@ ATURAN: list[Aturan] = [
     Aturan("gaya", _r(r"\bmaaf atas ketidaknyamanan\w*"), "Terjemahan harfiah 'Sorry for the inconvenience'. Lihat references/bahasa-layanan.md."),
     Aturan("gaya", _r(rf"\b(?:kami|saya)\s+(?:akan|tidak|sudah|belum|telah|sedang)\s+(?:{KATA_KERJA_DASAR})\b"), "Untuk pasif nol, letakkan kata bantu sebelum pelaku ('akan kami kirim'). Untuk kalimat aktif, pakai meN- ('kami akan mengirim')."),
     Aturan("gaya", _r(r"!(?![\[=])"), "Tanda seru. Perintah dan ajakan tidak memerlukannya."),
-    Aturan("gaya", _r(r";"), "Titik koma. Ivan tidak memakainya di badan tulisan. Pertimbangkan dua kalimat."),
+    Aturan("gaya", _r(r";"), "Titik koma boleh sesuai fungsinya (WRITING_GUIDE.md §6), tetapi Ivan tidak memakainya. Periksa apakah dua kalimat lebih jernih."),
 ]
 
 for _salah, _baku in BAKU:
@@ -221,18 +252,27 @@ def _kosongkan(pola: str, teks: str, flags: int = 0) -> str:
     return re.sub(pola, lambda m: re.sub(r"[^\n]", " ", m.group(0)), teks, flags=flags)
 
 
-def bersihkan(teks: str, abaikan_kutipan: bool) -> str:
+# Hanya tag HTML yang dikenal. Placeholder seperti <nama bisnis> tetap terbaca.
+_TAG_HTML = (
+    r"</?(?:a|b|i|u|em|strong|br|p|div|span|code|pre|kbd|sup|sub|img|ul|ol|li|table|thead|"
+    r"tbody|tr|td|th|details|summary|blockquote|hr|h[1-6])\b[^<>\n]*/?>"
+)
+
+
+def bersihkan(teks: str, periksa_kutipan: bool) -> str:
     teks = _kosongkan(r"`[^`\n]*`", teks)
-    teks = _kosongkan(r"https?://\S+", teks)
+    # Tanda baca di ujung tautan dan alamat email tetap ada agar kalimat terpisah.
+    teks = _kosongkan(r"https?://[^\s<>()]*[^\s<>().,;:!?'\"”’]", teks)
     teks = _kosongkan(r"\]\([^)\n]*\)", teks)
-    teks = _kosongkan(r"<!--.*?-->|<[^>\n]+>", teks, re.DOTALL)
+    teks = _kosongkan(r"<!--.*?-->", teks, re.DOTALL)
+    teks = _kosongkan(_TAG_HTML, teks, re.IGNORECASE)
     teks = _kosongkan(r"&[A-Za-z]+;|&#\d+;", teks)
-    teks = _kosongkan(r"[\w.+-]+@[\w-]+\.[\w.-]+", teks)
+    teks = _kosongkan(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", teks)
     teks = _kosongkan(r"✗[^|✓]*", teks)
     teks = teks.replace("✓", " ").replace("**", "  ")
     teks = _kosongkan(r"(?<![\w*])\*(?=\S)|(?<=\S)\*(?![\w*])", teks)
     teks = _kosongkan(r"(?<!\w)_(?=\w)|(?<=\w)_(?!\w)", teks)
-    if abaikan_kutipan:
+    if not periksa_kutipan:
         teks = _kosongkan(r"“[^”]*”", teks)
         teks = _kosongkan(r'"[^"]*"', teks)
         teks = _kosongkan(r"‘[^’]*’", teks)
@@ -308,7 +348,8 @@ def pecah_kalimat(teks: str) -> list[tuple[int, str]]:
         lindung = re.sub(rf"\b{ab}\.", lambda m: m.group(0)[:-1] + "\x00", lindung)
     hasil = []
     pos = 0
-    for m in re.finditer(r"[.?!…][”\"’)\]]*(?=\s+[“\"‘(\[]?[A-Z0-9])", lindung):
+    # Kalimat baru diawali huruf kapital, angka, atau placeholder seperti [nama] dan {nama}.
+    for m in re.finditer(r"[.?!…][”\"’)\]]*(?=\s+(?:[“\"‘(]?[A-Z0-9]|[\[{<]))", lindung):
         akhir = m.end()
         potong = teks[pos:akhir]
         if potong.strip():
@@ -340,11 +381,11 @@ def kalimat_tanya(teks: str, posisi: int) -> bool:
     return bool(sesudah and sesudah.group(0) == "?")
 
 
-def periksa(isi: str, tanpa_nuave: bool, abaikan_kutipan: bool) -> tuple[list[Temuan], list[int]]:
+def periksa(isi: str, tanpa_nuave: bool, periksa_kutipan: bool) -> tuple[list[Temuan], list[int]]:
     temuan: list[Temuan] = []
     panjang: list[int] = []
     for blok in susun_blok(isi):
-        bersih = bersihkan(blok.teks, abaikan_kutipan)
+        bersih = bersihkan(blok.teks, periksa_kutipan)
         for aturan in ATURAN:
             if tanpa_nuave and aturan.khusus_nuave:
                 continue
@@ -402,7 +443,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Periksa teks bahasa Indonesia secara mekanis.")
     parser.add_argument("berkas", nargs="+", help="Berkas teks atau Markdown. Pakai - untuk masukan standar.")
     parser.add_argument("--tanpa-nuave", action="store_true", help="Lewati aturan khusus Nuave (VOICE.md).")
-    parser.add_argument("--abaikan-kutipan", action="store_true", help="Lewati teks di dalam tanda petik.")
+    parser.add_argument("--periksa-kutipan", action="store_true",
+                        help="Periksa juga teks di dalam tanda petik. Bawaannya dilewati karena kutipan harus persis.")
     parser.add_argument("--ketat", action="store_true", help="Kode keluar 1 jika ada temuan [Nuave] atau [kaidah].")
     args = parser.parse_args(argv)
 
@@ -413,7 +455,7 @@ def main(argv: list[str] | None = None) -> int:
     for nama in args.berkas:
         isi = sys.stdin.read() if nama == "-" else Path(nama).read_text(encoding="utf-8")
         label = "masukan" if nama == "-" else nama
-        temuan, panjang = periksa(isi, args.tanpa_nuave, args.abaikan_kutipan)
+        temuan, panjang = periksa(isi, args.tanpa_nuave, args.periksa_kutipan)
         print(f"== {label} ==")
         for t in temuan:
             print(f"{label}:{t.baris}: [{t.kategori}] {t.pesan} «{t.cuplikan}»")

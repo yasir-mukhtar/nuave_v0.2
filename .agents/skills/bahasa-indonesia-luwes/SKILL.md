@@ -23,7 +23,7 @@ Bandingkan dua kalimat dari tulisannya:
 Keduanya benar. Hanya yang kedua terasa luwes. Skill ini mengajak Anda menulis
 kalimat jenis kedua.
 
-> Skill ini meniru cara menulis, bukan orangnya. Jangan mengatasnamakan tulisan
+> Skill ini meniru cara menulis, bukan orangnya. Jangan menyebut tulisan Anda
 > sebagai karya Ivan Lanin, jangan meminjam kisah hidupnya, dan jangan menyalin
 > paragraf utuh dari tulisannya.
 
@@ -86,7 +86,7 @@ Tujuh sifat berikut terasa di hampir setiap tulisannya.
 
 ## 3. Logika berbahasa
 
-Gaya Ivan lahir dari cara berpikir sebelum menulis. Delapan gerakan pikiran ini
+Gaya Ivan lahir dari cara berpikir sebelum menulis. Delapan langkah berpikir ini
 paling sering muncul.
 
 1. **Pisahkan dua hal yang sering disamakan.** Penyukuan dan pemenggalan, cuaca
@@ -119,9 +119,11 @@ paling sering muncul.
 ### Kalimat dan paragraf
 
 1. **Satu kalimat, satu gagasan.** Kalimat Ivan rata-rata berisi 12,6 kata.
-   Tiga dari empat kalimatnya berisi 7 sampai 18 kata, dan kurang dari 2 persen
-   melewati 25 kata. Esai pribadinya lebih ringkas (10 sampai 12 kata),
-   sedangkan uraian teknisnya lebih panjang (13 sampai 15 kata).
+   Tiga dari empat kalimatnya berisi 7 sampai 18 kata, dan kurang dari 2%
+   melewati 25 kata. Esai pribadinya yang terbaru lebih ringkas (10 sampai 12
+   kata), sedangkan uraian teknisnya lebih panjang (13 sampai 15 kata). Angka
+   ini menggambarkan gaya Ivan, bukan target. Target Nuave ada di VOICE.md §5,
+   dan penulis laporan dua sumber tidak diberi target jumlah kata.
 2. **Variasikan irama.** Sekitar satu dari sembilan kalimat hanya berisi enam
    kata atau kurang: "Mekanismenya sederhana." "Ritmenya berubah." Kalimat
    pendek menegaskan, kalimat sedang menjelaskan. Jika semua kalimat sependek
@@ -129,8 +131,10 @@ paling sering muncul.
 3. **Paragraf tiga sampai lima kalimat.** Kalimat pertama membawa pokoknya.
    Satu kalimat boleh berdiri sendiri sebagai paragraf jika itulah inti atau
    titik balik tulisan: "Peta ilmu bukanlah wilayah itu sendiri."
-4. **Mulai dari yang konkret.** Buka dengan kejadian, ungkapan, atau contoh
-   yang akrab, lalu naik ke gagasan.
+4. **Jelaskan lewat yang konkret.** Gagasan dijelaskan dengan contoh yang
+   dapat dibayangkan pembaca, bukan dengan istilah abstrak. Di teks produk
+   Nuave, kalimat pertama tetap membawa hasil atau jawabannya (VOICE.md §3).
+   Contoh konkret menyusul sesudahnya.
 5. **Sebut pelaku dan kata kerjanya.** "Memperbarui informasi harga" lebih
    cekatan daripada "melakukan pembaruan informasi harga". Kalimat aktif
    menjadi pilihan awal. Kalimat pasif dipakai jika benda yang dikenai tindakan
@@ -199,11 +203,14 @@ paling sering muncul.
 
 17. **Nyatakan fakta dengan lugas, tandai pendapat sebagai pendapat.**
     "Menurut saya", "saya pikir", dan "mungkin" dipakai untuk pendapat dan
-    dugaan, bukan untuk fakta yang sudah jelas.
+    dugaan, bukan untuk fakta yang sudah jelas. Di teks Nuave, tafsiran
+    ditandai dengan cakupannya, misalnya "Dalam audit ini, ..." atau "Dari
+    sepuluh pertanyaan yang diuji, ...". Jangan menulis "Menurut kami" untuk
+    hasil yang dibuat model AI (VOICE.md §3).
 18. **Santun tanpa selalu minta maaf.** Minta maaf jika memang ada kesalahan
-    atau kerugian. Selain itu, berikan permohonan, tanggung jawab,
-    penghargaan, kerendahan hati, kesepahaman, atau kepedulian. Rinciannya ada
-    di `references/bahasa-layanan.md`.
+    atau kerugian. Di luar itu, pilih bentuk santun yang lain: permohonan,
+    tanggung jawab, penghargaan, kerendahan hati, kesepahaman, atau
+    kepedulian. Rinciannya ada di `references/bahasa-layanan.md`.
 19. **Perintah dan ajakan tanpa tanda seru.** Tanda seru menambah ketegasan
     yang tidak diperlukan.
 20. **Terangkan istilah teknis dengan kata sehari-hari.** Pakai kurung atau
@@ -211,27 +218,34 @@ paling sering muncul.
 21. **Jenaka hanya di tempat yang aman.** Jangan bercanda dalam pesan galat,
     urusan uang, data pribadi, atau hasil audit.
 
-## 5. Kerangka tulisan panjang
+## 5. Kerangka tulisan
 
-Untuk FAQ, halaman penjelasan, artikel, email panjang, dan bagian laporan,
-pakai tiga bagian yang Ivan ajarkan: pembuka, inti, dan penutup.
+**Teks produk Nuave dibuka dengan hasil atau jawabannya.** VOICE.md §3 meminta
+urutan ini: hasil atau tindakan yang diperlukan, lalu bukti, langkah
+berikutnya, dan batasnya. Untuk laporan, ikuti WRITING_GUIDE.md §4 sampai §9.
+Untuk FAQ, halaman penjelasan, dan email, kalimat pertama menjawab keperluan
+pembaca. Gaya Ivan bekerja sesudahnya: definisi singkat beserta pembedanya,
+contoh yang dapat dibayangkan, dan penutup yang memberi langkah berikutnya.
 
-**Pembuka.** Mulai dari sesuatu yang akrab dan konkret: ungkapan yang sering
-terdengar, kejadian kecil, atau pertanyaan yang biasa diajukan orang. Lalu
-tunjukkan apa yang mengganjal. Akhiri paragraf pertama dengan pertanyaan atau
-pokok tulisan.
+**Kerangka esai Ivan dipakai utuh hanya untuk artikel**, misalnya tulisan blog
+atau catatan pendiri yang memakai nama penulis. Pokok tulisan tetap terbaca di
+paragraf pertama. Kerangkanya tiga bagian:
 
-**Inti.** Petakan dulu, baru rinci. Berikan definisi singkat beserta
-pembedanya: "Hujan hari ini adalah cuaca. Pola hujan selama puluhan tahun
-adalah iklim." Bagi bahan menjadi tiga atau empat bagian. Berikan contoh yang
-bisa dibayangkan, uji yang bisa dicoba pembaca, dan satu perumpamaan yang
-dirawat dari awal sampai akhir.
+- **Pembuka.** Mulai dari sesuatu yang akrab dan konkret: ungkapan yang sering
+  terdengar, kejadian kecil, atau pertanyaan yang biasa diajukan orang. Lalu
+  tunjukkan apa yang mengganjal.
+- **Inti.** Petakan dulu, baru rinci. Berikan definisi singkat beserta
+  pembedanya: "Hujan hari ini adalah cuaca. Pola hujan selama puluhan tahun
+  adalah iklim." Bagi bahan menjadi tiga atau empat bagian. Berikan contoh
+  yang dapat dibayangkan, uji yang dapat dicoba pembaca, dan satu perumpamaan
+  yang dirawat dari awal sampai akhir.
+- **Penutup.** Kembali ke gambar di pembuka atau tarik satu pelajaran kecil
+  yang meluas. Penutup Ivan tenang, bukan bergemuruh: "Langit tidak peduli
+  peta mana yang saya pegang."
 
-**Penutup.** Kembali ke gambar di pembuka, tarik satu pelajaran kecil yang
-meluas, atau ajukan pertanyaan yang membuat pembaca berpikir. Penutup Ivan
-tenang, bukan bergemuruh: "Langit tidak peduli peta mana yang saya pegang."
-
-Jenis pembuka dan penutup beserta contohnya ada di
+Di artikel pun, aturan VOICE.md tetap berlaku: tanpa adegan atau tokoh
+pelanggan rekaan yang disajikan sebagai kejadian nyata, tanpa hype, dan tanpa
+janji. Jenis pembuka dan penutup beserta contohnya ada di
 `references/pola-tulisan.md`.
 
 ## 6. Penerapan di Nuave
@@ -240,13 +254,16 @@ Jenis pembuka dan penutup beserta contohnya ada di
 
 - Pembaca disapa **Anda**. Jangan memakai "kamu", "Bapak/Ibu", atau "pengguna"
   untuk menyapa (VOICE.md §3).
-- **Nuave** untuk perilaku produk. **audit ini** untuk hasil yang terbatas.
-  **kami** untuk komunikasi tim dan tindakan perusahaan, seperti menerima
-  pembayaran, mengirim email, dan membantu.
-- Jangan memakai "kami" untuk penilaian mesin. Pembaca bisa mengira hasil audit
-  sudah diperiksa manusia.
+- Pakai **Nuave** untuk perilaku produk dan **audit ini** untuk hasil yang
+  terbatas. Pakai **kami** untuk komunikasi tim dan tindakan perusahaan, seperti
+  menerima pembayaran, mengirim email, dan membantu.
+- Proses otomatis ditulis dengan "Nuave" atau kalimat pasif: "Nuave sedang
+  menyusun pertanyaan" atau "Pertanyaan sedang disusun".
+- Jangan memakai "kami" untuk penilaian mesin. Pembaca dapat mengira hasil
+  audit sudah diperiksa manusia.
 - Hindari "kita" di teks produk karena kata itu mengaburkan siapa yang
-  bertindak.
+  bertindak. Pengecualiannya pertanyaan audit, yang memakai suara calon
+  pelanggan.
 
 ### Ragam per permukaan
 
@@ -255,13 +272,22 @@ Nuave memakai empat yang terakhir.
 
 | Permukaan | Ragam | Pegangan |
 | --- | --- | --- |
-| Landing, iklan, takarir | santai sampai konsultatif | Kata lisan ringan yang diizinkan VOICE.md (cuma, kok, duluan, kasih tahu, biar, "ya" di akhir teks bantuan), tetap dengan "Anda" |
-| Alur pesanan, intake, pertanyaan | konsultatif | Pendek, kata kerja spesifik, satu tindakan per layar |
-| Status, galat, menunggu | konsultatif | Apa yang terjadi, apa yang bisa dilakukan, maaf hanya jika Nuave keliru |
+| Landing, pratinjau pesanan, iklan, takarir | santai sampai konsultatif | Kata lisan ringan yang diizinkan VOICE.md (cuma, kok, duluan, kasih tahu, biar, dan "ya" di akhir teks bantuan), tetap dengan "Anda" |
+| Alur pesanan dan intake | konsultatif | Pendek, kata kerja spesifik, satu tindakan per layar |
+| Pertanyaan audit | ragam calon pelanggan | Ditulis seperti yang diketik calon pelanggan dan boleh informal ("nggak", "aja"), sesuai VOICE.md §7.3. Pilihan kata Ivan, padanan, dan pemeriksa tidak berlaku di sini |
+| Status, galat, menunggu | konsultatif | Apa yang terjadi, apa yang dapat dilakukan, maaf jika Nuave keliru atau pembaca dirugikan |
 | Laporan | konsultatif menuju resmi | Ikuti WRITING_GUIDE.md |
 | Email transaksional | resmi yang ringan | VOICE.md §7.5 |
 | Syarat dan privasi | resmi | Tetap jernih: "luwes berarti kejernihan dan keteraturan" |
 | Label yang ditetapkan | beku | Disalin persis, tidak disunting |
+
+Kata yang dipakai VOICE.md di ragam pemasaran tetap dipakai walaupun skill ini
+lebih menyukai bentuk lain, misalnya "cek", "tanya", "website", "bisa", dan
+"saat". Untuk label tindakan di dalam produk, VOICE.md memakai "Periksa"
+(**Periksa pertanyaan audit**). Kata "Cek" dipakai di ajakan pemasaran (**Cek
+bisnis saya di AI**). Jika teks Nuave yang sudah berjalan memakai satu istilah,
+misalnya "link" di email laporan, pertahankan istilah itu di permukaan yang
+sama.
 
 ### Pola teks antarmuka
 
@@ -272,13 +298,18 @@ sebelum memakainya.
 | --- | --- | --- |
 | Tombol | Kata kerja, tanpa titik dan tanda seru | Simpan · Lanjut · Bayar Rp249.000 |
 | Label kolom | Frasa benda yang ringkas | Nama usaha · Email penerima laporan |
-| Teks bantuan | Satu kalimat: untuk apa isian ini | Untuk pembayaran, akses laporan, dan info pesanan. |
+| Teks bantuan | Satu kalimat atau frasa pendek: untuk apa isian ini | Untuk pembayaran, akses laporan, dan info pesanan. |
 | Menunggu | Apa yang sedang terjadi, lalu apa yang boleh dilakukan | Audit sedang berjalan. Anda boleh menutup halaman ini. |
 | Kosong | Apa yang nanti muncul di sini dan kapan | Belum ada laporan. Laporan muncul di sini setelah audit selesai. |
 | Galat karena isian | Apa yang kurang dan cara membetulkannya, tanpa menyalahkan | Alamat email ini belum lengkap. Periksa bagian setelah tanda @. |
-| Galat karena sistem | Maaf, apa yang terjadi, apa yang aman, langkah berikutnya | Maaf, jawaban Anda belum tersimpan karena gangguan di sistem kami. Isian Anda masih ada. Coba simpan sekali lagi. |
+| Galat karena sistem | Maaf, apa yang terjadi, apa yang tetap tersimpan (hanya jika sistem menjaminnya), langkah berikutnya | Maaf, jawaban Anda belum tersimpan karena gangguan di sistem kami. Isian Anda masih ada di layar. Coba simpan sekali lagi. |
 | Berhasil | Fakta, lalu langkah berikutnya | Pembayaran sudah kami terima. Berikutnya, periksa informasi bisnis Anda. |
 | Konfirmasi | Pertanyaan pendek dengan kata kerja, lalu akibatnya | Keluar dari halaman ini? Isian yang belum disimpan akan hilang. |
+
+"Maaf," cukup untuk pesan singkat di layar. "Mohon maaf" cocok untuk email atau
+kesalahan yang merugikan pembaca. Contoh di skill ini memakai [kurung siku]
+untuk bagian yang harus diisi. Di kode, ikuti cara penyisipan yang sudah
+dipakai berkasnya.
 
 Contoh sebelum dan sesudah yang lebih lengkap ada di
 `references/bahasa-layanan.md`.
@@ -289,7 +320,7 @@ Teks Nuave "Pembayaran tidak kami terima" sudah memakai pola yang Ivan bahas.
 Kata bantu dan kata ingkar diletakkan sebelum pelaku: **akan kami kirim**,
 **tidak kami simpan**, **sudah kami terima**. Bentuk "kami akan kirim" lazim
 dalam percakapan, tetapi kurang rapi dalam tulisan. Jika "kami" ingin
-diletakkan di depan, pakai kata kerja aktif: "Kami akan mengirim tautan laporan
+diletakkan di depan, pakai kata kerja aktif: "Kami akan mengirim link laporan
 ke email Anda."
 
 Pasif nol menggeser perhatian dari pelaku ke benda yang sedang dibicarakan
@@ -306,8 +337,10 @@ menyembunyikan siapa yang keliru.
 | Sapaan "Ibu dan Bapak" dalam contoh layanan | Anda | VOICE.md §3 |
 | Padanan untuk hampir setiap istilah asing | Istilah yang ditetapkan tetap dipakai: **Download PDF**, email, **AI Visibility Report**, AI, model AI, ChatGPT, Google AI Overview, expertise, customer journey, touchpoint | VOICE.md §2 |
 | "61,08 persen" di prosa | `50%` dan `14,2%` | VOICE.md §4 |
+| Kerangka esai: pembuka konkret, perumpamaan, penutup yang kembali | Hanya untuk artikel. Teks produk dibuka dengan hasil atau jawabannya | VOICE.md §3, WRITING_GUIDE.md §4 dan §9 |
 | Pembuka berupa kisah pribadi | Mulai dari bahan yang benar-benar ada. Jangan mengarang adegan atau tokoh pelanggan | WRITING_GUIDE.md §4 |
-| Pertanyaan retoris di pembuka | Boleh di pemasaran dan penjelasan, tidak di simpulan laporan | GAYA_TEMPO.md |
+| Pertanyaan retoris di pembuka | Boleh di pemasaran, seperti pertanyaan pembuka di VOICE.md §7.1. Tidak dipakai di laporan | VOICE.md §7.1, GAYA_TEMPO.md |
+| "Menurut saya" untuk menandai pendapat | "Dalam audit ini, ...". Jangan "Menurut kami" untuk hasil model AI | VOICE.md §3 |
 | "Pekan" untuk satuan waktu | Boleh di prosa. Label `Minggu 1–2` pada rencana laporan tetap | VOICE.md §3 |
 | Kelakar di penutup | Hanya di artikel dan media sosial, tidak di galat, pembayaran, atau hasil audit | Nada VOICE.md §3, GAYA_TEMPO.md |
 
@@ -316,7 +349,8 @@ menyembunyikan siapa yang keliru.
 **Sebelum menulis**
 
 1. Baca bagian VOICE.md yang relevan dan sumber teks di `docs/content/` jika
-   ada.
+   ada. Ambil fakta produk, seperti harga, alur, dan janji layanan, dari
+   `docs/PRODUCT.md` dan sumber itu, bukan dari skill ini.
 2. Jawab lima unsur kelengkapan wacana dari Ivan: tujuan, bahan, struktur,
    media, dan format.
 3. Tentukan ragamnya dengan tabel di bagian 6.
@@ -338,21 +372,27 @@ menyembunyikan siapa yang keliru.
    Apakah maaf dipakai pada tempatnya?
 8. **Luwes.** Bacalah keras-keras. Pangkas kata yang boros. Pecah kalimat yang
    terlalu panjang. Gabungkan kalimat yang terlalu terpatah-patah.
-9. Jika sesi Anda bisa menjalankan perintah, periksa teksnya dari folder skill
-   ini dengan `python3 scripts/periksa_teks.py <berkas>`. Pemeriksa itu hanya
-   menangkap kesalahan mekanis. Rasa tetap dinilai dengan membaca.
+9. Jika sesi Anda dapat menjalankan perintah, periksa teksnya dari akar repo
+   dengan `python3 .agents/skills/bahasa-indonesia-luwes/scripts/periksa_teks.py
+   <berkas>`. Teks di dalam tanda petik dilewati karena kutipan bukti harus
+   disalin persis. Jangan memakai pemeriksa untuk pertanyaan audit. Pemeriksa
+   itu hanya menangkap kesalahan mekanis. Rasa tetap dinilai dengan membaca.
 
 ## 9. Daftar periksa akhir
 
 - [ ] Label persis, kutipan, nama, dan angka tidak berubah.
+- [ ] Teks produk dibuka dengan hasil atau jawabannya.
 - [ ] Pembaca disapa "Anda", dan pelaku setiap tindakan jelas.
 - [ ] Tidak ada tanda pisah di prosa dan tidak ada tanda seru pada perintah.
 - [ ] Tidak ada "tapi", "di mana" sebagai kata sambung, "hal ini", "hal
       tersebut", "dikarenakan", atau "merubah".
-- [ ] Kalimat rata-rata sekitar 12 kata, dan tidak ada yang melewati 25 kata
-      tanpa alasan.
+- [ ] Setiap kalimat memuat satu gagasan, dan panjangnya bervariasi. Untuk
+      kalimat penjelasan Nuave, sasaran VOICE.md §5 adalah 12 sampai 20 kata.
+      Penulis laporan dua sumber tidak diberi target jumlah kata.
 - [ ] Setiap klaim sebatas bahan, dan pendapat ditandai sebagai pendapat.
-- [ ] Maaf hanya dipakai untuk kesalahan atau kerugian yang nyata.
+- [ ] Tidak ada kalimat menenangkan yang belum pasti benar.
+- [ ] Maaf dipakai untuk kesalahan atau kerugian yang nyata, bukan sebagai
+      rumus.
 - [ ] Istilah asing yang baru sudah dijelaskan, kecuali yang ditetapkan
       VOICE.md.
 - [ ] Teks terdengar wajar ketika dibaca keras-keras.
@@ -361,9 +401,9 @@ menyembunyikan siapa yang keliru.
 
 | Berkas | Isi | Kapan dibaca |
 | --- | --- | --- |
-| `references/pola-tulisan.md` | Pembuka, inti, penutup, paragraf, gaya kalimat, sikap, humor, catatan pendek | Menulis teks panjang: FAQ, artikel, email, bagian laporan |
+| `references/pola-tulisan.md` | Judul, pembuka, inti, penutup, paragraf, gaya kalimat, sikap, humor, catatan pendek | Menulis artikel dan teks panjang lain |
 | `references/kaidah-dan-diksi.md` | Kata hubung, pilihan kata, bentuk baku, pasif nol, tanda baca, angka, padanan | Menyunting kalimat dan memilih kata |
 | `references/bahasa-layanan.md` | Kesantunan tanpa maaf, perintah, pola teks antarmuka, contoh sebelum dan sesudah | Menulis teks antarmuka, status, galat, dan email |
 | `references/profil-korpus.md` | Daftar 26 tulisan, angka-angka, cara menghitung, batas analisis | Memeriksa dasar aturan atau memperbarui skill |
 | `prompt-ringkas.md` | Versi pendek untuk ditempel ke alat yang belum membaca skill | ChatGPT, Gemini, atau alat lain |
-| `scripts/periksa_teks.py` | Pemeriksa mekanis tanpa pustaka tambahan (Python 3.8+) | Setelah menulis, jika bisa menjalankan Python |
+| `scripts/periksa_teks.py` | Pemeriksa mekanis tanpa pustaka tambahan (Python 3.8+) | Setelah menulis, jika dapat menjalankan Python |

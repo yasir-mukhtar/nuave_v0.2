@@ -167,7 +167,7 @@ bahasa, label, slogan, atau konsep.
   tidak dihitung.
 - Korpus didominasi tulisan tentang bahasa dan ilmu. Tulisan Ivan tentang tema
   lain mungkin sedikit berbeda.
-- Pemisah kalimat otomatis bisa keliru pada kutipan bertingkat dan singkatan
+- Pemisah kalimat otomatis dapat keliru pada kutipan bertingkat dan singkatan
   yang jarang.
 - Beberapa salah ketik di tulisan lama tidak dijadikan pola, misalnya
   "menemukannya jawabannya" dan "Joss" untuk Joos.

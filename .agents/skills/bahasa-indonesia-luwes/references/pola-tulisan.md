@@ -11,15 +11,38 @@ Ivan membagi tulisan menjadi pembuka, inti, dan penutup. Semua bagian diarahkan
 oleh satu pokok. Ia menyebutnya struktur makro: "Struktur makro memberi arah dan
 fokus sehingga wacana tidak sekadar panjang, tetapi juga terarah."
 
-Ia juga membedakan kohesi dan koherensi. Kalimat bisa tersambung rapi oleh kata
+Ia juga membedakan kohesi dan koherensi. Kalimat dapat tersambung rapi oleh kata
 hubung, tetapi alur pikirnya tetap meloncat: "Sebuah wacana dapat kohesif,
 tetapi tidak koheren jika susunan kalimatnya rapi, tetapi alur pikirannya
 meloncat-loncat." Jadi, periksa alur gagasan lebih dulu, baru kata hubungnya.
 
-## 2. Pembuka
+## 2. Judul dan subjudul
 
-Paragraf pertama Ivan hampir selalu berangkat dari hal yang dapat dibayangkan.
-Lima jenis pembuka paling sering muncul.
+Judul esai Ivan sering berupa gambar yang mengundang rasa ingin tahu, lalu
+subjudulnya menerangkan isi dengan lugas:
+
+| Judul | Subjudul |
+| --- | --- |
+| Mencuci Piring Sendiri | Mengapa Pikiran Perlu Tetap Dilatih |
+| Tanpa Kartu | Antara Kemudahan, Kepercayaan, dan Ketergantungan |
+| Dua Cara Membaca Langit yang Sama | Jakarta Panas Berbulan-bulan, Cuaca atau Iklim? |
+| Politik yang Saya Sebut Bahasa | Empat Jalan Memahami Ilmu Kekuasaan |
+
+Tulisan kebahasaan dan ringkasan bukunya memakai judul yang langsung menyebut
+pokok, misalnya "Penyukuan dan Pemenggalan" dengan subjudul "Dua cara memahami
+kata".
+
+Penerapan di Nuave: pola judul bergambar hanya cocok untuk artikel. Judul di
+antarmuka dan laporan cukup lugas dan mengikuti label yang ditetapkan.
+
+## 3. Pembuka
+
+Esai dan tulisan kebahasaan Ivan hampir selalu dibuka dengan hal yang dapat
+dibayangkan. Seri ringkasan bukunya berbeda karena dibuka dengan jembatan dari
+bab sebelumnya. Enam jenis pembuka paling sering muncul.
+
+Penerapan di Nuave: teks produk tetap dibuka dengan hasil atau jawabannya
+(VOICE.md §3). Pembuka di tabel ini terutama untuk artikel.
 
 | Jenis | Contoh dari korpus | Penerapan di Nuave |
 | --- | --- | --- |
@@ -27,7 +50,8 @@ Lima jenis pembuka paling sering muncul.
 | Kejadian kecil yang dialami | "Siang itu, saat membuka dompet, saya baru sadar bahwa kartu ATM saya sudah lewat masa berlakunya." | Hanya untuk artikel dengan nama penulis. Jangan mengarang kejadian pelanggan |
 | Pengakuan diri | "Saya pernah mengaku tidak tertarik dengan politik." | Tulisan pendiri. Tidak untuk teks produk |
 | Candaan atau teka-teki | "Di kelas, saya punya candaan favorit: Apa bedanya konfeksi dan konveksi?" | Artikel atau media sosial, bukan antarmuka |
-| Pernyataan umum yang dihidupkan | "Bahasa tidak pernah berdiri sendiri. Ia hidup dalam interaksi manusia yang membentuk dan dibentuk oleh kondisi sosial." | Halaman penjelasan dan FAQ |
+| Pernyataan umum yang dihidupkan | "Bahasa tidak pernah berdiri sendiri. Ia hidup dalam interaksi manusia yang membentuk dan dibentuk oleh kondisi sosial." | Paragraf kedua halaman penjelasan, sesudah jawabannya |
+| Jembatan dari tulisan sebelumnya | "Setelah membahas wacana, buku Pesona Bahasa mengajak kita menilik pragmatika pada Bab VII." | Artikel bersambung atau bagian lanjutan |
 
 Sesudah pembuka, Ivan menunjukkan apa yang mengganjal. Penandanya beragam:
 "Saya baru terusik ketika ...", "Masalahnya, ...", atau "Namun, setiap kali
@@ -38,7 +62,7 @@ saya saja yang terlalu mudah kepanasan?"
 Yang tidak ia lakukan: membuka dengan "di era digital ini", "seperti yang kita
 ketahui bersama", atau kutipan definisi kamus.
 
-## 3. Inti
+## 4. Inti
 
 ### Petakan dulu
 
@@ -58,8 +82,8 @@ ketahui bersama", atau kutipan definisi kamus.
 
 ### Tunjukkan dengan contoh
 
-- **Pasangan minimal.** Dua kalimat yang hanya berbeda pada satu unsur. Ia
-  membandingkan "Perempuan itu masuk ke kamar ketika hujan turun" dengan
+- **Dua kalimat untuk satu peristiwa.** Peristiwanya sama, pilihan katanya
+  berbeda. Ia membandingkan "Perempuan itu masuk ke kamar ketika hujan turun" dengan
   "Perempuan itu menyelinap ke kamar sementara hujan mencakar kaca". Kalimat
   kedua, tulisnya, "menambahkan dugaan tentang ketakutan, kerahasiaan, dan
   bahaya".
@@ -69,7 +93,7 @@ ketahui bersama", atau kutipan definisi kamus.
 - **Satu kejadian, banyak peran.** "Ketika seseorang demam, fisiologi
   menjelaskan perubahan suhu, kedokteran mencari penyebabnya, farmasi
   memastikan ketepatan penggunaan obat, dan keperawatan merawat pasien."
-- **Uji yang bisa dicoba pembaca.** "Getaran itu bisa kita rasakan dengan
+- **Uji yang dapat dicoba pembaca.** "Getaran itu bisa kita rasakan dengan
   meletakkan jari di tenggorokan." Lalu, singkat saja: "Coba rasakan bedanya."
 - **Contoh dari keseharian Indonesia.** Pasar, warung, QRIS, ATM, bubur ayam,
   Vespa di Bandung, termometer anak. Contoh lokal membuat penjelasan terasa
@@ -113,14 +137,14 @@ Penghubung antarparagraf yang khas: "Di situlah ...", "Kembali ke ...", dan
 Transisi yang baik tidak terasa. Ia hanya menyambung dua gagasan yang memang
 berhubungan.
 
-## 4. Penutup
+## 5. Penutup
 
 | Jenis | Contoh dari korpus |
 | --- | --- |
 | Kembali ke gambar pembuka | Pembuka menyebut bentuk yang "begitu biasa sehingga jarang dipersoalkan". Penutupnya: "Kadang-kadang, ia menyamar dalam susunan yang telah begitu biasa sehingga kita berhenti bertanya." |
 | Pelajaran kecil yang meluas | "Ini contoh kecil bahwa bahasa tidak hanya hidup dalam suara, tetapi juga dalam rupa." |
 | Pertanyaan untuk pembaca | "Kapan terakhir kali kita menolak jawaban AI karena merasa ada yang janggal?" |
-| Kelakar yang mengikat | Esai tentang kata "bagus" ditutup dengan "Sejauh ini, saya baru punya satu kata untuknya: Bagus!" |
+| Kelakar yang mengikat | Esai tentang selera, yang di tengahnya menyoroti kata "bagus", ditutup dengan "Sejauh ini, saya baru punya satu kata untuknya: Bagus!" |
 | Ajakan lembut | "Kita sudah lama diajarkan untuk berbahasa dengan baik dan benar. Kini saatnya kita juga melakukannya dengan luwes." |
 | Gambar yang tenang | "Langit tidak peduli peta mana yang saya pegang." |
 
@@ -131,7 +155,7 @@ Penerapan di Nuave: laporan ditutup dengan langkah berikutnya, sesuai
 WRITING_GUIDE.md §9. Kelakar dan pertanyaan retoris hanya untuk artikel atau
 pemasaran.
 
-## 5. Paragraf
+## 6. Paragraf
 
 Paragraf Ivan biasanya berisi tiga sampai lima kalimat dengan pola berikut.
 
@@ -146,7 +170,7 @@ arti. Misalnya: "Konsonan terbentuk dari hambatan dalam aliran udara, sedangkan
 vokal dihasilkan dengan aliran yang relatif bebas." Lalu muncul contoh, dan
 paragraf ditutup dengan "Ini menunjukkan bahwa ..." atau kalimat sejenis.
 
-## 6. Gaya kalimat
+## 7. Gaya kalimat
 
 | Pola | Contoh dari korpus | Pakai untuk |
 | --- | --- | --- |
@@ -166,7 +190,7 @@ paragraf ditutup dengan "Ini menunjukkan bahwa ..." atau kalimat sejenis.
 Jangan memakai semua pola dalam satu tulisan. Satu atau dua pola per paragraf
 sudah banyak.
 
-## 7. Suara dan sikap
+## 8. Suara dan sikap
 
 **Pendapat ditandai.** Ivan memakai "Menurut saya", "Saya pikir", "Saya rasa",
 dan "Saya pribadi menganggap". Penanda ini muncul di depan pendapat, bukan di
@@ -199,10 +223,10 @@ hari." Namun, ia juga menulis: "Saya ingin tahu kapan harus menerima jawaban,
 kapan perlu memeriksanya, dan kapan harus menolaknya."
 
 Penerapan di Nuave: "saya" tidak dipakai di teks produk. Sikapnya tetap dibawa.
-Fakta dari bahan audit ditulis lugas, tafsiran ditandai sebagai tafsiran, dan
-batas audit disebut di dekat simpulannya.
+Fakta dari bahan audit ditulis lugas, tafsiran ditandai dengan cakupannya
+("Dalam audit ini, ..."), dan batas audit disebut di dekat simpulannya.
 
-## 8. Humor
+## 9. Humor
 
 Jenis humor di korpus:
 
@@ -210,24 +234,24 @@ Jenis humor di korpus:
   seperti harus memohon bantuan Tuhan dengan melihat ke atas." "Rupanya, saya
   hanya lapar."
 - **Kelakar penutup yang mengikat.** Satu kata "Bagus!" menutup esai tentang
-  kata "bagus".
+  selera yang sebelumnya menyoroti kata "bagus".
 - **Penafian jenaka.** "Penafian: Ini bukan tulisan titipan endorsemen aplikasi
   bank itu."
 - **Kata bentukan yang main-main.** Subjudul "Bekas Penata Cahaya Teater yang
   Mengaku Tunaestetika".
 - **Contoh lucu yang tetap menjelaskan.** Pertanyaan "Bagaimana rapatnya?"
   dijawab "Kopinya enak" untuk menjelaskan implikatur.
-- **Larangan yang mengundang penasaran.** "Satu titipan, jangan baca etimologi
+- **Larangan yang mengundang rasa penasaran.** "Satu titipan, jangan baca etimologi
   gula di KBBI Daring. Pokoknya, jangan."
 
 Humornya tidak pernah mengejek orang lain dan tidak mengorbankan ketepatan. Di
 Nuave, humor hanya cocok untuk artikel dan media sosial. Teks antarmuka cukup
 hangat, tidak perlu lucu.
 
-## 9. Catatan pendek
+## 10. Catatan pendek
 
-Setiap tulisan Ivan ditutup dengan bagian "Jurnal dan Kenangan": catatan
-pendek tentang kemarin, tahun lalu, dan dua tahun lalu. Polanya cocok untuk
+Sebagian besar tulisan Ivan ditutup dengan bagian "Jurnal dan Kenangan":
+catatan pendek tentang kemarin, tahun lalu, dan dua tahun lalu. Polanya cocok untuk
 kabar singkat, catatan pembaruan produk, atau unggahan media sosial.
 
 1. Penanda waktu: "Selasa kemarin,".
@@ -241,7 +265,7 @@ hanya muncul di sini atau di dalam dialog. Di badan esai, nada lisan muncul
 sesekali dan terkendali: "Kalau sedang sendiri, ya, tidak apa-apa." Ivan
 memindahkan ragam sesuai tempatnya. Itulah luwes.
 
-## 10. Yang bukan gaya Ivan
+## 11. Yang bukan gaya Ivan
 
 - Pembuka klise dan kata birokrat (aturan 16 di SKILL.md).
 - Tanda seru berderet, huruf kapital untuk penekanan, dan emoji di badan
