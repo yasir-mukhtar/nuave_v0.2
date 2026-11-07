@@ -6,15 +6,38 @@ A throwaway test for [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../../docs/REPORT_PDF
 - `build.py` writes one HTML file with every page the §5.2 page list can
   hold at its largest. Each writer text is filled to its Spec 023 word limit
   (`src/lib/audit/two-source-writing.ts`), times a scale factor.
-- `measure.js` prints that file in Chromium with the PDF options the new
+- `measure.mjs` prints that file in Chromium with the PDF options the new
   print request needs (`preferCSSPageSize`, `printBackground`, zero margins).
   It reports the load, ready and print times, the file size, the fonts that
   loaded, and every content box whose text does not fit.
+- `fonts.py` downloads the latin subset of the four fonts (Newsreader, Geist,
+  Roboto Condensed, Geist Mono) from Google Fonts and writes them as base64
+  `@font-face` rules in `fonts.css`, which `build.py` embeds.
 
-The fonts (Newsreader, Geist, Roboto Condensed, Geist Mono) are downloaded
-from Google Fonts at run time and embedded as base64. The page layout only
-approximates the Figma: it uses the same page box, type sizes and column
-widths, which is enough to measure time, size and fit.
+The page layout only approximates the Figma: it uses the same page box and
+type sizes, but simpler blocks (a table instead of Pesaing's bars and chips,
+and each appendix answer across the full width in two columns instead of the
+Figma's question column with ChatGPT and Google side by side).
+
+## How to run it
+
+From the repository root, after `npm ci`:
+
+```bash
+python3 -I experiments/report-pdf-design/spike/fonts.py /tmp/spike
+```
+
+```bash
+python3 -I experiments/report-pdf-design/spike/build.py /tmp/spike/fonts.css /tmp/spike/max.html 1.0 1200 400
+```
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node experiments/report-pdf-design/spike/measure.mjs /tmp/spike/max.html /tmp/spike/max.pdf
+```
+
+The arguments after the HTML path are the word-limit scale, the ChatGPT
+answer length and the Google answer length. `CHROMIUM_PATH` is needed only
+when the installed browser does not match the `@playwright/test` version.
 
 ## Results, 2026-11-07 (local Chromium in the cloud session)
 
@@ -45,11 +68,33 @@ What this shows:
    which Chromium embeds as TrueType. One fallback font (Liberation Sans)
    also appears, for the "●" and "○" marks that the Latin subset of Geist
    lacks. The real pages draw those marks as shapes, so it should not recur.
+5. **Page size.** The PDF pages are 1080 × 607.9 pt, which is 1440 × 810
+   CSS px (about 381 × 214 mm), as D-2 intends. The reference export is
+   1440 × 810 pt: the same shape at a larger physical size. §8's size check
+   should say CSS px.
+
+## Limits of this run
+
+- **The appendix holds fewer words per page in the real design.** The
+  Figma pages give a column to the question, topic and notes, and show
+  ChatGPT and Google side by side, so a real page holds fewer than about 420
+  words and 86 pages is likely an underestimate at these answer lengths.
+- **Answers are plain repeated words.** Real answers have lists, tables and
+  line breaks, which take more room.
+- **Answers are split before printing, by word count.** The plan's split by
+  measuring in the browser (§6.4), and the data the real print page loads,
+  are not in the timings.
+- **Bahan siap pakai is one page here.** At its maximum it may be five
+  ("1 dari 5" in the Figma). The two questions that name the clinic (v3
+  F-4) would add appendix pages if F-4 is approved.
+- **"Every page fits" holds for these approximate pages only,** not yet for
+  the Figma templates.
 
 ## Not done yet
 
-- **Browser Run.** The Cloudflare token in this session cannot call Browser
-  Run (the REST call answered "Authentication error"). PR previews, which do
+- **Browser Run.** One direct REST call to Browser Run with this session's
+  Cloudflare token was refused ("Authentication error"); the plan's route is
+  Browser Run on a PR preview. PR previews, which do
   have the binding, are not deployed for a draft, docs-only PR.
 - **The longest texts saved on Nuave's orders.** These are in the production
   database. Reading them needs the founder's permission.

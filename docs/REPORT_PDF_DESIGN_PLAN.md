@@ -272,7 +272,7 @@ Each package is one small pull request with its own spec section, tests and
 an independent verdict. Merge and deploy stay with the founder.
 
 **Step 0: spike and spec (no product code).** A throwaway test builds a
-**maximum-length** PDF: the page list's largest case today (about 47 pages:
+**maximum-length** PDF (the local part of the spike counted about 57 pages before continued pages, and 86 with them at assumed answer lengths; see `experiments/report-pdf-design/spike/`): the page list's largest case (earlier estimate about 47 pages:
 10 findings plus `google_finding`, 10 recommendations, the fixed and section
 pages, all appendix pages and the back cover) plus continued pages for the longest saved
 answers, with embedded fonts,
