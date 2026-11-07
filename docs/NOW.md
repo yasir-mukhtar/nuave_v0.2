@@ -44,6 +44,11 @@
 
 ## Next action
 
+- **Report PDF design** (2026-11-07,
+  [decision](./DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)):
+  [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md) is approved
+  (D-0 to D-10). Next: export the corrected Figma reference, run the Step 0
+  spike (a maximum-length PDF through Browser Run), then write the spec.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The

@@ -1,10 +1,38 @@
 # Nuave decision log
 
 > Status: **Authoritative dated decision history**
-> Updated: 2026-10-29
+> Updated: 2026-11-07
 
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
+
+## 2026-11-07 — Approve the PDF report design plan (D-0 to D-10)
+
+Yasir approved [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md)
+(PR #207, independent review PASS on `4326edf`) with every decision as
+recommended:
+
+- **D-1, option A:** the web report stays as it is (frozen at Spec 021 v2,
+  the fallback when a PDF cannot be made), and only the PDF gets the new
+  design. Closing the web report is decided later.
+- **D-2:** 16:9 landscape pages, 1440 × 810, not A4.
+- **D-3:** Newsreader, Geist, Roboto Condensed, and Geist Mono for code only,
+  inside the PDF pages.
+- **D-4:** the corrected Figma is the visual reference.
+- **D-5:** appendix notes come from code.
+- **D-6:** every count stays per source, in the settled sentences; no pooled
+  numbers.
+- **D-7:** fixed text is approved once, with no promise of a scheduled
+  service, re-check or date.
+- **D-8:** "Minta bantuan" to support@nuave.ai stays the help path.
+- **D-9, option A:** Ringkasan is filled from saved fields.
+- **D-10:** the Spec 021 Part P points listed in the plan change.
+
+The same day he asked for the official Nuave logo on the cover and a back
+cover with the logo, the website (nuave.ai) and one sentence on what Nuave
+does. Both are in the Figma, and the plan records them.
+
+Next: the reference export and the Step 0 spike, then the spec.
 
 ## 2026-10-29 — The free check picks the real name and asks when unsure; spec gate waived
 

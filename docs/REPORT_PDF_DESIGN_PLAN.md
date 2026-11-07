@@ -1,10 +1,9 @@
 # Plan: the PDF report design, from Figma to every order
 
-> Status: **Draft, not approved.** Do not implement from this file
-> ([`docs/INDEX.md`](../INDEX.md), Working documents). It becomes a plan only
-> when the founder approves it (D-0) in [`DECISION_LOG.md`](../DECISION_LOG.md),
-> and each package still needs its own approved spec
-> ([`WORKFLOW.md`](../WORKFLOW.md)).
+> Status: **Approved by the founder on 2026-11-07** (D-0 to D-10 as
+> recommended; [decision](./DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)).
+> Each package still needs its own approved spec ([`WORKFLOW.md`](./WORKFLOW.md));
+> nothing is built from this file directly.
 > Author: Claude (orchestrator role), 2026-11-07, branch
 > `claude/vigilant-cerf-e5kktf`. Revision 6 applies independent review
 > rounds 1 (FAIL) and 2 to 5 (PASS+NOTES); see "Review history" at the end.
@@ -12,10 +11,10 @@
 > (file `W66XEpO1rKQY8vbKyvo7xq`, page `1:156`), made and iterated with the
 > founder on 2026-11-07; the draft [Report v3 plan](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205)
 > (revision 6.1, PR #205, not merged), whose proof of concept A supplied the
-> sample content; [Spec 018](../../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
-> (what a saved report holds and how it counts); [Spec 021](../../specs/021-report-v2/SPEC.md)
-> (report v2, Part P: the server PDF); [Spec 023](../../specs/023-report-writing-quality/SPEC.md);
-> [`AUDIT.md`](../AUDIT.md); [`DESIGN.md`](../DESIGN.md); [`VOICE.md`](../VOICE.md);
+> sample content; [Spec 018](./specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+> (what a saved report holds and how it counts); [Spec 021](./specs/021-report-v2/SPEC.md)
+> (report v2, Part P: the server PDF); [Spec 023](./specs/023-report-writing-quality/SPEC.md);
+> [`AUDIT.md`](./AUDIT.md); [`DESIGN.md`](./DESIGN.md); [`VOICE.md`](./VOICE.md);
 > the Indonesian writing skill `bahasa-indonesia-luwes` (PR #206, not merged).
 
 ## 1. What this plan does
@@ -157,6 +156,7 @@ pages that need it fall back as the web page does today.
 | Bahan siap pakai | v3 P2.4 (F-7a) | |
 | Lampiran A0 and A1 to A10 | Today | One question per page; continued pages as needed (§6.4) |
 | Penutup | Today, partly | Counts today; "3 pemeriksaan teknis" only with v3 P1.1; the saved starting point with v3 P3.3 |
+| Back cover | Fixed | The Nuave logo, the website address, one sentence on what Nuave does, and the confidentiality line with the business name and month (founder, 2026-11-07) |
 
 Numbers the Figma shows that are not defined yet ("3,4 nama per jawaban",
 the "0 dari 6" group and its summed volume, word counts) appear only after a
@@ -176,8 +176,9 @@ spec defines them with their denominators.
    their own), and zero margins.
 3. **A page list made by code.** A pure function turns a saved report into
    the ordered list of pages: cover to Rencana, then the Langkah
-   pages, then the appendix questions, then Penutup as the last page, as in
-   the Figma. Lists that can grow are spread by count, never by
+   pages, Bahan siap pakai when it exists, Penutup, the Lampiran divider and
+   the appendix questions, and the back cover as the last page, as in the
+   Figma after the founder's 2026-11-07 changes. Lists that can grow are spread by count, never by
    measuring: one Temuan page per finding, one Langkah page per
    recommendation, at most five "Menurut jawaban AI" lines, at most five
    Celah topik rows (R-18). Because the writer's word limits are soft (a
@@ -328,6 +329,10 @@ unchanged, and `verify-nuave` passes on a preview.
 4. PR 1, PR 2, PR 3, PR 4, each merged by the founder after its verdict.
 5. Later PRs with the v3 packages. If the v3 plan is approved first, its
    Phase 0 layout work and PR 1 to PR 3 are planned together.
+
+## Changes after approval
+
+- **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The reference export (D-4) follows when the spec is written.
 
 ## Review history
 
