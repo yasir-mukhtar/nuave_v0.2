@@ -1,0 +1,5090 @@
+{
+ "meta": {
+  "built_utc": "2026-11-07T00:03:15Z",
+  "answers_file": "experiments/dataforseo-sozo/results/answers/SUMMARY.md (run 2026-10-24; ChatGPT model gpt-5.6-luna for 1-5, Google AI Overview for 6-10)",
+  "user_agent": "Mozilla/5.0 (compatible; NuavePoC/1.0; +https://nuave.ai)",
+  "page_loads_used": 31,
+  "quote_rules": "Quotes are copied verbatim (markdown ** and * removed from answer text; whitespace collapsed). A quote that spans several page elements is joined with single spaces; 'match' records how it was verified.",
+  "contact_details": "No phone numbers or email addresses are copied. Derived text files in evidence/pages_text are redacted; raw pages in evidence/pages are unmodified.",
+  "redaction": "Doctor names and STR numbers copied from clinic pages are replaced with [nama] and [nomor]. No phone numbers or emails are in this file. Raw pages are not kept in Git."
+ },
+ "answers": [
+  {
+   "n": 1,
+   "source": "chatgpt",
+   "question": "Klinik kecantikan yang bagus untuk menghilangkan flek hitam di Jakarta apa ya? Cari yang harganya terjangkau.",
+   "saved_status_line": "Mentions Sozo: YES",
+   "sozo_named_in_text": true,
+   "sozo_named_quote": "Sozo Skin | Pico Laser",
+   "sozo_site_cited": false,
+   "sozo_site_cited_urls": [],
+   "sources": [
+    {
+     "title": "Pico Laser untuk Flek Hitam & Bekas Jerawat | Diri Clinic",
+     "url": "https://diricare.com/clinic/treatment/pico-laser",
+     "domain": "diricare.com"
+    },
+    {
+     "title": "Berapa Biaya Laser Flek Hitam di Klinik Kecantikan dan Ketahanannya?",
+     "url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+     "domain": "suara.com"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "Diri Clinic",
+     "as_written": "Diri Clinic"
+    },
+    {
+     "name": "RS Royal Progress",
+     "as_written": "RS Royal Progress"
+    },
+    {
+     "name": "K Young",
+     "as_written": "K Young"
+    },
+    {
+     "name": "Sozo Skin Clinic",
+     "as_written": "Sozo Skin"
+    },
+    {
+     "name": "Fabella Beauty Clinic",
+     "as_written": "Fabella Beauty Clinic"
+    }
+   ],
+   "other_organisations_or_platforms_named": [],
+   "people_named": [],
+   "notes": []
+  },
+  {
+   "n": 2,
+   "source": "chatgpt",
+   "question": "Rekomendasi klinik untuk menghilangkan bekas jerawat di Jakarta Selatan, kisaran harganya berapa?",
+   "saved_status_line": "Mentions Sozo: no",
+   "sozo_named_in_text": false,
+   "sozo_named_quote": null,
+   "sozo_site_cited": false,
+   "sozo_site_cited_urls": [],
+   "sources": [
+    {
+     "title": "Scar Treatment – Primavita Clinic",
+     "url": "https://primavitaclinic.co.id/face/scar-treatment/",
+     "domain": "primavitaclinic.co.id"
+    },
+    {
+     "title": "ERHA Ultimate - Klinik Spesialis Kulit & Rambut",
+     "url": "https://erhaultimate.co.id/id/treatment-group/microneedle",
+     "domain": "erhaultimate.co.id"
+    },
+    {
+     "title": "paket-bekas-luka | Aveia Health Skin Clinic Jakarta",
+     "url": "https://www.aveiaclinic.com/id/paket-bekas-luka",
+     "domain": "aveiaclinic.com"
+    },
+    {
+     "title": "Advance Scar Correction Theraphy | Official NMW Aesthetic Clinic & Dermatologi Jakarta",
+     "url": "https://nmwclinic.co.id/layanan/medical-treatment/advance-scar-correction-theraphy",
+     "domain": "nmwclinic.co.id"
+    },
+    {
+     "title": "Skin Texture | Farla Aesthetic Clinic Jakarta",
+     "url": "https://farla.id/treatment/skin-texture-treatment-farla/",
+     "domain": "farla.id"
+    },
+    {
+     "title": "Amala Clinic",
+     "url": "https://amalaclinic.com/treatment/pigment-and-texture",
+     "domain": "amalaclinic.com"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "Primavita Clinic",
+     "as_written": "Primavita Clinic"
+    },
+    {
+     "name": "ERHA",
+     "as_written": "ERHA Ultimate"
+    },
+    {
+     "name": "Aveia Health Skin Clinic",
+     "as_written": "Aveia Health Skin Clinic"
+    },
+    {
+     "name": "NMW Aesthetic Clinic",
+     "as_written": "NMW Aesthetic Clinic"
+    },
+    {
+     "name": "Farla Infinite",
+     "as_written": "Farla Infinite"
+    },
+    {
+     "name": "Amala Clinic",
+     "as_written": "Amala Clinic"
+    }
+   ],
+   "other_organisations_or_platforms_named": [],
+   "people_named": [],
+   "notes": []
+  },
+  {
+   "n": 3,
+   "source": "chatgpt",
+   "question": "Mau coba filler atau botox pertama kali, klinik mana yang aman dan terpercaya di Jakarta?",
+   "saved_status_line": "Mentions Sozo: no",
+   "sozo_named_in_text": false,
+   "sozo_named_quote": null,
+   "sozo_site_cited": false,
+   "sozo_site_cited_urls": [],
+   "sources": [
+    {
+     "title": "KLINIK KULIT & KELAMIN Poliklinik | RSUD Pasar Minggu - Rumah Sehat Untuk Jakarta",
+     "url": "https://rsudpasarminggu.jakarta.go.id/poliklinik/detail/klinik-kulit-kelamin",
+     "domain": "rsudpasarminggu.jakarta.go.id"
+    },
+    {
+     "title": "Rawat Jalan",
+     "url": "https://rsudbudhiasih.jakarta.go.id/website/Layanan_Kesehatan/Rawat_Jalan?kd=MjQ4OQ%3D%3D",
+     "domain": "rsudbudhiasih.jakarta.go.id"
+    },
+    {
+     "title": "C Derma - Dermatology & Aesthetic Center",
+     "url": "https://www.cderma.id/",
+     "domain": "cderma.id"
+    },
+    {
+     "title": "dr. [nama] - Klinik Bamed",
+     "url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+     "domain": "klinikbamed.com"
+    },
+    {
+     "title": "Cari Dermatologist — PERDOSKI",
+     "url": "https://perdoski.id/id/find-doctor",
+     "domain": "perdoski.id"
+    },
+    {
+     "title": "Perhimpunan Dokter Spesialis",
+     "url": "https://perdoski.id/uploads/original/2017/09/PanduanKeterampilanKlinisPERDOSKI2017.pdf",
+     "domain": "perdoski.id"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "RSUD Pasar Minggu",
+     "as_written": "Klinik Kulit & Kelamin RSUD Pasar Minggu"
+    },
+    {
+     "name": "RSUD Budhi Asih",
+     "as_written": "Klinik Kulit & Kelamin RSUD Budhi Asih"
+    },
+    {
+     "name": "C Derma",
+     "as_written": "C Derma Dermatology & Aesthetic Center"
+    },
+    {
+     "name": "Bamed Clinic",
+     "as_written": "Bamed Clinic"
+    }
+   ],
+   "other_organisations_or_platforms_named": [
+    {
+     "name": "PERDOSKI",
+     "role": "professional association; its doctor directory is recommended"
+    }
+   ],
+   "people_named": [
+    "dr. [nama]"
+   ],
+   "notes": []
+  },
+  {
+   "n": 4,
+   "source": "chatgpt",
+   "question": "Klinik kecantikan yang cabangnya banyak dan harganya terjangkau di Indonesia apa saja?",
+   "saved_status_line": "Mentions Sozo: YES",
+   "sozo_named_in_text": true,
+   "sozo_named_quote": "SOZO Skin Clinic | Mulai sekitar Rp199 ribuan untuk promo/treatment tertentu",
+   "sozo_site_cited": true,
+   "sozo_site_cited_urls": [
+    "https://sozoskinclinic.com/"
+   ],
+   "sources": [
+    {
+     "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+     "url": "https://sozoskinclinic.cloudindo.co.id/",
+     "domain": "sozoskinclinic.cloudindo.co.id"
+    },
+    {
+     "title": "Klinik Kecantikan Terbaik | Superskin Skincare & Treatment",
+     "url": "https://superskinme.id/id",
+     "domain": "superskinme.id"
+    },
+    {
+     "title": "Rekomendasi Klinik Kecantikan di Indonesia - Traveloka",
+     "url": "https://www.traveloka.com/id-id/activities/indonesia/country/indonesia-100003/beauty-and-spa/beauty-clinic",
+     "domain": "traveloka.com"
+    },
+    {
+     "title": "7 Klinik Kecantikan dengan Cabang Terbanyak - Aplikasi Absensi Online Karyawan",
+     "url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+     "domain": "hadirr.com"
+    },
+    {
+     "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+     "url": "https://sozoskinclinic.com/",
+     "domain": "sozoskinclinic.com"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "Sozo Skin Clinic",
+     "as_written": "SOZO Skin Clinic"
+    },
+    {
+     "name": "SuperSkin Clinic",
+     "as_written": "SuperSkin Clinic"
+    },
+    {
+     "name": "Naavagreen",
+     "as_written": "Naavagreen Natural Skin Care"
+    },
+    {
+     "name": "Larissa Aesthetic Center",
+     "as_written": "Larissa Aesthetic Center"
+    },
+    {
+     "name": "Natasha Skin Clinic",
+     "as_written": "Natasha Skin Clinic"
+    },
+    {
+     "name": "ZAP Clinic",
+     "as_written": "ZAP Clinic"
+    },
+    {
+     "name": "ERHA",
+     "as_written": "ERHA"
+    }
+   ],
+   "other_organisations_or_platforms_named": [],
+   "people_named": [],
+   "notes": [
+    "One cited source is sozoskinclinic.cloudindo.co.id (not Sozo's domain); the answer cites it for Sozo's price and branch claims."
+   ]
+  },
+  {
+   "n": 5,
+   "source": "chatgpt",
+   "question": "Sozo Skin Clinic bagus nggak? Aman dan worth it untuk treatment wajah?",
+   "saved_status_line": "Mentions Sozo: YES",
+   "sozo_named_in_text": true,
+   "sozo_named_quote": "Sozo Skin Clinic bisa jadi pilihan yang cukup oke",
+   "sozo_site_cited": true,
+   "sozo_site_cited_urls": [
+    "https://sozoskinclinic.com/tentang-kami/"
+   ],
+   "sources": [
+    {
+     "title": "Tentang Kami - Sozo Skin Clinic | 75+ Cabang di Indonesia",
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "domain": "sozoskinclinic.com"
+    },
+    {
+     "title": "Sozo Skin Clinic - Kelapa Gading 2: 222 Ulasan, Rating 4.7★ — Kelapa Gading, Jakarta Utara | CariBisnis.id",
+     "url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+     "domain": "caribisnis.id"
+    },
+    {
+     "title": "Sozo Skin Clinic - Tebet Timur | Klinik Kecantikan Terbaik untuk Kulit, Rambut, dan Slimming: 137 Ulasan, Rating 4.8★ — Tebet, Jakarta Selatan | CariBisnis.id",
+     "url": "https://caribisnis.id/klinik-kecantikan/jakarta-selatan/tebet/sozo-skin-clinic-tebet-timur-k-tebe-imp1",
+     "domain": "caribisnis.id"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "Sozo Skin Clinic",
+     "as_written": "Sozo Skin Clinic"
+    }
+   ],
+   "other_organisations_or_platforms_named": [
+    {
+     "name": "Traveloka",
+     "role": "platform named as a source of ratings"
+    },
+    {
+     "name": "Google",
+     "role": "named in 'Rating Google/Traveloka'"
+    }
+   ],
+   "people_named": [],
+   "notes": []
+  },
+  {
+   "n": 6,
+   "source": "google",
+   "question": "klinik kecantikan terdekat",
+   "saved_status_line": "AI Overview shown: yes · Mentions Sozo: no · Sozo in normal results: not in top results",
+   "sozo_named_in_text": false,
+   "sozo_named_quote": null,
+   "sozo_site_cited": false,
+   "sozo_site_cited_urls": [],
+   "sources": [],
+   "businesses_named": [],
+   "other_organisations_or_platforms_named": [],
+   "people_named": [],
+   "notes": [
+    "The saved AI Overview for this query has no text and no sources ('Sources: - none')."
+   ]
+  },
+  {
+   "n": 7,
+   "source": "google",
+   "question": "apa klinik kecantikan terbaik di indonesia",
+   "saved_status_line": "AI Overview shown: yes · Mentions Sozo: YES · Sozo in normal results: #3",
+   "sozo_named_in_text": false,
+   "sozo_named_quote": null,
+   "sozo_site_cited": true,
+   "sozo_site_cited_urls": [
+    "https://sozoskinclinic.com/blog/skin/rekomendasi-klinik-kecantikan-terbaik/"
+   ],
+   "sources": [
+    {
+     "title": "7 Klinik Kecantikan dengan Cabang Terbanyak - Aplikasi Absensi Online Karyawan",
+     "url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+     "domain": "hadirr.com"
+    },
+    {
+     "title": "Rekomendasi Klinik Kecantikan Terbaik di Indonesia - Indopos",
+     "url": "https://koranindopos.com/rekomendasi-klinik-kecantikan-terbaik-di-indonesia/",
+     "domain": "koranindopos.com"
+    },
+    {
+     "title": "Klinik Kecantikan & Estetika Terbaik di Jakarta - Blink Beauty Clinic",
+     "url": "https://blinkbeautyclinic.com/id/",
+     "domain": "blinkbeautyclinic.com"
+    },
+    {
+     "title": "5 Rekomendasi Klinik Kecantikan Terpercaya dan Terbaik",
+     "url": "https://wartaevent.com/5-rekomendasi-klinik-kecantikan-terpercaya-dan-terbaik/",
+     "domain": "wartaevent.com"
+    },
+    {
+     "title": "7 Rekomendasi Klinik Kecantikan Terbaik yang Bagus & Layanannya",
+     "url": "https://sozoskinclinic.com/blog/skin/rekomendasi-klinik-kecantikan-terbaik/",
+     "domain": "sozoskinclinic.com"
+    },
+    {
+     "title": "5 Rekomendasi Klinik Kecantikan dengan Perawatan Paling Lengkap ...",
+     "url": "https://www.suara.com/lifestyle/2023/11/10/082753/5-rekomendasi-klinik-kecantikan-dengan-perawatan-paling-lengkap-cocok-buat-self-reward",
+     "domain": "suara.com"
+    },
+    {
+     "title": "Harga Facial Wajah 2026 & Jenis Perawatannya di C Derma",
+     "url": "https://www.cderma.id/harga-facial-wajah/",
+     "domain": "cderma.id"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "ZAP Clinic",
+     "as_written": "ZAP Clinic"
+    },
+    {
+     "name": "Dermaster",
+     "as_written": "Dermaster Klinik Indonesia"
+    },
+    {
+     "name": "ERHA",
+     "as_written": "ERHA Clinic"
+    },
+    {
+     "name": "Bening's Clinic",
+     "as_written": "Bening's Clinic"
+    },
+    {
+     "name": "Jakarta Aesthetic Clinic",
+     "as_written": "Jakarta Aesthetic Clinic (JAC)"
+    },
+    {
+     "name": "Miracle Aesthetic Clinic",
+     "as_written": "Miracle Aesthetic Clinic"
+    }
+   ],
+   "other_organisations_or_platforms_named": [
+    {
+     "name": "Kementerian Kesehatan",
+     "role": "government ministry (licensing advice)"
+    }
+   ],
+   "people_named": [
+    "dr. Olivia Ong"
+   ],
+   "notes": [
+    "Sozo is not named in the text. Sozo's own blog page is cited, together with suara.com, for the Jakarta Aesthetic Clinic (JAC) entry."
+   ]
+  },
+  {
+   "n": 8,
+   "source": "google",
+   "question": "berapa biaya laser untuk menghilangkan flek hitam di wajah",
+   "saved_status_line": "AI Overview shown: yes · Mentions Sozo: YES · Sozo in normal results: #7",
+   "sozo_named_in_text": false,
+   "sozo_named_quote": null,
+   "sozo_site_cited": true,
+   "sozo_site_cited_urls": [
+    "https://sozoskinclinic.com/blog/skin/berapa-harga-treatment-wajah-di-klinik-ini-rincian-lengkapnya/"
+   ],
+   "sources": [
+    {
+     "title": "\"\"PEJUANG MELASMA WAJIB MERAPAT 😭🔥 Ini bukan treatment ...",
+     "url": "https://www.instagram.com/reel/DWXyK4HEqol/",
+     "domain": "instagram.com"
+    },
+    {
+     "title": "Biaya Laser Wajah 2026: Semua Jenis Laser & Estimasi Harga",
+     "url": "https://klinikmagna.com/biaya-laser-wajah-semua-jenis-terbaru-tahun-2024/",
+     "domain": "klinikmagna.com"
+    },
+    {
+     "title": "ZAP Clinic on Instagram: \"Picoway Laser mulai dari 2.5jt saja namun ...",
+     "url": "https://www.instagram.com/p/CqVQrJ4rP0J/",
+     "domain": "instagram.com"
+    },
+    {
+     "title": "Wow wow wow Laser buat hilangin Flek asal Korea cuma 500rb di ...",
+     "url": "https://www.instagram.com/reel/DADeocnTwOc/",
+     "domain": "instagram.com"
+    },
+    {
+     "title": "Skincare Tidak Cukup? Coba Laser untuk Bekas Jerawat - ERHA Ultimate",
+     "url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+     "domain": "erhaultimate.co.id"
+    },
+    {
+     "title": "Laser Wajah, Cara Menghilangkan Flek Hitam di Wajah - HDmall.id",
+     "url": "https://hdmall.id/c/menghilangkan-flek-hitam-dengan-laser",
+     "domain": "hdmall.id"
+    },
+    {
+     "title": "Treatment Laser untuk Bekas Jerawat: Manfaat & Biayanya",
+     "url": "https://ristraclinic.co.id/blog/laser-untuk-bekas-jerawat-manfaat-treatment-dan-biaya",
+     "domain": "ristraclinic.co.id"
+    },
+    {
+     "title": "Berapa Harga Treatment Wajah di Klinik? Ini Rincian Lengkapnya",
+     "url": "https://sozoskinclinic.com/blog/skin/berapa-harga-treatment-wajah-di-klinik-ini-rincian-lengkapnya/",
+     "domain": "sozoskinclinic.com"
+    },
+    {
+     "title": "Harga Perawatan Yellow Laser - Beauty Plus Clinic",
+     "url": "https://beautyplusclinic.com/harga-perawatan-yellow-laser/",
+     "domain": "beautyplusclinic.com"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "Bening's Clinic",
+     "as_written": "Bening's Clinic"
+    },
+    {
+     "name": "ZAP Clinic",
+     "as_written": "ZAP Clinic"
+    },
+    {
+     "name": "ERHA",
+     "as_written": "ERHA Ultimate"
+    }
+   ],
+   "other_organisations_or_platforms_named": [],
+   "people_named": [],
+   "notes": [
+    "Sozo is not named in the text. Sozo's own blog page is cited, with three other pages, for the 'Lokasi dan Reputasi Klinik' cost factor."
+   ]
+  },
+  {
+   "n": 9,
+   "source": "google",
+   "question": "cara menghilangkan bekas jerawat di klinik kecantikan",
+   "saved_status_line": "AI Overview shown: yes · Mentions Sozo: no · Sozo in normal results: not in top results",
+   "sozo_named_in_text": false,
+   "sozo_named_quote": null,
+   "sozo_site_cited": false,
+   "sozo_site_cited_urls": [],
+   "sources": [
+    {
+     "title": "6 Cara Menghilangkan Bekas Jerawat dengan Perawatan Medis - Alodokter",
+     "url": "https://www.alodokter.com/6-cara-menghilangkan-bekas-jerawat-dengan-perawatan-medis",
+     "domain": "alodokter.com"
+    },
+    {
+     "title": "Skincare Tidak Cukup? Coba Laser untuk Bekas Jerawat",
+     "url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+     "domain": "erhaultimate.co.id"
+    },
+    {
+     "title": "Masih belum temukan cara cepat hilangkan bekas jerawat ...",
+     "url": "https://www.instagram.com/reel/DQ1hZAtk1SR/",
+     "domain": "instagram.com"
+    },
+    {
+     "title": "Beragam Cara Menghilangkan Bekas Jerawat",
+     "url": "https://www.youtube.com/watch?v=bDBQBPeLkZg&t=108",
+     "domain": "youtube.com"
+    },
+    {
+     "title": "Menghilangkan Bekas Jerawat, Ini 6 Metode yang Efektif - Alodokter",
+     "url": "https://www.alodokter.com/sederet-cara-menghilangkan-bekas-jerawat",
+     "domain": "alodokter.com"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "ERHA",
+     "as_written": "ERHA Ultimate"
+    }
+   ],
+   "other_organisations_or_platforms_named": [
+    {
+     "name": "Alodokter",
+     "role": "health portal named as a guide"
+    }
+   ],
+   "people_named": [],
+   "notes": []
+  },
+  {
+   "n": 10,
+   "source": "google",
+   "question": "berapa biaya treatment di sozo",
+   "saved_status_line": "AI Overview shown: yes · Mentions Sozo: YES · Sozo in normal results: not in top results",
+   "sozo_named_in_text": true,
+   "sozo_named_quote": "Harga treatment di SOZO Skin Clinic sangat bervariasi",
+   "sozo_site_cited": true,
+   "sozo_site_cited_urls": [
+    "https://sozoskinclinic.com/"
+   ],
+   "sources": [
+    {
+     "title": "Daftar Harga Perawatan Sozo Clinic | PDF",
+     "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+     "domain": "id.scribd.com"
+    },
+    {
+     "title": "SOZO Skin Clinic | Treatment Jutaan Jadi Cuma 100RB-an Bisa Bikin Kulit ...",
+     "url": "https://www.instagram.com/p/C3SVBbjvLV6/",
+     "domain": "instagram.com"
+    },
+    {
+     "title": "Tiket Sozo Clinic Tanjung Barat Harga Promo",
+     "url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+     "domain": "tiket.com"
+    },
+    {
+     "title": "Beli Tiket Sozo Skin Clinic - Kemang - Harga Promo 2026 di Traveloka",
+     "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+     "domain": "traveloka.com"
+    },
+    {
+     "title": "Beli Tiket Sozo Skin Clinic - Pondok Bambu - Harga Promo 2026 di Traveloka",
+     "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+     "domain": "traveloka.com"
+    },
+    {
+     "title": "Promo SOZO SKIN Acne Laser Facial - Tokopedia",
+     "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+     "domain": "tokopedia.com"
+    },
+    {
+     "title": "SOZO Skin Clinic | Kapan Lagi DNA Salmon Cuma 1 JUTAAN? ...",
+     "url": "https://www.instagram.com/reel/DdTyfs2zP6L/",
+     "domain": "instagram.com"
+    },
+    {
+     "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+     "url": "https://sozoskinclinic.com/",
+     "domain": "sozoskinclinic.com"
+    },
+    {
+     "title": "Beli Tiket Sozo Skin Clinic - Puri Indah - Harga Promo 2026 di Traveloka",
+     "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+     "domain": "traveloka.com"
+    }
+   ],
+   "businesses_named": [
+    {
+     "name": "Sozo Skin Clinic",
+     "as_written": "SOZO Skin Clinic"
+    }
+   ],
+   "other_organisations_or_platforms_named": [
+    {
+     "name": "Traveloka",
+     "role": "marketplace named for promos"
+    },
+    {
+     "name": "Tiket.com",
+     "role": "marketplace named for promos"
+    },
+    {
+     "name": "Tokopedia",
+     "role": "marketplace named for promos"
+    }
+   ],
+   "people_named": [],
+   "notes": []
+  }
+ ],
+ "claims": [
+  {
+   "id": "C01",
+   "n": 1,
+   "source": "chatgpt",
+   "quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "topic": "layanan",
+   "claim_summary": "Sozo offers Pico Laser for dark spots (flek).",
+   "cited_source_urls": [],
+   "quote_match": "exact",
+   "note": "This table row has no citation."
+  },
+  {
+   "id": "C02",
+   "n": 1,
+   "source": "chatgpt",
+   "quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "topic": "harga",
+   "claim_summary": "Pico Laser new-customer promo about Rp499 ribu.",
+   "cited_source_urls": [],
+   "quote_match": "exact",
+   "note": "This table row has no citation."
+  },
+  {
+   "id": "C03",
+   "n": 1,
+   "source": "chatgpt",
+   "quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "topic": "harga",
+   "claim_summary": "Pico Laser normal price about Rp1,199 juta.",
+   "cited_source_urls": [],
+   "quote_match": "exact",
+   "note": "This table row has no citation."
+  },
+  {
+   "id": "C04",
+   "n": 1,
+   "source": "chatgpt",
+   "quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "topic": "cabang_lokasi",
+   "claim_summary": "Sozo has branches in Jakarta.",
+   "cited_source_urls": [],
+   "quote_match": "exact",
+   "note": "This table row has no citation."
+  },
+  {
+   "id": "C05",
+   "n": 1,
+   "source": "chatgpt",
+   "quote": "Kalau cari yang cukup terpercaya dan masih relatif terjangkau di Jakarta, saya akan shortlist seperti ini:",
+   "topic": "harga",
+   "claim_summary": "Positioning: Sozo is in a shortlist of 'fairly trusted and relatively affordable' clinics.",
+   "cited_source_urls": [],
+   "quote_match": "exact",
+   "note": "The framing applies to all five clinics in the table, Sozo included."
+  },
+  {
+   "id": "C06",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Kalau kriterianya cabang banyak + relatif terjangkau, beberapa pilihan yang bisa dipertimbangkan di Indonesia:",
+   "topic": "harga",
+   "claim_summary": "Positioning: Sozo is listed among clinics with 'many branches + relatively affordable'.",
+   "cited_source_urls": [],
+   "quote_match": "exact",
+   "note": "The framing applies to all seven clinics in the table, Sozo included."
+  },
+  {
+   "id": "C07",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "SOZO Skin Clinic | Mulai sekitar Rp199 ribuan untuk promo/treatment tertentu",
+   "topic": "harga",
+   "claim_summary": "Prices start around Rp199 ribu for some promos/treatments.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.cloudindo.co.id/"
+   ],
+   "quote_match": "exact",
+   "note": "Citation is at the end of the Sozo table row."
+  },
+  {
+   "id": "C08",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo.",
+   "topic": "cabang_lokasi",
+   "claim_summary": "More than 70 branches, according to its website.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.cloudindo.co.id/"
+   ],
+   "quote_match": "exact",
+   "note": "Citation is at the end of the Sozo table row."
+  },
+  {
+   "id": "C09",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo.",
+   "topic": "cabang_lokasi",
+   "claim_summary": "Branches include locations outside Java.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.cloudindo.co.id/"
+   ],
+   "quote_match": "exact",
+   "note": "Citation is at the end of the Sozo table row."
+  },
+  {
+   "id": "C10",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo.",
+   "topic": "harga",
+   "claim_summary": "Positioning: often offers promos.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.cloudindo.co.id/"
+   ],
+   "quote_match": "exact",
+   "note": "Citation is at the end of the Sozo table row."
+  },
+  {
+   "id": "C11",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Facial atau perawatan dasar: coba bandingkan Naavagreen, Larissa, SuperSkin, atau SOZO.",
+   "topic": "harga",
+   "claim_summary": "Positioning: Sozo is one of the cheapest options for facials/basic care (under the heading 'Kalau ingin yang paling hemat').",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C12",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Laser atau hair removal: biasanya ZAP dan SOZO lebih mudah ditemukan di kota-kota besar.",
+   "topic": "layanan",
+   "claim_summary": "Sozo offers laser and hair removal.",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C13",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Laser atau hair removal: biasanya ZAP dan SOZO lebih mudah ditemukan di kota-kota besar.",
+   "topic": "cabang_lokasi",
+   "claim_summary": "Sozo is easy to find in big cities.",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C14",
+   "n": 4,
+   "source": "chatgpt",
+   "quote": "Di luar Pulau Jawa: SOZO bisa menjadi salah satu pilihan yang lebih mudah dicari karena jaringannya mencakup Medan, Makassar, dan kota besar lainnya.",
+   "topic": "cabang_lokasi",
+   "claim_summary": "Network covers Medan, Makassar and other big cities outside Java.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C15",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Sozo Skin Clinic bisa jadi pilihan yang cukup oke, terutama untuk facial/basic treatment dengan harga promo.",
+   "topic": "profil",
+   "claim_summary": "Verdict: an OK choice, especially for facials/basic treatment at promo prices.",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C16",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "saya tidak akan langsung menyebut semua cabangnya “pasti aman” atau selalu worth it, karena kualitas layanan tampaknya bisa berbeda antar cabang dan dokter.",
+   "topic": "keamanan_izin",
+   "claim_summary": "Not all branches can be called 'surely safe'; service quality seems to differ between branches and doctors.",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C17",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "topic": "cabang_lokasi",
+   "claim_summary": "Sozo claims to have many branches.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/tentang-kami/"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C18",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "topic": "dokter",
+   "claim_summary": "Sozo claims procedures are supervised by doctors.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/tentang-kami/"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C19",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "topic": "keamanan_izin",
+   "claim_summary": "Sozo claims to use certified equipment.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/tentang-kami/"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C20",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "topic": "keamanan_izin",
+   "claim_summary": "Sozo claims to use BPOM-registered products.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/tentang-kami/"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C21",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Beberapa cabang punya rating publik tinggi, misalnya Kelapa Gading sekitar 4,7/5 dari 222 ulasan, Tebet 4,8/5 dari 137 ulasan, dan Rawamangun 9,5/10 dari 57 ulasan Traveloka.",
+   "topic": "lainnya",
+   "claim_summary": "Branch ratings: Kelapa Gading 4.7/5 (222 reviews), Tebet 4.8/5 (137), Rawamangun 9.5/10 (57, Traveloka).",
+   "cited_source_urls": [
+    "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C22",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Beberapa cabang punya rating publik tinggi, misalnya Kelapa Gading sekitar 4,7/5 dari 222 ulasan, Tebet 4,8/5 dari 137 ulasan, dan Rawamangun 9,5/10 dari 57 ulasan Traveloka.",
+   "topic": "cabang_lokasi",
+   "claim_summary": "Sozo has branches in Kelapa Gading, Tebet and Rawamangun.",
+   "cited_source_urls": [
+    "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C23",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Banyak ulasan memuji keramahan dokter/terapis, kebersihan, dan harga yang relatif terjangkau.",
+   "topic": "lainnya",
+   "claim_summary": "Reviews praise friendly doctors/therapists, cleanliness and relatively affordable prices.",
+   "cited_source_urls": [
+    "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C24",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Ada ulasan mengenai antrean, miskomunikasi appointment, hasil treatment yang tidak sesuai harapan, serta promo atau harga yang kurang transparan.",
+   "topic": "lainnya",
+   "claim_summary": "Some reviews mention queues, appointment mix-ups, disappointing results and unclear promos/prices.",
+   "cited_source_urls": [
+    "https://caribisnis.id/klinik-kecantikan/jakarta-selatan/tebet/sozo-skin-clinic-tebet-timur-k-tebe-imp1"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C25",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Menurut saya, worth it kalau: - Tujuannya facial, cleansing, hidrasi, atau perawatan ringan.",
+   "topic": "profil",
+   "claim_summary": "Worth it for facials, cleansing, hydration or light treatments.",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C26",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Untuk facial/basic skincare, Sozo kemungkinan cukup layak dicoba, tetapi pilih cabang dan dokter dengan hati-hati.",
+   "topic": "profil",
+   "claim_summary": "Worth trying for facials/basic skincare; choose branch and doctor carefully.",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C27",
+   "n": 5,
+   "source": "chatgpt",
+   "quote": "Untuk jerawat berat, flek membandel, bopeng, pigmentasi, atau tindakan invasif, saya lebih menyarankan konsultasi ke dokter spesialis kulit dan kelamin (Sp.D.V.E.)",
+   "topic": "dokter",
+   "claim_summary": "For severe acne, stubborn spots, scars, pigmentation or invasive procedures, the answer prefers a Sp.D.V.E. dermatologist (implicitly instead of Sozo).",
+   "cited_source_urls": [],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C28",
+   "n": 10,
+   "source": "google",
+   "quote": "Harga treatment di SOZO Skin Clinic sangat bervariasi, mulai dari Rp100 ribuan hingga jutaan rupiah , tergantung jenis perawatan dan promo yang sedang berjalan.",
+   "topic": "harga",
+   "claim_summary": "Prices range from about Rp100 ribu to millions of rupiah.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.instagram.com/p/C3SVBbjvLV6/"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C29",
+   "n": 10,
+   "source": "google",
+   "quote": "Biolight Face / Hair: Rp194.000 – Rp199.000",
+   "topic": "harga",
+   "claim_summary": "Biolight Face/Hair Rp194.000–Rp199.000.",
+   "cited_source_urls": [
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C30",
+   "n": 10,
+   "source": "google",
+   "quote": "IPL Acne / IPL Glow: Rp199.000 – Rp314.000 (diskon dari ~Rp399.000)",
+   "topic": "harga",
+   "claim_summary": "IPL Acne/Glow Rp199.000–Rp314.000, discounted from about Rp399.000.",
+   "cited_source_urls": [
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C31",
+   "n": 10,
+   "source": "google",
+   "quote": "Radiofrequency Face: Rp314.000",
+   "topic": "harga",
+   "claim_summary": "Radiofrequency Face Rp314.000.",
+   "cited_source_urls": [
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C32",
+   "n": 10,
+   "source": "google",
+   "quote": "Sozo Signature Facial: Rp499.000 – Rp699.000",
+   "topic": "harga",
+   "claim_summary": "Sozo Signature Facial Rp499.000–Rp699.000.",
+   "cited_source_urls": [
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C33",
+   "n": 10,
+   "source": "google",
+   "quote": "Acne Laser Facial / Diamond Laser Facial: Rp899.000 – Rp1.499.000",
+   "topic": "harga",
+   "claim_summary": "Acne/Diamond Laser Facial Rp899.000–Rp1.499.000.",
+   "cited_source_urls": [
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C34",
+   "n": 10,
+   "source": "google",
+   "quote": "Underarm Hair Removal: Rp199.000",
+   "topic": "harga",
+   "claim_summary": "Underarm hair removal Rp199.000.",
+   "cited_source_urls": [
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C35",
+   "n": 10,
+   "source": "google",
+   "quote": "Brazilian V Hair Removal: Rp349.000",
+   "topic": "harga",
+   "claim_summary": "Brazilian V hair removal Rp349.000.",
+   "cited_source_urls": [
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C36",
+   "n": 10,
+   "source": "google",
+   "quote": "Melasma Skinbooster: Rp499.000",
+   "topic": "harga",
+   "claim_summary": "Melasma Skinbooster Rp499.000.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.instagram.com/reel/DdTyfs2zP6L/"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C37",
+   "n": 10,
+   "source": "google",
+   "quote": "DNA Glow / DNA Salmon: Rp1.499.000",
+   "topic": "harga",
+   "claim_summary": "DNA Glow / DNA Salmon Rp1.499.000.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.instagram.com/reel/DdTyfs2zP6L/"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C38",
+   "n": 10,
+   "source": "google",
+   "quote": "Glass Skin / Aqua Shine / Pink Bomb: Rp1.999.000 – Rp2.999.000",
+   "topic": "harga",
+   "claim_summary": "Glass Skin / Aqua Shine / Pink Bomb Rp1.999.000–Rp2.999.000.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.instagram.com/reel/DdTyfs2zP6L/"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C39",
+   "n": 10,
+   "source": "google",
+   "quote": "Botox Standard: Rp599.000 – Rp1.493.900 (tergantung unit/promo)",
+   "topic": "harga",
+   "claim_summary": "Botox Standard Rp599.000–Rp1.493.900.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C40",
+   "n": 10,
+   "source": "google",
+   "quote": "Botox Premium: Rp999.000",
+   "topic": "harga",
+   "claim_summary": "Botox Premium Rp999.000.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C41",
+   "n": 10,
+   "source": "google",
+   "quote": "Filler Korean: Rp2.849.000 – Rp2.999.000",
+   "topic": "harga",
+   "claim_summary": "Korean filler Rp2.849.000–Rp2.999.000.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C42",
+   "n": 10,
+   "source": "google",
+   "quote": "Filler Premium: Rp6.799.000 – Rp6.999.000",
+   "topic": "harga",
+   "claim_summary": "Premium filler Rp6.799.000–Rp6.999.000.",
+   "cited_source_urls": [
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial"
+   ],
+   "quote_match": "exact",
+   "note": "Citations are attached at the end of this group of bullet points in the AI Overview, not to each line."
+  },
+  {
+   "id": "C43",
+   "n": 10,
+   "source": "google",
+   "quote": "sering tersedia diskon atau paket promo khusus (seperti potongan harga atau voucher first timer)",
+   "topic": "harga",
+   "claim_summary": "Discounts and special promo packages are often available, e.g. a first-timer voucher.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C44",
+   "n": 10,
+   "source": "google",
+   "quote": "melalui platform seperti Traveloka, Tiket.com, Tokopedia , atau langsung di website resmi Sozo Skin Clinic.",
+   "topic": "harga",
+   "claim_summary": "Promos are available through Traveloka, Tiket.com and Tokopedia.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat"
+   ],
+   "quote_match": "exact"
+  },
+  {
+   "id": "C45",
+   "n": 10,
+   "source": "google",
+   "quote": "melalui platform seperti Traveloka, Tiket.com, Tokopedia , atau langsung di website resmi Sozo Skin Clinic.",
+   "topic": "harga",
+   "claim_summary": "Promos are available directly on Sozo's official website.",
+   "cited_source_urls": [
+    "https://sozoskinclinic.com/",
+    "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+    "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+    "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+    "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat"
+   ],
+   "quote_match": "exact"
+  }
+ ],
+ "own_site": {
+  "robots_txt_url": "https://sozoskinclinic.com/robots.txt",
+  "pages": [
+   {
+    "role": "home",
+    "load": "own_home",
+    "branch_count": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "70+ Lokasi Klinik Kecantikan",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "30+ Kota di Indonesia",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "60+ cabang di Jakarta, Bogor, Depok, Tangerang, Bekasi, Medan, dan Semarang.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Saat ini Sozo Skin Clinic memiliki 60 cabang yang tersebar di berbagai kota besar di Indonesia, dan akan terus bertambah.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "dengan 78 cabang yang tersebar di Jabodetabek, Jawa, Sumatera, Bali, Kalimantan, dan Sulawesi",
+      "where": "JSON-LD",
+      "match": "exact"
+     }
+    ],
+    "cities": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Tersebar di seluruh kota besar di Indonesia.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "hingga ke luar Pulau Jawa seperti klinik kecantikan medan dan klinik kecantikan makassar",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Jakarta Selatan: Arteri Pondok Indah, Mampang, Kemang, Tebet, Tebet Timur",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Jakarta Utara: Kelapa Gading Boulevard, PIK",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Jakarta Timur: Jakarta Garden City (JGC), Pondok Bambu, Rawamangun",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Jakarta Barat: Mangga Besar, Puri Indah, Tanjung Duren, Tanjung Duren 2",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Sumatera Utara: Medan, Medan Cemara Asri",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Sulawesi Selatan: Makassar",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "prices": [
+     {
+      "treatment": "special prices (unspecified treatments)",
+      "url": "https://sozoskinclinic.com/",
+      "quote": "harga khusus mulai dari Rp199.000 di lebih dari 40 cabang di kota-kota besar, dan diskon khusus untuk reservasi pertama kali.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "reservation discount",
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Reservasi sekarang, diskon 100rb!",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "doctor consultation",
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Konsultasi Dokter Gratis",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "positioning",
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Perawatan premium dengan harga terjangkau.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "doctors": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "dr. [nama], Sp.D.V.E",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "dr. [nama], M.Biomed",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "dr. [nama], Sp.D.V.E",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "registration_numbers": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "opening_hours": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Senin – Sabtu 09:00 – 19:00 WIB Minggu 09:00 – 17:00 WIB",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Jam operasional dapat berubah pada hari libur nasional.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "address": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Head Office Jl. Bintaro Raya No.15, Kota Jakarta Selatan, DKI Jakarta 12240",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "other": [
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Standar kualitas layanan dan kelengkapan treatment ini berlaku sama di seluruh cabang kami di Indonesia",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Sozo Skin Clinic menyediakan promo dan diskon menarik untuk perawatan kulit dan wajah.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Mau perawatan hemat tapi efektif?",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Teknologi Laser & Penghilang Bulu",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Apa itu Sozo Skin Clinic?",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Sozo Skin Clinic – PT. Pohon Biru Jaya – Seven Retail Group",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "jsonld": {
+     "present": true,
+     "script_blocks": 1,
+     "types": [
+      "ContactPoint",
+      "Country",
+      "ImageObject",
+      "Organization",
+      "WebPage",
+      "WebSite"
+     ],
+     "organization_name": "Sozo Skin Clinic",
+     "organization_alternateName": "Sozo Clinic",
+     "address_stated": false,
+     "foundingDate": "2022",
+     "description_quote": {
+      "url": "https://sozoskinclinic.com/",
+      "quote": "Sozo Skin Clinic adalah jaringan klinik kecantikan premium di Indonesia dengan 78 cabang",
+      "where": "JSON-LD",
+      "match": "exact"
+     },
+     "note": "No address, PostalAddress or LocalBusiness/MedicalClinic node; ContactPoint holds a phone and email (values not copied)."
+    },
+    "notes": [
+     "The home page counters for Dokter / Pasien / Cabang read '0 +' in the HTML; their numbers are filled in by script and could not be read."
+    ],
+    "url": "https://sozoskinclinic.com/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:40:05Z",
+    "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+    "metadata_modified_time": "2026-10-01T08:14:20+00:00"
+   },
+   {
+    "role": "branches",
+    "load": "own_lokasi",
+    "branch_count": [
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "80+ cabang tersebar di seluruh Indonesia, siap memberikan perawatan kulit terbaik untukmu",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "branch_entries_counted_in_html": 81,
+    "cities": [
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Jakarta Tangerang Depok Bogor Bekasi Bandung Surabaya Semarang Jogja Malang Medan Makassar",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "branches_named_in_answers_or_their_sources": [
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Kelapa Gading Boulevard",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Kelapa Gading Summarecon",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Tebet Timur",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Rawamangun",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Kemang",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Pondok Bambu",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Puri Indah",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "AEON Tanjung Barat",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Medan Cemara Asri",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Makassar Tamalanrea",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "address": [
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "AEON Tanjung Barat (3-23AB) - Jl. Raya Tanjung Barat No. 163",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "opening_hours": [
+     {
+      "url": "https://sozoskinclinic.com/lokasi/",
+      "quote": "Senin – Sabtu 09:00 – 19:00 WIB Minggu 09:00 – 17:00 WIB",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "81 branch entries (one 'BUAT JADWAL' button each) are in the page HTML; each lists an address. Branch-level opening hours are not shown; only the site-wide footer hours."
+    ],
+    "url": "https://sozoskinclinic.com/lokasi/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:41:55Z",
+    "title": "Lokasi Sozo Skin Clinic Treatment Kecantikan Terdekat",
+    "metadata_modified_time": "2026-11-06T03:37:14+00:00",
+    "doctors": [],
+    "registration_numbers": [],
+    "prices": []
+   },
+   {
+    "role": "prices_promos",
+    "load": "own_promo",
+    "prices": [
+     {
+      "treatment": "payment promo",
+      "url": "https://sozoskinclinic.com/promo/",
+      "quote": "Diskon treatment wajah, tubuh, dan rambut — plus cicilan 0% dan cashback hingga Rp500.000 untuk booking bulan ini.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "terms",
+      "url": "https://sozoskinclinic.com/promo/",
+      "quote": "Harga belum termasuk service charge 5% (maks. Rp150.000).",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "terms",
+      "url": "https://sozoskinclinic.com/promo/",
+      "quote": "Promo tersedia hanya di outlet tertentu.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "The individual promo offers are images; their alt text is generic and holds no price.",
+     {
+      "url": "https://sozoskinclinic.com/promo/",
+      "quote": "Promo Skin Treatment pilihan 1",
+      "where": "image alt text",
+      "match": "exact"
+     }
+    ],
+    "url": "https://sozoskinclinic.com/promo/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:41:58Z",
+    "title": "Promo Klinik Kecantikan SOZO Bulan Ini - Cicilan 0%",
+    "metadata_modified_time": "2026-08-12T06:31:02+00:00",
+    "doctors": [],
+    "registration_numbers": [],
+    "opening_hours": [],
+    "address": [],
+    "branch_count": [],
+    "cities": []
+   },
+   {
+    "role": "prices_full_list",
+    "load": "own_treatment",
+    "prices": [
+     {
+      "treatment": "Mini Facial",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Mini Facial 30 Menit Rp 149.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Pico Laser",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Pico Laser 45 Menit Rp 1.199.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Biolight Hair",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Biolight Hair 70 Menit Mulai Rp 199.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "IPL Acne",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "IPL Acne 30 Menit Rp 299.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "IPL Glow",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "IPL Glow 30 Menit Rp 299.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "RF Wajah",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "RF Wajah 45 Menit Konsultasikan",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Sozo Signature Facial",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Sozo Signature Facial 60 Menit Rp 699.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Diamond Laser Facial",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Diamond Laser Facial 60 Menit Rp 1.499.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Acne Laser Facial",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Acne Laser Facial 60 Menit Rp 1.499.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Underarm Removal Treatment",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Underarm Removal Treatment 20 Menit Mulai Rp 249.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Brazilian Hair Removal",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Brazilian Hair Removal 45 Menit Mulai Rp 1.199.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Laser Hair Removal",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Laser Hair Removal 30 Menit Mulai Rp 799.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "DNA Glow (DNA Salmon)",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "DNA Glow (DNA Salmon) 75 Menit Rp 1.599.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Glass Skin Booster",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Glass Skin Booster 75 Menit Rp 2.099.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Aqua Shine Skinbooster",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Aqua Shine Skinbooster 60 Menit Rp 2.599.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Sozo Pink Bomb",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Sozo Pink Bomb 60 Menit Rp 3.099.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Zo-Tox / Botox Standar 10u",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Zo-Tox / Botox Standar 10u 50 Menit Konsultasikan",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Zo-Tox / Botox Premium 10u",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Zo-Tox / Botox Premium 10u 50 Menit Konsultasikan",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Korean Filler",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Korean Filler 75 Menit Konsultasikan",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "Juvelook",
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Juvelook 75 Menit Rp 11.198.000",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "other": [
+     {
+      "url": "https://sozoskinclinic.com/treatment/",
+      "quote": "Menampilkan 1–12 dari 90 treatment",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "This is the site's 'Lihat Semua Treatment' page; all 90 treatment cards are in the HTML. Botox, filler and RF Wajah show 'Konsultasikan' instead of a price. No treatment named 'Melasma Skinbooster' or 'Biolight Face' is listed."
+    ],
+    "url": "https://sozoskinclinic.com/treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:44:55Z",
+    "title": "Semua Beauty Treatment Sozo Skin Clinic - Lengkap & Terpercaya",
+    "metadata_modified_time": "2026-11-06T04:33:07+00:00",
+    "doctors": [],
+    "registration_numbers": [],
+    "opening_hours": [],
+    "address": [],
+    "branch_count": [],
+    "cities": []
+   },
+   {
+    "role": "doctors",
+    "load": "own_dokter",
+    "doctors": [
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "dr. [nama], Sp.D.V.E",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "dr. [nama], M.Biomed (AAM)",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "dr. [nama], Sp.D.V.E",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "dr. Putri Rizkya",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "dr. Syerli Rahmadeni",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "registration_numbers": [
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+      "quote": "STR: [nomor]",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "STR numbers only; no SIP number is shown on any loaded Sozo page. One STR is partly masked on the site itself. No branch or schedule is given per doctor."
+    ],
+    "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:01Z",
+    "title": "Tim Dokter Spesialis Kulit & Estetika Terbaik",
+    "metadata_modified_time": "2026-10-09T07:11:32+00:00",
+    "opening_hours": [],
+    "address": [],
+    "prices": [],
+    "branch_count": [],
+    "cities": []
+   },
+   {
+    "role": "about",
+    "load": "own_tentang",
+    "branch_count": [
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Klinik kecantikan medis terbaik & tepercaya dengan 75+ lokasi di Indonesia.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "75+ Lokasi beroperasi di Indonesia",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Tentang Kami - Sozo Skin Clinic | 75+ Cabang di Indonesia",
+      "where": "title",
+      "match": "exact"
+     }
+    ],
+    "cities": [
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "termasuk area Jabodetabek, Medan, dan Semarang.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "doctors": [
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "dilakukan langsung oleh dokter estetika serta dokter spesialis kulit (Sp.DVE) berlisensi resmi.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "other": [
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "telah disertifikasi oleh standar keamanan internasional (US-FDA / CE Approved).",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Didukung oleh produk berbahan aktif bersertifikasi BPOM",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "prosedur dilakukan di bawah pengawasan dokter",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "produk berbahan aktif yang telah terdaftar resmi di BPOM.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Seluruh 75+ lokasi Sozo Skin Clinic yang tersebar di Indonesia menerapkan standar protokol klinis, kualitas produk, kecanggihan teknologi, dan transparansi harga yang sepenuhnya seragam",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Sebagian besar pasien bisa langsung kembali beraktivitas normal setelah perawatan selesai.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "To deliver medically-grounded skin and body treatments with genuine warmth",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "opening_hours": [
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Senin – Sabtu 09:00 – 19:00 WIB Minggu 09:00 – 17:00 WIB",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "address": [
+     {
+      "url": "https://sozoskinclinic.com/tentang-kami/",
+      "quote": "Jl. Bintaro Raya No.15, Kota Jakarta Selatan, DKI Jakarta 12240",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "url": "https://sozoskinclinic.com/tentang-kami/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:04Z",
+    "title": "Tentang Kami - Sozo Skin Clinic | 75+ Cabang di Indonesia",
+    "metadata_modified_time": "2026-10-09T04:33:25+00:00",
+    "registration_numbers": [],
+    "prices": []
+   },
+   {
+    "role": "treatment_flek_pigmentasi",
+    "load": "own_laser",
+    "prices": [
+     {
+      "treatment": "Pico Laser",
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "Pico Laser Menggunakan teknologi picosecond, efektif mengatasi pigmentasi, meratakan warna kulit, melasma, atau tanda lahir. Baca selengkapnya Mulai dari Rp 1.199.000",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "laser wajah (general)",
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "Perawatan laser wajah di SOZO mulai dari Rp 499.000 saja per titik.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "treatment": "discount",
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "Kami juga menawarkan potongan diskon Rp 100.000 dan metode cicilan bunga 0%.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "branch_count": [
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "mulai Rp499rb, ditangani dokter di 60+ cabang.",
+      "where": "meta description",
+      "match": "exact"
+     }
+    ],
+    "doctors": [
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "Dilakukan langsung oleh dokter profesional.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "other": [
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "kemerahan ringan sekitar 1-3 hari",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+      "quote": "Berapa biaya perawatan laser wajah di SOZO?",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "No doctor is named and no SIP/STR is shown on this page."
+    ],
+    "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:07Z",
+    "title": "Laser Wajah & Laser Treatment Lengkap | Sozo",
+    "metadata_modified_time": "2026-07-30T06:37:37+00:00",
+    "registration_numbers": [],
+    "opening_hours": [],
+    "address": [],
+    "cities": []
+   },
+   {
+    "role": "treatment_bekas_jerawat",
+    "load": "own_scar",
+    "prices": [
+     {
+      "treatment": "all scar treatments",
+      "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+      "quote": "Info Lengkap Harga Hubungi Admin",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "cities": [
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+      "quote": "Klinik kami tersebar di berbagai wilayah Jabodetabek (Jakarta, Bogor, Depok, Tangerang, dan Bekasi).",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "doctors": [
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+      "quote": "ditangani langsung oleh terapis serta Dokter Kecantikan profesional",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "other": [
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+      "quote": "Proses & Cara Kerja Scar Treatment",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+      "quote": "Proses pemulihan atau downtime berbeda untuk setiap perawatan.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+      "quote": "Jenis bekas luka apa saja yang bisa dihilangkan di Sozo Skin Clinic?",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "No price, no named doctor and no SIP/STR on this page."
+    ],
+    "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:10Z",
+    "title": "Scar Treatment untuk Atasi Bopeng | Sozo",
+    "metadata_modified_time": "2026-07-24T08:50:03+00:00",
+    "registration_numbers": [],
+    "opening_hours": [],
+    "address": [],
+    "branch_count": []
+   },
+   {
+    "role": "treatment_filler_botox",
+    "load": "own_filler",
+    "prices": [
+     {
+      "treatment": "Korean Filler",
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Korean Filler Mulai dari Rp3.799.000",
+      "where": "visible text",
+      "match": "exact_ignoring_whitespace_between_page_elements"
+     },
+     {
+      "treatment": "Premium Filler",
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Premium Filler Mulai dari Rp6.999.000",
+      "where": "visible text",
+      "match": "exact_ignoring_whitespace_between_page_elements"
+     },
+     {
+      "treatment": "Filler Dagu",
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Filler Dagu Mulai dari Rp6.394.000",
+      "where": "visible text",
+      "match": "exact_ignoring_whitespace_between_page_elements"
+     }
+    ],
+    "cities": [
+     {
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Jakarta Tangerang Tangerang Selatan Bekasi Depok Bogor Bandung Surabaya Semarang Medan",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "doctors": [
+     {
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Seluruh tindakan filler dilakukan langsung oleh dokter tersertifikasi yang berpengalaman di bidang estetika medis.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "other": [
+     {
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Siapa yang melakukan tindakan filler di Sozo Skin Clinic?",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Selesai: Anda bisa langsung kembali beraktivitas di hari yang sama.",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+      "quote": "Untuk info harga dan promo terbaru, hubungi tim Sozo lewat tombol Buat Jadwal.",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ],
+    "notes": [
+     "The filler page shows 'Mulai dari' prices while the site's full treatment list shows 'Konsultasikan' for the same fillers. No doctor is named."
+    ],
+    "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:13Z",
+    "title": "Filler Treatment - Pilihan Filler Dagu, Hidung & Bibir",
+    "metadata_modified_time": "2026-11-02T07:27:20+00:00",
+    "registration_numbers": [],
+    "opening_hours": [],
+    "address": [],
+    "branch_count": []
+   }
+  ],
+  "branch_count_statements": [
+   {
+    "stated": "60 cabang",
+    "url": "https://sozoskinclinic.com/",
+    "quote": "Saat ini Sozo Skin Clinic memiliki 60 cabang",
+    "where": "visible text",
+    "match": "exact"
+   },
+   {
+    "stated": "60+ cabang",
+    "url": "https://sozoskinclinic.com/",
+    "quote": "60+ cabang di Jakarta, Bogor, Depok, Tangerang, Bekasi, Medan, dan Semarang.",
+    "where": "visible text",
+    "match": "exact"
+   },
+   {
+    "stated": "60+ cabang",
+    "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+    "quote": "ditangani dokter di 60+ cabang.",
+    "where": "meta description",
+    "match": "exact"
+   },
+   {
+    "stated": "70+ lokasi",
+    "url": "https://sozoskinclinic.com/",
+    "quote": "70+ Lokasi Klinik Kecantikan",
+    "where": "visible text",
+    "match": "exact"
+   },
+   {
+    "stated": "75+ lokasi",
+    "url": "https://sozoskinclinic.com/tentang-kami/",
+    "quote": "75+ Lokasi beroperasi di Indonesia",
+    "where": "visible text",
+    "match": "exact"
+   },
+   {
+    "stated": "78 cabang",
+    "url": "https://sozoskinclinic.com/",
+    "quote": "dengan 78 cabang yang tersebar",
+    "where": "JSON-LD",
+    "match": "exact"
+   },
+   {
+    "stated": "80+ cabang",
+    "url": "https://sozoskinclinic.com/lokasi/",
+    "quote": "80+ cabang tersebar di seluruh Indonesia",
+    "where": "visible text",
+    "match": "exact"
+   },
+   {
+    "stated": "40+ cabang (where the Rp199.000 special price applies)",
+    "url": "https://sozoskinclinic.com/",
+    "quote": "di lebih dari 40 cabang di kota-kota besar",
+    "where": "visible text",
+    "match": "exact"
+   }
+  ]
+ },
+ "claim_checks": [
+  {
+   "claim_id": "C01",
+   "n": 1,
+   "topic": "layanan",
+   "claim_quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "claim_summary": "Sozo offers Pico Laser for dark spots (flek).",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+     "quote": "Menggunakan teknologi picosecond, efektif mengatasi pigmentasi, meratakan warna kulit, melasma, atau tanda lahir.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Pico Laser 45 Menit Rp 1.199.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C02",
+   "n": 1,
+   "topic": "harga",
+   "claim_quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "claim_summary": "Pico Laser new-customer promo about Rp499 ribu.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Pico Laser 45 Menit Rp 1.199.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+     "quote": "Perawatan laser wajah di SOZO mulai dari Rp 499.000 saja per titik.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "No page loaded mentions a new-customer promo price for Pico Laser. The site lists Pico Laser at Rp 1.199.000 and says facial laser starts at Rp 499.000 'per titik'. Promo offers are images, so their prices could not be read."
+  },
+  {
+   "claim_id": "C03",
+   "n": 1,
+   "topic": "harga",
+   "claim_quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "claim_summary": "Pico Laser normal price about Rp1,199 juta.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Pico Laser 45 Menit Rp 1.199.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C04",
+   "n": 1,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Sozo Skin | Pico Laser | promo pelanggan baru sekitar Rp499 ribu, harga normal sekitar Rp1,199 juta—cek cabang Jakarta dan promo aktif",
+   "claim_summary": "Sozo has branches in Jakarta.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Jakarta Selatan: Arteri Pondok Indah, Mampang, Kemang, Tebet, Tebet Timur",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The branches page lists 21 entries under DKI Jakarta."
+  },
+  {
+   "claim_id": "C05",
+   "n": 1,
+   "topic": "harga",
+   "claim_quote": "Kalau cari yang cukup terpercaya dan masih relatif terjangkau di Jakarta, saya akan shortlist seperti ini:",
+   "claim_summary": "Positioning: Sozo is in a shortlist of 'fairly trusted and relatively affordable' clinics.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Perawatan premium dengan harga terjangkau.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "Klinik kecantikan medis terbaik & tepercaya dengan 75+ lokasi di Indonesia.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site positions itself as affordable and trusted; the answer's wording covers the whole shortlist."
+  },
+  {
+   "claim_id": "C06",
+   "n": 4,
+   "topic": "harga",
+   "claim_quote": "Kalau kriterianya cabang banyak + relatif terjangkau, beberapa pilihan yang bisa dipertimbangkan di Indonesia:",
+   "claim_summary": "Positioning: Sozo is listed among clinics with 'many branches + relatively affordable'.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Perawatan premium dengan harga terjangkau.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "75+ Lokasi beroperasi di Indonesia",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site presents itself as affordable with many locations; the answer's wording covers the whole table."
+  },
+  {
+   "claim_id": "C07",
+   "n": 4,
+   "topic": "harga",
+   "claim_quote": "SOZO Skin Clinic | Mulai sekitar Rp199 ribuan untuk promo/treatment tertentu",
+   "claim_summary": "Prices start around Rp199 ribu for some promos/treatments.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "harga khusus mulai dari Rp199.000 di lebih dari 40 cabang di kota-kota besar",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C08",
+   "n": 4,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo.",
+   "claim_summary": "More than 70 branches, according to its website.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "70+ Lokasi Klinik Kecantikan",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site gives several different counts: 60, 60+, 70+, 75+, 78 and 80+ (see own_site.branch_count_statements). All but the '60' and '60+' statements fit 'more than 70'. The answer cites a different domain (sozoskinclinic.cloudindo.co.id) for this, which could not be loaded."
+  },
+  {
+   "claim_id": "C09",
+   "n": 4,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo.",
+   "claim_summary": "Branches include locations outside Java.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "hingga ke luar Pulau Jawa seperti klinik kecantikan medan dan klinik kecantikan makassar",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C10",
+   "n": 4,
+   "topic": "harga",
+   "claim_quote": "Cabang cukup luas, lebih dari 70 cabang menurut situsnya, termasuk di luar Jawa; sering menawarkan promo.",
+   "claim_summary": "Positioning: often offers promos.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Sozo Skin Clinic menyediakan promo dan diskon menarik untuk perawatan kulit dan wajah.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/promo/",
+     "quote": "Promo Klinik Kecantikan SOZO Bulan Ini - Cicilan 0%",
+     "where": "title",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C11",
+   "n": 4,
+   "topic": "harga",
+   "claim_quote": "Facial atau perawatan dasar: coba bandingkan Naavagreen, Larissa, SuperSkin, atau SOZO.",
+   "claim_summary": "Positioning: Sozo is one of the cheapest options for facials/basic care (under the heading 'Kalau ingin yang paling hemat').",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Mau perawatan hemat tapi efektif?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Mini Facial 30 Menit Rp 149.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site presents itself as economical; whether it is among the cheapest compared with other clinics cannot be checked on Sozo's site."
+  },
+  {
+   "claim_id": "C12",
+   "n": 4,
+   "topic": "layanan",
+   "claim_quote": "Laser atau hair removal: biasanya ZAP dan SOZO lebih mudah ditemukan di kota-kota besar.",
+   "claim_summary": "Sozo offers laser and hair removal.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Teknologi Laser & Penghilang Bulu",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Laser Hair Removal 30 Menit Mulai Rp 799.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C13",
+   "n": 4,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Laser atau hair removal: biasanya ZAP dan SOZO lebih mudah ditemukan di kota-kota besar.",
+   "claim_summary": "Sozo is easy to find in big cities.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Tersebar di seluruh kota besar di Indonesia.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C14",
+   "n": 4,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Di luar Pulau Jawa: SOZO bisa menjadi salah satu pilihan yang lebih mudah dicari karena jaringannya mencakup Medan, Makassar, dan kota besar lainnya.",
+   "claim_summary": "Network covers Medan, Makassar and other big cities outside Java.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "hingga ke luar Pulau Jawa seperti klinik kecantikan medan dan klinik kecantikan makassar",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/lokasi/",
+     "quote": "Makassar Tamalanrea",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The branches page lists 3 entries under Sumatera Utara (Medan) and 2 under Sulawesi Selatan (Makassar)."
+  },
+  {
+   "claim_id": "C15",
+   "n": 5,
+   "topic": "profil",
+   "claim_quote": "Sozo Skin Clinic bisa jadi pilihan yang cukup oke, terutama untuk facial/basic treatment dengan harga promo.",
+   "claim_summary": "Verdict: an OK choice, especially for facials/basic treatment at promo prices.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "This is the answer's opinion. For context, the site lists 90 treatments, from facials to lasers, injectables and scar treatments."
+  },
+  {
+   "claim_id": "C16",
+   "n": 5,
+   "topic": "keamanan_izin",
+   "claim_quote": "saya tidak akan langsung menyebut semua cabangnya “pasti aman” atau selalu worth it, karena kualitas layanan tampaknya bisa berbeda antar cabang dan dokter.",
+   "claim_summary": "Not all branches can be called 'surely safe'; service quality seems to differ between branches and doctors.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "Seluruh 75+ lokasi Sozo Skin Clinic yang tersebar di Indonesia menerapkan standar protokol klinis, kualitas produk, kecanggihan teknologi, dan transparansi harga yang sepenuhnya seragam",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "Standar kualitas layanan dan kelengkapan treatment ini berlaku sama di seluruh cabang kami di Indonesia",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The answer is hedged ('tampaknya'); the site states the opposite (uniform standards at all branches). Nothing here says which is true."
+  },
+  {
+   "claim_id": "C17",
+   "n": 5,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "claim_summary": "Sozo claims to have many branches.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "75+ Lokasi beroperasi di Indonesia",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C18",
+   "n": 5,
+   "topic": "dokter",
+   "claim_quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "claim_summary": "Sozo claims procedures are supervised by doctors.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "prosedur dilakukan di bawah pengawasan dokter",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C19",
+   "n": 5,
+   "topic": "keamanan_izin",
+   "claim_quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "claim_summary": "Sozo claims to use certified equipment.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "telah disertifikasi oleh standar keamanan internasional (US-FDA / CE Approved).",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C20",
+   "n": 5,
+   "topic": "keamanan_izin",
+   "claim_quote": "Sozo mengklaim memiliki banyak cabang dan prosedur di bawah pengawasan dokter, memakai alat bersertifikasi serta produk yang terdaftar BPOM",
+   "claim_summary": "Sozo claims to use BPOM-registered products.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "produk berbahan aktif yang telah terdaftar resmi di BPOM.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C21",
+   "n": 5,
+   "topic": "lainnya",
+   "claim_quote": "Beberapa cabang punya rating publik tinggi, misalnya Kelapa Gading sekitar 4,7/5 dari 222 ulasan, Tebet 4,8/5 dari 137 ulasan, dan Rawamangun 9,5/10 dari 57 ulasan Traveloka.",
+   "claim_summary": "Branch ratings: Kelapa Gading 4.7/5 (222 reviews), Tebet 4.8/5 (137), Rawamangun 9.5/10 (57, Traveloka).",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "No rating or review count appears on the Sozo pages loaded. The cited CariBisnis page shows '4.7' and '222 ulasan' for 'Sozo Skin Clinic - Kelapa Gading 2'."
+  },
+  {
+   "claim_id": "C22",
+   "n": 5,
+   "topic": "cabang_lokasi",
+   "claim_quote": "Beberapa cabang punya rating publik tinggi, misalnya Kelapa Gading sekitar 4,7/5 dari 222 ulasan, Tebet 4,8/5 dari 137 ulasan, dan Rawamangun 9,5/10 dari 57 ulasan Traveloka.",
+   "claim_summary": "Sozo has branches in Kelapa Gading, Tebet and Rawamangun.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/lokasi/",
+     "quote": "Kelapa Gading Boulevard",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/lokasi/",
+     "quote": "Tebet Timur",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/lokasi/",
+     "quote": "Rawamangun",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The branches page also lists 'Kelapa Gading Summarecon' and 'Tebet'."
+  },
+  {
+   "claim_id": "C23",
+   "n": 5,
+   "topic": "lainnya",
+   "claim_quote": "Banyak ulasan memuji keramahan dokter/terapis, kebersihan, dan harga yang relatif terjangkau.",
+   "claim_summary": "Reviews praise friendly doctors/therapists, cleanliness and relatively affordable prices.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "Review content is not on the Sozo pages loaded (the site's /testimoni/ page was not loaded)."
+  },
+  {
+   "claim_id": "C24",
+   "n": 5,
+   "topic": "lainnya",
+   "claim_quote": "Ada ulasan mengenai antrean, miskomunikasi appointment, hasil treatment yang tidak sesuai harapan, serta promo atau harga yang kurang transparan.",
+   "claim_summary": "Some reviews mention queues, appointment mix-ups, disappointing results and unclear promos/prices.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "transparansi harga yang sepenuhnya seragam",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "Review content cannot be checked on the site. For context only, the site claims uniform price transparency."
+  },
+  {
+   "claim_id": "C25",
+   "n": 5,
+   "topic": "profil",
+   "claim_quote": "Menurut saya, worth it kalau: - Tujuannya facial, cleansing, hidrasi, atau perawatan ringan.",
+   "claim_summary": "Worth it for facials, cleansing, hydration or light treatments.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "This is the answer's opinion."
+  },
+  {
+   "claim_id": "C26",
+   "n": 5,
+   "topic": "profil",
+   "claim_quote": "Untuk facial/basic skincare, Sozo kemungkinan cukup layak dicoba, tetapi pilih cabang dan dokter dengan hati-hati.",
+   "claim_summary": "Worth trying for facials/basic skincare; choose branch and doctor carefully.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "This is the answer's opinion."
+  },
+  {
+   "claim_id": "C27",
+   "n": 5,
+   "topic": "dokter",
+   "claim_quote": "Untuk jerawat berat, flek membandel, bopeng, pigmentasi, atau tindakan invasif, saya lebih menyarankan konsultasi ke dokter spesialis kulit dan kelamin (Sp.D.V.E.)",
+   "claim_summary": "For severe acne, stubborn spots, scars, pigmentation or invasive procedures, the answer prefers a Sp.D.V.E. dermatologist (implicitly instead of Sozo).",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+     "quote": "dr. [nama], Sp.D.V.E",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+     "quote": "dr. [nama], Sp.D.V.E",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/tentang-kami/",
+     "quote": "dilakukan langsung oleh dokter estetika serta dokter spesialis kulit (Sp.DVE) berlisensi resmi.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "This is a recommendation, not a statement of fact about Sozo. For context, the site names two Sp.D.V.E doctors with STR numbers."
+  },
+  {
+   "claim_id": "C28",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Harga treatment di SOZO Skin Clinic sangat bervariasi, mulai dari Rp100 ribuan hingga jutaan rupiah , tergantung jenis perawatan dan promo yang sedang berjalan.",
+   "claim_summary": "Prices range from about Rp100 ribu to millions of rupiah.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Mini Facial 30 Menit Rp 149.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Juvelook 75 Menit Rp 11.198.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "Here 'Rp100 ribuan' is read as Rp100.000–Rp199.999. The lowest list price is Rp 149.000 and the highest is Rp 11.198.000."
+  },
+  {
+   "claim_id": "C29",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Biolight Face / Hair: Rp194.000 – Rp199.000",
+   "claim_summary": "Biolight Face/Hair Rp194.000–Rp199.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Biolight Hair 70 Menit Mulai Rp 199.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site's Biolight Hair price equals the top of the answer's range. 'Biolight Face' is not on the site's list, and Rp194.000 is not stated."
+  },
+  {
+   "claim_id": "C30",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "IPL Acne / IPL Glow: Rp199.000 – Rp314.000 (diskon dari ~Rp399.000)",
+   "claim_summary": "IPL Acne/Glow Rp199.000–Rp314.000, discounted from about Rp399.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "IPL Acne 30 Menit Rp 299.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "IPL Glow 30 Menit Rp 299.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site's Rp 299.000 falls inside the answer's range. The site states no Rp399.000 normal price for IPL."
+  },
+  {
+   "claim_id": "C31",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Radiofrequency Face: Rp314.000",
+   "claim_summary": "Radiofrequency Face Rp314.000.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "RF Wajah 45 Menit Konsultasikan",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site lists RF Wajah without a price."
+  },
+  {
+   "claim_id": "C32",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Sozo Signature Facial: Rp499.000 – Rp699.000",
+   "claim_summary": "Sozo Signature Facial Rp499.000–Rp699.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Sozo Signature Facial 60 Menit Rp 699.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site price equals the top of the answer's range."
+  },
+  {
+   "claim_id": "C33",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Acne Laser Facial / Diamond Laser Facial: Rp899.000 – Rp1.499.000",
+   "claim_summary": "Acne/Diamond Laser Facial Rp899.000–Rp1.499.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Diamond Laser Facial 60 Menit Rp 1.499.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Acne Laser Facial 60 Menit Rp 1.499.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site price equals the top of the answer's range. The site's Acne section also lists 'Acne Laser Facial' (75 Menit) with 'Konsultasikan'."
+  },
+  {
+   "claim_id": "C34",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Underarm Hair Removal: Rp199.000",
+   "claim_summary": "Underarm hair removal Rp199.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Underarm Removal Treatment 20 Menit Mulai Rp 249.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C35",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Brazilian V Hair Removal: Rp349.000",
+   "claim_summary": "Brazilian V hair removal Rp349.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Brazilian Hair Removal 45 Menit Mulai Rp 1.199.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C36",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Melasma Skinbooster: Rp499.000",
+   "claim_summary": "Melasma Skinbooster Rp499.000.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "No treatment named 'Melasma Skinbooster' appears on the site's 90-treatment list or the other pages loaded."
+  },
+  {
+   "claim_id": "C37",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "DNA Glow / DNA Salmon: Rp1.499.000",
+   "claim_summary": "DNA Glow / DNA Salmon Rp1.499.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "DNA Glow (DNA Salmon) 75 Menit Rp 1.599.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C38",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Glass Skin / Aqua Shine / Pink Bomb: Rp1.999.000 – Rp2.999.000",
+   "claim_summary": "Glass Skin / Aqua Shine / Pink Bomb Rp1.999.000–Rp2.999.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Glass Skin Booster 75 Menit Rp 2.099.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Aqua Shine Skinbooster 60 Menit Rp 2.599.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Sozo Pink Bomb 60 Menit Rp 3.099.000",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "Glass Skin and Aqua Shine fall inside the answer's range; Pink Bomb is above it."
+  },
+  {
+   "claim_id": "C39",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Botox Standard: Rp599.000 – Rp1.493.900 (tergantung unit/promo)",
+   "claim_summary": "Botox Standard Rp599.000–Rp1.493.900.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Zo-Tox / Botox Standar 10u 50 Menit Konsultasikan",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site lists it without a price."
+  },
+  {
+   "claim_id": "C40",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Botox Premium: Rp999.000",
+   "claim_summary": "Botox Premium Rp999.000.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/treatment/",
+     "quote": "Zo-Tox / Botox Premium 10u 50 Menit Konsultasikan",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "note": "The site lists it without a price."
+  },
+  {
+   "claim_id": "C41",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Filler Korean: Rp2.849.000 – Rp2.999.000",
+   "claim_summary": "Korean filler Rp2.849.000–Rp2.999.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+     "quote": "Korean Filler Mulai dari Rp3.799.000",
+     "where": "visible text",
+     "match": "exact_ignoring_whitespace_between_page_elements"
+    }
+   ],
+   "note": "The site's full treatment list shows 'Konsultasikan' for Korean Filler."
+  },
+  {
+   "claim_id": "C42",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "Filler Premium: Rp6.799.000 – Rp6.999.000",
+   "claim_summary": "Premium filler Rp6.799.000–Rp6.999.000.",
+   "verdict": "berbeda",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+     "quote": "Premium Filler Mulai dari Rp6.999.000",
+     "where": "visible text",
+     "match": "exact_ignoring_whitespace_between_page_elements"
+    }
+   ],
+   "note": "The top of the answer's range equals the site's starting price; the bottom (Rp6.799.000) is lower."
+  },
+  {
+   "claim_id": "C43",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "sering tersedia diskon atau paket promo khusus (seperti potongan harga atau voucher first timer)",
+   "claim_summary": "Discounts and special promo packages are often available, e.g. a first-timer voucher.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/",
+     "quote": "diskon khusus untuk reservasi pertama kali.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  },
+  {
+   "claim_id": "C44",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "melalui platform seperti Traveloka, Tiket.com, Tokopedia , atau langsung di website resmi Sozo Skin Clinic.",
+   "claim_summary": "Promos are available through Traveloka, Tiket.com and Tokopedia.",
+   "verdict": "tidak_bisa_dicek",
+   "site_reference": [],
+   "note": "None of the Sozo pages loaded mentions Traveloka, Tiket.com or Tokopedia. The answer cites Sozo listings on those platforms, but they were blocked or timed out."
+  },
+  {
+   "claim_id": "C45",
+   "n": 10,
+   "topic": "harga",
+   "claim_quote": "melalui platform seperti Traveloka, Tiket.com, Tokopedia , atau langsung di website resmi Sozo Skin Clinic.",
+   "claim_summary": "Promos are available directly on Sozo's official website.",
+   "verdict": "sesuai",
+   "site_reference": [
+    {
+     "url": "https://sozoskinclinic.com/promo/",
+     "quote": "Promo Klinik Kecantikan SOZO Bulan Ini - Cicilan 0%",
+     "where": "title",
+     "match": "exact"
+    },
+    {
+     "url": "https://sozoskinclinic.com/promo/",
+     "quote": "Diskon treatment wajah, tubuh, dan rambut — plus cicilan 0% dan cashback hingga Rp500.000 untuk booking bulan ini.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ]
+  }
+ ],
+ "claim_check_counts": {
+  "sesuai": 21,
+  "tidak_bisa_dicek": 13,
+  "berbeda": 11
+ },
+ "robots": {
+  "url": "https://sozoskinclinic.com/robots.txt",
+  "status": 200,
+  "utc_time": "2026-11-06T23:40:02Z",
+  "full_text": "# START YOAST BLOCK\n# ---------------------------\nUser-agent: *\nAllow: /\nDisallow: /ads/\nDisallow: /blog/tag/\nDisallow: /wp-content/plugins/jetpack/\nDisallow:/?page_id=\nDisallow: /blog///feed/\nDisallow: /blog/author//page/\nDisallow: /blog/page/*\nDisallow: /*?SA\nDisallow: /*?SD\nDisallow: /*?ND\nDisallow: /*?MA\nDisallow: /*?MD\nDisallow: /*?NA\nDisallow: /hair-removal/\nDisallow: /cdn-cgi/\nDisallow: /hair-removal/\n\n\nUser-agent: AdsBot-Google\nAllow: /\nAllow: /ads/\nAllow: /hair-removal/\n\nSitemap: https://sozoskinclinic.com/sitemap_index.xml\n# ---------------------------\n# END YOAST BLOCK",
+  "user_agents_named": [
+   "*",
+   "AdsBot-Google"
+  ],
+  "method": "RFC 9309: use the group naming the agent, otherwise the '*' group; among matching Allow/Disallow paths the longest wins, and Allow wins a tie.",
+  "results": [
+   {
+    "agent": "Googlebot",
+    "page": "home",
+    "path": "/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Googlebot",
+    "page": "treatment_flek (laser)",
+    "path": "/skin-treatment/laser-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Googlebot",
+    "page": "treatment_bekas_jerawat (scar)",
+    "path": "/skin-treatment/scar-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Googlebot",
+    "page": "treatment_filler",
+    "path": "/injectable-treatment/filler-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Googlebot",
+    "page": "treatment list",
+    "path": "/treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Googlebot",
+    "page": "hair removal pages (site menu)",
+    "path": "/hair-removal-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Googlebot",
+    "page": "path named in a Disallow rule",
+    "path": "/hair-removal/",
+    "allowed": false,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 18,
+     "line": "Disallow: /hair-removal/"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "home",
+    "path": "/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "treatment_flek (laser)",
+    "path": "/skin-treatment/laser-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "treatment_bekas_jerawat (scar)",
+    "path": "/skin-treatment/scar-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "treatment_filler",
+    "path": "/injectable-treatment/filler-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "treatment list",
+    "path": "/treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "hair removal pages (site menu)",
+    "path": "/hair-removal-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "Bingbot",
+    "page": "path named in a Disallow rule",
+    "path": "/hair-removal/",
+    "allowed": false,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 18,
+     "line": "Disallow: /hair-removal/"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "home",
+    "path": "/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "treatment_flek (laser)",
+    "path": "/skin-treatment/laser-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "treatment_bekas_jerawat (scar)",
+    "path": "/skin-treatment/scar-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "treatment_filler",
+    "path": "/injectable-treatment/filler-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "treatment list",
+    "path": "/treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "hair removal pages (site menu)",
+    "path": "/hair-removal-treatment/",
+    "allowed": true,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 4,
+     "line": "Allow: /"
+    }
+   },
+   {
+    "agent": "OAI-SearchBot",
+    "page": "path named in a Disallow rule",
+    "path": "/hair-removal/",
+    "allowed": false,
+    "group_used": [
+     "User-agent: *"
+    ],
+    "group_basis": "no group names this agent, so it falls back to 'User-agent: *'",
+    "deciding_line": {
+     "line_no": 18,
+     "line": "Disallow: /hair-removal/"
+    }
+   }
+  ],
+  "ai_agent_rules": [],
+  "ai_agent_note": "No line names GPTBot, Google-Extended, ClaudeBot, PerplexityBot, OAI-SearchBot or any other AI agent. The only named agent besides '*' is AdsBot-Google, so all AI agents fall back to the 'User-agent: *' group.",
+  "other_observations": [
+   "'Disallow: /hair-removal/' appears twice in the '*' group. The site's own hair removal pages are at /hair-removal-treatment/, which this rule does not match.",
+   "The AdsBot-Google group explicitly allows /ads/ and /hair-removal/, which are disallowed for everyone else.",
+   "Sitemap: https://sozoskinclinic.com/sitemap_index.xml (not loaded; home page links were enough)."
+  ]
+ },
+ "cited_pages": [
+  {
+   "url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+   "domain": "erhaultimate.co.id",
+   "rank_by_citations": 1,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 10,
+   "cited_in_answers": [
+    8,
+    9
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r01",
+     "requested_url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+     "status": 200,
+     "utc_time": "2026-11-06T23:46:44Z",
+     "final_url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "ERHA (named competitor) own site, article",
+   "load_result": "loaded",
+   "page_title": "Skincare Tidak Cukup? Coba Laser untuk Bekas Jerawat",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "Skincare Tidak Cukup? Coba Laser untuk Bekas Jerawat",
+    "Skincare Tidak Cukup? Coba Laser untuk Bekas Jerawat - ERHA Ultimate"
+   ]
+  },
+  {
+   "url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+   "domain": "hadirr.com",
+   "rank_by_citations": 2,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 8,
+   "cited_in_answers": [
+    4,
+    7
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r02",
+     "requested_url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+     "status": 200,
+     "utc_time": "2026-11-06T23:46:46Z",
+     "final_url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/"
+    }
+   ],
+   "site_type": "daftar_artikel",
+   "site_type_basis": "'7 Klinik Kecantikan dengan Cabang Terbanyak' list article on the blog of an HR/attendance app (hadirr.com)",
+   "load_result": "loaded",
+   "page_title": "7 Klinik Kecantikan dengan Cabang Terbanyak - Aplikasi Absensi Online Karyawan",
+   "mentions_sozo": false,
+   "details": {
+    "clinics_listed_as_headings": [
+     "Dermaster Klinik Indonesia",
+     "Miracle Aesthetic Clinic",
+     "Larissa Aesthetic Center",
+     "ZAP Clinic",
+     "Bening’s Clinic",
+     "ERHA Clinic",
+     "Natasha Skin Care"
+    ],
+    "dates_in_metadata": {
+     "article:published_time": "2023-10-11T04:20:52+00:00",
+     "article:modified_time": "2024-12-23T09:23:06+00:00"
+    }
+   },
+   "answer_titles": [
+    "7 Klinik Kecantikan dengan Cabang Terbanyak - Aplikasi Absensi Online Karyawan"
+   ]
+  },
+  {
+   "url": "https://www.alodokter.com/6-cara-menghilangkan-bekas-jerawat-dengan-perawatan-medis",
+   "domain": "alodokter.com",
+   "rank_by_citations": 3,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 6,
+   "cited_in_answers": [
+    9
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r03",
+     "requested_url": "https://www.alodokter.com/6-cara-menghilangkan-bekas-jerawat-dengan-perawatan-medis",
+     "status": 200,
+     "utc_time": "2026-11-06T23:46:48Z",
+     "final_url": "https://www.alodokter.com/6-cara-menghilangkan-bekas-jerawat-dengan-perawatan-medis"
+    }
+   ],
+   "site_type": "portal_kesehatan",
+   "site_type_basis": "Alodokter health portal article",
+   "load_result": "loaded",
+   "page_title": "6 Cara Menghilangkan Bekas Jerawat dengan Perawatan Medis - Alodokter",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "6 Cara Menghilangkan Bekas Jerawat dengan Perawatan Medis - Alodokter"
+   ]
+  },
+  {
+   "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+   "domain": "id.scribd.com",
+   "rank_by_citations": 4,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 6,
+   "cited_in_answers": [
+    10
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r04",
+     "requested_url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+     "status": 200,
+     "utc_time": "2026-11-06T23:46:49Z",
+     "final_url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info"
+    }
+   ],
+   "site_type": "dokumen",
+   "site_type_basis": "Scribd document page",
+   "load_result": "loaded",
+   "page_title": "Daftar Harga Perawatan Sozo Clinic | PDF",
+   "mentions_sozo": true,
+   "sozo_quotes": [
+    {
+     "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+     "quote": "Daftar Harga Perawatan Sozo Clinic",
+     "where": "visible text",
+     "match": "exact"
+    },
+    {
+     "url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+     "quote": "harga perawatan tersebut untuk member dan non member",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "details": {
+    "note": "The page shows only the document title, a description and the uploader (an individual Scribd user account, not one named Sozo). The 4-page document itself, with any prices, is not in the HTML text. No upload date is shown."
+   },
+   "answer_titles": [
+    "Daftar Harga Perawatan Sozo Clinic | PDF"
+   ]
+  },
+  {
+   "url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+   "domain": "tokopedia.com",
+   "rank_by_citations": 5,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 5,
+   "cited_in_answers": [
+    10
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r05",
+     "requested_url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+     "status": null,
+     "utc_time": "2026-11-06T23:46:51Z",
+     "final_url": null,
+     "error": "TimeoutError: The read operation timed out"
+    },
+    {
+     "load_id": "cited_r05_retry",
+     "requested_url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+     "status": null,
+     "utc_time": "2026-11-06T23:48:05Z",
+     "final_url": null,
+     "error": "TimeoutError: The read operation timed out"
+    }
+   ],
+   "site_type": "direktori_marketplace",
+   "site_type_basis": "Tokopedia marketplace product page (type from the domain; page not loaded)",
+   "page_title": null,
+   "mentions_sozo": null,
+   "load_result": "failed",
+   "note": "Not readable, so whether it mentions Sozo is unknown.",
+   "answer_titles": [
+    "Promo SOZO SKIN Acne Laser Facial - Tokopedia"
+   ]
+  },
+  {
+   "url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+   "domain": "tiket.com",
+   "rank_by_citations": 6,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 4,
+   "cited_in_answers": [
+    10
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r06",
+     "requested_url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+     "status": 403,
+     "utc_time": "2026-11-06T23:47:16Z",
+     "final_url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat"
+    }
+   ],
+   "site_type": "direktori_marketplace",
+   "site_type_basis": "Tiket.com activity listing (type from the domain; page blocked)",
+   "page_title": null,
+   "mentions_sozo": null,
+   "load_result": "blocked_http_403",
+   "block_page_title": "Robot atau manusia?",
+   "note": "Not readable, so whether it mentions Sozo is unknown.",
+   "answer_titles": [
+    "Tiket Sozo Clinic Tanjung Barat Harga Promo"
+   ]
+  },
+  {
+   "url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+   "domain": "caribisnis.id",
+   "rank_by_citations": 7,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 3,
+   "cited_in_answers": [
+    5
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r07",
+     "requested_url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:17Z",
+     "final_url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1"
+    }
+   ],
+   "site_type": "direktori_marketplace",
+   "site_type_basis": "CariBisnis.id business directory listing",
+   "load_result": "loaded",
+   "page_title": "Sozo Skin Clinic - Kelapa Gading 2: 222 Ulasan, Rating 4.7★ — Kelapa Gading, Jakarta Utara | CariBisnis.id",
+   "mentions_sozo": true,
+   "sozo_quotes": [
+    {
+     "url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+     "quote": "Sozo Skin Clinic - Kelapa Gading 2 adalah klinik kecantikan yang melayani berbagai perawatan wajah dan kulit, mulai dari facial, laser, filler, hingga botox.",
+     "where": "visible text",
+     "match": "exact"
+    }
+   ],
+   "details": {
+    "rating_quote": {
+     "url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+     "quote": "4.7 222 ulasan",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "opening_hours_quote": {
+     "url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+     "quote": "Sozo Skin Clinic buka setiap hari, Senin sampai Minggu, dengan jam operasional yang sama yaitu pukul 10.00 hingga 20.00",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "note": "These directory hours differ from the site-wide hours on sozoskinclinic.com (Mon–Sat 09:00–19:00, Sun 09:00–17:00); the directory is about one branch."
+   },
+   "answer_titles": [
+    "Sozo Skin Clinic - Kelapa Gading 2: 222 Ulasan, Rating 4.7★ — Kelapa Gading, Jakarta Utara | CariBisnis.id"
+   ]
+  },
+  {
+   "url": "https://www.instagram.com/reel/DWXyK4HEqol/",
+   "domain": "instagram.com",
+   "rank_by_citations": 8,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 3,
+   "cited_in_answers": [
+    8
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r08",
+     "requested_url": "https://www.instagram.com/reel/DWXyK4HEqol/",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:19Z",
+     "final_url": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freel%2FDWXyK4HEqol%2F&is_from_rle",
+     "redirects": [
+      {
+       "status": 302,
+       "from": "https://www.instagram.com/reel/DWXyK4HEqol/",
+       "to": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freel%2FDWXyK4HEqol%2F&is_from_rle"
+      }
+     ]
+    }
+   ],
+   "site_type": "media_sosial",
+   "site_type_basis": "Instagram reel (redirected to the login page)",
+   "load_result": "redirected_to_login",
+   "page_title": null,
+   "landing_page_title": "Instagram",
+   "mentions_sozo": null,
+   "note": "Instagram redirected the request to its login page, so the post itself could not be read.",
+   "answer_titles": [
+    "\"\"PEJUANG MELASMA WAJIB MERAPAT 😭🔥 Ini bukan treatment ..."
+   ]
+  },
+  {
+   "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+   "domain": "traveloka.com",
+   "rank_by_citations": 9,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 3,
+   "cited_in_answers": [
+    10
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r09",
+     "requested_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+     "status": 403,
+     "utc_time": "2026-11-06T23:47:27Z",
+     "final_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284"
+    }
+   ],
+   "site_type": "direktori_marketplace",
+   "site_type_basis": "Traveloka activity listing (type from the domain; page blocked)",
+   "page_title": null,
+   "mentions_sozo": null,
+   "load_result": "blocked_http_403",
+   "block_page_title": "traveloka.com",
+   "note": "Not readable, so whether it mentions Sozo is unknown.",
+   "answer_titles": [
+    "Beli Tiket Sozo Skin Clinic - Kemang - Harga Promo 2026 di Traveloka"
+   ]
+  },
+  {
+   "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+   "domain": "traveloka.com",
+   "rank_by_citations": 10,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 3,
+   "cited_in_answers": [
+    10
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r10",
+     "requested_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+     "status": 403,
+     "utc_time": "2026-11-06T23:47:30Z",
+     "final_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959"
+    }
+   ],
+   "site_type": "direktori_marketplace",
+   "site_type_basis": "Traveloka activity listing (type from the domain; page blocked)",
+   "page_title": null,
+   "mentions_sozo": null,
+   "load_result": "blocked_http_403",
+   "block_page_title": "traveloka.com",
+   "note": "Not readable, so whether it mentions Sozo is unknown.",
+   "answer_titles": [
+    "Beli Tiket Sozo Skin Clinic - Pondok Bambu - Harga Promo 2026 di Traveloka"
+   ]
+  },
+  {
+   "url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+   "domain": "traveloka.com",
+   "rank_by_citations": 11,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 3,
+   "cited_in_answers": [
+    10
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r11",
+     "requested_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+     "status": 403,
+     "utc_time": "2026-11-06T23:47:33Z",
+     "final_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433"
+    }
+   ],
+   "site_type": "direktori_marketplace",
+   "site_type_basis": "Traveloka activity listing (type from the domain; page blocked)",
+   "page_title": null,
+   "mentions_sozo": null,
+   "load_result": "blocked_http_403",
+   "block_page_title": "traveloka.com",
+   "note": "Not readable, so whether it mentions Sozo is unknown.",
+   "answer_titles": [
+    "Beli Tiket Sozo Skin Clinic - Puri Indah - Harga Promo 2026 di Traveloka"
+   ]
+  },
+  {
+   "url": "https://diricare.com/clinic/treatment/pico-laser",
+   "domain": "diricare.com",
+   "rank_by_citations": 12,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    1
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r12",
+     "requested_url": "https://diricare.com/clinic/treatment/pico-laser",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:29Z",
+     "final_url": "https://diricare.com/clinic/treatment/pico-laser"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "Diri Clinic (named competitor) treatment page",
+   "load_result": "loaded",
+   "page_title": "Pico Laser untuk Flek Hitam & Bekas Jerawat | Diri Clinic",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "Pico Laser untuk Flek Hitam & Bekas Jerawat | Diri Clinic"
+   ]
+  },
+  {
+   "url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+   "domain": "suara.com",
+   "rank_by_citations": 13,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    1
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r13",
+     "requested_url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:32Z",
+     "final_url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya"
+    }
+   ],
+   "site_type": "daftar_artikel",
+   "site_type_basis": "suara.com media article on laser prices (no clinic list)",
+   "load_result": "loaded",
+   "page_title": "Berapa Biaya Laser Flek Hitam di Klinik Kecantikan dan Ketahanannya?",
+   "mentions_sozo": false,
+   "details": {
+    "quote_without_clinic_name": {
+     "url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+     "quote": "Beberapa klinik menawarkan harga normal sekitar Rp1.199.000 dengan promo pelanggan baru di bawah Rp800.000.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "date_quote": {
+     "url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+     "quote": "Sabtu, 10 Oktober 2026 | 13:15 WIB",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "note": "This article is cited in answer 1. It names no clinic in this sentence; answer 1 gives Sozo's Pico Laser normal price as about Rp1,199 juta."
+   },
+   "answer_titles": [
+    "Berapa Biaya Laser Flek Hitam di Klinik Kecantikan dan Ketahanannya?"
+   ]
+  },
+  {
+   "url": "https://primavitaclinic.co.id/face/scar-treatment/",
+   "domain": "primavitaclinic.co.id",
+   "rank_by_citations": 14,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    2
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r14",
+     "requested_url": "https://primavitaclinic.co.id/face/scar-treatment/",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:35Z",
+     "final_url": "https://primavitaclinic.co.id/face/scar-treatment/"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "Primavita Clinic (named competitor) treatment page",
+   "load_result": "loaded",
+   "page_title": "Scar Treatment | Primavita Clinic",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "Scar Treatment – Primavita Clinic"
+   ]
+  },
+  {
+   "url": "https://erhaultimate.co.id/id/treatment-group/microneedle",
+   "domain": "erhaultimate.co.id",
+   "rank_by_citations": 15,
+   "in_top15": true,
+   "loaded_for": "cited_pages (top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    2
+   ],
+   "load_attempts": [
+    {
+     "load_id": "cited_r15",
+     "requested_url": "https://erhaultimate.co.id/id/treatment-group/microneedle",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:36Z",
+     "final_url": "https://erhaultimate.co.id/id/treatment-group/microneedle"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "ERHA (named competitor) treatment price list",
+   "load_result": "loaded",
+   "page_title": "ERHA Ultimate - Klinik Spesialis Kulit & Rambut",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "ERHA Ultimate - Klinik Spesialis Kulit & Rambut"
+   ]
+  },
+  {
+   "url": "https://www.cderma.id/",
+   "domain": "cderma.id",
+   "rank_by_citations": 22,
+   "in_top15": false,
+   "loaded_for": "competitor_pages (also a cited page, outside the top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    3
+   ],
+   "load_attempts": [
+    {
+     "load_id": "comp_cderma_home",
+     "requested_url": "https://www.cderma.id/",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:47Z",
+     "final_url": "https://www.cderma.id/"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "C Derma (named competitor) home page",
+   "load_result": "loaded",
+   "page_title": "C Derma - Dermatology & Aesthetic Center",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "C Derma - Dermatology & Aesthetic Center"
+   ]
+  },
+  {
+   "url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+   "domain": "klinikbamed.com",
+   "rank_by_citations": 23,
+   "in_top15": false,
+   "loaded_for": "competitor_pages (also a cited page, outside the top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    3
+   ],
+   "load_attempts": [
+    {
+     "load_id": "comp_bamed_doctor",
+     "requested_url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+     "status": 200,
+     "utc_time": "2026-11-06T23:47:48Z",
+     "final_url": "https://klinikbamed.com/dokter/sonia-hanifati/"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "Bamed (named competitor) doctor profile",
+   "load_result": "loaded",
+   "page_title": "dr. [nama] - Klinik Bamed",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "dr. [nama] - Klinik Bamed"
+   ]
+  },
+  {
+   "url": "https://www.cderma.id/harga-facial-wajah/",
+   "domain": "cderma.id",
+   "rank_by_citations": 34,
+   "in_top15": false,
+   "loaded_for": "competitor_pages (also a cited page, outside the top 15)",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    7
+   ],
+   "load_attempts": [
+    {
+     "load_id": "comp_cderma_harga_facial",
+     "requested_url": "https://www.cderma.id/harga-facial-wajah/",
+     "status": 200,
+     "utc_time": "2026-11-06T23:48:04Z",
+     "final_url": "https://www.cderma.id/harga-facial-wajah/"
+    }
+   ],
+   "site_type": "situs_pesaing",
+   "site_type_basis": "C Derma (named competitor) facial price article",
+   "load_result": "loaded",
+   "page_title": "Harga Facial Wajah 2026 & Jenis Perawatannya di C Derma",
+   "mentions_sozo": false,
+   "answer_titles": [
+    "Harga Facial Wajah 2026 & Jenis Perawatannya di C Derma"
+   ]
+  },
+  {
+   "url": "https://sozoskinclinic.cloudindo.co.id/",
+   "domain": "sozoskinclinic.cloudindo.co.id",
+   "rank_by_citations": 26,
+   "in_top15": false,
+   "loaded_for": "extra: the source answer 4 cites for Sozo's branch count and starting price",
+   "citation_occurrences": 2,
+   "cited_in_answers": [
+    4
+   ],
+   "load_attempts": [
+    {
+     "load_id": "extra_cloudindo",
+     "requested_url": "https://sozoskinclinic.cloudindo.co.id/",
+     "status": null,
+     "utc_time": "2026-11-06T23:47:54Z",
+     "final_url": null,
+     "error": "URLError: <urlopen error [Errno 104] Connection reset by peer>"
+    },
+    {
+     "load_id": "extra_cloudindo_retry",
+     "requested_url": "https://sozoskinclinic.cloudindo.co.id/",
+     "status": null,
+     "utc_time": "2026-11-06T23:48:44Z",
+     "final_url": null,
+     "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1035)>"
+    }
+   ],
+   "site_type": null,
+   "site_type_basis": "Not loaded, so not verified. Facts available: the hostname starts with 'sozoskinclinic.' under cloudindo.co.id, and answer 4 lists its title as 'Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau', identical to the title of sozoskinclinic.com's home page.",
+   "page_title": null,
+   "mentions_sozo": null,
+   "load_result": "failed",
+   "note": "First attempt: connection reset (proxy log: tunnel closed after 10 s). Retry: TLS verification failed, 'certificate has expired'. TLS checks were not bypassed.",
+   "answer_titles": [
+    "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau"
+   ]
+  }
+ ],
+ "cited_pages_selection": {
+  "rule": "total citation occurrences (inline links + Sources entries) across the 10 answers, ties by first appearance",
+  "distinct_non_sozo_urls": 45,
+  "alternative_reading_answers_citing_top15": [
+   "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+   "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+   "https://diricare.com/clinic/treatment/pico-laser",
+   "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+   "https://primavitaclinic.co.id/face/scar-treatment/",
+   "https://erhaultimate.co.id/id/treatment-group/microneedle",
+   "https://www.aveiaclinic.com/id/paket-bekas-luka",
+   "https://nmwclinic.co.id/layanan/medical-treatment/advance-scar-correction-theraphy",
+   "https://farla.id/treatment/skin-texture-treatment-farla/",
+   "https://amalaclinic.com/treatment/pigment-and-texture",
+   "https://rsudpasarminggu.jakarta.go.id/poliklinik/detail/klinik-kulit-kelamin",
+   "https://rsudbudhiasih.jakarta.go.id/website/Layanan_Kesehatan/Rawat_Jalan?kd=MjQ4OQ%3D%3D",
+   "https://www.cderma.id/",
+   "https://klinikbamed.com/dokter/sonia-hanifati/",
+   "https://perdoski.id/id/find-doctor"
+  ],
+  "cited_urls_not_loaded": [
+   {
+    "url": "https://www.aveiaclinic.com/id/paket-bekas-luka",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     2
+    ]
+   },
+   {
+    "url": "https://nmwclinic.co.id/layanan/medical-treatment/advance-scar-correction-theraphy",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     2
+    ]
+   },
+   {
+    "url": "https://farla.id/treatment/skin-texture-treatment-farla/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     2
+    ]
+   },
+   {
+    "url": "https://amalaclinic.com/treatment/pigment-and-texture",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     2
+    ]
+   },
+   {
+    "url": "https://rsudpasarminggu.jakarta.go.id/poliklinik/detail/klinik-kulit-kelamin",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     3
+    ]
+   },
+   {
+    "url": "https://rsudbudhiasih.jakarta.go.id/website/Layanan_Kesehatan/Rawat_Jalan?kd=MjQ4OQ%3D%3D",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     3
+    ]
+   },
+   {
+    "url": "https://perdoski.id/id/find-doctor",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     3
+    ]
+   },
+   {
+    "url": "https://perdoski.id/uploads/original/2017/09/PanduanKeterampilanKlinisPERDOSKI2017.pdf",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     3
+    ]
+   },
+   {
+    "url": "https://superskinme.id/id",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     4
+    ]
+   },
+   {
+    "url": "https://www.traveloka.com/id-id/activities/indonesia/country/indonesia-100003/beauty-and-spa/beauty-clinic",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     4
+    ]
+   },
+   {
+    "url": "https://caribisnis.id/klinik-kecantikan/jakarta-selatan/tebet/sozo-skin-clinic-tebet-timur-k-tebe-imp1",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     5
+    ]
+   },
+   {
+    "url": "https://koranindopos.com/rekomendasi-klinik-kecantikan-terbaik-di-indonesia/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     7
+    ]
+   },
+   {
+    "url": "https://blinkbeautyclinic.com/id/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     7
+    ]
+   },
+   {
+    "url": "https://wartaevent.com/5-rekomendasi-klinik-kecantikan-terpercaya-dan-terbaik/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     7
+    ]
+   },
+   {
+    "url": "https://www.suara.com/lifestyle/2023/11/10/082753/5-rekomendasi-klinik-kecantikan-dengan-perawatan-paling-lengkap-cocok-buat-self-reward",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     7
+    ]
+   },
+   {
+    "url": "https://klinikmagna.com/biaya-laser-wajah-semua-jenis-terbaru-tahun-2024/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     8
+    ]
+   },
+   {
+    "url": "https://www.instagram.com/p/CqVQrJ4rP0J/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     8
+    ]
+   },
+   {
+    "url": "https://www.instagram.com/reel/DADeocnTwOc/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     8
+    ]
+   },
+   {
+    "url": "https://hdmall.id/c/menghilangkan-flek-hitam-dengan-laser",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     8
+    ]
+   },
+   {
+    "url": "https://ristraclinic.co.id/blog/laser-untuk-bekas-jerawat-manfaat-treatment-dan-biaya",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     8
+    ]
+   },
+   {
+    "url": "https://www.instagram.com/reel/DQ1hZAtk1SR/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     9
+    ]
+   },
+   {
+    "url": "https://www.youtube.com/watch?v=bDBQBPeLkZg&t=108",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     9
+    ]
+   },
+   {
+    "url": "https://www.alodokter.com/sederet-cara-menghilangkan-bekas-jerawat",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     9
+    ]
+   },
+   {
+    "url": "https://www.instagram.com/p/C3SVBbjvLV6/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     10
+    ]
+   },
+   {
+    "url": "https://www.instagram.com/reel/DdTyfs2zP6L/",
+    "citation_occurrences": 2,
+    "cited_in_answers": [
+     10
+    ]
+   },
+   {
+    "url": "https://beautyplusclinic.com/harga-perawatan-yellow-laser/",
+    "citation_occurrences": 1,
+    "cited_in_answers": [
+     8
+    ]
+   }
+  ]
+ },
+ "competitor_pages": {
+  "criteria": [
+   "doctor_named_with_title",
+   "sip_or_str_number_shown",
+   "price_shown_rp",
+   "patient_questions_answered",
+   "process_or_downtime",
+   "english_text",
+   "last_updated_date"
+  ],
+  "english_text_rule": "'ya' only for a sentence, heading or title written in English; brand names, treatment names, menu labels and copyright lines do not count.",
+  "rows": [
+   {
+    "side": "competitor",
+    "business": "Bamed",
+    "url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:47:48Z",
+    "title": "dr. [nama] - Klinik Bamed",
+    "cited_in_answers": [
+     3
+    ],
+    "paired_sozo_page": "own_dokter",
+    "doctor_named_with_title": {
+     "value": "ya",
+     "quote": "dr. [nama], Sp.D.V.E, FINSDV",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "tidak"
+    },
+    "patient_questions_answered": {
+     "value": "tidak"
+    },
+    "process_or_downtime": {
+     "value": "tidak"
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "Only the loanword 'evidence-based' inside an Indonesian sentence."
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-08-18T11:24:38+00:00."
+    },
+    "other_observations": [
+     {
+      "url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+      "quote": "Beliau meraih gelar spesialis dari Fakultas Kedokteran Universitas Indonesia",
+      "where": "visible text",
+      "match": "exact"
+     },
+     {
+      "url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+      "quote": "Jadwal Praktek Dokter",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ]
+   },
+   {
+    "side": "competitor",
+    "business": "C Derma",
+    "url": "https://www.cderma.id/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:47:47Z",
+    "title": "C Derma - Dermatology & Aesthetic Center",
+    "cited_in_answers": [
+     3
+    ],
+    "paired_sozo_page": "own_home and own_filler",
+    "doctor_named_with_title": {
+     "value": "ya",
+     "quote": "dr. [nama], Sp.DVE",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "tidak"
+    },
+    "patient_questions_answered": {
+     "value": "tidak",
+     "note": "The only question is a booking prompt: 'Tidak yakin dari mana mulai?'"
+    },
+    "process_or_downtime": {
+     "value": "tidak"
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "English appears only in the brand line 'Dermatology & Aesthetic Center' and labels such as HEAL / UPLIFT."
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-05-23T09:39:53+00:00. The og:title metadata reads 'Home V2 (12 Feb 2026)'."
+    },
+    "other_observations": [
+     {
+      "url": "https://www.cderma.id/",
+      "quote": "4,9/5,0 dari 453+ ulasan Google",
+      "where": "visible text",
+      "match": "exact"
+     }
+    ]
+   },
+   {
+    "side": "competitor",
+    "business": "C Derma",
+    "url": "https://www.cderma.id/harga-facial-wajah/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:48:04Z",
+    "title": "Harga Facial Wajah 2026 & Jenis Perawatannya di C Derma",
+    "cited_in_answers": [
+     7
+    ],
+    "paired_sozo_page": "own_treatment",
+    "doctor_named_with_title": {
+     "value": "ya",
+     "quote": "dr. [nama], Sp.D.V.E.",
+     "where": "visible text",
+     "match": "exact",
+     "note": "Named as the medical reviewer ('Ditinjau secara medis oleh')."
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "harga facial wajah mulai dari Rp450.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "patient_questions_answered": {
+     "value": "ya",
+     "quote": "Berapa Kali Facial Wajah yang Baik dan Efektif?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "process_or_downtime": {
+     "value": "ya",
+     "quote": "60 menit, Tanpa downtime",
+     "where": "visible text",
+     "match": "exact",
+     "note": "The page also has a 9-step 'Tahapan Prosedur Facial Wajah'."
+    },
+    "english_text": {
+     "value": "ya",
+     "quote": "5 Reasons to Get a Deep Cleansing Facial",
+     "where": "visible text",
+     "match": "exact",
+     "note": "English only in the titles of the cited references."
+    },
+    "last_updated_date": {
+     "value": "ya",
+     "quote": "Terakhir pada 29 Juli 2026",
+     "where": "visible text",
+     "match": "exact",
+     "note": "Medical-review date. The page also shows 'Diterbitkan 6 Desember 2024'."
+    }
+   },
+   {
+    "side": "competitor",
+    "business": "ERHA",
+    "url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+    "status": 200,
+    "utc_time": "2026-11-06T23:46:44Z",
+    "title": "Skincare Tidak Cukup? Coba Laser untuk Bekas Jerawat",
+    "cited_in_answers": [
+     8,
+     9
+    ],
+    "paired_sozo_page": "own_scar (also own_laser)",
+    "doctor_named_with_title": {
+     "value": "tidak",
+     "note": "Refers to 'dokter' and 'dermatologist' without naming anyone."
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "Pico Laser: Rp1.110.000 - Rp1.975.000",
+     "where": "visible text",
+     "match": "exact",
+     "note": "General market ranges ('kisaran harga umum di klinik dermatologi di Indonesia'), not ERHA's own price list."
+    },
+    "patient_questions_answered": {
+     "value": "ya",
+     "quote": "Apa Itu Laser untuk Bekas Jerawat?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "process_or_downtime": {
+     "value": "ya",
+     "quote": "waktu downtime-nya lebih lama (1–5 hari)",
+     "where": "visible text",
+     "match": "exact",
+     "note": "The page also has a 6-step 'Prosedur Laser untuk Bekas Jerawat'."
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "The page's html lang attribute is 'en' but the text is Indonesian; English appears only in menu labels such as 'Heal Me'."
+    },
+    "last_updated_date": {
+     "value": "tidak_terdeteksi",
+     "quote": "04 December 2025 -",
+     "where": "visible text",
+     "match": "exact",
+     "note": "A date with no label; it is unclear whether it is the publication or the update date."
+    }
+   },
+   {
+    "side": "competitor",
+    "business": "ERHA",
+    "url": "https://erhaultimate.co.id/id/treatment-group/microneedle",
+    "status": 200,
+    "utc_time": "2026-11-06T23:47:36Z",
+    "title": "ERHA Ultimate - Klinik Spesialis Kulit & Rambut",
+    "cited_in_answers": [
+     2
+    ],
+    "paired_sozo_page": "own_scar",
+    "doctor_named_with_title": {
+     "value": "tidak"
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "Scar Treatment by Microneedle Mulai Dari Rp1.385.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "patient_questions_answered": {
+     "value": "tidak"
+    },
+    "process_or_downtime": {
+     "value": "tidak"
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "English only in treatment names (e.g. 'Scar Treatment by Microneedle') and menu labels."
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No date shown and no modified time in metadata."
+    }
+   },
+   {
+    "side": "sozo",
+    "business": "Sozo Skin Clinic",
+    "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:01Z",
+    "title": "Tim Dokter Spesialis Kulit & Estetika Terbaik",
+    "paired_with": [
+     "Bamed doctor profile"
+    ],
+    "doctor_named_with_title": {
+     "value": "ya",
+     "quote": "dr. [nama], Sp.D.V.E",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "sip_or_str_number_shown": {
+     "value": "ya",
+     "quote": "STR: [nomor]",
+     "where": "visible text",
+     "match": "exact",
+     "note": "STR only; no SIP shown."
+    },
+    "price_shown_rp": {
+     "value": "tidak"
+    },
+    "patient_questions_answered": {
+     "value": "tidak"
+    },
+    "process_or_downtime": {
+     "value": "tidak"
+    },
+    "english_text": {
+     "value": "tidak"
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-10-09T07:11:32+00:00."
+    }
+   },
+   {
+    "side": "sozo",
+    "business": "Sozo Skin Clinic",
+    "url": "https://sozoskinclinic.com/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:40:05Z",
+    "title": "Sozo Skin Clinic - Klinik Kecantikan Terdekat, Harga Terjangkau",
+    "paired_with": [
+     "C Derma home"
+    ],
+    "doctor_named_with_title": {
+     "value": "ya",
+     "quote": "dr. [nama], Sp.D.V.E",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "sip_or_str_number_shown": {
+     "value": "ya",
+     "quote": "STR: [nomor]",
+     "where": "visible text",
+     "match": "exact",
+     "note": "STR only; no SIP shown."
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "harga khusus mulai dari Rp199.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "patient_questions_answered": {
+     "value": "ya",
+     "quote": "Apa itu Sozo Skin Clinic?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "process_or_downtime": {
+     "value": "tidak",
+     "note": "Only booking steps ('Cara Reservasi'); no treatment process or downtime."
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "Only a stray English word in 'With harga perawatan yang terjangkau' and the footer 'All right reserved'."
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-10-01T08:14:20+00:00."
+    }
+   },
+   {
+    "side": "sozo",
+    "business": "Sozo Skin Clinic",
+    "url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:13Z",
+    "title": "Filler Treatment - Pilihan Filler Dagu, Hidung & Bibir",
+    "paired_with": [
+     "C Derma home (cited for filler/botox in answer 3)"
+    ],
+    "doctor_named_with_title": {
+     "value": "tidak",
+     "note": "'Seluruh tindakan filler dilakukan langsung oleh dokter tersertifikasi', with no name."
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "Korean Filler Mulai dari Rp3.799.000",
+     "where": "visible text",
+     "match": "exact_ignoring_whitespace_between_page_elements"
+    },
+    "patient_questions_answered": {
+     "value": "ya",
+     "quote": "Siapa yang melakukan tindakan filler di Sozo Skin Clinic?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "process_or_downtime": {
+     "value": "ya",
+     "quote": "Selesai: Anda bisa langsung kembali beraktivitas di hari yang sama.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "english_text": {
+     "value": "tidak"
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-11-02T07:27:20+00:00."
+    }
+   },
+   {
+    "side": "sozo",
+    "business": "Sozo Skin Clinic",
+    "url": "https://sozoskinclinic.com/treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:44:55Z",
+    "title": "Semua Beauty Treatment Sozo Skin Clinic - Lengkap & Terpercaya",
+    "paired_with": [
+     "C Derma facial price article"
+    ],
+    "doctor_named_with_title": {
+     "value": "tidak"
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "Sozo Signature Facial 60 Menit Rp 699.000",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "patient_questions_answered": {
+     "value": "tidak",
+     "note": "Only a chat prompt 'Bingung pilih treatment?'."
+    },
+    "process_or_downtime": {
+     "value": "tidak",
+     "note": "Durations per treatment (e.g. '60 Menit') but no process or downtime."
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "English only in treatment names."
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-11-06T04:33:07+00:00."
+    }
+   },
+   {
+    "side": "sozo",
+    "business": "Sozo Skin Clinic",
+    "url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:10Z",
+    "title": "Scar Treatment untuk Atasi Bopeng | Sozo",
+    "paired_with": [
+     "ERHA laser article",
+     "ERHA microneedle list"
+    ],
+    "doctor_named_with_title": {
+     "value": "tidak",
+     "note": "'ditangani langsung oleh terapis serta Dokter Kecantikan profesional', with no name."
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "tidak",
+     "quote": "Info Lengkap Harga Hubungi Admin",
+     "where": "visible text",
+     "match": "exact",
+     "note": "Price on request only."
+    },
+    "patient_questions_answered": {
+     "value": "ya",
+     "quote": "Jenis bekas luka apa saja yang bisa dihilangkan di Sozo Skin Clinic?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "process_or_downtime": {
+     "value": "ya",
+     "quote": "Proses pemulihan atau downtime berbeda untuk setiap perawatan.",
+     "where": "visible text",
+     "match": "exact",
+     "note": "There is also a 4-step 'Proses & Cara Kerja Scar Treatment'."
+    },
+    "english_text": {
+     "value": "tidak",
+     "note": "English only in short labels such as 'Cooling & Recovery'."
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-07-24T08:50:03+00:00."
+    }
+   },
+   {
+    "side": "sozo",
+    "business": "Sozo Skin Clinic",
+    "url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+    "status": 200,
+    "utc_time": "2026-11-06T23:42:07Z",
+    "title": "Laser Wajah & Laser Treatment Lengkap | Sozo",
+    "paired_with": [
+     "ERHA laser article (supplementary: Sozo's laser page also covers bekas jerawat)"
+    ],
+    "doctor_named_with_title": {
+     "value": "tidak",
+     "note": "'Dilakukan langsung oleh dokter profesional.', with no name."
+    },
+    "sip_or_str_number_shown": {
+     "value": "tidak"
+    },
+    "price_shown_rp": {
+     "value": "ya",
+     "quote": "Perawatan laser wajah di SOZO mulai dari Rp 499.000 saja per titik.",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "patient_questions_answered": {
+     "value": "ya",
+     "quote": "Berapa biaya perawatan laser wajah di SOZO?",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "process_or_downtime": {
+     "value": "ya",
+     "quote": "kemerahan ringan sekitar 1-3 hari",
+     "where": "visible text",
+     "match": "exact"
+    },
+    "english_text": {
+     "value": "tidak"
+    },
+    "last_updated_date": {
+     "value": "tidak",
+     "note": "No visible date; page metadata article:modified_time = 2026-07-30T06:37:37+00:00."
+    }
+   }
+  ]
+ },
+ "loads": [
+  {
+   "id": "own_robots",
+   "requested_url": "https://sozoskinclinic.com/robots.txt",
+   "utc_time": "2026-11-06T23:40:02Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/robots.txt",
+   "redirects": [],
+   "content_type": "text/plain",
+   "bytes": 615,
+   "saved_as": "own_robots__sozoskinclinic.com.txt"
+  },
+  {
+   "id": "own_home",
+   "requested_url": "https://sozoskinclinic.com/",
+   "utc_time": "2026-11-06T23:40:05Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 343415,
+   "saved_as": "own_home__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_lokasi",
+   "requested_url": "https://sozoskinclinic.com/lokasi/",
+   "utc_time": "2026-11-06T23:41:55Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/lokasi/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 328807,
+   "saved_as": "own_lokasi__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_promo",
+   "requested_url": "https://sozoskinclinic.com/promo/",
+   "utc_time": "2026-11-06T23:41:58Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/promo/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 216318,
+   "saved_as": "own_promo__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_dokter",
+   "requested_url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+   "utc_time": "2026-11-06T23:42:01Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 168470,
+   "saved_as": "own_dokter__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_tentang",
+   "requested_url": "https://sozoskinclinic.com/tentang-kami/",
+   "utc_time": "2026-11-06T23:42:04Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/tentang-kami/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 225984,
+   "saved_as": "own_tentang__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_laser",
+   "requested_url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+   "utc_time": "2026-11-06T23:42:07Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/skin-treatment/laser-treatment/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 204728,
+   "saved_as": "own_laser__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_scar",
+   "requested_url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+   "utc_time": "2026-11-06T23:42:10Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/skin-treatment/scar-treatment/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 201716,
+   "saved_as": "own_scar__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_filler",
+   "requested_url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+   "utc_time": "2026-11-06T23:42:13Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/injectable-treatment/filler-treatment/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 207366,
+   "saved_as": "own_filler__sozoskinclinic.com.html"
+  },
+  {
+   "id": "own_treatment",
+   "requested_url": "https://sozoskinclinic.com/treatment/",
+   "utc_time": "2026-11-06T23:44:55Z",
+   "status": 200,
+   "final_url": "https://sozoskinclinic.com/treatment/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 365416,
+   "saved_as": "own_treatment__sozoskinclinic.com.html"
+  },
+  {
+   "id": "cited_r01",
+   "requested_url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+   "utc_time": "2026-11-06T23:46:44Z",
+   "status": 200,
+   "final_url": "https://erhaultimate.co.id/article/skincare-tidak-cukup-coba-treatment-laser-bekas-jerawat-proses-jenis-harga-hasilnya",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 222738,
+   "saved_as": "cited_r01__erhaultimate.co.id.html"
+  },
+  {
+   "id": "cited_r02",
+   "requested_url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+   "utc_time": "2026-11-06T23:46:46Z",
+   "status": 200,
+   "final_url": "https://www.hadirr.com/blog/klinik-kecantikan-dengan-cabang-terbanyak/",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 140143,
+   "saved_as": "cited_r02__hadirr.com.html"
+  },
+  {
+   "id": "cited_r03",
+   "requested_url": "https://www.alodokter.com/6-cara-menghilangkan-bekas-jerawat-dengan-perawatan-medis",
+   "utc_time": "2026-11-06T23:46:48Z",
+   "status": 200,
+   "final_url": "https://www.alodokter.com/6-cara-menghilangkan-bekas-jerawat-dengan-perawatan-medis",
+   "redirects": [],
+   "content_type": "text/html",
+   "bytes": 64323,
+   "saved_as": "cited_r03__alodokter.com.html"
+  },
+  {
+   "id": "cited_r04",
+   "requested_url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+   "utc_time": "2026-11-06T23:46:49Z",
+   "status": 200,
+   "final_url": "https://id.scribd.com/document/706546440/SOZO-Skin-Clinic-Info",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 1239161,
+   "saved_as": "cited_r04__id.scribd.com.html"
+  },
+  {
+   "id": "cited_r05",
+   "requested_url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+   "utc_time": "2026-11-06T23:46:51Z",
+   "status": null,
+   "error": "TimeoutError: The read operation timed out",
+   "redirects": [],
+   "bytes": 0,
+   "saved_as": "cited_r05__tokopedia.com.html"
+  },
+  {
+   "id": "cited_r06",
+   "requested_url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+   "utc_time": "2026-11-06T23:47:16Z",
+   "status": 403,
+   "final_url": "https://www.tiket.com/id-id/to-do/sozo-clinic-tanjung-barat",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 31359,
+   "saved_as": "cited_r06__tiket.com.html"
+  },
+  {
+   "id": "cited_r07",
+   "requested_url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+   "utc_time": "2026-11-06T23:47:17Z",
+   "status": 200,
+   "final_url": "https://caribisnis.id/klinik-kecantikan/jakarta-utara/kelapa-gading/sozo-skin-clinic-kelapa-gading-kela-imp1",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 223661,
+   "saved_as": "cited_r07__caribisnis.id.html"
+  },
+  {
+   "id": "cited_r08",
+   "requested_url": "https://www.instagram.com/reel/DWXyK4HEqol/",
+   "utc_time": "2026-11-06T23:47:19Z",
+   "status": 200,
+   "final_url": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freel%2FDWXyK4HEqol%2F&is_from_rle",
+   "redirects": [
+    {
+     "status": 302,
+     "from": "https://www.instagram.com/reel/DWXyK4HEqol/",
+     "to": "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Freel%2FDWXyK4HEqol%2F&is_from_rle"
+    }
+   ],
+   "content_type": "text/html; charset=\"utf-8\"",
+   "bytes": 420583,
+   "saved_as": "cited_r08__instagram.com.html"
+  },
+  {
+   "id": "cited_r09",
+   "requested_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+   "utc_time": "2026-11-06T23:47:27Z",
+   "status": 403,
+   "final_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-kemang-5951970827284",
+   "redirects": [],
+   "content_type": "text/html;charset=utf-8",
+   "bytes": 773,
+   "saved_as": "cited_r09__traveloka.com.html"
+  },
+  {
+   "id": "cited_r12",
+   "requested_url": "https://diricare.com/clinic/treatment/pico-laser",
+   "utc_time": "2026-11-06T23:47:29Z",
+   "status": 200,
+   "final_url": "https://diricare.com/clinic/treatment/pico-laser",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 93975,
+   "saved_as": "cited_r12__diricare.com.html"
+  },
+  {
+   "id": "cited_r10",
+   "requested_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+   "utc_time": "2026-11-06T23:47:30Z",
+   "status": 403,
+   "final_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-pondok-bambu-3482630623959",
+   "redirects": [],
+   "content_type": "text/html;charset=utf-8",
+   "bytes": 773,
+   "saved_as": "cited_r10__traveloka.com.html"
+  },
+  {
+   "id": "cited_r13",
+   "requested_url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+   "utc_time": "2026-11-06T23:47:32Z",
+   "status": 200,
+   "final_url": "https://www.suara.com/lifestyle/2026/10/10/131500/berapa-biaya-laser-flek-hitam-di-klinik-kecantikan-dan-ketahanannya",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 157400,
+   "saved_as": "cited_r13__suara.com.html"
+  },
+  {
+   "id": "cited_r11",
+   "requested_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+   "utc_time": "2026-11-06T23:47:33Z",
+   "status": 403,
+   "final_url": "https://www.traveloka.com/id-id/activities/indonesia/product/sozo-skin-clinic-puri-indah-8018563560433",
+   "redirects": [],
+   "content_type": "text/html;charset=utf-8",
+   "bytes": 773,
+   "saved_as": "cited_r11__traveloka.com.html"
+  },
+  {
+   "id": "cited_r14",
+   "requested_url": "https://primavitaclinic.co.id/face/scar-treatment/",
+   "utc_time": "2026-11-06T23:47:35Z",
+   "status": 200,
+   "final_url": "https://primavitaclinic.co.id/face/scar-treatment/",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 147042,
+   "saved_as": "cited_r14__primavitaclinic.co.id.html"
+  },
+  {
+   "id": "cited_r15",
+   "requested_url": "https://erhaultimate.co.id/id/treatment-group/microneedle",
+   "utc_time": "2026-11-06T23:47:36Z",
+   "status": 200,
+   "final_url": "https://erhaultimate.co.id/id/treatment-group/microneedle",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 111929,
+   "saved_as": "cited_r15__erhaultimate.co.id.html"
+  },
+  {
+   "id": "comp_cderma_home",
+   "requested_url": "https://www.cderma.id/",
+   "utc_time": "2026-11-06T23:47:47Z",
+   "status": 200,
+   "final_url": "https://www.cderma.id/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 162108,
+   "saved_as": "comp_cderma_home__cderma.id.html"
+  },
+  {
+   "id": "comp_bamed_doctor",
+   "requested_url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+   "utc_time": "2026-11-06T23:47:48Z",
+   "status": 200,
+   "final_url": "https://klinikbamed.com/dokter/sonia-hanifati/",
+   "redirects": [],
+   "content_type": "text/html; charset=UTF-8",
+   "bytes": 81026,
+   "saved_as": "comp_bamed_doctor__klinikbamed.com.html"
+  },
+  {
+   "id": "extra_cloudindo",
+   "requested_url": "https://sozoskinclinic.cloudindo.co.id/",
+   "utc_time": "2026-11-06T23:47:54Z",
+   "status": null,
+   "error": "URLError: <urlopen error [Errno 104] Connection reset by peer>",
+   "redirects": [],
+   "bytes": 0,
+   "saved_as": "extra_cloudindo__sozoskinclinic.cloudindo.co.id.html"
+  },
+  {
+   "id": "comp_cderma_harga_facial",
+   "requested_url": "https://www.cderma.id/harga-facial-wajah/",
+   "utc_time": "2026-11-06T23:48:04Z",
+   "status": 200,
+   "final_url": "https://www.cderma.id/harga-facial-wajah/",
+   "redirects": [],
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 174217,
+   "saved_as": "comp_cderma_harga_facial__cderma.id.html"
+  },
+  {
+   "id": "cited_r05_retry",
+   "requested_url": "https://www.tokopedia.com/sozoskinclinic/sozo-skin-acne-laser-facial",
+   "utc_time": "2026-11-06T23:48:05Z",
+   "status": null,
+   "error": "TimeoutError: The read operation timed out",
+   "redirects": [],
+   "bytes": 0,
+   "saved_as": "cited_r05_retry__tokopedia.com.html"
+  },
+  {
+   "id": "extra_cloudindo_retry",
+   "requested_url": "https://sozoskinclinic.cloudindo.co.id/",
+   "utc_time": "2026-11-06T23:48:44Z",
+   "status": null,
+   "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1035)>",
+   "redirects": [],
+   "bytes": 0,
+   "saved_as": "extra_cloudindo_retry__sozoskinclinic.cloudindo.co.id.html"
+  }
+ ]
+}

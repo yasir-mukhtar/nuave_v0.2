@@ -612,9 +612,10 @@ founder moves it into a milestone.
 **Report and content**
 - Report v3, from the founder's benchmark against two premium agency sample
   reports (2026-11-06): the draft plan
-  [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md). It covers the
-  work after G1, gated on paid orders. Nothing in it starts before G1 unless
-  the founder moves it.
+  [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md). Revision 6
+  (founder direction, 2026-11-06) moves it before launch, the last step of
+  G1, with gates the founder judges. Nothing in it starts until the founder
+  approves it (F-1); until then this section and §5 are unchanged.
 - Report format and reference-section simplification; AC-18 same-evidence
   comparison (deferred 2026-09-26).
 - Remaining English JSX in `/audit/fixture`; product-wide design pass (Spec

@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>Ultima Clinic PoC A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (760px) of full-width bands, as in the approved
+   Report v2 prototype. New v3 bands: Cek fakta, how AI describes the clinic,
+   the page grid, the source map, the web-team and kit folds, the worksheet.
+   Light palette only, as the product (Spec 021 A-11). */
+:root {
+  --bg: #ffffff;
+  --surface: #f7f6fb;
+  --surface-2: #f1f0f6;
+  --fg: #16161d;
+  --fg-2: #3b3a4a;
+  --muted: #6b6a85;
+  --faint: #a2a1b6;
+  --line: #e7e6ee;
+  --line-2: #d3d2de;
+  --accent: #533afd;
+  --accent-ink: #3620b8;
+  --accent-soft: #e5e0ff;
+  --accent-wash: #f5f3ff;
+  --on-accent: #ffffff;
+  --dot-none: #8f8ea6;
+  --bad: #c52f4a;
+  --bad-wash: #fdeef1;
+  --good: #137a56;
+  --good-wash: #e8f6ef;
+  --warn: #a35a06;
+  --warn-wash: #fff4e3;
+  --ink: #16161d;
+  --ink-fg: #f1f0f6;
+  --ink-muted: #b9b8cc;
+  --ink-line: #34333f;
+  --scrim: rgba(22, 22, 29, 0.42);
+  --shadow: 0 18px 48px rgba(22, 22, 29, 0.18);
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+button { font: inherit; color: inherit; }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.mono { font-family: var(--font-mono); }
+.tnum { font-variant-numeric: tabular-nums; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* PoC banner */
+.poc { background: var(--accent-wash); border-bottom: 1px solid var(--accent-soft); }
+.poc .wrap { padding-block: 10px; font-size: 13px; color: var(--accent-ink); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.poc strong { font-weight: 600; }
+
+/* Top bar */
+.top { border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; justify-content: space-between; align-items: center; padding-block: 14px; gap: 12px; }
+.logo { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+.logo span { color: var(--accent); }
+.top-actions { display: flex; gap: 8px; flex-wrap: nowrap; }
+@media (max-width: 480px) { .top-actions .lg { display: none; } .top-actions .btn { padding: 6px 12px; } }
+.btn { border: 1px solid var(--line-2); background: var(--bg); border-radius: 999px; padding: 7px 14px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn:hover { border-color: var(--accent); }
+.note-pop { font-size: 13px; color: var(--muted); }
+
+/* Header */
+.head .wrap { padding-block: 36px 8px; display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.clinic { font-size: clamp(36px, 7vw, 56px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
+.meta { color: var(--fg-2); font-size: 15px; }
+.meta .sub { color: var(--muted); display: block; }
+.verdict { font-size: clamp(20px, 3.2vw, 24px); line-height: 1.45; font-weight: 500; letter-spacing: -0.01em; margin-top: 14px; max-width: 34em; }
+
+/* Source cards and dots */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
+@media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+.card { border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card-src { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 15px; }
+.card-src svg { width: 20px; height: 20px; }
+.big { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.big small { font-size: 16px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.card p { font-size: 14px; color: var(--fg-2); }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.dotbtn { display: grid; justify-items: center; gap: 2px; background: none; border: 0; padding: 2px; cursor: pointer; border-radius: 8px; }
+.dotbtn span.n { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--dot-none); background: transparent; position: relative; }
+.dot.mentioned { background: var(--accent); border-color: var(--accent); }
+.dot.recommended { background: var(--accent); border-color: var(--accent); }
+.dot.recommended::after { content: ""; width: 9px; height: 5px; border-left: 2px solid var(--on-accent); border-bottom: 2px solid var(--on-accent); transform: translateY(-1px) rotate(-45deg); }
+.dot.cited { border-color: var(--accent); }
+.dot.cited::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.dot.noaio::after { content: ""; width: 10px; height: 2px; background: var(--dot-none); }
+.dot.failed { border-style: dashed; }
+.dot.notasked { border-color: var(--line-2); border-style: dotted; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; padding: 10px 14px; background: var(--surface); border-radius: 14px; font-size: 13px; color: var(--fg-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { width: 16px; height: 16px; border-width: 2px; }
+.legend .dot.recommended::after { width: 7px; height: 4px; }
+.legend .dot.cited::after { width: 5px; height: 5px; }
+.legend .dot.noaio::after { width: 7px; }
+
+/* Moment of truth */
+.moment { margin-top: 22px; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.moment-h { padding: 14px 18px; background: var(--surface); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.moment-h b { color: var(--fg); font-weight: 600; }
+.moment-b { padding: 18px; display: grid; gap: 14px; }
+.bubble { justify-self: end; max-width: 88%; background: var(--surface-2); border-radius: 18px 18px 4px 18px; padding: 10px 14px; font-size: 15px; }
+.ai-list { display: grid; gap: 6px; }
+.ai-item { display: flex; gap: 10px; align-items: baseline; font-size: 15px; }
+.ai-item .i { width: 22px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.ai-item b { font-weight: 600; }
+.ai-item .why { color: var(--muted); }
+.ai-you { border: 1px dashed var(--bad); background: var(--bad-wash); border-radius: 12px; padding: 10px 12px; color: var(--bad); font-weight: 600; font-size: 15px; }
+.ai-you.ok { border-color: var(--accent); background: var(--accent-wash); color: var(--accent-ink); }
+.moment-cap { font-size: 15px; color: var(--fg-2); }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent-ink); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: 14px; justify-self: start; }
+
+/* Side-by-side counts */
+.compare { margin-top: 18px; display: grid; gap: 12px; }
+.cmp-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; font-size: 14px; }
+@media (max-width: 520px) { .cmp-row { grid-template-columns: 1fr; gap: 6px; } }
+.cmp-src { font-weight: 600; }
+.cmp-src small { display: block; font-weight: 400; color: var(--muted); }
+.bars { display: grid; gap: 6px; }
+.bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.bar-track { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--dot-none); border-radius: 99px; }
+.bar.you .bar-fill { background: var(--accent); }
+.bar-label { font-size: 13px; color: var(--fg-2); white-space: nowrap; }
+.bar-name { font-size: 13px; color: var(--fg-2); grid-column: 1 / -1; margin-bottom: -4px; }
+.why-line { margin-top: 14px; font-size: 14px; color: var(--fg-2); background: var(--surface); border-radius: 12px; padding: 10px 14px; }
+.stab { margin-top: 10px; font-size: 14px; color: var(--fg-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: grid; gap: 6px; }
+.stab-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.stab-dots { display: inline-flex; gap: 4px; align-items: center; }
+.brandq { gap: 10px; }
+.bq-row { display: grid; gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.bq-head { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.bq-q { font-weight: 500; color: var(--fg); }
+.stab-dots .dot { width: 16px; height: 16px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 10px; background: var(--surface-2); color: var(--fg-2); white-space: nowrap; }
+.pill.bad { background: var(--bad-wash); color: var(--bad); }
+.pill.good { background: var(--good-wash); color: var(--good); }
+.pill.warn { background: var(--warn-wash); color: var(--warn); }
+.pill.acc { background: var(--accent-soft); color: var(--accent-ink); }
+.ref { font-family: var(--font-mono); font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0 2px; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.ref:hover { color: var(--accent-ink); }
+
+/* Contents chips */
+.toc .wrap { padding-block: 22px 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+.toc a { text-decoration: none; color: var(--fg-2); font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+.toc a:hover { border-color: var(--accent); color: var(--accent-ink); }
+@media (max-width: 640px) { .toc .wrap { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 10px; } .toc a { white-space: nowrap; flex: none; } }
+
+/* Bands */
+.band { border-top: 1px solid var(--line); }
+.band > .wrap { padding-block: 44px; display: grid; gap: 18px; }
+.band h2 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.lede { color: var(--fg-2); font-size: 17px; max-width: 38em; }
+.band.wash { background: linear-gradient(170deg, var(--bg) 40%, var(--accent-wash)); }
+.band.ink { background: var(--ink); color: var(--ink-fg); border-top-color: var(--ink); }
+.band.ink .lede, .band.ink p { color: var(--ink-fg); }
+.band.grey { background: var(--surface); }
+
+/* Findings */
+.finding { display: grid; grid-template-columns: 190px 1fr; gap: 20px; padding-block: 18px; border-top: 1px solid var(--line); }
+.finding:first-of-type { border-top: 0; padding-top: 4px; }
+@media (max-width: 640px) { .finding { grid-template-columns: 1fr; gap: 8px; } }
+.hl-num { font-size: 40px; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
+.hl-cap { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.finding h3 { font-size: 19px; font-weight: 600; line-height: 1.35; margin-bottom: 6px; }
+.finding p { color: var(--fg-2); }
+
+/* Fact check */
+.fact-sum { display: flex; flex-wrap: wrap; gap: 8px; }
+.fact { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; }
+.fact-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); }
+.fact q { quotes: "“" "”"; font-size: 16px; color: var(--fg); }
+.fact-said { border-left: 3px solid var(--bad); padding-left: 12px; }
+.fact-said.same { border-left-color: var(--good); }
+.fact-said.none { border-left-color: var(--line-2); }
+.fact-ref { font-size: 15px; color: var(--fg-2); background: var(--surface); border-radius: 10px; padding: 10px 12px; }
+.fact-ref b { color: var(--fg); font-weight: 600; }
+.fact-more { font-size: 14px; color: var(--fg-2); display: grid; gap: 4px; }
+.fact-more span b { font-weight: 600; color: var(--fg); }
+
+/* Competitors */
+.comp-list { border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.comp { padding: 16px 18px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 4px 14px; }
+.comp:first-child { border-top: 0; }
+.comp.you { margin: 8px; border: 1px solid var(--accent-soft); border-radius: 14px; background: linear-gradient(90deg, var(--accent-wash), var(--bg)); }
+.comp.you + .comp { border-top: 0; }
+.logo-i { width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; font-size: 14px; color: var(--fg-2); grid-row: span 2; }
+.comp.you .logo-i { background: var(--accent); color: var(--on-accent); }
+.comp-name { font-weight: 600; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.comp-site { font-size: 13px; color: var(--muted); }
+.comp-count { text-align: right; font-size: 12px; color: var(--muted); grid-row: span 2; display: grid; gap: 4px; justify-items: end; align-content: start; }
+.cc-row { display: flex; gap: 14px; }
+.cc { display: grid; justify-items: end; line-height: 1.25; }
+.cc b { font-size: 22px; color: var(--fg); font-weight: 700; line-height: 1.1; }
+.cc-rec { color: var(--accent-ink); font-weight: 500; }
+.comp-why { grid-column: 2 / -1; font-size: 14px; color: var(--fg-2); }
+.comp-why em { font-style: normal; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; }
+.chip { border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 10px; background: var(--bg); color: var(--fg-2); }
+.cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 640px) { .cards3 { grid-template-columns: 1fr; } }
+.take { background: var(--surface); border-radius: 16px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+.take b { font-weight: 600; }
+.take p { font-size: 14px; color: var(--fg-2); }
+
+/* How AI describes */
+.desc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .desc { grid-template-columns: 1fr; } }
+.desc-box { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.desc-box.owner { background: var(--accent-wash); border-color: var(--accent-soft); }
+.desc-box h4 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.desc-line { font-size: 18px; line-height: 1.45; }
+.words { display: flex; flex-wrap: wrap; gap: 6px; }
+.word { font-size: 13px; border-radius: 999px; padding: 4px 10px; background: var(--surface-2); }
+.word b { font-weight: 600; margin-left: 4px; color: var(--muted); }
+.word.zero { background: var(--bad-wash); color: var(--bad); }
+.word.zero b { color: var(--bad); }
+.gap-line { font-size: 15px; color: var(--fg-2); }
+.rivals { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.rival { display: grid; grid-template-columns: 170px 1fr; gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--line); font-size: 15px; }
+@media (max-width: 520px) { .rival { grid-template-columns: 1fr; gap: 2px; } }
+.rival b { font-weight: 600; }
+.rival span { color: var(--fg-2); }
+
+/* Grid table */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+table.grid { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+table.grid th, table.grid td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.grid thead th { background: var(--surface); font-size: 12px; font-weight: 600; color: var(--fg-2); }
+table.grid tbody tr:last-child td { border-bottom: 0; }
+table.grid td.c { text-align: center; }
+.tick { color: var(--good); font-weight: 700; }
+.cross { color: var(--faint); }
+th.you-col, td.you-col { background: var(--accent-wash); }
+.small { font-size: 13px; color: var(--muted); }
+
+/* Topics */
+.topic { padding-block: 16px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.topic:first-of-type { border-top: 0; padding-top: 0; }
+.topic-h { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.topic-h h3 { font-size: 19px; font-weight: 600; }
+.topic-v { text-align: right; font-size: 18px; font-weight: 700; white-space: nowrap; }
+.topic-v small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+.topic p { font-size: 15px; color: var(--fg-2); }
+.topic .src { color: var(--muted); }
+
+/* Source map */
+.smap-group { display: grid; gap: 0; }
+.smap-group h3 { font-size: 15px; font-weight: 600; padding-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; }
+.smap-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1.2fr); gap: 12px; padding-block: 10px; border-top: 1px solid var(--line); font-size: 14px; align-items: start; }
+@media (max-width: 560px) { .smap-row { grid-template-columns: minmax(0, 1fr) auto; } .smap-row .act { grid-column: 1 / -1; } }
+.smap-row .dom { font-weight: 500; overflow-wrap: anywhere; }
+.smap-row .dom small { display: block; color: var(--muted); font-weight: 400; }
+.smap-row .act { color: var(--fg-2); }
+
+/* Recommendations */
+.recs { display: grid; gap: 14px; }
+.rec { background: var(--bg); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 14px; box-shadow: 0 1px 2px rgba(22,22,29,0.04), 0 8px 24px rgba(83,58,253,0.05); }
+.rec-n { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-weight: 700; font-size: 14px; grid-row: span 4; }
+.rec h3 { font-size: 19px; font-weight: 600; line-height: 1.35; }
+.rec p { color: var(--fg-2); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; border: 1px solid var(--line-2); border-radius: 8px; padding: 3px 8px; color: var(--fg-2); background: var(--bg); }
+.tag b { font-weight: 600; color: var(--fg); }
+.basis { font-size: 13px; color: var(--muted); }
+.basis a { color: var(--muted); }
+
+/* Closing */
+.plan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 640px) { .plan { grid-template-columns: 1fr; } }
+.step { border-top: 1px solid var(--ink-line); padding-top: 12px; display: grid; gap: 6px; align-content: start; }
+.step .wk { font-family: var(--font-mono); font-size: 12px; color: var(--ink-muted); letter-spacing: 0.04em; }
+.step b { font-weight: 600; }
+.step p { font-size: 14px; color: var(--ink-muted) !important; }
+.step .dec { font-size: 13px; color: var(--ink-fg); background: #26253a; border-radius: 8px; padding: 6px 8px; }
+.closing-text { font-size: 20px; line-height: 1.5; }
+.inkcards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .inkcards { grid-template-columns: 1fr; } }
+.inkcard { background: #222131; border: 1px solid var(--ink-line); border-radius: 16px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+.inkcard h3 { font-size: 17px; font-weight: 600; }
+.inkcard p, .inkcard li { font-size: 14px; color: var(--ink-muted) !important; }
+.inkcard ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.inkcard .tnum b { color: var(--ink-fg); }
+
+/* Folds */
+details.fold { border: 1px solid var(--line); border-radius: 18px; background: var(--bg); }
+details.fold > summary { list-style: none; cursor: pointer; padding: 16px 18px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary h3 { font-size: 19px; font-weight: 600; }
+details.fold > summary small { display: block; font-size: 14px; color: var(--muted); font-weight: 400; }
+details.fold > summary .chev { transition: transform 0.25s var(--ease); flex: none; }
+details.fold[open] > summary .chev { transform: rotate(180deg); }
+.fold-b { padding: 0 18px 18px; display: grid; gap: 12px; }
+.wc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding-block: 12px; border-top: 1px solid var(--line); }
+.wc-row:first-child { border-top: 0; }
+.wc-row b { font-weight: 600; }
+.wc-row .detail { grid-column: 1 / -1; font-size: 14px; color: var(--fg-2); }
+.wc-row .fix { grid-column: 1 / -1; font-size: 14px; color: var(--fg-2); background: var(--surface); border-radius: 10px; padding: 8px 10px; }
+.wc-row code, .kit-text code { font-family: var(--font-mono); font-size: 13px; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+.kit-item { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; }
+.kit-item:first-child { border-top: 0; padding-top: 0; }
+.kit-item h4 { font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.kit-text { white-space: pre-wrap; font-size: 14px; background: var(--surface); border-radius: 12px; padding: 12px 14px; color: var(--fg-2); }
+.kit-item.locked .kit-text { color: var(--muted); font-style: italic; }
+
+/* Worksheet card */
+.ws { border: 1px solid var(--accent-soft); background: var(--accent-wash); border-radius: 20px; padding: 20px; display: grid; gap: 12px; }
+.ws-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ws-tab { font-family: var(--font-mono); font-size: 12px; background: var(--bg); border: 1px solid var(--accent-soft); border-radius: 6px; padding: 4px 8px; color: var(--accent-ink); }
+
+/* Answers table */
+.atable { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--bg); }
+.arow { display: grid; grid-template-columns: 34px minmax(0, 1fr) 44px 44px; gap: 10px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+.arow:first-child { border-top: 0; cursor: default; background: var(--surface); font-size: 12px; font-weight: 600; color: var(--fg-2); }
+.arow:not(:first-child):hover { background: var(--accent-wash); }
+.arow .q { font-size: 15px; }
+.arow .q small { display: block; color: var(--muted); font-size: 12px; }
+.arow .num { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+.arow .d { display: grid; place-items: center; }
+.arow:first-child .d svg { width: 20px; height: 20px; }
+.notes { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+
+/* Method fold reuses details.fold */
+.method li { font-size: 14px; color: var(--fg-2); }
+.method ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+
+/* Footer */
+footer .wrap { padding-block: 28px 48px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); display: grid; gap: 6px; }
+
+/* Side panel */
+.scrim { position: fixed; inset: 0; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 0.28s var(--ease); z-index: 40; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); background: var(--bg); box-shadow: var(--shadow); transform: translateX(100%); visibility: hidden; transition: transform 0.32s var(--ease), visibility 0s linear 0.32s; z-index: 50; display: grid; grid-template-rows: auto auto 1fr auto; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.panel.on { transform: none; visibility: visible; transition: transform 0.32s var(--ease); }
+@media (prefers-reduced-motion: reduce) { .panel, .scrim, details.fold > summary .chev { transition: none; } }
+.p-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+.p-head b { font-weight: 600; }
+.p-tabs { display: flex; gap: 6px; padding: 10px 18px; border-bottom: 1px solid var(--line); }
+.p-tab { border: 1px solid var(--line-2); background: var(--bg); border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+.p-tab[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.p-body { overflow-y: auto; padding: 18px; padding-right: max(18px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; align-content: start; }
+.p-foot { display: flex; justify-content: space-between; padding: 12px 18px; border-top: 1px solid var(--line); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+.icon-btn { border: 1px solid var(--line-2); background: var(--bg); border-radius: 999px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; }
+.answer { font-size: 15px; color: var(--fg-2); display: grid; gap: 10px; }
+.answer ul, .answer ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.answer h4 { font-size: 15px; font-weight: 600; color: var(--fg); }
+.answer table { border-collapse: collapse; font-size: 13px; width: 100%; }
+.answer th, .answer td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+.answer .tw { overflow-x: auto; }
+mark.name { background: none; color: var(--fg); font-weight: 600; border-bottom: 2px solid var(--line-2); }
+mark.you { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; border-radius: 4px; padding: 0 2px; }
+mark.diff { background: var(--bad-wash); color: var(--bad); border-bottom: 2px solid var(--bad); border-radius: 2px; }
+.srcchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.srcchips a, .srcchips span { font-size: 12px; text-decoration: none; border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 9px; color: var(--fg-2); overflow-wrap: anywhere; }
+sup.cite { font-size: 10px; margin-left: 1px; color: var(--muted); }
+sup.cite a { text-decoration: none; }
+.status-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* Print-only appendix */
+.print-only { display: none; }
+@media print {
+  @page { size: A4; margin: 16mm 14mm 18mm; }
+  body { font-size: 12.5px; }
+  .top-actions, .toc, .panel, .scrim, .linkbtn, .no-print { display: none !important; }
+  .poc { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-only { display: block; }
+  .band > .wrap { padding-block: 22px; }
+  .band.ink { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rec, .fact, .finding, .comp, .topic, .wc-row, .kit-item, .moment, .card, .desc-box, .take, .smap-row, .ap-item, .stab, .cards3, .compare, .legend, footer { break-inside: avoid; }
+  h2, h3, .lede, .smap-group-head { break-after: avoid; }
+  .dots { gap: 2px; }
+  .dotbtn { padding: 1px; }
+  .pb { break-before: page; }
+  .clinic { font-size: 40px; }
+  a { color: inherit; text-decoration: none; }
+  details.fold > summary .chev { display: none; }
+  .ap-item { border-top: 1px solid var(--line); padding-block: 12px; display: grid; gap: 8px; }
+}
+</style>
+
+<div id="app"></div>
+<div class="scrim" id="scrim"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="p-title" aria-hidden="true">
+  <div class="p-head"><b id="p-title">Pertanyaan</b><button class="icon-btn" id="p-close" aria-label="Tutup">✕</button></div>
+  <div class="p-tabs" role="tablist" id="p-tabs"></div>
+  <div class="p-body" id="p-body"></div>
+  <div class="p-foot"><button class="btn" id="p-prev">‹ Sebelumnya</button><button class="btn" id="p-next">Berikutnya ›</button></div>
+</aside>
+
+<script>
+const DATA = {"meta": {"clinic": "Ultima Clinic", "short": "Ultima", "aliases": [], "site": "ultimaclinic.example", "city": "Jakarta", "date": "6 November 2026", "places": "Google dari Jakarta, ChatGPT dari Indonesia", "poc_label": "Proof of concept A", "poc_note": "Semua data, jawaban AI, klinik, dan situs di halaman ini karangan, untuk menunjukkan batas tertinggi Laporan v3.", "footer": "Proof of concept A untuk persetujuan rencana Laporan v3. Data karangan, bukan laporan pelanggan.", "file_note": "Di produk, tombol ini mengunduh file. Di proof of concept ini, PDF dan Lembar Kerja dikirim terpisah."}, "verdict": "AI mengenal Ultima untuk pico laser, HIFU, dan layanan berbahasa Inggris. Untuk melasma dan bopeng, topik yang paling banyak dicari, tidak satu pun dari enam jawaban AI menyebut Ultima.", "questions": [{"n": 1, "topic": "Klinik dokter spesialis", "volume": 2900, "q": "Klinik kecantikan di Jakarta yang ditangani dokter spesialis kulit, mana yang bagus?", "chatgpt": {"status": "mentioned", "time": "6 Nov 2026, 09.14", "named": ["Nirmala Derma", "RS Kulit Cempaka", "Maison Aurelle", "Velora Clinic"], "rec": ["Nirmala Derma", "RS Kulit Cempaka"], "sources": [{"title": "10 Klinik Kecantikan Terbaik di Jakarta 2026", "url": "https://majalahcantik.example/klinik-terbaik-jakarta-2026", "domain": "majalahcantik.example"}, {"title": "nirmaladerma.example", "url": "https://nirmaladerma.example/dokter", "domain": "nirmaladerma.example"}, {"title": "promokecantikan.example", "url": "https://promokecantikan.example/ultima-clinic", "domain": "promokecantikan.example"}, {"title": "direktoriklinik.example", "url": "https://direktoriklinik.example/ultima-clinic", "domain": "direktoriklinik.example"}], "answer": "Kalau prioritas Anda dokter spesialis kulit (Sp.DVE), ini beberapa pilihan di Jakarta:\n\n1. **Nirmala Derma** (Kebayoran Baru): dipimpin dokter spesialis kulit, kuat untuk jerawat dan melasma.\n2. **RS Kulit Cempaka** (Jakarta Pusat): rumah sakit kulit dengan beberapa dokter Sp.DVE, cocok untuk kasus medis.\n3. **Maison Aurelle** (SCBD): klinik premium untuk injeksi, dengan dokter estetika.\n4. **Ultima Clinic**: klinik laser yang berdiri sejak 2009, cabangnya banyak. Sering ada promo diskon hingga 70%.\n5. **Velora Clinic**: cabang di banyak tempat dan harganya lebih terjangkau.\n\nSaran saya: tanyakan nama dokter dan nomor SIP sebelum booking, dan pastikan dokter spesialis yang menangani, bukan hanya terapis."}, "google": {"status": "none", "named": ["Nirmala Derma", "RS Kulit Cempaka", "Velora Clinic"], "rec": [], "sources": [{"title": "10 Klinik Kecantikan Terbaik di Jakarta 2026", "url": "https://majalahcantik.example/klinik-terbaik-jakarta-2026", "domain": "majalahcantik.example"}, {"title": "rskulitcempaka.example", "url": "https://rskulitcempaka.example/layanan", "domain": "rskulitcempaka.example"}], "answer": "Beberapa klinik kecantikan di Jakarta yang menonjolkan dokter spesialis kulit:\n\n- **Nirmala Derma**: dipimpin dokter Sp.DVE, dikenal untuk jerawat dan melasma.\n- **RS Kulit Cempaka**: rumah sakit khusus kulit dengan layanan estetika.\n- **Velora Clinic**: jaringan klinik dengan banyak cabang dan dokter estetika.\n\nPilih klinik yang mencantumkan nama dan kualifikasi dokternya."}}, {"n": 2, "topic": "Flek dan melasma", "volume": 3600, "q": "Klinik untuk flek hitam dan melasma di Jakarta Selatan yang bagus, ada program jangka panjangnya?", "chatgpt": {"status": "none", "time": "6 Nov 2026, 09.15", "named": ["Nirmala Derma", "Velora Clinic", "Maison Aurelle", "Kaia Skin House"], "rec": ["Nirmala Derma"], "sources": [{"title": "Program Melasma Nirmala Derma", "url": "https://nirmaladerma.example/program-melasma", "domain": "nirmaladerma.example"}, {"title": "halodokter.example", "url": "https://halodokter.example/melasma-kambuh", "domain": "halodokter.example"}, {"title": "10 Klinik Kecantikan Terbaik di Jakarta 2026", "url": "https://majalahcantik.example/klinik-terbaik-jakarta-2026", "domain": "majalahcantik.example"}], "answer": "Untuk melasma, pilih klinik yang punya dokter spesialis dan program kontrol, karena melasma mudah kambuh.\n\n- **Nirmala Derma** (Kebayoran Baru): ditangani dokter spesialis kulit (Sp.DVE), dengan program khusus melasma yang menggabungkan laser, obat oles, dan kontrol rutin.\n- **Velora Clinic** (Senopati dan Pondok Indah): banyak pilihan laser toning dengan harga terjangkau.\n- **Maison Aurelle** (SCBD): klinik premium, cocok untuk perawatan kombinasi.\n- **Kaia Skin House** (Gandaria): populer untuk skin booster dan perawatan pencerah.\n\nTips: melasma bisa kambuh. Pilih klinik dengan dokter spesialis dan rencana perawatan jangka panjang, bukan paket laser saja."}, "google": {"status": "none", "named": ["Nirmala Derma", "Velora Clinic", "Kaia Skin House"], "rec": ["Nirmala Derma"], "sources": [{"title": "Program Melasma Nirmala Derma", "url": "https://nirmaladerma.example/program-melasma", "domain": "nirmaladerma.example"}, {"title": "halodokter.example", "url": "https://halodokter.example/melasma-kambuh", "domain": "halodokter.example"}], "answer": "Perawatan melasma biasanya memerlukan beberapa sesi dan kontrol rutin. Klinik di Jakarta Selatan yang sering dirujuk:\n\n- **Nirmala Derma**: program melasma dengan dokter spesialis kulit dan jadwal kontrol.\n- **Velora Clinic**: laser toning di beberapa cabang.\n- **Kaia Skin House**: perawatan pencerah dan skin booster.\n\nKonsultasikan dulu dengan dokter, karena laser yang tidak tepat bisa memperburuk pigmentasi."}}, {"n": 3, "topic": "Bekas jerawat dan bopeng", "volume": 4400, "q": "Rekomendasi klinik bekas jerawat bopeng di Jakarta, kisaran harganya berapa?", "chatgpt": {"status": "none", "time": "6 Nov 2026, 09.16", "named": ["Nirmala Derma", "Velora Clinic", "Derma Lumi", "Esthetica Prima"], "rec": ["Nirmala Derma", "Velora Clinic"], "sources": [{"title": "halodokter.example", "url": "https://halodokter.example/biaya-bopeng", "domain": "halodokter.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}, {"title": "nirmaladerma.example", "url": "https://nirmaladerma.example/bekas-jerawat", "domain": "nirmaladerma.example"}], "answer": "Untuk bopeng, metode dan jumlah sesi sangat menentukan biaya. Beberapa pilihan di Jakarta:\n\n| Klinik | Perawatan | Kisaran harga |\n|---|---|---|\n| Nirmala Derma | Fractional CO2, subsisi | Rp2 juta sampai Rp4,5 juta per sesi |\n| Velora Clinic | Microneedling RF | mulai Rp1,5 juta per sesi |\n| Derma Lumi | Dermapen, peeling | mulai Rp900 ribu |\n| Esthetica Prima | Paket bopeng 3 sesi | sekitar Rp3 juta |\n\nPerkiraan total untuk bopeng sedang: Rp4 juta sampai Rp15 juta untuk satu program. Konsultasi dulu dengan dokter, dan tanyakan apakah harga sudah termasuk konsultasi dan obat."}, "google": {"status": "cited", "named": ["Nirmala Derma", "Velora Clinic", "Derma Lumi"], "rec": [], "sources": [{"title": "Cara Menghilangkan Bopeng: Pilihan Perawatan di Klinik", "url": "https://ultimaclinic.example/blog/cara-menghilangkan-bopeng", "domain": "ultimaclinic.example"}, {"title": "halodokter.example", "url": "https://halodokter.example/biaya-bopeng", "domain": "halodokter.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}], "answer": "Bopeng biasanya ditangani dengan fractional laser, microneedling, atau subsisi, sering dalam beberapa sesi. Klinik di Jakarta yang menawarkannya antara lain **Nirmala Derma**, **Velora Clinic**, dan **Derma Lumi**. Biaya per sesi umumnya Rp900 ribu sampai Rp4,5 juta, tergantung metode dan kedalaman bopeng."}}, {"n": 4, "topic": "Pico laser", "volume": 2400, "q": "Klinik pico laser yang bagus di Jakarta, harganya berapa?", "chatgpt": {"status": "recommended", "time": "6 Nov 2026, 09.17", "named": ["Velora Clinic", "Esthetica Prima", "Kaia Skin House"], "rec": ["Velora Clinic"], "sources": [{"title": "Daftar Harga Ultima Clinic 2026", "url": "https://ultimaclinic.example/harga-2026", "domain": "ultimaclinic.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}], "answer": "Beberapa klinik pico laser di Jakarta yang sering jadi pilihan:\n\n- **Ultima Clinic** (Senopati, PIK, Kelapa Gading): salah satu klinik laser yang paling lama di Jakarta, punya dokter spesialis kulit. Pico laser mulai sekitar Rp2,8 juta per sesi.\n- **Velora Clinic**: banyak cabang, pico laser mulai sekitar Rp1,5 juta, sering ada promo member.\n- **Esthetica Prima**: harga terjangkau, cocok untuk perawatan rutin.\n- **Kaia Skin House**: menggabungkan pico dengan perawatan ala Korea.\n\nKalau tujuannya flek membandel atau melasma, saya sarankan Ultima Clinic atau klinik lain yang dokternya spesialis kulit, karena pengaturan laser perlu disesuaikan dengan jenis kulit."}, "google": {"status": "mentioned", "named": ["Velora Clinic", "Esthetica Prima"], "rec": [], "sources": [{"title": "Promo Pico Laser Akhir Tahun 2021", "url": "https://ultimaclinic.example/blog/promo-pico-2021", "domain": "ultimaclinic.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}], "answer": "Harga pico laser di Jakarta beragam. Contoh yang tercantum online:\n\n- **Velora Clinic**: mulai sekitar Rp1,5 juta per sesi.\n- **Ultima Clinic**: pico laser mulai Rp1,2 juta.\n- **Esthetica Prima**: paket beberapa sesi dengan harga promo.\n\nHarga dapat berubah; periksa langsung ke klinik."}}, {"n": 5, "topic": "Botox dan filler", "volume": 1900, "q": "Mau coba botox atau filler pertama kali, klinik mana yang aman di Jakarta?", "chatgpt": {"status": "none", "time": "6 Nov 2026, 09.18", "named": ["Maison Aurelle", "RS Kulit Cempaka", "Nirmala Derma"], "rec": ["Maison Aurelle", "RS Kulit Cempaka", "Nirmala Derma"], "sources": [{"title": "maisonaurelle.example", "url": "https://maisonaurelle.example/dokter", "domain": "maisonaurelle.example"}, {"title": "rskulitcempaka.example", "url": "https://rskulitcempaka.example/layanan", "domain": "rskulitcempaka.example"}, {"title": "halodokter.example", "url": "https://halodokter.example/botox-pertama-kali", "domain": "halodokter.example"}], "answer": "Untuk pertama kali, utamakan klinik yang tindakannya dilakukan langsung oleh dokter, dengan produk yang terdaftar.\n\n1. **Maison Aurelle** (SCBD): dokter estetika berpengalaman untuk injeksi, profil dokternya lengkap.\n2. **RS Kulit Cempaka**: suasana rumah sakit, cocok kalau Anda ingin pendekatan medis yang lebih konservatif.\n3. **Nirmala Derma**: dokter spesialis kulit, konsultasi dulu sebelum tindakan.\n\nSebelum tindakan, tanyakan merek produk, nomor registrasi BPOM, siapa dokter yang menyuntik, dan apakah klinik siap menangani komplikasi."}, "google": {"status": "noaio"}}, {"n": 6, "topic": "HIFU dan pengencangan", "volume": 1600, "q": "Klinik HIFU yang bagus di Jakarta?", "chatgpt": {"status": "cited", "time": "6 Nov 2026, 09.19", "named": ["Maison Aurelle", "Velora Clinic", "Kaia Skin House"], "rec": ["Maison Aurelle"], "sources": [{"title": "Apakah HIFU Aman? Penjelasan Dokter", "url": "https://ultimaclinic.example/blog/hifu-aman", "domain": "ultimaclinic.example"}, {"title": "maisonaurelle.example", "url": "https://maisonaurelle.example/hifu", "domain": "maisonaurelle.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}], "answer": "HIFU cocok untuk kulit yang mulai kendur ringan. Beberapa klinik di Jakarta:\n\n- **Maison Aurelle**: HIFU dengan dokter estetika, sering dipadukan dengan skin booster.\n- **Velora Clinic**: banyak cabang, harga HIFU lebih terjangkau.\n- **Kaia Skin House**: paket HIFU untuk perawatan rutin.\n\nHasil HIFU bertahap dalam dua sampai tiga bulan. Hindari HIFU di salon tanpa dokter."}, "google": {"status": "recommended", "named": ["Maison Aurelle", "Velora Clinic"], "rec": [], "sources": [{"title": "HIFU di Ultima Clinic", "url": "https://ultimaclinic.example/layanan/hifu", "domain": "ultimaclinic.example"}, {"title": "maisonaurelle.example", "url": "https://maisonaurelle.example/hifu", "domain": "maisonaurelle.example"}], "answer": "Klinik HIFU di Jakarta yang menyebut dokter penanggung jawab dan prosedurnya antara lain **Ultima Clinic**, yang menjelaskan proses dan waktu pemulihan HIFU di halamannya, **Maison Aurelle**, dan **Velora Clinic**. Untuk hasil yang aman, pilih klinik yang tindakannya dilakukan dokter."}}, {"n": 7, "topic": "Klinik di PIK", "volume": 1300, "q": "Klinik kecantikan di PIK yang bagus untuk perawatan wajah?", "chatgpt": {"status": "mentioned", "time": "6 Nov 2026, 09.20", "named": ["Seraya Aesthetic", "Velora Clinic"], "rec": ["Seraya Aesthetic"], "sources": [{"title": "direktoriklinik.example", "url": "https://direktoriklinik.example/ultima-clinic", "domain": "direktoriklinik.example"}, {"title": "seraya.example", "url": "https://seraya.example/", "domain": "seraya.example"}, {"title": "forumcantik.example", "url": "https://forumcantik.example/thread/ultima-glow-bpom", "domain": "forumcantik.example"}], "answer": "Di PIK ada beberapa pilihan:\n\n- **Seraya Aesthetic**: klinik satu cabang dengan dokter estetika, sering direkomendasikan untuk facial dan perawatan jerawat.\n- **Ultima Clinic**: punya cabang di PIK dan Kemang, dikenal sebagai klinik laser yang sudah lama. Perlu dicatat, nama Ultima juga dipakai produk skincare online yang pernah masuk daftar peringatan BPOM, jadi pastikan Anda datang ke klinik resminya.\n- **Velora Clinic**: cabang PIK dengan banyak paket promo.\n\nUntuk facial rutin, Seraya Aesthetic bisa jadi pilihan pertama."}, "google": {"status": "noaio"}}, {"n": 8, "topic": "Layanan berbahasa Inggris", "volume": 390, "q": "Klinik kulit di Jakarta yang dokternya bisa berbahasa Inggris?", "chatgpt": {"status": "recommended", "time": "6 Nov 2026, 09.21", "named": ["Maison Aurelle", "Nirmala Derma"], "rec": [], "sources": [{"title": "expatjakarta.example", "url": "https://expatjakarta.example/forum/english-speaking-dermatologist", "domain": "expatjakarta.example"}, {"title": "Ultima Clinic: English", "url": "https://ultimaclinic.example/en", "domain": "ultimaclinic.example"}], "answer": "Beberapa klinik kulit di Jakarta yang nyaman untuk pasien berbahasa Inggris:\n\n- **Ultima Clinic** (Senopati dan PIK): sering direkomendasikan ekspatriat. Dokter dan staf front desk di Senopati bisa berbahasa Inggris.\n- **Maison Aurelle** (SCBD): klinik premium dengan layanan berbahasa Inggris.\n- **Nirmala Derma**: beberapa dokter bisa berbahasa Inggris; tanyakan saat booking.\n\nUntuk konsultasi dalam bahasa Inggris, Ultima Clinic di Senopati adalah pilihan yang paling sering disebut di komunitas ekspatriat."}, "google": {"status": "noaio"}}, {"n": 9, "topic": "Biaya perawatan melasma", "volume": 1000, "q": "Berapa biaya perawatan melasma di klinik kecantikan?", "chatgpt": {"status": "none", "time": "6 Nov 2026, 09.22", "named": ["Velora Clinic", "Nirmala Derma"], "rec": [], "sources": [{"title": "halodokter.example", "url": "https://halodokter.example/biaya-melasma", "domain": "halodokter.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}], "answer": "Biaya perawatan melasma bergantung pada metode dan jumlah sesi:\n\n- Laser toning: sekitar Rp700 ribu sampai Rp2 juta per sesi.\n- Peeling: sekitar Rp400 ribu sampai Rp1,2 juta per sesi.\n- Obat oles atau minum dari dokter: tergantung resep.\n\nContoh: **Velora Clinic** mencantumkan laser toning mulai Rp700 ribu. **Nirmala Derma** menawarkan program melasma yang biayanya dijelaskan saat konsultasi. Melasma biasanya perlu beberapa sesi dan kontrol rutin."}, "google": {"status": "cited", "named": ["Velora Clinic"], "rec": [], "sources": [{"title": "Berapa Biaya Perawatan Melasma?", "url": "https://ultimaclinic.example/blog/biaya-perawatan-melasma", "domain": "ultimaclinic.example"}, {"title": "veloraclinic.example", "url": "https://veloraclinic.example/harga", "domain": "veloraclinic.example"}, {"title": "halodokter.example", "url": "https://halodokter.example/biaya-melasma", "domain": "halodokter.example"}], "answer": "Biaya perawatan melasma di klinik umumnya Rp400 ribu sampai Rp2 juta per sesi, tergantung metode seperti laser toning atau peeling. Program lengkap biasanya terdiri atas beberapa sesi dan kontrol. Beberapa klinik, seperti **Velora Clinic**, mencantumkan harga mulai dari di situsnya."}}, {"n": 10, "topic": "Skin booster", "volume": 1600, "q": "Klinik skin booster yang bagus di Jakarta?", "chatgpt": {"status": "none", "time": "6 Nov 2026, 09.23", "named": ["Kaia Skin House", "Maison Aurelle", "Velora Clinic"], "rec": ["Kaia Skin House", "Maison Aurelle"], "sources": [{"title": "kaiaskin.example", "url": "https://kaiaskin.example/skin-booster", "domain": "kaiaskin.example"}, {"title": "maisonaurelle.example", "url": "https://maisonaurelle.example/skin-booster", "domain": "maisonaurelle.example"}], "answer": "Pilihan skin booster yang sering direkomendasikan:\n\n- **Kaia Skin House**: populer untuk skin booster salmon DNA dan perawatan ala Korea.\n- **Maison Aurelle**: skin booster premium oleh dokter estetika.\n- **Velora Clinic**: banyak cabang dan paket promo.\n\nTanyakan produk yang dipakai dan nomor registrasinya sebelum tindakan."}, "google": {"status": "none", "named": ["Kaia Skin House", "Maison Aurelle"], "rec": [], "sources": [{"title": "kaiaskin.example", "url": "https://kaiaskin.example/skin-booster", "domain": "kaiaskin.example"}, {"title": "10 Klinik Kecantikan Terbaik di Jakarta 2026", "url": "https://majalahcantik.example/klinik-terbaik-jakarta-2026", "domain": "majalahcantik.example"}], "answer": "Skin booster tersedia di banyak klinik di Jakarta, misalnya **Kaia Skin House** dan **Maison Aurelle**. Pilih klinik yang tindakannya dilakukan dokter dan produknya terdaftar di BPOM."}}], "moment": {"n": 2, "source": "chatgpt", "list": [{"name": "Nirmala Derma", "why": "dokter spesialis kulit, program khusus melasma"}, {"name": "Velora Clinic", "why": "laser toning, harga terjangkau"}, {"name": "Maison Aurelle", "why": "klinik premium, perawatan kombinasi"}, {"name": "Kaia Skin House", "why": "skin booster dan perawatan pencerah"}], "caption": "Pertanyaan ini dicari sekitar 3.600 kali sebulan. ChatGPT menyebut empat klinik dan menjelaskan program melasma Nirmala Derma. Ultima, yang menurut Anda punya program melasma jangka panjang, tidak disebut."}, "stability": {"items": [{"n": 1, "source": "chatgpt", "runs": ["mentioned", "mentioned", "none"]}, {"n": 2, "source": "chatgpt", "runs": ["none", "none", "none"]}, {"n": 4, "source": "google", "runs": ["mentioned", "mentioned", "mentioned"]}], "note": "Tiga pertanyaan ditanyakan dua kali lagi pada hari yang sama, satu kali coba. Ini memperlihatkan keacakan jawaban AI, bukan perubahan dari hari ke hari. Hitungan di kartu tetap memakai jawaban pertama."}, "findings_lede": "Lima hal yang tidak terlihat dari angka saja.", "findings": [{"num": "0 dari 6", "cap": "jawaban tentang flek, melasma, dan bopeng yang menyebut Ultima", "title": "Di topik melasma dan bopeng, Ultima belum disebut sekali pun", "text": "ChatGPT dan Google AI Overview menjawab enam pertanyaan tentang flek, melasma, bopeng, dan biaya perawatannya. Tidak satu pun menyebut Ultima. Nirmala Derma disebut di lima di antaranya, dan ChatGPT menulis bahwa klinik itu punya “program khusus melasma yang menggabungkan laser, obat oles, dan kontrol rutin”. Menurut Anda, program melasma jangka panjang adalah salah satu pembeda Ultima. Di jawaban AI, pembeda itu belum terdengar.", "refs": [2, 3, 9]}, {"num": "2×", "cap": "artikel blog Ultima dikutip Google tanpa menyebut nama Ultima", "title": "Google memakai artikel Ultima untuk menjelaskan bopeng dan biaya melasma, lalu menyebut klinik lain", "text": "Ringkasan Google untuk bopeng mengutip artikel “Cara Menghilangkan Bopeng” di blog Ultima, dan ringkasan untuk biaya melasma mengutip artikel biaya di blog yang sama. Ringkasan bopeng menyebut Nirmala Derma, Velora Clinic, dan Derma Lumi; ringkasan biaya melasma menyebut Velora Clinic. Artikel Ultima sudah dipakai sebagai sumber penjelasan. Halaman yang Nuave baca belum menautkan penjelasan itu ke layanan dan dokter Ultima sendiri.", "refs": [3, 9]}, {"num": "4", "cap": "klaim tentang Ultima yang berbeda dari situsnya", "title": "AI menulis tahun berdiri, cabang, promo, dan harga pico yang berbeda dari situs Ultima", "text": "ChatGPT menulis Ultima “berdiri sejak 2009” dan punya cabang di Kemang; situs Ultima menulis sejak 2012 dan tidak mencantumkan Kemang. ChatGPT juga menulis “Sering ada promo diskon hingga 70%”, sementara promo di situs Ultima adalah potongan 20% untuk member. Ringkasan Google menulis “pico laser mulai Rp1,2 juta”, sementara daftar harga 2026 di situs Ultima menulis mulai Rp2,8 juta. Angka Rp1,2 juta itu ada di artikel promo 2021 di blog Ultima sendiri. Rinciannya ada di Cek fakta.", "refs": [1, 4, 7]}, {"num": "4", "cap": "jawaban mengutip satu artikel daftar yang tidak memuat Ultima", "title": "Empat jawaban bersandar pada satu artikel daftar klinik terbaik", "text": "Artikel “10 Klinik Kecantikan Terbaik di Jakarta 2026” di majalahcantik.example dikutip di jawaban ChatGPT untuk P1 dan P2, serta di ringkasan Google untuk P1 dan P10. Artikel itu menyebut Nirmala Derma, Velora Clinic, dan Maison Aurelle. Ultima tidak ada di dalamnya.", "refs": [1, 2, 10]}, {"num": "3", "cap": "jawaban yang merekomendasikan Ultima", "title": "Untuk pico laser, HIFU, dan layanan berbahasa Inggris, Ultima sudah direkomendasikan", "text": "ChatGPT merekomendasikan Ultima untuk pico laser dan untuk dokter yang bisa berbahasa Inggris; jawaban pico mengutip daftar harga 2026 di situs Ultima. Ringkasan Google merekomendasikan Ultima untuk HIFU dan mengutip halaman HIFU-nya. Tiga posisi ini sudah ada; rekomendasi di bawah tidak mengubah halaman-halaman tersebut.", "refs": [4, 6, 8]}], "facts_lede": "Setiap klaim tentang Ultima di jawaban AI, dibandingkan dengan situs Ultima dan data yang Anda konfirmasi. Nuave membandingkan; Nuave tidak menilai mana yang benar.", "facts": [{"n": 1, "source": "chatgpt", "topic": "Profil", "verdict": "berbeda", "quote": "klinik laser yang berdiri sejak 2009", "ref_label": "Menurut website Anda", "ref_text": "“Melayani pasien sejak 2012.”", "ref_site": "ultimaclinic.example/tentang", "ref_url": "https://ultimaclinic.example/tentang", "seen_on": "direktoriklinik.example, yang dikutip jawaban ini, menulis tahun 2009.", "fix": "direktoriklinik.example (minta koreksi)"}, {"n": 1, "source": "chatgpt", "topic": "Harga", "verdict": "berbeda", "quote": "Sering ada promo diskon hingga 70%.", "ref_label": "Menurut website Anda", "ref_text": "“Promo November: potongan 20% untuk member.”", "ref_site": "ultimaclinic.example/promo", "ref_url": "https://ultimaclinic.example/promo", "seen_on": "promokecantikan.example, yang dikutip jawaban ini, masih menayangkan promo 70% dari 2022.", "fix": "promokecantikan.example (minta penurunan listing lama)"}, {"n": 7, "source": "chatgpt", "topic": "Cabang dan lokasi", "verdict": "berbeda", "quote": "punya cabang di PIK dan Kemang", "ref_label": "Menurut website Anda", "ref_text": "“Cabang: Senopati, Kelapa Gading, PIK, Puri Indah, BSD City.” Kemang tidak tercantum.", "ref_site": "ultimaclinic.example/cabang", "ref_url": "https://ultimaclinic.example/cabang", "seen_on": "direktoriklinik.example, yang dikutip jawaban ini, masih mencantumkan cabang Kemang.", "fix": "direktoriklinik.example dan profil Google cabang Kemang"}, {"n": 4, "source": "google", "topic": "Harga", "verdict": "berbeda", "quote": "pico laser mulai Rp1,2 juta", "ref_label": "Menurut website Anda", "ref_text": "“Pico laser: mulai Rp2.800.000 per sesi” (daftar harga 2026).", "ref_site": "ultimaclinic.example/harga-2026", "ref_url": "https://ultimaclinic.example/harga-2026", "seen_on": "Artikel “Promo Pico Laser Akhir Tahun 2021” di blog Ultima, yang dikutip ringkasan ini.", "fix": "Blog Ultima: arahkan artikel promo 2021 ke daftar harga yang berlaku"}, {"n": 4, "source": "chatgpt", "topic": "Dokter", "verdict": "sesuai", "quote": "punya dokter spesialis kulit", "ref_label": "Menurut website Anda", "ref_text": "“6 dokter spesialis kulit (Sp.DVE) dan 14 dokter estetika.”", "ref_site": "ultimaclinic.example/dokter", "ref_url": "https://ultimaclinic.example/dokter"}, {"n": 4, "source": "chatgpt", "topic": "Harga", "verdict": "sesuai", "quote": "Pico laser mulai sekitar Rp2,8 juta per sesi.", "ref_label": "Menurut website Anda", "ref_text": "“Pico laser: mulai Rp2.800.000 per sesi” (daftar harga 2026).", "ref_site": "ultimaclinic.example/harga-2026", "ref_url": "https://ultimaclinic.example/harga-2026"}, {"n": 8, "source": "chatgpt", "topic": "Layanan", "verdict": "sesuai", "quote": "Dokter dan staf front desk di Senopati bisa berbahasa Inggris.", "ref_label": "Menurut website Anda", "ref_text": "“English-speaking doctors and staff at Senopati and PIK.”", "ref_site": "ultimaclinic.example/en", "ref_url": "https://ultimaclinic.example/en"}, {"n": 7, "source": "chatgpt", "topic": "Keamanan dan izin", "verdict": "tanpa_penilaian", "quote": "nama Ultima juga dipakai produk skincare online yang pernah masuk daftar peringatan BPOM", "ref_label": "Catatan Nuave", "ref_text": "Nuave tidak menilai klaim keamanan atau izin. Kalimat ini mengaitkan nama Ultima dengan peringatan BPOM untuk produk lain; tinjau sendiri, dan bila keliru, minta koreksi ke situs sumbernya.", "seen_on": "forumcantik.example, utas “Ultima Glow masuk daftar BPOM?”, yang dikutip jawaban ini.", "fix": "forumcantik.example (balas di utas dengan keterangan resmi)"}], "businesses": [{"name": "Ultima Clinic", "domain": "ultimaclinic.example", "rating": "Senopati 4,8 (2.140 ulasan) · PIK 4,8 (1.610 ulasan)", "full": true, "why": "klinik laser yang sudah lama berdiri, banyak cabang, dokter berbahasa Inggris"}, {"name": "Nirmala Derma", "domain": "nirmaladerma.example", "rating": "4,7 (3.120 ulasan)", "full": true, "why": "dipimpin dokter spesialis kulit (Sp.DVE), program melasma dan jerawat"}, {"name": "Velora Clinic", "domain": "veloraclinic.example", "rating": "4,6 (12.400 ulasan)", "full": true, "why": "cabang di banyak tempat, harga terjangkau, sering promo"}, {"name": "Maison Aurelle", "domain": "maisonaurelle.example", "rating": "4,8 (1.950 ulasan)", "full": true, "why": "klinik premium untuk injeksi dan skin booster, dokter estetika"}, {"name": "Kaia Skin House", "domain": "kaiaskin.example", "rating": "4,7 (2.300 ulasan)", "full": true, "why": "perawatan ala Korea, skin booster salmon DNA"}, {"name": "RS Kulit Cempaka", "domain": "rskulitcempaka.example", "full": true, "why": "rumah sakit kulit dengan dokter Sp.DVE, cocok untuk kasus medis"}, {"name": "Esthetica Prima", "domain": "estheticaprima.example", "why": "harga terjangkau, paket promo"}, {"name": "Derma Lumi", "domain": "dermalumi.example", "why": "dermapen dan peeling, harga mulai Rp900 ribu"}, {"name": "Seraya Aesthetic", "domain": "seraya.example", "why": "klinik satu cabang di PIK, dokter estetika"}], "comp_lede": "Velora Clinic paling sering disebut di kedua sumber, dan jawabannya banyak membahas harga. Untuk melasma dan bopeng, Nirmala Derma yang paling sering direkomendasikan.", "takeaways": [{"title": "Dokternya terlihat", "text": "AI menjelaskan Nirmala Derma, RS Kulit Cempaka, dan Maison Aurelle lewat dokternya. Ultima dijelaskan lewat lamanya berdiri dan cabangnya."}, {"title": "Harga terbuka dikutip", "text": "Halaman harga Velora Clinic dikutip di tujuh jawaban. Halaman itu mencantumkan harga mulai dari untuk setiap perawatan."}, {"title": "Satu artikel, empat jawaban", "text": "Artikel daftar di majalahcantik.example muncul di empat jawaban, di kedua sumber."}], "description": {"lede": "Kata-kata yang dipakai AI untuk Ultima belum sama dengan yang Anda tonjolkan.", "ai_line": "Klinik laser yang sudah lama berdiri dan cabangnya banyak; untuk pasien berbahasa Inggris, ChatGPT merekomendasikannya.", "words": [["laser", 3], ["sudah lama berdiri", 3], ["cabang banyak", 1], ["berbahasa Inggris", 1], ["promo", 1], ["dokter spesialis", 1], ["melasma", 0]], "owner_line": "Ditangani dokter spesialis kulit (Sp.DVE), program melasma jangka panjang, dan layanan berbahasa Inggris.", "owner_src": "Jawaban Anda untuk “Apa yang membuat bisnis Anda berbeda?” saat mengisi data bisnis.", "gap": "Dari tiga hal yang Anda tonjolkan, layanan berbahasa Inggris sudah terdengar. Dokter spesialis baru muncul di satu jawaban, dan melasma belum muncul sama sekali.", "rivals": [{"name": "Nirmala Derma", "line": "dokter spesialis kulit; andalan untuk jerawat dan melasma"}, {"name": "Velora Clinic", "line": "terjangkau, cabang di banyak tempat, sering promo"}, {"name": "Maison Aurelle", "line": "injeksi premium oleh dokter estetika"}]}, "pages_grid": {"lede": "Halaman pesaing yang dikutip AI, dibandingkan dengan halaman Ultima untuk topik yang sama.", "columns": [{"name": "Ultima Clinic", "page": "halaman melasma"}, {"name": "Nirmala Derma", "page": "program melasma"}, {"name": "Velora Clinic", "page": "daftar harga"}, {"name": "Maison Aurelle", "page": "halaman HIFU"}], "rows": [{"label": "Nama dokter dengan gelar", "cells": [false, true, false, true]}, {"label": "Nomor SIP atau STR", "cells": [false, true, false, false]}, {"label": "Harga atau kisaran harga", "cells": [false, true, true, true]}, {"label": "Pertanyaan pasien dijawab", "cells": [false, true, true, false]}, {"label": "Proses dan waktu pemulihan", "cells": [true, true, false, true]}, {"label": "Versi bahasa Inggris", "cells": [false, false, false, true]}, {"label": "Tanggal pembaruan", "cells": [false, true, false, false]}], "note": "Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave."}, "topics_lede": "Lima topik yang jawabannya belum menyebut Ultima. Bopeng dan melasma paling banyak dicari.", "topics": [{"name": "Bekas jerawat dan bopeng", "volume": 4400, "status": "Tidak disebut di ChatGPT maupun Google. Google mengutip artikel bopeng di blog Ultima tanpa menyebut namanya.", "sources": "halodokter.example, veloraclinic.example, nirmaladerma.example", "refs": [3]}, {"name": "Flek dan melasma", "volume": 3600, "status": "Tidak disebut di ChatGPT maupun Google.", "sources": "nirmaladerma.example, halodokter.example, majalahcantik.example", "refs": [2]}, {"name": "Botox dan filler", "volume": 1900, "status": "Tidak disebut di ChatGPT. Google tidak menampilkan AI Overview.", "sources": "maisonaurelle.example, rskulitcempaka.example, halodokter.example", "refs": [5]}, {"name": "Skin booster", "volume": 1600, "status": "Tidak disebut di ChatGPT maupun Google.", "sources": "kaiaskin.example, maisonaurelle.example", "refs": [10]}, {"name": "Biaya perawatan melasma", "volume": 1000, "status": "Tidak disebut di ChatGPT maupun Google. Google mengutip artikel biaya melasma di blog Ultima tanpa menyebut namanya.", "sources": "halodokter.example, veloraclinic.example", "refs": [9]}], "sitemap": {"lede": "Situs yang dikutip ChatGPT dan Google di sepuluh pertanyaan ini, dan apakah Ultima ada di sana. Langkah berikut hanya untuk direktori dan portal kesehatan.", "groups": [{"name": "Situs Ultima", "sites": [{"domain": "ultimaclinic.example", "title": "blog, daftar harga, halaman HIFU, halaman bahasa Inggris", "present": "Situs Anda", "present_cls": "acc", "action": "Dua artikel blog dikutip tanpa nama Ultima; artikel promo 2021 masih dikutip untuk harga."}]}, {"name": "Direktori dan situs promo", "sites": [{"domain": "direktoriklinik.example", "title": "profil Ultima Clinic", "present": "Ada, data lama", "present_cls": "warn", "action": "Minta koreksi: cabang Kemang dan tahun berdiri 2009."}, {"domain": "promokecantikan.example", "title": "listing promo Ultima", "present": "Ada, promo 2022", "present_cls": "warn", "action": "Minta penurunan listing promo lama."}]}, {"name": "Portal kesehatan", "sites": [{"domain": "halodokter.example", "title": "artikel melasma, bopeng, dan botox", "present": "Ultima tidak ada", "present_cls": "bad", "action": "Daftar: buat profil klinik dan dokter, bila portal menyediakan direktori."}]}, {"name": "Artikel daftar dan media", "sites": [{"domain": "majalahcantik.example", "title": "10 Klinik Kecantikan Terbaik di Jakarta 2026", "present": "Ultima tidak disebut", "present_cls": "bad", "action": "Tanpa langkah: Nuave tidak menyarankan meminta masuk daftar “terbaik”."}]}, {"name": "Situs pesaing", "sites": [{"domain": "veloraclinic.example", "title": "daftar harga", "action": "Lihat “Apa yang ditampilkan halaman mereka”."}, {"domain": "nirmaladerma.example", "title": "program melasma, dokter, bekas jerawat", "action": "Lihat “Apa yang ditampilkan halaman mereka”."}, {"domain": "maisonaurelle.example", "title": "dokter, HIFU, skin booster", "action": ""}, {"domain": "kaiaskin.example", "title": "skin booster", "action": ""}, {"domain": "rskulitcempaka.example", "title": "layanan", "action": ""}, {"domain": "seraya.example", "title": "beranda", "action": ""}]}, {"name": "Forum dan komunitas", "sites": [{"domain": "forumcantik.example", "title": "utas “Ultima Glow masuk daftar BPOM?”", "present": "Ultima disebut", "present_cls": "warn", "action": "Tanpa langkah otomatis; lihat Cek fakta."}, {"domain": "expatjakarta.example", "title": "English-speaking dermatologist", "present": "Ultima disebut", "present_cls": "good", "action": ""}]}], "note": "Kolom tengah menghitung berapa jawaban yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan dibaca Nuave."}, "playbook": {"1": {"who": "Tim konten, ditinjau dokter", "effort": "±1 minggu per halaman", "check": "halaman terbuka tanpa login dan teksnya bukan gambar", "source": "panduan Google", "line": "AI Overview mengutip halaman yang terindeks dan dapat tampil dengan cuplikan; isi penting sebaiknya berupa teks.", "url": "https://developers.google.com/search/docs/appearance/ai-features"}, "2": {"who": "Tim marketing dan dokter", "effort": "±3 hari", "check": "setiap halaman perawatan menyebut dokter, dan halaman dokternya ada", "source": "panduan Google", "line": "Untuk topik kesehatan, Google menanyakan apakah jelas siapa penulis halaman dan apakah ia ahli di bidangnya.", "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"}, "4": {"who": "Manajer cabang", "effort": "±15 menit sehari", "check": "ulasan baru masuk tiap bulan dan setiap ulasan dibalas", "source": "panduan Google", "line": "Ulasan dan rating membantu peringkat lokal; ulasan berbayar, berhadiah, atau yang hanya diminta dari pasien puas melanggar aturan Google.", "url": "https://support.google.com/contributionpolicy/answer/7400114"}, "5": {"who": "Admin atau tim marketing", "effort": "±1 hari", "check": "nama, alamat, dan jam buka sama di setiap listing", "source": "panduan Google dan OpenAI", "line": "ChatGPT dan Google menyebut dan mengutip bisnis dari halaman publik, termasuk direktori.", "url": "https://developers.google.com/search/docs/appearance/ai-features"}, "6": {"who": "Vendor web", "effort": "kurang dari 1 jam", "check": "robots.txt mengizinkan Googlebot, Bingbot, dan OAI-SearchBot", "source": "panduan OpenAI", "line": "Ringkasan dan cuplikan di pencarian ChatGPT memerlukan OAI-SearchBot diizinkan di robots.txt.", "url": ""}}, "recs_lede": "Enam langkah, urut dari yang perlu didahulukan.", "recs": [{"item": 6, "title": "Izinkan pembaca pencarian ChatGPT membuka halaman perawatan", "text": "File robots.txt di situs Ultima melarang OAI-SearchBot, pembaca yang dipakai pencarian ChatGPT, membuka semua halaman di bawah /layanan/. Halaman pico, melasma, dan bopeng ada di sana. Hapus larangan itu. Pekerjaannya kecil, bisa selesai minggu ini, dan rinciannya ada di bagian Untuk tim web Anda.", "refs": []}, {"item": 2, "title": "Tampilkan dokter spesialis di halaman melasma dan bopeng", "text": "Halaman melasma Ultima yang dibaca Nuave tidak menyebut dokter yang menangani. Halaman program melasma Nirmala Derma, yang dikutip ChatGPT, menyebut nama dokter, gelar Sp.DVE, dan nomor SIP. Cantumkan dokter spesialis Ultima di halaman melasma dan bopeng, dengan tautan ke profilnya, dari data klinik yang berlaku. Dahulukan dua halaman ini karena topiknya paling banyak dicari dan belum menyebut Ultima di jawaban mana pun.", "refs": [2, 3]}, {"item": 1, "title": "Jawab pertanyaan pasien di halaman melasma, sebagai teks", "text": "Halaman melasma Ultima menjelaskan proses perawatan, tetapi harganya ada di dalam gambar dan tidak ada jawaban untuk pertanyaan yang muncul di jawaban AI: berapa sesi, apakah bisa kambuh, berapa biayanya. Tulis jawabannya sebagai teks di halaman itu, dengan kisaran harga yang berlaku, lalu minta dokter meninjaunya sebelum terbit.", "refs": [2, 9]}, {"item": 5, "title": "Minta koreksi data Ultima di direktori dan situs promo yang dikutip AI", "text": "direktoriklinik.example masih mencantumkan cabang Kemang dan tahun berdiri 2009, dan ChatGPT mengutip halaman itu di dua jawaban. promokecantikan.example masih menayangkan promo diskon 70% dari 2022. Kirim permintaan koreksi ke keduanya dengan data dari situs Ultima. Teks emailnya sudah ada di Bahan siap pakai.", "refs": [1, 7]}, {"item": 1, "title": "Arahkan artikel promo pico 2021 ke daftar harga yang berlaku", "text": "Ringkasan Google mengutip artikel promo pico 2021 di blog Ultima dan menulis harga mulai Rp1,2 juta. Daftar harga 2026 di situs yang sama menulis mulai Rp2,8 juta. Arahkan artikel lama ke daftar harga 2026, atau beri tanda jelas di bagian atasnya bahwa promo sudah berakhir.", "refs": [4]}, {"item": 4, "title": "Minta ulasan dari semua pasien, dan balas setiap ulasan", "text": "Ulasan Google Ultima sudah kuat: cabang Senopati 4,8 dari 2.140 ulasan. Jaga arusnya dengan meminta ulasan dari setiap pasien setelah kunjungan, tanpa hadiah dan tanpa memilih pasien yang puas saja. Teks pesan WhatsApp-nya ada di Bahan siap pakai.", "refs": []}], "closing": {"text": "Ultima sudah dikenal AI untuk pico laser, HIFU, dan layanan berbahasa Inggris. Yang belum terlihat adalah dokter spesialisnya di topik yang paling banyak dicari, melasma dan bopeng. Mulailah dari perbaikan kecil yang selesai minggu ini, lalu tampilkan dokter dan jawaban di dua halaman itu.", "plan": [{"weeks": "Minggu 1–2", "title": "Rapikan fakta dasar", "text": "Ubah robots.txt, minta koreksi direktori dan situs promo, dan arahkan artikel promo 2021.", "decision": "setujui harga “mulai dari” yang boleh tampil di situs"}, {"weeks": "Minggu 3–6", "title": "Tampilkan keahlian", "text": "Profil dokter spesialis, lalu halaman melasma dan bopeng yang menjawab pertanyaan pasien.", "decision": "tunjuk satu dokter untuk meninjau isi halaman"}, {"weeks": "Minggu 5–8", "title": "Jaga arus ulasan", "text": "Kirim pesan ulasan ke semua pasien dan balas setiap ulasan.", "decision": ""}], "recheck": "ChatGPT dan Google perlu waktu untuk membaca halaman baru. Setelah perubahan berjalan sekitar delapan minggu, audit ulang dengan sepuluh pertanyaan yang sama supaya hasilnya bisa dibandingkan langsung dengan laporan ini. Perbedaan hasil nanti dicatat; pengaruh perbaikan tidak bisa dipastikan dari perbandingan itu saja."}, "extras_lede": "Tiga bahan untuk tim Anda: pemeriksaan teknis untuk vendor web, teks yang tinggal disalin, dan Lembar Kerja untuk mencatat progres.", "webcheck_sub": "5 pemeriksaan pada 5 halaman Ultima · 1 gagal, 1 sebagian, 1 tidak cocok", "webcheck": [{"row": "robots.txt untuk Googlebot dan Bingbot", "result": "lulus", "detail": "Keduanya boleh membaca semua halaman yang diperiksa."}, {"row": "robots.txt untuk OAI-SearchBot, pembaca pencarian ChatGPT", "result": "gagal", "detail": "Baris <code>User-agent: OAI-SearchBot<\/code> diikuti <code>Disallow: /layanan/<\/code>. Halaman pico, melasma, bopeng, dan HIFU ada di bawah /layanan/.", "fix": "Hapus baris Disallow: /layanan/ untuk OAI-SearchBot. Menurut panduan OpenAI, ringkasan dan cuplikan di pencarian ChatGPT memerlukan pembaca ini diizinkan."}, {"row": "Harga, dokter, alamat, dan jam buka sebagai teks", "result": "sebagian", "detail": "Alamat dan jam buka terdeteksi sebagai teks. Harga tidak terdeteksi di halaman melasma dan bopeng; harganya ada di dalam gambar. Nama dokter tidak terdeteksi di halaman perawatan.", "fix": "Tulis harga dan nama dokter sebagai teks di halaman. Panduan Google: isi penting sebaiknya berupa teks."}, {"row": "Label data terstruktur dibanding teks halaman", "result": "tidakcocok", "detail": "Label MedicalClinic di beranda menulis alamat Jl. Kemang Raya. Teks beranda menulis Jl. Senopati.", "fix": "Samakan alamat di label dengan teks halaman. Panduan Google: data terstruktur harus sesuai dengan teks yang terlihat."}, {"row": "Pembaca biasa ditolak", "result": "lulus", "detail": "Kelima halaman terbuka normal dengan cara baca biasa."}, {"row": "noindex", "result": "f3", "detail": "Tidak ada tanda noindex di kelima halaman. Baris ini tampil bila keputusan F-3 menambahkannya ke pedoman."}, {"row": "Sitemap", "result": "f3", "detail": "sitemap.xml ada, tetapi 38 alamat di dalamnya tidak bisa dibuka. Baris ini tampil bila F-3 disetujui."}, {"row": "Teks yang baru muncul setelah kode berjalan", "result": "f3", "detail": "Sebagian besar teks halaman perawatan baru muncul setelah kode di browser berjalan. Baris ini tampil bila F-3 disetujui."}], "webcheck_note": "Bagikan bagian ini ke vendor web sebagai halaman PDF atau teks salinan, bukan dengan meneruskan link laporan. Pemeriksaan memakai cara baca biasa dan tidak berpura-pura menjadi pembaca AI.", "kit_sub": "Teks yang tinggal disalin. Dua teks untuk dipublikasikan menunggu tinjauan hukum.", "kit": [{"title": "Email permintaan koreksi ke direktoriklinik.example", "for": "Untuk admin atau tim marketing. Isi nama pengirim, lalu kirim dari email klinik.", "text": "Subjek: Permintaan pembaruan data Ultima Clinic\n\nHalo tim direktoriklinik,\n\nKami dari Ultima Clinic. Halaman profil kami di situs Anda masih mencantumkan cabang Kemang dan tahun berdiri 2009. Data yang berlaku:\n- Cabang: Senopati, Kelapa Gading, PIK, Puri Indah, dan BSD City. Cabang Kemang pindah ke Senopati pada 2023.\n- Berdiri sejak 2012.\n\nSumber resmi: ultimaclinic.example/tentang dan ultimaclinic.example/cabang\n\nMohon bantuannya memperbarui halaman tersebut. Terima kasih.\n\n[Nama]\nUltima Clinic"}, {"title": "Email permintaan penurunan promo lama ke promokecantikan.example", "for": "Untuk admin atau tim marketing.", "text": "Subjek: Permintaan penurunan promo Ultima Clinic yang sudah berakhir\n\nHalo tim promokecantikan,\n\nListing promo diskon 70% atas nama Ultima Clinic di situs Anda berasal dari 2022 dan sudah tidak berlaku. Mohon listing tersebut diturunkan, atau diberi keterangan bahwa promo telah berakhir. Promo yang berlaku dapat dilihat di ultimaclinic.example/promo.\n\nTerima kasih.\n\n[Nama]\nUltima Clinic"}, {"title": "Pesan WhatsApp untuk meminta ulasan", "for": "Kirim ke semua pasien setelah kunjungan, bukan hanya yang puas. Jangan menawarkan hadiah.", "text": "Terima kasih sudah berkunjung ke Ultima Clinic hari ini. Kalau berkenan, ceritakan pengalaman Anda lewat ulasan Google di tautan ini: [tautan ulasan cabang]. Semua masukan membantu kami memperbaiki layanan. Memberi ulasan tidak wajib dan tidak memengaruhi layanan yang Anda terima."}, {"title": "Teks halaman Fakta Resmi", "locked": true, "text": "Tersedia setelah teks resmi Permenkes 1787/2010 dibaca dan tinjauan hukum selesai (keputusan F-7)."}, {"title": "Kerangka halaman melasma", "locked": true, "text": "Tersedia setelah tinjauan hukum (keputusan F-7). Isinya kelak: siapa yang cocok, proses, jumlah sesi, kisaran harga, risiko, dan dokter yang menangani, untuk ditinjau dokter Ultima."}], "worksheet": {"title": "Lembar Kerja Ultima Clinic", "text": "Satu file Excel yang juga bisa dibuka di Google Sheets. Isinya sama dengan laporan ini, ditambah kolom untuk penanggung jawab, tanggal target, dan status. Progres terhitung sendiri setiap kali status diubah.", "tabs": ["Panduan", "Ringkasan", "Rencana Kerja", "Pertanyaan & Hasil", "Pesaing", "Cek Fakta", "Website", "Situs AI", "Bahan Siap Pakai", "Titik Awal"]}, "answers_lede": "Bukti di balik laporan ini. Ketuk pertanyaan untuk membaca jawaban lengkap ChatGPT dan Google AI Overview.", "answer_notes": ["Jawaban AI dapat berubah menurut waktu, model, akun, dan lokasi.", "Pertanyaan diajukan dari Indonesia; Google dari Jakarta.", "Disebut belum tentu direkomendasikan."], "method": ["Sepuluh pertanyaan diambil dari data pencarian Google di Indonesia dan tidak menyebut nama Ultima.", "Setiap pertanyaan ditanyakan sekali ke aplikasi ChatGPT, dari Indonesia, dan ke Google, dari Jakarta, pada 6 November 2026.", "Kartu ChatGPT menghitung dari 10 jawaban. Kartu Google menghitung dari ringkasan AI yang benar-benar tampil: 7 dari 10 pertanyaan.", "Disebut: nama Ultima ada di jawaban. Direkomendasikan: jawaban menyarankan Ultima untuk kebutuhan yang ditanyakan; ini penilaian penulis laporan yang diperiksa kode. Situs dikutip: halaman Ultima dipakai sebagai sumber, tetapi namanya tidak disebut.", "Hitungan nama pesaing dan situs yang dikutip dibuat oleh kode dari jawaban yang tersimpan, bukan oleh penulis laporan.", "Seberapa stabil: tiga pertanyaan ditanyakan dua kali lagi pada hari yang sama. Hasilnya tidak mengubah hitungan di kartu.", "Cek fakta membandingkan kalimat AI dengan situs Ultima dan data yang Anda konfirmasi. Nuave tidak menilai klaim keamanan, izin, atau mutu layanan.", "Sepuluh pertanyaan tidak mewakili semua pertanyaan calon pasien, dan laporan ini tidak membuktikan mengapa AI menjawab seperti ini."]};
+
+const ICON = {
+  chatgpt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.217 19.384a3.501 3.501 0 0 0 6.783 -1.217v-5.167l-6 -3.35"/><path d="M5.214 15.014a3.501 3.501 0 0 0 4.446 5.266l4.34 -2.534v-6.946"/><path d="M6 7.63c-1.391 -.236 -2.787 .395 -3.534 1.689a3.474 3.474 0 0 0 1.271 4.745l4.263 2.514l6 -3.348"/><path d="M12.783 4.616a3.501 3.501 0 0 0 -6.783 1.217v5.067l6 3.45"/><path d="M18.786 8.986a3.501 3.501 0 0 0 -4.446 -5.266l-4.34 2.534v6.946"/><path d="M18 16.302c1.391 .236 2.787 -.395 3.534 -1.689a3.474 3.474 0 0 0 -1.271 -4.745l-4.308 -2.514l-5.955 3.42"/></svg>',
+  google: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.945 11a9 9 0 1 1 -3.284 -5.997l-2.655 2.392a5.5 5.5 0 1 0 2.119 6.605h-4.125v-3h7.945z"/></svg>',
+  chev: '<svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 9l6 6l6 -6"/></svg>'
+};
+const SRC = { chatgpt: "ChatGPT", google: "Google AI Overview" };
+const STATUS = {
+  recommended: "Direkomendasikan", mentioned: "Disebut", cited: "Situs dikutip, nama tidak disebut",
+  none: "Tidak disebut", noaio: "Tidak ada AI Overview", failed: "Tidak dapat diuji", notasked: "Tidak ditanyakan"
+};
+const D = DATA;
+// Questions that name the clinic are shown apart and never counted (plan F-4).
+const QS = D.questions.filter(q => !q.brand);
+const BRANDQ = D.questions.filter(q => q.brand);
+const CLINIC = D.meta.clinic;
+const SHORT = D.meta.short || CLINIC;
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function fmt(n) { return Number(n).toLocaleString("id-ID"); }
+function dot(status, extra = "") { return `<span class="dot ${status} ${extra}" aria-hidden="true"></span>`; }
+function refs(list) { return (list || []).map(n => `<button class="ref" data-q="${n}">P${n}</button>`).join(" "); }
+function volText(x) { return x.volume ? `±${fmt(x.volume)} pencarian/bulan` : x.ai_mentions ? `±${fmt(x.ai_mentions)} sebutan di asisten AI/bulan` : ""; }
+function namedIn(a) { return a && (a.status === "mentioned" || a.status === "recommended"); }
+
+/* ---------- counts, computed from the answers (code, not the writer) ---------- */
+function stats(src) {
+  const qs = QS.map(q => q[src]).filter(a => a && a.status !== "notasked");
+  const done = qs.filter(a => a.status !== "failed");
+  const shown = done.filter(a => a.status !== "noaio");
+  return {
+    asked: qs.length, done: done.length, shown: shown.length,
+    noaio: done.length - shown.length, failed: qs.length - done.length,
+    named: shown.filter(namedIn).length,
+    rec: shown.filter(a => a.status === "recommended").length,
+    cited: shown.filter(a => a.status === "cited").length,
+  };
+}
+function businessCounts(src) {
+  const m = {};
+  QS.forEach(q => {
+    const a = q[src];
+    if (!a || a.status === "notasked" || a.status === "failed" || a.status === "noaio") return;
+    new Set(a.named || []).forEach(n => { m[n] = (m[n] || 0) + 1; });
+  });
+  return m;
+}
+function recCounts() {
+  const m = {};
+  QS.forEach(q => ["chatgpt", "google"].forEach(src => {
+    const a = q[src];
+    if (!a) return;
+    new Set(a.rec || []).forEach(n => { m[n] = (m[n] || 0) + 1; });
+  }));
+  return m;
+}
+function avgNamed(src) {
+  const per = QS.map(q => q[src]).filter(a => a && !["notasked", "failed", "noaio"].includes(a.status))
+    .map(a => new Set([...(a.named || []), ...(namedIn(a) ? [CLINIC] : [])]).size).filter(n => n > 0);
+  if (!per.length) return null;
+  return { avg: per.reduce((x, y) => x + y, 0) / per.length, n: per.length };
+}
+
+/* ---------- tiny Markdown for saved answers ---------- */
+function inline(s) {
+  s = esc(s);
+  s = s.replace(/\[\[(\d+)\]\]\((https?:[^)\s]+)\)/g, (m, n, u) => `<sup class="cite"><a href="${u}" target="_blank" rel="noreferrer noopener">${n}</a></sup>`);
+  s = s.replace(/\[\[(\d+)\]\]/g, (m, n) => `<sup class="cite">${n}</sup>`);
+  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, (m, t, u) => `<a href="${u}" target="_blank" rel="noreferrer noopener">${t}</a>`);
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  return s;
+}
+function md(text) {
+  const lines = String(text || "").split("\n");
+  let out = [], list = null, table = null;
+  const flush = () => {
+    if (list) { out.push(`<${list.t}>${list.items.map(i => `<li>${inline(i)}</li>`).join("")}</${list.t}>`); list = null; }
+    if (table) {
+      const rows = table.filter(r => !/^\s*\|?\s*:?-{2,}/.test(r));
+      const cells = r => r.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map(c => c.trim());
+      const [h, ...b] = rows;
+      out.push(`<div class="tw"><table><thead><tr>${cells(h).map(c => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${b.map(r => `<tr>${cells(r).map(c => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      table = null;
+    }
+  };
+  for (const raw of lines) {
+    const l = raw.trimEnd();
+    if (/^\s*\|.*\|\s*$/.test(l)) { if (list) flush(); (table = table || []).push(l); continue; }
+    if (table) flush();
+    let m;
+    if ((m = l.match(/^\s*[-*•]\s+(.*)$/))) { if (!list || list.t !== "ul") { flush(); list = { t: "ul", items: [] }; } list.items.push(m[1]); continue; }
+    if ((m = l.match(/^\s*\d+[.)]\s+(.*)$/))) { if (!list || list.t !== "ol") { flush(); list = { t: "ol", items: [] }; } list.items.push(m[1]); continue; }
+    flush();
+    if (!l.trim()) continue;
+    if ((m = l.match(/^#{1,6}\s+(.*)$/))) { out.push(`<h4>${inline(m[1])}</h4>`); continue; }
+    out.push(`<p>${inline(l)}</p>`);
+  }
+  flush();
+  return out.join("");
+}
+function highlight(html, diffs) {
+  const names = [...new Set([...(D.businesses || []).flatMap(b => [b.name, ...(b.aliases || [])])])]
+    .filter(Boolean).sort((a, b) => b.length - a.length);
+  const youNames = [CLINIC, ...(D.meta.aliases || [])].sort((a, b) => b.length - a.length);
+  const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Only touch text outside tags.
+  return html.replace(/>([^<]+)</g, (m, txt) => {
+    let t = txt;
+    (diffs || []).forEach(dq => { const e = esc(dq); if (e && t.includes(e)) t = t.split(e).join(`\u0001${e}\u0002`); });
+    youNames.forEach(n => { t = t.replace(new RegExp(`(^|[^\\w])(${reEsc(esc(n))})(?![\\w])`, "g"), "$1\u0003$2\u0004"); });
+    names.forEach(n => { if (youNames.includes(n)) return; t = t.replace(new RegExp(`(^|[^\\w\u0003])(${reEsc(esc(n))})(?![\\w])`, "g"), "$1\u0005$2\u0006"); });
+    t = t.replace(/\u0001/g, '<mark class="diff">').replace(/\u0002/g, "</mark>")
+         .replace(/\u0003/g, '<mark class="you">').replace(/\u0004/g, "</mark>")
+         .replace(/\u0005/g, '<mark class="name">').replace(/\u0006/g, "</mark>");
+    return `>${t}<`;
+  });
+}
+function answerHTML(q, src) {
+  const a = q[src];
+  if (!a || a.status === "notasked") return `<p class="small">Pertanyaan ini tidak ditanyakan ke ${SRC[src]} dalam data ini.</p>`;
+  if (a.status === "noaio") return `<div class="status-line">${dot("noaio")}<span class="pill">${STATUS.noaio}</span></div><p class="small">Google tidak menampilkan AI Overview saat pertanyaan ini diperiksa.</p>`;
+  if (a.status === "failed") return `<div class="status-line">${dot("failed")}<span class="pill">${STATUS.failed}</span></div><p class="small">Pemeriksaan ini tidak berhasil. Tim Nuave membantu menjalankannya lagi.</p>`;
+  const diffs = (D.facts || []).filter(f => f.n === q.n && f.source === src && f.verdict === "berbeda").map(f => f.quote);
+  const chips = (a.sources || []).map(s => s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noreferrer noopener" title="${esc(s.title || "")}">${esc(s.domain)}</a>` : `<span title="${esc(s.title || "")}">${esc(s.domain)}</span>`).join("");
+  return `<div class="status-line">${dot(a.status)}<span class="pill ${a.status === "recommended" || a.status === "mentioned" ? "acc" : ""}">${STATUS[a.status]}</span>${a.time ? `<span class="small">${esc(a.time)}</span>` : ""}</div>
+    <div class="answer">${highlight(md(a.answer), diffs)}</div>
+    ${chips ? `<div><div class="small" style="margin-bottom:6px">Sumber yang dikutip</div><div class="srcchips">${chips}</div></div>` : ""}`;
+}
+
+/* ---------- sections ---------- */
+function header() {
+  const m = D.meta;
+  return `
+  <div class="poc"><div class="wrap"><strong>${esc(m.poc_label)}</strong><span>${esc(m.poc_note)}</span></div></div>
+  <div class="top"><div class="wrap"><div class="logo">nuave<span>.</span></div>
+    <div class="top-actions"><button class="btn" data-file="pdf"><span class="lg">Unduh </span>PDF</button><button class="btn primary" data-file="xlsx"><span class="lg">Unduh </span>Lembar Kerja</button></div></div></div>
+  <header class="head"><div class="wrap">
+    <div class="eyebrow">Laporan Visibilitas AI</div>
+    <h1 class="clinic">${esc(CLINIC)}</h1>
+    <p class="meta">${esc(m.site)} · ${esc(m.city)}<span class="sub">Diperiksa ${esc(m.date)} · ChatGPT dan Google AI Overview · ${esc(m.places)}</span></p>
+    <p class="verdict">${esc(D.verdict)}</p>
+    ${cards()}
+    ${moment()}
+    ${compare()}
+    ${stability()}
+    ${brandBox()}
+  </div></header>
+  <p class="note-pop wrap no-print" id="file-note" hidden></p>`;
+}
+function cards() {
+  const c = stats("chatgpt"), g = stats("google");
+  const dotsFor = src => QS.filter(q => q[src] && q[src].status !== "notasked")
+    .map(q => `<button class="dotbtn" data-q="${q.n}" data-src="${src}" title="P${q.n} · ${SRC[src]} · ${STATUS[q[src].status]}">${dot(q[src].status)}<span class="n">${q.n}</span></button>`).join("");
+  const present = new Set(QS.flatMap(q => ["chatgpt", "google"].map(s => q[s] && q[s].status)).filter(Boolean));
+  const legendItems = ["noaio", "none", "cited", "mentioned", "recommended", "failed", "notasked"].filter(s => s !== "failed" && s !== "notasked" || present.has(s));
+  const cs = (c.named ? `${SHORT} disebut di ${c.named} jawaban dan direkomendasikan di ${c.rec}.` : `${SHORT} tidak disebut di jawaban mana pun.`) + (c.cited ? ` Situsnya dikutip tanpa nama di ${c.cited}.` : "");
+  const gs = (g.named ? `${SHORT} disebut di ${g.named} ringkasan.` : `${SHORT} tidak disebut di ringkasan mana pun.`) + (g.cited ? ` Situsnya dikutip tanpa nama di ${g.cited}.` : "") + (g.noaio ? ` Tidak ada AI Overview di ${g.noaio} pertanyaan.` : "");
+  return `<div class="cards">
+    <div class="card"><div class="card-src">${ICON.chatgpt}ChatGPT</div><div class="big tnum">${c.named} <small>dari ${c.done} jawaban</small></div><p>${esc(cs)}</p><div class="dots">${dotsFor("chatgpt")}</div></div>
+    <div class="card"><div class="card-src">${ICON.google}Google AI Overview</div><div class="big tnum">${g.named} <small>dari ${g.shown} ringkasan AI</small></div><p>${esc(gs)}</p><div class="dots">${dotsFor("google")}</div></div>
+  </div>
+  <div class="legend">${legendItems.map(s => `<span>${dot(s)}${STATUS[s]}</span>`).join("")}</div>`;
+}
+function moment() {
+  const mo = D.moment; if (!mo) return "";
+  const q = D.questions.find(x => x.n === mo.n), a = q[mo.source];
+  const list = (mo.list || []).map((it, i) => `<div class="ai-item"><span class="i">${i + 1}.</span><span><b>${esc(it.name)}</b> <span class="why">${esc(it.why || "")}</span></span></div>`).join("");
+  const you = namedIn(a) ? `<div class="ai-you ok">${esc(CLINIC)}: ${esc(STATUS[a.status].toLowerCase())}</div>` : `<div class="ai-you">${esc(CLINIC)}: tidak disebut</div>`;
+  return `<section class="moment" aria-label="Contoh jawaban">
+    <div class="moment-h"><span><b>Saat calon pasien bertanya</b> · ${SRC[mo.source]} · P${q.n}</span><span>${esc(q.topic)}${volText(q) ? ` · ${volText(q)}` : ""}</span></div>
+    <div class="moment-b"><div class="bubble">${esc(q.q)}</div><div class="ai-list">${list}</div>${you}
+    <p class="moment-cap">${esc(mo.caption)}</p><button class="linkbtn" data-q="${q.n}" data-src="${mo.source}">Baca jawaban lengkap</button></div></section>`;
+}
+function compare() {
+  const row = (src, den, label) => {
+    const bc = businessCounts(src);
+    const others = Object.entries(bc).filter(([n]) => n !== CLINIC).sort((a, b) => b[1] - a[1]);
+    const youN = stats(src).named;
+    if (!den) return "";
+    const top = others[0];
+    const bar = (name, n, you) => `<div class="bar ${you ? "you" : ""}"><span class="bar-name">${esc(name)}</span><div class="bar-track"><div class="bar-fill" style="width:${(n / den) * 100}%"></div></div><span class="bar-label tnum">${n} dari ${den}</span></div>`;
+    return `<div class="cmp-row"><div class="cmp-src">${SRC[src]}<small>${label}</small></div><div class="bars">${top ? bar(`${top[0]} (paling sering disebut)`, top[1], false) : ""}${bar(CLINIC, youN, true)}</div></div>`;
+  };
+  const c = stats("chatgpt"), g = stats("google");
+  const ac = avgNamed("chatgpt"), ag = avgNamed("google");
+  const avg = [ac && `jawaban ChatGPT yang menyebut bisnis rata-rata menyebut ${ac.avg.toFixed(1).replace(".", ",")} nama (${ac.n} jawaban)`, ag && `ringkasan Google rata-rata ${ag.avg.toFixed(1).replace(".", ",")} nama (${ag.n} ringkasan)`].filter(Boolean).join("; ");
+  return `<div class="compare">${row("chatgpt", c.done, `${c.done} jawaban`)}${row("google", g.shown, `${g.shown} ringkasan AI`)}</div>
+  ${avg ? `<p class="why-line">Mengapa ini penting: AI tidak memberi sepuluh tautan. Dalam laporan ini, ${esc(avg)}. Klinik yang tidak ada di daftar itu tidak ikut dipertimbangkan oleh calon pasien yang bertanya.</p>` : ""}`;
+}
+function stability() {
+  const s = D.stability;
+  if (!s) return "";
+  if (s.note_only) return `<div class="stab"><b>Seberapa stabil</b><span class="small">${esc(s.note_only)}</span></div>`;
+  const word = runs => { const k = runs.filter(r => r === "mentioned" || r === "recommended").length; return k === runs.length ? ["selalu", "good"] : k === 0 ? ["tidak pernah", "bad"] : ["kadang", "warn"]; };
+  const rows = s.items.map(it => { const [w, cls] = word(it.runs); const k = it.runs.filter(r => r === "mentioned" || r === "recommended").length; return `<div class="stab-row"><button class="ref" data-q="${it.n}" data-src="${it.source}">P${it.n}</button><span>${SRC[it.source]}</span><span class="pill ${cls}">${w} · ${k} dari ${it.runs.length}</span><span class="stab-dots" aria-label="${it.runs.length} kali ditanyakan">${it.runs.map(r => dot(r)).join("")}</span></div>`; }).join("");
+  return `<div class="stab"><b>Seberapa stabil</b>${rows}<span class="small">${esc(s.note)}</span></div>`;
+}
+function brandBox() {
+  if (!BRANDQ.length) return "";
+  const rows = BRANDQ.map(q => {
+    const src = q.chatgpt && q.chatgpt.status !== "notasked" ? "chatgpt" : "google";
+    return `<div class="bq-row"><div class="bq-head"><button class="ref" data-q="${q.n}" data-src="${src}">P${q.n}</button><span>${SRC[src]}</span></div><p class="bq-q">“${esc(q.q)}”</p>${q.brand_summary ? `<p class="small">${esc(q.brand_summary)}</p>` : ""}</div>`;
+  }).join("");
+  return `<div class="stab brandq"><b>Saat nama ${esc(SHORT)} ditanyakan langsung</b>${rows}<span class="small">${esc(D.brand_note || "")}</span></div>`;
+}
+function toc(items) {
+  return `<nav class="toc" aria-label="Isi laporan"><div class="wrap">${items.map(([id, t]) => `<a href="#${id}">${esc(t)}</a>`).join("")}</div></nav>`;
+}
+function band(id, title, lede, body, cls = "", pb = false) {
+  return `<section class="band ${cls} ${pb ? "pb" : ""}" id="${id}"><div class="wrap"><h2>${esc(title)}</h2>${lede ? `<p class="lede">${esc(lede)}</p>` : ""}${body}</div></section>`;
+}
+function findings() {
+  return band("temuan", "Temuan Utama", D.findings_lede, D.findings.map(f => `
+    <div class="finding"><div>${f.num ? `<div class="hl-num tnum">${esc(f.num)}</div><div class="hl-cap">${esc(f.cap)}</div>` : ""}</div>
+    <div><h3>${esc(f.title)}</h3><p>${esc(f.text)} ${refs(f.refs)}</p></div></div>`).join(""), "", false);
+}
+function facts() {
+  const F = D.facts || [];
+  if (!F.length && !D.facts_empty) return "";
+  const n = { berbeda: 0, sesuai: 0, tidak_bisa_dicek: 0, tanpa_penilaian: 0 };
+  F.forEach(f => n[f.verdict]++);
+  const V = { berbeda: ["Berbeda", "bad"], sesuai: ["Sesuai", "good"], tidak_bisa_dicek: ["Tidak bisa dicek", ""], tanpa_penilaian: ["Tanpa penilaian", "warn"] };
+  const sum = `<div class="fact-sum"><span class="pill">${F.length} klaim diperiksa</span>${n.berbeda ? `<span class="pill bad">${n.berbeda} berbeda</span>` : ""}${n.sesuai ? `<span class="pill good">${n.sesuai} sesuai</span>` : ""}${n.tidak_bisa_dicek ? `<span class="pill">${n.tidak_bisa_dicek} tidak bisa dicek</span>` : ""}${n.tanpa_penilaian ? `<span class="pill warn">${n.tanpa_penilaian} tanpa penilaian</span>` : ""}</div>`;
+  const shownF = F.some(f => "show" in f) ? F.filter(f => f.show) : F;
+  const subset = shownF.length < F.length ? `<p class="small">Ditampilkan ${shownF.length} dari ${F.length} klaim. Semuanya ada di Lembar Kerja, tab Cek Fakta.</p>` : "";
+  const body = F.length ? sum + subset + shownF.map(f => {
+    const [vl, vc] = V[f.verdict];
+    return `<article class="fact"><div class="fact-top"><span>${SRC[f.source]} · <button class="ref" data-q="${f.n}" data-src="${f.source}">P${f.n}</button> · ${esc(f.topic)}</span><span class="pill ${vc}">${vl}</span></div>
+      <div class="fact-said ${f.verdict === "sesuai" ? "same" : f.verdict === "berbeda" ? "" : "none"}"><div class="small">Kata ${SRC[f.source]}</div><q>${esc(f.quote)}</q></div>
+      ${f.ref_text ? `<div class="fact-ref"><b>${esc(f.ref_label)}:</b> ${esc(f.ref_text)}${f.ref_url ? ` <a href="${esc(f.ref_url)}" target="_blank" rel="noreferrer noopener" class="small">${esc(f.ref_site || "halaman")}</a>` : ""}</div>` : ""}
+      ${(f.seen_on || f.fix) ? `<div class="fact-more">${f.seen_on ? `<span><b>${esc(f.seen_label || "Teks yang sama ada di")}:</b> ${esc(f.seen_on)}</span>` : ""}${f.fix ? `<span><b>Perbaiki di:</b> ${esc(f.fix)}</span>` : ""}</div>` : ""}
+    </article>`;
+  }).join("") : `<p class="lede">${esc(D.facts_empty)}</p>`;
+  return band("cek-fakta", "Cek fakta: apa kata AI tentang " + SHORT, D.facts_lede, body);
+}
+function competitors() {
+  const cc = businessCounts("chatgpt"), gc = businessCounts("google"), rc = recCounts();
+  const youC = stats("chatgpt").named, youG = stats("google").named;
+  const youRec = QS.reduce((k, q) => k + ["chatgpt", "google"].filter(s => q[s] && q[s].status === "recommended").length, 0);
+  const den = { c: stats("chatgpt").done, g: stats("google").shown };
+  const all = (D.businesses || []).map(b => {
+    const you = b.name === CLINIC;
+    const c = you ? youC : (cc[b.name] || 0), g = you ? youG : (gc[b.name] || 0);
+    return { ...b, you, c, g, total: c + g, rec: you ? youRec : (rc[b.name] || 0) };
+  }).filter(b => b.total > 0).sort((a, b) => b.total - a.total || b.rec - a.rec);
+  const full = all.filter(b => b.full || b.you).slice(0, 6);
+  const rest = all.filter(b => !full.includes(b));
+  const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const rows = full.map(b => `<div class="comp ${b.you ? "you" : ""}"><div class="logo-i">${esc(initials(b.name))}</div>
+    <div><div class="comp-name">${esc(b.name)}${b.you ? '<span class="pill acc">Klinik Anda</span>' : ""}</div><div class="comp-site">${b.domain ? esc(b.domain) : "situs tidak tercatat"}${b.rating ? ` · ${esc(b.rating)}` : ""}</div></div>
+    <div class="comp-count"><div class="cc-row"><span class="cc"><small>ChatGPT</small><b class="tnum">${b.c}</b><small>dari ${den.c}</small></span><span class="cc"><small>Google</small><b class="tnum">${b.g}</b><small>dari ${den.g}</small></span></div>${b.rec ? `<span class="cc-rec">direkomendasikan ${b.rec}×</span>` : ""}</div>
+    ${b.why ? `<div class="comp-why"><em>Menurut jawaban AI:</em> ${esc(b.why)}</div>` : ""}</div>`).join("");
+  const chips = rest.length ? `<div class="chips"><span class="small" style="width:100%">${rest.length} bisnis lain disebut lebih jarang:</span>${rest.map(b => `<span class="chip">${esc(b.name)} · ChatGPT ${b.c} · Google ${b.g}</span>`).join("")}</div>` : "";
+  const takes = (D.takeaways || []).length ? `<div class="cards3">${D.takeaways.map(t => `<div class="take"><b>${esc(t.title)}</b><p>${esc(t.text)}</p></div>`).join("")}</div>` : "";
+  return band("pesaing", "Peta Pesaing", D.comp_lede, `<div class="comp-list">${rows}${chips}</div>${takes}`, "", true);
+}
+function description() {
+  const d = D.description; if (!d) return "";
+  const words = (d.words || []).map(([w, k]) => `<span class="word ${k === 0 ? "zero" : ""}">${esc(w)}<b class="tnum">${k}×</b></span>`).join("");
+  const rivals = (d.rivals || []).map(r => `<div class="rival"><b>${esc(r.name)}</b><span>${esc(r.line)}</span></div>`).join("");
+  return band("gambaran", `Bagaimana AI menggambarkan ${SHORT}`, d.lede, `
+    <div class="desc"><div class="desc-box"><h4>Kata AI</h4><p class="desc-line">${esc(d.ai_line)}</p><div class="words">${words}</div><p class="small">${esc(d.words_note || `Angka: berapa jawaban yang memakai kata itu untuk ${SHORT}.`)}</p></div>
+    <div class="desc-box owner"><h4>${esc(d.owner_head || "Menurut Anda")}</h4><p class="desc-line">${d.owner_line ? esc(d.owner_line) : '<span class="small">Belum diisi.</span>'}</p>${d.owner_src ? `<p class="small">${esc(d.owner_src)}</p>` : ""}</div></div>
+    ${d.gap ? `<p class="gap-line">${esc(d.gap)}</p>` : ""}
+    ${rivals ? `<div><div class="small" style="margin-bottom:6px">Gambaran AI untuk klinik lain</div><div class="rivals">${rivals}</div></div>` : ""}`);
+}
+function pagesGrid() {
+  const g = D.pages_grid; if (!g) return "";
+  const cell = v => v === true ? '<span class="tick">✓</span>' : v === false ? '<span class="cross">tidak terdeteksi</span>' : `<span class="small">${esc(v)}</span>`;
+  return band("halaman", "Apa yang ditampilkan halaman mereka", g.lede, `
+    <div class="tablewrap"><table class="grid"><thead><tr><th>Yang dicari pada halaman</th>${g.columns.map((c, i) => `<th class="c ${(c.you ?? i === 0) ? "you-col" : ""}">${esc(c.name)}<br><span class="small">${esc(c.page)}</span></th>`).join("")}</tr></thead>
+    <tbody>${g.rows.map(r => `<tr><td>${esc(r.label)}</td>${r.cells.map((v, i) => `<td class="c ${(g.columns[i].you ?? i === 0) ? "you-col" : ""}">${cell(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="small">${esc(g.note)}</p>`);
+}
+function topics() {
+  if (!(D.topics || []).length) return "";
+  return band("celah", "Celah Topik", D.topics_lede, D.topics.map(t => `
+    <div class="topic"><div class="topic-h"><h3>${esc(t.name)}</h3><div class="topic-v tnum">${t.volume ? `±${fmt(t.volume)}<small>pencarian/bulan</small>` : t.ai_mentions ? `±${fmt(t.ai_mentions)}<small>sebutan di asisten AI/bulan</small>` : `${t.others}<small>klinik lain disebut AI</small>`}</div></div>
+    <p>${esc(t.status)} ${t.sources ? `<span class="src">Sumber yang dipakai AI: ${esc(t.sources)}</span>` : ""} ${refs(t.refs)}</p></div>`).join(""));
+}
+function sourceMap() {
+  const S = D.sitemap; if (!S) return "";
+  const counts = {};
+  D.questions.forEach(q => ["chatgpt", "google"].forEach(src => { const a = q[src]; if (!a || !a.sources) return; new Set(a.sources.map(s => s.domain)).forEach(dm => { counts[dm] = (counts[dm] || 0) + 1; }); }));
+  const groups = S.groups.map(gp => {
+    const rows = gp.sites.map(s => ({ ...s, k: counts[s.domain] || 0 })).sort((a, b) => b.k - a.k);
+    const total = rows.reduce((x, r) => x + r.k, 0);
+    return `<div class="smap-group"><h3><span>${esc(gp.name)}</span><span class="small tnum">${total} kutipan</span></h3>${rows.map(r => `
+      <div class="smap-row"><div class="dom">${esc(r.domain)}${r.title ? `<small>${esc(r.title)}</small>` : ""}</div><div class="tnum small">${r.k} jawaban</div>
+      <div class="act">${r.present ? `<span class="pill ${r.present_cls || ""}">${esc(r.present)}</span> ` : ""}${esc(r.action || "")}</div></div>`).join("")}</div>`;
+  }).join("");
+  return band("situs-ai", "Situs yang dibaca AI", S.lede, groups + (S.note ? `<p class="small">${esc(S.note)}</p>` : ""));
+}
+function recs() {
+  const P = D.playbook || {};
+  return band("rekomendasi", "Rekomendasi", D.recs_lede, `<div class="recs">${D.recs.map((r, i) => {
+    const p = P[r.item] || {};
+    return `<article class="rec"><div class="rec-n">${i + 1}</div><h3>${esc(r.title)}</h3><p>${esc(r.text)} ${refs(r.refs)}</p>
+      <div class="tags">${p.who ? `<span class="tag"><b>Siapa:</b> ${esc(p.who)}</span>` : ""}${p.effort ? `<span class="tag"><b>Waktu kerja:</b> ${esc(p.effort)}</span>` : ""}${p.check ? `<span class="tag"><b>Selesai jika:</b> ${esc(p.check)}</span>` : ""}</div>
+      ${p.line ? `<p class="basis">Dasar, ${esc(p.source)}: ${esc(p.line)}${p.url ? ` <a href="${esc(p.url)}" target="_blank" rel="noreferrer noopener">Sumber</a>` : ""}</p>` : ""}</article>`;
+  }).join("")}</div>`, "wash", true);
+}
+function closing() {
+  const c = D.closing, cs = stats("chatgpt"), gs = stats("google");
+  const nb = (D.facts || []).filter(f => f.verdict === "berbeda").length;
+  const wf = (D.webcheck || []).filter(w => ["gagal", "sebagian", "tidakcocok"].includes(w.result)).length;
+  const plan = c.plan.map(s => `<div class="step"><span class="wk">${esc(s.weeks)}</span><b>${esc(s.title)}</b><p>${esc(s.text)}</p>${s.decision ? `<span class="dec">Keputusan Anda: ${esc(s.decision)}</span>` : ""}</div>`).join("");
+  return band("penutup", "Penutup", "", `<p class="closing-text">${esc(c.text)}</p><div class="plan">${plan}</div>
+    <div class="inkcards"><div class="inkcard"><h3>Titik awal</h3><ul class="tnum">
+      <li>ChatGPT: <b>${cs.named} dari ${cs.done}</b> jawaban menyebut ${esc(SHORT)}</li>
+      <li>Google AI Overview: <b>${gs.named} dari ${gs.shown}</b> ringkasan menyebut ${esc(SHORT)}</li>
+      ${(D.facts || []).length ? `<li>Cek fakta: <b>${nb}</b> klaim berbeda</li>` : ""}
+      ${(D.webcheck || []).length ? `<li>Untuk tim web: <b>${wf}</b> pemeriksaan perlu diperbaiki</li>` : ""}
+    </ul><p>Angka ini tersimpan di Lembar Kerja, tab Titik Awal, untuk dibandingkan nanti.</p></div>
+    <div class="inkcard"><h3>Audit ulang setelah 8 minggu</h3><p>${esc(c.recheck)}</p></div></div>`, "ink", true);
+}
+function webcheck() {
+  const W = D.webcheck || []; if (!W.length) return "";
+  const R = { lulus: ["Lulus", "good"], gagal: ["Gagal", "bad"], sebagian: ["Sebagian", "warn"], tidakcocok: ["Tidak cocok", "warn"], indikasi: ["Indikasi", "warn"], netral: ["Catatan", ""], tidakada: ["Tidak ada", ""], f3: ["Butuh F-3", "acc"] };
+  return `<details class="fold" id="tim-web"><summary><div><h3>Untuk tim web Anda</h3><small>${esc(D.webcheck_sub || "")}</small></div>${ICON.chev}</summary><div class="fold-b">
+    ${W.map(w => { const [l, c] = R[w.result] || [w.result, ""]; return `<div class="wc-row"><b>${esc(w.row)}</b><span class="pill ${c}">${l}</span><div class="detail">${w.detail}</div>${w.fix ? `<div class="fix"><b>Cara memperbaiki:</b> ${esc(w.fix)}</div>` : ""}</div>`; }).join("")}
+    <p class="small">${esc(D.webcheck_note || "")}</p></div></details>`;
+}
+function kit() {
+  const K = D.kit || []; if (!K.length) return "";
+  return `<details class="fold" id="bahan"><summary><div><h3>Bahan siap pakai</h3><small>${esc(D.kit_sub || "")}</small></div>${ICON.chev}</summary><div class="fold-b">
+    ${K.map((k, i) => `<div class="kit-item ${k.locked ? "locked" : ""}"><h4><span>${esc(k.title)}</span>${k.locked ? '<span class="pill">Setelah tinjauan hukum</span>' : `<button class="btn no-print" data-copy="${i}">Salin teks</button>`}</h4>${k.for ? `<p class="small">${esc(k.for)}</p>` : ""}<div class="kit-text" id="kit-${i}">${esc(k.text)}</div></div>`).join("")}
+  </div></details>`;
+}
+function worksheet() {
+  const w = D.worksheet;
+  return `<div class="ws"><div class="eyebrow">Lembar Kerja</div><h3 style="font-size:20px;font-weight:600">${esc(w.title)}</h3><p>${esc(w.text)}</p>
+    <div class="ws-tabs">${w.tabs.map(t => `<span class="ws-tab">${esc(t)}</span>`).join("")}</div>
+    <div><button class="btn primary no-print" data-file="xlsx">Unduh Lembar Kerja (Excel)</button></div></div>`;
+}
+function answers() {
+  const head = `<div class="arow"><span>#</span><span>Pertanyaan</span><span class="d" title="ChatGPT">${ICON.chatgpt}</span><span class="d" title="Google AI Overview">${ICON.google}</span></div>`;
+  const rows = D.questions.map(q => `<div class="arow" data-q="${q.n}" tabindex="0" role="button" aria-label="Buka pertanyaan ${q.n}"><span class="num">${q.n}</span><span class="q">${esc(q.q)}<small>${esc(q.topic)}${volText(q) ? ` · ${volText(q)}` : ""}${q.brand ? " · menyebut nama klinik, tidak dihitung" : ""}</small></span>
+    <span class="d" title="ChatGPT · ${STATUS[(q.chatgpt || {}).status || "notasked"]}">${dot((q.chatgpt || {}).status || "notasked")}</span><span class="d" title="Google AI Overview · ${STATUS[(q.google || {}).status || "notasked"]}">${dot((q.google || {}).status || "notasked")}</span></div>`).join("");
+  return band("jawaban", "Jawaban AI", D.answers_lede, `<div class="atable">${head}${rows}</div><div class="notes">${(D.answer_notes || []).map(n => `<span>· ${esc(n)}</span>`).join("")}</div>`, "grey", true);
+}
+function method() {
+  return `<details class="fold method" id="cara-membaca"><summary><div><h3>Cara membaca angka ini</h3><small>Apa yang ditanyakan, kapan, dan apa yang tidak bisa ditunjukkan</small></div>${ICON.chev}</summary><div class="fold-b"><ul>${D.method.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div></details>`;
+}
+function appendix() {
+  const items = D.questions.flatMap(q => ["chatgpt", "google"].filter(s => q[s] && q[s].status !== "notasked").map(s => `<div class="ap-item"><div class="small">PERTANYAAN ${q.n} · ${SRC[s].toUpperCase()}</div><div class="bubble">${esc(q.q)}</div>${answerHTML(q, s)}</div>`)).join("");
+  return `<section class="band print-only pb"><div class="wrap"><h2>Lampiran: jawaban lengkap</h2>${items}</div></section>`;
+}
+function footer() {
+  return `<footer><div class="wrap"><span>Nuave · Laporan Visibilitas AI · ${esc(CLINIC)}</span><span>${esc(D.meta.footer)}</span></div></footer>`;
+}
+
+function render() {
+  const tocItems = [["temuan", "Temuan Utama"], ...((D.facts || []).length || D.facts_empty ? [["cek-fakta", "Cek fakta"]] : []), ["pesaing", "Peta Pesaing"],
+    ...(D.description ? [["gambaran", "Gambaran AI"]] : []), ...(D.pages_grid ? [["halaman", "Halaman pesaing"]] : []), ["celah", "Celah Topik"],
+    ...(D.sitemap ? [["situs-ai", "Situs yang dibaca AI"]] : []), ["rekomendasi", "Rekomendasi"], ["penutup", "Penutup"], ["lainnya", "Tim web, bahan, lembar kerja"], ["jawaban", "Jawaban AI"]];
+  document.getElementById("app").innerHTML = header() + toc(tocItems) + findings() + facts() + competitors() + description() + pagesGrid() + topics() + sourceMap() + recs() + closing()
+    + `<section class="band" id="lainnya"><div class="wrap"><h2>Untuk dikerjakan</h2><p class="lede">${esc(D.extras_lede)}</p>${webcheck()}${kit()}${worksheet()}</div></section>`
+    + answers() + `<section class="band grey" style="border-top:0"><div class="wrap" style="padding-top:0">${method()}</div></section>` + appendix() + footer();
+}
+render();
+
+/* ---------- side panel ---------- */
+const panel = document.getElementById("panel"), scrim = document.getElementById("scrim");
+let cur = { n: 1, src: "chatgpt" }, lastFocus = null;
+function firstSrc(q) { return ["chatgpt", "google"].find(s => q[s] && q[s].status !== "notasked") || "chatgpt"; }
+function show(n, src) {
+  const q = D.questions.find(x => x.n === n); if (!q) return;
+  src = src && q[src] && q[src].status !== "notasked" ? src : firstSrc(q);
+  cur = { n, src };
+  document.getElementById("p-title").textContent = `Pertanyaan ${n} dari ${D.questions.length}`;
+  document.getElementById("p-tabs").innerHTML = ["chatgpt", "google"].map(s => `<button class="p-tab" role="tab" aria-selected="${s === src}" data-tab="${s}" ${!q[s] || q[s].status === "notasked" ? "disabled" : ""}>${SRC[s]}</button>`).join("");
+  document.getElementById("p-body").innerHTML = `<div class="small">${esc(q.topic)}${volText(q) ? ` · ${volText(q)}` : ""}</div><div class="bubble">${esc(q.q)}</div>${answerHTML(q, src)}`;
+  document.getElementById("p-body").scrollTop = 0;
+}
+function open(n, src) { lastFocus = document.activeElement; show(n, src); panel.classList.add("on"); scrim.classList.add("on"); panel.setAttribute("aria-hidden", "false"); document.getElementById("p-close").focus(); }
+function close() { panel.classList.remove("on"); scrim.classList.remove("on"); panel.setAttribute("aria-hidden", "true"); if (lastFocus) lastFocus.focus(); }
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-q]");
+  if (t && !t.closest(".panel")) { open(Number(t.dataset.q), t.dataset.src); return; }
+  const tab = e.target.closest("[data-tab]"); if (tab) { show(cur.n, tab.dataset.tab); return; }
+  const f = e.target.closest("[data-file]");
+  if (f) { const note = document.getElementById("file-note"); note.hidden = false; note.textContent = D.meta.file_note; note.scrollIntoView({ block: "nearest" }); return; }
+  const c = e.target.closest("[data-copy]");
+  if (c) { const txt = D.kit[Number(c.dataset.copy)].text; const done = () => { c.textContent = "Tersalin"; setTimeout(() => (c.textContent = "Salin teks"), 1600); };
+    try { navigator.clipboard.writeText(txt).then(done, () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("kit-" + c.dataset.copy)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (_) {} }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && panel.classList.contains("on")) close();
+  if (e.key === "Enter" && e.target.classList && e.target.classList.contains("arow") && e.target.dataset.q) open(Number(e.target.dataset.q));
+});
+scrim.addEventListener("click", close);
+document.getElementById("p-close").addEventListener("click", close);
+document.getElementById("p-prev").addEventListener("click", () => show(cur.n > 1 ? cur.n - 1 : D.questions.length, cur.src));
+document.getElementById("p-next").addEventListener("click", () => show(cur.n < D.questions.length ? cur.n + 1 : 1, cur.src));
+window.__expandForPrint = () => document.querySelectorAll("details").forEach(d => d.setAttribute("open", ""));
+</script>
+
+</body></html>

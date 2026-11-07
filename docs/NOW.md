@@ -44,13 +44,17 @@
 
 ## Next action
 
-- **Report v3 plan, draft** (2026-11-06):
+- **Report v3 plan, draft** (2026-11-06, revision 6):
   [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md) proposes the
-  report work after G1. It comes from the founder's benchmark of two premium
-  agency sample reports, and passed independent review in round 4. Waiting
-  on the founder: F-1 and F-6 now; the other decisions at their gates. It does not
-  change the order of work to G1. Only this bullet was added on 2026-11-06;
-  the rest of this page is as of 2026-10-30.
+  report and worksheet work the founder wants done before launch (the last
+  step of G1). It comes from the founder's benchmark of two premium agency
+  sample reports; revision 5.1 passed independent review, and revision 6
+  follows the founder's direction of 2026-11-06 (founder-judged gates, a
+  worksheet with every report). Two proofs of concept are in
+  [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md).
+  Waiting on the founder: F-1 (approve the plan after seeing them). Nothing
+  in it starts before F-1. Only this bullet was added on 2026-11-06; the rest
+  of this page is as of 2026-10-30.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The

@@ -2,13 +2,13 @@
 
 > Status: **Draft, not approved.** Do not implement from this file
 > ([`docs/INDEX.md`](../INDEX.md), Working documents). It becomes the report
-> plan after G1 only when the founder approves it in
+> plan only when the founder approves it (F-1) in
 > [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
 > own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 5.1. Independent review: rounds
-> 1 (FAIL), 2 and 3 (ALMOST), round 4 **PASS**, and PASS confirmed on
-> revision 5; see "Review history" at the end.
+> `claude/inspiring-tesla-yox17h`. Revision 6, after the founder's direction
+> of 2026-11-06 (below). Revision 5.1 passed independent review (rounds 1 to
+> 4 and two confirmations); see "Review history" at the end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
 > [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
@@ -17,9 +17,40 @@
 > [Spec 018](../../specs/018-search-grounded-chatgpt-google-audit/SPEC.md),
 > [Spec 021](../../specs/021-report-v2/SPEC.md) and
 > [Spec 023](../../specs/023-report-writing-quality/SPEC.md).
-> Relationship: this plan does not change the order of work to G1.
-> `PAYING_CUSTOMER_PLAN.md` governs until G1 is done. Words in *italics* on
-> first use are explained in the Glossary at the end.
+> Relationship: the founder wants this work done **before launch**, so that
+> paying customers get the best report Nuave can think of (direction
+> 2026-11-06, below). It starts only when the founder approves the plan
+> (F-1). Words in *italics* on first use are explained in the Glossary at the
+> end.
+
+**Founder direction, 2026-11-06 (after revision 5.1).** These points change
+the plan and are reflected in revision 6:
+
+1. **No gate in this plan needs customer validation.** The plan prepares the
+   best report format before launch. The founder alone judges whether each
+   phase is good enough. Customer feedback comes after launch, in the next
+   improvement project, not in this plan.
+2. **A worksheet ("Lembar Kerja") accompanies every report.** It makes the
+   report feel far more valuable.
+3. **F-1 to F-12:** the founder agrees with the recommendations for now and
+   may change their mind along the way. The orchestrator re-confirms the
+   decisions a phase relies on before writing that phase's spec.
+4. **Proof first:** before approving the plan, the founder asked for two
+   proofs of concept in `experiments/report-v3-poc/`. One uses invented data
+   to show the ceiling; the other uses real saved answers, renamed "Ultima
+   Clinic", and says only what the evidence supports.
+
+**Proofs of concept (built 2026-11-07).** [`experiments/report-v3-poc/`](../../experiments/report-v3-poc/README.md)
+holds both, each as a report page, an A4 PDF and a worksheet built from the
+same data. Its `build.py` refuses a report that breaks this plan's rules (fact
+quotes word for word, no verdict on safety claims, no em dashes, playbook-backed
+recommendations). Proof B uses the saved answers of 2026-10-24 and 31 page
+loads of 2026-11-07, and shows three things later phases must handle: the old
+test asked each question to one source only; its two questions that name the
+clinic show what F-4 would add (Google's prices for the clinic came from
+Traveloka, tiket.com, Tokopedia, Scribd and Instagram, and 10 of 14 differ
+from the clinic's own site); and the stability sample, the owner's own words
+and most search volumes stay empty because the test did not collect them.
 
 ## 1. Why
 
@@ -79,68 +110,39 @@ minutes:
    long it takes, and how to check it is done, all taken from the playbook.
 6. **A small kit:** correction requests and a review invitation; texts for
    publishing only after the legal conditions in F-7.
-7. **A stability note:** a few questions asked again, showing how much the
+7. **"Lembar Kerja" (worksheet):** an Excel file, which also opens in Google
+   Sheets, made from the same saved data as the report. Its tabs are a guide,
+   a summary, the work plan with status lists and progress, every question
+   and result, competitors, the fact check, the website check, the sites AI
+   relies on, and a starting point for a later re-check.
+8. **A stability note:** a few questions asked again, showing how much the
    answers move.
-8. **A paid re-check** of the same questions that shows before and after.
 
-## 3. Gates and success measures
+The paid re-check moves to the next improvement project, after launch
+(§6, "After launch").
 
-Nuave has not yet sold a report to anyone but the founder, and "internal
-technical completion is not evidence of customer demand" (`VISION.md`). Each
-phase therefore starts only when the gate before it passes. The numbers below
-are defaults the founder may change in F-1.
+## 3. Gates: the founder judges each phase
+
+The founder decided on 2026-11-06 that no gate in this plan needs customer
+validation: the aim is the best report format Nuave can think of before
+launch, and the founder alone judges whether each phase is good enough.
+Customer feedback comes after launch, in the next improvement project (§6,
+"After launch"). The risk this accepts, building features owners may not use,
+is the founder's informed choice; earlier review rounds raised it.
 
 | Gate | Before | Passes when |
 | ---- | ------ | ----------- |
-| 0 | Phase 0 | G1 is done and F-1 is approved. Phase 0 runs alongside the first sales and never holds them up. |
-| 1 | Phase 1; P3.0 and P3.1 | At least **5 paid orders** from customers other than the founder; at least **3 of those owners** have answered the three Track V questions about the report they received (the baseline, recorded with the report version each owner got: today's or Phase 0's); and the claims count (§6, "Before Gate 1") is done. |
-| 2 | Phase 2; P3.2 and P3.3 | At least **5 more paid orders** received Phase 1; of the owners asked, at least **3 of 5** name a "Cek fakta" or website-check item as new information, and at least **1 of 5** says they did one recommendation within two weeks; refunds and complaints are no higher than for Gate 1's orders. |
-| 3 | P3.4 (re-check as a product) | At least **2 owners have paid** for a re-check done by hand: a normal new order whose ten questions are edited to match the first report's, compared by the founder. What owners say they would pay does not count (`PRODUCT.md`: "Do not treat stated intent as completed action"). |
-| 4 | Phase 4 | About **20 paid orders**. |
+| 0 | Phase 0 | The founder has seen the two proofs of concept and approves this plan (F-1). |
+| 1 | Phase 1 | The founder judges Phase 0 good enough on two orders: NV-3WDSAY shown in the new layout, and one new test order of the founder's choosing. The claims count (§6, "Before Gate 1") is done on the founder's own orders. |
+| 2 | Phase 2 | The founder judges Phase 1 good enough on the same orders plus one new test order. |
+| 3 | Phase 3 | The founder judges Phase 2, report and worksheet together, good enough on the same orders. |
+| Launch | Opening to paying customers | The founder judges the whole report and worksheet good enough on two or three fresh test orders for different clinics. Launch is the last step of G1 (`PAYING_CUSTOMER_PLAN.md` §5, Stage 3: the founder records "open for paying customers"); G1's other steps are unchanged. |
 
-If a gate does not pass, stop, write down what owners said, and re-plan with
-the founder. The report page records nothing about readers (`/r` has no
-tracking, `NOW.md`), so these answers come only from asking owners (F-6).
-Only owners who agree to be asked will answer, so the answers lean towards
-engaged owners; read them with that in mind.
-
-**The hand-run re-check for Gate 3** works with today's product, under
-conditions:
-
-- **Offer and price:** by default, the FAQ's existing line does the offering
-  ("cek ulang, sebagai pesanan baru, setelah 6 sampai 8 minggu"): owners
-  order on their own and nobody is contacted. Contacting owners with an
-  offer is optional and needs F-6's line and the privacy purpose to cover
-  offers too ("…dan menawarkan cek ulang?"). Either way it is a normal order
-  at Rp249.000; any discount is a separate founder decision.
-- **The owner edits, in their own browser:** the intake lives only in the
-  browser that paid (Terms §6), so the owner, not the founder, edits the ten
-  questions to match the first report's. Edited questions are free text, up
-  to 700 characters, and become "Diubah oleh Anda", so the rule for
-  search-sourced wording no longer applies.
-- **Founder's checklist:**
-  - the owner picks the same search city, or the city rule rejects the edits
-    (Spec 018 R-11a);
-  - the edits go in an order that never leaves more than two questions that
-    are not about choosing a place (so at least eight of ten), because that
-    rule is checked after every edit (`MIN_PROVIDER_QUESTIONS` and
-    `MAX_ADVICE_QUESTIONS` in `src/lib/discovery/question-rules.ts`; the
-    on-screen message says seven, a mismatch noted in the parking lot);
-  - duplicates are cleared;
-  - any method or version difference between the two orders is told to the
-    owner (`VISION.md` principle 7: "discloses material differences instead
-    of presenting incompatible runs as progress").
-- **The comparison:** the founder compares the two reports by hand. The
-  Terms do not describe this extra.
-- **What the owner must be told:** the FAQ's line alone is not enough on the
-  default path. Either the founder approves one FAQ (or Penutup) sentence
-  saying to choose the same search city, copy the ten questions from the
-  first report, and expect a comparison by hand, so the owner knows before
-  paying. Or the founder replies to a repeat order for the same website
-  before its questions are approved, as a support reply about the owner's
-  own order.
-- **Timing:** Gate 3 cannot pass until about eight weeks after the first
-  outside orders.
+At each gate the founder says go, revise, or re-plan. "Revise" repeats the
+phase's last step until the founder is satisfied; "re-plan" goes back to this
+plan. Each verdict is recorded in the phase's pull request or a
+`DECISION_LOG.md` entry, together with any F-decision the founder changed
+(§5).
 
 ## 4. Rules for every package
 
@@ -197,26 +199,37 @@ conditions:
     requests, an independent verdict on each, and `verify-nuave` on the real
     path. Each spec measures the limits it touches (§7, "Platform limits")
     before building. Merge and deploy stay with the founder.
+12. **Re-confirm before each phase.** Before writing a phase's spec, the
+    orchestrator lists the F-decisions that phase relies on, with their
+    current answers, and asks the founder to confirm or change each one.
+    A change is recorded in `DECISION_LOG.md`, and this plan is updated with
+    its knock-on effects before work continues.
+13. **One source for report and worksheet.** The worksheet is built from the
+    same saved report data by code, never by a second writer call, so its
+    numbers, quotes and recommendations always equal the report's.
 
 ## 5. Decisions the founder owes
 
-Each has a recommendation. Nothing below is decided. "Changes" lists every
-approved document the decision would change.
+Each has a recommendation. On 2026-11-06 the founder agreed with the
+recommendations **for now** and said they may change their mind along the
+way, so each is re-confirmed before the phase that relies on it (§4 rule
+12). F-1 waits for the two proofs of concept. "Changes" lists every approved
+document the decision would change.
 
 | # | Decision | Changes | Recommendation |
 | - | -------- | ------- | -------------- |
-| F-1 | Approve this plan with its gates (§3) and their default numbers. | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/` | Yes, after G1. |
+| F-1 | Approve this plan, after seeing the two proofs of concept, with its founder gates (§3) and the launch timing. | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/`; `PAYING_CUSTOMER_PLAN.md` (launch, the last step of G1, waits for the founder's verdict at the launch gate) | Pending the proofs of concept. |
 | F-2 | Add to each playbook item ("What a clinic can do") who usually does it, roughly how long it takes, and one fixed Indonesian line saying what the item's official source means (§4 rule 3); the report shows the first two, with the item's existing "Check" line, as small tags under each recommendation. No "impact" tag and no "do this first" line. | `PLAYBOOK.md`; Spec 021's Rekomendasi rule, which removed "Penanggung jawab yang disarankan" and "Selesai ketika" (SPEC.md, Rekomendasi). Spec 023 R-09 is kept, because the effort then comes from the playbook, not the writer. | Yes. `AUDIT.md`'s checklist still asks for an owner and completion check. |
 | F-3 | Website-check rows the playbook does not cover yet, or covers without a fix line (*noindex*; a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader), need a playbook amendment, each backed by an official source and its fix line. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
-| F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide at Gate 1, only if the claims count shows too few claims to check. |
+| F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide before Phase 1, only if the claims count on the founder's own orders shows too few claims to check. |
 | F-5 | Show the owner's own answer to "Apa yang membuat bisnis Anda berbeda?" (already asked in the intake) next to how AI describes the clinic, labelled "Menurut Anda". | Spec 023's quotation rule, which never lets the owner's own claims be quoted | Yes; no new intake question is needed. |
-| F-6 | How owners are asked the gate questions, and what Nuave may learn from paid orders: the founder asks only owners who said yes to one line in the report-ready email, and the claims count reads only the founder's own orders and orders whose owners agree. The line must cover both (for example "Boleh kami menghubungi Anda untuk minta pendapat, dan memakai laporan ini tanpa nama Anda untuk memperbaiki Nuave?"), or the privacy page's §4 gains the purpose. Offering a re-check by message is optional and needs the line to cover offers too; by default the FAQ makes the offer (§3). Decide together with F-1, and ship it before the first outside customer's report is delivered. The email change is visible to customers, so it needs a small spec or the founder's written waiver (`WORKFLOW.md`, specification gate). | The report-ready email; the privacy page (today the order email is only for payment confirmation, the report link and support replies, §2, and §4 lists no "improve the service" purpose); `AGENTS.md` needs founder approval before contacting anyone | Yes. |
+| F-6 | **Moved to the next improvement project** (customer feedback is out of this plan, founder 2026-11-06). Kept for reference: how owners are asked for feedback, and what Nuave may learn from paid orders, through a consent line in the report-ready email or a new purpose on the privacy page. | The report-ready email; the privacy page (§2 and §4); `AGENTS.md` (founder approval before contacting anyone) | Decide in that project. |
 | F-7 | The kit as a deliverable, in two steps: (a) correction requests and a review invitation, fixed texts the founder approves once; (b) texts meant for publishing (a facts text, a page outline) only after the official Permenkes 1787/2010 text is read (the playbook used summaries) and the parking lot's legal review is done. No requests to be added to "best clinic" list articles. | Terms (new deliverable); `PLAYBOOK.md` if new advice | (a) with Phase 2; (b) only after the legal review. |
 | F-8 | A stability sample: three questions asked twice more, one try each, shown apart as variation. It never changes the counts, the "at least 5 of 10 checks" report rule, refunds or the dots. | Spec 018 (each question asked once). Terms §2 (a "pemeriksaan" is one question asked to one source; "Satu audit berisi 20 pemeriksaan"), §3 (what the report contains) and §8 (Rp12.450 for each failed check): the Terms must say that stability re-asks are not "pemeriksaan" and are never refunded. `AUDIT.md` already encourages "re-asking a small number of questions" as "variance measurement". | Decide after the variance study (P3.0). |
-| F-9 | Re-check price, timing and reminder email (the parking-lot wishlist). | Terms; privacy page; landing page | Decide at Gate 3. |
+| F-9 | **Moved to the next improvement project**, with the paid re-check. Re-check price, timing and reminder email (the parking-lot wishlist). | Terms; privacy page; landing page | Decide in that project. |
 | F-10 | Keep the USD 5.00 order hold, and design every package within it. | — | Yes. Raise it only if a package cannot fit: at USD 6.00 the USD 50 daily cap allows 8 orders in progress at once, not 10. |
-| F-11 | A price or offer test. | Landing page; terms | Phase 4. |
-| F-12 | Google AI Mode or Gemini as another source. | Landing page, terms and FAQ ("ChatGPT dan Google AI Overview") | Phase 4, after a trial of the provider. |
+| F-11 | **Moved to the next improvement project.** A price or offer test. | Landing page; terms | Decide in that project, from customer data. |
+| F-12 | **Moved to the next improvement project.** Google AI Mode or Gemini as another source. | Landing page, terms and FAQ ("ChatGPT dan Google AI Overview") | Decide in that project, after a trial of the provider. |
 
 ## 6. Phases
 
@@ -296,23 +309,46 @@ each; what ten questions cannot show.
 menit: halaman 1"); page-break rules that avoid half-empty pages (pages 6 and
 8 of the prototype PDF); the owner's part first.
 
+**P0.10 "Lembar Kerja", first version.** An "Unduh Lembar Kerja" button next to
+"Unduh PDF" gives an Excel file (it also opens in Google Sheets), made on
+request from the saved report and not stored, like the PDF. Its first tabs:
+
+- **Panduan:** how to use the file, in five lines;
+- **Ringkasan:** the verdict, the per-source counts and the counts side by
+  side;
+- **Rencana Kerja:** each recommendation with its playbook tags (who,
+  effort, how to check), plus columns the owner fills in: person in charge,
+  target date, a status list (Belum, Sedang, Selesai, Ditunda) and notes,
+  with a progress count that updates itself;
+- **Pertanyaan & Hasil:** every question, each source's result, the
+  businesses named and the sites cited;
+- **Pesaing:** each named business with its counts per source and its
+  "Menurut jawaban AI" line.
+
+Later phases add tabs (P1.3, P2.5, P3.3). A spike decides where the file is
+built: in the browser from the report data the page already holds, or on the
+server like the PDF; either way the status lists, formulas and colours of the
+proof of concept must survive in Excel and Google Sheets.
+
 - **Done when:** on a 390×844 phone the verdict and the first source card
   show without scrolling, with the moment of truth below them; the owner's
   part stays within a word budget the spec sets after measuring today's
   NV-3WDSAY report; `spend-worst-case.test.ts` passes at or under USD 5.00;
-  both protected report snapshots pass unchanged; delivery stays within 30
-  minutes on the first three paid orders after release; the founder judges
-  one new order.
+  both protected report snapshots pass unchanged; the worksheet opens in
+  Excel and Google Sheets with working status lists and progress counts, and
+  a test shows its counts equal the report's; delivery stays within 30
+  minutes on the founder's test orders; the founder judges Gate 1.
 - **Cost:** about USD 0.02 to 0.08 an order, from 1,000 to 2,000 more output
   tokens at USD 20 per million, within the 24,000-token allowance, on two
   calls.
-- **Founder time:** about 4 to 6 hours (prototype, spec, merges, one order).
-  About 1 to 2 weeks.
+- **Size:** about four pull requests (layout, writer fields, PDF, worksheet).
+- **Founder time:** about 5 to 8 hours (prototype, spec, merges, test
+  orders). About 2 weeks.
 
 ### Before Gate 1: the claims count
 
-Free and without code. On the exported orders and the paid orders F-6 allows,
-count the claims AI made about the clinic and how many could be compared with
+Free and without code. On the founder's own orders (NV-3WDSAY, NV-8XAPUF and
+new test orders), count the claims AI made about the clinic and how many could be compared with
 the clinic's own pages. Spec 018's ten questions never name the business
 (R-02), so claims come only from answers that named it on their own. If most
 orders have almost none, P1.2 waits, and F-4 is decided. The result goes in
@@ -321,7 +357,8 @@ the gate).
 
 ### Phase 1: Check the basics
 
-About four or five pull requests. Starts at Gate 1.
+About five or six pull requests. Starts at Gate 1. The worksheet gains two
+tabs (P1.3).
 
 **P1.1 Website check: "Untuk tim web Anda".** Plain page loads only: no AI,
 and no request pretending to be an AI reader. Only rows the playbook supports
@@ -377,8 +414,13 @@ appear in AI Overviews, but it has no fix line for it yet.
   its allowance on the exported orders; older reports are unchanged; the
   founder judges two real orders.
 
+**P1.3 Worksheet tabs "Website" and "Cek Fakta".** The website check's rows
+with their fix lines and a status list for the web vendor, and the fact
+check's rows with the AI's sentence, the reference and where to fix it.
+Done when both tabs equal the report's sections on the fixture orders.
+
 - **Cost:** about USD 0.04 to 0.15 an order (writer output); the website
-  check has no provider cost.
+  check and the worksheet have no provider cost.
 - **Founder time:** about 6 to 10 hours. About 2 to 3 weeks.
 
 ### Phase 2: Make it actionable
@@ -417,14 +459,14 @@ patient, no rewards, no script; playbook item 4). Later, only after the legal
 review: a facts text and one page outline for the biggest topic gap. No
 structured-data code, because the playbook says no special markup is needed.
 
-**P2.5 Work list.** "Salin daftar kerja" copies the recommendations and their
-tags as text for WhatsApp or notes. An Excel workbook like the premium one
-comes only if at least two owners or their agencies ask for one: it suits
-teams on laptops more than owners on phones.
+**P2.5 The worksheet, complete.** The worksheet gains "Situs AI" (the source
+map, with a column for the next step and its status) and "Bahan Siap Pakai"
+(the kit's approved texts). On a phone, "Salin daftar kerja" copies the
+recommendations and their tags as text for WhatsApp or notes.
 
 - **Done when**, besides the checks every package has (the worst-case test,
-  both protected report snapshots, delivery within 30 minutes on the first
-  three orders):
+  both protected report snapshots, delivery within 30 minutes on the founder's
+  test orders):
   - P2.1: every cited site falls in exactly one group; a fixture order's
     directory and portal rows get their next step, and its list-article rows
     get none.
@@ -434,7 +476,8 @@ teams on laptops more than owners on phones.
     text is labelled "Menurut Anda".
   - P2.4: only texts the founder approved appear; no text meant for
     publishing appears before the legal review.
-  - P2.5: the copied text matches the recommendations and their tags.
+  - P2.5: the new tabs equal the report's sections; the copied text matches
+    the recommendations and their tags.
 - **Cost:** about USD 0.05 to 0.15 an order in all: USD 0.05 to 0.10 of
   writer output, plus up to nine more Firecrawl requests (about USD 0.045,
   billed in credits outside the USD ledger).
@@ -443,8 +486,8 @@ teams on laptops more than owners on phones.
 
 ### Phase 3: Make it measurable
 
-About five to seven pull requests. P3.0 and P3.1 are cheap and may start any
-time after Gate 1; P3.2 and P3.3 start at Gate 2; P3.4 starts at Gate 3.
+About four or five pull requests. Phase 3 starts at Gate 3; P3.0 and P3.1
+are cheap and may start any time after Gate 1.
 
 **P3.0 Variance study** (no code; a few dollars of live spend the founder
 approves). Ask three to five questions from two or three exported orders
@@ -474,15 +517,9 @@ try each, shown apart as "Seberapa stabil". It never feeds the counts, the
   (`src/lib/orders/runner.ts`).
 
 **P3.3 Starting-point card.** The report saves a small "Titik awal" block:
-the counts, the "Cek fakta" and website-check results. Nothing is tracked
-between reports; when a re-check is ordered, Nuave asks the owner which
-recommendations were done.
-
-**P3.4 Paid re-check** (needs F-9; Gate 3). The same questions and sources;
-no new intake beyond "what changed"; a report that compares each question
-and each check, before and after, and says what changed, never why. It needs
-a re-check order type linked to the first order, a price, a reminder email
-with consent, and updated terms and privacy pages.
+the counts, the "Cek fakta" and website-check results; the worksheet gains a
+"Titik Awal" tab with the same numbers and an empty column for the re-check.
+Nothing is tracked between reports.
 
 - **Done when**, besides the checks every package has:
   - P3.0: a short written result, with each question's counts across the
@@ -495,27 +532,40 @@ with consent, and updated terms and privacy pages.
     dots and refunds are identical with and without the sample; the step
     stays inside the runner's work budget; the cleanup job empties the new
     table.
-  - P3.3: new reports save "Titik awal"; older reports are unchanged.
-  - P3.4: its own spec, written after Gate 3.
-- **Founder time:** about 10 to 20 hours; the re-check is a small product of
-  its own. About 4 to 6 weeks.
+  - P3.3: new reports save "Titik awal", and the worksheet's tab shows the
+    same numbers; older reports are unchanged.
+- **Founder time:** about 8 to 14 hours. About 3 to 4 weeks.
 
-### Phase 4: Prove it is worth more (evidence first)
+### After launch: the next improvement project (not part of this plan)
 
-- **P4.1 Priorities by value:** the prices AI itself quoted for each topic
-  (code reads "Rp" ranges from the answers), plus an optional owner choice
-  of their most important treatments (its own decision), giving a "rebut
-  dulu / pertahankan / nanti" grid. No revenue forecast.
-- **P4.2 Nuave's own reference numbers:** after enough audits in one city and
-  category (the parking lot asks whether about twenty is enough), one line of
-  combined, anonymous counts, only once `VISION.md`'s bar is met ("until
-  their reliability has been demonstrated") and a privacy review is done.
-- **P4.3 Offer and price test** (F-11), decided from conversion, refund and
-  re-check data.
-- **P4.4 More sources** (F-12): Google AI Mode, then Gemini, after a trial of
-  the provider.
-- **P4.5 Optional human time:** a paid read-through call, only if owners ask.
-  No report ever depends on it.
+These need paying customers or their data, so they wait for launch (founder
+direction, 2026-11-06). They are listed so nothing is lost:
+
+- **Customer feedback:** the Track V questions, owner interviews, and how
+  owners are asked (F-6).
+- **Paid re-check** (F-9): the same questions and sources, with no new intake
+  beyond "what changed"; a report that compares each question and check,
+  before and after, and says what changed, never why. It needs a re-check
+  order type linked to the first order, a price, a reminder email with
+  consent, and updated terms and privacy pages. A hand-run version already
+  works today: a normal new order whose ten questions the owner edits, in
+  their own browser, to match the first report's. Conditions: the same
+  search city (Spec 018 R-11a); at least eight of ten place questions after
+  every edit (`MIN_PROVIDER_QUESTIONS` and `MAX_ADVICE_QUESTIONS` in
+  `src/lib/discovery/question-rules.ts`); method differences told to the
+  owner (`VISION.md` principle 7); and the owner told beforehand that the
+  founder compares the two reports by hand.
+- **Priorities by value:** the prices AI itself quoted for each topic, plus
+  an optional owner choice of their most important treatments, giving a
+  "rebut dulu / pertahankan / nanti" grid; no revenue forecast; checked
+  against `PRODUCT.md`'s non-goals first.
+- **Nuave's own reference numbers:** combined, anonymous counts after enough
+  audits in one city and category, once `VISION.md`'s bar is met and a
+  privacy review is done.
+- **Offer and price test** (F-11), from conversion, refund and re-check data.
+- **More sources** (F-12): Google AI Mode, then Gemini, after a trial of the
+  provider.
+- **Optional human time:** a paid read-through call, only if owners ask.
 
 ## 7. Unit economics
 
@@ -540,7 +590,8 @@ fees about 1–2% depending on the payment method, about Rp2.500 to Rp5.000
 **After Phases 0 to 3** (estimates, billed): add about USD 0.16 to 0.43
 (Phase 0, 0.02–0.08; Phase 1, 0.04–0.15; Phase 2, 0.05–0.15; Phase 3, about
 0.05), for about **USD 1.6 to 2.0** an order, about Rp26.500–33.500.
-F-4's two questions, if approved, add about USD 0.02 billed.
+F-4's two questions, if approved, add about USD 0.02 billed. The worksheet
+adds no provider cost: code builds it from the saved report.
 
 The worst case rises by the stability sample (USD 0.072) and, if F-4 is
 approved, by F-4's questions (USD 0.072): at most **USD 4.929**, under the
@@ -578,23 +629,26 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
   draft pull request runs only code checks and unit tests, about 8 billed
   minutes on this pull request's first push; code pull requests marked ready
   run the full set.
-- **Founder time,** the largest cost: about 30 to 50 hours across Phases 0
-  to 3 (§6), and about 15 to 20 pull requests to review. Treat this as a
+- **Founder time,** the largest cost: about 30 to 45 hours across Phases 0
+  to 3 (§6), and about 17 to 21 pull requests to review. Treat this as a
   lower bound: Spec 021, the closest precedent, took four prototype rounds
   and three plan-review rounds. Record Phase 0's real hours and re-estimate
   the rest at Gate 1.
 
-**What pays for it** (hypotheses the gates test, not forecasts):
+**What pays for it** (hypotheses for the next improvement project to test
+with customers, not forecasts):
 
-- Reports that show the owner something new, so fewer refunds and more word
-  of mouth (Phases 0 and 1).
-- Owners who act are the likely buyers of a re-check (Phases 2 and 3). The
-  extra provider cost, about Rp2.500 to Rp7.000 an order, is covered when
-  more than about 2–6% of owners buy a re-check. That assumes a placeholder
-  price of Rp149.000 (F-9) and about Rp31.000 to deliver it and take the
-  payment. The founder's time is covered only if owners value the new
-  sections, which is what Gates 1 to 3 check before each next phase.
-- A fuller report may carry a higher price (Phase 4).
+- Reports and worksheets that show the owner something new and give them
+  work they can track: fewer refunds and more word of mouth.
+- Owners who act are the likely buyers of a re-check. The extra provider
+  cost of this plan, about Rp2.500 to Rp7.000 an order, is covered when more
+  than about 2–6% of owners buy a re-check, at a placeholder price of
+  Rp149.000 (F-9) and about Rp31.000 to deliver it and take the payment.
+- A fuller report may carry a higher price (F-11).
+
+Whether owners value the new sections is not tested before launch: the
+founder judges the report (§3), and the next improvement project measures
+what customers do.
 
 **Platform limits** (each spec measures the ones it touches):
 
@@ -617,10 +671,11 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
 | A "berbeda" row is itself wrong (an outdated site, a misread quotation) | a reference is required; the quotation check; both sources shown when they disagree; `AUDIT.md`'s correction path for an objectively wrong report |
 | "Cek fakta" reads as Nuave vouching for the clinic's safety or quality | safety and licensing get no verdict; verdicts are always relative to a named reference |
 | The website check blames the web vendor for a refusal Nuave caused | refusals are only an "indikasi"; no fake AI readers; fixed explanatory text |
-| Building before anyone has paid | Gates 1 to 3; Phase 0 small and alongside the first sales |
+| Building features owners may not use, because no customer validates them before launch | accepted by the founder (2026-11-06); the founder judges each phase (§3); the next improvement project measures what customers use |
+| The worksheet's numbers drift from the report's | one builder reads the same saved report (§4 rule 13); a test compares their counts |
 | The order's worst case passes USD 5.00 | the worst-case test in every "done when"; F-10 |
 | The report gets long | prototype first; a word budget; sections hide when empty; technical parts folded |
-| Delivery passes 30 minutes | each spec measures its step; time checked on the first three orders after each phase |
+| Delivery passes 30 minutes | each spec measures its step; time checked on the founder's test orders after each phase |
 | Kit texts break health advertising rules | F-7: no publishing texts before the legal review; fixed texts approved once |
 | A provider changes (DataForSEO, Firecrawl) | trials before promises; fail closed, as today |
 
@@ -638,7 +693,8 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
 - Requests to be added to "best clinic" list articles.
 - Advice on letting AI companies train on the site.
 - Requests pretending to be an AI reader.
-- An Excel workbook by default, a monitoring dashboard, or a subscription.
+- A monitoring dashboard or a subscription. The worksheet is a file the
+  owner keeps, not a live dashboard.
 - A progress tracker: progress lives in each spec's `VERIFICATION.md` and its
   pull requests, and `NOW.md` names the active phase.
 
@@ -646,8 +702,11 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
 
 - Read `AGENTS.md`, `NOW.md`, then §1 to §5 of this plan and only your
   phase.
-- Check the gate (§3) before starting a phase. Every package needs its own
-  approved spec, which lists its required context.
+- Check the gate (§3) before starting a phase, and re-confirm with the
+  founder the F-decisions the phase relies on (§4 rule 12). Every package
+  needs its own approved spec, which lists its required context.
+- The proofs of concept in `experiments/report-v3-poc/` show the target look
+  and depth; a spec may refine them but says so where it differs.
 - New ideas go to `PAYING_CUSTOMER_PLAN.md` §6, not here.
 
 ## Glossary
@@ -803,12 +862,12 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
 | 14 "Kenapa mereka" | Renamed and reframed as differences (P2.2) |
 | 15 Three runs per question | Changed: variance study, then a stability sample (P3.0, P3.2, F-8) |
 | 16 Ready-to-use kit | P2.4, in two steps (F-7); no structured-data code |
-| 17 Workbook | P2.5: copy as text; Excel only on request |
-| 18 Re-check as a product | P3.3 and P3.4 (F-9) |
-| 19 Google AI Mode, Gemini, Meta AI | Phase 4 (F-12); Meta AI not planned |
-| 20 Priorities by value | P4.1 |
-| 21 Nuave's own benchmark | P4.2, only once reliable |
-| 22 The business lesson (re-check, fix pack) | P3.4 and P4.3; no done-for-you fix pack |
+| 17 Workbook | The "Lembar Kerja" grows with each phase: P0.10, P1.3, P2.5, P3.3 (founder direction 2026-11-06) |
+| 18 Re-check as a product | P3.3 (starting point); the paid re-check is in "After launch" (F-9) |
+| 19 Google AI Mode, Gemini, Meta AI | "After launch" (F-12); Meta AI not planned |
+| 20 Priorities by value | "After launch" |
+| 21 Nuave's own benchmark | "After launch", only once reliable |
+| 22 The business lesson (re-check, fix pack) | "After launch" (F-9, F-11); no done-for-you fix pack |
 | Design: charts, colours, PDF cover | P0.9; charts and colours settled in the P0.0 prototype |
 
 ## Review history
@@ -879,3 +938,13 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   not tell the owner to keep the same city, copy the questions, or expect a
   hand comparison. A wording nit in `NOW.md` asked for F-1 and F-6 now and
   the rest at their gates. Both fixed in revision 5.1.
+- **Founder direction (2026-11-06):** no customer-validation gates; the plan
+  runs before launch; a worksheet accompanies every report; F-1 to F-12
+  agreed for now, with re-confirmation along the way; two proofs of concept
+  before approving the plan.
+- **Revision 6:** gates become the founder's judgement (§3), with launch as
+  the last gate. The worksheet grows with each phase (P0.10, P1.3, P2.5,
+  P3.3), and §4 adds rules 12 (re-confirm before each phase) and 13 (one
+  source for report and worksheet). F-6, F-9, F-11 and F-12 move, with the
+  paid re-check and Phase 4, to "After launch". The claims count uses the
+  founder's own orders. Risks, costs and founder time are updated.
