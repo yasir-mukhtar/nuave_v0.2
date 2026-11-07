@@ -1,8 +1,12 @@
 # Spec 024: The designed report PDF (16:9)
 
-> Status: **Draft**
+> Status: **In review**. The founder answered Q-3, Q-4, Q-10 and Q-11 on
+> 2026-11-07 (all as recommended); the spec awaits the founder's approval.
 > Owner: founder; drafted by Claude on `claude/vigilant-cerf-e5kktf`
-> Updated: 2026-11-07, revision 4. Revision 4 applies the review of
+> Updated: 2026-11-07, revision 5. Revision 5 records the founder's answers
+> to Q-3, Q-4, Q-10 and Q-11 and applies the two minor notes of the review
+> of `348138a` (1.5 times cases for Ringkasan and Celah topik, AC-S6b;
+> Pesaing in Q-1). Revision 4 applies the review of
 > `91a6890` (PASS+NOTES): Q-3 as three options, an AC for the log cause
 > (AC-F12), the Lampiran divider in Part 3, L-06 and L-07 in order, and the
 > 7 saved reports in Q-11. Revision 3 applied the review of
@@ -278,8 +282,7 @@ Reports written before Part B have no limits; the same budgets apply to
 them. Step 0 found that at 1.25 times the limits two pages overflow:
 **Pesaing** (six rows with 25-word reasons, 15 chips, three takeaways; 743 of
 626 px) and **Cek fakta** (eight rows; 640 of 626 px). Pesaing is built in
-Part 2 and fits on one page at its budget (S-04); above it, Q-3 applies
-(default: option a). Cek fakta's spec (v3 P1.2) must set its own budget or overflow rule.
+Part 2 and fits on one page at its budget (S-04); above it, Q-3 option (a) applies. Cek fakta's spec (v3 P1.2) must set its own budget or overflow rule.
 
 ### Fixed text (D-7)
 
@@ -433,8 +436,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
     per section, with the approved title (D-12). A section shows its divider
     and its Daftar isi row only when it has at least one page (settled in
     revision 3: a divider followed by nothing is an empty section; today
-    sections 02 and 03 have none). Whether the numbers then keep gaps is
-    Q-4.
+    sections 02 and 03 have none). The other sections keep their approved
+    numbers, with gaps (Q-4, founder 2026-11-07).
   - **Penutup:** the saved `conclusion` always, and `two_source_writing.plan`
     as three phase columns; a report without a plan falls back as the web
     Penutup does (Spec 021 A-07). P0.4's decisions come with Part 5.
@@ -446,8 +449,7 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   it on; with it off, two-source reports print exactly as today (body and
   A4 request). Part 3 turns it on in production and removes the setting, so
   it does not stay as a test-only switch (`AGENTS.md`, engineering
-  guardrail 6). If the founder picks Q-10's other option, the PR the
-  founder names turns it on instead.
+  guardrail 6). Part 3 is where it goes on (Q-10, founder 2026-11-07).
 
 ### Acceptance criteria
 
@@ -497,7 +499,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   the whole conclusion;
   one card per source with its count, its settled sentence and ten dots; the
   first plan step as "Yang dikerjakan dulu", left out when there is no plan.
-  The other two columns are not shown.
+  The other two columns are not shown. The page is laid out to fit at 1.5
+  times its budget (Q-3 option (a)): a plan step of 53 words, beside a
+  verdict at its 220-character cut (code cuts it, so it never exceeds that).
 - **S-02: Peta jawaban.** The ten questions by the two sources, with the
   clinic's state in each cell first, then competitor columns for the first
   four other businesses in `competitorRows` order (`report-v2-data.ts`),
@@ -524,7 +528,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   `SavedReport.tsx`; a fetch from third-party sites during printing would
   send Browser Run's requests to them and could delay `networkidle0`).
 - **S-05: Celah topik.** The rows the web report's Celah Topik shows (Spec
-  021 A-05), at most five.
+  021 A-05), at most five. The page is laid out to fit at 1.5 times its
+  budget (Q-3 option (a)): five topic names of 9 words each.
 - **S-06: Rencana.** Every recommendation in one list. When the rows are
   over the page's budget (its recommendation titles at 14 words each, plus
   the tags once Part 5 adds them), the list continues on a Rencana
@@ -533,7 +538,7 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   rows with tags is at risk, a fixture proves only the cases it holds, and a
   continued page is decidable before printing so Daftar isi stays right.
   This extends plan §6.3's list (Temuan, Langkah, Penutup) by one page kind;
-  the founder confirms it with Q-3. v3 P0.6's who, time and done-when and
+  the founder chose this with Q-3 option (a) on 2026-11-07. v3 P0.6's who, time and done-when and
   P0.7's tags come with Part 5.
 - **S-07: Langkah.** One page per recommendation in the "Detail langkah"
   layout: title and paragraph. P0.6 and P0.7 parts come with Part 5; P1.1's
@@ -569,6 +574,10 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   three takeaways at 15 + 45 words, the same chips), the page fits or
   continues between rows onto a "lanjutan" page, with nothing outside its
   box.
+- **AC-S6b:** Given Ringkasan at 1.5 times its budget (a 220-character
+  verdict, a 53-word first plan step) and Celah topik at 1.5 times its
+  budget (five 9-word topic names), each page fits on one page with nothing
+  outside its box (Q-3 option (a)).
 - **AC-S7:** Given a report written before Part B and a non-clinic report,
   the pages fall back as the web does and say "Bisnis Anda" where AC-20
   requires.
@@ -777,69 +786,25 @@ Still open:
   the check when more orders are saved and before this spec is marked
   Verified, counting with the writer's `words()`, not by spaces. If a saved
   text exceeds its budget, `long_texts` and the continued pages cover it on
-  Temuan, Langkah, Penutup and Rencana, and the budget table is updated.
-- **Q-3 (founder, before approval): text over its soft limit on pages
-  without continued pages.** Plan §6.3 gives continued pages only to
-  Temuan, Langkah and Penutup. Ringkasan's plan step, Pesaing's reasons and
-  takeaways, Celah topik's topic names and Rencana's rows can also be saved
-  over budget, because the writer limits are soft, and cutting is
-  forbidden. The basis: no saved text has exceeded its limit by space
-  count, but the recommendation title is 14 of 14 and may already be over
-  by `words()`; topic names were not measured; Pesaing overflows at 1.25
-  times its budget in the spike. Options:
-  - **(a) Recommended, and the default this draft is written to:** lay out
-    Ringkasan, Pesaing and Celah topik to fit at 1.5 times their budget, and
-    give Pesaing and Rencana continued pages ("lanjutan") when they are
-    still over. The 1.5 factor is a judgement, not derived from data: a
-    margin above the 1.25 case that already overflowed. Trade-off: a
-    roomier layout than the reference on three pages, and two more page
-    kinds in the page list. Changes, already written into this draft: S-04
-    gives Pesaing its continued page (between rows, before printing); S-06
-    gives Rencana its; G-06 names both beside F-06; AC-S6 has a 1.5 times
-    case for Pesaing; AC-S8 tests Rencana. Still to add if (a) is chosen:
-    a 1.5 times fixture for Ringkasan and for Celah topik in AC-S6's style.
-  - **(b) Continued pages for every page at risk,** no 1.5 times layout:
-    Ringkasan, Pesaing, Celah topik and Rencana all continue when over.
-    Trade-off: the layouts match the reference at the budget, but a
-    one-page summary such as Ringkasan can spill onto a second page, and
-    the page list has the most cases. Changes: S-01, S-04 and S-05 add
-    continued pages; S-06 stays; G-06 names all four; AC-S6 tests Pesaing
-    over budget continuing instead of the 1.5 times case; AC-S8 stays; new
-    ACs for Ringkasan and Celah topik continuing.
-  - **(c) Fit at the budget only, with a stated exception:** the pages are
-    tested at the budget, and a text over its soft limit is accepted as an
-    exception (it may overflow and is counted in `long_texts`). Trade-off:
-    the simplest build and the reference layout, but it breaks finish line
-    5 and G-06 for over-limit text, which the saved reports have not shown
-    by space count. Changes: S-04 drops Pesaing's continued page and S-06
-    Rencana's; G-06 gains the exception; AC-S6 keeps only the at-budget
-    case; AC-S8 is removed; AC-G2 excludes pages with an over-limit text.
-- **Q-4 (founder): section numbers when a section has no page.** A section
-  without a page shows no divider (F-09, settled in revision 3). Today
-  sections 02 and 03 have none. Recommendation: keep the approved numbers,
-  so the PDF goes 01, 04, 05. Trade-off: the gap shows that sections are
-  missing, but the approved titles (D-12) stay fixed and a later section
-  never renumbers the others; renumbering (01, 02, 03) reads more smoothly
-  but changes the approved fixed text with each package.
-- **Q-10 (founder, before approval): when customers get the new PDF.** Part
-  1 alone would ship a PDF without Ringkasan, findings or answers, a loss
-  against today's PDF and finish line 2. The switch (F-10) keeps production
-  on today's print until Part 3 either way. Recommendation: Parts 1 and 2
-  merge with the switch off in production; Part 3 turns it on for
-  customers, and Part 4 ships after it, because its line is true only then.
-  Trade-off: three PRs reach customers at once, so a fault shows late;
-  turning the switch on in production with Part 1 or Part 2 gives earlier
-  feedback but a thinner PDF in between.
-- **Q-11 (founder): reports already delivered.** Plan §6.1 gives the new
-  print body to every Spec 018 report, while §3 speaks of "every new
-  two-source order". Step 0's length check counted 7 saved reports in
-  production (2026-11-07); whose they are and how many of them are
-  two-source reports is not known from that check. Recommendation: follow
-  §6.1 (G-01), so every
-  two-source report downloads the designed PDF, since nothing is stored and
-  every PDF is made fresh. Trade-off: an owner who already downloaded the
-  A4 PDF gets a different file on the next download; keeping old reports on
-  A4 means two server layouts to maintain.
+  Temuan, Langkah, Penutup, Rencana and Pesaing, and the budget table is
+  updated.
+Settled by the founder on 2026-11-07, each as recommended:
+
+- **Q-3: option (a).** Ringkasan, Pesaing and Celah topik are laid out to
+  fit at 1.5 times their budget (S-01, S-04, S-05), and Pesaing and Rencana
+  get continued pages when they are still over (S-04, S-06), beside the
+  plan's Temuan, Langkah and Penutup (§6.3). The 1.5 factor is a judgement:
+  a margin above the 1.25 case that overflowed in the spike. Checked by
+  AC-S6, AC-S6b and AC-S8.
+- **Q-4: keep the approved numbers.** A section without a page shows no
+  divider and no Daftar isi row, and the others keep their approved numbers
+  (D-12), so today's PDF goes 01, 04, 05.
+- **Q-10: the switch goes on with Part 3.** Parts 1 and 2 merge with the
+  switch (F-10) off in production; Part 3 turns it on for customers (L-07),
+  and Part 4 ships after it (W-02).
+- **Q-11: every two-source report gets the designed PDF,** including reports
+  already delivered, on their next download (G-01, plan §6.1). Nothing is
+  stored; every PDF is made fresh.
 
 Settled in revision 2, as recommended by the review of `72660aa`:
 
@@ -860,8 +825,8 @@ Settled in revision 2, as recommended by the review of `72660aa`:
 Settled in revision 3, from the review of `f885989`:
 
 - A section without a page shows no divider (F-09); its numbering is Q-4.
-- Rencana gets continued pages (S-06) under Q-3 option (a), the default;
-  the founder confirms with Q-3.
+- Rencana gets continued pages (S-06) under Q-3 option (a), which the
+  founder chose on 2026-11-07.
 
 ## Implementation notes
 
