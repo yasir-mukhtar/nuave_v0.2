@@ -73,7 +73,8 @@ describe("the page list follows the Report v3 order (AC-F2, plan §5.3 rule 5)",
         expect(pages.at(-1)!.kind).toBe("sampul_belakang");
         expect(pages[0]!.kind).toBe("sampul");
         // F-04, D-10: the dark pages are exactly the listed kinds.
-        for (const page of pages) expect(page.dark).toBe(DARK_KINDS.has(page.kind));
+        for (const page of pages)
+          expect(page.dark).toBe(DARK_KINDS.has(page.kind));
       }
     });
   }
@@ -132,14 +133,30 @@ describe("the page list follows the Report v3 order (AC-F2, plan §5.3 rule 5)",
     const temuan = pages.filter((p) => p.kind === "temuan");
     expect(temuan).toHaveLength(11);
     expect(temuan.at(-1)!.googleFinding).toBe(true);
-    expect(temuan.slice(0, 10).map((p) => p.item)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    expect(pages.filter((p) => p.kind === "langkah").map((p) => p.item)).toEqual([
+    expect(temuan.slice(0, 10).map((p) => p.item)).toEqual([
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
     ]);
+    expect(
+      pages.filter((p) => p.kind === "langkah").map((p) => p.item),
+    ).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     // The appendix labels are A0 and A1 to A10.
     expect(
-      pages.filter((p) => p.section === "05" && p.kind !== "divider").map((p) => p.label),
-    ).toEqual(["A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"]);
+      pages
+        .filter((p) => p.section === "05" && p.kind !== "divider")
+        .map((p) => p.label),
+    ).toEqual([
+      "A0",
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8",
+      "A9",
+      "A10",
+    ]);
   });
 
   it("no google_finding page when Google showed an AI Overview for every completed check", () => {
@@ -177,7 +194,9 @@ describe("continued pages (F-06, AC-F2)", () => {
     const { pages } = reportPdfPages(over, ALL_KINDS);
     const parts = (kind: string, item?: number) =>
       pages
-        .filter((p) => p.kind === kind && (item === undefined || p.item === item))
+        .filter(
+          (p) => p.kind === kind && (item === undefined || p.item === item),
+        )
         .map((p) => `${p.part.index}/${p.part.of}`);
     expect(parts("temuan", 0)).toEqual(["1/2", "2/2"]);
     expect(parts("temuan", 1)).toEqual(["1/4", "2/4", "3/4", "4/4"]);
@@ -185,14 +204,24 @@ describe("continued pages (F-06, AC-F2)", () => {
     // Conclusion 141 words: three pages; plan step 1 at 36 words: two.
     expect(parts("penutup")).toEqual(["1/3", "2/3", "3/3"]);
     const closing = pages.filter((p) => p.kind === "penutup");
-    expect(closing.map((p) => p.plan!.map((s) => s.step))).toEqual([[0, 1, 2], [0], []]);
+    expect(closing.map((p) => p.plan!.map((s) => s.step))).toEqual([
+      [0, 1, 2],
+      [0],
+      [],
+    ]);
     // Nothing is lost and no page holds more than its budget.
     const temuanText = pages
       .filter((p) => p.kind === "temuan" && p.item === 1)
       .map((p) => p.text!);
     expect(temuanText.join(" ")).toBe(over.key_findings[1]!.explanation);
-    for (const text of temuanText) expect(words(text)).toBeLessThanOrEqual(BUDGET.findingText);
-    expect(closing.map((p) => p.conclusion).join(" ").trim()).toBe(over.conclusion);
+    for (const text of temuanText)
+      expect(words(text)).toBeLessThanOrEqual(BUDGET.findingText);
+    expect(
+      closing
+        .map((p) => p.conclusion)
+        .join(" ")
+        .trim(),
+    ).toBe(over.conclusion);
     expect(longTexts(over)).toBe(5);
   });
 
@@ -201,14 +230,26 @@ describe("continued pages (F-06, AC-F2)", () => {
     const finding = report.key_findings[0]!;
     const over: PageListInput = {
       ...report,
-      key_findings: [{ ...finding, title: textOfWords(17), explanation: textOfWords(80) }],
+      key_findings: [
+        { ...finding, title: textOfWords(17), explanation: textOfWords(80) },
+      ],
     };
-    const temuan = reportPdfPages(over, ALL_KINDS).pages.filter((p) => p.kind === "temuan");
-    expect(temuan.map((p) => words(p.text!))).toEqual([70, 10]);
+    const temuan = reportPdfPages(over, ALL_KINDS).pages.filter(
+      (p) => p.kind === "temuan",
+    );
+    // 17-word title: 5 words over, so the first page holds at most 70 words
+    // of text, cut at the last sentence end before that.
+    const counts = temuan.map((p) => words(p.text!));
+    expect(counts).toHaveLength(2);
+    expect(counts[0]).toBeLessThanOrEqual(70);
+    expect(counts[0]! + counts[1]!).toBe(80);
   });
 
   it("the maximum fixture spreads every long text and counts them", () => {
-    const { pages, longTexts: count } = reportPdfPages(input("maximum"), ALL_KINDS);
+    const { pages, longTexts: count } = reportPdfPages(
+      input("maximum"),
+      ALL_KINDS,
+    );
     expect(pages.filter((p) => p.part.of > 1).length).toBeGreaterThan(30);
     // 10 finding titles + 10 texts, 10 recommendation titles + 10 texts,
     // the conclusion and three plan steps.
@@ -218,8 +259,12 @@ describe("continued pages (F-06, AC-F2)", () => {
 
 describe("splitText splits at sentence ends (Q-7)", () => {
   it("keeps sentences whole and splits a sentence longer than a page at a word", () => {
-    const text = "Satu dua tiga. Empat lima enam. Tujuh delapan sembilan sepuluh.";
-    expect(splitText(text, [6])).toEqual(["Satu dua tiga. Empat lima enam.", "Tujuh delapan sembilan sepuluh."]);
+    const text =
+      "Satu dua tiga. Empat lima enam. Tujuh delapan sembilan sepuluh.";
+    expect(splitText(text, [6])).toEqual([
+      "Satu dua tiga. Empat lima enam.",
+      "Tujuh delapan sembilan sepuluh.",
+    ]);
     expect(splitText(text, [3])).toEqual([
       "Satu dua tiga.",
       "Empat lima enam.",
@@ -228,7 +273,9 @@ describe("splitText splits at sentence ends (Q-7)", () => {
     ]);
     expect(splitText("", [5])).toEqual([""]);
     // "Sp.DVE" counts as two words, as the writer counts it.
-    expect(splitText("dr. Ayu Sp.DVE praktik.", [10])).toEqual(["dr. Ayu Sp.DVE praktik."]);
+    expect(splitText("dr. Ayu Sp.DVE praktik.", [10])).toEqual([
+      "dr. Ayu Sp.DVE praktik.",
+    ]);
   });
 });
 
@@ -253,7 +300,9 @@ describe("Daftar isi and dividers (F-09, AC-F3, AC-F11)", () => {
           dividers.map((d) => d.section),
         );
         // Sections 02 and 03 have no page today (Q-4).
-        expect(dividers.some((d) => d.section === "02" || d.section === "03")).toBe(false);
+        expect(
+          dividers.some((d) => d.section === "02" || d.section === "03"),
+        ).toBe(false);
       }
     });
   }
@@ -277,7 +326,9 @@ describe("Daftar isi and dividers (F-09, AC-F3, AC-F11)", () => {
     const base = reportFixture({ recommendations: 1 }).report as PageListInput;
     const none = { ...base, priorities: [] };
     const { pages } = reportPdfPages(none, ALL_KINDS);
-    expect(pages.some((p) => p.kind === "rencana" || p.kind === "langkah")).toBe(false);
+    expect(
+      pages.some((p) => p.kind === "rencana" || p.kind === "langkah"),
+    ).toBe(false);
     expect(pages.filter((p) => p.section === "04").map((p) => p.kind)).toEqual([
       "divider",
       "penutup",

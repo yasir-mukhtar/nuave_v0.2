@@ -171,9 +171,10 @@ export const CONTENTS = {
       subject === "klinik" ? "Klinik" : "Bisnis"
     } yang tidak disebut tidak tampil di jawaban itu.`,
   heading: "Isi laporan",
-  /** The row mark of a front page (reference: "–" in the number column;
+  /** The row mark of a front page (reference: a short dash in the number column;
    * drawn as a short line, not a dash character, G-08). */
-  caraMembacaNote: "Apa yang ditanyakan, cara menghitung, dan arti setiap titik",
+  caraMembacaNote:
+    "Apa yang ditanyakan, cara menghitung, dan arti setiap titik",
   /** A section row's note: the names of the pages it holds. */
   sectionNote: (pageNames: readonly string[]) => joinList(pageNames),
 } as const;
@@ -238,7 +239,10 @@ export const DIVIDER = {
  */
 export const SECTION_QUESTIONS: Record<
   SectionNumber,
-  readonly { text: (subject: ReportSubject | undefined, name: string) => string; answeredBy: readonly string[] }[]
+  readonly {
+    text: (subject: ReportSubject | undefined, name: string) => string;
+    answeredBy: readonly string[];
+  }[]
 > = {
   "01": [
     {

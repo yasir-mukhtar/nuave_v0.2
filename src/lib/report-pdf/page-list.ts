@@ -1,5 +1,8 @@
 import { sentences, type TwoSourceReport } from "@/lib/audit/two-source-report";
-import { TWO_SOURCE_WRITING_LIMITS, words } from "@/lib/audit/two-source-writing";
+import {
+  TWO_SOURCE_WRITING_LIMITS,
+  words,
+} from "@/lib/audit/two-source-writing";
 import type { AuditReport } from "@/lib/audit/types";
 import { topicGapRows } from "@/app/audit/report/report-v2-data";
 import type { SectionNumber } from "./fixed-text";
@@ -46,37 +49,39 @@ export type PageSection = "front" | SectionNumber | "end";
 
 /** Part 0 "Pages and their order": the Report v3 order (plan §5.2). A test
  * asserts the page list follows it (AC-F2, plan §5.3 rule 5). */
-export const V3_PAGE_ORDER: readonly { section: PageSection; kind: PageKind }[] =
-  [
-    { section: "front", kind: "sampul" },
-    { section: "front", kind: "daftar_isi" },
-    { section: "front", kind: "cara_membaca" },
-    { section: "front", kind: "ringkasan" },
-    { section: "front", kind: "saat_bertanya" },
-    { section: "front", kind: "peta_jawaban" },
-    { section: "01", kind: "divider" },
-    { section: "01", kind: "temuan" },
-    { section: "01", kind: "pesaing" },
-    { section: "01", kind: "celah_topik" },
-    { section: "02", kind: "divider" },
-    { section: "02", kind: "cek_fakta" },
-    { section: "02", kind: "kata_ai" },
-    { section: "03", kind: "divider" },
-    { section: "03", kind: "halaman_mereka" },
-    { section: "03", kind: "situs_dibaca" },
-    { section: "03", kind: "untuk_tim_web" },
-    { section: "04", kind: "divider" },
-    { section: "04", kind: "rencana" },
-    { section: "04", kind: "langkah" },
-    { section: "04", kind: "bahan_siap_pakai" },
-    { section: "04", kind: "lembar_kerja" },
-    { section: "04", kind: "penutup" },
-    { section: "04", kind: "titik_awal" },
-    { section: "05", kind: "divider" },
-    { section: "05", kind: "lampiran_a0" },
-    { section: "05", kind: "lampiran_soal" },
-    { section: "end", kind: "sampul_belakang" },
-  ];
+export const V3_PAGE_ORDER: readonly {
+  section: PageSection;
+  kind: PageKind;
+}[] = [
+  { section: "front", kind: "sampul" },
+  { section: "front", kind: "daftar_isi" },
+  { section: "front", kind: "cara_membaca" },
+  { section: "front", kind: "ringkasan" },
+  { section: "front", kind: "saat_bertanya" },
+  { section: "front", kind: "peta_jawaban" },
+  { section: "01", kind: "divider" },
+  { section: "01", kind: "temuan" },
+  { section: "01", kind: "pesaing" },
+  { section: "01", kind: "celah_topik" },
+  { section: "02", kind: "divider" },
+  { section: "02", kind: "cek_fakta" },
+  { section: "02", kind: "kata_ai" },
+  { section: "03", kind: "divider" },
+  { section: "03", kind: "halaman_mereka" },
+  { section: "03", kind: "situs_dibaca" },
+  { section: "03", kind: "untuk_tim_web" },
+  { section: "04", kind: "divider" },
+  { section: "04", kind: "rencana" },
+  { section: "04", kind: "langkah" },
+  { section: "04", kind: "bahan_siap_pakai" },
+  { section: "04", kind: "lembar_kerja" },
+  { section: "04", kind: "penutup" },
+  { section: "04", kind: "titik_awal" },
+  { section: "05", kind: "divider" },
+  { section: "05", kind: "lampiran_a0" },
+  { section: "05", kind: "lampiran_soal" },
+  { section: "end", kind: "sampul_belakang" },
+];
 
 /** The templates built so far. Part 1 builds the always-present pages and
  * the divider template (F-09); later Parts add theirs. */
@@ -244,7 +249,10 @@ function titledPieces(
   textBudget: number,
 ): string[] {
   const extra = Math.max(0, words(title) - titleBudget);
-  const first = Math.max(MIN_FIRST_PAGE_WORDS, textBudget - extra * TITLE_WORD_COST);
+  const first = Math.max(
+    MIN_FIRST_PAGE_WORDS,
+    textBudget - extra * TITLE_WORD_COST,
+  );
   return splitText(text, [first, textBudget]);
 }
 
@@ -264,7 +272,14 @@ function closingParts(input: PageListInput): {
     conclusion: conclusion[k] ?? "",
     plan: plan.flatMap((step, i) =>
       steps[i]![k] !== undefined
-        ? [{ step: i, weeks: step.weeks, title: step.title, text: steps[i]![k]! }]
+        ? [
+            {
+              step: i,
+              weeks: step.weeks,
+              title: step.title,
+              text: steps[i]![k]!,
+            },
+          ]
         : [],
     ),
   }));
@@ -308,7 +323,9 @@ function pagesOf(
     ...extra,
   });
   const parts = (pieces: readonly Partial<Draft>[]): Draft[] =>
-    pieces.map((extra, i) => one({ ...extra, part: { index: i + 1, of: pieces.length } }));
+    pieces.map((extra, i) =>
+      one({ ...extra, part: { index: i + 1, of: pieces.length } }),
+    );
   switch (kind) {
     case "sampul":
     case "daftar_isi":
@@ -445,9 +462,18 @@ export function contentsRows(pages: readonly PdfPage[]): ContentsRow[] {
       page.section === "front" &&
       (page.kind === "cara_membaca" || page.kind === "ringkasan")
     ) {
-      rows.push({ section: null, kind: page.kind, page: page.number, kinds: [page.kind] });
+      rows.push({
+        section: null,
+        kind: page.kind,
+        page: page.number,
+        kinds: [page.kind],
+      });
     }
-    if (page.kind === "divider" && page.section !== "front" && page.section !== "end") {
+    if (
+      page.kind === "divider" &&
+      page.section !== "front" &&
+      page.section !== "end"
+    ) {
       const kinds = [
         ...new Set(
           pages
@@ -455,7 +481,12 @@ export function contentsRows(pages: readonly PdfPage[]): ContentsRow[] {
             .map((p) => p.kind),
         ),
       ];
-      rows.push({ section: page.section, kind: "divider", page: page.number, kinds });
+      rows.push({
+        section: page.section,
+        kind: "divider",
+        page: page.number,
+        kinds,
+      });
     }
   }
   return rows;

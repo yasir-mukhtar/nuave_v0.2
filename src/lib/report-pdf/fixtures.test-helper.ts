@@ -50,9 +50,7 @@ export function textOfWords(n: number, seed = 0): string {
       count += 1;
     }
     i += 1;
-    out.push(
-      sentence.join(" ").replace(/^./, (c) => c.toUpperCase()) + ".",
-    );
+    out.push(sentence.join(" ").replace(/^./, (c) => c.toUpperCase()) + ".");
     sentence = [];
   }
   const text = out.join(" ");
@@ -104,7 +102,10 @@ const has = (list: number[] | undefined, ordinal: number) =>
   Boolean(list?.includes(ordinal));
 
 function businessNames(n: number): string[] {
-  return Array.from({ length: n }, (_, i) => `Klinik Contoh ${String.fromCharCode(65 + i)}`);
+  return Array.from(
+    { length: n },
+    (_, i) => `Klinik Contoh ${String.fromCharCode(65 + i)}`,
+  );
 }
 
 function answerText(
@@ -126,7 +127,10 @@ function answerText(
         "",
       ].join("\n")
     : "";
-  const body = textOfWords(Math.max(1, words - (lead ? lead.split(" ").length : 0)), seed);
+  const body = textOfWords(
+    Math.max(1, words - (lead ? lead.split(" ").length : 0)),
+    seed,
+  );
   return [lead, tableText, body].filter(Boolean).join("\n\n");
 }
 
@@ -143,10 +147,14 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
   const observations: AuditObservation[] = base.observations.map((o, i) => {
     const ordinal = i + 1;
     const failed = has(options.chatgptFailed, ordinal);
-    const named = has(options.chatgptNamed, ordinal) || has(options.chatgptRecommended, ordinal);
+    const named =
+      has(options.chatgptNamed, ordinal) ||
+      has(options.chatgptRecommended, ordinal);
     const mentioned = [
       ...(named ? [name] : []),
-      ...(options.answerWithoutBusiness && ordinal === 3 ? [] : others.slice(0, 3)),
+      ...(options.answerWithoutBusiness && ordinal === 3
+        ? []
+        : others.slice(0, 3)),
     ];
     return {
       ...o,
@@ -197,7 +205,8 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
         : {
             outcome: "answered",
             named:
-              has(options.chatgptNamed, ordinal) || has(options.chatgptRecommended, ordinal)
+              has(options.chatgptNamed, ordinal) ||
+              has(options.chatgptRecommended, ordinal)
                 ? "named"
                 : has(options.chatgptCited, ordinal)
                   ? "source_only"
@@ -205,9 +214,21 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
             recommended: has(options.chatgptRecommended, ordinal),
           },
       google: gFailed
-        ? { outcome: "failed", text: "", references: [], named: null, observed_at: null }
+        ? {
+            outcome: "failed",
+            text: "",
+            references: [],
+            named: null,
+            observed_at: null,
+          }
         : gNotShown
-          ? { outcome: "not_shown", text: "", references: [], named: null, observed_at: checkedTo }
+          ? {
+              outcome: "not_shown",
+              text: "",
+              references: [],
+              named: null,
+              observed_at: checkedTo,
+            }
           : {
               outcome: "summary",
               text: answerText(
@@ -217,7 +238,10 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
                 false,
               ),
               references: [
-                { url: `https://ulasan-${ordinal}.example/`, title: `Ulasan contoh ${ordinal}` },
+                {
+                  url: `https://ulasan-${ordinal}.example/`,
+                  title: `Ulasan contoh ${ordinal}`,
+                },
               ],
               named: has(options.googleNamed, ordinal)
                 ? "named"
@@ -230,7 +254,9 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
   });
 
   const answered = questions.filter((q) => q.chatgpt.outcome === "answered");
-  const completedGoogle = questions.filter((q) => q.google.outcome !== "failed");
+  const completedGoogle = questions.filter(
+    (q) => q.google.outcome !== "failed",
+  );
   const summaries = questions.filter((q) => q.google.outcome === "summary");
   const counts: TwoSourceReport["counts"] = {
     chatgpt: {
@@ -261,7 +287,10 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
     search_data_available: searchData,
     questions,
     counts,
-    google_finding: googleCoverageFinding(summaries.length, completedGoogle.length),
+    google_finding: googleCoverageFinding(
+      summaries.length,
+      completedGoogle.length,
+    ),
     topics_missing: questions
       .filter((q) => q.chatgpt.named !== "named" && q.google.named !== "named")
       .slice(0, 5)
@@ -274,7 +303,8 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
         domains: ["sumber-1.example"],
       })),
     other_businesses: {
-      chatgpt: options.answerWithoutBusiness && others.length === 0 ? [] : others,
+      chatgpt:
+        options.answerWithoutBusiness && others.length === 0 ? [] : others,
       google: [],
     },
   };
@@ -293,7 +323,10 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
     })),
     priorities: Array.from({ length: nRecs }, (_, i) => ({
       order: i + 1,
-      action: textOfWords(options.recommendationTitleWords ?? 10, i + 2).replace(/\.$/, ""),
+      action: textOfWords(
+        options.recommendationTitleWords ?? 10,
+        i + 2,
+      ).replace(/\.$/, ""),
       why: textOfWords(options.recommendationWords ?? 50, i + 3),
       evidence_prompt_ids: ids.slice(0, 2),
     })),
@@ -312,9 +345,21 @@ export function reportFixture(options: FixtureOptions = {}): SavedReportData {
               { title: "Catatan contoh dua", text: textOfWords(20, 2) },
             ],
             plan: [
-              { weeks: "Minggu 1–2", title: "Rapikan fakta dasar", text: textOfWords(options.planWords ?? 22, 1) },
-              { weeks: "Minggu 3–6", title: "Tampilkan keahlian", text: textOfWords(options.planWords ?? 22, 2) },
-              { weeks: "Minggu 5–8", title: "Jaga arus ulasan", text: textOfWords(options.planWords ?? 22, 3) },
+              {
+                weeks: "Minggu 1–2",
+                title: "Rapikan fakta dasar",
+                text: textOfWords(options.planWords ?? 22, 1),
+              },
+              {
+                weeks: "Minggu 3–6",
+                title: "Tampilkan keahlian",
+                text: textOfWords(options.planWords ?? 22, 2),
+              },
+              {
+                weeks: "Minggu 5–8",
+                title: "Jaga arus ulasan",
+                text: textOfWords(options.planWords ?? 22, 3),
+              },
             ],
             topic_names: [],
             google_readings: [],
@@ -373,7 +418,11 @@ export const FIXTURES = {
   named_nowhere: () => reportFixture({}),
   /** The clinic is named in all twenty answers. */
   named_everywhere: () =>
-    reportFixture({ chatgptNamed: all, chatgptRecommended: [1, 2], googleNamed: all }),
+    reportFixture({
+      chatgptNamed: all,
+      chatgptRecommended: [1, 2],
+      googleNamed: all,
+    }),
   /** Three AI Overviews not shown. */
   three_no_overview: () =>
     reportFixture({ chatgptNamed: [2], googleNotShown: [3, 5, 9] }),
@@ -381,13 +430,15 @@ export const FIXTURES = {
   failed_each_source: () =>
     reportFixture({ chatgptNamed: [1], chatgptFailed: [7], googleFailed: [2] }),
   /** No search volume: questions written from the business facts. */
-  no_search_volume: () => reportFixture({ searchData: false, chatgptNamed: [3] }),
+  no_search_volume: () =>
+    reportFixture({ searchData: false, chatgptNamed: [3] }),
   /** The longest answers: about 700 words (ChatGPT) and 450 (Google). */
   longest_answer: () => reportFixture({ chatgptWords: 700, googleWords: 450 }),
   /** An answer with a table. */
   answer_with_table: () => reportFixture({ table: true }),
   /** Ten other businesses named. */
-  ten_other_businesses: () => reportFixture({ otherBusinesses: 10, chatgptNamed: [1] }),
+  ten_other_businesses: () =>
+    reportFixture({ otherBusinesses: 10, chatgptNamed: [1] }),
   /** A long business name. */
   long_business_name: () =>
     reportFixture({
@@ -400,13 +451,24 @@ export const FIXTURES = {
   /** The longest texts saved on Nuave's orders (spike README): finding 64
    * words, recommendation 60, conclusion 58, plan step 23. */
   longest_texts: () =>
-    reportFixture({ findingWords: 64, recommendationWords: 60, conclusionWords: 58, planWords: 23 }),
+    reportFixture({
+      findingWords: 64,
+      recommendationWords: 60,
+      conclusionWords: 58,
+      planWords: 23,
+    }),
   /** Ten findings and ten recommendations. */
-  ten_and_ten: () => reportFixture({ findings: 10, recommendations: 10, googleNotShown: [2] }),
+  ten_and_ten: () =>
+    reportFixture({ findings: 10, recommendations: 10, googleNotShown: [2] }),
   /** An answer citing 44 sources (saved maximum: 44). */
   sources_44: () => reportFixture({ sources: 44 }),
   /** A business that is not a clinic ("Bisnis Anda", AC-20). */
-  non_clinic: () => reportFixture({ name: "Kedai Kopi Fiksi", subject: "bisnis", place: "Bandung" }),
+  non_clinic: () =>
+    reportFixture({
+      name: "Kedai Kopi Fiksi",
+      subject: "bisnis",
+      place: "Bandung",
+    }),
   /** Every texts at its budget exactly (one page each). */
   at_budget: () =>
     reportFixture({
