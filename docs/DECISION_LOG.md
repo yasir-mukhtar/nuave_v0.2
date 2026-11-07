@@ -22,10 +22,11 @@ Yasir also decided three points:
 - Peta jawaban becomes a proposal to v3.
 - Facts come from v3, and the sentences are polished.
 
-Later the same day the Report v3 plan was approved (F-1, revision 6.3). Its
-"Format of the report PDF" adopts both proposals: Cara membaca laporan comes
+Later the same day the Report v3 plan, approved at revision 6.1 (F-1), added
+in revision 6.3 a "Format of the report PDF" that adopts both proposals: Cara membaca laporan comes
 before Ringkasan, and Peta jawaban is a front page. The design plan's page
-order follows that list (§5.2), with five sections, and no proposal is open.
+order follows that list (§5.2), with five sections. One proposal is open:
+Titik awal as its own page after Penutup.
 The plan's §5.2 and §5.3 hold the page map and the rules.
 
 ## 2026-11-07 — Approve the PDF report design plan (D-0 to D-10)

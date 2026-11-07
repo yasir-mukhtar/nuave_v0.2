@@ -121,15 +121,15 @@ pages that need it fall back as the web page does today.
 | Per-source counts and failed checks (`two_source.counts`) | Cover orbit; Ringkasan cards; the moment page's per-source bars; Titik awal |
 | `two_source_writing.verdict` | Ringkasan statement (D-9 option A) |
 | `conclusion` | Penutup's paragraph, always (as the web Penutup shows it); also Ringkasan's statement when there is no verdict |
-| `key_findings` (with `headline`) | One **Temuan** page per finding, in the Temuan template (reference pages 7 to 11): the headline's number and caption (shown as saved, D-6), the title, the text, and the questions it cites (`evidence_prompt_ids`) as chips that point to their appendix pages |
+| `key_findings` (with `headline`) | One **Temuan** page per finding, in the Temuan template (Figma pages 08 to 12): the headline's number and caption (shown as saved, D-6), the title, the text, and the questions it cites (`evidence_prompt_ids`) as chips that point to their appendix pages |
 | `google_finding` | Its own Temuan page, as on the web page today |
 | `two_source_writing.takeaways` | Pesaing page, the right column (at most three, Spec 021) |
-| `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source for the first five businesses and the clinic's own row, chips for the rest, as the web page does, and the "Menurut jawaban AI" line for those five) |
+| `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source for the first five businesses and the clinic's own row, chips for the rest, as the web page does, and the "Menurut jawaban AI" line for those five) and the Peta jawaban grid's competitor columns |
 | `other_businesses` per source | Pesaing page, "disebut lebih jarang" line |
 | `topics_missing` (Celah Topik) | The **Celah topik** page |
-| `priorities` (each recommendation's title and paragraph) | One **Langkah** page per recommendation, in the Figma "Detail langkah" layout (title and paragraph today; who, effort, evidence block and "Dasarnya" added by v3 P0.6, P1.1 and P0.7); the Rekomendasi page lists them, with who, time and done-when once v3 P0.6 adds them |
+| `priorities` (each recommendation's title and paragraph) | One **Langkah** page per recommendation, in the Figma "Detail langkah" layout (title and paragraph today; who, effort, evidence block and "Dasarnya" added by v3 P0.6, P1.1 and P0.7); the Rencana page lists them, with who, time and done-when once v3 P0.6 adds them |
 | `two_source_writing.plan` (three steps with weeks) | Penutup, as the three phase columns, with the owner's decision under a step once v3 P0.4 adds it |
-| Questions, states, topic, volume | Ringkasan cards (the dots); Lampiran A0 |
+| Questions, states, topic, volume | Peta jawaban; Ringkasan cards (the dots); Lampiran A0 |
 | Each question's origin label (`label_text`) | Its appendix page, under the question |
 | Both full answers (ChatGPT: the observation's `raw_answer`; Google: `google.text`), Google `references`, the ChatGPT observation's `sources` | Lampiran A1 to A10 |
 | Method facts (places, dates, `checked_from`, `checked_to`) | Cara membaca laporan |
@@ -164,7 +164,7 @@ waits for that package. A page whose data does not exist yet is left out.
 | 04 | Bahan siap pakai | v3 P2.4 (F-7a) | |
 | 04 | Lembar Kerja | v3 P0.10 | Names the worksheet and its tabs; where it is downloaded is v3 F-13. The work-plan preview rows are this report's own recommendations; the person, date and status columns start empty, and the reference fills them only as a labelled example |
 | 04 | Penutup | Today; decisions with v3 P0.4 | The closing paragraph and the three phases |
-| 04 | Titik awal | Today, partly | Today's counts and the re-audit advice (D-7); v3 P3.3 adds the comparison with a later audit |
+| 04 | Titik awal | Today, partly | Today's counts and the re-audit advice (D-7); v3 P3.3 adds the comparison with a later audit. A page of its own is an open proposal to v3 (§5.3 rule 4); if v3 declines, it folds back into Penutup |
 | 05 Lampiran | A0, the questions | Today | With v3's answer notes |
 | 05 | A1 to A10, one question per page | Today | Both full answers, their sources and the code notes; continued pages as needed (§6.4); the two questions that name the clinic, if v3 F-4 is approved |
 | End | Sampul belakang | Design only | |
@@ -188,8 +188,12 @@ session; aesthetics and delivery belong to this plan.**
    template fits, this plan adds one. A page is never changed to fit a
    template.
 4. **Proposals to v3** are listed here until v3 adopts or rejects them.
-   None is open: the two earlier ones (Cara membaca laporan before
-   Ringkasan; Peta jawaban) were adopted in v3 revision 6.2.
+   The two earlier ones (Cara membaca laporan before Ringkasan; Peta
+   jawaban) were adopted in v3 revision 6.3. Open:
+   - Titik awal as its own page after Penutup. v3's list has Penutup as the
+     last page of section 04, and in the reference export the starting
+     point was part of it; the Figma gives it a page so the counts to
+     compare in eight weeks stand alone.
 5. **In code,** the page-list function takes the v3 page order as its input,
    and a test asserts that the PDF's page order equals it.
 6. **Sample content:** the Figma's sample text comes from proof of concept
@@ -203,8 +207,11 @@ report only after the v3 spec that brings it defines it with its denominator
 (for example "3,4 nama per jawaban", v3 P0.3, and the word counts, v3 P2.3).
 A finding's number is shown as saved and only in a form Spec 021 B-05 keeps:
 "X dari Y" where Y is the number of questions the finding cites or a
-source's own denominator. The Figma's finding numbers are per question for
-that reason ("0 dari 3 pertanyaan", not "0 dari 6 jawaban").
+source's own denominator, a whole number such as "2×", or a figure copied
+from an answer. The Figma's finding numbers are per question for that reason
+("0 dari 3 pertanyaan", not "0 dari 6 jawaban"). Two sample numbers have no
+B-05 form today and wait for a basis v3 defines: Temuan 3's "4 klaim" (v3
+P1.2) and Temuan 4's "3 pertanyaan" whose answers cite one site.
 
 ## 6. How the PDF is made
 
@@ -379,7 +386,7 @@ unchanged, and `verify-nuave` passes on a preview.
 
 - **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The same day the founder added two pages from the Report v3 structure (Untuk tim web Anda; Lembar Kerja), and the reference was exported to `experiments/report-pdf-design/reference.pdf` (33 pages; see its [README](../experiments/report-pdf-design/README.md)). D-10 now lists every dark page shown in the approved design (the section dividers, Penutup and the back cover), not only the cover.
 - **2026-11-07, founder:** substance and format follow the Report v3 session, and aesthetics and delivery belong to this plan (§5.3). The Figma was restructured to v3's content: a Ringkasan with the verdict and the two source cards, a moment page, five Temuan pages from v3's findings, a Rencana page with v3's six steps, and a Penutup with v3's three phases.
-- **2026-11-07, Report v3 plan approved (F-1, revision 6.3):** its "Format of the report PDF" sets the page order, and the Figma now follows it (§5.2): Cara membaca laporan before Ringkasan and Peta jawaban as a front page (both had been this plan's proposals, and v3 adopted them), five sections ("Posisi <klinik> hari ini", "Apa kata AI tentang <klinik>", "Apa yang dibaca AI", "Rencana delapan minggu", "Lampiran"), and section titles that state no cause. The "Untuk dikerjakan" divider is gone; its pages sit in sections 03 and 04. Temuan pages now lead with the writer's meaning sentence and show the count beneath it (v3 rule 14). The sample counts are per question or per source (D-6), Cek fakta and A1 keep v3's wording ("…, yang dikutip jawaban ini"; "Tanpa penilaian"), Cara membaca carries all of v3's method lines, and Ringkasan shows the first plan step (D-9 A). The reference export of earlier the same day no longer matches the Figma; it is exported again once the founder has seen the Figma.
+- **2026-11-07, Report v3 revision 6.3** (the plan was approved at 6.1, F-1, and the approval recorded in 6.2): its "Format of the report PDF" sets the page order, and the Figma now follows it (§5.2): Cara membaca laporan before Ringkasan and Peta jawaban as a front page (both had been this plan's proposals, and v3 adopted them), five sections ("Posisi <klinik> hari ini", "Apa kata AI tentang <klinik>", "Apa yang dibaca AI", "Rencana delapan minggu", "Lampiran"), and section titles that state no cause. The "Untuk dikerjakan" divider is gone; its pages sit in sections 03 and 04. Temuan pages now lead with the writer's meaning sentence and show the count beneath it (v3 rule 14). The sample counts are per question or per source (D-6), Cek fakta and A1 keep v3's wording ("…, yang dikutip jawaban ini"; "Tanpa penilaian"), Cara membaca carries all of v3's method lines, and Ringkasan shows the first plan step (D-9 A). The reference export of earlier the same day no longer matches the Figma; it is exported again once the founder has seen the Figma.
 
 ## Review history
 
@@ -390,4 +397,5 @@ unchanged, and `verify-nuave` passes on a preview.
 | 3 | `5e3004e` | PASS+NOTES | Soft writer limits with no rule for long text on report pages; the spike below the real page maximum (about 46); PR 4's "done when" against finish line 6; D-6's B-05 clause; the Figma's scheduled re-check promise; the Temuan evidence card rule, the number of Pesaing bars, and Langkah pages in the page list. All addressed in revision 4. |
 | 4 | `73c939a` | PASS+NOTES | The over-budget case named an order log that does not exist and left the page undefined; the evidence card rule for findings that name no source; a stale risk row; Penutup's place; the re-audit advice card and the clinic's own Pesaing row. All addressed in revision 5. |
 | 5 | `9789039` | PASS+NOTES | Three optional notes: the broad "every saved field" wording in §1 and §5.1; the evidence card's basis rule; where `long_texts` is counted. All addressed in revision 6. |
-| 6 | `cc1d94a` | FAIL | §5.2 followed the proof of concept's `render()` instead of v3's own page order; pooled finding counts and a false claim that they survive B-05; competitor recommendation counts marked as saved today; Cek fakta and A1 wording that turned "cited by this answer" into a cause and dropped the BPOM qualifiers; method lines missing from Cara membaca; card sentences not in the settled form; Titik awal and Cara membaca marked as waiting for v3; D-10's dark-page list. All addressed in the next head (§5.2, §5.3, D-10, the Figma). |
+| 6 | `cc1d94a` | FAIL | §5.2 followed the proof of concept's `render()` instead of v3's own page order; pooled finding counts and a false claim that they survive B-05; competitor recommendation counts marked as saved today; Cek fakta and A1 wording that turned "cited by this answer" into a cause and dropped the BPOM qualifiers; method lines missing from Cara membaca; card sentences not in the settled form; Titik awal and Cara membaca marked as waiting for v3; D-10's dark-page list. All addressed in `130090b` (§5.2, §5.3, D-10, the Figma). |
+| 7 | `130090b` | PASS+NOTES | Ringkasan and moment-page sentences not in the code's settled form; "Yang dikerjakan dulu" showed recommendation 1, not the first plan step; §5.1 had lost its Peta jawaban mappings and two stale names; Titik awal as a page v3 does not list; Temuan 1's question and answer counts; a Langkah 1 claim beyond the playbook line; the Celah topik headline for a question without AI Overview; the B-05 paragraph; revision numbers; topic names; four small sample issues. All addressed in the next head. |
