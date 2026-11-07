@@ -156,17 +156,31 @@ def check(d, label):
         listed = re.search(r"\((P\d+(?:, P\d+)*)\)", note)
         if not listed or sorted(int(x[1:]) for x in listed.group(1).split(", ")) != sorted(pool):
             errors.append(f"words_note must list the answers counted: ({', '.join(f'P{n}' for n in sorted(pool))})")
+        rivals = [n.lower() for b in d["businesses"] if b["name"] != d["meta"]["clinic"]
+                  for n in [b["name"]] + b.get("aliases", [])]
+
         def own_lines(a):
-            # The clinic's passage: each line naming it, with the more deeply indented lines under it
-            # (sub-bullets). The product's spec counts within the passage (plan P2.3).
+            # The clinic's passage (plan P2.3): each line naming it; under a heading that names it, the
+            # section up to the next heading; under a list item that names it, the more deeply indented
+            # lines below it. Either stops at a line naming another business from the data's list.
             lines, out, i = a.get("answer", "").split("\n"), [], 0
             while i < len(lines):
-                if not any(o in lines[i].lower() for o in own):
+                low = lines[i].lower()
+                if not any(o in low for o in own):
                     i += 1
                     continue
+                head = lines[i].lstrip().startswith("#")
                 depth, block, i = len(lines[i]) - len(lines[i].lstrip()), [lines[i]], i + 1
-                while i < len(lines) and lines[i].strip() and len(lines[i]) - len(lines[i].lstrip()) > depth:
-                    block.append(lines[i])
+                while i < len(lines):
+                    nxt = lines[i]
+                    if head:
+                        if nxt.lstrip().startswith("#"):
+                            break
+                    elif not nxt.strip() or len(nxt) - len(nxt.lstrip()) <= depth:
+                        break
+                    if any(r in nxt.lower() for r in rivals):
+                        break
+                    block.append(nxt)
                     i += 1
                 out.append("\n".join(block))
             return out

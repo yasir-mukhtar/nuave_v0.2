@@ -624,10 +624,11 @@ reading (`src/lib/reading/page-reader.ts`).
 
 **P2.3 How AI describes the clinic** (needs F-5). AI's one-line description
 of the clinic, built from quote-checked words, and the words AI attaches to
-it, counted by code within the clinic's own passage (its list item with
-its sub-items, its table row, or its sentence; a list heading does not
-count), with a note naming the source, the answers counted and the
-denominator. Next to it, labelled "Menurut Anda", the owner's own
+it, counted by code within the clinic's own passage: its list item with
+its sub-items up to one that names another business, its table row, its
+sentence, or the section under a heading that names it. A heading or
+lead-in line that does not name the clinic does not count. A note names
+the source, the answers counted and the denominator. Next to it, labelled "Menurut Anda", the owner's own
 answer to "Apa yang membuat bisnis Anda berbeda?".
 
 **P2.4 Kit** (needs F-7). First: correction requests to the directories and
@@ -1208,4 +1209,11 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   and `build.py` reads the sub-items under its line; the sentence names
   cited sites of one kind; the history is corrected; B's topics follow
   demand, then question order; a topic count needs its source; the note's
-  answer list is compared in order.
+  answer list is compared as a sorted list.
+- **Revision 6.4 review (round 4, 2026-11-07): PASS+NOTES on `a719dd4`,
+  three notes,** none of them in today's data: a sub-item about another
+  business under a line naming the clinic was read as the clinic's; the
+  section under a heading that names the clinic was not read; and a wording
+  nit. All are applied: the passage stops at a line naming another business
+  from the data's list, and a heading that names the clinic opens a section
+  read up to the next heading, in P2.3 and in `build.py`.

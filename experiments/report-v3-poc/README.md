@@ -67,10 +67,12 @@ build needs `openpyxl`; the render uses the pre-installed Playwright.
     `docs/content/report/PLAYBOOK.md` and has its tags in the data;
   - at most eight fact rows in the report (plan P1.2) and five names in the
     moment of truth (P0.1);
-  - each word in "Kata AI" is in the clinic's passage (a line naming it,
-    with the sub-items under that line; a list heading does not count) in
-    every answer it is counted in, and in no such passage in the other
-    answers of its source; the note names the source, the denominator and
+  - each word in "Kata AI" is in the clinic's passage in every answer it
+    is counted in, and in no such passage in the other answers of its
+    source. The passage is a line naming the clinic, with the sub-items
+    under it, or the section under a heading naming it, up to the next
+    heading; either stops at a line naming another business in the data.
+    A lead-in line that does not name the clinic does not count; the note names the source, the denominator and
     the answers counted ("dari 4 jawaban ChatGPT ... (P1, P4, P7, P8)");
   - a topic's count of other clinics names its source;
   - no em dashes anywhere in the report's own text, the kit's texts included,
