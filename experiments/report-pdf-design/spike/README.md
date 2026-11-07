@@ -47,6 +47,26 @@ when the installed browser does not match the `@playwright/test` version.
 | Word limits ×1.25; same answers | 86 | 0.1 s | 0.07 s | 0.23 s | 656 KB | Pesaing (743 of 626 px), Cek fakta (640 of 626 px) |
 | Word limits ×1.0; ChatGPT answers 500 words, Google 200 | 66 | 0.1 s | 0.06 s | 0.18 s | 533 KB | none |
 
+## Results, 2026-11-07 (Cloudflare Browser Run)
+
+The same three HTML files, sent to Browser Run's REST PDF endpoint
+(`/accounts/<id>/browser-rendering/pdf`) with the HTML inline, the same wait
+for `[data-saved-report="ready"]` (20 s) and a 30 s load limit, and
+`preferCSSPageSize` and `printBackground`. The founder added the Browser Run
+permission to the session's token for this run.
+
+| Case | Pages | Whole request | Browser time used | PDF size |
+| --- | --- | --- | --- | --- |
+| Word limits ×1.0; answers 1,200 and 400 words | 86 | 2.2 s | 0.87 s | 852 KB |
+| Word limits ×1.25; same answers | 86 | 1.3 s | 0.60 s | 863 KB |
+| Word limits ×1.0; answers 500 and 200 words | 66 | 0.8 s | 0.40 s | 713 KB |
+
+"Whole request" is measured from this session and includes the upload of the
+HTML (about 580 KB with the fonts). "Browser time used" is Browser Run's own
+`x-browser-ms-used` header. The page count, page size (1080 × 607.9 pt) and
+fonts (Newsreader, Geist and Roboto Condensed embedded, as Type 3) match the
+local run, and a rendered page shows the web fonts in use.
+
 What this shows:
 
 1. **The page count is larger than the plan's "about 47".** The v3 pages add
@@ -54,10 +74,10 @@ What this shows:
    of answer per page, a 1,200-word ChatGPT answer plus a 400-word Google
    answer is four pages per question. The answer lengths are assumptions
    until the real ones are measured (below).
-2. **Time and size are far inside the limits on a local browser.** The
+2. **Time and size are far inside the limits, in Browser Run too.** The
    limits are 30 s to load and 20 s for the ready marker
-   (`src/lib/orders/report-pdf.ts`). Browser Run adds its own start-up and
-   network time, which this run could not measure (below).
+   (`src/lib/orders/report-pdf.ts`). The longest case took 2.2 s in all and
+   0.87 s of browser time, and the PDF is under 1 MB.
 3. **At the word limits every page fits.** At 25% over the limits, two pages
    overflow: Pesaing (six rows with 20-word reasons, 15 chips and three
    takeaways) and Cek fakta (eight rows). These two need either a tighter
@@ -90,13 +110,14 @@ What this shows:
 - **"Every page fits" holds for these approximate pages only,** not yet for
   the Figma templates.
 
+- **Browser Run was called through its REST endpoint with the HTML inline,**
+  not through the Worker's binding opening the print page on a preview. The
+  real path adds the page's own load from the Worker (its data and the font
+  files), which these timings do not include.
+
 ## Not done yet
 
-- **Browser Run.** One direct REST call to Browser Run with this session's
-  Cloudflare token was refused ("Authentication error"); the plan's route is
-  Browser Run on a PR preview. PR previews, which do
-  have the binding, are not deployed for a draft, docs-only PR.
 - **The longest texts saved on Nuave's orders.** These are in the production
-  database. Reading them needs the founder's permission.
-
-Both are needed before the spec sets each page's word budget.
+  database. The founder allowed reading their lengths, but this session's
+  permission settings block production reads, so it waits for a permission
+  rule. The spec needs these before it sets each page's word budget.

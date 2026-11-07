@@ -404,6 +404,7 @@ preview.
 
 - **2026-11-07, Report v3 revision 6.4:** "Counts on the PDF pages" becomes the counting rule (§5.3 rule 0). The Figma follows it: finding numbers with their source, Pesaing's "Direkomendasikan" only on the clinic's row, Situs yang dibaca AI counted per source without group totals, and the takeaways with denominators. The reference was exported again.
 - **2026-11-07, Report v3 revision 6.4 (commit `5d04c86`):** Titik awal is adopted as its own page after Penutup (v3 direction 3): its numbers carry their denominators ("4 dari 8 klaim yang diperiksa", "3 dari 5 pemeriksaan teknis yang dinilai"), its footer keeps only the date the numbers come from and the confidential label (limits are said once, on Cara membaca), and the Lembar Kerja line shows only once that tab exists (v3 P3.3). "Direkomendasikan" is ChatGPT only. The Figma and the reference follow, with v3's Kata AI counts ("x dari 4 jawaban ChatGPT") and the Celah topik lede.
+- **2026-11-07, Step 0 spike:** the maximum-length PDF (86 pages at the word limits, with assumed answer lengths) prints through Cloudflare Browser Run in 2.2 s (0.87 s of browser time) at 852 KB, far inside the 30 s and 20 s limits (`experiments/report-pdf-design/spike/`). The longest saved texts are still to be measured.
 
 ## Review history
 
@@ -425,3 +426,4 @@ preview.
 | 14 | `8d6cfad` | PASS+NOTES | §9's page count; the word-limit spec name in the spike. Addressed in `be32a08`. |
 | 15 | `be32a08` | PASS+NOTES | The Pesaing row's "per source"; the order of two entries. Addressed in `7410b6e`. |
 | 16 | `7410b6e` | PASS+NOTES | One optional wording note on the Pesaing row, left as is. |
+| 17 | `960f0d1` | PASS | The Titik awal row and page 29 match v3. |
