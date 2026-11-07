@@ -6,9 +6,10 @@
 > [`DECISION_LOG.md`](../DECISION_LOG.md). Every package then still needs its
 > own approved spec ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 6, after the founder's direction
-> of 2026-11-06 (below). Revision 5.1 passed independent review (rounds 1 to
-> 4 and two confirmations); see "Review history" at the end.
+> `claude/inspiring-tesla-yox17h`. Revision 6.1: revision 6 followed the
+> founder's direction of 2026-11-06 (below), and 6.1 applies its first
+> independent review. Revision 5.1 passed independent review (rounds 1 to 4
+> and two confirmations); see "Review history" at the end.
 > Inputs: the founder's benchmark request of 2026-11-06 (two premium agency
 > sample reports and one workbook, not kept in Git; Appendix A),
 > [`NOW.md`](../NOW.md), [`PAYING_CUSTOMER_PLAN.md`](../PAYING_CUSTOMER_PLAN.md)
@@ -42,15 +43,21 @@ the plan and are reflected in revision 6:
 
 **Proofs of concept (built 2026-11-07).** [`experiments/report-v3-poc/`](../../experiments/report-v3-poc/README.md)
 holds both, each as a report page, an A4 PDF and a worksheet built from the
-same data. Its `build.py` refuses a report that breaks this plan's rules (fact
-quotes word for word, no verdict on safety claims, no em dashes, playbook-backed
-recommendations). Proof B uses the saved answers of 2026-10-24 and 31 page
-loads of 2026-11-07, and shows three things later phases must handle: the old
-test asked each question to one source only; its two questions that name the
-clinic show what F-4 would add (Google's prices for the clinic came from
-Traveloka, tiket.com, Tokopedia, Scribd and Instagram, and 10 of 14 differ
-from the clinic's own site); and the stability sample, the owner's own words
-and most search volumes stay empty because the test did not collect them.
+same data. Its `build.py` stops a report that breaks the checks listed in
+the folder's README (among them: every business named must appear in its
+answer, fact quotes word for word, every other quotation found in the answers
+or the evidence, no verdict on safety or licensing claims, playbook items that
+exist, at most eight fact rows and five names in the moment of truth, no em
+dashes). Proof B uses the saved answers of 2026-10-24 and 31 page loads of
+2026-11-07, and shows three things later phases must handle: the old test
+asked each question to one source only; its two questions that name the
+clinic (one of them about safety, which F-4 would never ask) show what F-4
+would add (Google's answer cited Traveloka, tiket.com, Tokopedia, Scribd and
+Instagram for the clinic's prices, and 10 of its 14 prices differ from the
+text on the clinic's own site); and the stability sample, the owner's own
+words and most search volumes stay empty because the test did not collect
+them. The proofs are examples, not specs: where one differs from §4 or a
+package's limits, §4 and the package win.
 
 ## 1. Why
 
@@ -114,7 +121,8 @@ minutes:
    Sheets, made from the same saved data as the report. Its tabs are a guide,
    a summary, the work plan with status lists and progress, every question
    and result, competitors, the fact check, the website check, the sites AI
-   relies on, and a starting point for a later re-check.
+   relies on, the kit's ready-to-use texts ("Bahan Siap Pakai"), and a
+   starting point for a later re-check.
 8. **A stability note:** a few questions asked again, showing how much the
    answers move.
 
@@ -135,8 +143,13 @@ is the founder's informed choice; earlier review rounds raised it.
 | 0 | Phase 0 | The founder has seen the two proofs of concept and approves this plan (F-1). |
 | 1 | Phase 1 | The founder judges Phase 0 good enough on two orders: NV-3WDSAY shown in the new layout, and one new test order of the founder's choosing. The claims count (§6, "Before Gate 1") is done on the founder's own orders. |
 | 2 | Phase 2 | The founder judges Phase 1 good enough on the same orders plus one new test order. |
-| 3 | Phase 3 | The founder judges Phase 2, report and worksheet together, good enough on the same orders. |
+| 3 | Phase 3 | The founder judges Phase 2, report and worksheet together, good enough on the same orders plus one new test order (new sections appear only on orders run after they ship; saved reports are never rewritten). |
 | Launch | Opening to paying customers | The founder judges the whole report and worksheet good enough on two or three fresh test orders for different clinics. Launch is the last step of G1 (`PAYING_CUSTOMER_PLAN.md` §5, Stage 3: the founder records "open for paying customers"); G1's other steps are unchanged. |
+
+**Launch timing.** By the week estimates in §6 (Phase 0 about 2 weeks,
+Phase 1 about 2 to 3, Phase 2 about 3 to 4, Phase 3 about 3 to 4), the launch
+gate comes about 10 to 13 weeks after F-1, plus the time each gate's verdict
+and any "revise" takes. Approving F-1 approves this timing.
 
 At each gate the founder says go, revise, or re-plan. "Revise" repeats the
 phase's last step until the founder is satisfied; "re-plan" goes back to this
@@ -218,7 +231,7 @@ document the decision would change.
 
 | # | Decision | Changes | Recommendation |
 | - | -------- | ------- | -------------- |
-| F-1 | Approve this plan, after seeing the two proofs of concept, with its founder gates (§3) and the launch timing. | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/`; `PAYING_CUSTOMER_PLAN.md` (launch, the last step of G1, waits for the founder's verdict at the launch gate) | Pending the proofs of concept. |
+| F-1 | Approve this plan, after seeing the two proofs of concept, with its founder gates (§3) and the launch timing (§3: about 10 to 13 weeks after F-1). | `INDEX.md` and `NOW.md` routing; this file moves out of `drafts/`; `PAYING_CUSTOMER_PLAN.md` (launch, the last step of G1, waits for the founder's verdict at the launch gate) | Pending the proofs of concept. |
 | F-2 | Add to each playbook item ("What a clinic can do") who usually does it, roughly how long it takes, and one fixed Indonesian line saying what the item's official source means (§4 rule 3); the report shows the first two, with the item's existing "Check" line, as small tags under each recommendation. No "impact" tag and no "do this first" line. | `PLAYBOOK.md`; Spec 021's Rekomendasi rule, which removed "Penanggung jawab yang disarankan" and "Selesai ketika" (SPEC.md, Rekomendasi). Spec 023 R-09 is kept, because the effort then comes from the playbook, not the writer. | Yes. `AUDIT.md`'s checklist still asks for an owner and completion check. |
 | F-3 | Website-check rows the playbook does not cover yet, or covers without a fix line (*noindex*; a *sitemap*; text that appears only after the browser runs code; ChatGPT's user-request reader), need a playbook amendment, each backed by an official source and its fix line. | `PLAYBOOK.md` | Add a row only when an official source supports it; leave it out until then. |
 | F-4 | Two fixed questions that name the business (where its branches are; the starting price of its main service; never safety), asked to both sources apart from the ten, three tries each like every check. Worst case: 4 calls × 3 tries × USD 0.006 = USD 0.072. | Spec 018 R-02 ("no request to DataForSEO contains the business's name"); Terms §2 and §3 ("sepuluh pertanyaan", "20 pemeriksaan") and §8 (Rp12.450 = Rp249.000 ÷ 20); the privacy page (the name goes to DataForSEO, ChatGPT and Google); `AUDIT.md`'s question rules | Decide before Phase 1, only if the claims count on the founder's own orders shows too few claims to check. |
@@ -235,7 +248,7 @@ document the decision would change.
 
 ### Phase 0: Lead with the evidence (no new data)
 
-Writer instructions and layout. About three pull requests.
+Writer instructions, layout, PDF and the worksheet. About four pull requests.
 
 **P0.0 Prototype on real two-source orders.** The Sozo prototype in
 `experiments/report-v2-poc/` asked each question to one source only and has
@@ -317,7 +330,8 @@ request from the saved report and not stored, like the PDF. Its first tabs:
 - **Ringkasan:** the verdict, the per-source counts and the counts side by
   side;
 - **Rencana Kerja:** each recommendation with its playbook tags (who,
-  effort, how to check), plus columns the owner fills in: person in charge,
+  effort, how to check; they exist once F-2 amends the playbook), plus
+  columns the owner fills in: person in charge,
   target date, a status list (Belum, Sedang, Selesai, Ditunda) and notes,
   with a progress count that updates itself;
 - **Pertanyaan & Hasil:** every question, each source's result, the
@@ -325,8 +339,8 @@ request from the saved report and not stored, like the PDF. Its first tabs:
 - **Pesaing:** each named business with its counts per source and its
   "Menurut jawaban AI" line.
 
-Later phases add tabs (P1.3, P2.5, P3.3). A spike decides where the file is
-built: in the browser from the report data the page already holds, or on the
+Later phases add tabs (P1.3, P2.5, P3.3). A short trial decides where the
+file is built: in the browser from the report data the page already holds, or on the
 server like the PDF; either way the status lists, formulas and colours of the
 proof of concept must survive in Excel and Google Sheets.
 
@@ -358,7 +372,10 @@ the gate).
 ### Phase 1: Check the basics
 
 About five or six pull requests. Starts at Gate 1. The worksheet gains two
-tabs (P1.3).
+tabs (P1.3). Every package's "done when" includes the checks every package
+has: the worst-case test at or under USD 5.00, both protected report
+snapshots unchanged, and delivery within 30 minutes on the founder's test
+orders.
 
 **P1.1 Website check: "Untuk tim web Anda".** Plain page loads only: no AI,
 and no request pretending to be an AI reader. Only rows the playbook supports
@@ -401,7 +418,11 @@ appear in AI Overviews, but it has no fix line for it yet.
   dicek") and the reference text.
 - **Code checks:** the quotation is in the cited answer; the reference text
   is on the cited page or in the owner's facts; "berbeda" without a found
-  reference becomes "tidak bisa dicek". At most eight rows.
+  reference becomes "tidak bisa dicek". The report shows at most eight
+  rows, "berbeda" first, with a count of every claim checked; the
+  worksheet's Cek Fakta tab lists every checked claim (P1.3). Listing every
+  claim adds roughly 80 to 120 writer output tokens a claim; the allowance
+  check in "done when" covers it.
 - **Safety and licensing:** shown only as what AI said, with no verdict.
   Nuave never states that the clinic is safe, licensed or good (`AUDIT.md`
   checklist; `AGENTS.md` working rule 9).
@@ -412,12 +433,14 @@ appear in AI Overviews, but it has no fix line for it yet.
   the right rows; an invented quotation is dropped; no row says "berbeda"
   without a reference; the worst-case test passes; the writer's output fits
   its allowance on the exported orders; older reports are unchanged; the
-  founder judges two real orders.
+  founder judges two of the founder's test orders.
 
 **P1.3 Worksheet tabs "Website" and "Cek Fakta".** The website check's rows
 with their fix lines and a status list for the web vendor, and the fact
 check's rows with the AI's sentence, the reference and where to fix it.
-Done when both tabs equal the report's sections on the fixture orders.
+Done when, besides the checks every package has: the Website tab equals the
+report's section, and the Cek Fakta tab lists every checked claim with its
+first rows equal to the report's, on the fixture orders.
 
 - **Cost:** about USD 0.04 to 0.15 an order (writer output); the website
   check and the worksheet have no provider cost.
@@ -672,6 +695,7 @@ what customers do.
 | "Cek fakta" reads as Nuave vouching for the clinic's safety or quality | safety and licensing get no verdict; verdicts are always relative to a named reference |
 | The website check blames the web vendor for a refusal Nuave caused | refusals are only an "indikasi"; no fake AI readers; fixed explanatory text |
 | Building features owners may not use, because no customer validates them before launch | accepted by the founder (2026-11-06); the founder judges each phase (§3); the next improvement project measures what customers use |
+| The first paying customer waits about 10 to 13 weeks after F-1 (§3) | the founder's choice (2026-11-06); each gate is a chance to re-plan, including launching earlier |
 | The worksheet's numbers drift from the report's | one builder reads the same saved report (§4 rule 13); a test compares their counts |
 | The order's worst case passes USD 5.00 | the worst-case test in every "done when"; F-10 |
 | The report gets long | prototype first; a word budget; sections hide when empty; technical parts folded |
@@ -706,7 +730,8 @@ what customers do.
   founder the F-decisions the phase relies on (§4 rule 12). Every package
   needs its own approved spec, which lists its required context.
 - The proofs of concept in `experiments/report-v3-poc/` show the target look
-  and depth; a spec may refine them but says so where it differs.
+  and depth; a spec may refine them but says so where it differs. Where a
+  proof differs from §4 or a package's limits, §4 and the package win.
 - New ideas go to `PAYING_CUSTOMER_PLAN.md` §6, not here.
 
 ## Glossary
@@ -948,3 +973,17 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   source for report and worksheet). F-6, F-9, F-11 and F-12 move, with the
   paid re-check and Phase 4, to "After launch". The claims count uses the
   founder's own orders. Risks, costs and founder time are updated.
+- **Revision 6 review (round 1, 2026-11-07): FAIL, 8 findings.** The plan's
+  protections held; the proofs and two plan gaps did not. Fixed in 6.1:
+  the proofs' template pooled recommendations across sources and made a claim
+  about patients' behaviour; proof B called cited pages "the source" and
+  overstated ten price differences; `build.py` enforced less than the README
+  claimed (now it checks names against the answer text, every quotation, a
+  safety and licensing word list, playbook items in `PLAYBOOK.md`, and the row
+  limits); two doctor names were left unredacted in the evidence record; the
+  proofs passed the eight-row and five-name limits (now enforced, and the
+  plan says the worksheet lists every checked claim); Gate 3 had no new order;
+  the launch timing was implied, not stated (§3, F-1, §8); and small
+  inconsistencies (Phase 0 pull requests, the worksheet's tabs in §2, P1.3's
+  checks, F-2 behind P0.10's tags, wording). A separate evidence check of
+  proof B found ten more over-claims in its data, all fixed.

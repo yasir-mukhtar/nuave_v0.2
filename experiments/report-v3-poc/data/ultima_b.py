@@ -17,12 +17,14 @@ nothing here is invented. Where the test has no data (owner's own words, the
 stability sample, search volume for most questions) the report says so.
 """
 
+import json
 import re
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parents[3]
 SUMMARY = ROOT / "experiments/dataforseo-sozo/results/answers/SUMMARY.md"
+EVIDENCE = Path(__file__).resolve().parents[1] / "evidence/evidence.json"
 
 G_AI = "https://developers.google.com/search/docs/appearance/ai-features"
 G_HELP = "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
@@ -96,7 +98,8 @@ assert len(CHATGPT) == 5 and len(GOOGLE) == 5
 # Status of Ultima in each answer, and the other businesses it names and
 # recommends, read by hand (statuses as in report-v2-poc/build.py). P7 lists
 # its clinics under the heading "Rekomendasi Klinik Kecantikan Populer di
-# Indonesia", so they count as recommended there.
+# Indonesia", so they count as recommended there. P6: Google marked an AI
+# Overview as shown but its text was not saved, so the check cannot be judged.
 
 READ = {
     1: ("chatgpt", "mentioned", ["Diri Clinic", "RS Royal Progress", "K Young", "Fabella Beauty Clinic"],
@@ -108,13 +111,17 @@ READ = {
     4: ("chatgpt", "recommended", ["SuperSkin Clinic", "Naavagreen", "Larissa Aesthetic Center", "Natasha Skin Clinic", "ZAP Clinic", "ERHA"],
         ["SuperSkin Clinic", "Naavagreen", "Larissa Aesthetic Center", "Natasha Skin Clinic", "ZAP Clinic", "ERHA"]),
     5: ("chatgpt", "mentioned", [], []),
-    6: ("google", "noaio", [], []),
+    6: ("google", "failed", [], []),
     7: ("google", "cited", ["ZAP Clinic", "Dermaster", "ERHA", "Bening's Clinic", "Jakarta Aesthetic Clinic", "Miracle Aesthetic Clinic"],
         ["ZAP Clinic", "Dermaster", "ERHA", "Bening's Clinic", "Jakarta Aesthetic Clinic", "Miracle Aesthetic Clinic"]),
     8: ("google", "cited", ["Bening's Clinic", "ZAP Clinic", "ERHA"], []),
     9: ("google", "none", ["ERHA"], []),
     10: ("google", "mentioned", [], []),
 }
+NOTES = {6: "Google menandai ada AI Overview untuk pertanyaan ini, tetapi teksnya tidak tersimpan dalam data uji, jadi hasilnya tidak dapat dinilai."}
+# Volumes: experiments/dataforseo-sozo/results/discover/SUMMARY.md (Google
+# searches a month for P6; DataForSEO's estimate of monthly mentions of the
+# topic in AI assistants for P1, P2 and P7). The other questions have none.
 TOPIC = {
     1: ("Flek hitam", {"ai_mentions": 3602}), 2: ("Bekas jerawat", {"ai_mentions": 1146}), 3: ("Filler dan botox", {}),
     4: ("Klinik dengan banyak cabang", {}), 5: ("Nama klinik: bagus dan aman?", {"brand": True}),
@@ -123,7 +130,7 @@ TOPIC = {
 }
 BRAND_SUMMARY = {
     5: "ChatGPT menilai Ultima “cukup oke” untuk facial dan perawatan dasar dengan harga promo, mengutip rating dan ulasan dari CariBisnis, lalu menyarankan dokter spesialis untuk kasus berat.",
-    10: "Google menulis 14 harga perawatan Ultima dengan sumber Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram. Sepuluh berbeda dari teks di situs Ultima.",
+    10: "Google menulis 14 harga perawatan Ultima dan mengutip Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram untuk harga-harga itu. Sepuluh berbeda dari teks di situs Ultima; enam di antaranya berupa kisaran yang memuat harga situs atau berujung di harga itu.",
 }
 
 questions = []
@@ -137,20 +144,48 @@ for n in range(1, 11):
     if n in BRAND_SUMMARY:
         item["brand_summary"] = BRAND_SUMMARY[n]
     item[src] = {"status": status, "named": named, "rec": rec, "sources": sources, "answer": text}
+    if n in NOTES:
+        item[src]["note"] = NOTES[n]
     item["google" if src == "chatgpt" else "chatgpt"] = {"status": "notasked"}
     questions.append(item)
+
+# ------------------------------------------------------------- site quotes
+# Text from the clinic's own pages that the report quotes. Each one, and each
+# quotation inside a fact's reference, must appear in evidence/evidence.json
+# once the clinic is renamed; the check below stops the build otherwise.
+
+SITE_QUOTES = [
+    "Saat ini Ultima Clinic memiliki 60 cabang yang tersebar di berbagai kota besar di Indonesia, dan akan terus bertambah.",
+    "60+ cabang di Jakarta, Bogor, Depok, Tangerang, Bekasi, Medan, dan Semarang.",
+    "70+ Lokasi Klinik Kecantikan",
+    "Ultima Clinic adalah jaringan klinik kecantikan premium di Indonesia dengan 78 cabang",
+    "80+ cabang tersebar di seluruh Indonesia, siap memberikan perawatan kulit terbaik untukmu",
+    "Dilakukan langsung oleh dokter profesional.",
+    "ditangani langsung oleh terapis serta Dokter Kecantikan profesional",
+    "Seluruh tindakan filler dilakukan langsung oleh dokter tersertifikasi",
+    "Info Lengkap Harga Hubungi Admin",
+    "Korean Filler Mulai dari Rp3.799.000",
+    "RF Wajah 45 Menit Konsultasikan",
+    "0 +",
+]
 
 # ------------------------------------------------------------- fact check
 # From evidence.json claim_checks (C-numbers kept). Opinions and positioning
 # (C05, C06, C11, C15, C25, C26, C27) and two trivial claims (C01, C04) are
-# left out. Safety and licensing claims (C16, C19, C20) get no verdict.
+# left out. Safety, licensing and medical-supervision claims (C16, C18, C19,
+# C20) get no verdict and no reference. A price range counts as "berbeda" even
+# when one end equals the site's price; the reference then says so.
 
 WEB = "Menurut website Anda"
 NOTE = "Catatan Nuave"
+NO_VERDICT = "Nuave tidak menilai klaim keamanan, izin, atau mutu layanan."
+UNREAD = "belum bisa ditentukan: halaman yang dikutip tidak terbaca oleh Nuave"
 TRAVELOKA = "Ringkasan mengutip dua listing Ultima di Traveloka untuk kelompok harga ini. Keduanya menolak dibuka Nuave."
-TIKET = "Ringkasan mengutip listing Ultima di tiket.com dan dua di Traveloka untuk kelompok harga ini. Ketiganya menolak dibuka Nuave."
-SCRIBD_IG = "Ringkasan mengutip dokumen Scribd dan unggahan Instagram untuk kelompok harga ini. Instagram meminta login; teks harga di dokumen Scribd tidak terbaca."
-SCRIBD_TOKO = "Ringkasan mengutip dokumen Scribd dan listing Tokopedia untuk kelompok harga ini. Tokopedia tidak menjawab; teks harga di dokumen Scribd tidak terbaca."
+FACIAL = ("Ringkasan mengutip listing Ultima di tiket.com, dua listing di Traveloka, listing Tokopedia, dan dokumen Scribd untuk kelompok harga ini. "
+          "tiket.com dan Traveloka menolak dibuka, Tokopedia tidak menjawab, dan teks harga di dokumen Scribd tidak terbaca.")
+SCRIBD_IG = "Ringkasan mengutip dokumen Scribd dan unggahan Instagram untuk kelompok harga ini. Unggahan Instagram itu tidak dibuka Nuave, dan teks harga di dokumen Scribd tidak terbaca."
+SCRIBD_TOKO = "Ringkasan mengutip dokumen Scribd dan listing Tokopedia untuk kelompok harga ini. Tokopedia tidak menjawab, dan teks harga di dokumen Scribd tidak terbaca."
+TOP_END = "Ujung atas kisaran di jawaban sama dengan harga ini."
 
 
 def fact(c, n, src, topic, verdict, quote, label, ref, page="", seen="", fix="", show=False):
@@ -162,27 +197,32 @@ def fact(c, n, src, topic, verdict, quote, label, ref, page="", seen="", fix="",
 facts = [
     # berbeda
     fact("C35", 10, "google", "Harga", "berbeda", "Brazilian V Hair Removal: Rp349.000", WEB, "“Brazilian Hair Removal 45 Menit Mulai Rp 1.199.000”", "/treatment/",
-         TRAVELOKA, "listing Ultima di Traveloka", show=True),
+         TRAVELOKA, UNREAD, show=True),
     fact("C41", 10, "google", "Harga", "berbeda", "Filler Korean: Rp2.849.000 – Rp2.999.000", WEB,
          "“Korean Filler Mulai dari Rp3.799.000” di halaman filler. Daftar perawatan menulis “Konsultasikan” untuk filler yang sama.", "/injectable-treatment/filler-treatment/",
-         SCRIBD_TOKO, "halaman filler dan daftar perawatan Ultima (keduanya berbeda), lalu listing Tokopedia", show=True),
+         SCRIBD_TOKO, "halaman filler dan daftar perawatan Ultima, yang tidak sama satu sama lain", show=True),
     fact("C34", 10, "google", "Harga", "berbeda", "Underarm Hair Removal: Rp199.000", WEB, "“Underarm Removal Treatment 20 Menit Mulai Rp 249.000”", "/treatment/",
-         TRAVELOKA, "listing Ultima di Traveloka", show=True),
+         TRAVELOKA, UNREAD, show=True),
     fact("C37", 10, "google", "Harga", "berbeda", "DNA Glow / DNA Salmon: Rp1.499.000", WEB, "“DNA Glow (DNA Salmon) 75 Menit Rp 1.599.000”", "/treatment/",
-         SCRIBD_IG, "dokumen dan unggahan yang dikutip; daftar harga Ultima"),
+         SCRIBD_IG, UNREAD),
     fact("C29", 10, "google", "Harga", "berbeda", "Biolight Face / Hair: Rp194.000 – Rp199.000", WEB,
-         "“Biolight Hair 70 Menit Mulai Rp 199.000”. Biolight Face tidak ada di daftar, dan Rp194.000 tidak tertulis.", "/treatment/", TIKET, "listing Ultima di tiket.com dan Traveloka"),
+         "“Biolight Hair 70 Menit Mulai Rp 199.000”. " + TOP_END + " Biolight Face tidak ada di daftar, dan Rp194.000 tidak tertulis.", "/treatment/", FACIAL, UNREAD),
     fact("C30", 10, "google", "Harga", "berbeda", "IPL Acne / IPL Glow: Rp199.000 – Rp314.000 (diskon dari ~Rp399.000)", WEB,
-         "“IPL Acne 30 Menit Rp 299.000” dan “IPL Glow 30 Menit Rp 299.000”. Harga normal Rp399.000 tidak tertulis.", "/treatment/", TIKET, "listing Ultima di tiket.com dan Traveloka"),
-    fact("C32", 10, "google", "Harga", "berbeda", "Ultima Signature Facial: Rp499.000 – Rp699.000", WEB, "“Ultima Signature Facial 60 Menit Rp 699.000”", "/treatment/",
-         TIKET, "listing Ultima di tiket.com dan Traveloka"),
+         "“IPL Acne 30 Menit Rp 299.000” dan “IPL Glow 30 Menit Rp 299.000”. Harga di situs ada di dalam kisaran jawaban; harga normal Rp399.000 tidak tertulis.", "/treatment/", FACIAL, UNREAD),
+    fact("C32", 10, "google", "Harga", "berbeda", "Ultima Signature Facial: Rp499.000 – Rp699.000", WEB, "“Ultima Signature Facial 60 Menit Rp 699.000”. " + TOP_END, "/treatment/",
+         FACIAL, UNREAD),
     fact("C33", 10, "google", "Harga", "berbeda", "Acne Laser Facial / Diamond Laser Facial: Rp899.000 – Rp1.499.000", WEB,
-         "“Diamond Laser Facial 60 Menit Rp 1.499.000” dan “Acne Laser Facial 60 Menit Rp 1.499.000”", "/treatment/", TIKET, "listing Ultima di tiket.com dan Traveloka"),
+         "“Diamond Laser Facial 60 Menit Rp 1.499.000” dan “Acne Laser Facial 60 Menit Rp 1.499.000”. " + TOP_END, "/treatment/", FACIAL, UNREAD),
     fact("C38", 10, "google", "Harga", "berbeda", "Glass Skin / Aqua Shine / Pink Bomb: Rp1.999.000 – Rp2.999.000", WEB,
-         "“Glass Skin Booster 75 Menit Rp 2.099.000”, “Aqua Shine Skinbooster 60 Menit Rp 2.599.000”, dan “Ultima Pink Bomb 60 Menit Rp 3.099.000”", "/treatment/",
-         SCRIBD_IG, "dokumen dan unggahan yang dikutip; daftar harga Ultima"),
-    fact("C42", 10, "google", "Harga", "berbeda", "Filler Premium: Rp6.799.000 – Rp6.999.000", WEB, "“Premium Filler Mulai dari Rp6.999.000” di halaman filler.",
-         "/injectable-treatment/filler-treatment/", SCRIBD_TOKO, "halaman filler dan daftar perawatan Ultima, lalu listing Tokopedia"),
+         "“Glass Skin Booster 75 Menit Rp 2.099.000”, “Aqua Shine Skinbooster 60 Menit Rp 2.599.000”, dan “Ultima Pink Bomb 60 Menit Rp 3.099.000”. Dua dari tiga harga ini ada di dalam kisaran jawaban.",
+         "/treatment/", SCRIBD_IG, UNREAD),
+    fact("C42", 10, "google", "Harga", "berbeda", "Filler Premium: Rp6.799.000 – Rp6.999.000", WEB, "“Premium Filler Mulai dari Rp6.999.000” di halaman filler. " + TOP_END,
+         "/injectable-treatment/filler-treatment/", SCRIBD_TOKO, "halaman filler dan daftar perawatan Ultima, yang tidak sama satu sama lain"),
+    # tanpa penilaian (safety, licensing, medical supervision)
+    fact("C20", 5, "chatgpt", "Keamanan dan izin", "tanpa_penilaian", "produk yang terdaftar BPOM", NOTE, NO_VERDICT, show=True),
+    fact("C19", 5, "chatgpt", "Keamanan dan izin", "tanpa_penilaian", "memakai alat bersertifikasi", NOTE, NO_VERDICT),
+    fact("C18", 5, "chatgpt", "Keamanan dan izin", "tanpa_penilaian", "prosedur di bawah pengawasan dokter", NOTE, NO_VERDICT),
+    fact("C16", 5, "chatgpt", "Keamanan dan mutu", "tanpa_penilaian", "kualitas layanan tampaknya bisa berbeda antar cabang dan dokter", NOTE, NO_VERDICT),
     # tidak bisa dicek
     fact("C02", 1, "chatgpt", "Harga", "tidak_bisa_dicek", "promo pelanggan baru sekitar Rp499 ribu", NOTE,
          "Promo di situs Ultima berupa gambar, jadi harganya tidak terbaca. Halaman laser menulis: “Perawatan laser wajah di Ultima mulai dari Rp 499.000 saja per titik.”",
@@ -190,31 +230,23 @@ facts = [
     fact("C36", 10, "google", "Harga", "tidak_bisa_dicek", "Melasma Skinbooster: Rp499.000", NOTE,
          "Tidak ada perawatan bernama Melasma Skinbooster di 90 perawatan pada daftar harga Ultima.", "/treatment/", SCRIBD_IG, show=True),
     fact("C21", 5, "chatgpt", "Rating dan ulasan", "tidak_bisa_dicek", "Kelapa Gading sekitar 4,7/5 dari 222 ulasan", NOTE,
-         "Rating tidak ada di situs Ultima. Halaman CariBisnis yang dikutip jawaban ini menulis 4.7 dan 222 ulasan untuk cabang Kelapa Gading 2.", show=True),
-    fact("C31", 10, "google", "Harga", "tidak_bisa_dicek", "Radiofrequency Face: Rp314.000", NOTE, "Daftar perawatan menulis “RF Wajah 45 Menit Konsultasikan”, tanpa harga.", "/treatment/", TIKET),
+         "Rating tidak tertulis di halaman Ultima yang dibuka. Halaman CariBisnis yang dikutip jawaban ini menulis 4.7 dan 222 ulasan untuk cabang Kelapa Gading 2.", show=True),
+    fact("C31", 10, "google", "Harga", "tidak_bisa_dicek", "Radiofrequency Face: Rp314.000", NOTE, "Daftar perawatan menulis “RF Wajah 45 Menit Konsultasikan”, tanpa harga.", "/treatment/", FACIAL),
     fact("C39", 10, "google", "Harga", "tidak_bisa_dicek", "Botox Standard: Rp599.000 – Rp1.493.900 (tergantung unit/promo)", NOTE,
-         "Daftar perawatan menulis botox standar 10u dengan “Konsultasikan”, tanpa harga.", "/treatment/", SCRIBD_TOKO),
-    fact("C40", 10, "google", "Harga", "tidak_bisa_dicek", "Botox Premium: Rp999.000", NOTE, "Daftar perawatan menulis botox premium 10u dengan “Konsultasikan”, tanpa harga.", "/treatment/", SCRIBD_TOKO),
+         "Daftar perawatan menulis botox standar 10u dengan harga “Konsultasikan”.", "/treatment/", SCRIBD_TOKO),
+    fact("C40", 10, "google", "Harga", "tidak_bisa_dicek", "Botox Premium: Rp999.000", NOTE, "Daftar perawatan menulis botox premium 10u dengan harga “Konsultasikan”.", "/treatment/", SCRIBD_TOKO),
     fact("C44", 10, "google", "Harga", "tidak_bisa_dicek", "melalui platform seperti Traveloka, Tiket.com, Tokopedia", NOTE,
          "Halaman Ultima yang dibuka tidak menyebut Traveloka, tiket.com, atau Tokopedia. Listing di ketiganya tidak bisa dibuka Nuave."),
     fact("C23", 5, "chatgpt", "Rating dan ulasan", "tidak_bisa_dicek", "Banyak ulasan memuji keramahan dokter/terapis, kebersihan, dan harga yang relatif terjangkau.", NOTE,
          "Isi ulasan tidak ada di halaman Ultima yang dibuka."),
     fact("C24", 5, "chatgpt", "Rating dan ulasan", "tidak_bisa_dicek",
          "Ada ulasan mengenai antrean, miskomunikasi appointment, hasil treatment yang tidak sesuai harapan, serta promo atau harga yang kurang transparan.", NOTE,
-         "Isi ulasan tidak bisa dicek di situs Ultima. Jawaban ini mengutip halaman CariBisnis cabang Tebet Timur."),
-    # tanpa penilaian (safety and licensing)
-    fact("C16", 5, "chatgpt", "Keamanan dan mutu", "tanpa_penilaian", "kualitas layanan tampaknya bisa berbeda antar cabang dan dokter", NOTE,
-         "Nuave tidak menilai klaim keamanan atau mutu layanan. Situs Ultima menulis bahwa semua lokasinya menerapkan standar yang “sepenuhnya seragam”.", "/tentang-kami/", show=True),
-    fact("C20", 5, "chatgpt", "Keamanan dan izin", "tanpa_penilaian", "produk yang terdaftar BPOM", NOTE,
-         "Nuave tidak menilai klaim keamanan atau izin. Situs Ultima menulis “produk berbahan aktif yang telah terdaftar resmi di BPOM.”", "/tentang-kami/", show=True),
-    fact("C19", 5, "chatgpt", "Keamanan dan izin", "tanpa_penilaian", "memakai alat bersertifikasi", NOTE,
-         "Nuave tidak menilai klaim keamanan atau izin. Situs Ultima menulis alatnya “telah disertifikasi oleh standar keamanan internasional (US-FDA / CE Approved).”", "/tentang-kami/"),
+         "Isi ulasan tidak bisa dicek di situs Ultima. Jawaban ini mengutip halaman CariBisnis cabang Tebet Timur, yang tidak dibuka Nuave."),
     # sesuai
     fact("C08", 4, "chatgpt", "Cabang dan lokasi", "sesuai", "lebih dari 70 cabang menurut situsnya", WEB,
          "“70+ Lokasi Klinik Kecantikan” di beranda. Situs yang sama juga menulis 60, 60+, 75+, 78, dan 80+.", "/",
-         "Jawaban ini mengutip ultimaclinic.cloudindo.example, bukan situs Ultima. Situs itu tidak bisa dibuka Nuave (sertifikatnya kedaluwarsa).",
-         "satu angka cabang di semua halaman Ultima (Temuan 4)", show=True),
-    fact("C03", 1, "chatgpt", "Harga", "sesuai", "harga normal sekitar Rp1,199 juta", WEB, "“Pico Laser 45 Menit Rp 1.199.000”", "/treatment/", show=True),
+         "Jawaban ini mengutip ultimaclinic.cloudindo.example, bukan situs Ultima. Situs itu tidak bisa dibuka Nuave (sertifikatnya kedaluwarsa).", show=True),
+    fact("C03", 1, "chatgpt", "Harga", "sesuai", "harga normal sekitar Rp1,199 juta", WEB, "“Pico Laser 45 Menit Rp 1.199.000”", "/treatment/"),
     fact("C14", 4, "chatgpt", "Cabang dan lokasi", "sesuai", "jaringannya mencakup Medan, Makassar, dan kota besar lainnya", WEB,
          "Halaman Lokasi mencantumkan tiga cabang di Medan dan dua di Makassar.", "/lokasi/"),
     fact("C07", 4, "chatgpt", "Harga", "sesuai", "Mulai sekitar Rp199 ribuan untuk promo/treatment tertentu", WEB,
@@ -227,7 +259,6 @@ facts = [
          "“Teknologi Laser & Penghilang Bulu” di beranda; “Laser Hair Removal 30 Menit Mulai Rp 799.000” di daftar perawatan.", "/"),
     fact("C13", 4, "chatgpt", "Cabang dan lokasi", "sesuai", "lebih mudah ditemukan di kota-kota besar", WEB, "“Tersebar di seluruh kota besar di Indonesia.”", "/"),
     fact("C17", 5, "chatgpt", "Cabang dan lokasi", "sesuai", "Ultima mengklaim memiliki banyak cabang", WEB, "“75+ Lokasi beroperasi di Indonesia”", "/tentang-kami/"),
-    fact("C18", 5, "chatgpt", "Dokter", "sesuai", "prosedur di bawah pengawasan dokter", WEB, "“prosedur dilakukan di bawah pengawasan dokter”", "/tentang-kami/"),
     fact("C22", 5, "chatgpt", "Cabang dan lokasi", "sesuai", "Kelapa Gading sekitar 4,7/5 dari 222 ulasan, Tebet 4,8/5 dari 137 ulasan, dan Rawamangun", WEB,
          "Halaman Lokasi mencantumkan Kelapa Gading Boulevard, Kelapa Gading Summarecon, Tebet, Tebet Timur, dan Rawamangun.", "/lokasi/"),
     fact("C28", 10, "google", "Harga", "sesuai", "mulai dari Rp100 ribuan hingga jutaan rupiah", WEB,
@@ -236,6 +267,26 @@ facts = [
          "“diskon khusus untuk reservasi pertama kali.”", "/"),
     fact("C45", 10, "google", "Harga", "sesuai", "atau langsung di website resmi Ultima Clinic", WEB, "“Promo Klinik Kecantikan Ultima Bulan Ini - Cicilan 0%”", "/promo/"),
 ]
+
+
+def _check_site_quotes():
+    """Every site quote, and every quotation in a fact's reference, is in the evidence record."""
+    def walk(node):
+        if isinstance(node, str):
+            yield node
+        elif isinstance(node, dict):
+            for v in node.values():
+                yield from walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                yield from walk(v)
+    evidence = rename(" \n ".join(walk(json.loads(EVIDENCE.read_text(encoding="utf-8")))))
+    wanted = list(SITE_QUOTES) + [q for f in facts for q in re.findall(r"“([^”]+)”", f["ref_text"])]
+    missing = [q for q in wanted if q.rstrip(".") not in evidence]
+    assert not missing, f"site quotes not in evidence.json: {missing}"
+
+
+_check_site_quotes()
 
 # ------------------------------------------------------------------- data
 
@@ -248,7 +299,8 @@ DATA = {
         "footer": "Proof of concept B untuk persetujuan rencana Laporan v3. Data nyata dengan nama klinik disamarkan, bukan laporan pelanggan.",
         "file_note": "Di produk, tombol ini mengunduh file. Di proof of concept ini, PDF dan Lembar Kerja dikirim terpisah.",
     },
-    "verdict": "ChatGPT menyebut Ultima di 2 dari 4 jawaban, sebagai jaringan cabang dengan harga promo. Di 3 ringkasan Google untuk pertanyaan umum, nama Ultima tidak muncul, walau dua artikel blognya dipakai sebagai sumber.",
+    "site_quotes": SITE_QUOTES,
+    "verdict": "ChatGPT menyebut Ultima di 2 dari 4 jawaban, sebagai jaringan cabang dengan harga promo. Di 3 ringkasan Google untuk pertanyaan umum, nama Ultima tidak muncul, walau dua artikel blognya dikutip.",
     "questions": questions,
     "moment": {
         "n": 2, "source": "chatgpt",
@@ -258,44 +310,43 @@ DATA = {
             {"name": "Aveia Health Skin Clinic", "why": "Mampang; sekitar Rp570 ribu sampai Rp2,45 juta"},
             {"name": "NMW Aesthetic Clinic", "why": "Petogogan; terapi khusus bekas jerawat cekung"},
             {"name": "Farla Infinite", "why": "Cilandak; CO₂ laser dan RF microneedling"},
-            {"name": "Amala Clinic", "why": "laser resurfacing mulai sekitar Rp3,8 juta"},
         ],
-        "caption": "Beranda Ultima mencantumkan lima cabang di Jakarta Selatan, termasuk Tebet dan Mampang, dan situsnya punya halaman perawatan bopeng. ChatGPT menyebut enam klinik lain, empat di antaranya dengan harga yang mereka publikasikan. Ultima tidak disebut.",
+        "caption": "Beranda Ultima mencantumkan lima cabang di Jakarta Selatan, termasuk Tebet dan Mampang. Untuk pertanyaan ini, ChatGPT menyebut enam klinik lain, dan Ultima tidak disebut.",
     },
     "stability": {"note_only": "Belum ada contoh kestabilan: uji ini punya satu jawaban per pertanyaan. Di produk, tiga pertanyaan ditanyakan dua kali lagi pada hari yang sama."},
-    "brand_note": "Dua pertanyaan uji menyebut nama klinik. Jawabannya tidak dihitung di kartu dan peta pesaing, tetapi klaimnya ikut dicek. Di produk, pertanyaan seperti ini menunggu keputusan F-4 dan tidak menanyakan keamanan.",
+    "brand_note": "Dua pertanyaan uji menyebut nama klinik. Jawabannya tidak dihitung di kartu dan peta pesaing, tetapi klaimnya ikut dicek. Di produk, pertanyaan seperti ini menunggu keputusan F-4 dan tidak pernah menanyakan keamanan, seperti P5.",
     "findings_lede": "Lima hal yang tidak terlihat dari angka saja.",
     "findings": [
-        {"num": "0 dari 3", "cap": "ringkasan Google yang menyebut Ultima",
-         "title": "Google memakai blog Ultima sebagai sumber, tetapi tidak menyebut namanya",
-         "text": "Dua dari tiga ringkasan Google yang tampil mengutip artikel blog Ultima. Untuk “apa klinik kecantikan terbaik di indonesia”, artikel daftar klinik di blog Ultima dipakai untuk menjelaskan klinik lain, Jakarta Aesthetic Clinic. Untuk biaya laser flek hitam, artikel rincian harga perawatan di blog yang sama dipakai untuk faktor biaya. Nama Ultima tidak muncul di teks kedua ringkasan; yang disebut adalah ZAP Clinic, ERHA, Bening's Clinic, dan tiga klinik lain.",
+        {"num": "0 dari 3", "cap": "ringkasan Google untuk pertanyaan umum yang menyebut Ultima",
+         "title": "Google mengutip blog Ultima, tetapi tidak menyebut namanya",
+         "text": "Dua dari tiga ringkasan Google yang tampil mengutip artikel blog Ultima. Untuk “apa klinik kecantikan terbaik di indonesia”, artikel daftar klinik di blog Ultima dikutip pada penjelasan tentang klinik lain, Jakarta Aesthetic Clinic. Untuk biaya laser flek hitam, artikel rincian harga perawatan di blog yang sama dikutip pada bagian faktor biaya. Nama Ultima tidak muncul di teks kedua ringkasan; yang disebut adalah ZAP Clinic, ERHA, Bening's Clinic, dan tiga klinik lain.",
          "refs": [7, 8]},
         {"num": "10 dari 14", "cap": "harga di ringkasan Google yang berbeda dari teks situs Ultima",
-         "title": "Saat nama Ultima ditanyakan, Google mengambil harganya dari situs lain",
-         "text": "Untuk “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga perawatan. Sepuluh berbeda dari teks di situs Ultima, misalnya Brazilian V Hair Removal Rp349.000, sedangkan daftar harga Ultima menulis mulai Rp1.199.000. Empat lainnya tidak bisa dicek: situs tidak menulis harganya, atau perawatannya tidak ada di daftar. Untuk daftar harga itu, ringkasan mengutip Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram; situs Ultima baru dikutip di catatan penutupnya.",
+         "title": "Saat nama Ultima ditanyakan, Google mengutip situs lain untuk harganya",
+         "text": "Untuk “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga perawatan dan mengutip Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram untuk harga-harga itu; situs Ultima baru dikutip di catatan penutupnya. Sepuluh harga berbeda dari teks di situs Ultima, misalnya Brazilian V Hair Removal Rp349.000, sedangkan daftar harga Ultima menulis mulai Rp1.199.000. Enam dari sepuluh itu berupa kisaran yang memuat harga di situs atau berujung di harga itu, misalnya Ultima Signature Facial Rp499.000 sampai Rp699.000, sedangkan situs menulis Rp699.000. Empat harga lainnya tidak bisa dicek: situs tidak menulis harganya, atau perawatannya tidak ada di daftar.",
          "refs": [10]},
         {"num": "0 dari 3", "cap": "halaman perawatan Ultima yang menyebut nama dokter",
          "title": "Untuk kasus berat, ChatGPT menyarankan dokter spesialis, tanpa menyebut dokter Ultima",
-         "text": "Di P5, ChatGPT menilai Ultima cocok untuk facial dan perawatan ringan, lalu menulis: “saya lebih menyarankan konsultasi ke dokter spesialis kulit dan kelamin (Sp.D.V.E.) atau klinik yang transparan soal dokter dan alatnya.” Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler yang dibaca Nuave tidak menyebut nama dokter yang menangani. Untuk filler pertama kali (P3), ChatGPT menulis bahwa ia memilih tempat yang injeksinya dilakukan dokter spesialis.",
+         "text": "Di P5, ChatGPT menilai Ultima cocok untuk facial dan perawatan ringan, lalu menulis: “saya lebih menyarankan konsultasi ke dokter spesialis kulit dan kelamin (Sp.D.V.E.) atau klinik yang transparan soal dokter dan alatnya.” Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler yang dibaca Nuave tidak menyebut nama dokter yang menangani. Untuk filler pertama kali (P3), ChatGPT menulis bahwa ia memilih tempat yang injeksinya dilakukan dokter spesialis. Audit ini tidak membuktikan bahwa isi halaman itu memengaruhi jawaban ChatGPT.",
          "refs": [3, 5]},
         {"num": "6", "cap": "angka jumlah cabang di situs Ultima",
          "title": "Situs Ultima menulis enam angka jumlah cabang",
-         "text": "Beranda menulis “60 cabang”, “60+ cabang”, dan “70+ Lokasi”; data terstruktur di beranda menulis 78 cabang; halaman Tentang Kami menulis 75+; halaman Lokasi menulis “80+ cabang” dan memuat 81 cabang. ChatGPT menulis “lebih dari 70 cabang menurut situsnya”, dengan sumber situs lain yang memakai nama Ultima dan tidak bisa dibuka Nuave. Angka yang berlaku hanya Ultima yang tahu.",
+         "text": "Beranda menulis “60 cabang”, “60+ cabang”, dan “70+ Lokasi”; data terstruktur di beranda menulis 78 cabang; halaman Tentang Kami menulis 75+; halaman Lokasi menulis “80+ cabang” dan memuat 81 cabang. ChatGPT menulis “lebih dari 70 cabang menurut situsnya” dan mengutip situs lain yang memakai nama Ultima, yang tidak bisa dibuka Nuave. Angka yang berlaku hanya Ultima yang tahu.",
          "refs": [4, 5]},
         {"num": "2 dari 4", "cap": "jawaban ChatGPT yang menyebut Ultima",
-         "title": "ChatGPT mengenal Ultima sebagai jaringan cabang dengan harga promo",
+         "title": "Di P4, ChatGPT merekomendasikan Ultima sebagai jaringan cabang dengan harga promo",
          "text": "Di P4, ChatGPT merekomendasikan Ultima untuk facial dan perawatan dasar yang hemat, untuk laser dan hair removal di kota besar, dan untuk pilihan di luar Pulau Jawa. Di P1, Ultima ada di tabel klinik flek hitam dengan harga promo pico laser, tetapi saran akhirnya RS Royal Progress, K Young, dan Diri Clinic. Untuk bekas jerawat di Jakarta Selatan (P2) dan filler pertama kali (P3), Ultima tidak disebut.",
          "refs": [1, 2, 3, 4]},
     ],
-    "facts_lede": "Setiap klaim tentang Ultima di jawaban AI, dibandingkan dengan teks di situs Ultima. Nuave membandingkan; Nuave tidak menilai mana yang benar. Pendapat dan saran di jawaban tidak dicek.",
+    "facts_lede": "Klaim tentang Ultima di jawaban AI, dibandingkan dengan teks di situs Ultima. Nuave membandingkan; Nuave tidak menilai mana yang benar. Pendapat dan saran di jawaban tidak dicek, dan klaim keamanan atau izin tidak diberi penilaian.",
     "facts": facts,
     "businesses": [
         {"name": "Ultima Clinic", "domain": "ultimaclinic.example", "rating": "Kelapa Gading 2: 4,7 (222 ulasan) menurut CariBisnis", "full": True,
          "why": "cabang banyak sampai luar Jawa, harga promo mulai sekitar Rp199 ribu, untuk facial dan perawatan dasar"},
         {"name": "ERHA", "aliases": ["ERHA Ultimate", "ERHA Clinic"], "domain": "erhaultimate.co.id", "full": True,
          "why": "dokter spesialis kulit (Sp.D.V.E), lebih dari 100 cabang, untuk jerawat, flek, dan rambut"},
-        {"name": "ZAP Clinic", "aliases": ["ZAP"], "domain": "zapclinic.com", "full": True, "why": "laser dan hair removal dengan teknologi modern, lebih dari 60 cabang"},
-        {"name": "Bening's Clinic", "aliases": ["Bening's"], "domain": "beningsclinic.com", "full": True, "why": "perawatan glow dan laser, skincare racikan dokter, lebih dari 66 cabang"},
+        {"name": "ZAP Clinic", "aliases": ["ZAP"], "full": True, "why": "laser dan hair removal dengan teknologi modern, lebih dari 60 cabang"},
+        {"name": "Bening's Clinic", "aliases": ["Bening's"], "full": True, "why": "perawatan glow dan laser, skincare racikan dokter, lebih dari 66 cabang"},
         {"name": "C Derma", "domain": "cderma.id", "rating": "4,9 dari 453+ ulasan Google, menurut situsnya", "full": True,
          "why": "filler dan botox ditangani dokter spesialis kulit, kelamin, dan estetika"},
         {"name": "Bamed Clinic", "aliases": ["Bamed"], "domain": "klinikbamed.com", "full": True,
@@ -328,12 +379,12 @@ DATA = {
     "description": {
         "lede": "Kata-kata yang dipakai AI untuk Ultima, dibandingkan dengan yang ditonjolkan situs Ultima.",
         "ai_line": "Jaringan klinik dengan banyak cabang dan harga promo, cocok untuk facial dan perawatan dasar.",
-        "words": [["promo", 4], ["laser", 3], ["terjangkau", 3], ["facial", 3], ["cabang banyak", 2], ["luar Jawa", 1], ["dokter spesialis", 0]],
-        "words_note": "Angka: berapa dari empat jawaban yang menyebut Ultima (P1, P4, P5, P10) memakai kata itu untuk Ultima.",
+        "words": [["promo", 2], ["laser", 2], ["terjangkau", 2], ["facial", 1], ["cabang banyak", 1], ["luar Jawa", 1], ["dokter spesialis", 0]],
+        "words_note": "Angka: berapa dari dua jawaban yang menyebut Ultima tanpa ditanya namanya (P1, P4) memakai kata itu untuk Ultima.",
         "owner_head": "Menurut situs Anda",
         "owner_line": "Perawatan premium dengan harga terjangkau, oleh dokter estetika dan dokter spesialis kulit (Sp.DVE) berlisensi, di lebih dari 70 lokasi.",
         "owner_src": "Dirangkum dari beranda dan halaman Tentang Kami. Data uji ini tidak punya jawaban pemilik untuk “Apa yang membuat bisnis Anda berbeda?”.",
-        "gap": "AI sudah memakai “promo”, “terjangkau”, dan “cabang banyak”. “Dokter spesialis”, yang ditonjolkan situs Ultima, belum dipakai untuk Ultima di jawaban mana pun.",
+        "gap": "Di dua jawaban itu, AI memakai “promo”, “terjangkau”, dan “laser” untuk Ultima. “Dokter spesialis”, yang ditonjolkan situs Ultima, tidak dipakai untuk Ultima di jawaban mana pun.",
         "rivals": [
             {"name": "ERHA", "line": "dokter spesialis kulit, lebih dari 100 cabang, untuk jerawat, flek, dan rambut"},
             {"name": "ZAP Clinic", "line": "laser dan hair removal, lebih dari 60 cabang"},
@@ -343,26 +394,27 @@ DATA = {
     "pages_grid": {
         "lede": "Halaman yang dikutip AI untuk bekas jerawat, filler, dan harga, dibandingkan dengan halaman Ultima.",
         "columns": [{"name": "Ultima Clinic", "page": "halaman bopeng", "you": True}, {"name": "Ultima Clinic", "page": "halaman filler", "you": True},
+                    {"name": "Ultima Clinic", "page": "halaman tim dokter", "you": True},
                     {"name": "ERHA", "page": "artikel laser bekas jerawat"}, {"name": "C Derma", "page": "harga facial"}, {"name": "Bamed", "page": "profil dokter"}],
         "rows": [
-            {"label": "Nama dokter dengan gelar", "cells": [False, False, False, True, True]},
-            {"label": "Nomor SIP atau STR", "cells": [False, False, False, False, False]},
-            {"label": "Harga atau kisaran harga", "cells": [False, True, True, True, False]},
-            {"label": "Pertanyaan pasien dijawab", "cells": [True, True, True, True, False]},
-            {"label": "Proses dan waktu pemulihan", "cells": [True, True, True, True, False]},
-            {"label": "Tanggal pembaruan", "cells": [False, False, "tanggal tanpa keterangan", True, False]},
+            {"label": "Nama dokter dengan gelar", "cells": [False, False, True, False, True, True]},
+            {"label": "Nomor SIP atau STR", "cells": [False, False, "STR saja", False, False, False]},
+            {"label": "Harga atau kisaran harga", "cells": [False, True, False, "kisaran pasar umum", True, False]},
+            {"label": "Pertanyaan pasien dijawab", "cells": [True, True, False, True, True, False]},
+            {"label": "Proses atau waktu pemulihan", "cells": ["proses saja", True, False, True, True, False]},
+            {"label": "Tanggal pembaruan", "cells": [False, False, False, "tanggal tanpa keterangan", True, False]},
         ],
-        "note": "Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E; tidak ada nomor SIP di halaman Ultima yang dibuka. Harga di artikel ERHA adalah kisaran pasar umum, bukan daftar harga ERHA. Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
+        "note": "Tidak ada nomor SIP di halaman mana pun yang dibuka. Harga di artikel ERHA adalah kisaran pasar umum, bukan daftar harga ERHA. Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
     },
-    "topics_lede": "Empat topik yang jawabannya belum menyebut Ultima, atau hanya memakai situsnya tanpa nama.",
+    "topics_lede": "Empat topik yang jawabannya tidak merekomendasikan Ultima.",
     "topics": [
         {"name": "Bekas jerawat dan bopeng", "ai_mentions": 1146, "status": "Tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima tidak menulis harga.",
          "sources": "primavitaclinic.co.id, erhaultimate.co.id, aveiaclinic.com, alodokter.com", "refs": [2, 9]},
         {"name": "Filler dan botox pertama kali", "others": 4, "status": "Tidak disebut di ChatGPT. Empat tempat yang disarankan dijelaskan lewat dokter spesialisnya.",
          "sources": "rsudpasarminggu.jakarta.go.id, cderma.id, klinikbamed.com, perdoski.id", "refs": [3]},
-        {"name": "Klinik kecantikan terbaik", "ai_mentions": 299, "status": "Tidak disebut di Google. Artikel daftar klinik di blog Ultima dipakai sebagai sumber, untuk menjelaskan klinik lain.",
+        {"name": "Klinik kecantikan terbaik", "ai_mentions": 299, "status": "Tidak disebut di Google. Artikel daftar klinik di blog Ultima dikutip pada penjelasan tentang klinik lain.",
          "sources": "hadirr.com, koranindopos.com, ultimaclinic.example", "refs": [7]},
-        {"name": "Biaya laser flek hitam", "others": 3, "status": "Tidak disebut di Google; artikel harga di blog Ultima dipakai sebagai sumber. Di ChatGPT (P1), Ultima disebut dengan harga pico laser, tanpa masuk saran akhir.",
+        {"name": "Biaya laser flek hitam", "others": 7, "status": "Tidak disebut di Google; artikel harga di blog Ultima dikutip. Di ChatGPT (P1), Ultima disebut dengan harga pico laser, tanpa masuk saran akhir.",
          "sources": "erhaultimate.co.id, klinikmagna.com, hdmall.id, ultimaclinic.example", "refs": [1, 8]},
     ],
     "sitemap": {
@@ -376,16 +428,16 @@ DATA = {
             ]},
             {"name": "Listing dan marketplace", "sites": [
                 {"domain": "traveloka.com", "title": "listing cabang Kemang, Pondok Bambu, dan Puri Indah (P10); halaman kategori klinik (P4)", "present": "Ada, tidak terbaca", "present_cls": "warn",
-                 "action": "Samakan harga dengan daftar harga situs (Rekomendasi 4)."},
-                {"domain": "tiket.com", "title": "listing cabang Tanjung Barat", "present": "Ada, tidak terbaca", "present_cls": "warn", "action": "Samakan harga dengan daftar harga situs."},
-                {"domain": "tokopedia.com", "title": "toko Ultima, Acne Laser Facial", "present": "Ada, tidak terbaca", "present_cls": "warn", "action": "Samakan harga dengan daftar harga situs."},
+                 "action": "Cocokkan harga dengan daftar harga situs (Rekomendasi 4)."},
+                {"domain": "tiket.com", "title": "listing cabang Tanjung Barat", "present": "Ada, tidak terbaca", "present_cls": "warn", "action": "Cocokkan harga dengan daftar harga situs."},
+                {"domain": "tokopedia.com", "title": "toko Ultima, Acne Laser Facial", "present": "Ada, tidak terbaca", "present_cls": "warn", "action": "Cocokkan harga dengan daftar harga situs."},
                 {"domain": "caribisnis.id", "title": "listing cabang Kelapa Gading 2 dan Tebet Timur", "present": "Ada, jam buka berbeda", "present_cls": "warn",
-                 "action": "Minta koreksi jam buka. Teks emailnya ada di Bahan siap pakai."},
-                {"domain": "id.scribd.com", "title": "“Daftar Harga Perawatan Ultima Clinic”, unggahan pengguna", "present": "Ada, tanpa tanggal", "present_cls": "warn",
+                 "action": "Jam buka cabang Kelapa Gading 2 berbeda dari situs; halaman Tebet Timur tidak dibuka. Minta koreksi jam buka; teks emailnya ada di Bahan siap pakai."},
+                {"domain": "id.scribd.com", "title": "dokumen daftar harga Ultima, unggahan pengguna", "present": "Ada, tanpa tanggal", "present_cls": "warn",
                  "action": "Tanpa langkah otomatis: dokumen unggahan pengguna, bukan direktori."},
             ]},
             {"name": "Portal kesehatan dan organisasi profesi", "sites": [
-                {"domain": "alodokter.com", "title": "artikel cara menghilangkan bekas jerawat", "present": "Ultima tidak ada", "present_cls": "bad",
+                {"domain": "alodokter.com", "title": "dua artikel cara menghilangkan bekas jerawat", "present": "Tidak disebut di artikel yang dibuka (1 dari 2)", "present_cls": "bad",
                  "action": "Daftar: buat profil klinik dan dokter, bila portal menyediakan direktori."},
                 {"domain": "perdoski.id", "title": "direktori dokter spesialis kulit", "present": "Belum diperiksa", "present_cls": "",
                  "action": "Cek apakah dokter Sp.D.V.E Ultima ada di direktori ini. ChatGPT menyarankannya untuk memverifikasi dokter (P3)."},
@@ -399,7 +451,7 @@ DATA = {
                 {"domain": "wartaevent.com", "title": "rekomendasi klinik kecantikan", "present": "", "action": ""},
             ]},
             {"name": "Media sosial dan video", "sites": [
-                {"domain": "instagram.com", "title": "unggahan promo Ultima dan video melasma", "present": "Tidak terbaca", "present_cls": "", "action": ""},
+                {"domain": "instagram.com", "title": "unggahan promo Ultima dan video melasma", "present": "Tidak dibuka; satu reel lain meminta login", "present_cls": "", "action": ""},
                 {"domain": "youtube.com", "title": "video cara menghilangkan bekas jerawat", "present": "", "action": ""},
             ]},
             {"name": "Situs pesaing", "sites": [
@@ -423,7 +475,7 @@ DATA = {
                 {"domain": "rsudbudhiasih.jakarta.go.id", "title": "rawat jalan", "present": "", "action": ""},
             ]},
         ],
-        "note": "Kolom tengah menghitung berapa jawaban yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan bisa dibuka Nuave; Traveloka, tiket.com, Tokopedia, dan Instagram tidak bisa dibuka.",
+        "note": "Kolom tengah menghitung berapa jawaban yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan bisa dibuka Nuave; Traveloka, tiket.com, Tokopedia, dan dua unggahan Instagram tidak terbaca.",
     },
     "playbook": {
         1: {"who": "Tim konten, ditinjau dokter", "effort": "±1 minggu per halaman", "check": "halaman terbuka tanpa login dan teksnya bukan gambar",
@@ -438,29 +490,29 @@ DATA = {
     "recs_lede": "Lima langkah, urut dari yang perlu didahulukan.",
     "recs": [
         {"item": 1, "title": "Tulis harga sebagai teks, dengan angka yang sama di semua halaman",
-         "text": "Saat ditanya “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga dengan sumber Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram; sepuluh berbeda dari teks di situs Ultima. Di situs sendiri, harga promo ada di dalam gambar, halaman bopeng tidak menulis harga, dan harga filler berbeda antara halaman filler (mulai Rp3.799.000) dan daftar perawatan (“Konsultasikan”). Tulis harga “mulai dari” yang berlaku sebagai teks di setiap halaman perawatan dan halaman promo, dengan angka yang sama di semua halaman.",
+         "text": "Saat ditanya “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga dan mengutip Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram untuk harga-harga itu; sepuluh berbeda dari teks di situs Ultima. Di situs sendiri, harga promo ada di dalam gambar, halaman bopeng tidak menulis harga, dan harga filler berbeda antara halaman filler (mulai Rp3.799.000) dan daftar perawatan (“Konsultasikan”). Tulis harga “mulai dari” yang berlaku sebagai teks di setiap halaman perawatan dan halaman promo, dengan angka yang sama di semua halaman. Audit ini tidak membuktikan bahwa AI akan memakai harga itu; langkah ini mengikuti pedoman di bawah.",
          "refs": [10]},
         {"item": 2, "title": "Sebutkan dokter yang menangani di halaman laser, bopeng, dan filler",
-         "text": "Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler hanya menulis “dokter profesional”, “Dokter Kecantikan profesional”, atau “dokter tersertifikasi”, tanpa nama. Untuk filler pertama kali, ChatGPT menyarankan tempat yang dijelaskan lewat dokter spesialisnya, termasuk halaman profil dokter Bamed. Cantumkan nama, gelar, dan nomor STR atau SIP dokter yang menangani di setiap halaman perawatan, dengan tautan ke halaman tim dokter.",
+         "text": "Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler hanya menulis “dokter profesional”, “Dokter Kecantikan profesional”, atau “dokter tersertifikasi”, tanpa nama. Cantumkan nama, gelar, dan nomor STR atau SIP dokter yang menangani di setiap halaman perawatan, dengan tautan ke halaman tim dokter. Untuk filler pertama kali, ChatGPT menyarankan tempat yang dijelaskan lewat dokter spesialisnya; audit ini tidak membuktikan hubungan itu, dan langkah ini mengikuti pedoman Google untuk topik kesehatan.",
          "refs": [3, 5]},
         {"item": 1, "title": "Lengkapi halaman bopeng dengan harga dan jawaban pertanyaan pasien",
-         "text": "Untuk bekas jerawat, Ultima tidak disebut di ChatGPT (P2) maupun Google (P9), walau beranda Ultima mencantumkan lima cabang di Jakarta Selatan. Jawaban P2 menyebut enam klinik, empat dengan harga yang mereka publikasikan. Halaman bopeng Ultima menjelaskan proses dan jenis bekas luka yang bisa ditangani, tetapi untuk harga hanya menulis “Info Lengkap Harga Hubungi Admin”. Tulis kisaran harga, jumlah sesi, waktu pemulihan, dan dokter yang menangani sebagai teks, lalu minta dokter meninjaunya sebelum terbit.",
+         "text": "Untuk bekas jerawat, Ultima tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima menjelaskan proses dan jenis bekas luka yang bisa ditangani, tetapi untuk harga hanya menulis “Info Lengkap Harga Hubungi Admin”, dan tidak menyebut waktu pemulihan atau dokter yang menangani. Tulis kisaran harga, jumlah sesi, waktu pemulihan, dan dokter yang menangani sebagai teks, lalu minta dokter meninjaunya sebelum terbit. Audit ini tidak membuktikan bahwa isi halaman memengaruhi jawaban AI; langkah ini mengikuti pedoman di bawah.",
          "refs": [2, 9]},
-        {"item": 5, "title": "Samakan harga dan jam buka di listing yang dikutip AI",
-         "text": "Ringkasan Google untuk P10 mengutip listing Ultima di Traveloka, tiket.com, dan Tokopedia untuk harga. Di P5, ChatGPT mengutip CariBisnis, yang menulis jam buka cabang Kelapa Gading 2 setiap hari 10.00 sampai 20.00; situs Ultima menulis Senin sampai Sabtu 09.00 sampai 19.00 dan Minggu 09.00 sampai 17.00. Samakan harga dan jam buka di listing itu dengan data cabang yang berlaku. Teks permintaannya ada di Bahan siap pakai.",
+        {"item": 5, "title": "Cocokkan harga dan jam buka di listing yang dikutip AI",
+         "text": "Untuk harga Ultima, ringkasan Google di P10 mengutip listing Ultima di Traveloka, tiket.com, dan Tokopedia; Nuave tidak bisa membuka listing itu. Di P5, ChatGPT mengutip CariBisnis, yang menulis jam buka cabang Kelapa Gading 2 setiap hari 10.00 sampai 20.00; situs Ultima menulis Senin sampai Sabtu 09.00 sampai 19.00 dan Minggu 09.00 sampai 17.00. Cocokkan harga dan jam buka di setiap listing itu dengan data cabang yang berlaku, dan minta koreksi bila berbeda. Teks permintaannya ada di Bahan siap pakai.",
          "refs": [5, 10]},
         {"item": 4, "title": "Minta ulasan dari semua pasien, dan balas setiap ulasan",
-         "text": "Saat ditanya “Ultima Clinic bagus nggak?”, ChatGPT merangkum ulasan dari CariBisnis: ada pujian untuk keramahan, kebersihan, dan harga, dan ada keluhan soal antrean, miskomunikasi janji temu, dan harga promo yang kurang jelas. Minta ulasan dari setiap pasien setelah kunjungan, tanpa hadiah dan tanpa memilih pasien yang puas saja, lalu balas setiap ulasan, termasuk keluhan. Teks pesan WhatsApp-nya ada di Bahan siap pakai.",
+         "text": "Saat ditanya “Ultima Clinic bagus nggak?”, ChatGPT merangkum ulasan dari CariBisnis: ada pujian untuk keramahan, kebersihan, dan harga, dan ada keluhan soal antrean, miskomunikasi janji temu, hasil perawatan yang tidak sesuai harapan, dan harga promo yang kurang jelas. Minta ulasan dari setiap pasien setelah kunjungan, tanpa hadiah dan tanpa memilih pasien yang puas saja, lalu balas setiap ulasan, termasuk keluhan. Teks pesan WhatsApp-nya ada di Bahan siap pakai.",
          "refs": [5]},
     ],
     "closing": {
-        "text": "AI sudah mengenal Ultima sebagai jaringan cabang dengan harga promo. Yang belum terlihat adalah dokternya dan harga resminya: Google mengambil harga Ultima dari situs lain, dan halaman perawatan belum menyebut dokter. Mulailah dari harga sebagai teks dan satu angka cabang, lalu tampilkan dokter di halaman perawatan.",
+        "text": "Di jawaban ChatGPT, Ultima muncul dengan harga promo, dan di P4 sebagai jaringan dengan banyak cabang. Untuk harga Ultima, ringkasan Google mengutip situs lain, dan halaman perawatan Ultima yang dibaca Nuave tidak menyebut nama dokter. Mulailah dari harga sebagai teks, lalu tampilkan dokter di halaman perawatan.",
         "plan": [
-            {"weeks": "Minggu 1–2", "title": "Rapikan harga dan angka cabang", "text": "Tulis harga sebagai teks, samakan harga filler, dan pakai satu angka cabang di situs dan data terstruktur.",
-             "decision": "tetapkan satu angka cabang dan harga “mulai dari” yang boleh tampil"},
+            {"weeks": "Minggu 1–2", "title": "Rapikan harga", "text": "Tulis harga sebagai teks, samakan harga filler, dan samakan angka cabang di data terstruktur dengan teks beranda.",
+             "decision": "tetapkan angka cabang dan harga “mulai dari” yang boleh tampil"},
             {"weeks": "Minggu 3–6", "title": "Tampilkan dokter", "text": "Nama dan STR dokter di halaman laser, bopeng, dan filler; lengkapi halaman bopeng.",
              "decision": "tunjuk dokter yang meninjau isi halaman"},
-            {"weeks": "Minggu 5–8", "title": "Rapikan listing dan ulasan", "text": "Samakan listing di Traveloka, tiket.com, Tokopedia, dan CariBisnis; kirim pesan ulasan ke semua pasien.", "decision": ""},
+            {"weeks": "Minggu 5–8", "title": "Cocokkan listing, minta ulasan", "text": "Cocokkan listing di Traveloka, tiket.com, Tokopedia, dan CariBisnis; kirim pesan ulasan ke semua pasien.", "decision": ""},
         ],
         "recheck": "ChatGPT dan Google perlu waktu untuk membaca halaman baru. Setelah perubahan berjalan sekitar delapan minggu, audit ulang dengan pertanyaan yang sama, kali ini ke kedua sumber, supaya hasilnya bisa dibandingkan dengan laporan ini. Perbedaan hasil nanti dicatat; pengaruh perbaikan tidak bisa dipastikan dari perbandingan itu saja.",
     },
@@ -476,7 +528,7 @@ DATA = {
          "fix": "Tulis harga dan nama dokter sebagai teks di halaman perawatan dan promo. Panduan Google: isi penting sebaiknya berupa teks."},
         {"row": "Label data terstruktur dibanding teks halaman", "result": "tidakcocok",
          "detail": "Data terstruktur di beranda menulis 78 cabang dan tidak memuat alamat atau jenis klinik. Teks beranda menulis 60, 60+, dan 70+.",
-         "fix": "Setelah satu angka cabang ditetapkan, pakai angka itu juga di data terstruktur. Panduan Google: data terstruktur harus sesuai dengan teks yang terlihat."},
+         "fix": "Pakai angka cabang yang berlaku, sama dengan teks halaman, di data terstruktur. Panduan Google: data terstruktur harus sesuai dengan teks yang terlihat."},
         {"row": "Pembaca biasa ditolak", "result": "lulus", "detail": "Kesembilan halaman Ultima terbuka normal dengan cara baca biasa."},
         {"row": "Teks yang baru muncul setelah kode berjalan", "result": "f3",
          "detail": "Angka dokter, pasien, dan cabang di beranda tertulis “0 +” di HTML dan baru terisi setelah kode di browser berjalan. Baris ini tampil bila keputusan F-3 menambahkannya ke pedoman."},
@@ -487,7 +539,7 @@ DATA = {
     "kit": [
         {"title": "Email permintaan koreksi jam buka ke CariBisnis", "for": "Untuk admin atau tim marketing. Isi jam buka cabang yang berlaku dan nama pengirim, lalu kirim dari email klinik.",
          "text": "Subjek: Permintaan pembaruan data Ultima Clinic - Kelapa Gading 2\n\nHalo tim CariBisnis,\n\nKami dari Ultima Clinic. Halaman cabang Kelapa Gading 2 di situs Anda menulis jam buka setiap hari 10.00 sampai 20.00. Jam buka cabang ini yang berlaku: [isi jam buka cabang].\n\nSumber resmi: ultimaclinic.example/lokasi\n\nMohon bantuannya memperbarui halaman tersebut. Terima kasih.\n\n[Nama]\nUltima Clinic"},
-        {"title": "Pesan ke Traveloka, tiket.com, dan Tokopedia", "for": "Untuk tim yang mengelola listing Ultima di platform itu.",
+        {"title": "Pesan ke Traveloka, tiket.com, dan Tokopedia", "for": "Untuk tim yang mengelola listing Ultima di platform itu, setelah mencocokkan harganya.",
          "text": "Halo tim [nama platform],\n\nKami dari Ultima Clinic. Mohon bantuan menyamakan harga di listing Ultima Clinic dengan daftar harga resmi kami di ultimaclinic.example/treatment. Yang perlu disamakan: [nama perawatan dan harga yang berlaku].\n\nTerima kasih.\n\n[Nama]\nUltima Clinic"},
         {"title": "Pesan WhatsApp untuk meminta ulasan", "for": "Kirim ke semua pasien setelah kunjungan, bukan hanya yang puas. Jangan menawarkan hadiah.",
          "text": "Terima kasih sudah berkunjung ke Ultima Clinic hari ini. Kalau berkenan, ceritakan pengalaman Anda lewat ulasan Google di tautan ini: [tautan ulasan cabang]. Semua masukan membantu kami memperbaiki layanan. Memberi ulasan tidak wajib dan tidak memengaruhi layanan yang Anda terima."},
@@ -496,7 +548,7 @@ DATA = {
     ],
     "worksheet": {
         "title": "Lembar Kerja Ultima Clinic",
-        "text": "Satu file Excel yang juga bisa dibuka di Google Sheets. Isinya sama dengan laporan ini, ditambah kolom untuk penanggung jawab, tanggal target, dan status, serta ke-36 klaim yang dicek. Progres terhitung sendiri setiap kali status diubah.",
+        "text": "Satu file Excel yang juga bisa dibuka di Google Sheets. Isinya sama dengan laporan ini, ditambah kolom untuk penanggung jawab, tanggal target, dan status. Tab Cek Fakta memuat ke-36 klaim yang dicek; laporan menampilkan delapan. Progres terhitung sendiri setiap kali status diubah.",
         "tabs": ["Panduan", "Ringkasan", "Rencana Kerja", "Pertanyaan & Hasil", "Pesaing", "Cek Fakta", "Website", "Situs AI", "Bahan Siap Pakai", "Titik Awal"],
     },
     "answers_lede": "Bukti di balik laporan ini. Ketuk pertanyaan untuk membaca jawaban lengkap. Di data uji ini, P1 sampai P5 hanya ditanyakan ke ChatGPT dan P6 sampai P10 hanya ke Google.",
@@ -505,12 +557,12 @@ DATA = {
     "method": [
         "Sepuluh pertanyaan dari uji Nuave pada 24 Oktober 2026. P1 sampai P5 ditanyakan ke ChatGPT (model gpt-5.6-luna) dan P6 sampai P10 ke Google AI Overview, dari Indonesia. Di produk, setiap pertanyaan ditanyakan ke kedua sumber.",
         "P5 dan P10 menyebut nama klinik. Jawabannya ditampilkan terpisah dan tidak dihitung di kartu, perbandingan, dan peta pesaing.",
-        "P6: Google menandai ada AI Overview, tetapi tidak mengirim teksnya. Laporan ini menghitungnya sebagai tanpa AI Overview.",
+        "P6: Google menandai ada AI Overview, tetapi teksnya tidak tersimpan, jadi hasilnya tidak dapat dinilai.",
         "Kartu ChatGPT menghitung 4 jawaban, dan kartu Google menghitung 3 ringkasan AI yang tampil.",
-        "Disebut: nama Ultima ada di jawaban. Direkomendasikan: jawaban menyarankan Ultima untuk kebutuhan yang ditanyakan. Situs dikutip: halaman Ultima dipakai sebagai sumber, tetapi namanya tidak muncul.",
-        "Situs Ultima dan halaman yang dikutip dibuka pada 7 November 2026 dengan cara baca biasa, 31 kali buka halaman. Traveloka, tiket.com, Tokopedia, Instagram, dan satu situs lain menolak atau tidak menjawab.",
-        "Cek fakta membandingkan kalimat AI dengan teks di situs Ultima. Pendapat dan saran di jawaban AI tidak dicek. Harga promo di situs berupa gambar, jadi tidak terbaca.",
-        "Volume: pencarian Google per bulan bila ada, atau perkiraan sebutan topik di asisten AI per bulan dari DataForSEO. Pertanyaan lain tidak punya angka.",
+        "Disebut: nama Ultima ada di jawaban. Direkomendasikan: jawaban menyarankan Ultima untuk kebutuhan yang ditanyakan. Situs dikutip: halaman Ultima dikutip, tetapi namanya tidak muncul.",
+        "Situs Ultima dan halaman yang dikutip dibuka pada 7 November 2026 dengan cara baca biasa, 31 kali buka halaman. Traveloka, tiket.com, Tokopedia, satu reel Instagram, dan satu situs lain menolak atau tidak menjawab.",
+        "Cek fakta membandingkan kalimat AI dengan teks di situs Ultima. Pendapat dan saran di jawaban AI tidak dicek, dan klaim keamanan, izin, atau pengawasan dokter tidak diberi penilaian. Harga promo di situs berupa gambar, jadi tidak terbaca. Laporan menampilkan delapan klaim; Lembar Kerja memuat ke-36.",
+        "Volume: pencarian Google per bulan bila ada, atau perkiraan sebutan topik di asisten AI per bulan, dari uji penemuan DataForSEO pada 24 Oktober 2026. Pertanyaan lain tidak punya angka.",
         "Tidak ada contoh kestabilan: uji ini punya satu jawaban per pertanyaan.",
         "Nama klinik diganti menjadi Ultima Clinic dan alamat situsnya menjadi ultimaclinic.example. Nama klinik lain, situs lain, dan isi jawaban tidak diubah.",
         "Sepuluh pertanyaan tidak mewakili semua pertanyaan calon pasien, dan laporan ini tidak membuktikan mengapa AI menjawab seperti itu.",

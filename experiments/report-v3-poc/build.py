@@ -32,30 +32,67 @@ def load(name):
 
 
 def norm(text):
-    """Answer text as a reader sees it: no Markdown emphasis, single spaces."""
-    return re.sub(r"\s+", " ", text.replace("**", "").replace("*", "")).strip()
+    """Text as a reader sees it: no Markdown emphasis, single spaces, lower case."""
+    return re.sub(r"\s+", " ", text.replace("**", "").replace("*", "")).strip().lower()
 
 
-def prose(d):
-    """Every piece of report prose written for this report (quotes from answers excluded)."""
-    out = [d["verdict"], d["closing"]["text"], d["closing"]["recheck"], d.get("comp_lede", ""), d.get("brand_note", "")]
-    out += [f["title"] + " " + f["text"] for f in d["findings"]]
-    out += [r["title"] + " " + r["text"] for r in d["recs"]]
-    out += [t["status"] for t in d.get("topics", [])] + [t["text"] for t in d.get("takeaways", [])]
-    out += [p["title"] + " " + p["text"] for p in d["closing"]["plan"]]
-    out += [f.get("ref_text", "") + " " + f.get("seen_on", "") for f in d.get("facts", [])]
-    out += d.get("method", []) + [q.get("brand_summary", "") for q in d["questions"]]
-    if d.get("moment"):
-        out.append(d["moment"].get("caption", ""))
-    if d.get("description"):
-        out += [d["description"].get(k, "") for k in ("ai_line", "gap", "owner_line", "lede")]
-    return [t for t in out if t]
+PLAYBOOK = HERE.parents[1] / "docs/content/report/PLAYBOOK.md"
+# Words that make a claim about safety, licensing or medical supervision.
+# Such a claim is shown only as what AI said, with no verdict (plan §4).
+SAFETY = re.compile(r"\b(aman|keamanan|bpom|izin|perizinan|sertifikat\w*|bersertifikasi|tersertifikasi|terdaftar|lisensi|berlisensi|legal|pengawasan dokter)\b", re.I)
+# Fixed product texts a report may quote besides the evidence.
+FIXED = ["Apa yang membuat bisnis Anda berbeda?", "Ada info yang sering salah ditulis AI?",
+         # the report's own section names and labels, which its prose may refer to
+         "Apa yang ditampilkan halaman mereka", "Tidak terdeteksi", "Ada", "tidak ada", "Cek fakta",
+         "Bahan siap pakai", "Untuk tim web Anda", "Salin daftar kerja", "Unduh Lembar Kerja"]
+NOT_PROSE = {"answer", "quote", "q", "sources", "url", "ref_url", "text_kit"}
+MAX_FACT_ROWS = 8   # plan P1.2: the report shows at most eight fact rows
+MAX_MOMENT = 5      # plan P0.1: the moment shows the first five names
+
+
+def playbook_items():
+    text = PLAYBOOK.read_text(encoding="utf-8")
+    part = text.split("## What a clinic can do", 1)[1].split("\n## ", 1)[0]
+    return {int(n) for n in re.findall(r"^(\d+)\. \*\*", part, re.M)}
+
+
+def strings(node, key=""):
+    """Every string the writer wrote for this report: all data except answers, quotes and sources."""
+    if key in NOT_PROSE:
+        return
+    if isinstance(node, str):
+        yield key, node
+    elif isinstance(node, dict):
+        for k, v in node.items():
+            if k == "kit":
+                for item in v:
+                    yield from ((kk, vv) for kk, vv in item.items() if kk != "text" and isinstance(vv, str))
+                continue
+            yield from strings(v, k)
+    elif isinstance(node, list):
+        for v in node:
+            yield from strings(v, key)
+
+
+def corpus(d):
+    """What a quotation in the report may come from: the answers, the questions, cited
+    page titles, the facts' quotes and references, and the site quotes the data lists."""
+    parts = list(FIXED) + d.get("site_quotes", [])
+    for q in d["questions"]:
+        parts.append(q["q"])
+        for src in ("chatgpt", "google"):
+            a = q.get(src) or {}
+            parts.append(a.get("answer", ""))
+            parts += [s.get("title", "") for s in a.get("sources", [])]
+    for f in d.get("facts", []):
+        parts += [f["quote"], f.get("ref_text", "")]
+    return norm(" \n ".join(parts))
 
 
 def check(d, label):
-    """The plan's rules, as code: what a report may show must be in its data."""
+    """The plan's rules, as code. Each failure names the rule it breaks."""
     errors = []
-    names = {b["name"] for b in d["businesses"]}
+    names = {b["name"]: [b["name"]] + b.get("aliases", []) for b in d["businesses"]}
     for q in d["questions"]:
         for src in ("chatgpt", "google"):
             a = q.get(src)
@@ -63,36 +100,54 @@ def check(d, label):
                 continue
             if a["status"] not in VALID:
                 errors.append(f"P{q['n']} {src}: bad status {a['status']}")
+            text = norm(a.get("answer", ""))
             for n in a.get("named", []) + a.get("rec", []):
                 if n not in names:
                     errors.append(f"P{q['n']} {src}: '{n}' is not in businesses")
+                elif not any(norm(alias) in text for alias in names[n]):
+                    errors.append(f"P{q['n']} {src}: '{n}' is listed as named but does not appear in the answer")
             for n in a.get("rec", []):
                 if n not in a.get("named", []):
                     errors.append(f"P{q['n']} {src}: '{n}' recommended but not named")
-    for f in d.get("facts", []):
+    facts = d.get("facts", [])
+    for f in facts:
         q = next(x for x in d["questions"] if x["n"] == f["n"])
-        text = (q.get(f["source"]) or {}).get("answer", "")
-        if norm(f["quote"]) not in norm(text):
+        if norm(f["quote"]) not in norm((q.get(f["source"]) or {}).get("answer", "")):
             errors.append(f"fact quote not in P{f['n']} {f['source']}: {f['quote'][:50]}")
         if f["verdict"] not in ("berbeda", "sesuai", "tidak_bisa_dicek", "tanpa_penilaian"):
             errors.append(f"fact {f['quote'][:30]}: bad verdict {f['verdict']}")
-        if f["topic"].lower().startswith("keamanan") and f["verdict"] != "tanpa_penilaian":
+        if (SAFETY.search(f["quote"]) or f["topic"].lower().startswith("keamanan")) and f["verdict"] != "tanpa_penilaian":
             errors.append(f"safety or licensing claim with a verdict: {f['quote'][:50]}")
+        if f["verdict"] == "tanpa_penilaian" and ("“" in f.get("ref_text", "") or not f.get("ref_text", "").startswith("Nuave tidak menilai")):
+            errors.append(f"a claim with no verdict must not be set against a reference: {f['quote'][:50]}")
+    shown = [f for f in facts if f.get("show", True)]
+    if len(shown) > MAX_FACT_ROWS:
+        errors.append(f"{len(shown)} fact rows shown (plan P1.2 allows {MAX_FACT_ROWS})")
     mo = d.get("moment")
     if mo:
         a = next(x for x in d["questions"] if x["n"] == mo["n"])[mo["source"]]
+        if len(mo["list"]) > MAX_MOMENT:
+            errors.append(f"moment lists {len(mo['list'])} names (plan P0.1 shows {MAX_MOMENT})")
         for it in mo["list"]:
             if it["name"] not in a.get("named", []):
                 errors.append(f"moment lists '{it['name']}', not named in that answer")
+    items = playbook_items()
     for r in d["recs"]:
+        if r["item"] not in items:
+            errors.append(f"recommendation uses item {r['item']}, which is not in PLAYBOOK.md")
         if r["item"] not in d["playbook"]:
             errors.append(f"recommendation uses playbook item {r['item']} with no tags")
-    for text in prose(d):
-        if "—" in text:
-            errors.append(f"em dash in report prose: {text[:50]}")
-    for r in d["recs"]:
         if r["title"].split()[0] in ("Periksa", "Pertahankan", "Pertimbangkan", "Pastikan"):
             errors.append(f"recommendation title starts with a banned verb: {r['title']}")
+    known = corpus(d)
+    for key, text in strings(d):
+        if "—" in text:
+            errors.append(f"em dash in {key}: {text[:50]}")
+        if key in ("ref_text", "site_quotes"):
+            continue
+        for quoted in re.findall(r"“([^”]+)”", text):
+            if norm(quoted.rstrip(".,")) not in known:
+                errors.append(f"quotation in {key} not found in the answers or evidence: “{quoted[:50]}”")
     if len(d["verdict"]) > 220:
         errors.append(f"verdict is {len(d['verdict'])} characters (limit 220)")
     if errors:

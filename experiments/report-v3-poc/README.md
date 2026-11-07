@@ -44,14 +44,31 @@ build needs `openpyxl`; the render uses the pre-installed Playwright.
   summary numbers are live formulas over the "Pertanyaan & Hasil" tab, status
   cells are drop-down lists, and progress counts itself. Both worksheets were
   recalculated in LibreOffice and match their reports.
-- `build.py`: refuses a report that breaks the plan's rules: every fact quote
-  must appear word for word in its answer; safety and licensing claims get no
-  verdict; businesses and recommendations must exist in the answers; a
-  recommendation needs a playbook item; no em dashes in report prose; the
-  verdict stays under 220 characters; recommendation titles never start with
-  "Periksa", "Pertahankan", "Pertimbangkan" or "Pastikan".
+- `build.py`: stops the build when a report breaks one of these checks:
+  - every business an answer is said to name or recommend is in the business
+    list and appears, by name or alias, in that answer's text;
+  - every fact quote appears word for word in its answer, and every other
+    quotation in the report's own text appears in the answers, the questions,
+    cited page titles, the facts, or the site quotes the data file lists
+    (for B, `data/ultima_b.py` also checks each site quote against
+    `evidence/evidence.json`);
+  - a claim about safety, licensing or medical supervision (a fixed word list,
+    or a "Keamanan" topic) gets no verdict and no reference;
+  - each recommendation uses a playbook item that exists in
+    `docs/content/report/PLAYBOOK.md` and has its tags in the data;
+  - at most eight fact rows in the report (plan P1.2) and five names in the
+    moment of truth (P0.1);
+  - no em dashes anywhere in the report's own text, a verdict under 220
+    characters, and no recommendation title starting with "Periksa",
+    "Pertahankan", "Pertimbangkan" or "Pastikan".
+
+  It does not judge whether a sentence implies a cause, or whether a hand-set
+  status or word count is right: the two independent reviews on the pull
+  request did that.
 - `evidence/`: the record behind B (`evidence.json`, `NOTES.md`, the page-load
-  log). Doctor names and STR numbers are redacted; raw pages are not kept.
+  log). Doctor names and STR numbers in page text are redacted (page URLs are
+  kept as cited); raw pages are not kept. Search volumes come from
+  `../dataforseo-sozo/results/discover/SUMMARY.md`.
 
 ## What B shows about the plan
 
@@ -61,6 +78,8 @@ build needs `openpyxl`; the render uses the pre-installed Playwright.
 - Two test questions name the clinic. B shows them apart and does not count
   them, which is what decision F-4 would add. One of them is about safety; the
   plan never asks that, so B shows it as an old test, as is.
+- The report shows eight of the 36 checked claims; the worksheet lists all
+  36, as the plan now says (P1.2, P1.3).
 - The stability sample, the owner's own words, and search volume for most
   questions are empty in B because the test did not collect them. The page
   says so instead of filling them in.

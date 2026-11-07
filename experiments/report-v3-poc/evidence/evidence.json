@@ -416,7 +416,7 @@
     }
    ],
    "people_named": [
-    "dr. Olivia Ong"
+    "dr. [nama]"
    ],
    "notes": [
     "Sozo is not named in the text. Sozo's own blog page is cited, together with suara.com, for the Jakarta Aesthetic Clinic (JAC) entry."
@@ -1812,13 +1812,13 @@
      },
      {
       "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
-      "quote": "dr. Putri Rizkya",
+      "quote": "dr. [nama]",
       "where": "visible text",
       "match": "exact"
      },
      {
       "url": "https://sozoskinclinic.com/tim-dokter-sozo-skin/",
-      "quote": "dr. Syerli Rahmadeni",
+      "quote": "dr. [nama]",
       "where": "visible text",
       "match": "exact"
      }
