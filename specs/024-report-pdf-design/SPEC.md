@@ -2,7 +2,10 @@
 
 > Status: **Draft**
 > Owner: founder; drafted by Claude on `claude/vigilant-cerf-e5kktf`
-> Updated: 2026-11-07
+> Updated: 2026-11-07, revision 2. Revision 2 applies the independent
+> review of `72660aa` (PASS+NOTES): Part 5 for the v3 Phase 0 page
+> templates, checkable AC-G2 and AC-G3, the ready rule split between Parts 1
+> and 3, S-01 to S-03 made exact, Q-2 and Q-5 to Q-9 settled.
 > Implements: [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../docs/REPORT_PDF_DESIGN_PLAN.md)
 > (approved 2026-11-07, D-0 to D-10;
 > [decision](../../docs/DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)),
@@ -70,20 +73,21 @@ they can present and act on, without the web page beside it.
 | Part 3 | PR 3 | The appendix (Lampiran) |
 | Part 4 | PR 4 | One line on the web report and in the report-ready email |
 | Part 4b | PR 4b | The "Unduh Lembar Kerja" button on the web report |
+| Part 5 | One PR with each v3 Phase 0 package | The page templates for v3 Phase 0: the moment page, the Cara membaca additions, the Rencana and Langkah tags, the Penutup decisions, the Lembar Kerja page |
 
 ## Non-scope
 
 - A redesign of the web report. It stays frozen at Spec 021 v2 (D-1 A),
   except the line of Part 4 and the button of Part 4b.
-- The Report v3 packages, their data and their pages: Saat calon pasien
-  bertanya (P0.1 to P0.3), Cek fakta (P1.2), Kata AI dan kata Anda (P2.3),
-  Halaman mereka (P2.2), Situs yang dibaca AI (P2.1), Untuk tim web Anda
-  (P1.1), Bahan siap pakai (P2.4), Lembar Kerja (P0.10), the Titik Awal tab
-  (P3.3), the stability box and re-asks (P3.2), v3's answer notes on A0, the
-  two questions that name the clinic (F-4), and the later parts of pages
-  marked "partly" in plan §5.2. This spec only requires that such a page is
-  left out until its saved data exists (G-02); each package's own spec
-  builds its page.
+- The data, claims, counts and rules of every Report v3 package. They stay
+  with v3's specs (plan §5.3). Part 5 adds only the Phase 0 templates.
+- The pages of v3 packages after Phase 0: Cek fakta (P1.2), Kata AI dan kata
+  Anda (P2.3), Halaman mereka (P2.2), Situs yang dibaca AI (P2.1), Untuk tim
+  web Anda (P1.1), Bahan siap pakai (P2.4), the Titik Awal tab (P3.3), the stability box and re-asks (P3.2), v3's
+  answer notes on A0 and the two questions that name the clinic (F-4). This
+  spec only requires that such a page is left out until its saved data
+  exists (G-02). Each package's own spec adds its template (plan §7, "Later
+  PRs").
 - The worksheet file itself (v3 P0.10). Part 4b only adds its button.
 - Email changes beyond Part 4's one line.
 - D-1 options B and C (closing the web report).
@@ -115,11 +119,12 @@ this spec does not reopen them.
 | D-11 | The official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) on the cover and in every page header; a back cover as the last page with the logo, the website (nuave.ai) and one sentence on what Nuave does; Penutup before the Lampiran. |
 | D-12 | The five section titles are approved fixed text (see "Fixed text"). |
 | D-13 | Report v3 F-13 option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (Part 4b), shipped with v3 P0.10. |
-| D-14 | Titik awal is its own page after Penutup (Report v3 revision 6.4). |
+| D-14 | Titik awal is its own page after Penutup. This is Report v3's decision (revision 6.4, direction 3), adopted from this plan's §5.3 proposal; v3 owns page order (plan §5.3). |
 
-D-1 to D-10 are the plan's numbers. D-11 to D-14 are numbered here for the
-later decisions in the plan's "Changes after approval" and the decision log
-entry "Report section titles approved; worksheet download is a button".
+D-1 to D-10 are the plan's numbers. D-11 to D-13 are numbered here for the
+founder's later decisions in the plan's "Changes after approval" and the
+decision log entry "Report section titles approved; worksheet download is a
+button". D-14 records v3's decision, not a founder decision of this plan.
 
 ## Part 0: rules for every Part
 
