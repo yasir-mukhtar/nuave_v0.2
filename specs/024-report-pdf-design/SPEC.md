@@ -1,0 +1,649 @@
+# Spec 024: The designed report PDF (16:9)
+
+> Status: **Draft**
+> Owner: founder; drafted by Claude on `claude/vigilant-cerf-e5kktf`
+> Updated: 2026-11-07
+> Implements: [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../docs/REPORT_PDF_DESIGN_PLAN.md)
+> (approved 2026-11-07, D-0 to D-10;
+> [decision](../../docs/DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)),
+> its §7 packages PR 1, PR 2, PR 3, PR 4 and PR 4b. Amends
+> [Spec 021](../021-report-v2/SPEC.md) Part P (plan D-10).
+
+## Required context
+
+Read in order:
+
+1. `AGENTS.md`.
+2. [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../docs/REPORT_PDF_DESIGN_PLAN.md),
+   all of it. This spec links to its sections instead of copying them.
+3. The Report v3 plan (`docs/REPORT_V3_PLAN.md` on PR #205, revision 6.4):
+   "Approval and alignment", "Format of the report PDF" and "Counts on the
+   PDF pages". It owns what each page says, the page order and the counting
+   rule (plan §5.3).
+4. Step 0 results: [`experiments/report-pdf-design/README.md`](../../experiments/report-pdf-design/README.md)
+   (the reference export) and
+   [`experiments/report-pdf-design/spike/README.md`](../../experiments/report-pdf-design/spike/README.md).
+5. [Spec 021](../021-report-v2/SPEC.md): Part P (the server PDF this
+   replaces), Part B (B-04 limits, B-05 headline numbers), A-05, A-07, AC-A5.
+6. [Spec 018](../018-search-grounded-chatgpt-google-audit/SPEC.md): the
+   "Report layout" count sentences, R-20 (failed slot), R-28 (privacy),
+   R-29 (old reports), AC-20 ("Klinik Anda").
+7. `docs/VOICE.md` (dashes, settled labels), `docs/DESIGN.md` (fonts, tokens,
+   report exception), `docs/AUDIT.md` (per-source denominators).
+8. Code: `src/lib/orders/report-pdf.ts`, `src/app/api/report/pdf/route.ts`,
+   `src/app/r/print/page.tsx`, `src/app/r/SavedReport.tsx`,
+   `src/lib/audit/two-source-report.ts`, `src/lib/audit/two-source-writing.ts`,
+   `src/app/audit/report/TwoSourceReport.tsx`,
+   `src/app/audit/report/report-v2-data.ts`, `src/lib/orders/mail.ts`,
+   `src/app/fonts.ts`, `src/styles/tokens.css`.
+
+Do not load: `archive/`, older report prototypes, the parked PRs named in
+`AGENTS.md`.
+
+## Problem
+
+Observed: the server PDF (Spec 021 Part P) is an A4 print of the phone-first
+web report. The founder approved a different look on 2026-11-07: a 16:9,
+presentation-ready PDF that reads like an agency report (Figma "Redesain
+Report Nuave", exported as `experiments/report-pdf-design/reference.pdf`,
+39 pages). Nothing in the product makes that PDF from an order's saved data.
+
+## Desired outcome
+
+Every two-source report's "Unduh PDF" gives the designed 16:9 PDF, filled
+only from that report's saved data, with every count per source and nothing
+cut off. The finish line is the plan's §3.
+
+## User and situation
+
+The clinic owner (and the people they show it to: a partner, a web vendor, a
+meeting room) opens the PDF after the report-ready email. They want a report
+they can present and act on, without the web page beside it.
+
+## Scope
+
+| Part | Plan package | What it builds |
+| --- | --- | --- |
+| Part 0 | all | Rules every Part keeps, the limits, the budgets, the fixed text |
+| Part 1 | PR 1 | Fonts and tokens, the print request, the page box, the page list, the ready rule, the always-present pages |
+| Part 2 | PR 2 | The report pages filled from saved data, with code headlines |
+| Part 3 | PR 3 | The appendix (Lampiran) |
+| Part 4 | PR 4 | One line on the web report and in the report-ready email |
+| Part 4b | PR 4b | The "Unduh Lembar Kerja" button on the web report |
+
+## Non-scope
+
+- A redesign of the web report. It stays frozen at Spec 021 v2 (D-1 A),
+  except the line of Part 4 and the button of Part 4b.
+- The Report v3 packages, their data and their pages: Saat calon pasien
+  bertanya (P0.1 to P0.3), Cek fakta (P1.2), Kata AI dan kata Anda (P2.3),
+  Halaman mereka (P2.2), Situs yang dibaca AI (P2.1), Untuk tim web Anda
+  (P1.1), Bahan siap pakai (P2.4), Lembar Kerja (P0.10), the Titik Awal tab
+  (P3.3), the stability box and re-asks (P3.2), v3's answer notes on A0, the
+  two questions that name the clinic (F-4), and the later parts of pages
+  marked "partly" in plan §5.2. This spec only requires that such a page is
+  left out until its saved data exists (G-02); each package's own spec
+  builds its page.
+- The worksheet file itself (v3 P0.10). Part 4b only adds its button.
+- Email changes beyond Part 4's one line.
+- D-1 options B and C (closing the web report).
+- A4 portrait, dark mode for the whole report, translated reports.
+- New writer fields (D-9 option B), new counts, pooled numbers, or any change
+  to how the report counts (`docs/AUDIT.md`, Spec 018).
+- A re-run button, a scheduled re-check, or any promised date (D-7, D-8).
+- Reports saved before Spec 018: their web page and their print stay
+  exactly as today (Spec 018 R-29, Spec 021 AC-A5 and P-05).
+- Prices, refunds, the delivery promise.
+
+## Decisions recorded
+
+Settled by the founder on 2026-11-07. The plan's §4 holds the full text;
+this spec does not reopen them.
+
+| # | Decision |
+| --- | --- |
+| D-1 | Option A: the web report stays frozen at Spec 021 v2 and is the fallback when a PDF cannot be made; only the PDF gets the design. B or C later, by its own spec. |
+| D-2 | 16:9 landscape, 1440 × 810 CSS px (about 381 × 214 mm), not A4. |
+| D-3 | Newsreader (headlines, big numbers), Geist (text), Roboto Condensed (labels, page numbers), Geist Mono only for text that shows code; loaded through `src/app/fonts.ts`; report type values in `tokens.css`; the `DESIGN.md` exceptions listed in the plan. |
+| D-4 | The corrected Figma is the visual reference, exported once to `experiments/report-pdf-design/reference.pdf`. Where it and a spec disagree, the spec wins. |
+| D-5 | Appendix notes ("Catatan Nuave") come from code: a fixed sentence with blanks, only for a fact the saved report holds. |
+| D-6 | Conclusion headlines come from code templates built on the settled per-source sentences; writer headlines kept under B-05 show as saved; no pooled numbers (plan D-6 defines them). |
+| D-7 | Fixed text is written once with `VOICE.md` and the writing skill, approved once, kept in one file. No download button in the PDF. No line claims what patients do or promises a scheduled service, re-check or date. Re-audit advice stays. |
+| D-8 | The help path on a failed check is "Minta bantuan", the mailto link to `support@nuave.ai` with the order number. No re-run button. |
+| D-9 | Option A: Ringkasan is filled from saved fields; only "Yang dikerjakan dulu" of its three columns is shown. |
+| D-10 | Spec 021 Part P changes: dark pages, the footer format, the print request (see "Amendments to Spec 021"). |
+| D-11 | The official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) on the cover and in every page header; a back cover as the last page with the logo, the website (nuave.ai) and one sentence on what Nuave does; Penutup before the Lampiran. |
+| D-12 | The five section titles are approved fixed text (see "Fixed text"). |
+| D-13 | Report v3 F-13 option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (Part 4b), shipped with v3 P0.10. |
+| D-14 | Titik awal is its own page after Penutup (Report v3 revision 6.4). |
+
+D-1 to D-10 are the plan's numbers. D-11 to D-14 are numbered here for the
+later decisions in the plan's "Changes after approval" and the decision log
+entry "Report section titles approved; worksheet download is a button".
+
+## Part 0: rules for every Part
+
+### Pages and their order
+
+The page order and what each page holds are plan §5.2, which follows Report
+v3 "Format of the report PDF". The table says which Part builds each page
+and when it is shown.
+
+| Section | Page | Built in | Shown when |
+| --- | --- | --- | --- |
+| Front | Sampul | Part 1 | Always |
+| Front | Daftar isi | Part 1 | Always |
+| Front | Cara membaca laporan | Part 1 | Always; v3 parts only when saved |
+| Front | Ringkasan | Part 2 | Always |
+| Front | Saat calon pasien bertanya | v3 P0.1 | Only when its saved data exists |
+| Front | Peta jawaban | Part 2 | Always |
+| 01 | Divider | Part 1 | See Q-4 |
+| 01 | Temuan, one per finding and one for `google_finding` | Part 2 | One per saved finding |
+| 01 | Pesaing | Part 2 | When competitor rows exist |
+| 01 | Celah topik | Part 2 | When it has a row |
+| 02 | Divider, Cek fakta, Kata AI dan kata Anda | v3 P1.2, P2.3 | Only when their saved data exists |
+| 03 | Divider, Halaman mereka, Situs yang dibaca AI, Untuk tim web Anda | v3 P2.2, P2.1, P1.1 | Only when their saved data exists |
+| 04 | Divider | Part 1 | See Q-4 |
+| 04 | Rencana | Part 2 | When recommendations exist |
+| 04 | Langkah, one per recommendation | Part 2 | One per saved recommendation |
+| 04 | Bahan siap pakai, Lembar Kerja | v3 P2.4, P0.10 | Only when their saved data exists |
+| 04 | Penutup | Part 1 | Always |
+| 04 | Titik awal | Part 2 (Q-6) | Always; v3 numbers only when saved |
+| 05 | Divider, A0, A1 to A10 with continued pages | Part 3 | Always |
+| End | Sampul belakang | Part 1 (Q-6) | Always |
+
+### Requirements
+
+- **G-01: Which reports.** The designed PDF is made for every two-source
+  (Spec 018) report, including those written before Spec 021 Part B, which
+  fall back where the web page falls back today. Reports saved before Spec
+  018 keep their web page and their browser print exactly as today.
+- **G-02: Page list.** The pages and their order come only from the page-list
+  function (F-05), whose order is the v3 order above. A page whose data does
+  not exist is left out, and so is its row on Daftar isi. No page is added,
+  dropped or reordered to fit a template (plan §5.3).
+- **G-03: Counts.** Every count is per source with its denominator, computed
+  by code, and equals the same count elsewhere in the report. Answers are
+  never added across the two sources; no pooled number (plan D-6) appears
+  except inside a writer headline kept under B-05. A denominator of 0 shows
+  "Tidak diuji", never "0 dari 0". "Direkomendasikan" is counted only for the
+  clinic and only for ChatGPT. The count sentences are produced by the code
+  that produces them for the web report today (`two-source-report.ts`,
+  `TwoSourceReport.tsx`), never retyped, so "Klinik Anda" and "Bisnis Anda"
+  follow `two_source.subject` (Spec 018 AC-20).
+- **G-04: Headline numbers.** A finding's large number is shown only as
+  saved and only when B-05 kept it ("X dari Y", a whole number such as "2×",
+  or a figure copied from an answer, plan §5.3). Numbers the reference shows
+  that have no B-05 form today (Temuan 3's "4 dari 8" klaim, Temuan 4's "1")
+  are not shown.
+- **G-05: Fixed text.** Every customer-facing string that is not saved data
+  comes from the one fixed-text file (see "Fixed text"). No fixed line claims
+  what patients do, states a cause, or promises a scheduled service,
+  re-check or date. Section titles state what their pages show, never a
+  cause.
+- **G-06: Nothing cut.** No text is cut off, set below the reference sizes,
+  or placed outside its page box; no page is empty. Long text goes to
+  continued pages: by word count on report pages (F-06), by measuring in the
+  appendix (L-05).
+- **G-07: Made fresh.** Each download is made from the saved, unchanging
+  report; nothing is stored and nothing is regenerated (Spec 021 P-04, Spec
+  018 R-29).
+- **G-08: Charts and marks.** Charts, bars and dots are plain HTML and SVG
+  drawn from the numbers, with no chart library. The "●" and "○" style marks
+  are drawn as shapes, not font glyphs (Step 0: Geist's Latin subset lacks
+  them and a fallback font appeared).
+- **G-09: No button in the PDF.** The PDF has no download or other button.
+
+### Limits
+
+Set from Step 0 (spike README, 2026-11-07; each case ran once).
+
+| Limit | Value | Basis |
+| --- | --- | --- |
+| Browser Run page load | 30 s, unchanged | `report-pdf.ts` |
+| Ready marker wait | 20 s, unchanged | `report-pdf.ts` |
+| PDFs per report per UTC day | 20 (`PDF_DAILY_CAP`), unchanged | plan §9 |
+| Print code | single use, 60 s (`PRINT_TOKEN_TTL_MS`), unchanged | Spec 021 P-02 |
+| Route rate limit | unchanged | Spec 021 P-02 |
+| Page size | CSS `1440px × 810px`, zero margins; the PDF page measures 1080 × 607.9 pt | D-2; spike finding 5 (the reference export is 1440 × 810 pt, the same shape at a larger size) |
+| Measured worst cases | 86 pages at the word limits with assumed 1,200 and 400 word answers: 2.2 s whole request, 0.87 s browser time, 851 KB. At real saved maxima (680 and 450 word answers): 76 pages, 2.4 s, 1.57 s browser time, about 785 KB | spike, Browser Run REST endpoint with inline HTML |
+| File size and render time thresholds for fixture checks | Not set by the plan | Q-2 |
+
+The measured cases did not go through the Worker's binding opening the
+print page, did not draw source lists, and used simpler layouts than the
+Figma; Part 1 and Part 3 measure the real path (AC-F8, AC-L6).
+
+### Word budgets
+
+Budgets are the Spec 021 B-04 writer limits
+(`TWO_SOURCE_WRITING_LIMITS`), **confirmed against saved maxima on
+2026-11-07 (7 reports)**: every saved writer text was within its limit
+(spike README, "The longest texts saved on Nuave's orders"). Seven reports
+is a small sample; Q-1 re-checks the budgets as orders grow.
+
+| Page | Text | Budget | Longest saved | Over budget |
+| --- | --- | --- | --- | --- |
+| Ringkasan | Verdict | 220 characters, 2 sentences (cut by code today) | 30 words | Code cuts it as the web does |
+| Ringkasan | "Yang dikerjakan dulu" (first plan step) | 35 words | 23 | Q-3 |
+| Temuan | Finding title / text | 12 / 80 words | 10 / 64 | Continued page (F-06) |
+| Pesaing | "Menurut jawaban AI" reason, up to five | 20 words each | 15 | Q-3 |
+| Pesaing | Takeaways, up to three | 10 + 30 words each | 25 (text) | Q-3 |
+| Celah topik | Topic name, up to five rows | 6 words | not measured | Q-3 |
+| Rencana, Langkah | Recommendation title / paragraph | 14 / 100 words | 14 / 60 | Langkah: continued page (F-06); Rencana: Q-3 |
+| Penutup | Conclusion; three plan steps | 70; 35 words each | 58; 23 | Continued page (F-06) |
+
+Reports written before Part B have no limits; the same budgets apply to
+them. Step 0 found that at 1.25 times the limits two pages overflow:
+**Pesaing** (six rows with 25-word reasons, 15 chips, three takeaways; 743 of
+626 px) and **Cek fakta** (eight rows; 640 of 626 px). Pesaing is built in
+Part 2 and must fit at its budget (S-04); its behaviour above the budget is
+Q-3. Cek fakta's spec (v3 P1.2) must set its own budget or overflow rule.
+
+### Fixed text (D-7)
+
+All fixed strings live in one file (path chosen in Part 1), written with
+`VOICE.md` and the writing skill, approved once by the founder (when: Q-5).
+No em or en dash appears in Indonesian prose; the only en dash allowed is in
+a range such as "Minggu 1–2" or "08.00–21.00" (`VOICE.md` §3). This spec does
+not write new customer-facing copy. The strings already settled or named by
+the plan:
+
+| String | Where | Source |
+| --- | --- | --- |
+| "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran" | Dividers, Daftar isi | D-12 (approved) |
+| "Tidak dapat diuji", "Minta bantuan" | Failed checks | Spec 018 R-20 |
+| "Tidak diuji" | Denominator 0 | `VOICE.md`, Spec 018 |
+| The count sentences and the code-built Google sentence | Cards, headlines, Titik awal | Code (G-03); not in the file |
+| "Yang dikerjakan dulu" | Ringkasan | D-9 |
+| "Menurut jawaban AI", "disebut lebih jarang", "Direkomendasikan" | Pesaing | plan §5.1, §5.2 |
+| "Catatan Nuave" and one sentence with blanks per note kind | Appendix | D-5 |
+| "lanjutan"; labels "A0", "A1", "A3 · 1/2" | Continued pages, appendix footers | plan §6.3 |
+| Method line with and without search data (`search_data_available`) | Cara membaca laporan | D-7 |
+| Page names (Daftar isi, Cara membaca laporan, Ringkasan, Peta jawaban, Temuan, Pesaing, Celah topik, Rencana, Langkah, Penutup, Titik awal, Lampiran) | Page titles, Daftar isi | plan §5.2 |
+| Re-audit advice: about eight weeks after the changes, an audit with the same ten questions, so the two reports can be compared; the comparison alone does not show what caused the differences; no date or service | Titik awal | D-7, v3 direction 3 (meaning fixed; wording to be written) |
+| The sentence on what Nuave does, and "nuave.ai" | Back cover | D-11 (wording as in the reference, approved with the file) |
+| The confidential label and the "date the numbers come from" line | Titik awal footer and as the reference shows | plan "Changes after approval" (wording to be written) |
+| The PDF line of Part 4 | Web report, email | Founder approves the wording (W-01) |
+
+The web button stays "Unduh PDF" (Spec 021 AC-P1) and the email keeps
+"Download PDF" (D-7).
+
+### Fixtures
+
+Plan §8.1, plus **an answer citing 44 or more sources** (saved maximum: 44)
+and **answers of about 700 words (ChatGPT) and 450 words (Google)**. No
+personal data. A fixture whose data is longer than saved maxima is allowed
+and expected.
+
+### Acceptance criteria for every Part
+
+Each Part runs these on its fixture PDFs, for the pages it has built.
+
+- **AC-G1:** Given any fixture, the PDF's pages are 1440 × 810 CSS px
+  (1080 × 607.9 pt), and its page count and page labels equal the page list
+  after splitting.
+- **AC-G2:** Given any fixture, no element lies outside its page box, no
+  page is empty, and no computed font size is below the reference sizes.
+- **AC-G3:** Given any fixture, every count equals the saved per-source
+  counts, and no pooled number (plan D-6) appears outside a B-05 writer
+  headline.
+- **AC-G4:** Given the fixed-text file, it holds no em dash and no en dash
+  outside the allowed ranges, and every page's fixed strings come from it.
+- **AC-G5:** `npm run verify` passes; the Spec 021 AC-A5 snapshots and the
+  pre-Spec-018 print pass unchanged.
+- **AC-G6 (judgement):** The founder compares the fixture PDFs with the
+  reference export and accepts them.
+- **AC-G7:** An independent verdict is recorded on the Part's exact head.
+
+## Part 1: the page frame (PR 1)
+
+### Requirements
+
+- **F-01: Fonts.** Newsreader, Geist, Roboto Condensed and Geist Mono (D-3),
+  loaded only through `src/app/fonts.ts`, used only inside the PDF pages.
+  Font files are static, one weight per file, of a kind Chromium embeds as
+  TrueType, not Type 3 (Step 0 finding 4: variable woff2 files embedded as
+  Type 3, which can look soft and copy poorly). The PR records each file's
+  licence (SIL OFL or Apache 2.0, D-3). If static files still embed as Type
+  3, the PR stops and returns to the orchestrator.
+- **F-02: Tokens and `DESIGN.md`.** The report type values go in
+  `tokens.css` as a report block, so `npm run check:typography` keeps
+  passing. `DESIGN.md` gets the three changes D-3 lists: the two new families
+  in `fonts.ts`, Newsreader replacing the system serif stack for the PDF,
+  and an exception for Roboto Condensed inside the PDF pages only.
+- **F-03: Print request.** `pdfRequest` asks for the page's own CSS page size
+  (`preferCSSPageSize`), backgrounds, no Browser Run header or footer, and
+  zero margins. The load wait (30 s, `networkidle0`), the ready selector and
+  its 20 s wait, the print code, the cap and the file name
+  `Laporan-Nuave-<klinik>.pdf` stay as today.
+- **F-04: Print page and page box.** `/r/print` gets a new body made of the
+  PDF pages for two-source reports; other reports keep today's print. Each
+  page is one 1440 × 810 box with its own header (the official logo, D-11)
+  and footer drawn by the page: the page number on report pages ("05") and
+  the appendix label in the appendix ("A3 · 1/2") (D-10). The cover, the
+  five dividers, Penutup, Titik awal and the back cover are dark pages
+  (D-10); all others use the light palette.
+- **F-05: Page-list function.** A pure function turns a saved report into
+  the ordered list of pages, each with its kind, its label and its number,
+  in the order of Part 0. Lists that can grow are spread by count, never by
+  measuring: one Temuan page per finding, one Langkah page per
+  recommendation, at most five "Menurut jawaban AI" lines, at most five
+  Celah topik rows (Spec 018 R-18). Daftar isi's numbers come from this list
+  and are fixed before printing.
+- **F-06: Continued report pages.** A Temuan, Langkah or Penutup text over
+  its budget gets as many continued pages ("lanjutan") as it needs, decided
+  by the page-list function from the word count before printing; the text
+  never overflows. Where the text splits is Q-7.
+- **F-07: `long_texts`.** The existing `report_pdf` log line gains one
+  count, `long_texts`: the number of texts over budget, worked out by running
+  the page-list function on the saved report the route already reads.
+  Numbers and codes only.
+- **F-08: Ready comes last.** The print page sets `[data-saved-report="ready"]`
+  only after the data has arrived, `document.fonts.ready` has resolved, and
+  the appendix has been split (Part 3). The web report's marker is
+  unchanged.
+- **F-09: Always-present pages.** As in the reference, filled from saved
+  data where they show data:
+  - **Sampul**, with the logo.
+  - **Daftar isi:** one row per section shown, pointing at its divider, and
+    at the appendix's first page only.
+  - **Cara membaca laporan:** the method facts (places, dates,
+    `checked_from`, `checked_to`), the per-source denominators and the dot
+    legend; the method line chosen by `search_data_available`. v3 P0.8's
+    labels and the P3.2 stability box only when saved.
+  - **The section dividers** (shown as Q-4 decides).
+  - **Penutup:** the saved `conclusion` always, and `two_source_writing.plan`
+    as three phase columns; a report without a plan falls back as the web
+    Penutup does (Spec 021 A-07).
+  - **Sampul belakang** as the last page: the logo, nuave.ai and the
+    approved sentence (D-11).
+
+### Acceptance criteria
+
+- **AC-F1:** A unit test shows `pdfRequest` asks for `preferCSSPageSize`,
+  `printBackground`, no header or footer template, zero margins, and keeps
+  the 30 s load and 20 s ready waits.
+- **AC-F2:** Given the fixtures, the page-list function returns the Part 0
+  order (a test asserts it equals the v3 order), leaves out pages without
+  data with their Daftar isi rows, and gives a Temuan, Langkah or Penutup
+  text over budget the right number of continued pages and one at its
+  budget none.
+- **AC-F3:** Given the fixtures, Daftar isi's numbers point at the right
+  pages; the dark pages are the ones F-04 lists; the back cover is the last
+  page.
+- **AC-F4:** A test shows the ready marker is absent until data, fonts and
+  the appendix split are all done.
+- **AC-F5:** Given a fixture PDF, its fonts are embedded, none is Type 3, and
+  no fallback font appears.
+- **AC-F6:** `npm run check:typography` passes; no font loader exists
+  outside `fonts.ts`.
+- **AC-F7:** A route test shows the `report_pdf` line carries `long_texts`
+  and only numbers and codes.
+- **AC-F8:** `verify-nuave` on a preview downloads the designed PDF; the
+  largest fixture's PDF through the real Browser Run path is inside the 30 s
+  and 20 s limits, and its time and size are recorded.
+- **AC-F9:** A report saved before Spec 018 still prints with today's print.
+
+## Part 2: the report pages from saved data (PR 2)
+
+### Requirements
+
+- **S-01: Ringkasan (D-9 A).** The statement is `two_source_writing.verdict`,
+  or the `conclusion` when there is no verdict (as the web Ringkasan does);
+  one card per source with its count, its settled sentence and ten dots; the
+  first plan step as "Yang dikerjakan dulu", left out when there is no plan.
+  The other two columns are not shown.
+- **S-02: Peta jawaban.** The ten questions by the two sources, with the
+  clinic's state in each cell and the competitors named by code.
+- **S-03: Temuan.** One page per `key_findings` item and one for
+  `google_finding`, in the web report's order: the writer's meaning sentence
+  first, the headline number and caption beneath when kept (G-04), the
+  title, the text, and each cited question (`evidence_prompt_ids`) as a chip
+  naming its appendix label.
+- **S-04: Pesaing.** Bars per source for the first five businesses and the
+  clinic's own row, chips for the rest, the "Menurut jawaban AI" line for
+  those five, `other_businesses` per source as the "disebut lebih jarang"
+  line, and up to three takeaways in the right column. Mentions per source;
+  "Direkomendasikan" only on the clinic's row, ChatGPT only. Rows may keep
+  `sortRows` order; the sum that orders them is never printed. Older reports
+  derive rows as `competitorRows` does today. Competitor logos: Q-8.
+- **S-05: Celah topik.** The rows the web report's Celah Topik shows (Spec
+  021 A-05), at most five.
+- **S-06: Rencana.** Every recommendation in one list; v3 P0.6's who, time
+  and done-when only when saved.
+- **S-07: Langkah.** One page per recommendation in the "Detail langkah"
+  layout: title and paragraph; v3 P0.6, P0.7 and P1.1 parts only when saved.
+- **S-08: Code headlines (D-6).** A page headline that states a conclusion
+  is a code template built on the settled sentences, in the code's own words,
+  for example "ChatGPT: Klinik Anda muncul di 4 dari 10 pertanyaan dan
+  direkomendasikan di 2." The template stays the fallback if a writer
+  headline is added later (v3 P0.5).
+- **S-09: Titik awal.** Today's per-source counts with denominators, each
+  equal to the same count elsewhere, the date they come from, and the
+  re-audit advice (fixed text). Nothing is compared between reports; no
+  target or forecast. v3 P1.2, P1.1 and P3.3 numbers and the worksheet tab
+  line only once saved.
+
+### Acceptance criteria
+
+- **AC-S1:** A test shows every number on the Part 2 pages equals the saved
+  report's per-source counts, for every fixture.
+- **AC-S2:** A test shows every §5.1 field this Part maps appears in the PDF
+  text.
+- **AC-S3:** Given the ten-other-businesses fixture, "Direkomendasikan"
+  appears only on the clinic's ChatGPT row and no summed count is printed.
+- **AC-S4:** Given a finding whose headline B-05 dropped, its page shows no
+  number; given one kept, the number shows as saved.
+- **AC-S5:** Given a report with ten findings and ten recommendations,
+  the PDF has eleven Temuan pages (with `google_finding`) and ten Langkah
+  pages, plus their continued pages, and Daftar isi is correct.
+- **AC-S6:** Given Pesaing at its budget (five 20-word reasons, three
+  takeaways at 10 + 30 words, the most chips in the fixtures) and a long
+  business name, the page fits.
+- **AC-S7:** Given a report written before Part B and a non-clinic report,
+  the pages fall back as the web does and say "Bisnis Anda" where AC-20
+  requires.
+
+## Part 3: the appendix (PR 3)
+
+### Requirements
+
+- **L-01: A0.** The Lampiran divider, then A0: every question with its
+  topic, search volume and state per source; v3's answer notes only when
+  saved.
+- **L-02: One page per question (A1 to A10).** The question, its origin
+  label (`label_text`) under it, its topic and volume; the full ChatGPT
+  answer (`raw_answer`) and the full Google text (`google.text`); Google
+  `references` and the ChatGPT `sources` as numbered lists.
+- **L-03: States and empty cards.** No AI Overview; a failed check with
+  "Tidak dapat diuji" and "Minta bantuan" (mailto `support@nuave.ai` with the
+  order number, D-8, no re-run); no business named; no cited sources; no
+  search volume.
+- **L-04: Catatan Nuave (D-5).** A note only for a fact the saved report
+  holds: an answer that cited the clinic's site without its name, no AI
+  Overview, a failed check, no search volume, no cited sources, no business
+  named. The "berbeda" claim note and the stability re-ask note only once
+  their data exists. Each note is a fixed sentence with blanks.
+- **L-05: Split by measuring.** A script in the print page measures each
+  answer block; a block taller than its box is split at a paragraph, list
+  item or table row onto "A3 · 2/2"; when both answers together are too
+  tall, each source gets its own page. Text is never cut or shrunk.
+  Splitting ends before the ready marker (F-08). Only the appendix splits
+  this way, so the report pages and Daftar isi do not move.
+- **L-06: Long answers and long source lists.** The appendix holds answers
+  of about 700 words (ChatGPT) and 450 (Google), the saved maxima, and
+  longer. A source list of 40 or more items (saved maximum: 44) stays a
+  numbered list, splits between items onto continued pages like an answer
+  block, keeps its numbering across pages, and is never cut, shortened or
+  set smaller.
+
+### Acceptance criteria
+
+- **AC-L1:** For every fixture, every saved answer is found in the PDF text,
+  compared paragraph by paragraph after removing list marks, table bars and
+  line breaks and joining columns.
+- **AC-L2:** Given the longest saved answer and the answer with a table, the
+  answers split cleanly at paragraphs, items or rows, and the labels
+  ("A3 · 1/2", "A3 · 2/2") equal the page list after splitting.
+- **AC-L3:** Given the 44-source fixture, every source appears once, in
+  order, numbered without a gap across pages.
+- **AC-L4:** Given each empty-state fixture, its card shows; the "Minta
+  bantuan" link is the mailto with the order number; no re-run button
+  exists.
+- **AC-L5:** Given a fixture without a note's fact, that note is absent;
+  with it, the note shows.
+- **AC-L6:** `verify-nuave` on a preview downloads a PDF with the appendix;
+  the 76-page-class fixture prints through the real path inside the limits,
+  with time and size recorded.
+
+## Part 4: the PDF line on the web report (PR 4)
+
+### Requirements
+
+- **W-01:** One line on the web report and one in the report-ready email
+  (`src/lib/orders/mail.ts`) saying the PDF is the full designed report. The
+  founder approves the wording; it goes in the fixed-text file.
+- **W-02:** The line shows only on two-source reports. Nothing else on the
+  frozen web report or in the email changes.
+
+### Acceptance criteria
+
+- **AC-W1:** A new test shows the line on a two-source report and not on a
+  report saved before Spec 018.
+- **AC-W2:** The email test output carries the line.
+- **AC-W3:** The pre-Spec-018 snapshots stay unchanged.
+- **AC-W4:** `verify-nuave` passes on a preview.
+
+## Part 4b: the worksheet button (PR 4b)
+
+### Requirements
+
+- **K-01:** An "Unduh Lembar Kerja" button next to "Unduh PDF" on the web
+  report (D-13), downloading the worksheet that v3 P0.10 builds. It ships
+  with P0.10.
+- **K-02:** The button shows only on two-source reports and only once P0.10
+  exists. Nothing else on the web report changes.
+
+### Acceptance criteria
+
+- **AC-K1:** A new test shows the button only on two-source reports and only
+  when P0.10 is present.
+- **AC-K2:** The button downloads the worksheet.
+- **AC-K3:** The pre-Spec-018 snapshots stay unchanged; `verify-nuave`
+  passes on a preview.
+
+## Amendments to Spec 021 (D-10)
+
+For two-source reports, from the Part that ships each:
+
+- **P-03** reads: layout as this spec (16:9 pages, dark pages as F-04, page
+  footers drawn by the page, the appendix of Part 3). "Always the light
+  palette" no longer applies to the PDF.
+- **AC-P1** reads: "Unduh PDF" downloads the designed 16:9 PDF, with "05"
+  style page numbers on report pages and "A3 · 1/2" labels in the appendix.
+- The "PDF" bullets of Spec 021 "Experience" (A4, page 1 content, the footer
+  "Nuave · Laporan Visibilitas AI · <klinik>" and "<n> / <total>") are
+  replaced by this spec. The button, its spinner, its file name and its
+  retry message stay.
+- P-01, P-02, P-04 and P-05 are unchanged.
+
+## Failure and recovery
+
+- **The PDF cannot be made** (Browser Run down or missing, the ready marker
+  not set in 20 s, the daily cap reached): the web report shows today's retry
+  message (Spec 021 P-05) and stays the full report and the fallback (D-1 A).
+  Where Browser Run is missing, the button uses the browser's print of the
+  web page, as today.
+- **A font fails to load in Browser Run:** Q-9.
+- **A page's data is missing:** the page is left out (G-02); nothing is
+  inferred, invented or filled with sample content.
+- **A writer text is over budget:** continued pages on Temuan, Langkah and
+  Penutup (F-06); other pages per Q-3. Text is never cut.
+- **Never:** a pooled number, a cause, a promised date or re-check, a number
+  with no denominator, or content from the Figma sample.
+
+## Evidence, data, privacy, and cost
+
+- **Data:** only what the saved report already holds and the web report
+  already shows (Spec 018 R-28). No new field is collected or saved; the
+  `long_texts` log count is a number.
+- **Privacy:** no new data is sent anywhere. Browser Run already opens the
+  print page with a single-use code (Spec 021 P-02); the font files come from
+  Nuave's own site through `fonts.ts`, so the print page asks no font
+  service. Competitor logos: Q-8.
+- **Cost:** no new model or search calls; the order's worst case stays
+  USD 4.785, under the USD 5.00 hold (plan §9). Browser Run time per PDF
+  measured at 0.87 to 1.57 s of browser time in the worst cases, inside the
+  included hours at current volume (Spec 021 P-01); `PDF_DAILY_CAP` stays.
+- **Licences:** the four font families are open licence; each file's licence
+  is recorded in Part 1 (F-01).
+
+## Open questions
+
+- **Q-1 (orchestrator, after more orders): re-check the budgets.** The
+  budgets were confirmed on 7 saved reports on 2026-11-07. Re-run
+  `experiments/report-pdf-design/spike/saved_lengths.py` (read-only, numbers
+  only) when more orders are saved, and before this spec is marked Verified;
+  if a saved text exceeds its budget, the `long_texts` count and the
+  continued pages cover it, but the budget table is updated. Not a blocker
+  for approval.
+- **Q-2 (founder, before approval): fixture thresholds.** Plan §8 checks
+  "file size and render time inside the spike's limits" but sets no numbers.
+  Options: only Browser Run's 30 s and 20 s limits; or a tighter limit, such
+  as a time and size margin over the 76-page measurement.
+- **Q-3 (founder, before approval): over budget on pages without continued
+  pages.** Plan §6.3 gives continued pages only to Temuan, Langkah and
+  Penutup. Ringkasan's plan step, Pesaing's reasons and takeaways, Celah
+  topik's topic names and Rencana's titles can also be saved over budget
+  (the limits are soft). The plan forbids cutting. Options: a continued page
+  for those too; a layout tested to fit well above the budget; or a stated
+  exception. Step 0 shows Pesaing overflows at 1.25 times.
+- **Q-4 (founder): dividers of empty sections.** Today sections 02 and 03
+  have no page with data. Is their divider (and Daftar isi row) left out
+  until a page exists, as the left-out rule suggests, or always shown?
+- **Q-5 (founder): when the fixed-text file is approved.** Recommendation:
+  the whole file, for Parts 1 to 3, in Part 1's review, so it is approved
+  once; Part 4's line is added when the founder approves its wording.
+- **Q-6 (orchestrator): page assignment.** The plan's packages do not name
+  the back cover (added after approval) or Titik awal. This spec places the
+  back cover in Part 1 and Titik awal in Part 2.
+- **Q-7 (founder): where a continued report page splits.** The plan says
+  "decided from the word count" only. Recommendation: at a sentence end, so
+  no sentence is broken across pages.
+- **Q-8 (founder): competitor logos on Pesaing.** The web report loads each
+  business's own site icon (Spec 021 C-03). In the PDF, Browser Run would
+  fetch them from third-party sites during printing, and a slow site delays
+  `networkidle0`. Options: initials only in the PDF, or icons as on the web.
+- **Q-9 (founder): a font that fails to load.** `document.fonts.ready`
+  resolves even when a font fails, so a PDF could print in a fallback font.
+  Options: do not set the ready marker, so the download fails with the retry
+  message; or print with the fallback.
+- **Q-10 (founder, before approval): when customers get the new PDF.** Part
+  1 alone would ship a PDF without Ringkasan, findings or answers, a loss
+  against today's PDF and finish line 2. Options: Parts 1 to 3 switch the
+  print page over together (Part 3 turns the new body on for customers), or
+  they merge separately and deploy together. Part 4's line is true only
+  after that switch.
+- **Q-11 (founder): reports already delivered.** Plan §6.1 gives the new
+  print body to every Spec 018 report, and §3 speaks of "every new
+  two-source order". G-01 follows §6.1 (older two-source reports also get
+  the design on their next download). Confirm.
+
+## Implementation notes
+
+- Step 0 used Chromium's `preferCSSPageSize` with `printBackground` and zero
+  margins; the spike's code is throwaway and is not the implementation.
+- `next/font` may serve a variable file even when weights are listed;
+  F-01's TrueType check is the test, not the loader's settings.
+- The spike's appendix held about 420 words per page across the full width;
+  the Figma's question column and side-by-side answers hold fewer, so the
+  real appendix has more pages than the spike counted.
+
+## Verification record
+
+Complete after implementation, per Part:
+
+- Verification artifact: `specs/024-report-pdf-design/VERIFICATION.md`
+- Result: Pending
+- Date: Pending
+- Verified commit or working-tree state: Pending
