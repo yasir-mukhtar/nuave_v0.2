@@ -11,7 +11,7 @@
 > (file `W66XEpO1rKQY8vbKyvo7xq`, page `1:156`), made and iterated with the
 > founder on 2026-11-07; the [Report v3 plan](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205)
 > (`docs/REPORT_V3_PLAN.md` on PR #205, approved by the founder on
-> 2026-11-07, F-1; revision 6.3), whose proof of concept A supplied the
+> 2026-11-07, F-1; revision 6.4), whose proof of concept A supplied the
 > sample content; [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
 > (what a saved report holds and how it counts); [Spec 021](../specs/021-report-v2/SPEC.md)
 > (report v2, Part P: the server PDF); [Spec 023](../specs/023-report-writing-quality/SPEC.md);
