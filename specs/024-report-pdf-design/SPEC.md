@@ -321,9 +321,10 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   counts. A test finds every "X dari Y" in the PDF text and checks that Y
   equals one source's own denominator (ChatGPT N, Google M or Z, Spec 018) or
   the number of questions the finding cites; the only exception is a writer
-  headline kept under B-05, shown as saved. No number in the PDF equals the
-  sum of a ChatGPT and a Google count of the same thing unless that sum is
-  also one source's own count or a question count of that kind.
+  headline kept under B-05, shown as saved. No sum of the two sources
+  appears: no X or Y equals a ChatGPT count plus the Google count of the
+  same kind (named, completed, failed, answers), except where the fixture's
+  test lists that value as also a legitimate per-source or question count.
 - **AC-G4:** Given the fixed-text file, it holds no em dash and no en dash
   outside the allowed ranges, and every page's fixed strings come from it.
 - **AC-G5:** `npm run verify` passes; the Spec 021 AC-A5 snapshots and the
@@ -345,7 +346,12 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   3, the PR stops and returns to the orchestrator.
 - **F-02: Tokens and `DESIGN.md`.** The report type values go in
   `tokens.css` as a report block, so `npm run check:typography` keeps
-  passing. `DESIGN.md` gets the three changes D-3 lists: the two new families
+  passing. Neither the plan nor the reference README gives the sizes, so
+  this Part delivers the list: each type role of the PDF pages (for example
+  headline, big number, text, label, page number, appendix answer, code
+  text) with its minimum size in CSS px, taken from the reference and
+  approved by the founder with the fixture PDFs (AC-G6). AC-G2 checks
+  against this list. `DESIGN.md` gets the three changes D-3 lists: the two new families
   in `fonts.ts`, Newsreader replacing the system serif stack for the PDF,
   and an exception for Roboto Condensed inside the PDF pages only.
 - **F-03: Print request.** `pdfRequest` asks for the page's own CSS page size
@@ -370,15 +376,22 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 - **F-06: Continued report pages.** A Temuan, Langkah or Penutup text over
   its budget gets as many continued pages ("lanjutan") as it needs, decided
   by the page-list function from the word count before printing; the text
-  never overflows. Where the text splits is Q-7.
+  never overflows. A text splits at a sentence end, so no sentence is broken
+  across pages (Q-7, settled: it reads better and is decidable from the
+  text alone); a single sentence longer than a page splits at a word.
 - **F-07: `long_texts`.** The existing `report_pdf` log line gains one
   count, `long_texts`: the number of texts over budget, worked out by running
   the page-list function on the saved report the route already reads.
   Numbers and codes only.
 - **F-08: Ready comes last.** The print page sets `[data-saved-report="ready"]`
-  only after the data has arrived, `document.fonts.ready` has resolved, and
-  the appendix has been split (Part 3). The web report's marker is
-  unchanged.
+  only after the data has arrived and `document.fonts.ready` has resolved
+  with every PDF font loaded (`document.fonts.check` for each family and
+  weight used). If a font has failed, the marker is never set, so Browser
+  Run times out and the download shows the retry message (Q-9, settled:
+  fail closed; a PDF in a fallback font would break the design and the
+  embedded-font check, and the web report stays the full report, D-1 A).
+  Part 3 extends this rule to the appendix split (L-05). The web report's
+  marker is unchanged.
 - **F-09: Always-present pages.** As in the reference, filled from saved
   data where they show data:
   - **Sampul**, with the logo.
@@ -408,8 +421,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 - **AC-F3:** Given the fixtures, Daftar isi's numbers point at the right
   pages; the dark pages are the ones F-04 lists; the back cover is the last
   page.
-- **AC-F4:** A test shows the ready marker is absent until data, fonts and
-  the appendix split are all done.
+- **AC-F4:** A test shows the ready marker is absent until the data has
+  arrived and the fonts have loaded, and stays absent when a font fails to
+  load.
 - **AC-F5:** Given a fixture PDF, its fonts are embedded, none is Type 3, and
   no fallback font appears.
 - **AC-F6:** `npm run check:typography` passes; no font loader exists
@@ -425,25 +439,35 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 
 ### Requirements
 
-- **S-01: Ringkasan (D-9 A).** The statement is `two_source_writing.verdict`,
-  or the `conclusion` when there is no verdict (as the web Ringkasan does);
+- **S-01: Ringkasan (D-9 A).** The statement is `two_source_writing.verdict`;
+  when there is none, it is `verdictFromConclusion(conclusion)`, as on the
+  web: the conclusion cut at a sentence end, at most 220 characters, never
+  the whole conclusion;
   one card per source with its count, its settled sentence and ten dots; the
   first plan step as "Yang dikerjakan dulu", left out when there is no plan.
   The other two columns are not shown.
 - **S-02: Peta jawaban.** The ten questions by the two sources, with the
-  clinic's state in each cell and the competitors named by code.
-- **S-03: Temuan.** One page per `key_findings` item and one for
-  `google_finding`, in the web report's order: the writer's meaning sentence
-  first, the headline number and caption beneath when kept (G-04), the
-  title, the text, and each cited question (`evidence_prompt_ids`) as a chip
-  naming its appendix label.
+  clinic's state in each cell, and competitor columns for the first four
+  other businesses in `competitorRows` order (`report-v2-data.ts`), after
+  the clinic's own column.
+- **S-03: Temuan.** One page per `key_findings` item, in saved order, in
+  this order on the page: the title (the writer's meaning sentence), the
+  headline number and caption when B-05 kept them (G-04), the text, then
+  each cited question (`evidence_prompt_ids`) as a chip naming its appendix
+  label. `google_finding` gets its own Temuan page, placed where the web
+  report shows it, holding its one code-built sentence with no title, no
+  number and no chips.
 - **S-04: Pesaing.** Bars per source for the first five businesses and the
   clinic's own row, chips for the rest, the "Menurut jawaban AI" line for
   those five, `other_businesses` per source as the "disebut lebih jarang"
   line, and up to three takeaways in the right column. Mentions per source;
   "Direkomendasikan" only on the clinic's row, ChatGPT only. Rows may keep
   `sortRows` order; the sum that orders them is never printed. Older reports
-  derive rows as `competitorRows` does today. Competitor logos: Q-8.
+  derive rows as `competitorRows` does today. Every business shows its
+  initials, never a logo, and the print page makes no logo request (Q-8,
+  settled: today's print copy already makes none, `showLogos` in
+  `SavedReport.tsx`; a fetch from third-party sites during printing would
+  send Browser Run's requests to them and could delay `networkidle0`).
 - **S-05: Celah topik.** The rows the web report's Celah Topik shows (Spec
   021 A-05), at most five.
 - **S-06: Rencana.** Every recommendation in one list; v3 P0.6's who, time
