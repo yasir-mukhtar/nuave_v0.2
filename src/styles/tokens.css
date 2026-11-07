@@ -389,3 +389,70 @@
   --lp-nav-border: var(--border-light);
   --lp-card-glass: rgba(255, 255, 255, 0.85);
 }
+
+/*
+ * Spec 024 F-02: the designed report PDF (16:9, 1440 x 810 CSS px pages).
+ * Only the print page's designed body carries `.report-pdf`, together with
+ * the four report font variables from src/app/fonts.ts, so these values
+ * resolve there and nowhere else. Sizes are taken from the reference export
+ * (experiments/report-pdf-design/reference.pdf, measured at 1 pt = 1 px);
+ * each is also the minimum for its type role (AC-G2), listed in
+ * src/lib/report-pdf/type-roles.ts and specs/024-report-pdf-design/PR1_NOTES.md.
+ */
+.report-pdf {
+  --pdf-font-serif: var(--font-report-serif);
+  --pdf-font-sans: var(--font-report-sans);
+  --pdf-font-label: var(--font-report-label);
+  --pdf-font-code: var(--font-report-code);
+
+  /* Type roles: size, line height, tracking. */
+  --pdf-type-display: 72px; /* cover title */
+  --pdf-type-display-leading: 0.96;
+  --pdf-type-section-number: 210px; /* "01" on a divider */
+  --pdf-type-section-title: 60px; /* divider title */
+  --pdf-type-big-number: 72px; /* a card's or finding's large number */
+  --pdf-type-title: 36px; /* page title, Daftar isi lead */
+  --pdf-type-statement: 26px; /* Penutup's conclusion, back cover line */
+  --pdf-type-statement-lg: 30px;
+  --pdf-type-heading-lg: 26px; /* "Isi laporan" */
+  --pdf-type-heading: 22px; /* column and step titles */
+  --pdf-type-heading-sm: 20px; /* Daftar isi rows */
+  --pdf-type-lede: 18px; /* cover and divider lede */
+  --pdf-type-text: 14px; /* body text, appendix answers */
+  --pdf-type-small: 12px; /* row notes, legends */
+  --pdf-type-caption: 11px; /* source notes */
+  --pdf-type-label: 12px; /* uppercase labels (Roboto Condensed) */
+  --pdf-type-footer: 12px; /* page footer (Roboto Condensed) */
+  --pdf-type-page-number: 12px; /* "05", "A3 · 1/2" (Roboto Condensed) */
+  --pdf-type-code: 13px; /* text that shows code (Geist Mono) */
+  --pdf-type-label-tracking: 0.12em;
+  --pdf-type-footer-tracking: 0.04em;
+  --pdf-type-serif-tracking: -0.01em;
+
+  /* The page box and its frame. */
+  --pdf-page-width: 1440px;
+  --pdf-page-height: 810px;
+  --pdf-page-gutter: 80px;
+  --pdf-header-top: 40px;
+  --pdf-footer-bottom: 28px;
+  --pdf-content-top: 96px;
+  --pdf-content-bottom: 92px;
+
+  /* Light pages (the reference's white pages). */
+  --pdf-light-bg: #ffffff;
+  --pdf-light-ink: var(--ink-900);
+  --pdf-light-text: var(--ink-700);
+  --pdf-light-muted: var(--ink-500);
+  --pdf-light-line: var(--line-300);
+  --pdf-light-accent: var(--ember-500);
+  --pdf-light-accent-text: var(--ember-600);
+
+  /* Dark pages (cover, dividers, Penutup, Titik awal, back cover; D-10). */
+  --pdf-dark-bg: #100e26;
+  --pdf-dark-ink: #ffffff;
+  --pdf-dark-text: #d9d7ea;
+  --pdf-dark-muted: #9a98b8;
+  --pdf-dark-line: #312e49;
+  --pdf-dark-accent: var(--ember-400);
+  --pdf-dark-ring: #4a4766;
+}

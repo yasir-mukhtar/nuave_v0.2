@@ -52,7 +52,9 @@ const LABEL = /(?:^|\n)\s*(?:Mengapa|Berdasarkan)\s*:/i;
 
 const limits = TWO_SOURCE_WRITING_LIMITS;
 
-function words(text: string): number {
+/** Words as the writer counts them: letter and number runs ("Sp.DVE" is
+ * two). Spec 024 counts its page budgets the same way. */
+export function words(text: string): number {
   return text.match(/[\p{L}\p{N}]+(?:[’'-][\p{L}\p{N}]+)*/gu)?.length ?? 0;
 }
 
