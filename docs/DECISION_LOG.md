@@ -6,6 +6,15 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-11-07 — Approve Spec 024 (the designed report PDF)
+
+Yasir approved [Spec 024](../specs/024-report-pdf-design/SPEC.md),
+revision 5 (independent review PASS on `0450f1c`). That includes the four
+answers below and Q-9: when a font fails to load, no PDF is printed; the
+download shows the retry message and the web report stays the full report.
+Implementation starts with Part 1 (PR 1, the page frame), on its own branch
+and PR; merge and deploy stay with the founder.
+
 ## 2026-11-07 — Designed report PDF: four rollout and layout answers (Spec 024)
 
 Yasir answered the four founder questions of
@@ -21,7 +30,7 @@ Yasir answered the four founder questions of
 - **Reports already delivered (Q-11):** every two-source report, including
   ones already delivered, gets the designed PDF on its next download.
 
-Spec 024 is In review and still needs the founder's approval.
+Spec 024 was approved the same day (entry above).
 
 ## 2026-11-07 — Report section titles approved; worksheet download is a button
 

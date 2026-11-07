@@ -1,7 +1,9 @@
 # Spec 024: The designed report PDF (16:9)
 
-> Status: **In review**. The founder answered Q-3, Q-4, Q-10 and Q-11 on
-> 2026-11-07 (all as recommended); the spec awaits the founder's approval.
+> Status: **Approved** by the founder on 2026-11-07
+> ([decision](../../docs/DECISION_LOG.md#2026-11-07--approve-spec-024-the-designed-report-pdf)),
+> with Q-3, Q-4, Q-10 and Q-11 answered as recommended and Q-9 (fail closed
+> when a font fails) confirmed. Build Part 1 (PR 1) first.
 > Owner: founder; drafted by Claude on `claude/vigilant-cerf-e5kktf`
 > Updated: 2026-11-07, revision 5. Revision 5 records the founder's answers
 > to Q-3, Q-4, Q-10 and Q-11 and applies the two minor notes of the review
@@ -748,8 +750,8 @@ For two-source reports, from the Part that ships each:
   see, a ready timeout as its own code (F-07, AC-F12); telling a font
   failure apart from another timeout is not required. A font outage therefore stops
   every designed PDF while the web report stays up as the full report,
-  which D-1 option A accepts. The founder confirms this fail-closed rule at
-  approval.
+  which D-1 option A accepts. The founder confirmed this fail-closed rule
+  with the approval (2026-11-07).
 - **A page's data is missing:** the page is left out (G-02); nothing is
   inferred, invented or filled with sample content.
 - **A writer text is over budget:** continued pages on Temuan, Langkah,
@@ -818,8 +820,8 @@ Settled in revision 2, as recommended by the review of `72660aa`:
   breaks across pages.
 - **Q-8:** initials only, no logo requests (S-04), as today's print copy
   already does; no third-party request during printing.
-- **Q-9:** fail closed on a font that fails (F-08); the founder confirms at
-  approval.
+- **Q-9:** fail closed on a font that fails (F-08); the founder confirmed it
+  with the approval on 2026-11-07.
 
 Settled in revision 3, from the review of `f885989`:
 
