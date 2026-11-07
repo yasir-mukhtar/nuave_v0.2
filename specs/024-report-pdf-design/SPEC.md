@@ -2,7 +2,10 @@
 
 > Status: **Draft**
 > Owner: founder; drafted by Claude on `claude/vigilant-cerf-e5kktf`
-> Updated: 2026-11-07, revision 3. Revision 3 applies the review of
+> Updated: 2026-11-07, revision 4. Revision 4 applies the review of
+> `91a6890` (PASS+NOTES): Q-3 as three options, an AC for the log cause
+> (AC-F12), the Lampiran divider in Part 3, L-06 and L-07 in order, and the
+> 7 saved reports in Q-11. Revision 3 applied the review of
 > `f885989` (PASS+NOTES): AC-G3 limited to counts, the designed-print switch
 > (F-10), Rencana continued pages, one template-ownership rule, the font
 > failure rule, and dividers only for sections with a page. Revision 2
@@ -175,7 +178,7 @@ and when it is shown.
 | 04 | Lembar Kerja | Part 5, with v3 P0.10 | Only once the worksheet exists |
 | 04 | Penutup | Part 1 | Always |
 | 04 | Titik awal | Part 2 (Q-6, settled) | Always; v3 numbers only when saved |
-| 05 | Divider, A0, A1 to A10 with continued pages | Part 3 | Always |
+| 05 | Divider (Part 1's template), A0, A1 to A10 with continued pages | Part 3 | Always |
 | End | Sampul belakang | Part 1 (Q-6, settled) | Always |
 
 Parts of pages that wait for Phase 0 (Cara membaca's P0.8 lines, the P0.6
@@ -214,7 +217,8 @@ added by Part 5; later v3 parts by the later Part added with that package
   cause.
 - **G-06: Nothing cut.** No text is cut off, set below the reference sizes,
   or placed outside its page box; no page is empty. Long text goes to
-  continued pages: by word count on report pages (F-06, S-06), by measuring in the
+  continued pages: by word count on report pages (F-06; Rencana S-06 and
+  Pesaing S-04 under Q-3 option (a)), by measuring in the
   appendix (L-05).
 - **G-07: Made fresh.** Each download is made from the saved, unchanging
   report; nothing is stored and nothing is regenerated (Spec 021 P-04, Spec
@@ -262,11 +266,11 @@ the writer's rule. The page-list function counts with `words()`.
 | Page | Text | Budget | Longest saved | Over budget |
 | --- | --- | --- | --- | --- |
 | Ringkasan | Verdict | 220 characters and 2 sentences (no word limit; cut by code today) | 30 words | Code cuts it as the web does |
-| Ringkasan | "Yang dikerjakan dulu" (first plan step) | 35 words | 23 | Q-3 |
+| Ringkasan | "Yang dikerjakan dulu" (first plan step) | 35 words | 23 | Fits at 1.5 times (Q-3 a) |
 | Temuan | Finding title / text | 12 / 80 words | 10 / 64 | Continued page (F-06) |
-| Pesaing | "Menurut jawaban AI" reason, up to five | 20 words each | 15 | Q-3 |
-| Pesaing | Takeaways, up to three | 10 + 30 words each | 25 (text) | Q-3 |
-| Celah topik | Topic name, up to five rows | 6 words | not measured | Q-3 |
+| Pesaing | "Menurut jawaban AI" reason, up to five | 20 words each | 15 | 1.5 times layout, then continued page (Q-3 a) |
+| Pesaing | Takeaways, up to three | 10 + 30 words each | 25 (text) | 1.5 times layout, then continued page (Q-3 a) |
+| Celah topik | Topic name, up to five rows | 6 words | not measured | Fits at 1.5 times (Q-3 a) |
 | Rencana, Langkah | Recommendation title / paragraph | 14 / 100 words | 14 / 60 | Langkah: continued page (F-06); Rencana: continued page (S-06) |
 | Penutup | Conclusion; three plan steps | 70; 35 words each | 58; 23 | Continued page (F-06) |
 
@@ -274,8 +278,8 @@ Reports written before Part B have no limits; the same budgets apply to
 them. Step 0 found that at 1.25 times the limits two pages overflow:
 **Pesaing** (six rows with 25-word reasons, 15 chips, three takeaways; 743 of
 626 px) and **Cek fakta** (eight rows; 640 of 626 px). Pesaing is built in
-Part 2 and must fit at its budget (S-04); its behaviour above the budget is
-Q-3. Cek fakta's spec (v3 P1.2) must set its own budget or overflow rule.
+Part 2 and fits on one page at its budget (S-04); above it, Q-3 applies
+(default: option a). Cek fakta's spec (v3 P1.2) must set its own budget or overflow rule.
 
 ### Fixed text (D-7)
 
@@ -400,7 +404,12 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 - **F-07: `long_texts`.** The existing `report_pdf` log line gains one
   count, `long_texts`: the number of texts over budget, worked out by running
   the page-list function on the saved report the route already reads.
-  Numbers and codes only.
+  Numbers and codes only. When Browser Run fails, the line also records the
+  cause the route can see: a ready timeout gets its own status code,
+  separate from today's `browser_error` and `browser_failed` (with its HTTP
+  status). How the route recognises a ready timeout in Browser Run's
+  response is found and recorded in Part 1; a failure it cannot classify
+  keeps `browser_failed`.
 - **F-08: Ready comes last.** The print page sets `[data-saved-report="ready"]`
   only after the data has arrived and `document.fonts.ready` has resolved,
   and no face in `document.fonts` whose family is one of the PDF fonts
@@ -473,6 +482,10 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   has the switch off.
 - **AC-F11:** Given the fixtures, no divider appears for a section without
   a page, and Daftar isi has no row for it.
+- **AC-F12:** A route test, with Browser Run answering as it does when the
+  ready marker never appears, shows the `report_pdf` line logged with the
+  ready-timeout code, numbers and codes only, and the retry answer
+  returned.
 
 ## Part 2: the report pages from saved data (PR 2)
 
@@ -502,7 +515,10 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   line, and up to three takeaways in the right column. Mentions per source;
   "Direkomendasikan" only on the clinic's row, ChatGPT only. Rows may keep
   `sortRows` order; the sum that orders them is never printed. Older reports
-  derive rows as `competitorRows` does today. Every business shows its
+  derive rows as `competitorRows` does today. Under Q-3 option (a), the
+  default, a Pesaing still over its page after the 1.5 times layout
+  continues between rows onto a "lanjutan" page, decided before printing.
+  Every business shows its
   initials, never a logo, and the print page makes no logo request (Q-8,
   settled: today's print copy already makes none, `showLogos` in
   `SavedReport.tsx`; a fetch from third-party sites during printing would
@@ -548,7 +564,11 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   pages, plus their continued pages, and Daftar isi is correct.
 - **AC-S6:** Given Pesaing at its budget (five 20-word reasons, three
   takeaways at 10 + 30 words, the most chips in the fixtures) and a long
-  business name, the page fits.
+  business name, the page fits on one page. Under Q-3 option (a), the
+  default: given Pesaing at 1.5 times its budget (five 30-word reasons,
+  three takeaways at 15 + 45 words, the same chips), the page fits or
+  continues between rows onto a "lanjutan" page, with nothing outside its
+  box.
 - **AC-S7:** Given a report written before Part B and a non-clinic report,
   the pages fall back as the web does and say "Bisnis Anda" where AC-20
   requires.
@@ -560,7 +580,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 
 ### Requirements
 
-- **L-01: A0.** The Lampiran divider, then A0: every question with its
+- **L-01: A0.** Section 05's divider ("05 Lampiran"), drawn with Part 1's
+  divider template (F-09), then A0: every question with its
   topic, search volume and state per source; v3's answer notes only when
   saved.
 - **L-02: One page per question (A1 to A10).** The question, its origin
@@ -583,14 +604,14 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   This Part extends the ready rule (F-08): the marker is also held until the
   split has finished. Only the appendix splits this way, so the report pages
   and Daftar isi do not move.
-- **L-07: Switch on.** This Part turns the designed print on in production
-  and removes the switch (F-10).
 - **L-06: Long answers and long source lists.** The appendix holds answers
   of about 700 words (ChatGPT) and 450 (Google), the saved maxima, and
   longer. A source list of 40 or more items (saved maximum: 44) stays a
   numbered list, splits between items onto continued pages like an answer
   block, keeps its numbering across pages, and is never cut, shortened or
   set smaller.
+- **L-07: Switch on.** This Part turns the designed print on in production
+  and removes the switch (F-10).
 
 ### Acceptance criteria
 
@@ -717,15 +738,17 @@ For two-source reports, from the Part that ships each:
   (F-08), so the failure shows as a Browser Run ready timeout after about
   20 s, then the retry message. Each attempt still counts against
   `PDF_DAILY_CAP`. The `report_pdf` log line records the cause the route can
-  see (for example a ready timeout as its own code); telling a font failure
-  apart from another timeout is not required. A font outage therefore stops
+  see, a ready timeout as its own code (F-07, AC-F12); telling a font
+  failure apart from another timeout is not required. A font outage therefore stops
   every designed PDF while the web report stays up as the full report,
   which D-1 option A accepts. The founder confirms this fail-closed rule at
   approval.
 - **A page's data is missing:** the page is left out (G-02); nothing is
   inferred, invented or filled with sample content.
 - **A writer text is over budget:** continued pages on Temuan, Langkah,
-  Penutup (F-06) and Rencana (S-06); other pages per Q-3. Text is never cut.
+  Penutup (F-06), and under Q-3 option (a) Rencana (S-06) and Pesaing (S-04);
+  Ringkasan and Celah topik are laid out to fit at 1.5 times. Text is never
+  cut.
 - **Never:** a pooled number, a cause, a promised date or re-check, a number
   with no denominator, or content from the Figma sample.
 
@@ -755,20 +778,42 @@ Still open:
   Verified, counting with the writer's `words()`, not by spaces. If a saved
   text exceeds its budget, `long_texts` and the continued pages cover it on
   Temuan, Langkah, Penutup and Rencana, and the budget table is updated.
-- **Q-3 (founder, before approval): over budget on pages without continued
-  pages.** Plan §6.3 gives continued pages only to Temuan, Langkah and
-  Penutup; this spec adds Rencana (S-06). Ringkasan's plan step, Pesaing's
-  reasons and takeaways and Celah topik's topic names can also be saved over
-  budget, and cutting is forbidden. The basis: no saved text has exceeded
-  its limit by space count, but the recommendation title is 14 of 14 and
-  may already be over by `words()`; topic names were not measured; and
-  Pesaing overflows at 1.25 times its budget in the spike. Recommendation:
-  lay these pages out to fit at 1.5 times their budget, tested on a
-  fixture, and give Pesaing a continued page when it is still over. The
-  1.5 factor is a judgement, not derived from data: it is a margin above
-  the 1.25 case that already overflowed. Trade-off: a roomier layout is less
-  dense than the reference; continued pages on more page kinds add
-  page-list cases.
+- **Q-3 (founder, before approval): text over its soft limit on pages
+  without continued pages.** Plan §6.3 gives continued pages only to
+  Temuan, Langkah and Penutup. Ringkasan's plan step, Pesaing's reasons and
+  takeaways, Celah topik's topic names and Rencana's rows can also be saved
+  over budget, because the writer limits are soft, and cutting is
+  forbidden. The basis: no saved text has exceeded its limit by space
+  count, but the recommendation title is 14 of 14 and may already be over
+  by `words()`; topic names were not measured; Pesaing overflows at 1.25
+  times its budget in the spike. Options:
+  - **(a) Recommended, and the default this draft is written to:** lay out
+    Ringkasan, Pesaing and Celah topik to fit at 1.5 times their budget, and
+    give Pesaing and Rencana continued pages ("lanjutan") when they are
+    still over. The 1.5 factor is a judgement, not derived from data: a
+    margin above the 1.25 case that already overflowed. Trade-off: a
+    roomier layout than the reference on three pages, and two more page
+    kinds in the page list. Changes, already written into this draft: S-04
+    gives Pesaing its continued page (between rows, before printing); S-06
+    gives Rencana its; G-06 names both beside F-06; AC-S6 has a 1.5 times
+    case for Pesaing; AC-S8 tests Rencana. Still to add if (a) is chosen:
+    a 1.5 times fixture for Ringkasan and for Celah topik in AC-S6's style.
+  - **(b) Continued pages for every page at risk,** no 1.5 times layout:
+    Ringkasan, Pesaing, Celah topik and Rencana all continue when over.
+    Trade-off: the layouts match the reference at the budget, but a
+    one-page summary such as Ringkasan can spill onto a second page, and
+    the page list has the most cases. Changes: S-01, S-04 and S-05 add
+    continued pages; S-06 stays; G-06 names all four; AC-S6 tests Pesaing
+    over budget continuing instead of the 1.5 times case; AC-S8 stays; new
+    ACs for Ringkasan and Celah topik continuing.
+  - **(c) Fit at the budget only, with a stated exception:** the pages are
+    tested at the budget, and a text over its soft limit is accepted as an
+    exception (it may overflow and is counted in `long_texts`). Trade-off:
+    the simplest build and the reference layout, but it breaks finish line
+    5 and G-06 for over-limit text, which the saved reports have not shown
+    by space count. Changes: S-04 drops Pesaing's continued page and S-06
+    Rencana's; G-06 gains the exception; AC-S6 keeps only the at-budget
+    case; AC-S8 is removed; AC-G2 excludes pages with an over-limit text.
 - **Q-4 (founder): section numbers when a section has no page.** A section
   without a page shows no divider (F-09, settled in revision 3). Today
   sections 02 and 03 have none. Recommendation: keep the approved numbers,
@@ -787,7 +832,10 @@ Still open:
   feedback but a thinner PDF in between.
 - **Q-11 (founder): reports already delivered.** Plan §6.1 gives the new
   print body to every Spec 018 report, while §3 speaks of "every new
-  two-source order". Recommendation: follow §6.1 (G-01), so every
+  two-source order". Step 0's length check counted 7 saved reports in
+  production (2026-11-07); whose they are and how many of them are
+  two-source reports is not known from that check. Recommendation: follow
+  §6.1 (G-01), so every
   two-source report downloads the designed PDF, since nothing is stored and
   every PDF is made fresh. Trade-off: an owner who already downloaded the
   A4 PDF gets a different file on the next download; keeping old reports on
@@ -812,7 +860,8 @@ Settled in revision 2, as recommended by the review of `72660aa`:
 Settled in revision 3, from the review of `f885989`:
 
 - A section without a page shows no divider (F-09); its numbering is Q-4.
-- Rencana gets continued pages (S-06); the founder confirms with Q-3.
+- Rencana gets continued pages (S-06) under Q-3 option (a), the default;
+  the founder confirms with Q-3.
 
 ## Implementation notes
 
