@@ -656,7 +656,9 @@ For two-source reports, from the Part that ships each:
   message (Spec 021 P-05) and stays the full report and the fallback (D-1 A).
   Where Browser Run is missing, the button uses the browser's print of the
   web page, as today.
-- **A font fails to load in Browser Run:** Q-9.
+- **A font fails to load in Browser Run:** the ready marker is not set
+  (F-08), the download shows the retry message, and the web report stays the
+  full report (D-1 A). The founder confirms this fail-closed rule at approval.
 - **A page's data is missing:** the page is left out (G-02); nothing is
   inferred, invented or filled with sample content.
 - **A writer text is over budget:** continued pages on Temuan, Langkah and
@@ -672,7 +674,7 @@ For two-source reports, from the Part that ships each:
 - **Privacy:** no new data is sent anywhere. Browser Run already opens the
   print page with a single-use code (Spec 021 P-02); the font files come from
   Nuave's own site through `fonts.ts`, so the print page asks no font
-  service. Competitor logos: Q-8.
+  service. No competitor logo is requested (S-04).
 - **Cost:** no new model or search calls; the order's worst case stays
   USD 4.785, under the USD 5.00 hold (plan §9). Browser Run time per PDF
   measured at 0.87 to 1.57 s of browser time in the worst cases, inside the
@@ -682,54 +684,62 @@ For two-source reports, from the Part that ships each:
 
 ## Open questions
 
-- **Q-1 (orchestrator, after more orders): re-check the budgets.** The
-  budgets were confirmed on 7 saved reports on 2026-11-07. Re-run
-  `experiments/report-pdf-design/spike/saved_lengths.py` (read-only, numbers
-  only) when more orders are saved, and before this spec is marked Verified;
-  if a saved text exceeds its budget, the `long_texts` count and the
-  continued pages cover it, but the budget table is updated. Not a blocker
-  for approval.
-- **Q-2 (founder, before approval): fixture thresholds.** Plan §8 checks
-  "file size and render time inside the spike's limits" but sets no numbers.
-  Options: only Browser Run's 30 s and 20 s limits; or a tighter limit, such
-  as a time and size margin over the 76-page measurement.
+Still open:
+
+- **Q-1 (orchestrator; not blocking approval): re-check the budgets.** They
+  were confirmed on 7 saved reports on 2026-11-07, counted by spaces. Re-run
+  the check when more orders are saved and before this spec is marked
+  Verified, counting with the writer's `words()`, not by spaces. If a saved
+  text exceeds its budget, `long_texts` and the continued pages cover it on
+  Temuan, Langkah and Penutup, and the budget table is updated.
 - **Q-3 (founder, before approval): over budget on pages without continued
   pages.** Plan §6.3 gives continued pages only to Temuan, Langkah and
-  Penutup. Ringkasan's plan step, Pesaing's reasons and takeaways, Celah
-  topik's topic names and Rencana's titles can also be saved over budget
-  (the limits are soft). The plan forbids cutting. Options: a continued page
-  for those too; a layout tested to fit well above the budget; or a stated
-  exception. Step 0 shows Pesaing overflows at 1.25 times.
-- **Q-4 (founder): dividers of empty sections.** Today sections 02 and 03
-  have no page with data. Is their divider (and Daftar isi row) left out
-  until a page exists, as the left-out rule suggests, or always shown?
-- **Q-5 (founder): when the fixed-text file is approved.** Recommendation:
-  the whole file, for Parts 1 to 3, in Part 1's review, so it is approved
-  once; Part 4's line is added when the founder approves its wording.
-- **Q-6 (orchestrator): page assignment.** The plan's packages do not name
-  the back cover (added after approval) or Titik awal. This spec places the
-  back cover in Part 1 and Titik awal in Part 2.
-- **Q-7 (founder): where a continued report page splits.** The plan says
-  "decided from the word count" only. Recommendation: at a sentence end, so
-  no sentence is broken across pages.
-- **Q-8 (founder): competitor logos on Pesaing.** The web report loads each
-  business's own site icon (Spec 021 C-03). In the PDF, Browser Run would
-  fetch them from third-party sites during printing, and a slow site delays
-  `networkidle0`. Options: initials only in the PDF, or icons as on the web.
-- **Q-9 (founder): a font that fails to load.** `document.fonts.ready`
-  resolves even when a font fails, so a PDF could print in a fallback font.
-  Options: do not set the ready marker, so the download fails with the retry
-  message; or print with the fallback.
+  Penutup; Ringkasan's plan step, Pesaing's reasons and takeaways, Celah
+  topik's topic names and Rencana's titles can also be saved over budget,
+  and cutting is forbidden. Recommendation: lay these pages out to fit at
+  1.5 times their budget (all saved texts are under 1.0 today), tested on a
+  fixture, and give Pesaing a continued page when it is still over.
+  Trade-off: a roomier layout is less dense than the reference; continued
+  pages on more page kinds add page-list cases. Step 0 shows Pesaing
+  overflows at 1.25 times.
+- **Q-4 (founder): dividers of sections with no page.** Today sections 02
+  and 03 have no page with data. Recommendation: leave the divider and its
+  Daftar isi row out until one of its pages exists, and keep the approved
+  numbers, so the PDF goes 01, 04, 05. Trade-off: the gap shows that
+  sections are missing, but the approved titles (D-12) stay fixed and a
+  later section never renumbers the others; renumbering (01, 02, 03) reads
+  more smoothly but changes the approved fixed text with each package.
 - **Q-10 (founder, before approval): when customers get the new PDF.** Part
   1 alone would ship a PDF without Ringkasan, findings or answers, a loss
-  against today's PDF and finish line 2. Options: Parts 1 to 3 switch the
-  print page over together (Part 3 turns the new body on for customers), or
-  they merge separately and deploy together. Part 4's line is true only
-  after that switch.
+  against today's PDF and finish line 2. Recommendation: Parts 1 and 2 build
+  the new print body without turning it on; Part 3 turns it on for
+  customers, and Part 4 ships after it, because its line is true only then.
+  Trade-off: three PRs reach customers at once, so a fault shows late;
+  merging and deploying each Part live gives earlier feedback but a worse
+  PDF in between.
 - **Q-11 (founder): reports already delivered.** Plan §6.1 gives the new
-  print body to every Spec 018 report, and §3 speaks of "every new
-  two-source order". G-01 follows §6.1 (older two-source reports also get
-  the design on their next download). Confirm.
+  print body to every Spec 018 report, while §3 speaks of "every new
+  two-source order". Recommendation: follow §6.1 (G-01), so every
+  two-source report downloads the designed PDF, since nothing is stored and
+  every PDF is made fresh. Trade-off: an owner who already downloaded the
+  A4 PDF gets a different file on the next download; keeping old reports on
+  A4 means two server layouts to maintain.
+
+Settled in revision 2, as recommended by the review of `72660aa`:
+
+- **Q-2:** fixture thresholds of 10 s for the whole request and 3 MB per
+  PDF (Limits), about four times the measured maxima, far inside Browser
+  Run's limits.
+- **Q-5:** the fixed-text file is approved once, in Part 1's review, so
+  Parts 2 and 3 build on approved text (Fixed text).
+- **Q-6:** the back cover in Part 1 (design only, like the other
+  always-present pages) and Titik awal in Part 2 (it shows saved counts).
+- **Q-7:** a continued page splits at a sentence end (F-06), so no sentence
+  breaks across pages.
+- **Q-8:** initials only, no logo requests (S-04), as today's print copy
+  already does; no third-party request during printing.
+- **Q-9:** fail closed on a font that fails (F-08); the founder confirms at
+  approval.
 
 ## Implementation notes
 
