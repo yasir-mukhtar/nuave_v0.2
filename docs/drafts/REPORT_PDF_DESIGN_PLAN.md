@@ -6,9 +6,8 @@
 > and each package still needs its own approved spec
 > ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-07, branch
-> `claude/vigilant-cerf-e5kktf`. Revision 2 applies the first independent
-> review (round 1: FAIL, 2 blocking and 8 other findings); see "Review
-> history" at the end.
+> `claude/vigilant-cerf-e5kktf`. Revision 3 applies independent review
+> rounds 1 (FAIL) and 2 (PASS+NOTES); see "Review history" at the end.
 > Inputs: the founder's PDF redesign in Figma, page "Redesain Report Nuave"
 > (file `W66XEpO1rKQY8vbKyvo7xq`, page `1:156`), made and iterated with the
 > founder on 2026-11-07; the draft [Report v3 plan](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205)
@@ -55,11 +54,11 @@ the report is built once.
 
 ## 3. Finish line
 
-1. Every new two-source order's **Download PDF** gives the designed PDF:
+1. Every new two-source order's PDF download gives the designed PDF:
    16:9 pages, the Figma type, colours and grid, section dividers, a contents
    page whose numbers match, and an appendix with every question and both
    full answers.
-2. Every field a saved report holds appears in the PDF (§5.1).
+2. Everything the web report shows today appears in the PDF (§5.1).
 3. Every count is per source, with its settled sentence and denominator.
 4. Pages without data are left out; the contents page follows what is left.
 5. No text is cut off, shrunk below the reference sizes, or outside its page.
@@ -73,13 +72,13 @@ the report is built once.
 | # | Decision | Changes | Recommendation |
 | - | -------- | ------- | -------------- |
 | D-0 | Approve this plan. | `INDEX.md`, `NOW.md` routing; this file leaves `drafts/` | After review. |
-| D-1 | **What happens to the web report.** Option A: keep today's web report as it is (frozen at Spec 021 v2, no new sections), and redesign only the PDF. Option B: the private link opens a short delivery page; the PDF is the only full report. Option C: B, plus a short phone summary on the delivery page. | A: nothing. B and C: see the list below this table | **A now; decide B or C later**, after PR 3 ships and the checks in the paragraph below pass. |
+| D-1 | **What happens to the web report.** Option A: keep today's web report as it is (frozen at Spec 021 v2, no new sections), and redesign only the PDF. Option B: the private link opens a short delivery page; the PDF is the only full report. Option C: B, plus a short phone summary on the delivery page. | A: the v3 plan's web-page items move to the PDF (P0.1 under the source cards and its side panel, P0.8 under Jawaban AI, P1.2's marks in the answer panel, P2.5's copy on a phone, and Phase 0's "done when" phone check); PR 4 adds one line to the web report and to the approved report-ready email. B and C: see the list below this table | **A now; decide B or C later**, after PR 3 ships and the checks in the paragraph below pass. |
 | D-2 | Page format **16:9 landscape, 1440 × 810 CSS pixels** (about 381 × 214 mm), not A4. | Spec 021 Part P (A4 today); v3 P0.9 (A4 proof) | Yes. It is what the founder approved and it fits a meeting screen. It prints on A4 landscape with "fit to page". |
-| D-3 | Report type: **Newsreader** (headlines, big numbers), **Geist** (text), **Roboto Condensed** (labels, page numbers), **Geist Mono** only for text that shows code (for example robots.txt). | `DESIGN.md`: the two new families are added in `src/app/fonts.ts` (the only loader; no per-component loader), used only by the PDF pages; the report type values go in `tokens.css` as a report block, so `check:typography` keeps passing (it rejects raw px font sizes outside `tokens.css`); the "system serif stack only" line of the report exception changes to Newsreader for the PDF. Geist and Geist Mono are already app fonts. | Yes. Both new families are open licence (SIL OFL or Apache 2.0); the spec confirms each file's licence. |
-| D-4 | **The Figma is the visual reference after the corrections below**, then exported once to `experiments/report-pdf-design/reference.pdf`. Where the Figma and a spec disagree, the spec wins. Corrections before export: every pooled count removed (05 "6 dari 17 jawaban", 08 "dari 17 jawaban", 08 "lebih dari dua kali lebih sering", 05 grid cells "dari 2 jawaban", 07 "dicari sekitar 9.000 kali"), replaced by the per-source forms of D-6; the contents quote's unmeasured claim "lalu datang ke klinik yang disebut" rewritten (AGENTS rule 8); the A8 note "halaman yang membuat Ultima disebut" rewritten without a cause; the help line on A8 changed to D-8's path; **Download PDF** wherever a download is named. | Figma only | Yes. |
+| D-3 | Report type: **Newsreader** (headlines, big numbers), **Geist** (text), **Roboto Condensed** (labels, page numbers), **Geist Mono** only for text that shows code (for example robots.txt). | `DESIGN.md`: the two new families are added in `src/app/fonts.ts` (the only loader; no per-component loader), used only by the PDF pages; the report type values go in `tokens.css` as a report block, so `check:typography` keeps passing (it rejects raw px font sizes outside `tokens.css`); the "system serif stack only" line of the report exception changes to Newsreader for the PDF; and the rule "Do not ... introduce Inter or another UI font" (`DESIGN.md`, Typography families) gets an exception for Roboto Condensed inside the PDF pages only. Geist and Geist Mono are already app fonts. | Yes. Both new families are open licence (SIL OFL or Apache 2.0); the spec confirms each file's licence. |
+| D-4 | **The Figma is the visual reference after the corrections below**, then exported once to `experiments/report-pdf-design/reference.pdf`. Where the Figma and a spec disagree, the spec wins. Corrections before export: every pooled count removed (05 "6 dari 17 jawaban", 08 "dari 17 jawaban", 08 "lebih dari dua kali lebih sering", 05 grid cells "dari 2 jawaban", 07 "dicari sekitar 9.000 kali"), replaced by the per-source forms of D-6; the contents quote's unmeasured claim "lalu datang ke klinik yang disebut" rewritten (AGENTS rule 8); the A8 note "halaman yang membuat Ultima disebut" rewritten without a cause; the help line on A8 changed to D-8's path; the download label as D-7 settles it; and two frames added that the Figma does not have yet: **Celah topik** and one **Langkah** page per recommendation (§5.1). | Figma only | Yes. |
 | D-5 | **Appendix notes ("Catatan Nuave") come from code, not the writer.** A note appears only for a fact the saved report holds: a claim marked "berbeda" (when the fact check exists), an answer that cited the clinic's site without its name, no AI Overview, a failed check, no search volume, no cited sources, no business named, a stability re-ask (when it exists). Each note is a fixed sentence with blanks, approved once. | Spec 021 Part D (answers) | Yes. |
-| D-6 | **Headlines and counts.** Page headlines that state a conclusion come from code templates built on the settled per-source sentences, for example "ChatGPT: Klinik Anda muncul di 4 dari 10 pertanyaan. Google: Klinik Anda muncul di 2 dari 7 AI Overview." No pooled total, no ratio, no summed search volume, unless a later spec defines it with its denominator and the founder approves the change to `AUDIT.md`. The writer may replace a headline later (v3 P0.5), with the template as fallback. | None, as long as templates use the settled sentences | Yes. |
-| D-7 | Fixed text (section names, legends, empty states, notes, "Tidak dapat diuji", "Minta bantuan") is written once with `VOICE.md` and the writing skill, approved once, and kept in one file. Text that depends on the order is chosen by code from approved variants, for example the method line with and without search data (`search_data_available`). No fixed line may claim what patients do. | `VOICE.md` only if a new settled label is added | Yes. |
+| D-6 | **Headlines and counts.** Page headlines that state a conclusion come from code templates built on the settled per-source sentences, in the code's own words (`TwoSourceReport.tsx`), for example "ChatGPT: Klinik Anda muncul di 4 dari 10 pertanyaan dan direkomendasikan di 2." and "Google menampilkan AI Overview di 7 dari 10 pertanyaan; klinik Anda muncul di 2 dari 7." A **pooled number** means answers from both sources counted against one combined denominator (such as "6 dari 17 jawaban"), a ratio between such counts, or search volumes summed across questions. Pooled numbers are not shown unless a later spec defines them and the founder approves the change to `AUDIT.md`. Writer headlines kept under Spec 021 B-05, whose numbers count a finding's cited questions, show as saved. The writer may replace a page headline later (v3 P0.5), with the template as fallback. | None, as long as templates use the settled sentences | Yes. |
+| D-7 | Fixed text (section names, legends, empty states, notes, "Tidak dapat diuji", "Minta bantuan") is written once with `VOICE.md` and the writing skill, approved once, and kept in one file. The PDF has no download button; the web button stays "Unduh PDF" (Spec 021 AC-P1) and the email keeps "Download PDF", as today. Text that depends on the order is chosen by code from approved variants, for example the method line with and without search data (`search_data_available`). No fixed line may claim what patients do. | `VOICE.md` only if a new settled label is added | Yes. |
 | D-8 | The help path on a failed check is today's: **"Minta bantuan"**, the mailto link to `support@nuave.ai` with the order number (Spec 018). There is no re-run button (Spec 018 R-20). | None | Yes. |
 | D-9 | **Ringkasan's three short columns** ("Yang sudah berjalan", "Yang belum terlihat", "Yang dikerjakan dulu") have no saved field. Option A: fill the page with saved fields (the `verdict` as the statement, the per-source counts as figures, the first `plan` step as "Yang dikerjakan dulu"), and leave the other two columns out. Option B: a new writer field with a quote check (a Spec 023 change, with its cost measured). | Option B: Spec 023, the writer schema | **A** for this plan; B, if wanted, goes into v3 P0.5. |
 | D-10 | Spec 021 Part P points this plan changes: the dark cover (P-03 says the PDF is always the light palette); the footer format (AC-P1 "<n> / <total>" becomes "05" on report pages and "A3 · 1/2" in the appendix); the print request (§6.2). | Spec 021 Part P, by amendment in this plan's spec | Yes. |
@@ -94,7 +93,7 @@ page), AC-A6 and AC-A7; the `verify-nuave` checks of the report page; v3
 P0.1, P0.8, P1.2 and P2.5 and Phase 0's phone check, which are written for
 the web page; terms §2 ("hasil audit di halaman web, PDF, dan file bukti",
 `src/app/terms/page.tsx`); the report-ready email ("Di halaman laporan, pilih
-Download PDF", `src/lib/orders/mail.ts`); `docs/content/website/FAQ.md`; and
+Download PDF", `src/lib/orders/mail.ts`); `docs/content/website/FAQ.md` and the live FAQ page (`src/app/faq/page.tsx`); and
 the landing page's report pictures (`ReportShowcase.tsx`). Reports saved
 before Spec 018 would keep their web page in any option, because their PDF
 is the browser's print of it.
@@ -121,16 +120,17 @@ pages that need it fall back as the web page does today.
 | --- | --- |
 | Per-source counts and failed checks (`two_source.counts`) | Cover orbit; Ringkasan figures; Penutup |
 | `two_source_writing.verdict` | Ringkasan statement (D-9 option A) |
-| `conclusion` | Ringkasan, under the statement, when there is no verdict |
+| `conclusion` | Penutup's paragraph, always (as the web Penutup shows it); also Ringkasan's statement when there is no verdict |
 | `key_findings` (with `headline`) | One **Temuan** page per finding, in the Figma 07 layout: the headline, the finding's text, and its evidence answer when the finding names one |
 | `google_finding` | Its own Temuan page, as on the web page today |
-| `two_source_writing.takeaways` | Pesaing page, the right column |
-| `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source) and Peta jawaban grid |
+| `two_source_writing.takeaways` | Pesaing page, the right column (at most three, Spec 021) |
+| `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source, and the "Menurut jawaban AI" line for the first five businesses, as the web page shows them) and the Peta jawaban grid |
 | `other_businesses` per source | Pesaing page, "disebut lebih jarang" line |
 | `topics_missing` (Celah Topik) | A **Celah topik** page (new in the Figma, same grid as Peta jawaban rows) |
-| `priorities` | Rencana page, as a numbered list |
+| `priorities` (each recommendation's title and paragraph) | One **Langkah** page per recommendation, in the Figma "Detail langkah" layout (title and paragraph today; who, effort, evidence block and "Dasarnya" added by v3 P0.6, P1.1 and P0.7); the Rencana page lists their titles |
 | `two_source_writing.plan` (three steps with weeks) | Rencana page, as the three phase columns; Penutup |
 | Questions, states, topic, volume | Peta jawaban; Lampiran A0 |
+| Each question's origin label (`label_text`) | Its appendix page, under the question |
 | Both full answers (ChatGPT: the observation's `raw_answer`; Google: `google.text`), Google `references`, the ChatGPT observation's `sources` | Lampiran A1 to A10 |
 | Method facts (places, dates, `checked_from`, `checked_to`) | Cara membaca laporan |
 
@@ -148,7 +148,7 @@ pages that need it fall back as the web page does today.
 | Pesaing | Today | Two bars per business, one per source, each with its own denominator; no ratio headline |
 | Celah topik | Today | New page to draw (§5.1) |
 | Rencana | Today, partly | `plan` and `priorities`; who, effort and the six-step weekly chart need v3 P0.6 and F-2 |
-| Detail langkah | v3 P1.1 and P0.7 | The robots.txt evidence needs the website check (P1.1); "Dasarnya" needs P0.7 |
+| Langkah pages (Detail langkah) | Today, partly | One per recommendation with its title and paragraph; the robots.txt evidence needs the website check (P1.1), "Dasarnya" needs P0.7, the tags need P0.6 |
 | Cek fakta | v3 P1.2 | |
 | Kata AI vs Menurut Anda | v3 P2.3 (F-5) | Word counts need a definition in that spec |
 | Halaman mereka | v3 P2.2 | |
@@ -176,8 +176,13 @@ spec defines them with their denominators.
    their own), and zero margins.
 3. **A page list made by code.** A pure function turns a saved report into
    the ordered list of report pages (cover to Rencana) and the appendix
-   questions. Splitting (below) happens only inside the appendix, so the
-   report pages and the contents page are fixed before printing. Appendix
+   questions. Lists that can grow are spread by count, never by
+   measuring: one Temuan page per finding, one Langkah page per
+   recommendation, at most five "Menurut jawaban AI" lines, at most five
+   Celah topik rows (R-18). Each report page then holds bounded text whose
+   worst case the spike checks. Splitting by measurement (below) happens
+   only inside the appendix, so the report pages and the contents page are
+   fixed before printing. Appendix
    pages are labelled A0, A1, A3 · 1/2 and so on, as in the Figma, and the
    contents page points only at the appendix's first page.
 4. **Long answers flow onto continued pages.** A small script in the print
@@ -203,8 +208,11 @@ an independent verdict. Merge and deploy stay with the founder.
 **full-length** PDF (35 pages, the longest saved answer, embedded fonts)
 through the same Browser Run setup on a preview, against today's limits: 30
 seconds to load the page and 20 seconds for the ready marker
-(`src/lib/orders/report-pdf.ts`). It records the time, the file size, the
-page breaks and the fonts. The spec then sets the limits, records D-1 to
+(`src/lib/orders/report-pdf.ts`). It also renders the worst-case report pages:
+the longest finding, the longest recommendation (100 words, the writer's
+limit), five "Menurut jawaban AI" lines of 20 words, three takeaways, and a
+report written before Part B with no word limits. It records the time, the
+file size, the page breaks, the fonts and whether each worst case fits. The spec then sets the limits, records D-1 to
 D-10, the fixed text (D-7), and the corrected reference export (D-4).
 
 **PR 1: the page frame.** Fonts and tokens (D-3), the new print request, the
@@ -215,7 +223,8 @@ dividers, Penutup.
 pre-Spec-018 snapshots are unchanged.
 
 **PR 2: the report pages from saved data.** Ringkasan (D-9 A), Peta jawaban,
-Temuan pages, Pesaing, Celah topik, Rencana, with code headlines (D-6).
+Temuan pages, Pesaing, Celah topik, Rencana, the Langkah pages, with code
+headlines (D-6).
 *Done when:* every number equals the saved report's per-source counts in a
 test, and every field in §5.1 appears.
 
@@ -230,6 +239,9 @@ saved answer splits cleanly.
 the report-ready email that the PDF is the full designed report; the founder
 approves the wording. If the founder later picks B or C, that becomes its own
 spec.
+*Done when:* the line shows on the web report and in the email test output,
+the Spec 021 report snapshots change only by that line, and `verify-nuave`
+passes on a preview.
 
 **Later PRs, one per v3 package**, each with its designed page (§5.2).
 
@@ -247,7 +259,7 @@ spec.
    - Contents page numbers point at the right pages.
    - No element outside its page box; no empty page.
    - Every count equals the saved per-source counts, and no pooled number
-     appears.
+     (D-6's definition) appears outside B-05 writer headlines.
    - Every field in §5.1 is present.
    - Every saved answer is found in the PDF text, compared after removing
      list marks, table bars and line breaks and joining columns, paragraph by
@@ -259,7 +271,7 @@ spec.
 3. **Old reports.** Spec 021 AC-A5 snapshots and the pre-Spec-018 print pass
    unchanged.
 4. **The founder's eye** on the fixture PDFs against the reference export.
-5. **The real path.** `verify-nuave` on a preview for PR 1 and PR 3.
+5. **The real path.** `verify-nuave` on a preview for PR 1, PR 3 and PR 4.
 6. **Independent verdict** on each PR's exact head.
 
 ## 9. Cost and limits
@@ -280,6 +292,7 @@ spec.
 | Writer text longer than the sample breaks a page | Report pages hold only bounded fields with length limits from the spec; only the appendix splits; overflow checks on fixtures |
 | A page shows a number nobody defined, or a pooled count | §5 and D-6; the "no pooled number" check |
 | Saved content disappears from the PDF | §5.1 and its check |
+| A report page overflows | Lists spread by count (§6.3); worst cases rendered in the spike |
 | Fonts fail in Browser Run | Ready only after `document.fonts.ready`; the embedded-font check |
 | The Figma and the code drift apart | Corrected reference export (D-4); the founder's check per PR |
 
@@ -305,3 +318,4 @@ spec.
 | Round | Head | Verdict | Findings, in short |
 | --- | --- | --- | --- |
 | 1 | `f79705b` | FAIL | Pages marked "Today" that need unsaved data, and saved fields with no page; pooled counts and a ratio against `AUDIT.md`, Spec 018 AC-20 and Spec 023 R-13; D-1's costs (PDF as the only path, unlisted surfaces, no middle option); the print request and ready marker also change; D-3's other `DESIGN.md` rules; dark cover and footer format against Part P; page list vs continued pages; missing checks; the help path; unmeasured and causal fixed text, and **Download PDF**. All addressed in revision 2. |
+| 2 | `6e6d64b` | PASS+NOTES | `conclusion` hidden on Part B reports; recommendation paragraphs and competitor lines without room; the "no pooled number" check against B-05 headlines; option A's real changes; D-6 example not in the code's words; the download label; no Celah topik frame, no place for `label_text`, the live FAQ page, `DESIGN.md`'s "another UI font" rule; PR 4 without "done when"; finish line 2 too broad. All addressed in revision 3. |
