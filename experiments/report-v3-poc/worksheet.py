@@ -162,7 +162,7 @@ def build_workbook(d, out):
             a = q.get(src) or {"status": "notasked"}
             if a["status"] == "notasked":
                 continue
-            rows.append([f"P{q['n']}", q["q"], q["topic"], q.get("volume") or (f"{q['ai_mentions']:,} sebutan AI".replace(",", ".") if q.get("ai_mentions") else ""), SRC[src], RESULT[a["status"]],
+            rows.append([f"P{q['n']}", q["q"], q["topic"], q.get("volume") or (f"{q['ai_mentions']:,} sebutan AI".replace(",", ".") if q.get("ai_mentions") else ""), SRC[src], a.get("label") or RESULT[a["status"]],
                          ", ".join(a.get("named", [])), ", ".join(a.get("rec", [])),
                          ", ".join(dict.fromkeys(s["domain"] for s in a.get("sources", []))),
                          "Tidak, menyebut nama klinik" if q.get("brand") else "Ya"])
@@ -199,9 +199,9 @@ def build_workbook(d, out):
         c.border = BORDER
     named = lambda s: f'COUNTIFS({CR},"Ya",{QR},"{s}",{HR},"Disebut")+COUNTIFS({CR},"Ya",{QR},"{s}",{HR},"Direkomendasikan")'
     metrics = [
-        (f"ChatGPT: jawaban yang menyebut {short}", f"={named('ChatGPT')}", f'=COUNTIFS({CR},"Ya",{QR},"ChatGPT")-COUNTIFS({CR},"Ya",{QR},"ChatGPT",{HR},"Tidak dapat diuji")', "Disebut + direkomendasikan, dari jawaban yang selesai"),
+        (f"ChatGPT: jawaban yang menyebut {short}", f"={named('ChatGPT')}", f'=COUNTIFS({CR},"Ya",{QR},"ChatGPT")-COUNTIFS({CR},"Ya",{QR},"ChatGPT",{HR},"Tidak dapat diuji")-COUNTIFS({CR},"Ya",{QR},"ChatGPT",{HR},"Tidak dapat dinilai")', "Disebut + direkomendasikan, dari jawaban yang selesai"),
         (f"ChatGPT: jawaban yang merekomendasikan {short}", f'=COUNTIFS({CR},"Ya",{QR},"ChatGPT",{HR},"Direkomendasikan")', "=C8", "Dari jawaban yang selesai"),
-        (f"Google AI Overview: ringkasan yang menyebut {short}", f"={named('Google AI Overview')}", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak ada AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat diuji")', "Dari ringkasan AI yang tampil"),
+        (f"Google AI Overview: ringkasan yang menyebut {short}", f"={named('Google AI Overview')}", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak ada AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat diuji")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat dinilai")', "Dari ringkasan AI yang tampil"),
         (f"Google AI Overview: situs {short} dikutip tanpa nama", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Situs dikutip, nama tidak disebut")', "=C10", "Dari ringkasan AI yang tampil"),
         ("Google: pertanyaan tanpa AI Overview", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak ada AI Overview")', f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview")', "Dari pertanyaan yang diperiksa di Google"),
     ]
@@ -278,14 +278,17 @@ def build_workbook(d, out):
     if d.get("facts"):
         wf = wb.create_sheet("Cek Fakta")
         title(wf, "Cek Fakta", "Kalimat AI tentang klinik, dibandingkan dengan situs klinik dan data yang Anda konfirmasi. Nuave membandingkan, tidak menilai mana yang benar.", 9)
+        # The report's rows first, in the report's order, then every other checked claim (plan P1.2, P1.3).
+        ordered = [f for f in d["facts"] if f.get("show", True)] + [f for f in d["facts"] if not f.get("show", True)]
         rows = [[f"P{f['n']}", SRC[f["source"]], f["topic"], f["quote"], f"{f.get('ref_label', '')}: {f.get('ref_text', '')}".strip(": "),
-                 VERDICT[f["verdict"]], f.get("seen_on", ""), f.get("fix", ""), "Belum mulai" if f["verdict"] != "sesuai" else "Selesai"] for f in d["facts"]]
-        ff, fl = table(wf, 4, ["No", "Sumber", "Topik", "Kata AI", "Pembanding", "Hasil", "Sumber atau teks yang sama", "Perbaiki di", "Status perbaikan"],
-                       rows, [6, 18, 16, 44, 48, 14, 36, 30, 18], wrap_cols=(4, 5, 7, 8), center_cols=(1, 6))
+                 VERDICT[f["verdict"]], f.get("seen_on", ""), f.get("fix", ""), "Ya" if f.get("show", True) else "Tidak",
+                 "Belum mulai" if f["verdict"] != "sesuai" else "Selesai"] for f in ordered]
+        ff, fl = table(wf, 4, ["No", "Sumber", "Topik", "Kata AI", "Pembanding", "Hasil", "Sumber atau teks yang sama", "Perbaiki di", "Di laporan", "Status perbaikan"],
+                       rows, [6, 18, 16, 44, 48, 14, 36, 30, 12, 18], wrap_cols=(4, 5, 7, 8), center_cols=(1, 6, 9))
         for r in range(ff, fl + 1):
             wf.row_dimensions[r].height = 70
         color_words(wf, f"F{ff}:F{fl}", {"Berbeda": (BAD, BAD_W), "Sesuai": (GOOD, GOOD_W), "Tanpa penilaian": (WARN, WARN_W)})
-        status_list(wf, "I", ff, fl)
+        status_list(wf, "J", ff, fl)
 
     # ---------------- Website ----------------
     if d.get("webcheck"):

@@ -48,17 +48,20 @@ build needs `openpyxl`; the render uses the pre-installed Playwright.
   - every business an answer is said to name or recommend is in the business
     list and appears, by name or alias, in that answer's text;
   - every fact quote appears word for word in its answer, and every other
-    quotation in the report's own text appears in the answers, the questions,
+    quotation (in curly or straight double quotes) in the report's own text
+    appears in the answers, the questions,
     cited page titles, the facts, or the site quotes the data file lists
     (for B, `data/ultima_b.py` also checks each site quote against
     `evidence/evidence.json`);
-  - a claim about safety, licensing or medical supervision (a fixed word list,
-    or a "Keamanan" topic) gets no verdict and no reference;
+  - a claim about safety, licensing, registration (STR, SIP) or medical
+    supervision (a fixed word list, or a "Keamanan" topic) gets no verdict and
+    no reference;
   - each recommendation uses a playbook item that exists in
     `docs/content/report/PLAYBOOK.md` and has its tags in the data;
   - at most eight fact rows in the report (plan P1.2) and five names in the
     moment of truth (P0.1);
-  - no em dashes anywhere in the report's own text, a verdict under 220
+  - no em dashes anywhere in the report's own text, the kit's texts included,
+    a verdict under 220
     characters, and no recommendation title starting with "Periksa",
     "Pertahankan", "Pertimbangkan" or "Pastikan".
 

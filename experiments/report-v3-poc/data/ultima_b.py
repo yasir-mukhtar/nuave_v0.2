@@ -29,6 +29,7 @@ EVIDENCE = Path(__file__).resolve().parents[1] / "evidence/evidence.json"
 G_AI = "https://developers.google.com/search/docs/appearance/ai-features"
 G_HELP = "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
 G_REV = "https://support.google.com/contributionpolicy/answer/7400114"
+G_LOCAL = "https://support.google.com/business/answer/7091"
 SITE = "https://ultimaclinic.example"
 
 # ---------------------------------------------------------------- renaming
@@ -119,6 +120,8 @@ READ = {
     10: ("google", "mentioned", [], []),
 }
 NOTES = {6: "Google menandai ada AI Overview untuk pertanyaan ini, tetapi teksnya tidak tersimpan dalam data uji, jadi hasilnya tidak dapat dinilai."}
+# The product's "Tidak dapat diuji" means a check that failed; P6 did not fail.
+LABELS = {6: "Tidak dapat dinilai"}
 # Volumes: experiments/dataforseo-sozo/results/discover/SUMMARY.md (Google
 # searches a month for P6; DataForSEO's estimate of monthly mentions of the
 # topic in AI assistants for P1, P2 and P7). The other questions have none.
@@ -146,6 +149,8 @@ for n in range(1, 11):
     item[src] = {"status": status, "named": named, "rec": rec, "sources": sources, "answer": text}
     if n in NOTES:
         item[src]["note"] = NOTES[n]
+    if n in LABELS:
+        item[src]["label"] = LABELS[n]
     item["google" if src == "chatgpt" else "chatgpt"] = {"status": "notasked"}
     questions.append(item)
 
@@ -311,10 +316,10 @@ DATA = {
             {"name": "NMW Aesthetic Clinic", "why": "Petogogan; terapi khusus bekas jerawat cekung"},
             {"name": "Farla Infinite", "why": "Cilandak; CO₂ laser dan RF microneedling"},
         ],
-        "caption": "Beranda Ultima mencantumkan lima cabang di Jakarta Selatan, termasuk Tebet dan Mampang. Untuk pertanyaan ini, ChatGPT menyebut enam klinik lain, dan Ultima tidak disebut.",
+        "caption": "Beranda Ultima mencantumkan lima cabang di Jakarta Selatan. Untuk pertanyaan ini, ChatGPT menyebut enam klinik lain, dan Ultima tidak disebut; audit ini tidak membuktikan mengapa.",
     },
     "stability": {"note_only": "Belum ada contoh kestabilan: uji ini punya satu jawaban per pertanyaan. Di produk, tiga pertanyaan ditanyakan dua kali lagi pada hari yang sama."},
-    "brand_note": "Dua pertanyaan uji menyebut nama klinik. Jawabannya tidak dihitung di kartu dan peta pesaing, tetapi klaimnya ikut dicek. Di produk, pertanyaan seperti ini menunggu keputusan F-4 dan tidak pernah menanyakan keamanan, seperti P5.",
+    "brand_note": "Dua pertanyaan uji menyebut nama klinik. Jawabannya tidak dihitung di kartu dan peta pesaing, tetapi klaimnya ikut dicek. Di produk, pertanyaan seperti ini menunggu keputusan F-4 dan, tidak seperti P5, tidak pernah menanyakan keamanan.",
     "findings_lede": "Lima hal yang tidak terlihat dari angka saja.",
     "findings": [
         {"num": "0 dari 3", "cap": "ringkasan Google untuk pertanyaan umum yang menyebut Ultima",
@@ -475,7 +480,7 @@ DATA = {
                 {"domain": "rsudbudhiasih.jakarta.go.id", "title": "rawat jalan", "present": "", "action": ""},
             ]},
         ],
-        "note": "Kolom tengah menghitung berapa jawaban yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan bisa dibuka Nuave; Traveloka, tiket.com, Tokopedia, dan dua unggahan Instagram tidak terbaca.",
+        "note": "Kolom tengah menghitung berapa jawaban yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan bisa dibuka Nuave; Traveloka, tiket.com, Tokopedia, dan keenam tautan Instagram tidak terbaca: satu meminta login, lima tidak dibuka.",
     },
     "playbook": {
         1: {"who": "Tim konten, ditinjau dokter", "effort": "±1 minggu per halaman", "check": "halaman terbuka tanpa login dan teksnya bukan gambar",
@@ -483,20 +488,20 @@ DATA = {
         2: {"who": "Tim marketing dan dokter", "effort": "±3 hari", "check": "setiap halaman perawatan menyebut dokter, dan halaman dokternya ada",
             "source": "panduan Google", "line": "Untuk topik kesehatan, Google menanyakan apakah jelas siapa penulis halaman dan apakah ia ahli di bidangnya.", "url": G_HELP},
         4: {"who": "Manajer cabang", "effort": "±15 menit sehari", "check": "ulasan baru masuk tiap bulan dan setiap ulasan dibalas",
-            "source": "panduan Google", "line": "Ulasan dan rating membantu peringkat lokal; ulasan berbayar, berhadiah, atau yang hanya diminta dari pasien puas melanggar aturan Google.", "url": G_REV},
+            "source": "panduan Google", "line": "Ulasan dan rating bisa membantu peringkat lokal; ulasan berbayar, berhadiah, atau yang hanya diminta dari pasien puas melanggar aturan Google.", "urls": [G_LOCAL, G_REV]},
         5: {"who": "Admin atau tim marketing", "effort": "±1 hari", "check": "nama, alamat, dan jam buka sama di setiap listing",
             "source": "panduan Google dan OpenAI", "line": "ChatGPT dan Google menyebut dan mengutip bisnis dari halaman publik, termasuk direktori.", "url": G_AI},
     },
     "recs_lede": "Lima langkah, urut dari yang perlu didahulukan.",
     "recs": [
         {"item": 1, "title": "Tulis harga sebagai teks, dengan angka yang sama di semua halaman",
-         "text": "Saat ditanya “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga dan mengutip Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram untuk harga-harga itu; sepuluh berbeda dari teks di situs Ultima. Di situs sendiri, harga promo ada di dalam gambar, halaman bopeng tidak menulis harga, dan harga filler berbeda antara halaman filler (mulai Rp3.799.000) dan daftar perawatan (“Konsultasikan”). Tulis harga “mulai dari” yang berlaku sebagai teks di setiap halaman perawatan dan halaman promo, dengan angka yang sama di semua halaman. Audit ini tidak membuktikan bahwa AI akan memakai harga itu; langkah ini mengikuti pedoman di bawah.",
+         "text": "Saat ditanya “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga dan mengutip Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram untuk harga-harga itu; sepuluh berbeda dari teks di situs Ultima, enam di antaranya berupa kisaran yang memuat harga situs atau berujung di harga itu. Di situs sendiri, harga promo ada di dalam gambar, halaman bopeng tidak menulis harga, dan harga filler berbeda antara halaman filler (mulai Rp3.799.000) dan daftar perawatan (“Konsultasikan”). Tulis harga “mulai dari” yang berlaku sebagai teks di setiap halaman perawatan dan halaman promo, dengan angka yang sama di semua halaman. Audit ini tidak membuktikan bahwa AI akan memakai harga itu; langkah ini mengikuti pedoman di bawah.",
          "refs": [10]},
         {"item": 2, "title": "Sebutkan dokter yang menangani di halaman laser, bopeng, dan filler",
          "text": "Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler hanya menulis “dokter profesional”, “Dokter Kecantikan profesional”, atau “dokter tersertifikasi”, tanpa nama. Cantumkan nama, gelar, dan nomor STR atau SIP dokter yang menangani di setiap halaman perawatan, dengan tautan ke halaman tim dokter. Untuk filler pertama kali, ChatGPT menyarankan tempat yang dijelaskan lewat dokter spesialisnya; audit ini tidak membuktikan hubungan itu, dan langkah ini mengikuti pedoman Google untuk topik kesehatan.",
          "refs": [3, 5]},
         {"item": 1, "title": "Lengkapi halaman bopeng dengan harga dan jawaban pertanyaan pasien",
-         "text": "Untuk bekas jerawat, Ultima tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima menjelaskan proses dan jenis bekas luka yang bisa ditangani, tetapi untuk harga hanya menulis “Info Lengkap Harga Hubungi Admin”, dan tidak menyebut waktu pemulihan atau dokter yang menangani. Tulis kisaran harga, jumlah sesi, waktu pemulihan, dan dokter yang menangani sebagai teks, lalu minta dokter meninjaunya sebelum terbit. Audit ini tidak membuktikan bahwa isi halaman memengaruhi jawaban AI; langkah ini mengikuti pedoman di bawah.",
+         "text": "Untuk bekas jerawat, Ultima tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima menjelaskan proses dan jenis bekas luka yang bisa ditangani, tetapi untuk harga hanya menulis “Info Lengkap Harga Hubungi Admin”, dan tidak menyebut lama pemulihan atau nama dokter yang menangani. Tulis kisaran harga, jumlah sesi, waktu pemulihan, dan dokter yang menangani sebagai teks, lalu minta dokter meninjaunya sebelum terbit. Audit ini tidak membuktikan bahwa isi halaman memengaruhi jawaban AI; langkah ini mengikuti pedoman di bawah.",
          "refs": [2, 9]},
         {"item": 5, "title": "Cocokkan harga dan jam buka di listing yang dikutip AI",
          "text": "Untuk harga Ultima, ringkasan Google di P10 mengutip listing Ultima di Traveloka, tiket.com, dan Tokopedia; Nuave tidak bisa membuka listing itu. Di P5, ChatGPT mengutip CariBisnis, yang menulis jam buka cabang Kelapa Gading 2 setiap hari 10.00 sampai 20.00; situs Ultima menulis Senin sampai Sabtu 09.00 sampai 19.00 dan Minggu 09.00 sampai 17.00. Cocokkan harga dan jam buka di setiap listing itu dengan data cabang yang berlaku, dan minta koreksi bila berbeda. Teks permintaannya ada di Bahan siap pakai.",

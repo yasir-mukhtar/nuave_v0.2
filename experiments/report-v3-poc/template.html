@@ -199,11 +199,11 @@ p { margin: 0; }
 .comp.you .logo-i { background: var(--accent); color: var(--on-accent); }
 .comp-name { font-weight: 600; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .comp-site { font-size: 13px; color: var(--muted); }
-.comp-count { text-align: right; font-size: 12px; color: var(--muted); grid-row: span 2; display: grid; gap: 4px; justify-items: end; align-content: start; }
+.comp-count { text-align: right; font-size: 12px; color: var(--muted); display: grid; gap: 4px; justify-items: end; align-content: start; }
 .cc-row { display: flex; gap: 14px; }
 .cc { display: grid; justify-items: end; line-height: 1.25; }
 .cc b { font-size: 22px; color: var(--fg); font-weight: 700; line-height: 1.1; }
-.cc-rec { color: var(--accent-ink); font-weight: 500; }
+.comp-rec { grid-column: 2 / -1; font-size: 13px; color: var(--accent-ink); font-weight: 500; }
 .comp-why { grid-column: 2 / -1; font-size: 14px; color: var(--fg-2); }
 .comp-why em { font-style: normal; color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; }
@@ -423,6 +423,7 @@ function fmt(n) { return Number(n).toLocaleString("id-ID"); }
 function dot(status, extra = "") { return `<span class="dot ${status} ${extra}" aria-hidden="true"></span>`; }
 function refs(list) { return (list || []).map(n => `<button class="ref" data-q="${n}">P${n}</button>`).join(" "); }
 function volText(x) { return x.volume ? `±${fmt(x.volume)} pencarian/bulan` : x.ai_mentions ? `±${fmt(x.ai_mentions)} sebutan di asisten AI/bulan` : ""; }
+function label(a) { return (a && a.label) || STATUS[(a && a.status) || "notasked"]; }
 function namedIn(a) { return a && (a.status === "mentioned" || a.status === "recommended"); }
 
 /* ---------- counts, computed from the answers (code, not the writer) ---------- */
@@ -521,7 +522,7 @@ function answerHTML(q, src) {
   const a = q[src];
   if (!a || a.status === "notasked") return `<p class="small">Pertanyaan ini tidak ditanyakan ke ${SRC[src]} dalam data ini.</p>`;
   if (a.status === "noaio") return `<div class="status-line">${dot("noaio")}<span class="pill">${STATUS.noaio}</span></div><p class="small">Google tidak menampilkan AI Overview saat pertanyaan ini diperiksa.</p>`;
-  if (a.status === "failed") return `<div class="status-line">${dot("failed")}<span class="pill">${STATUS.failed}</span></div><p class="small">${esc(a.note || "Pemeriksaan ini tidak berhasil. Tim Nuave membantu menjalankannya lagi.")}</p>`;
+  if (a.status === "failed") return `<div class="status-line">${dot("failed")}<span class="pill">${esc(label(a))}</span></div><p class="small">${esc(a.note || "Pemeriksaan ini tidak berhasil. Tim Nuave membantu menjalankannya lagi.")}</p>`;
   const diffs = (D.facts || []).filter(f => f.n === q.n && f.source === src && f.verdict === "berbeda").map(f => f.quote);
   const chips = (a.sources || []).map(s => s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noreferrer noopener" title="${esc(s.title || "")}">${esc(s.domain)}</a>` : `<span title="${esc(s.title || "")}">${esc(s.domain)}</span>`).join("");
   return `<div class="status-line">${dot(a.status)}<span class="pill ${a.status === "recommended" || a.status === "mentioned" ? "acc" : ""}">${STATUS[a.status]}</span>${a.time ? `<span class="small">${esc(a.time)}</span>` : ""}</div>
@@ -549,10 +550,14 @@ function header() {
   </div></header>
   <p class="note-pop wrap no-print" id="file-note" hidden></p>`;
 }
+function legendLabel(st) {
+  const custom = QS.map(q => q.chatgpt && q.chatgpt.status === st ? q.chatgpt : q.google && q.google.status === st ? q.google : null).find(x => x && x.label);
+  return custom ? custom.label : STATUS[st];
+}
 function cards() {
   const c = stats("chatgpt"), g = stats("google");
   const dotsFor = src => QS.filter(q => q[src] && q[src].status !== "notasked")
-    .map(q => `<button class="dotbtn" data-q="${q.n}" data-src="${src}" title="P${q.n} · ${SRC[src]} · ${STATUS[q[src].status]}">${dot(q[src].status)}<span class="n">${q.n}</span></button>`).join("");
+    .map(q => `<button class="dotbtn" data-q="${q.n}" data-src="${src}" title="P${q.n} · ${SRC[src]} · ${esc(label(q[src]))}">${dot(q[src].status)}<span class="n">${q.n}</span></button>`).join("");
   const present = new Set(QS.flatMap(q => ["chatgpt", "google"].map(s => q[s] && q[s].status)).filter(Boolean));
   const legendItems = ["noaio", "none", "cited", "mentioned", "recommended", "failed", "notasked"].filter(s => !["noaio", "failed", "notasked"].includes(s) || present.has(s));
   const cs = (c.named ? `${SHORT} disebut di ${c.named} jawaban dan direkomendasikan di ${c.rec}.` : `${SHORT} tidak disebut di jawaban mana pun.`) + (c.cited ? ` Situsnya dikutip tanpa nama di ${c.cited}.` : "") + (c.failed ? ` ${c.failed} pertanyaan tidak dapat dinilai.` : "");
@@ -561,7 +566,7 @@ function cards() {
     <div class="card"><div class="card-src">${ICON.chatgpt}ChatGPT</div><div class="big tnum">${c.named} <small>dari ${c.done} jawaban</small></div><p>${esc(cs)}</p><div class="dots">${dotsFor("chatgpt")}</div></div>
     <div class="card"><div class="card-src">${ICON.google}Google AI Overview</div><div class="big tnum">${g.named} <small>dari ${g.shown} ringkasan AI</small></div><p>${esc(gs)}</p><div class="dots">${dotsFor("google")}</div></div>
   </div>
-  <div class="legend">${legendItems.map(s => `<span>${dot(s)}${STATUS[s]}</span>`).join("")}</div>`;
+  <div class="legend">${legendItems.map(s => `<span>${dot(s)}${esc(legendLabel(s))}</span>`).join("")}</div>`;
 }
 function moment() {
   const mo = D.moment; if (!mo) return "";
@@ -653,7 +658,8 @@ function competitors() {
   const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const rows = full.map(b => `<div class="comp ${b.you ? "you" : ""}"><div class="logo-i">${esc(initials(b.name))}</div>
     <div><div class="comp-name">${esc(b.name)}${b.you ? '<span class="pill acc">Klinik Anda</span>' : ""}</div><div class="comp-site">${b.domain ? esc(b.domain) : "situs tidak tercatat"}${b.rating ? ` · ${esc(b.rating)}` : ""}</div></div>
-    <div class="comp-count"><div class="cc-row"><span class="cc"><small>ChatGPT</small><b class="tnum">${b.c}</b><small>dari ${den.c}</small></span><span class="cc"><small>Google</small><b class="tnum">${b.g}</b><small>dari ${den.g}</small></span></div>${b.rec ? `<span class="cc-rec">direkomendasikan: ChatGPT ${b.rC} · Google ${b.rG}</span>` : ""}</div>
+    <div class="comp-count"><div class="cc-row"><span class="cc"><small>ChatGPT</small><b class="tnum">${b.c}</b><small>dari ${den.c}</small></span><span class="cc"><small>Google</small><b class="tnum">${b.g}</b><small>dari ${den.g}</small></span></div></div>
+    ${b.rec ? `<div class="comp-rec">Direkomendasikan: ChatGPT ${b.rC} dari ${den.c} · Google ${b.rG} dari ${den.g}</div>` : ""}
     ${b.why ? `<div class="comp-why"><em>Menurut jawaban AI:</em> ${esc(b.why)}</div>` : ""}</div>`).join("");
   const chips = rest.length ? `<div class="chips"><span class="small" style="width:100%">${rest.length} bisnis lain disebut lebih jarang:</span>${rest.map(b => `<span class="chip">${esc(b.name)} · ChatGPT ${b.c} · Google ${b.g}</span>`).join("")}</div>` : "";
   const takes = (D.takeaways || []).length ? `<div class="cards3">${D.takeaways.map(t => `<div class="take"><b>${esc(t.title)}</b><p>${esc(t.text)}</p></div>`).join("")}</div>` : "";
@@ -702,7 +708,7 @@ function recs() {
     const p = P[r.item] || {};
     return `<article class="rec"><div class="rec-n">${i + 1}</div><h3>${esc(r.title)}</h3><p>${esc(r.text)} ${refs(r.refs)}</p>
       <div class="tags">${p.who ? `<span class="tag"><b>Siapa:</b> ${esc(p.who)}</span>` : ""}${p.effort ? `<span class="tag"><b>Waktu kerja:</b> ${esc(p.effort)}</span>` : ""}${p.check ? `<span class="tag"><b>Selesai jika:</b> ${esc(p.check)}</span>` : ""}</div>
-      ${p.line ? `<p class="basis">Dasar, ${esc(p.source)}: ${esc(p.line)}${p.url ? ` <a href="${esc(p.url)}" target="_blank" rel="noreferrer noopener">Sumber</a>` : ""}</p>` : ""}</article>`;
+      ${p.line ? `<p class="basis">Dasar, ${esc(p.source)}: ${esc(p.line)}${(p.urls || (p.url ? [p.url] : [])).map((u, i, arr) => ` <a href="${esc(u)}" target="_blank" rel="noreferrer noopener">Sumber${arr.length > 1 ? " " + (i + 1) : ""}</a>`).join("")}</p>` : ""}</article>`;
   }).join("")}</div>`, "wash", true);
 }
 function closing() {

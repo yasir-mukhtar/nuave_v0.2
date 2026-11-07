@@ -44,11 +44,11 @@
 
 ## Next action
 
-- **Report v3 plan, draft** (2026-11-06, revision 6):
+- **Report v3 plan, draft** (2026-11-06, revision 6.1):
   [`drafts/REPORT_V3_PLAN.md`](./drafts/REPORT_V3_PLAN.md) proposes the
   report and worksheet work the founder wants done before launch (the last
   step of G1). It comes from the founder's benchmark of two premium agency
-  sample reports; revision 5.1 passed independent review, and revision 6
+  sample reports; revision 5.1 passed independent review, and revision 6.1
   follows the founder's direction of 2026-11-06 (founder-judged gates, a
   worksheet with every report). Two proofs of concept are in
   [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md).

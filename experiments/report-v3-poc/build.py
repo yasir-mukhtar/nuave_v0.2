@@ -39,7 +39,7 @@ def norm(text):
 PLAYBOOK = HERE.parents[1] / "docs/content/report/PLAYBOOK.md"
 # Words that make a claim about safety, licensing or medical supervision.
 # Such a claim is shown only as what AI said, with no verdict (plan §4).
-SAFETY = re.compile(r"\b(aman|keamanan|bpom|izin|perizinan|sertifikat\w*|bersertifikasi|tersertifikasi|terdaftar|lisensi|berlisensi|legal|pengawasan dokter)\b", re.I)
+SAFETY = re.compile(r"\b(aman|keamanan|bpom|izin|berizin|perizinan|sertifikat\w*|bersertifikasi|tersertifikasi|terdaftar|lisensi|berlisensi|legal|legalitas|str|sip|pengawasan dokter)\b", re.I)
 # Fixed product texts a report may quote besides the evidence.
 FIXED = ["Apa yang membuat bisnis Anda berbeda?", "Ada info yang sering salah ditulis AI?",
          # the report's own section names and labels, which its prose may refer to
@@ -66,7 +66,7 @@ def strings(node, key=""):
         for k, v in node.items():
             if k == "kit":
                 for item in v:
-                    yield from ((kk, vv) for kk, vv in item.items() if kk != "text" and isinstance(vv, str))
+                    yield from (("kit_text" if kk == "text" else kk, vv) for kk, vv in item.items() if isinstance(vv, str))
                 continue
             yield from strings(v, k)
     elif isinstance(node, list):
@@ -143,9 +143,9 @@ def check(d, label):
     for key, text in strings(d):
         if "—" in text:
             errors.append(f"em dash in {key}: {text[:50]}")
-        if key in ("ref_text", "site_quotes"):
+        if key in ("ref_text", "site_quotes", "kit_text"):
             continue
-        for quoted in re.findall(r"“([^”]+)”", text):
+        for quoted in re.findall(r"“([^”]+)”", text) + re.findall(r'"([^"<>]+)"', text):
             if norm(quoted.rstrip(".,")) not in known:
                 errors.append(f"quotation in {key} not found in the answers or evidence: “{quoted[:50]}”")
     if len(d["verdict"]) > 220:

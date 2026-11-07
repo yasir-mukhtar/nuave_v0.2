@@ -404,7 +404,7 @@ DATA = {
         2: {"who": "Tim marketing dan dokter", "effort": "±3 hari", "check": "setiap halaman perawatan menyebut dokter, dan halaman dokternya ada",
             "source": "panduan Google", "line": "Untuk topik kesehatan, Google menanyakan apakah jelas siapa penulis halaman dan apakah ia ahli di bidangnya.", "url": G_HELP},
         4: {"who": "Manajer cabang", "effort": "±15 menit sehari", "check": "ulasan baru masuk tiap bulan dan setiap ulasan dibalas",
-            "source": "panduan Google", "line": "Ulasan dan rating membantu peringkat lokal; ulasan berbayar, berhadiah, atau yang hanya diminta dari pasien puas melanggar aturan Google.", "url": G_REV},
+            "source": "panduan Google", "line": "Ulasan dan rating bisa membantu peringkat lokal; ulasan berbayar, berhadiah, atau yang hanya diminta dari pasien puas melanggar aturan Google.", "urls": [G_LOCAL, G_REV]},
         5: {"who": "Admin atau tim marketing", "effort": "±1 hari", "check": "nama, alamat, dan jam buka sama di setiap listing",
             "source": "panduan Google dan OpenAI", "line": "ChatGPT dan Google menyebut dan mengutip bisnis dari halaman publik, termasuk direktori.", "url": G_AI},
         6: {"who": "Vendor web", "effort": "kurang dari 1 jam", "check": "robots.txt mengizinkan Googlebot, Bingbot, dan OAI-SearchBot",

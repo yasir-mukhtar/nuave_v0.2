@@ -219,7 +219,9 @@ plan. Each verdict is recorded in the phase's pull request or a
     its knock-on effects before work continues.
 13. **One source for report and worksheet.** The worksheet is built from the
     same saved report data by code, never by a second writer call, so its
-    numbers, quotes and recommendations always equal the report's.
+    numbers, quotes and recommendations always equal the saved report's. The
+    worksheet may also list rows the page folds away, such as every checked
+    claim (P1.2).
 
 ## 5. Decisions the founder owes
 
