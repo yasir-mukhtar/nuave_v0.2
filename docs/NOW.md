@@ -67,8 +67,8 @@
   (the page templates of v3 Phase 0). F-13 is decided: the worksheet
   downloads from a button next to "Unduh PDF" (2026-11-07,
   [decision](./DECISION_LOG.md#2026-11-07--report-section-titles-approved-worksheet-download-is-a-button)).
-  This bullet was updated on 2026-11-07; the rest of this page is as of
-  2026-10-30.
+  This bullet and the one above are as of 2026-11-07; the rest of this
+  page is as of 2026-10-30.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The

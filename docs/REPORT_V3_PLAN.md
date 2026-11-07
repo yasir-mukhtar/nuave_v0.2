@@ -314,6 +314,9 @@ plan. Each verdict is recorded in the phase's pull request or a
 5. **Old reports stay as they are.** The page draws only the parts a saved
    report has data for, and nothing is rewritten when a report is opened (S0;
    the "rule for old reports" in [Spec 021's plan](../specs/021-report-v2/PLAN.md)).
+   How an old report's PDF looks follows Spec 024 (Q-11: a delivered
+   two-source report gets the designed PDF on its next download, drawn from
+   the data it already has).
 6. **Spending stays inside today's limits.** The *worst case* of one order
    must stay at or under the USD 5.00 order hold (decision 2026-10-28). Today
    it is USD 4.785: USD 1.5452 before the report plus three report calls at
