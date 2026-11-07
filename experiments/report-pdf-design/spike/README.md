@@ -127,7 +127,7 @@ command. Seven saved reports, 70 ChatGPT answers:
 | Finding text (`key_findings[].explanation`) | 64 words | 80 |
 | Recommendation paragraph (`priorities[].why`) | 60 words | 100 |
 | Conclusion | 58 words | 70 |
-| Verdict | 30 words | none |
+| Verdict | 30 words (173 characters) | 220 characters, 2 sentences |
 | Takeaway text | 25 words | 30 |
 | Plan step text | 23 words | 35 |
 | "Menurut jawaban AI" reason | 15 words | 20 |
@@ -137,7 +137,9 @@ command. Seven saved reports, 70 ChatGPT answers:
 | Google AI Overview | 450 words | none |
 | Sources cited by one ChatGPT answer | 44 | none |
 
-Every saved writer text is within its limit, so the writer limits can serve
+Words are counted by spaces, so the counts are approximate: the writer's own
+`words()` counts tokens ("Sp.DVE" is two), and the 14-word title may already
+be at or over its limit by that rule. Every saved writer text is within its limit by this count, so the writer limits can serve
 as the page budgets. The appendix has to hold answers of about 700 and 450
 words and a source list of 40 or more.
 
