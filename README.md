@@ -49,6 +49,7 @@ the founder accepted the report for now on 2026-09-26. Work now follows the
 | Resume question generation without losing the accepted approach | [`NUAVE-PROMPTS-2026-09-17` checkpoint](./docs/checkpoints/2026-09-17-winning-prompt-glm/CHECKPOINT.md) |
 | Dated product decisions | [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) |
 | Indonesian writing contract for customer copy | [`docs/VOICE.md`](./docs/VOICE.md) |
+| Writing Indonesian that reads clear and natural (interface, report, email, other touchpoints) | [`docs/VOICE.md`](./docs/VOICE.md) first, then the [`bahasa-indonesia-luwes`](./.agents/skills/bahasa-indonesia-luwes/SKILL.md) skill |
 | What each customer touchpoint must do | [`docs/journey/`](./docs/journey/) |
 | Landing, Order Preview, and website page copy | [`docs/content/`](./docs/content/) |
 
@@ -232,3 +233,4 @@ Code map:
 | Global styles and design tokens | `src/app/globals.css`, `src/styles/` |
 | Static images, icons, and web manifest | `public/` |
 | Current repository prompt skills | `skills/` |
+| Agent skills (Claude Code loads them through `.claude/skills/`) | `.agents/skills/` |
