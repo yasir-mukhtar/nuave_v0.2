@@ -248,7 +248,7 @@ DATA = {
         "footer": "Proof of concept B untuk persetujuan rencana Laporan v3. Data nyata dengan nama klinik disamarkan, bukan laporan pelanggan.",
         "file_note": "Di produk, tombol ini mengunduh file. Di proof of concept ini, PDF dan Lembar Kerja dikirim terpisah.",
     },
-    "verdict": "ChatGPT menyebut Ultima di 2 dari 4 jawaban, sebagai jaringan cabang dengan harga promo. Ringkasan Google tidak menyebut Ultima, walau dua artikel blog Ultima dipakai sebagai sumber.",
+    "verdict": "ChatGPT menyebut Ultima di 2 dari 4 jawaban, sebagai jaringan cabang dengan harga promo. Di 3 ringkasan Google untuk pertanyaan umum, nama Ultima tidak muncul, walau dua artikel blognya dipakai sebagai sumber.",
     "questions": questions,
     "moment": {
         "n": 2, "source": "chatgpt",
@@ -276,7 +276,7 @@ DATA = {
          "refs": [10]},
         {"num": "0 dari 3", "cap": "halaman perawatan Ultima yang menyebut nama dokter",
          "title": "Untuk kasus berat, ChatGPT menyarankan dokter spesialis, tanpa menyebut dokter Ultima",
-         "text": "Di P5, ChatGPT menilai Ultima cocok untuk facial dan perawatan ringan, lalu menulis: “saya lebih menyarankan konsultasi ke dokter spesialis kulit dan kelamin (Sp.D.V.E.) atau klinik yang transparan soal dokter dan alatnya.” Situs Ultima punya halaman tim dokter dengan dua dokter Sp.D.V.E dan nomor STR, tetapi halaman laser, bopeng, dan filler yang dibaca Nuave tidak menyebut nama dokter yang menangani. Untuk filler pertama kali (P3), ChatGPT menulis bahwa ia memilih tempat yang injeksinya dilakukan dokter spesialis.",
+         "text": "Di P5, ChatGPT menilai Ultima cocok untuk facial dan perawatan ringan, lalu menulis: “saya lebih menyarankan konsultasi ke dokter spesialis kulit dan kelamin (Sp.D.V.E.) atau klinik yang transparan soal dokter dan alatnya.” Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler yang dibaca Nuave tidak menyebut nama dokter yang menangani. Untuk filler pertama kali (P3), ChatGPT menulis bahwa ia memilih tempat yang injeksinya dilakukan dokter spesialis.",
          "refs": [3, 5]},
         {"num": "6", "cap": "angka jumlah cabang di situs Ultima",
          "title": "Situs Ultima menulis enam angka jumlah cabang",
@@ -352,7 +352,7 @@ DATA = {
             {"label": "Proses dan waktu pemulihan", "cells": [True, True, True, True, False]},
             {"label": "Tanggal pembaruan", "cells": [False, False, "tanggal tanpa keterangan", True, False]},
         ],
-        "note": "Halaman tim dokter Ultima menulis dua dokter Sp.D.V.E dengan nomor STR; tidak ada nomor SIP di halaman Ultima yang dibuka. Harga di artikel ERHA adalah kisaran pasar umum, bukan daftar harga ERHA. Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
+        "note": "Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E; tidak ada nomor SIP di halaman Ultima yang dibuka. Harga di artikel ERHA adalah kisaran pasar umum, bukan daftar harga ERHA. Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
     },
     "topics_lede": "Empat topik yang jawabannya belum menyebut Ultima, atau hanya memakai situsnya tanpa nama.",
     "topics": [
@@ -375,7 +375,7 @@ DATA = {
                  "action": "Dikutip ChatGPT untuk jumlah cabang dan harga (P4). Sertifikatnya kedaluwarsa, jadi isinya tidak diperiksa."},
             ]},
             {"name": "Listing dan marketplace", "sites": [
-                {"domain": "traveloka.com", "title": "listing cabang Kemang, Pondok Bambu, dan Puri Indah", "present": "Ada, tidak terbaca", "present_cls": "warn",
+                {"domain": "traveloka.com", "title": "listing cabang Kemang, Pondok Bambu, dan Puri Indah (P10); halaman kategori klinik (P4)", "present": "Ada, tidak terbaca", "present_cls": "warn",
                  "action": "Samakan harga dengan daftar harga situs (Rekomendasi 4)."},
                 {"domain": "tiket.com", "title": "listing cabang Tanjung Barat", "present": "Ada, tidak terbaca", "present_cls": "warn", "action": "Samakan harga dengan daftar harga situs."},
                 {"domain": "tokopedia.com", "title": "toko Ultima, Acne Laser Facial", "present": "Ada, tidak terbaca", "present_cls": "warn", "action": "Samakan harga dengan daftar harga situs."},
@@ -394,7 +394,7 @@ DATA = {
             {"name": "Artikel daftar dan media", "sites": [
                 {"domain": "hadirr.com", "title": "7 Klinik Kecantikan dengan Cabang Terbanyak", "present": "Ultima tidak disebut", "present_cls": "bad",
                  "action": "Tanpa langkah: Nuave tidak menyarankan meminta masuk daftar “terbaik”."},
-                {"domain": "suara.com", "title": "biaya laser flek hitam; rekomendasi klinik", "present": "Ultima tidak disebut", "present_cls": "bad", "action": ""},
+                {"domain": "suara.com", "title": "biaya laser flek hitam (dibuka); rekomendasi klinik 2023 (tidak dibuka)", "present": "Tidak disebut di artikel yang dibuka", "present_cls": "bad", "action": ""},
                 {"domain": "koranindopos.com", "title": "rekomendasi klinik kecantikan terbaik", "present": "", "action": ""},
                 {"domain": "wartaevent.com", "title": "rekomendasi klinik kecantikan", "present": "", "action": ""},
             ]},
@@ -441,7 +441,7 @@ DATA = {
          "text": "Saat ditanya “berapa biaya treatment di ultima”, ringkasan Google menulis 14 harga dengan sumber Traveloka, tiket.com, Tokopedia, Scribd, dan Instagram; sepuluh berbeda dari teks di situs Ultima. Di situs sendiri, harga promo ada di dalam gambar, halaman bopeng tidak menulis harga, dan harga filler berbeda antara halaman filler (mulai Rp3.799.000) dan daftar perawatan (“Konsultasikan”). Tulis harga “mulai dari” yang berlaku sebagai teks di setiap halaman perawatan dan halaman promo, dengan angka yang sama di semua halaman.",
          "refs": [10]},
         {"item": 2, "title": "Sebutkan dokter yang menangani di halaman laser, bopeng, dan filler",
-         "text": "Halaman tim dokter Ultima menulis dua dokter Sp.D.V.E dengan nomor STR, tetapi halaman laser, bopeng, dan filler hanya menulis “dokter profesional”, “Dokter Kecantikan profesional”, atau “dokter tersertifikasi”, tanpa nama. Untuk filler pertama kali, ChatGPT menyarankan tempat yang dijelaskan lewat dokter spesialisnya, termasuk halaman profil dokter Bamed. Cantumkan nama, gelar, dan nomor STR atau SIP dokter yang menangani di setiap halaman perawatan, dengan tautan ke halaman tim dokter.",
+         "text": "Halaman tim dokter Ultima mencantumkan lima dokter dengan nomor STR, dua di antaranya Sp.D.V.E, tetapi halaman laser, bopeng, dan filler hanya menulis “dokter profesional”, “Dokter Kecantikan profesional”, atau “dokter tersertifikasi”, tanpa nama. Untuk filler pertama kali, ChatGPT menyarankan tempat yang dijelaskan lewat dokter spesialisnya, termasuk halaman profil dokter Bamed. Cantumkan nama, gelar, dan nomor STR atau SIP dokter yang menangani di setiap halaman perawatan, dengan tautan ke halaman tim dokter.",
          "refs": [3, 5]},
         {"item": 1, "title": "Lengkapi halaman bopeng dengan harga dan jawaban pertanyaan pasien",
          "text": "Untuk bekas jerawat, Ultima tidak disebut di ChatGPT (P2) maupun Google (P9), walau beranda Ultima mencantumkan lima cabang di Jakarta Selatan. Jawaban P2 menyebut enam klinik, empat dengan harga yang mereka publikasikan. Halaman bopeng Ultima menjelaskan proses dan jenis bekas luka yang bisa ditangani, tetapi untuk harga hanya menulis “Info Lengkap Harga Hubungi Admin”. Tulis kisaran harga, jumlah sesi, waktu pemulihan, dan dokter yang menangani sebagai teks, lalu minta dokter meninjaunya sebelum terbit.",
