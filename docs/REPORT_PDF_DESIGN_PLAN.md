@@ -11,9 +11,9 @@
 > (file `W66XEpO1rKQY8vbKyvo7xq`, page `1:156`), made and iterated with the
 > founder on 2026-11-07; the draft [Report v3 plan](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205)
 > (revision 6.1, PR #205, not merged), whose proof of concept A supplied the
-> sample content; [Spec 018](./specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
-> (what a saved report holds and how it counts); [Spec 021](./specs/021-report-v2/SPEC.md)
-> (report v2, Part P: the server PDF); [Spec 023](./specs/023-report-writing-quality/SPEC.md);
+> sample content; [Spec 018](../specs/018-search-grounded-chatgpt-google-audit/SPEC.md)
+> (what a saved report holds and how it counts); [Spec 021](../specs/021-report-v2/SPEC.md)
+> (report v2, Part P: the server PDF); [Spec 023](../specs/023-report-writing-quality/SPEC.md);
 > [`AUDIT.md`](./AUDIT.md); [`DESIGN.md`](./DESIGN.md); [`VOICE.md`](./VOICE.md);
 > the Indonesian writing skill `bahasa-indonesia-luwes` (PR #206, not merged).
 
@@ -215,9 +215,9 @@ Each package is one small pull request with its own spec section, tests and
 an independent verdict. Merge and deploy stay with the founder.
 
 **Step 0: spike and spec (no product code).** A throwaway test builds a
-**maximum-length** PDF: the page list's largest case today (about 46 pages:
+**maximum-length** PDF: the page list's largest case today (about 47 pages:
 10 findings plus `google_finding`, 10 recommendations, the fixed and section
-pages, and all appendix pages) plus continued pages for the longest saved
+pages, all appendix pages and the back cover) plus continued pages for the longest saved
 answers, with embedded fonts,
 through the same Browser Run setup on a preview, against today's limits: 30
 seconds to load the page and 20 seconds for the ready marker
@@ -296,7 +296,7 @@ unchanged, and `verify-nuave` passes on a preview.
   (USD 1.5452 before the report plus three report calls at USD 1.08,
   `src/lib/spending/spend-worst-case.test.ts`), under the USD 5.00 hold.
 - Browser Run time grows with the page count; the spike measures the
-  maximum-length PDF (about 46 pages plus continued pages) against the
+  maximum-length PDF (about 47 pages plus continued pages) against the
   30-second and 20-second limits before PR 1.
 - `PDF_DAILY_CAP` (20 PDFs per report per day) stays.
 
@@ -340,6 +340,6 @@ unchanged, and `verify-nuave` passes on a preview.
 | --- | --- | --- | --- |
 | 1 | `f79705b` | FAIL | Pages marked "Today" that need unsaved data, and saved fields with no page; pooled counts and a ratio against `AUDIT.md`, Spec 018 AC-20 and Spec 023 R-13; D-1's costs (PDF as the only path, unlisted surfaces, no middle option); the print request and ready marker also change; D-3's other `DESIGN.md` rules; dark cover and footer format against Part P; page list vs continued pages; missing checks; the help path; unmeasured and causal fixed text, and **Download PDF**. All addressed in revision 2. |
 | 2 | `6e6d64b` | PASS+NOTES | `conclusion` hidden on Part B reports; recommendation paragraphs and competitor lines without room; the "no pooled number" check against B-05 headlines; option A's real changes; D-6 example not in the code's words; the download label; no Celah topik frame, no place for `label_text`, the live FAQ page, `DESIGN.md`'s "another UI font" rule; PR 4 without "done when"; finish line 2 too broad. All addressed in revision 3. |
-| 3 | `5e3004e` | PASS+NOTES | Soft writer limits with no rule for long text on report pages; the spike below the real page maximum (about 46); PR 4's "done when" against finish line 6; D-6's B-05 clause; the Figma's scheduled re-check promise; the Temuan evidence card rule, the number of Pesaing bars, and Langkah pages in the page list. All addressed in revision 4. |
+| 3 | `5e3004e` | PASS+NOTES | Soft writer limits with no rule for long text on report pages; the spike below the real page maximum (about 47); PR 4's "done when" against finish line 6; D-6's B-05 clause; the Figma's scheduled re-check promise; the Temuan evidence card rule, the number of Pesaing bars, and Langkah pages in the page list. All addressed in revision 4. |
 | 4 | `73c939a` | PASS+NOTES | The over-budget case named an order log that does not exist and left the page undefined; the evidence card rule for findings that name no source; a stale risk row; Penutup's place; the re-audit advice card and the clinic's own Pesaing row. All addressed in revision 5. |
 | 5 | `9789039` | PASS+NOTES | Three optional notes: the broad "every saved field" wording in §1 and §5.1; the evidence card's basis rule; where `long_texts` is counted. All addressed in revision 6. |
