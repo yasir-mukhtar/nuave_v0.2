@@ -53,7 +53,7 @@ latest status.
 - [`024-report-pdf-design/SPEC.md`](./024-report-pdf-design/SPEC.md)
   — **Approved** (2026-11-07, revision 5). The designed 16:9 report PDF:
   one Part per PR (page frame, report pages, appendix, the web line, the
-  worksheet button, v3 Phase 0 templates). Four independent review rounds,
+  worksheet button, v3 Phase 0 templates). Six independent review rounds,
   the last PASS on `0450f1c`; founder answered Q-3, Q-4, Q-10 and Q-11.
   Build Part 1 (PR 1) next.
 
