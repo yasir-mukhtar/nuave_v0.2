@@ -49,8 +49,10 @@
   [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md) is approved
   (D-0 to D-10) and follows the approved Report v3 page order; the
   reference is exported (`experiments/report-pdf-design/reference.pdf`, 39
-  pages). Next: the Step 0 spike (a
-  maximum-length PDF through Browser Run), then the spec.
+  pages). Step 0 spike, local part done
+  (`experiments/report-pdf-design/spike/`): 86 pages at the limits, under
+  1 s, 644 KB. Next: the Browser Run run and the longest saved texts, both
+  waiting on founder access, then the spec.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The
