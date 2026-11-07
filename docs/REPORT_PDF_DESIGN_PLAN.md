@@ -152,7 +152,7 @@ waits for that package. A page whose data does not exist yet is left out.
 | Front | Saat calon pasien bertanya | v3 P0.1 to P0.3 | One answer in which the clinic is not named, chosen by code; the per-source bars; "Mengapa ini penting" with the average-names line |
 | Front | Peta jawaban | Today | The ten questions by the two sources, with the clinic's state in each cell and the competitors named by code |
 | 01 Posisi <klinik> hari ini | Temuan, one page per finding | Today | The writer's meaning sentence first, the code's count and its caption beneath, then the text and the cited questions as chips (v3 rule 14; §5.1) |
-| 01 | Pesaing | Today (Part C) | Each business's mentions per source, "Menurut jawaban AI" and the takeaways. "Direkomendasikan" appears only on the clinic's own row, per source, because the saved report does not keep whether an answer recommended another business and no v3 package adds it. Rows may keep the web report's order (`sortRows`); the sum that orders them is never printed |
+| 01 | Pesaing | Today (Part C) | Each business's mentions per source, "Menurut jawaban AI" and the takeaways. "Direkomendasikan" appears only on the clinic's own row, and for ChatGPT only, because the saved report does not keep whether an answer recommended another business and no v3 package adds it. Rows may keep the web report's order (`sortRows`); the sum that orders them is never printed |
 | 01 | Celah topik | Today | |
 | 02 Apa kata AI tentang <klinik> | Cek fakta | v3 P1.2 | Up to eight rows, "berbeda" first, with the count of all claims checked; the source column reads "<situs>, yang dikutip jawaban ini"; safety and licensing claims as "Tanpa penilaian" with no reference |
 | 02 | Kata AI dan kata Anda | v3 P2.3 (F-5) | AI's line and word counts next to "Menurut Anda", and the other clinics' lines |
@@ -402,8 +402,8 @@ preview.
 
 - **2026-11-07, founder:** the five section titles are approved as fixed text (D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran". v3 F-13 is decided as option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (PR 4b). The reference was exported again from the Figma the same day: `experiments/report-pdf-design/reference.pdf`, 39 pages in the §5.2 order.
 
-- **2026-11-07, Report v3 revision 6.4 (commit `5d04c86`):** Titik awal is adopted as its own page after Penutup (v3 direction 3): its numbers carry their denominators ("4 dari 8 klaim yang diperiksa", "3 dari 5 pemeriksaan teknis yang dijalankan"), its footer keeps only the date the numbers come from and the confidential label (limits are said once, on Cara membaca), and the Lembar Kerja line shows only once that tab exists (v3 P3.3). "Direkomendasikan" is ChatGPT only. The Figma and the reference follow, with v3's Kata AI counts ("x dari 4 jawaban ChatGPT") and the Celah topik lede.
 - **2026-11-07, Report v3 revision 6.4:** "Counts on the PDF pages" becomes the counting rule (§5.3 rule 0). The Figma follows it: finding numbers with their source, Pesaing's "Direkomendasikan" only on the clinic's row, Situs yang dibaca AI counted per source without group totals, and the takeaways with denominators. The reference was exported again.
+- **2026-11-07, Report v3 revision 6.4 (commit `5d04c86`):** Titik awal is adopted as its own page after Penutup (v3 direction 3): its numbers carry their denominators ("4 dari 8 klaim yang diperiksa", "3 dari 5 pemeriksaan teknis yang dijalankan"), its footer keeps only the date the numbers come from and the confidential label (limits are said once, on Cara membaca), and the Lembar Kerja line shows only once that tab exists (v3 P3.3). "Direkomendasikan" is ChatGPT only. The Figma and the reference follow, with v3's Kata AI counts ("x dari 4 jawaban ChatGPT") and the Celah topik lede.
 
 ## Review history
 
@@ -422,4 +422,5 @@ preview.
 | 11 | `f4878bd` | PASS+NOTES | Situs counts verified; Temuan 4's number also has no B-05 form; tight spacing on Temuan 1. Both addressed in `07f97ca`. |
 | 12 | `07f97ca` | PASS | Both round 11 notes resolved. |
 | 13 | `e2092ac` | PASS+NOTES | Step 0 spike, local part: README claims beyond the scripts (font download, run steps, the appendix layout), unstated limits of the run, Bahan siap pakai pages, page-size units, the page maximum in §7, the direct Browser Run call. Addressed in `8d6cfad`. |
-| 14 | `8d6cfad` | PASS+NOTES | §9's page count; the word-limit spec name in the spike. Addressed in the next head. |
+| 14 | `8d6cfad` | PASS+NOTES | §9's page count; the word-limit spec name in the spike. Addressed in `be32a08`. |
+| 15 | `be32a08` | PASS+NOTES | The Pesaing row's "per source"; the order of two entries. Addressed in the next head. |
