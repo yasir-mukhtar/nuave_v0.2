@@ -1,9 +1,10 @@
 """Step 0 spike: the longest texts saved on Nuave's orders, as numbers only.
 
-Read-only. One fixed SELECT on the production D1 database (`nuave-v2-spend`,
+Read-only. Fixed SELECTs on the production D1 database (`nuave-v2-spend`,
 table `orders`) returns, for every text field inside each saved report, its
-JSON path, its length in characters and its word count. No text leaves the
-database: the query returns numbers and field paths only. This script then
+JSON path, its length in characters and its word count, and the same counts
+for each saved ChatGPT answer (`order_questions.observation_json`). No text
+leaves the database: the query returns numbers and field paths only. This script then
 groups the paths (array positions removed) and prints, per field, how many
 values there are, and the longest in characters and in words.
 
@@ -50,6 +51,25 @@ for row in rows:
     entry["values"] += 1
     entry["max_chars"] = max(entry["max_chars"], row["chars"])
     entry["max_words"] = max(entry["max_words"], row["words"])
+
+answers = api(f"/accounts/{account}/d1/database/{DATABASE_ID}/query", {"sql": """
+SELECT length(a) AS chars, length(trim(a)) - length(replace(trim(a), ' ', '')) + 1 AS words,
+       json_array_length(json_extract(q.observation_json, '$.sources')) AS sources
+FROM (SELECT q.observation_json, json_extract(q.observation_json, '$.raw_answer') AS a
+      FROM order_questions q JOIN orders o ON o.id = q.order_id
+      WHERE o.report_json IS NOT NULL AND q.observation_json IS NOT NULL) q
+WHERE a IS NOT NULL AND length(a) > 0
+"""})["result"][0]["results"]
+for row in answers:
+    entry = fields.setdefault("order_questions.observation_json.raw_answer (ChatGPT)",
+                              {"values": 0, "max_chars": 0, "max_words": 0})
+    entry["values"] += 1
+    entry["max_chars"] = max(entry["max_chars"], row["chars"])
+    entry["max_words"] = max(entry["max_words"], row["words"])
+if answers:
+    words = sorted(row["words"] for row in answers)
+    print(f"ChatGPT answers: {len(words)}, median {words[len(words) // 2]} words, "
+          f"max {words[-1]} words, max sources {max((row['sources'] or 0) for row in answers)}")
 
 print(f"saved reports: {orders}")
 print(f"{'field':70} {'values':>6} {'max chars':>9} {'max words':>9}")

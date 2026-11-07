@@ -115,9 +115,36 @@ What this shows:
   real path adds the page's own load from the Worker (its data and the font
   files), which these timings do not include.
 
-## Not done yet
+## The longest texts saved on Nuave's orders, 2026-11-07
 
-- **The longest texts saved on Nuave's orders.** These are in the production
-  database. The founder allowed reading their lengths, but this session's
-  permission settings block production reads, so it waits for a permission
-  rule. The spec needs these before it sets each page's word budget.
+`saved_lengths.py` reads the production database with fixed SELECTs that
+return field paths and counts only; no text leaves the database. The founder
+allowed it, and the repository's `.claude/settings.json` allows exactly this
+command. Seven saved reports, 70 ChatGPT answers:
+
+| Text | Longest saved | Writer limit (Spec 021 B-04) |
+| --- | --- | --- |
+| Finding text (`key_findings[].explanation`) | 64 words | 80 |
+| Recommendation paragraph (`priorities[].why`) | 60 words | 100 |
+| Conclusion | 58 words | 70 |
+| Verdict | 30 words | none |
+| Takeaway text | 25 words | 30 |
+| Plan step text | 23 words | 35 |
+| "Menurut jawaban AI" reason | 15 words | 20 |
+| Recommendation title | 14 words | 14 |
+| Finding title | 10 words | 12 |
+| ChatGPT answer | 679 words (median 325) | none |
+| Google AI Overview | 450 words | none |
+| Sources cited by one ChatGPT answer | 44 | none |
+
+Every saved writer text is within its limit, so the writer limits can serve
+as the page budgets. The appendix has to hold answers of about 700 and 450
+words and a source list of 40 or more.
+
+At those answer lengths (`build.py … 1.0 680 450`) the report has **76
+pages**: 592 KB locally, and through Browser Run 2.4 s for the whole request
+(1.57 s of browser time) and 785 KB. The spike does not draw source lists,
+so 44 sources would add to the appendix pages.
+
+Seven reports is a small sample; the spec re-checks the budgets as orders
+grow.
