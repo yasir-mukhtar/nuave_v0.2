@@ -6,6 +6,23 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-11-07 — Designed report PDF: four rollout and layout answers (Spec 024)
+
+Yasir answered the four founder questions of
+[Spec 024](../specs/024-report-pdf-design/SPEC.md), all as recommended:
+
+- **Long text (Q-3, option a):** Ringkasan, Pesaing and Celah topik are laid
+  out to fit at 1.5 times their word budget, and Pesaing and Rencana get
+  continued pages when text is still over.
+- **Section numbers (Q-4):** a section without a page shows no divider, and
+  the others keep their approved numbers, so today's PDF goes 01, 04, 05.
+- **When customers get it (Q-10):** the designed PDF is switched on for
+  customers with PR 3; until then production keeps today's PDF.
+- **Reports already delivered (Q-11):** every two-source report, including
+  ones already delivered, gets the designed PDF on its next download.
+
+Spec 024 is In review and still needs the founder's approval.
+
 ## 2026-11-07 — Report section titles approved; worksheet download is a button
 
 Yasir approved the five section titles of the report PDF as fixed text

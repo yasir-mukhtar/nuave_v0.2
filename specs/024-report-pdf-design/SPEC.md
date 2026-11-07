@@ -519,8 +519,7 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   line, and up to three takeaways in the right column. Mentions per source;
   "Direkomendasikan" only on the clinic's row, ChatGPT only. Rows may keep
   `sortRows` order; the sum that orders them is never printed. Older reports
-  derive rows as `competitorRows` does today. Under Q-3 option (a), the
-  default, a Pesaing still over its page after the 1.5 times layout
+  derive rows as `competitorRows` does today. Under Q-3 option (a), a Pesaing still over its page after the 1.5 times layout
   continues between rows onto a "lanjutan" page, decided before printing.
   Every business shows its
   initials, never a logo, and the print page makes no logo request (Q-8,
@@ -569,8 +568,7 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   pages, plus their continued pages, and Daftar isi is correct.
 - **AC-S6:** Given Pesaing at its budget (five 20-word reasons, three
   takeaways at 10 + 30 words, the most chips in the fixtures) and a long
-  business name, the page fits on one page. Under Q-3 option (a), the
-  default: given Pesaing at 1.5 times its budget (five 30-word reasons,
+  business name, the page fits on one page. Under Q-3 option (a): given Pesaing at 1.5 times its budget (five 30-word reasons,
   three takeaways at 15 + 45 words, the same chips), the page fits or
   continues between rows onto a "lanjutan" page, with nothing outside its
   box.
@@ -788,6 +786,7 @@ Still open:
   text exceeds its budget, `long_texts` and the continued pages cover it on
   Temuan, Langkah, Penutup, Rencana and Pesaing, and the budget table is
   updated.
+
 Settled by the founder on 2026-11-07, each as recommended:
 
 - **Q-3: option (a).** Ringkasan, Pesaing and Celah topik are laid out to
