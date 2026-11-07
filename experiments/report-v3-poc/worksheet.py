@@ -202,7 +202,7 @@ def build_workbook(d, out):
         (f"ChatGPT: jawaban yang merekomendasikan {short}", f'=COUNTIFS({CR},"Ya",{QR},"ChatGPT",{HR},"Direkomendasikan")', "=C8", "Dari jawaban yang selesai"),
         (f"Google AI Overview: ringkasan yang menyebut {short}", f"={named('Google AI Overview')}", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak ada AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat diuji")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat dinilai")', "Dari ringkasan AI yang tampil"),
         (f"Google AI Overview: situs {short} dikutip tanpa nama", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Situs dikutip, nama tidak disebut")', "=C10", "Dari ringkasan AI yang tampil"),
-        ("Google: pertanyaan tanpa AI Overview", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak ada AI Overview")', f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview")', "Dari pertanyaan yang diperiksa di Google"),
+        ("Google: pertanyaan tanpa AI Overview", f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak ada AI Overview")', f'=COUNTIFS({CR},"Ya",{QR},"Google AI Overview")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat diuji")-COUNTIFS({CR},"Ya",{QR},"Google AI Overview",{HR},"Tidak dapat dinilai")', "Dari pemeriksaan Google yang selesai (ringkasan atau tidak tampil)"),
     ]
     for i, (label, val, den, how) in enumerate(metrics, start=8):
         for j, v in enumerate((label, val, den, how), start=1):
@@ -355,8 +355,8 @@ def build_workbook(d, out):
         base.append(("Cek fakta: klaim yang berbeda", nb, len(d["facts"]), "Dari klaim yang diperiksa, tab Cek Fakta"))
     if d.get("webcheck"):
         nf = sum(1 for w in d["webcheck"] if w["result"] in ("gagal", "sebagian", "tidakcocok"))
-        run = sum(1 for w in d["webcheck"] if w["result"] != "f3")  # "Butuh F-3" rows were not run
-        base.append(("Website: pemeriksaan yang perlu diperbaiki", nf, run, "Gagal, sebagian, atau tidak cocok, dari pemeriksaan yang dijalankan di tab Website"))
+        judged = sum(1 for w in d["webcheck"] if w["result"] != "f3")  # "Butuh F-3" rows carry no verdict
+        base.append(("Website: pemeriksaan yang perlu diperbaiki", nf, judged, "Gagal, sebagian, atau tidak cocok, dari pemeriksaan yang dinilai di tab Website"))
     for i, (label, val, den, note) in enumerate(base, start=5):
         wt.cell(row=i, column=1, value=label).font = font(10)
         c = wt.cell(row=i, column=2, value=val)

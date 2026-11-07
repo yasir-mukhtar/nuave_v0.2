@@ -67,17 +67,20 @@ build needs `openpyxl`; the render uses the pre-installed Playwright.
     `docs/content/report/PLAYBOOK.md` and has its tags in the data;
   - at most eight fact rows in the report (plan P1.2) and five names in the
     moment of truth (P0.1);
-  - each word in "Kata AI" is in every answer it is counted in, and on no
-    line naming the clinic in the other answers of its source, and the note
-    names the source and the denominator ("dari 4 jawaban ChatGPT");
+  - each word in "Kata AI" is on a line naming the clinic in every answer
+    it is counted in (a list heading does not count), and on no such line in
+    the other answers of its source; the note names the source, the
+    denominator and the answers counted ("dari 4 jawaban ChatGPT ... (P1,
+    P4, P7, P8)");
   - no em dashes anywhere in the report's own text, the kit's texts included,
     a verdict under 220
     characters, and no recommendation title starting with "Periksa",
     "Pertahankan", "Pertimbangkan" or "Pastikan".
 
   It does not judge whether a sentence implies a cause, whether a hand-set
-  status is right, or whether a counted word is used for the clinic rather
-  than near it: the independent reviews on the pull request did that.
+  status is right, or whether a word on the clinic's line is said about the
+  clinic: the independent reviews on the pull request did that. It reads the
+  data files from source every time, never from a cached copy.
 - `evidence/`: the record behind B (`evidence.json`, `NOTES.md`, the page-load
   log). Doctor names and STR numbers in page text are redacted (page URLs are
   kept as cited); raw pages are not kept. Search volumes come from

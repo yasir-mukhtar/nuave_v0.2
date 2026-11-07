@@ -13,9 +13,9 @@ Then `node experiments/report-v3-poc/render.mjs` prints the PDFs.
 No network calls.
 """
 
-import importlib.util
 import json
 import re
+import runpy
 import sys
 from pathlib import Path
 
@@ -25,10 +25,9 @@ VALID = {"recommended", "mentioned", "cited", "none", "noaio", "failed", "notask
 
 
 def load(name):
-    spec = importlib.util.spec_from_file_location(name, HERE / "data" / f"{name}.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.DATA
+    # Always from the source text: a cached .pyc can be stale when a data file is edited twice within
+    # a second at the same size, and the checks would then pass or fail on old data.
+    return runpy.run_path(str(HERE / "data" / f"{name}.py"), run_name=name)["DATA"]
 
 
 def norm(text):
@@ -141,29 +140,35 @@ def check(d, label):
             errors.append(f"recommendation title starts with a banned verb: {r['title']}")
     desc = d.get("description") or {}
     if desc.get("words"):
-        # Plan P2.3: the words AI attaches to the clinic are counted by code; rule 4: the note names the
-        # source and the denominator. Each word lists the answers that use it; the pattern must be in each
-        # of them and on no line naming the clinic in the other answers of the pool.
+        # Plan P2.3: the words AI attaches to the clinic are counted by code, on lines that name the clinic
+        # (a list heading does not count); rule 4: the note names the source, the denominator and the
+        # answers. Each word lists the answers that use it: the pattern must be on a line naming the clinic
+        # in each of them, and on no such line in the other answers of the pool.
         src = desc.get("words_source", "chatgpt")
         own = [d["meta"]["clinic"], d["meta"].get("short", "")] + d["meta"].get("aliases", [])
         own = [n.lower() for n in own if n]
         pool = {q["n"]: q[src] for q in d["questions"]
                 if not q.get("brand") and (q.get(src) or {}).get("status") in ("mentioned", "recommended")}
         unit = {"chatgpt": "jawaban ChatGPT", "google": "ringkasan Google"}[src]
-        if f"dari {len(pool)} {unit}" not in desc.get("words_note", ""):
+        note = desc.get("words_note", "")
+        if f"dari {len(pool)} {unit}" not in note:
             errors.append(f"words_note must say 'dari {len(pool)} {unit}' (rule 4: source and denominator)")
+        listed = re.search(r"\((P\d+(?:, P\d+)*)\)", note)
+        if not listed or {int(x[1:]) for x in listed.group(1).split(", ")} != set(pool):
+            errors.append(f"words_note must list the answers counted: ({', '.join(f'P{n}' for n in sorted(pool))})")
+        def own_lines(a):
+            return [l for l in a.get("answer", "").split("\n") if any(o in l.lower() for o in own)]
         for w, where, pattern in desc["words"]:
             rx = re.compile(pattern, re.I)
             for n in where:
                 if n not in pool:
                     errors.append(f"word '{w}': P{n} is not a {src} answer that names the clinic")
-                elif not rx.search(pool[n].get("answer", "")):
-                    errors.append(f"word '{w}': not found in P{n} {src}")
+                elif not any(rx.search(l) for l in own_lines(pool[n])):
+                    errors.append(f"word '{w}': not on a line naming the clinic in P{n} {src}")
             for n, a in pool.items():
                 if n in where:
                     continue
-                lines = [l for l in a.get("answer", "").split("\n") if any(o in l.lower() for o in own)]
-                if any(rx.search(l) for l in lines):
+                if any(rx.search(l) for l in own_lines(a)):
                     errors.append(f"word '{w}': on a line naming the clinic in P{n} {src}, but not counted")
     known = corpus(d)
     for key, text in strings(d):

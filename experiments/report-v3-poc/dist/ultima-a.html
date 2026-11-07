@@ -552,7 +552,7 @@ function cards() {
   const present = new Set(QS.flatMap(q => ["chatgpt", "google"].map(s => q[s] && q[s].status)).filter(Boolean));
   const legendItems = ["noaio", "none", "cited", "mentioned", "recommended", "failed", "notasked"].filter(s => !["noaio", "failed", "notasked"].includes(s) || present.has(s));
   const cs = (c.named ? `${SHORT} disebut di ${c.named} jawaban dan direkomendasikan di ${c.rec}.` : `${SHORT} tidak disebut di jawaban mana pun.`) + (c.cited ? ` Situsnya dikutip tanpa nama di ${c.cited}.` : "") + (c.failed ? ` ${c.failed} pertanyaan tidak dapat dinilai.` : "");
-  const gs = (g.named ? `${SHORT} disebut di ${g.named} ringkasan.` : `${SHORT} tidak disebut di ringkasan mana pun.`) + (g.cited ? ` Situsnya dikutip tanpa nama di ${g.cited}.` : "") + (g.noaio ? ` Tidak ada AI Overview di ${g.noaio} pertanyaan.` : "") + (g.failed ? ` ${g.failed} pertanyaan tidak dapat dinilai.` : "");
+  const gs = (g.named ? `${SHORT} disebut di ${g.named} ringkasan.` : `${SHORT} tidak disebut di ringkasan mana pun.`) + (g.cited ? ` Situsnya dikutip tanpa nama di ${g.cited}.` : "") + (g.done ? ` Google menampilkan AI Overview di ${g.shown} dari ${g.done} pertanyaan.` : "") + (g.failed ? ` ${g.failed} pertanyaan tidak dapat dinilai.` : "");
   return `<div class="cards">
     <div class="card"><div class="card-src">${ICON.chatgpt}ChatGPT</div><div class="big tnum">${c.named} <small>dari ${c.done} jawaban</small></div><p>${esc(cs)}</p><div class="dots">${dotsFor("chatgpt")}</div></div>
     <div class="card"><div class="card-src">${ICON.google}Google AI Overview</div><div class="big tnum">${g.named} <small>dari ${g.shown} ringkasan AI</small></div><p>${esc(gs)}</p><div class="dots">${dotsFor("google")}</div></div>
@@ -683,7 +683,7 @@ function pagesGrid() {
 function topics() {
   if (!(D.topics || []).length) return "";
   return band("celah", "Celah Topik", D.topics_lede, D.topics.map(t => `
-    <div class="topic"><div class="topic-h"><h3>${esc(t.name)}</h3><div class="topic-v tnum">${t.volume ? `±${fmt(t.volume)}<small>pencarian/bulan</small>` : t.ai_mentions ? `±${fmt(t.ai_mentions)}<small>sebutan di asisten AI/bulan</small>` : `${t.others}<small>klinik lain disebut AI</small>`}</div></div>
+    <div class="topic"><div class="topic-h"><h3>${esc(t.name)}</h3><div class="topic-v tnum">${t.volume ? `±${fmt(t.volume)}<small>pencarian/bulan</small>` : t.ai_mentions ? `±${fmt(t.ai_mentions)}<small>sebutan di asisten AI/bulan</small>` : `${t.others}<small>klinik lain disebut ${t.others_src ? "di " + SRC[t.others_src] : "AI"}</small>`}</div></div>
     <p>${esc(t.status)} ${t.sources ? `<span class="src">Situs yang dikutip: ${esc(t.sources)}</span>` : ""} ${refs(t.refs)}</p></div>`).join(""));
 }
 function sourceMap() {
@@ -717,7 +717,7 @@ function closing() {
       <li>ChatGPT: <b>${cs.named} dari ${cs.done}</b> jawaban menyebut ${esc(SHORT)}</li>
       <li>Google AI Overview: <b>${gs.named} dari ${gs.shown}</b> ringkasan menyebut ${esc(SHORT)}</li>
       ${(D.facts || []).length ? `<li>Cek fakta: <b>${nb} dari ${D.facts.length}</b> klaim yang diperiksa berbeda dari situs ${esc(SHORT)}</li>` : ""}
-      ${(D.webcheck || []).length ? `<li>Untuk tim web: <b>${wf} dari ${D.webcheck.filter(w => w.result !== "f3").length}</b> pemeriksaan teknis yang dijalankan perlu diperbaiki</li>` : ""}
+      ${(D.webcheck || []).length ? `<li>Untuk tim web: <b>${wf} dari ${D.webcheck.filter(w => w.result !== "f3").length}</b> pemeriksaan teknis yang dinilai perlu diperbaiki</li>` : ""}
     </ul><p>Angka ini tersimpan di Lembar Kerja, tab Titik Awal, untuk dibandingkan nanti.</p></div>
     <div class="inkcard"><h3>Audit ulang setelah 8 minggu</h3><p>${esc(c.recheck)}</p></div></div>`, "ink", true);
 }

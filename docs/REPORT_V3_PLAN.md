@@ -142,7 +142,7 @@ This plan adds three format directions:
    - today's counts per source with their denominators ("4 dari 10 jawaban
      ChatGPT menyebut <klinik>"), the claims that differ out of those
      checked (P1.2), and the technical checks that need fixing out of those
-     run (P1.1). Each number appears once its data exists and equals the
+     given a verdict (P1.1 runs only the checks the playbook covers). Each number appears once its data exists and equals the
      same number elsewhere in the report. No target, forecast or promised
      result.
    - The advice is fixed text: about eight weeks after the changes, an
@@ -151,14 +151,19 @@ This plan adds three format directions:
      not show what caused them. No promised date or service (D-7).
    - The line naming the worksheet's "Titik Awal" tab appears once that tab
      exists (P3.3).
-   - The limits stay on Cara membaca laporan (rule 14). This page states
-     only the date its numbers come from.
+   - The method's other limits stay on Cara membaca laporan (rule 14: each
+     limit once, where it applies). Besides the comparison limit in its
+     advice, this page states only the date its numbers come from.
 
 Any later change of order comes from this plan or its specs.
 
 **Counts on the PDF pages** (rules 2 and 4; the design plan's D-6). Every
-number on a page is computed by code and keeps its source and its
-denominator. A finding's large number is one of three things:
+number on a page is computed or confirmed by code and keeps its source and
+its denominator. Spec 021 B-05 keeps a writer's headline number only in a
+form code can confirm; counts of checked claims, technical checks and cited
+sources are not among those forms yet, so the specs of P1.2, P1.1 and P2.1
+each amend B-05 to confirm their counts, and until then such a number is
+left out. A finding's large number is one of three things:
 
 - one source's count ("2 dari 10 jawaban ChatGPT");
 - a count of questions, when the sentence is true in each source and each of
@@ -618,7 +623,9 @@ reading (`src/lib/reading/page-reader.ts`).
 
 **P2.3 How AI describes the clinic** (needs F-5). AI's one-line description
 of the clinic, built from quote-checked words, and the words AI attaches to
-it, counted by code. Next to it, labelled "Menurut Anda", the owner's own
+it, counted by code on the lines that name the clinic (a list heading does
+not count), with a note naming the source, the answers counted and the
+denominator. Next to it, labelled "Menurut Anda", the owner's own
 answer to "Apa yang membuat bisnis Anda berbeda?".
 
 **P2.4 Kit** (needs F-7). First: correction requests to the directories and
@@ -1173,3 +1180,17 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   the note's source and denominator. The worksheet's "Titik Awal" tab gains
   each count's denominator, and its technical checks count only the checks
   that were run.
+- **Revision 6.4 review (round 2, 2026-11-07): PASS+NOTES on `5d04c86`,
+  seven notes.** A and B counted "Kata AI" words by different rules, and the
+  check could pass a word listed where it is absent; B's "pertanyaan tanpa
+  AI Overview" counted a failed check in its denominator; the proofs called
+  the "Butuh F-3" rows not run although they show results; the counting
+  paragraph went beyond Spec 021 B-05; direction 3 contradicted rule 14 on
+  limits; B's Celah topik kept a topic where ChatGPT names Ultima (Spec 018
+  R-18), and its "7 klinik lain" added the two sources; and three
+  cross-plan items. All are applied: a word counts only on a line naming
+  the clinic, and `build.py` checks that and the note's answer list; the
+  Google card uses the settled sentence "Google menampilkan AI Overview di Z
+  dari M pertanyaan"; B-05's limit is stated; `build.py` reads the data
+  files from source, after a stale cached copy made a negative test pass.
+  The design plan's two rows are with its session.

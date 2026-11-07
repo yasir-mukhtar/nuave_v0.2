@@ -40,7 +40,9 @@ and adds two format directions: the moment of truth gets its own page after
 Ringkasan, and section titles state no cause.
 
 Next: the Phase 0 spec, planned together with the PDF design plan's Step 0
-spike and PR 1 to PR 3; F-13 before P0.10.
+spike and PR 1 to PR 3; F-13 before P0.10. (Later the same day the founder
+decided F-13 as option A, a button next to "Unduh PDF", in the PDF design
+session; that decision has its own entry, from PR #207.)
 
 ## 2026-10-29 — The free check picks the real name and asks when unsure; spec gate waived
 

@@ -385,16 +385,16 @@ DATA = {
         "lede": "Kata-kata yang dipakai AI untuk Ultima, dibandingkan dengan yang ditonjolkan situs Ultima.",
         "ai_line": "Jaringan klinik dengan banyak cabang dan harga promo, cocok untuk facial dan perawatan dasar.",
         "words_source": "chatgpt",
-        # Each word: the answers that use it for Ultima, and the pattern build.py looks for (plan P2.3: counted by code).
-        # "terjangkau" heads the shortlist that holds Ultima in both answers ("relatif terjangkau").
-        "words": [["promo", [1, 4], "promo"], ["laser", [1, 4], "laser"], ["terjangkau", [1, 4], "terjangkau"], ["facial", [4], "facial"],
+        # Each word: the answers that use it for Ultima, and the pattern build.py looks for (plan P2.3: counted by code,
+        # on lines that name the clinic; a list heading such as "relatif terjangkau" does not count).
+        "words": [["promo", [1, 4], "promo"], ["laser", [1, 4], "laser"], ["facial", [4], "facial"],
                   ["cabang banyak", [4], "cabang cukup luas|cabangnya banyak|banyak cabang"], ["luar Jawa", [4], "luar (Pulau )?Jawa"],
                   ["dokter spesialis", [], "dokter spesialis|spesialis kulit"]],
         "words_note": "Angka: berapa dari 2 jawaban ChatGPT yang menyebut Ultima tanpa ditanya namanya (P1, P4) memakai kata itu untuk Ultima.",
         "owner_head": "Menurut situs Anda",
         "owner_line": "Perawatan premium dengan harga terjangkau, oleh dokter estetika dan dokter spesialis kulit (Sp.DVE) berlisensi, di lebih dari 70 lokasi.",
         "owner_src": "Dirangkum dari beranda dan halaman Tentang Kami. Data uji ini tidak punya jawaban pemilik untuk “Apa yang membuat bisnis Anda berbeda?”.",
-        "gap": "Di dua jawaban itu, AI memakai “promo”, “terjangkau”, dan “laser” untuk Ultima. “Dokter spesialis”, yang ditonjolkan situs Ultima, tidak dipakai untuk Ultima di jawaban mana pun.",
+        "gap": "Di dua jawaban itu, AI memakai “promo” dan “laser” untuk Ultima. “Dokter spesialis”, yang ditonjolkan situs Ultima, tidak dipakai untuk Ultima di jawaban mana pun.",
         "rivals": [
             {"name": "ERHA", "line": "dokter spesialis kulit, lebih dari 100 cabang, untuk jerawat, flek, dan rambut"},
             {"name": "ZAP Clinic", "line": "laser dan hair removal, lebih dari 60 cabang"},
@@ -416,16 +416,16 @@ DATA = {
         ],
         "note": "Tidak ada nomor SIP di halaman mana pun yang dibuka. Harga di artikel ERHA adalah kisaran pasar umum, bukan daftar harga ERHA. Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
     },
-    "topics_lede": "Topik yang jawabannya tidak merekomendasikan Ultima.",
+    "topics_lede": "Topik yang jawabannya tidak menyebut Ultima.",
     "topics": [
         {"name": "Bekas jerawat dan bopeng", "ai_mentions": 1146, "status": "Tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima tidak menulis harga.",
          "sources": "primavitaclinic.co.id, erhaultimate.co.id, aveiaclinic.com, alodokter.com", "refs": [2, 9]},
-        {"name": "Filler dan botox pertama kali", "others": 4, "status": "Tidak disebut di ChatGPT. Empat tempat yang disarankan dijelaskan lewat dokter spesialisnya.",
+        {"name": "Filler dan botox pertama kali", "others": 4, "others_src": "chatgpt", "status": "Tidak disebut di ChatGPT. Empat tempat yang disarankan dijelaskan lewat dokter spesialisnya.",
          "sources": "rsudpasarminggu.jakarta.go.id, cderma.id, klinikbamed.com, perdoski.id", "refs": [3]},
         {"name": "Klinik kecantikan terbaik", "ai_mentions": 299, "status": "Tidak disebut di Google. Artikel daftar klinik di blog Ultima dikutip pada penjelasan tentang klinik lain.",
          "sources": "hadirr.com, koranindopos.com, ultimaclinic.example", "refs": [7]},
-        {"name": "Biaya laser flek hitam", "others": 7, "status": "Tidak disebut di Google; artikel harga di blog Ultima dikutip. Di ChatGPT (P1), Ultima disebut dengan harga pico laser, tanpa masuk saran akhir.",
-         "sources": "erhaultimate.co.id, klinikmagna.com, hdmall.id, ultimaclinic.example", "refs": [1, 8]},
+        {"name": "Biaya laser flek hitam", "others": 3, "others_src": "google", "status": "Tidak disebut di Google; artikel harga di blog Ultima dikutip.",
+         "sources": "erhaultimate.co.id, klinikmagna.com, hdmall.id, ultimaclinic.example", "refs": [8]},
     ],
     "sitemap": {
         "lede": "Situs yang dikutip ChatGPT dan Google di sepuluh pertanyaan ini, dan apakah Ultima ada di sana. Langkah berikut hanya untuk direktori, listing, dan portal kesehatan.",
