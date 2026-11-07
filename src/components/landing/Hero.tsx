@@ -29,13 +29,13 @@ export function Hero() {
             <span>sebelum pilih klinik</span>
           </h1>
           <p className={styles.lede}>
-            Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview.
-            Dapatkan rekomendasi perbaikan.
+            Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview,
+            lalu lihat apa yang perlu dibenahi.
           </p>
           <SourceForm inputId={HERO_INPUT_ID} className={styles.form} />
           <p className={styles.micro}>
-            Cek apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br />
-            Rp249.000 untuk mulai audit lengkap.
+            Nuave mencari klinik Anda, <b>gratis</b>.<br />
+            Audit lengkapnya Rp249.000.
           </p>
           <ul className={styles.ticks}>
             {TICKS.map((tick) => (

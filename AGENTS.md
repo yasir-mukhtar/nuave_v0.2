@@ -81,6 +81,19 @@ these PRs; see [docs/DECISION_LOG.md](./docs/DECISION_LOG.md).
     path for historical comparison or evidence. Archived material is not
     authoritative or active.
 
+## Writing Indonesian
+
+Before you write or edit Indonesian for the interface, a report, an email, or
+any other customer touchpoint, read [`docs/VOICE.md`](./docs/VOICE.md), then
+use the [`bahasa-indonesia-luwes`](./.agents/skills/bahasa-indonesia-luwes/SKILL.md)
+skill. It turns patterns from Ivan Lanin's public writing into rules for clear,
+warm, natural Indonesian, and its `scripts/periksa_teks.py` checks a draft
+mechanically. Claude Code loads it as a project skill through
+`.claude/skills/`. Any other agent can read its `SKILL.md` directly or paste
+its `prompt-ringkas.md`. Settled labels, `docs/VOICE.md`, and the report
+writing guide win on conflict. The skill does not authorize changing approved
+copy or a production prompt.
+
 ## Engineering guardrails
 
 For implementation work:
@@ -155,7 +168,7 @@ subscriptions, without a new founder decision.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

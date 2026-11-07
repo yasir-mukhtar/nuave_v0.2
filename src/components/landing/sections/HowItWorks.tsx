@@ -15,7 +15,7 @@ export function HowItWorks() {
       <div className={shell.container}>
         <header className={shell.head}>
           <h2 id="s4-title" className={cn("type-heading-xl", shell.h2)}>
-            <span>Kami tanya AI persis</span> <span>seperti pasien Anda</span>
+            <span>Nuave bertanya ke AI</span> <span>seperti pasien Anda</span>
           </h2>
         </header>
 
@@ -31,7 +31,7 @@ export function HowItWorks() {
             <p className={styles.text}>
               Atau akun Instagram klinik Anda.
               <br />
-              Nuave membaca data yang tersedia.
+              Nuave mencarinya, lalu Anda memastikan hasilnya benar.
             </p>
             <div className={styles.sketch}>
               <div className={cn(styles.card, styles.webCard)}>
@@ -74,15 +74,15 @@ export function HowItWorks() {
               2
             </span>
             <div className={styles.titleRow}>
-              <h3 className={styles.title}>Bayar dan cek</h3>
+              <h3 className={styles.title}>Bayar dan periksa</h3>
               <span className={styles.tag}>Rp249.000</span>
             </div>
             <p className={styles.text}>
-              Nuave siapkan 10 pertanyaan
+              Nuave menyiapkan 10 pertanyaan
               <br />
-              <b>berdasarkan volume pencarian di Google.</b>
+              <b>dari data pencarian Google.</b>
               <br />
-              Anda tinggal cek.
+              Anda tinggal memeriksa dan menyetujuinya.
             </p>
             <div className={styles.sketch}>
               <div className={styles.stack}>
@@ -115,9 +115,9 @@ export function HowItWorks() {
               <h3 className={styles.title}>Terima laporan</h3>
             </div>
             <p className={styles.text}>
-              Kami tanyakan ke ChatGPT dan
+              Pertanyaan diajukan ke
               <br />
-              Google AI Overview.
+              ChatGPT dan Google AI Overview.
               <br />
               Laporan lengkap siap dalam <b>30 menit.</b>
             </p>

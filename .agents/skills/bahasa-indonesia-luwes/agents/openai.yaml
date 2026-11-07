@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bahasa Indonesia Luwes"
+  short_description: "Tulis bahasa Indonesia yang baik, benar, dan luwes"
+  default_prompt: "Use $bahasa-indonesia-luwes to write or edit this Indonesian text so it reads clear, warm, and natural. Read docs/VOICE.md first and keep settled labels exactly."

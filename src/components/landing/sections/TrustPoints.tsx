@@ -11,7 +11,7 @@ const POINTS = [
   },
   {
     title: "Bahasa pasien",
-    lines: ["10 pertanyaan dengan", "bahasa natural pasien."],
+    lines: ["10 pertanyaan dalam", "bahasa sehari-hari pasien."],
     art: { src: "/landing/phone-typing.webp", width: 101, height: 161 },
   },
   {
@@ -25,7 +25,7 @@ const POINTS = [
   },
   {
     title: "Siap ditindaklanjuti",
-    lines: ["Ada penjelasan lengkap untuk", "setiap saran perbaikan."],
+    lines: ["Setiap saran disertai alasan,", "bukti, dan tanda selesainya."],
     art: { src: "/landing/clipboard.webp", width: 116, height: 140 },
   },
 ];
