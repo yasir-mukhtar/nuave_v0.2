@@ -15,14 +15,18 @@ and row limits. Its aesthetics and delivery belong to
 templates, chapters, type, colour, charts, page breaks, and polishing v3's
 wording with the writing skill without changing a fact.
 
-He also decided three points:
+Yasir also decided three points:
 
-- "Cara membaca laporan" stays before Ringkasan, his earlier choice. It is
-  recorded as a proposal to v3, which places it after Jawaban AI.
-- The Peta jawaban grid leaves the report and becomes a proposal to v3.
+- "Cara membaca laporan" stays before Ringkasan, the founder's earlier
+  choice, as a proposal to v3.
+- Peta jawaban becomes a proposal to v3.
 - Facts come from v3, and the sentences are polished.
 
-The plan's §5.2 and §5.3 hold the section map and the rules.
+Later the same day the Report v3 plan was approved (F-1, revision 6.3). Its
+"Format of the report PDF" adopts both proposals: Cara membaca laporan comes
+before Ringkasan, and Peta jawaban is a front page. The design plan's page
+order follows that list (§5.2), with five sections, and no proposal is open.
+The plan's §5.2 and §5.3 hold the page map and the rules.
 
 ## 2026-11-07 — Approve the PDF report design plan (D-0 to D-10)
 
