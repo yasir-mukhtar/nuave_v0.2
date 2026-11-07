@@ -152,8 +152,9 @@ pages that need it fall back as the web page does today.
 | Kata AI vs Menurut Anda | v3 P2.3 (F-5) | Word counts need a definition in that spec |
 | Halaman mereka | v3 P2.2 | |
 | Situs yang dibaca AI | v3 P2.1 | Until then, appendix sources show the address only, without "Artikel daftar" and similar labels |
-| Untuk tim web Anda | v3 P1.1 | Not drawn yet in the Figma; drawn with P1.1 |
+| Untuk tim web Anda | v3 P1.1 | The last page of section 03, made to be shared alone with the web vendor |
 | Bahan siap pakai | v3 P2.4 (F-7a) | |
+| Lembar Kerja | v3 P0.10 | One page after Bahan siap pakai: what the worksheet holds, its tabs and an example of its work plan; shown once the worksheet ships |
 | Lampiran A0 and A1 to A10 | Today | One question per page; continued pages as needed (§6.4) |
 | Penutup | Today, partly | Counts today; "3 pemeriksaan teknis" only with v3 P1.1; the saved starting point with v3 P3.3 |
 | Back cover | Fixed | The Nuave logo, the website address, one sentence on what Nuave does, and the confidentiality line with the business name and month (founder, 2026-11-07) |
@@ -332,7 +333,7 @@ unchanged, and `verify-nuave` passes on a preview.
 
 ## Changes after approval
 
-- **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The reference export (D-4) follows when the spec is written.
+- **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The same day the founder added two pages from the Report v3 structure (Untuk tim web Anda; Lembar Kerja), and the reference was exported to [`experiments/report-pdf-design/reference.pdf`](../experiments/report-pdf-design/README.md) (33 pages).
 
 ## Review history
 
