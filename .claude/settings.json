@@ -11,7 +11,8 @@
       "Bash(npm run check)",
       "Bash(npm run test:unit)",
       "Bash(npx vitest run *)",
-      "Bash(npx prettier --check *)"
+      "Bash(npx prettier --check *)",
+      "Bash(python3 -I experiments/report-pdf-design/spike/saved_lengths.py)"
     ]
   }
 }

@@ -6,6 +6,66 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-11-07 — Approve Spec 024 (the designed report PDF)
+
+Yasir approved [Spec 024](../specs/024-report-pdf-design/SPEC.md),
+revision 5 (independent review PASS on `0450f1c`). That includes the four
+answers below and Q-9: when a font fails to load, no PDF is printed; the
+download shows the retry message and the web report stays the full report.
+Implementation starts with Part 1 (PR 1, the page frame), on its own branch
+and PR; merge and deploy stay with the founder.
+
+## 2026-11-07 — Designed report PDF: four rollout and layout answers (Spec 024)
+
+Yasir answered the four founder questions of
+[Spec 024](../specs/024-report-pdf-design/SPEC.md), all as recommended:
+
+- **Long text (Q-3, option a):** Ringkasan, Pesaing and Celah topik are laid
+  out to fit at 1.5 times their word budget, and Pesaing and Rencana get
+  continued pages when text is still over.
+- **Section numbers (Q-4):** a section without a page shows no divider, and
+  the others keep their approved numbers, so today's PDF goes 01, 04, 05.
+- **When customers get it (Q-10):** the designed PDF is switched on for
+  customers with PR 3; until then production keeps today's PDF.
+- **Reports already delivered (Q-11):** every two-source report, including
+  ones already delivered, gets the designed PDF on its next download.
+
+Spec 024 was approved the same day (entry above).
+
+## 2026-11-07 — Report section titles approved; worksheet download is a button
+
+Yasir approved the five section titles of the report PDF as fixed text
+(design plan D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang
+<klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu" and
+"05 Lampiran". Yasir also decided Report v3 F-13 as option A: the owner
+downloads the Lembar Kerja with an "Unduh Lembar Kerja" button next to
+"Unduh PDF" on the web report, a second small exception to the web report
+freeze (design plan PR 4b, shipped with v3 P0.10). The reference export in
+`experiments/report-pdf-design/` was redone from the Figma.
+
+## 2026-11-07 — Report substance follows the Report v3 session; the design plan owns how it looks
+
+Yasir decided that the report's substance and format follow the Report v3
+session (PR #205): which sections exist, their order, claims, counts, labels
+and row limits. Its aesthetics and delivery belong to
+[`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md). That covers
+templates, chapters, type, colour, charts, page breaks, and polishing v3's
+wording with the writing skill without changing a fact.
+
+Yasir also decided three points:
+
+- "Cara membaca laporan" stays before Ringkasan, the founder's earlier
+  choice, as a proposal to v3.
+- Peta jawaban becomes a proposal to v3.
+- Facts come from v3, and the sentences are polished.
+
+Later the same day the Report v3 plan, approved at revision 6.1 (F-1), added
+in revision 6.3 a "Format of the report PDF" that adopts both proposals: Cara membaca laporan comes
+before Ringkasan, and Peta jawaban is a front page. The design plan's page
+order follows that list (§5.2), with five sections. Titik awal as its own
+page after Penutup was adopted in v3 revision 6.4.
+The plan's §5.2 and §5.3 hold the page map and the rules.
+
 ## 2026-11-07 — Approve the Report v3 plan (F-1)
 
 Yasir approved [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.1,
@@ -42,7 +102,36 @@ Ringkasan, and section titles state no cause.
 Next: the Phase 0 spec, planned together with the PDF design plan's Step 0
 spike and PR 1 to PR 3; F-13 before P0.10. (Later the same day the founder
 decided F-13 as option A, a button next to "Unduh PDF", in the PDF design
-session; that decision has its own entry, from PR #207.)
+session; that decision has its own entry above, "Report section titles
+approved; worksheet download is a button".)
+
+## 2026-11-07 — Approve the PDF report design plan (D-0 to D-10)
+
+Yasir approved [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md)
+(PR #207, independent review PASS on `4326edf`) with every decision as
+recommended:
+
+- **D-1, option A:** the web report stays as it is (frozen at Spec 021 v2,
+  the fallback when a PDF cannot be made), and only the PDF gets the new
+  design. Closing the web report is decided later.
+- **D-2:** 16:9 landscape pages, 1440 × 810, not A4.
+- **D-3:** Newsreader, Geist, Roboto Condensed, and Geist Mono for code only,
+  inside the PDF pages.
+- **D-4:** the corrected Figma is the visual reference.
+- **D-5:** appendix notes come from code.
+- **D-6:** every count stays per source, in the settled sentences; no pooled
+  numbers.
+- **D-7:** fixed text is approved once, with no promise of a scheduled
+  service, re-check or date.
+- **D-8:** "Minta bantuan" to support@nuave.ai stays the help path.
+- **D-9, option A:** Ringkasan is filled from saved fields.
+- **D-10:** the Spec 021 Part P points listed in the plan change.
+
+The same day he asked for the official Nuave logo on the cover and a back
+cover with the logo, the website (nuave.ai) and one sentence on what Nuave
+does. Both are in the Figma, and the plan records them.
+
+Next: the reference export and the Step 0 spike, then the spec.
 
 ## 2026-10-29 — The free check picks the real name and asks when unsure; spec gate waived
 

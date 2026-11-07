@@ -1,6 +1,6 @@
 # Nuave now
 
-> Updated: 2026-10-30
+> Updated: 2026-11-07
 > Stage: Stage 1 accepted; S0 decided; S2 merged (#127); S3 (Spec 016) Verified — merged, deployed and live-tested (#129, `d641701`); S4 (Spec 017) Verified — merged, deployed and live-tested (#137, #138, #139); Spec 018 merged (#151), AC-14 live run passed 2026-10-26 (NV-3WDSAY); S5 (terms, privacy, support, FAQ wording) done, approved 2026-10-25 (#159); S6 (Spec 020, clinic landing page) approved 2026-10-25 and built on PR #155, in review; then G1
 > Plan: [first paying customer](./PAYING_CUSTOMER_PLAN.md); S2 merged to main 2026-10-12 as `2d2c4ec`
 > History: the previous 954-line page is at `git show 29addbe:docs/NOW.md`
@@ -44,18 +44,31 @@
 
 ## Next action
 
+- **Report PDF design** (2026-11-07,
+  [decision](./DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)):
+  [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md) is approved
+  (D-0 to D-10) and follows the approved Report v3 page order; the
+  reference is exported (`experiments/report-pdf-design/reference.pdf`, 39
+  pages). Step 0 spike measured
+  (`experiments/report-pdf-design/spike/`): 86 pages at the limits, 2.2 s
+  through Browser Run, 851 KB. The longest saved texts fit the writer
+  limits (7 reports); at real answer lengths the PDF is 76 pages, 2.4 s.
+  [Spec 024](../specs/024-report-pdf-design/SPEC.md) is approved
+  (2026-11-07). Next: Part 1 (PR 1, the page frame).
 - **Report v3 plan, approved** (2026-11-07,
   [decision](./DECISION_LOG.md#2026-11-07--approve-the-report-v3-plan-f-1)):
   [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.4) sets the report
   and worksheet work the founder wants done before launch (the last step of
   G1), with gates the founder judges. It is aligned with the PDF design plan
-  (PR #207): the new sections appear in the 16:9 PDF, and the web report
-  stays frozen. Proofs of concept:
+  and Spec 024 (bullet above): the new sections appear in the 16:9 PDF, and
+  the web report stays frozen. Proofs of concept:
   [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md).
-  Next: the Phase 0 spec, planned with the PDF design plan's Step 0 and PR 1
-  to PR 3. F-13 is decided: the worksheet downloads from a button next to
-  "Unduh PDF" (2026-11-07, recorded on PR #207). This bullet
-  was updated on 2026-11-07; the rest of this page is as of 2026-10-30.
+  Next: the Phase 0 spec, planned with Spec 024's Parts 1 to 3 and Part 5
+  (the page templates of v3 Phase 0). F-13 is decided: the worksheet
+  downloads from a button next to "Unduh PDF" (2026-11-07,
+  [decision](./DECISION_LOG.md#2026-11-07--report-section-titles-approved-worksheet-download-is-a-button)).
+  This bullet was updated on 2026-11-07; the rest of this page is as of
+  2026-10-30.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The

@@ -66,8 +66,12 @@ package's limits, §4 and the package win.
 this plan (F-1) after seeing both proofs, and said proof A reads better
 because its sentences say what a result means, while proof B reads like
 facts listed one after another. §4 rule 14 turns that into a rule. The same
-day the founder approved the PDF design plan, [`REPORT_PDF_DESIGN_PLAN.md`](https://github.com/yasir-mukhtar/nuave_v0.2/pull/207) (PR #207; `docs/REPORT_PDF_DESIGN_PLAN.md` once merged)
-(D-0 to D-10). That plan owns how the report looks and how its pages are
+day the founder approved the PDF design plan,
+[`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md) (PR #207, D-0 to
+D-10), and then its spec, [Spec 024](../specs/024-report-pdf-design/SPEC.md):
+Parts 1 to 3 are PR 1 to PR 3 below, Part 4b is the worksheet button, and
+Part 5 builds the page templates of this plan's Phase 0, each in the same PR
+as its package. That plan owns how the report looks and how its pages are
 made; this plan owns what the report says and how it counts. Its decisions
 change parts of this plan:
 
