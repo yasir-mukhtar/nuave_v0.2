@@ -46,7 +46,7 @@
 
 - **Report v3 plan, approved** (2026-11-07,
   [decision](./DECISION_LOG.md#2026-11-07--approve-the-report-v3-plan-f-1)):
-  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.2) sets the report
+  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.3) sets the report
   and worksheet work the founder wants done before launch (the last step of
   G1), with gates the founder judges. It is aligned with the PDF design plan
   (PR #207): the new sections appear in the 16:9 PDF, and the web report
@@ -383,6 +383,7 @@ Dependency alerts remain unassessed by the JZ acceptance, not waived or resolved
 - Standing task exclusions remain in [AGENTS.md](../AGENTS.md#parked-work); broad cleanup does not reactivate them.
 - The plan's [parking lot](./PAYING_CUSTOMER_PLAN.md#6-parking-lot-after-we-have-paying-customers),
   including the open questions, waits until after the first paying customer.
+  Report v3 left it on 2026-11-07: it is milestone R3 in Stage 3.
 - Non-scope: [`END_TO_END_PLAN.md` §12](./END_TO_END_PLAN.md#12-explicit-non-scope-through-initial-launch),
   plus an agency or white-label reseller layer, advanced brand controls,
   automated recurring monitoring (a re-check the customer buys is allowed),

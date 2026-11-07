@@ -6,8 +6,8 @@
 > ([`WORKFLOW.md`](./WORKFLOW.md)); nothing is built from this file directly.
 > Layout belongs to the PDF design plan (see "Approval and alignment" below).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 6.2 records the approval and
-> aligns the plan with the PDF design plan. Revision 6.1: revision 6 followed the
+> `claude/inspiring-tesla-yox17h`. Revision 6.3: 6.2 recorded the approval
+> and aligned the plan with the PDF design plan; 6.3 applies its review. Revision 6.1: revision 6 followed the
 > founder's direction of 2026-11-06 (below), and 6.1 applies its first
 > independent review. Revision 5.1 passed independent review (rounds 1 to 4
 > and two confirmations); see "Review history" at the end.
@@ -73,8 +73,8 @@ change parts of this plan:
   new section of this plan appears in the PDF, not on the web page.
   Wherever a package below says "on a phone", "under the source cards" or
   "in the answer panel", its spec re-targets it to the PDF page the design
-  plan names (its §5.2). In particular: P0.1's moment of truth becomes the
-  evidence card of the PDF's Temuan pages; P0.8 becomes the PDF page "Cara
+  plan names (its §5.2). In particular: P0.1's moment of truth gets its own
+  page (see "Format of the report PDF" below); P0.8 becomes the PDF page "Cara
   membaca laporan"; P1.2's marks inside answers go into the PDF appendix;
   P2.5's "Salin daftar kerja" moves into the worksheet, because the web
   page is frozen; and Phase 0's phone check is replaced by the PDF checks of
@@ -88,56 +88,47 @@ change parts of this plan:
   and lists its tabs, but has no download button (its D-7); where the owner
   downloads it is F-13.
 
-**Who decides what (founder, 2026-11-07).** This plan decides substance and
-format: what the report says, how it counts, which pages and elements it
-has, in what order, and what each page holds. The PDF design plan owns
-aesthetics and delivery: the look (type, colour, grid, imagery) and how the
-pages are made and delivered. Where the two touch, the page list of the PDF
-design plan (its §5 and §6.3) follows the format below.
+**Who decides what.** The founder wrote on 2026-11-07: "secara substansi
+dan format kamu punya hak menentukan dan mengarahkan, namun secara estetika
+dan delivery itu ownershipnya di session sebelah." This plan reads that as:
+this plan decides substance and format (what the report says, how it
+counts, which pages and elements it has, their order, and what each page
+holds); the PDF design plan's session owns aesthetics and delivery (the
+look, and how the pages are made and reach the owner).
 
-**Format of the report PDF.** Pages in this order. A page whose data does
-not exist yet is left out, as the PDF design plan's §5.2 says, and the
-contents page follows what is left.
+**Format of the report PDF.** The order of the design plan's reference
+export (PR #207, `experiments/report-pdf-design/reference.pdf`) is the page
+order, with its five sections and their dividers, and each page keeps what
+the design plan's §5.1 maps to it:
 
-1. Sampul.
-2. Daftar isi.
-3. Ringkasan: the verdict (rule 14), the per-source counts in the settled
-   sentences, and the first plan step (the design plan's D-9 option A).
-4. Saat calon pasien bertanya (P0.1): one real answer in which the clinic is
-   not named, with the question, the first five businesses named, "dan N
-   bisnis lain", "Klinik Anda: tidak disebut" (or the AI's sentence about
-   the clinic), and one sentence on what it means.
-5. Cara membaca laporan (P0.8): the states, the per-source denominators and
-   what ten questions cannot show; the stability rows once P3.2 exists.
-6. Peta jawaban: the ten questions by the two sources, each cell one
-   source's state.
-7. Temuan: one page per finding, its meaning headline first (rule 14), then
-   the text and the evidence card.
-8. Cek fakta (P1.2): at most eight rows, "berbeda" first, with the count of
-   every claim checked.
-9. Pesaing: per-source counts and recommendations, each with its
-   denominator; the "Menurut jawaban AI" lines; the takeaways.
-10. Bagaimana AI menggambarkan klinik (P2.3, F-5): Kata AI next to Menurut
-    Anda.
-11. Halaman mereka (P2.2): differences between pages, never reasons.
-12. Celah topik.
-13. Situs yang dibaca AI (P2.1).
-14. Rencana: the three phases with "Keputusan Anda", then one Langkah page
-    per recommendation (its tags and "Dasar" line).
-15. Penutup: what to do first, Titik awal (P3.3), and the advice to audit
-    again.
-16. Untuk tim Anda: Untuk tim web Anda (P1.1; printable or sendable on its
-    own), Bahan siap pakai (P2.4), and the Lembar Kerja with its tabs.
-17. Lampiran: A0 (the questions and the method facts), then one page per
-    question with both full answers, their sources and code notes, and the
-    two questions that name the clinic apart, if F-4 is approved.
-18. Back cover.
+- front pages: Sampul, Daftar isi, Cara membaca laporan (P0.8 and the
+  method facts), Ringkasan, Peta jawaban;
+- 01 "Posisi <klinik> hari ini": the Temuan pages, Pesaing, Celah topik;
+- 02 "Apa kata AI tentang <klinik>": Cek fakta (P1.2), Kata AI next to
+  Menurut Anda (P2.3);
+- 03: Halaman mereka (P2.2), Situs yang dibaca AI (P2.1), Untuk tim web
+  Anda (P1.1, printable or sendable on its own);
+- 04 "Rencana delapan minggu": Rencana, one Langkah page per
+  recommendation, Bahan siap pakai (P2.4), Lembar Kerja, Penutup;
+- 05 "Lampiran": A0 (the questions), one page per question with both full
+  answers, their sources and code notes, and the two questions that name the
+  clinic apart, if F-4 is approved; then the back cover.
 
-This keeps the design plan's pages with three changes of order: the moment
-of truth gets its own page right after Ringkasan; "Cara membaca laporan"
-follows them, so the owner's part comes first (P0.9); and the pages for the
-team (web check, kit, worksheet) sit together after Penutup, which closes
-the owner's part.
+A page whose data does not exist yet is left out (the design plan's §5.2).
+This plan adds two format directions:
+
+1. **"Saat calon pasien bertanya" (P0.1) gets its own page, right after
+   Ringkasan:** one real answer in which the clinic is not named, chosen by
+   code as P0.1 says, with the question, the first five businesses named,
+   "dan N bisnis lain", "Klinik Anda: tidak disebut" (or the AI's sentence
+   about the clinic), and one sentence on what it means (rule 14). The
+   Temuan evidence card stays as the design plan's §5.1 defines it.
+2. **Section titles state no cause** (rule 3; Appendix B, idea 14). The
+   drawn divider "03 Mengapa klinik lain dipilih" says why other clinics are
+   chosen; it gets a title about what its pages show, such as "03 Apa yang
+   dibaca AI". Fixed titles are approved once (the design plan's D-7).
+
+Any later change of order comes from this plan or its specs.
 
 ## 1. Why
 
@@ -302,18 +293,21 @@ plan. Each verdict is recorded in the phase's pull request or a
     numbers, quotes and recommendations always equal the saved report's. The
     worksheet may also list rows the page folds away, such as every checked
     claim (P1.2).
-14. **Meaning first** (founder, 2026-11-07, preferring proof A's voice).
-    The verdict, each finding's headline and each recommendation start with
-    what the result means for the clinic: what a patient asking that
-    question sees, what the owner's own priority or claim meets in the
-    answers, or what the owner has to decide. The evidence follows. Meaning
-    is never a cause (rule 3): it says what is seen and what it costs the
-    clinic, not why AI chose. Each limit is said once, where it applies,
-    instead of a hedge after every sentence. Proof B shows why the owner's
-    own words matter: without them a finding has nothing to mean against,
-    so the writer leans on the intake's answers (F-5) and the owner's
-    priorities. The P0.5 spec and a Spec 023 amendment carry this rule into
-    the writer's instructions and its tests.
+14. **Meaning first.** The founder preferred proof A on 2026-11-07 because
+    its sentences say what a result means; this rule is this plan's reading
+    of that preference. The verdict, each finding's headline and each
+    recommendation start with what the result means for the clinic: what a
+    patient asking that question sees in the answer and where the clinic
+    stands in it, what the owner's confirmed offerings meet in the answers,
+    or what the owner has to decide. The evidence follows. Meaning is never
+    a cause (rule 3), never what patients do or how many are lost, and never
+    a money figure (`AGENTS.md` working rule 8; the PDF design plan's D-7).
+    Each limit is said once, where it applies, instead of a hedge after
+    every sentence. Proof B shows why the owner's own words matter: without
+    them a finding has nothing to mean against. If P0.5 uses the owner's
+    answer to "Apa yang membuat bisnis Anda berbeda?", F-5 is re-confirmed
+    before Phase 0 (rule 12). The P0.5 spec and a Spec 023 amendment carry
+    this rule into the writer's instructions and its tests.
 
 ## 5. Decisions the founder owes
 
@@ -337,13 +331,15 @@ document the decision would change.
 | F-10 | Keep the USD 5.00 order hold, and design every package within it. | — | Yes. Raise it only if a package cannot fit: at USD 6.00 the USD 50 daily cap allows 8 orders in progress at once, not 10. |
 | F-11 | **Moved to the next improvement project.** A price or offer test. | Landing page; terms | Decide in that project, from customer data. |
 | F-12 | **Moved to the next improvement project.** Google AI Mode or Gemini as another source. | Landing page, terms and FAQ ("ChatGPT dan Google AI Overview") | Decide in that project, after a trial of the provider. |
-| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7): **option A**, an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line; **option B**, a link in the report-ready email only. | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4; B: the approved report-ready email (`src/lib/orders/mail.ts`) | A, decided before P0.10's spec. The PDF names the worksheet and its tabs in either case. |
+| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7). Download is delivery, which the founder assigned to the PDF design plan's session on 2026-11-07, so F-13 is decided with that session. **Option A:** an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line. **Option B:** a link in the report-ready email; it needs a server route that builds the file from the link's secret, which rules out building the file in the browser (P0.10), and, as a new use of the order email, the privacy page updated first with the founder approving the wording (§4 rule 7). | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4. B: the approved report-ready email (`src/lib/orders/mail.ts`), a new route, and the privacy page if its wording does not cover it | A, decided with the PDF design session before P0.10's spec. The PDF names the worksheet and its tabs in either case. |
 
 ## 6. Phases
 
 ### Phase 0: Lead with the evidence (no new data)
 
-Writer instructions, layout, PDF and the worksheet. About four pull requests.
+Writer instructions and the worksheet here; the layout and the PDF are built
+by the PDF design plan's packages, planned together with this phase. About two
+pull requests here.
 
 **P0.0 Prototype on real two-source orders.** The Sozo prototype in
 `experiments/report-v2-poc/` asked each question to one source only and has
@@ -451,7 +447,8 @@ proof of concept must survive in Excel and Google Sheets.
 - **Cost:** about USD 0.02 to 0.08 an order, from 1,000 to 2,000 more output
   tokens at USD 20 per million, within the 24,000-token allowance, on two
   calls.
-- **Size:** about four pull requests (layout, writer fields, PDF, worksheet).
+- **Size:** about two pull requests here (writer fields, worksheet); the
+  layout and the PDF are the PDF design plan's Step 0 and PR 1 to PR 3.
 - **Founder time:** about 5 to 8 hours (prototype, spec, merges, test
   orders). About 2 weeks.
 
@@ -749,7 +746,8 @@ Rp217.500–222.500 today; about Rp210.500–220.000 after the plan.
   minutes on this pull request's first push; code pull requests marked ready
   run the full set.
 - **Founder time,** the largest cost: about 30 to 45 hours across Phases 0
-  to 3 (§6), and about 17 to 21 pull requests to review. Treat this as a
+  to 3 (§6), and about 15 to 19 pull requests to review here, besides the
+  PDF design plan's own. Treat this as a
   lower bound: Spec 021, the closest precedent, took four prototype rounds
   and three plan-review rounds. Record Phase 0's real hours and re-estimate
   the rest at Gate 1.
@@ -825,8 +823,9 @@ what customers do.
 - Check the gate (§3) before starting a phase, and re-confirm with the
   founder the F-decisions the phase relies on (§4 rule 12). Every package
   needs its own approved spec, which lists its required context.
-- The proofs of concept in `experiments/report-v3-poc/` show the target look
-  and depth; a spec may refine them but says so where it differs. Where a
+- The proofs of concept in `experiments/report-v3-poc/` show the target
+  content and depth; the look comes from the PDF design plan. A spec may
+  refine them but says so where it differs. Where a
   proof differs from §4 or a package's limits, §4 and the package win.
 - New ideas go to `PAYING_CUSTOMER_PLAN.md` §6, not here.
 
@@ -1087,4 +1086,15 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   (F-1), preferring proof A's voice. Revision 6.2 records it: the file
   leaves `drafts/`, §4 gains rule 14 ("Meaning first"), F-13 asks where the
   worksheet is downloaded, and "Approval and alignment" maps the PDF design
-  plan's D-1 and D-2 onto this plan's packages.
+  plan's D-1 and D-2 onto this plan's packages. Commit `1b3d1cb` added the
+  founder's ownership split and a page order.
+- **Revision 6.2 review (round 1, 2026-11-07): FAIL, 7 findings.** Rule 14's
+  "what it costs the clinic" invited claims about lost patients and money;
+  P0.1 was mapped two ways; the page order moved more than it claimed and kept
+  a causal section title; the record presented this plan's reading as the
+  founder's words; the routing still parked the plan; F-13 option B missed
+  changes and its owner; and small gaps. Revision 6.3 fixes all of them: rule
+  14 rules out patient behaviour and money; the reference export's order is
+  the page order, with two directions (P0.1's own page, a title without a
+  cause); the founder is quoted verbatim; the plan moves into Stage 3 of
+  `PAYING_CUSTOMER_PLAN.md`; F-13 is decided with the PDF design session.

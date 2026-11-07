@@ -48,6 +48,7 @@ done.
 | S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
 | **Stage 3** | **Go live** | | | | |
+| R3 | Report v3 before launch: Phases 0 to 3 and the launch gate ([`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md)), with the PDF design plan (PR #207) | Orchestrator + workers + founder | Plan approved 2026-11-07 (F-1); Phase 0 spec next | [#205](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205) (plan) | Plan: independent review PASS (revision 6.1) |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
 | V | Show reports to 3–5 real owners | Founder | Optional | — | — |
@@ -581,6 +582,12 @@ only if asked.
 
 ### Stage 3 — Go live
 
+**R3 — Report v3 before launch** (approved by the founder 2026-11-07, F-1).
+Phases 0 to 3 of [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md), each behind a
+gate the founder judges, built together with the PDF design plan (PR #207).
+Every package needs its own approved spec. G1's last step waits for R3's
+launch gate.
+
 **G1 — One real purchase and refund** (founder + worker, ~1 day)
 
 1. Worker runs the full sandbox journey with `verify-nuave` and records
@@ -612,11 +619,6 @@ Noted so they are not lost. Nothing here may be worked on before G1 unless the
 founder moves it into a milestone.
 
 **Report and content**
-- Report v3, from the founder's benchmark against two premium agency sample
-  reports (2026-11-06): the draft plan
-  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md), approved 2026-11-07 (F-1). It
-  runs before launch, the last step of G1 (§5), with gates the founder
-  judges.
 - Report format and reference-section simplification; AC-18 same-evidence
   comparison (deferred 2026-09-26).
 - Remaining English JSX in `/audit/fixture`; product-wide design pass (Spec

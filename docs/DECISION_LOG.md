@@ -20,20 +20,24 @@ own entry of 2026-11-07). Revision 6.2 of the Report v3 plan aligns the two:
 with D-1 option A the web report stays frozen and the plan's new sections
 appear in the PDF; with D-2 the PDF is 16:9, so v3 P0.9 is done by the design
 plan's packages. Where the owner downloads the worksheet is a new decision,
-F-13 (recommended: a button next to "Unduh PDF" on the web report).
+F-13, decided with the PDF design session because download is delivery
+(recommended: a button next to "Unduh PDF" on the web report).
 
 The other F-decisions stay as recommended and are re-confirmed before each
 phase's spec (§4 rule 12). Launch stays the last step of G1, after the
 founder's verdict at the plan's launch gate, about 10 to 13 weeks from this
 approval.
 
-**Who decides what (Yasir, same day).** The Report v3 plan and its session
-decide the report's substance and format: what it says, how it counts,
-which pages and elements it has, in what order, and what each holds. The
-PDF design plan and its session own aesthetics and delivery: the look
-(type, colour, grid, imagery) and how the pages are made and delivered. The
-plan's "Format of the report PDF" sets the page order; the PDF design plan's
-page list follows it.
+**Who decides what.** Yasir wrote the same day, in the Report v3 session:
+"secara substansi dan format kamu punya hak menentukan dan mengarahkan,
+namun secara estetika dan delivery itu ownershipnya di session sebelah."
+The Report v3 plan reads that as: its session decides substance and format
+(what the report says, how it counts, which pages and elements it has, their
+order, and what each holds), and the PDF design plan's session owns
+aesthetics and delivery (the look, and how the pages are made and reach the
+owner). Under that reading the plan keeps the design reference's page order
+and adds two format directions: the moment of truth gets its own page after
+Ringkasan, and section titles state no cause.
 
 Next: the Phase 0 spec, planned together with the PDF design plan's Step 0
 spike and PR 1 to PR 3; F-13 before P0.10.
