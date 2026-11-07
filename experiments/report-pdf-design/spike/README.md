@@ -57,11 +57,11 @@ permission to the session's token for this run.
 
 | Case | Pages | Whole request | Browser time used | PDF size |
 | --- | --- | --- | --- | --- |
-| Word limits ×1.0; answers 1,200 and 400 words | 86 | 2.2 s | 0.87 s | 852 KB |
+| Word limits ×1.0; answers 1,200 and 400 words | 86 | 2.2 s | 0.87 s | 851 KB |
 | Word limits ×1.25; same answers | 86 | 1.3 s | 0.60 s | 863 KB |
 | Word limits ×1.0; answers 500 and 200 words | 66 | 0.8 s | 0.40 s | 713 KB |
 
-"Whole request" is measured from this session and includes the upload of the
+Each case was sent once. "Whole request" is measured from this session and includes the upload of the
 HTML (about 580 KB with the fonts). "Browser time used" is Browser Run's own
 `x-browser-ms-used` header. The page count, page size (1080 × 607.9 pt) and
 fonts (Newsreader, Geist and Roboto Condensed embedded, as Type 3) match the

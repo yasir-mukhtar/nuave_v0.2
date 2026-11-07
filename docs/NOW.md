@@ -51,7 +51,7 @@
   reference is exported (`experiments/report-pdf-design/reference.pdf`, 39
   pages). Step 0 spike measured
   (`experiments/report-pdf-design/spike/`): 86 pages at the limits, 2.2 s
-  through Browser Run, 852 KB. Next: the longest saved texts (waiting on a
+  through Browser Run, 851 KB. Next: the longest saved texts (waiting on a
   production-read permission rule), then the spec.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
