@@ -598,6 +598,41 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 - **AC-K2:** The button downloads the worksheet.
 - **AC-K3:** The pre-Spec-018 snapshots stay unchanged; `verify-nuave`
   passes on a preview.
+- **AC-K4:** The independent verdict for Part 4b is given on the same head
+  as v3 P0.10's.
+
+## Part 5: page templates for v3 Phase 0 (one PR with each package)
+
+Plan §7 and §5.3 rule 3: when v3 adds a page or part of a page, this plan
+maps it to a template. Spec 024 owns these templates; v3's specs own their
+data, claims, counts, labels, row limits and when they show.
+
+### Requirements
+
+- **T-01: Where they are built.** Each template is built in the same PR as
+  its v3 package, against that package's approved spec, and plugs into
+  Part 1's page list (F-05), page box (F-04), budgets and continued-page
+  rule (F-06), fixed-text file (G-05) and ready rule (F-08). Part 0's rules
+  apply to every template.
+- **T-02: The templates.**
+  - The moment page "Saat calon pasien bertanya" (P0.1 to P0.3), right
+    after Ringkasan.
+  - The P0.8 lines on Cara membaca laporan.
+  - The P0.6 and P0.7 tags on Rencana and Langkah.
+  - The P0.4 decisions under the plan steps on Penutup.
+  - The Lembar Kerja page (P0.10), which names the worksheet and its tabs
+    and has no download button (G-09).
+- **T-03: Absent until saved.** Without the package's saved data, the page
+  or part is left out and the Part 1 to 3 PDF is unchanged.
+
+### Acceptance criteria
+
+- **AC-T1:** Given a fixture with the package's saved data, the template
+  shows it in the v3 position, and AC-G1 to AC-G4 pass.
+- **AC-T2:** Given a fixture without it, the PDF equals the Part 1 to 3
+  output (same page list and text).
+- **AC-T3:** The package spec's own acceptance criteria for its data pass on
+  the same head.
 
 ## Amendments to Spec 021 (D-10)
 
