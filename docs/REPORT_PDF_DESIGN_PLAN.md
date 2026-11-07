@@ -80,7 +80,7 @@ the report is built once.
 | D-7 | Fixed text (section names, legends, empty states, notes, "Tidak dapat diuji", "Minta bantuan") is written once with `VOICE.md` and the writing skill, approved once, and kept in one file. The PDF has no download button; the web button stays "Unduh PDF" (Spec 021 AC-P1) and the email keeps "Download PDF", as today. Text that depends on the order is chosen by code from approved variants, for example the method line with and without search data (`search_data_available`). No fixed line may claim what patients do, or promise a scheduled service, re-check or date. Advice to audit again, such as the web Penutup's "Audit ulang setelah 8 minggu" card, stays. | `VOICE.md` only if a new settled label is added | Yes. |
 | D-8 | The help path on a failed check is today's: **"Minta bantuan"**, the mailto link to `support@nuave.ai` with the order number (Spec 018). There is no re-run button (Spec 018 R-20). | None | Yes. |
 | D-9 | **Ringkasan's three short columns** ("Yang sudah berjalan", "Yang belum terlihat", "Yang dikerjakan dulu") have no saved field. Option A: fill the page with saved fields (the `verdict` as the statement, the per-source counts as figures, the first `plan` step as "Yang dikerjakan dulu"), and leave the other two columns out. Option B: a new writer field with a quote check (a Spec 023 change, with its cost measured). | Option B: Spec 023, the writer schema | **A** for this plan; B, if wanted, goes into v3 P0.5. |
-| D-10 | Spec 021 Part P points this plan changes: the dark cover (P-03 says the PDF is always the light palette); the footer format (AC-P1 "<n> / <total>" becomes "05" on report pages and "A3 · 1/2" in the appendix); the print request (§6.2). | Spec 021 Part P, by amendment in this plan's spec | Yes. |
+| D-10 | Spec 021 Part P points this plan changes: the dark pages (P-03 says the PDF is always the light palette): the cover, the five section dividers, Penutup and the back cover; the footer format (AC-P1 "<n> / <total>" becomes "05" on report pages and "A3 · 1/2" in the appendix); the print request (§6.2). | Spec 021 Part P, by amendment in this plan's spec | Yes. |
 
 **D-1, what B or C would change.** The PDF would become the only way to read
 the report, so a Browser Run failure (`src/app/api/report/pdf/route.ts`) or
@@ -154,7 +154,7 @@ pages that need it fall back as the web page does today.
 | Situs yang dibaca AI | v3 P2.1 | Until then, appendix sources show the address only, without "Artikel daftar" and similar labels |
 | Untuk tim web Anda | v3 P1.1 | The last page of section 03, made to be shared alone with the web vendor |
 | Bahan siap pakai | v3 P2.4 (F-7a) | |
-| Lembar Kerja | v3 P0.10 | One page after Bahan siap pakai: what the worksheet holds, its tabs and an example of its work plan; shown once the worksheet ships |
+| Lembar Kerja | v3 P0.10 | One page after Bahan siap pakai: what the worksheet holds and its tabs, with a preview of its work plan whose rows are this report's own recommendations (the person, date and status columns start empty; the reference fills them only as a labelled example); shown once the worksheet ships |
 | Lampiran A0 and A1 to A10 | Today | One question per page; continued pages as needed (§6.4) |
 | Penutup | Today, partly | Counts today; "3 pemeriksaan teknis" only with v3 P1.1; the saved starting point with v3 P3.3 |
 | Back cover | Fixed | The Nuave logo, the website address, one sentence on what Nuave does, and the confidentiality line with the business name and month (founder, 2026-11-07) |
@@ -177,7 +177,7 @@ spec defines them with their denominators.
    their own), and zero margins.
 3. **A page list made by code.** A pure function turns a saved report into
    the ordered list of pages: cover to Rencana, then the Langkah
-   pages, Bahan siap pakai when it exists, Penutup, the Lampiran divider and
+   pages, Bahan siap pakai and Lembar Kerja when they exist, Penutup, the Lampiran divider and
    the appendix questions, and the back cover as the last page, as in the
    Figma after the founder's 2026-11-07 changes. Lists that can grow are spread by count, never by
    measuring: one Temuan page per finding, one Langkah page per
@@ -333,7 +333,7 @@ unchanged, and `verify-nuave` passes on a preview.
 
 ## Changes after approval
 
-- **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The same day the founder added two pages from the Report v3 structure (Untuk tim web Anda; Lembar Kerja), and the reference was exported to [`experiments/report-pdf-design/reference.pdf`](../experiments/report-pdf-design/README.md) (33 pages).
+- **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The same day the founder added two pages from the Report v3 structure (Untuk tim web Anda; Lembar Kerja), and the reference was exported to `experiments/report-pdf-design/reference.pdf` (33 pages; see its [README](../experiments/report-pdf-design/README.md)).
 
 ## Review history
 
