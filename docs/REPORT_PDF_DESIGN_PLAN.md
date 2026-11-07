@@ -214,9 +214,9 @@ source's own denominator, a whole number such as "2×", or a figure copied
 from an answer. The Figma's finding numbers are per question for that reason
 ("0 dari 3 pertanyaan", not "0 dari 6 jawaban"). Since v3 revision 6.4 the
 sample's finding numbers carry their source ("2 dari 7" ringkasan Google,
-"2 dari 10" jawaban ChatGPT) or their split per source beside them. One has
-no B-05 form today and waits for the basis v3 P1.2 defines: Temuan 3's
-"4 dari 8" klaim.
+"2 dari 10" jawaban ChatGPT) or their split per source beside them. Two have
+no B-05 form today and wait for a basis v3 defines: Temuan 3's "4 dari 8"
+klaim (v3 P1.2) and Temuan 4's "1" cited list article (v3 P2.1).
 
 ## 6. How the PDF is made
 
@@ -420,3 +420,4 @@ preview.
 | 8 | `f0756c7` | PASS | All round 7 notes resolved. |
 | 9 | `3f8a0ca` | PASS+NOTES | Two exported pages with overlapping text (divider 02, Titik awal); the Lembar Kerja row and D-1 still treating the download as open; no checks for the button. All addressed in `f0efe5c`. |
 | 10 | `f0efe5c` | PASS | All round 9 notes resolved. |
+| 11 | `f4878bd` | PASS+NOTES | Situs counts verified; Temuan 4's number also has no B-05 form; tight spacing on Temuan 1. Both addressed in the next head. |
