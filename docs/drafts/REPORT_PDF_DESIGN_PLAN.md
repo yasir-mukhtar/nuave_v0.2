@@ -6,8 +6,8 @@
 > and each package still needs its own approved spec
 > ([`WORKFLOW.md`](../WORKFLOW.md)).
 > Author: Claude (orchestrator role), 2026-11-07, branch
-> `claude/vigilant-cerf-e5kktf`. Revision 5 applies independent review
-> rounds 1 (FAIL) and 2 to 4 (PASS+NOTES); see "Review history" at the end.
+> `claude/vigilant-cerf-e5kktf`. Revision 6 applies independent review
+> rounds 1 (FAIL) and 2 to 5 (PASS+NOTES); see "Review history" at the end.
 > Inputs: the founder's PDF redesign in Figma, page "Redesain Report Nuave"
 > (file `W66XEpO1rKQY8vbKyvo7xq`, page `1:156`), made and iterated with the
 > founder on 2026-11-07; the draft [Report v3 plan](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205)
@@ -26,8 +26,8 @@ look into the PDF every new order gets, filled from the order's own saved
 data.
 
 It covers **how the report looks and how its pages are made**. It does not
-change **what the report says or how it counts**. Everything a saved report
-holds today gets a place in the new PDF (§5.1), and every count keeps its
+change **what the report says or how it counts**. Everything the web report
+shows today gets a place in the new PDF (§5.1), and every count keeps its
 per-source denominator and its settled sentence (§4, D-6). A designed page
 whose data does not exist yet is left out until the package that brings the
 data ships (§5.2).
@@ -114,14 +114,14 @@ Android Drive), and the founder accepts the list above.
 written before Spec 021 Part B have no `two_source_writing` block, so the
 pages that need it fall back as the web page does today.
 
-### 5.1 Every saved field has a page
+### 5.1 Everything the web report shows has a page
 
 | Saved field | PDF page |
 | --- | --- |
 | Per-source counts and failed checks (`two_source.counts`) | Cover orbit; Ringkasan figures; Penutup |
 | `two_source_writing.verdict` | Ringkasan statement (D-9 option A) |
 | `conclusion` | Penutup's paragraph, always (as the web Penutup shows it); also Ringkasan's statement when there is no verdict |
-| `key_findings` (with `headline`) | One **Temuan** page per finding, in the Figma 07 layout: the headline, the finding's text, and an evidence card showing the first question in the finding's `evidence_prompt_ids` whose answer exists, from the source its headline's basis names (`chatgpt_named` gives ChatGPT, `google_named` gives Google), otherwise ChatGPT; a question whose check failed or showed no AI Overview is skipped; with the businesses that answer names. The Figma card's short description per business has no saved field and is left out until a spec adds one |
+| `key_findings` (with `headline`) | One **Temuan** page per finding, in the Figma 07 layout: the headline, the finding's text, and an evidence card showing the first question in the finding's `evidence_prompt_ids` whose answer exists, from the source its headline's basis names (a basis starting with `chatgpt_` gives ChatGPT, one starting with `google_` gives Google), otherwise ChatGPT; a question whose check failed or showed no AI Overview is skipped, and the card is left out when no cited question has an answer from that source; with the businesses that answer names. The Figma card's short description per business has no saved field and is left out until a spec adds one |
 | `google_finding` | Its own Temuan page, as on the web page today |
 | `two_source_writing.takeaways` | Pesaing page, the right column (at most three, Spec 021) |
 | `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source for the first five businesses and the clinic's own row, chips for the rest, as the web page does, and the "Menurut jawaban AI" line for those five) and the Peta jawaban grid |
@@ -188,7 +188,8 @@ spec defines them with their denominators.
    so the contents page stays correct. A text takes as many continued pages
    as it needs and never overflows. For the founder to see how often this
    happens, the existing `report_pdf` log line (numbers and codes only) gains
-   one count, `long_texts`. Splitting by measurement (below) happens
+   one count, `long_texts`, which the PDF route works out by running the
+   same page-list function on the saved report it already reads. Splitting by measurement (below) happens
    only inside the appendix, so the report pages and the contents page are
    fixed before printing. Appendix
    pages are labelled A0, A1, A3 · 1/2 and so on, as in the Figma, and the
@@ -336,3 +337,4 @@ unchanged, and `verify-nuave` passes on a preview.
 | 2 | `6e6d64b` | PASS+NOTES | `conclusion` hidden on Part B reports; recommendation paragraphs and competitor lines without room; the "no pooled number" check against B-05 headlines; option A's real changes; D-6 example not in the code's words; the download label; no Celah topik frame, no place for `label_text`, the live FAQ page, `DESIGN.md`'s "another UI font" rule; PR 4 without "done when"; finish line 2 too broad. All addressed in revision 3. |
 | 3 | `5e3004e` | PASS+NOTES | Soft writer limits with no rule for long text on report pages; the spike below the real page maximum (about 46); PR 4's "done when" against finish line 6; D-6's B-05 clause; the Figma's scheduled re-check promise; the Temuan evidence card rule, the number of Pesaing bars, and Langkah pages in the page list. All addressed in revision 4. |
 | 4 | `73c939a` | PASS+NOTES | The over-budget case named an order log that does not exist and left the page undefined; the evidence card rule for findings that name no source; a stale risk row; Penutup's place; the re-audit advice card and the clinic's own Pesaing row. All addressed in revision 5. |
+| 5 | `9789039` | PASS+NOTES | Three optional notes: the broad "every saved field" wording in §1 and §5.1; the evidence card's basis rule; where `long_texts` is counted. All addressed in revision 6. |
