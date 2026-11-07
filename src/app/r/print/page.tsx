@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { designedPrintOn } from "@/lib/orders/report-pdf";
 import SavedReport from "../SavedReport";
 
 // Spec 021 Part P: the page Browser Run prints. Its fragment is a single-use
@@ -12,6 +13,12 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+// Spec 024 F-10: with the designed print on, two-source reports print the
+// designed 16:9 pages; with it off, exactly today's print.
 export default function ReportPrintPage() {
-  return <SavedReport via="print" />;
+  return designedPrintOn() ? (
+    <SavedReport via="print" designed />
+  ) : (
+    <SavedReport via="print" />
+  );
 }

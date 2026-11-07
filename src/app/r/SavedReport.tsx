@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { AuditNotice } from "@/components/product/AuditNotice";
 import { Button } from "@/components/ui/button";
 import ReportView from "@/app/audit/ReportView";
@@ -9,6 +10,10 @@ import {
   savedReportEvidence,
   type SavedReportData,
 } from "@/lib/audit/customer-evidence-export";
+
+// Spec 024 F-04: the designed PDF body, loaded only by the print page while
+// the designed print is on, so the private report page does not carry it.
+const DesignedReport = dynamic(() => import("./print/DesignedReport"));
 
 type View =
   | { kind: "loading" }
@@ -27,8 +32,12 @@ type View =
  */
 export default function SavedReport({
   via = "link",
+  designed = false,
 }: {
   via?: "link" | "print";
+  /** Spec 024 F-10: the print page with the designed print on. A report
+   * saved before Spec 018 keeps today's print (AC-F9). */
+  designed?: boolean;
 }) {
   const [view, setView] = useState<View>({ kind: "loading" });
   const secret = useRef("");
@@ -83,6 +92,8 @@ export default function SavedReport({
 
   if (view.kind === "ready") {
     const { data } = view;
+    if (designed && via === "print" && data.report.two_source)
+      return <DesignedReport data={data} />;
     const downloadJson = () => {
       const evidence = savedReportEvidence(data);
       const url = URL.createObjectURL(
