@@ -27,6 +27,14 @@ phase's spec (§4 rule 12). Launch stays the last step of G1, after the
 founder's verdict at the plan's launch gate, about 10 to 13 weeks from this
 approval.
 
+**Who decides what (Yasir, same day).** The Report v3 plan and its session
+decide the report's substance and format: what it says, how it counts,
+which pages and elements it has, in what order, and what each holds. The
+PDF design plan and its session own aesthetics and delivery: the look
+(type, colour, grid, imagery) and how the pages are made and delivered. The
+plan's "Format of the report PDF" sets the page order; the PDF design plan's
+page list follows it.
+
 Next: the Phase 0 spec, planned together with the PDF design plan's Step 0
 spike and PR 1 to PR 3; F-13 before P0.10.
 

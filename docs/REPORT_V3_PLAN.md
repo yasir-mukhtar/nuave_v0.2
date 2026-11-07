@@ -88,6 +88,57 @@ change parts of this plan:
   and lists its tabs, but has no download button (its D-7); where the owner
   downloads it is F-13.
 
+**Who decides what (founder, 2026-11-07).** This plan decides substance and
+format: what the report says, how it counts, which pages and elements it
+has, in what order, and what each page holds. The PDF design plan owns
+aesthetics and delivery: the look (type, colour, grid, imagery) and how the
+pages are made and delivered. Where the two touch, the page list of the PDF
+design plan (its §5 and §6.3) follows the format below.
+
+**Format of the report PDF.** Pages in this order. A page whose data does
+not exist yet is left out, as the PDF design plan's §5.2 says, and the
+contents page follows what is left.
+
+1. Sampul.
+2. Daftar isi.
+3. Ringkasan: the verdict (rule 14), the per-source counts in the settled
+   sentences, and the first plan step (the design plan's D-9 option A).
+4. Saat calon pasien bertanya (P0.1): one real answer in which the clinic is
+   not named, with the question, the first five businesses named, "dan N
+   bisnis lain", "Klinik Anda: tidak disebut" (or the AI's sentence about
+   the clinic), and one sentence on what it means.
+5. Cara membaca laporan (P0.8): the states, the per-source denominators and
+   what ten questions cannot show; the stability rows once P3.2 exists.
+6. Peta jawaban: the ten questions by the two sources, each cell one
+   source's state.
+7. Temuan: one page per finding, its meaning headline first (rule 14), then
+   the text and the evidence card.
+8. Cek fakta (P1.2): at most eight rows, "berbeda" first, with the count of
+   every claim checked.
+9. Pesaing: per-source counts and recommendations, each with its
+   denominator; the "Menurut jawaban AI" lines; the takeaways.
+10. Bagaimana AI menggambarkan klinik (P2.3, F-5): Kata AI next to Menurut
+    Anda.
+11. Halaman mereka (P2.2): differences between pages, never reasons.
+12. Celah topik.
+13. Situs yang dibaca AI (P2.1).
+14. Rencana: the three phases with "Keputusan Anda", then one Langkah page
+    per recommendation (its tags and "Dasar" line).
+15. Penutup: what to do first, Titik awal (P3.3), and the advice to audit
+    again.
+16. Untuk tim Anda: Untuk tim web Anda (P1.1; printable or sendable on its
+    own), Bahan siap pakai (P2.4), and the Lembar Kerja with its tabs.
+17. Lampiran: A0 (the questions and the method facts), then one page per
+    question with both full answers, their sources and code notes, and the
+    two questions that name the clinic apart, if F-4 is approved.
+18. Back cover.
+
+This keeps the design plan's pages with three changes of order: the moment
+of truth gets its own page right after Ringkasan; "Cara membaca laporan"
+follows them, so the owner's part comes first (P0.9); and the pages for the
+team (web check, kit, worksheet) sit together after Penutup, which closes
+the owner's part.
+
 ## 1. Why
 
 Today's report is an honest, sharp **mirror**. It shows what ChatGPT and
