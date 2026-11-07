@@ -14,7 +14,7 @@ Yasir approved the five section titles of the report PDF as fixed text
 "05 Lampiran". Yasir also decided Report v3 F-13 as option A: the owner
 downloads the Lembar Kerja with an "Unduh Lembar Kerja" button next to
 "Unduh PDF" on the web report, a second small exception to the web report
-freeze (design plan PR 4, shipped with v3 P0.10). The reference export in
+freeze (design plan PR 4b, shipped with v3 P0.10). The reference export in
 `experiments/report-pdf-design/` was redone from the Figma.
 
 ## 2026-11-07 — Report substance follows the Report v3 session; the design plan owns how it looks

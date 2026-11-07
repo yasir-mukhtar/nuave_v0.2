@@ -72,7 +72,7 @@ the report is built once.
 | # | Decision | Changes | Recommendation |
 | - | -------- | ------- | -------------- |
 | D-0 | Approve this plan. | `INDEX.md`, `NOW.md` routing; this file leaves `drafts/` | After review. |
-| D-1 | **What happens to the web report.** Option A: keep today's web report as it is (frozen at Spec 021 v2, no new sections), and redesign only the PDF. Option B: the private link opens a short delivery page; the PDF is the only full report. Option C: B, plus a short phone summary on the delivery page. | A: the v3 plan's web-page items move to the PDF (P0.1 under the source cards and its side panel, P0.8 under Jawaban AI, P1.2's marks in the answer panel, P2.5's copy on a phone, and Phase 0's "done when" phone check); PR 4 adds one line to the web report and to the approved report-ready email. B and C: see the list below this table | **A now; decide B or C later**, after PR 3 ships and the checks in the paragraph below pass. |
+| D-1 | **What happens to the web report.** Option A: keep today's web report as it is (frozen at Spec 021 v2, no new sections), and redesign only the PDF. Option B: the private link opens a short delivery page; the PDF is the only full report. Option C: B, plus a short phone summary on the delivery page. | A: the v3 plan's web-page items move to the PDF (P0.1 under the source cards and its side panel, P0.8 under Jawaban AI, P1.2's marks in the answer panel, P2.5's copy on a phone, and Phase 0's "done when" phone check); PR 4 adds one line to the web report and to the approved report-ready email, and PR 4b the "Unduh Lembar Kerja" button (founder, 2026-11-07), both changes to the frozen Spec 021 web report. B and C: see the list below this table | **A now; decide B or C later**, after PR 3 ships and the checks in the paragraph below pass. |
 | D-2 | Page format **16:9 landscape, 1440 × 810 CSS pixels** (about 381 × 214 mm), not A4. | Spec 021 Part P (A4 today); v3 P0.9 (A4 proof) | Yes. It is what the founder approved and it fits a meeting screen. It prints on A4 landscape with "fit to page". |
 | D-3 | Report type: **Newsreader** (headlines, big numbers), **Geist** (text), **Roboto Condensed** (labels, page numbers), **Geist Mono** only for text that shows code (for example robots.txt). | `DESIGN.md`: the two new families are added in `src/app/fonts.ts` (the only loader; no per-component loader), used only by the PDF pages; the report type values go in `tokens.css` as a report block, so `check:typography` keeps passing (it rejects raw px font sizes outside `tokens.css`); the "system serif stack only" line of the report exception changes to Newsreader for the PDF; and the rule "Do not ... introduce Inter or another UI font" (`DESIGN.md`, Typography families) gets an exception for Roboto Condensed inside the PDF pages only. Geist and Geist Mono are already app fonts. | Yes. Both new families are open licence (SIL OFL or Apache 2.0); the spec confirms each file's licence. |
 | D-4 | **The Figma is the visual reference after the corrections below**, then exported once to `experiments/report-pdf-design/reference.pdf`. Where the Figma and a spec disagree, the spec wins. Corrections before export: every pooled count removed (05 "6 dari 17 jawaban", 08 "dari 17 jawaban", 08 "lebih dari dua kali lebih sering", 05 grid cells "dari 2 jawaban", 07 "dicari sekitar 9.000 kali"), replaced by the per-source forms of D-6; the contents quote's unmeasured claim "lalu datang ke klinik yang disebut" rewritten (AGENTS rule 8); the A8 note "halaman yang membuat Ultima disebut" rewritten without a cause; the help line on A8 changed to D-8's path; the download label as D-7 settles it; every line that promises a scheduled re-check or a date ("Cek ulang dijadwalkan awal Januari 2027" on Penutup, "Cek ulang pada awal Januari 2027" on Rencana) removed, because Nuave runs no scheduled re-check (Spec 021 wishlist; v3 F-9); and two frames added that the Figma does not have yet: **Celah topik** and one **Langkah** page per recommendation (§5.1). | Figma only | Yes. |
@@ -162,7 +162,7 @@ waits for that package. A page whose data does not exist yet is left out.
 | 04 Rencana delapan minggu | Rencana | Today; tags with v3 P0.6, P0.7 | Every step in one list |
 | 04 | Langkah, one page per recommendation | Today | |
 | 04 | Bahan siap pakai | v3 P2.4 (F-7a) | |
-| 04 | Lembar Kerja | v3 P0.10 | Names the worksheet and its tabs; where it is downloaded is v3 F-13. The work-plan preview rows are this report's own recommendations; the person, date and status columns start empty, and the reference fills them only as a labelled example |
+| 04 | Lembar Kerja | v3 P0.10 | Names the worksheet and its tabs; the owner downloads it with the "Unduh Lembar Kerja" button on the web report (v3 F-13 option A, PR 4b). The work-plan preview rows are this report's own recommendations; the person, date and status columns start empty, and the reference fills them only as a labelled example |
 | 04 | Penutup | Today; decisions with v3 P0.4 | The closing paragraph and the three phases |
 | 04 | Titik awal | Today, partly | Today's counts and the re-audit advice (D-7); v3 P3.3 adds the comparison with a later audit. A page of its own is an open proposal to v3 (§5.3 rule 4); if v3 declines, it folds back into Penutup |
 | 05 Lampiran | A0, the questions | Today | With v3's answer notes |
@@ -304,14 +304,20 @@ saved answer splits cleanly.
 
 **PR 4: the web page line (D-1 option A).** One line on the web report and in
 the report-ready email that the PDF is the full designed report; the founder
-approves the wording. It also adds the "Unduh Lembar Kerja" button next to
-"Unduh PDF" on the web report (v3 F-13 option A, founder 2026-11-07), a second
-small exception to the freeze; the button downloads the worksheet that v3
-P0.10 builds and ships with P0.10. If the founder later picks B or C, that
-becomes its own spec.
+approves the wording. If the founder later picks B or C, that becomes its
+own spec.
 *Done when:* the line shows only on two-source reports (a new test asserts
 it), the email test output carries it, the pre-Spec-018 snapshots stay
 unchanged, and `verify-nuave` passes on a preview.
+
+**PR 4b: the worksheet button (v3 F-13 option A, founder 2026-11-07).** An
+"Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second
+small exception to the freeze. It downloads the worksheet that v3 P0.10
+builds and ships with P0.10.
+*Done when:* the button shows only on two-source reports and only once P0.10
+exists (a new test asserts both), it downloads the worksheet, the
+pre-Spec-018 snapshots stay unchanged, and `verify-nuave` passes on a
+preview.
 
 **Later PRs, one per v3 package**, each with its designed page (§5.2).
 
@@ -381,7 +387,7 @@ unchanged, and `verify-nuave` passes on a preview.
 1. Founder: D-0 to D-10 (D-1, D-2 and D-6 first).
 2. Figma corrections (D-4) and the reference export.
 3. Step 0 spike and the spec; founder approves the spec.
-4. PR 1, PR 2, PR 3, PR 4, each merged by the founder after its verdict.
+4. PR 1, PR 2, PR 3, PR 4 (and PR 4b with v3 P0.10), each merged by the founder after its verdict.
 5. Later PRs with the v3 packages. If the v3 plan is approved first, its
    Phase 0 layout work and PR 1 to PR 3 are planned together.
 
@@ -391,7 +397,7 @@ unchanged, and `verify-nuave` passes on a preview.
 - **2026-11-07, founder:** substance and format follow the Report v3 session, and aesthetics and delivery belong to this plan (§5.3). The Figma was restructured to v3's content: a Ringkasan with the verdict and the two source cards, a moment page, five Temuan pages from v3's findings, a Rencana page with v3's six steps, and a Penutup with v3's three phases.
 - **2026-11-07, Report v3 revision 6.3** (the plan was approved at 6.1, F-1, and the approval recorded in 6.2): its "Format of the report PDF" sets the page order, and the Figma now follows it (§5.2): Cara membaca laporan before Ringkasan and Peta jawaban as a front page (both had been this plan's proposals, and v3 adopted them), five sections ("Posisi <klinik> hari ini", "Apa kata AI tentang <klinik>", "Apa yang dibaca AI", "Rencana delapan minggu", "Lampiran"), and section titles that state no cause. The "Untuk dikerjakan" divider is gone; its pages sit in sections 03 and 04. Temuan pages now lead with the writer's meaning sentence and show the count beneath it (v3 rule 14). The sample counts are per question or per source (D-6), Cek fakta and A1 keep v3's wording ("…, yang dikutip jawaban ini"; "Tanpa penilaian"), Cara membaca carries all of v3's method lines, and Ringkasan shows the first plan step (D-9 A). The reference was exported again afterwards (39 pages; see the entry below).
 
-- **2026-11-07, founder:** the five section titles are approved as fixed text (D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran". v3 F-13 is decided as option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (PR 4). The reference was exported again from the Figma the same day: `experiments/report-pdf-design/reference.pdf`, 39 pages in the §5.2 order.
+- **2026-11-07, founder:** the five section titles are approved as fixed text (D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran". v3 F-13 is decided as option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (PR 4b). The reference was exported again from the Figma the same day: `experiments/report-pdf-design/reference.pdf`, 39 pages in the §5.2 order.
 
 ## Review history
 
@@ -403,4 +409,6 @@ unchanged, and `verify-nuave` passes on a preview.
 | 4 | `73c939a` | PASS+NOTES | The over-budget case named an order log that does not exist and left the page undefined; the evidence card rule for findings that name no source; a stale risk row; Penutup's place; the re-audit advice card and the clinic's own Pesaing row. All addressed in revision 5. |
 | 5 | `9789039` | PASS+NOTES | Three optional notes: the broad "every saved field" wording in §1 and §5.1; the evidence card's basis rule; where `long_texts` is counted. All addressed in revision 6. |
 | 6 | `cc1d94a` | FAIL | §5.2 followed the proof of concept's `render()` instead of v3's own page order; pooled finding counts and a false claim that they survive B-05; competitor recommendation counts marked as saved today; Cek fakta and A1 wording that turned "cited by this answer" into a cause and dropped the BPOM qualifiers; method lines missing from Cara membaca; card sentences not in the settled form; Titik awal and Cara membaca marked as waiting for v3; D-10's dark-page list. All addressed in `130090b` (§5.2, §5.3, D-10, the Figma). |
-| 7 | `130090b` | PASS+NOTES | Ringkasan and moment-page sentences not in the code's settled form; "Yang dikerjakan dulu" showed recommendation 1, not the first plan step; §5.1 had lost its Peta jawaban mappings and two stale names; Titik awal as a page v3 does not list; Temuan 1's question and answer counts; a Langkah 1 claim beyond the playbook line; the Celah topik headline for a question without AI Overview; the B-05 paragraph; revision numbers; topic names; four small sample issues. All addressed in the next head. |
+| 7 | `130090b` | PASS+NOTES | Ringkasan and moment-page sentences not in the code's settled form; "Yang dikerjakan dulu" showed recommendation 1, not the first plan step; §5.1 had lost its Peta jawaban mappings and two stale names; Titik awal as a page v3 does not list; Temuan 1's question and answer counts; a Langkah 1 claim beyond the playbook line; the Celah topik headline for a question without AI Overview; the B-05 paragraph; revision numbers; topic names; four small sample issues. All addressed in `f0756c7`. |
+| 8 | `f0756c7` | PASS | All round 7 notes resolved. |
+| 9 | `3f8a0ca` | PASS+NOTES | Two exported pages with overlapping text (divider 02, Titik awal); the Lembar Kerja row and D-1 still treating the download as open; no checks for the button. All addressed in the next head (PR 4b, the frames, a new export). |
