@@ -50,6 +50,13 @@ verification is against its acceptance criteria.
 any, and the active milestone. The entries below record each package's
 latest status.
 
+- [`024-report-pdf-design/SPEC.md`](./024-report-pdf-design/SPEC.md)
+  — **Approved** (2026-11-07, revision 5). The designed 16:9 report PDF:
+  one Part per PR (page frame, report pages, appendix, the web line, the
+  worksheet button, v3 Phase 0 templates). Six independent review rounds,
+  the last PASS on `0450f1c`; founder answered Q-3, Q-4, Q-10 and Q-11.
+  Build Part 1 (PR 1) next.
+
 - [`023-report-writing-quality/SPEC.md`](./023-report-writing-quality/SPEC.md)
   — **Approved** (2026-10-28, revision 5). The report writer's depth and
   natural Indonesian: rules that fight good writing removed, a precise
