@@ -24,13 +24,13 @@ const TABS = [
   {
     value: "klinik",
     label: "Klinik lain",
-    description: "Menampilkan klinik lain yang muncul dalam jawaban AI.",
+    description: "Klinik lain yang muncul dalam jawaban AI.",
   },
   {
     value: "perbaikan",
     label: "Perbaikan",
     description:
-      "Tindak lanjut yang bisa dikerjakan, plus topik yang belum menyebut Anda.",
+      "Tindak lanjut yang bisa dikerjakan, beserta topik yang belum menyebut Anda.",
   },
 ] as const;
 

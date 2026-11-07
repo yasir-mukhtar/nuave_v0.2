@@ -4,6 +4,9 @@
 > Language: Indonesian
 > Updated: 2026-10-28 (the delivery promise is 30 minutes since
 > 2026-10-28: founder, go-live of Spec 021 PR 6b)
+> Updated: 2026-11-07 (23 wording changes marked **Luwes**, from a review
+> with the `bahasa-indonesia-luwes` skill. Each change and its reason is in
+> [`LANDING_COPY_LUWES_2026-11-07.md`](../../docs/drafts/LANDING_COPY_LUWES_2026-11-07.md).)
 
 Where the words come from:
 
@@ -17,6 +20,9 @@ Where the words come from:
 - **Fix.** A small change to the design's words, listed with its reason in
   [Small fixes](#small-fixes).
 - **D-n.** Settled by that decision in SPEC.md.
+- **Luwes.** Reworded on 2026-11-07 so the Indonesian reads plainer and
+  claims stay within their sources. Labels, sourced figures, pictures and the
+  D-1 to D-4 decisions did not change.
 
 A `/` inside a heading marks the line break drawn in the design on a laptop.
 On a phone, text wraps where it fits unless a break is noted.
@@ -26,7 +32,7 @@ On a phone, text wraps where it fits unless a break is noted.
 | Item | Words | From |
 | --- | --- | --- |
 | Browser tab title | Nuave · Cek klinik Anda di ChatGPT dan Google AI Overview | Proposal |
-| Description | Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview. Dapatkan rekomendasi perbaikan. | Proposal (the hero lede) |
+| Description | Cek apakah klinik Anda muncul di ChatGPT dan Google AI Overview, lalu lihat apa yang perlu dibenahi. | Luwes (the hero lede) |
 
 ## Menu
 
@@ -51,14 +57,15 @@ Shown above the headline only when this browser has a saved journey:
 - **H1:** "Pasien sekarang / tanya AI dulu / sebelum pilih klinik". The three
   line breaks hold on a phone too. No full stop.
 - **Lede:** "Cek apakah klinik Anda muncul di ChatGPT dan Google AI
-  Overview. Dapatkan rekomendasi perbaikan."
+  Overview, lalu lihat apa yang perlu dibenahi." (Luwes)
 - **Form** (the same in S1, S7 and S9):
   - Field: "Website atau Instagram klinik" (placeholder, and the field's name
     for screen readers).
   - Button: "Cek klinik saya di AI".
   - Error: "Masukkan satu website atau akun Instagram yang valid." (Today)
-- **Line under the form:** "Cek apakah klinik Anda bisa ditemukan, gratis. /
-  Rp249.000 untuk mulai audit lengkap."
+- **Line under the form:** "Nuave mencari klinik Anda, gratis. / Audit
+  lengkapnya Rp249.000." (Luwes: the free step only finds the clinic, FAQ
+  no. 6, so the line no longer says "bisa ditemukan".)
 - **Ticks:**
   1. "10 pertanyaan berdasarkan volume pencarian tertinggi Google" (D-2: kept)
   2. "ChatGPT dan Google AI Overview"
@@ -92,8 +99,9 @@ Shown above the headline only when this browser has a saved journey:
 ## S2 · Pasien pilih lewat AI
 
 - **H2:** "Makin banyak pasien / pilih dokter lewat AI"
-- **Line:** "Banyak pasien lebih mengikuti saran AI daripada hasil pencarian
-  di Google."
+- **Line:** "Kini banyak pasien tidak hanya mencari di Google, tetapi juga
+  bertanya ke AI." (Luwes: the three sources show people asking AI, not
+  trusting it more than Google.)
 - **Rows**, in this order on every screen (the founder moved Indonesia last,
   so the first row matches the "AS" in the line above):
 
@@ -141,16 +149,17 @@ Shown above the headline only when this browser has a saved journey:
 
 ## S4 · Cara kerja (`#cara-kerja`)
 
-- **H2:** "Kami tanya AI persis / seperti pasien Anda"
+- **H2:** "Nuave bertanya ke AI / dengan bahasa pasien Anda" (Luwes)
 - **Step 1:**
   - "Masukkan website", tag "Gratis".
-  - "Atau akun Instagram klinik Anda. Nuave membaca data yang tersedia."
+  - "Atau akun Instagram klinik Anda. Nuave mencarinya, lalu Anda memastikan
+    hasilnya benar." (Luwes)
   - Picture: a field with "klinikcantikfiksi.com", then a found card
     "Klinik Cantik Fiksi" / "Jakarta Selatan".
 - **Step 2:**
-  - "Bayar dan cek", tag "Rp249.000".
-  - "Nuave siapkan 10 pertanyaan berdasarkan volume pencarian di Google.
-    Anda tinggal cek."
+  - "Bayar dan periksa", tag "Rp249.000". (Luwes)
+  - "Nuave menyiapkan 10 pertanyaan dari data pencarian Google. Anda tinggal
+    memeriksa dan menyetujuinya." (Luwes)
   - Picture, a question card:
     - "Pertanyaan 3", tag "Contoh";
     - "Dicari di Google";
@@ -159,8 +168,8 @@ Shown above the headline only when this browser has a saved journey:
       (data September 2026)".
 - **Step 3:**
   - "Terima laporan".
-  - "Kami tanyakan ke ChatGPT dan Google AI Overview. Laporan lengkap siap
-    dalam 30 menit."
+  - "Pertanyaan diajukan ke ChatGPT dan Google AI Overview. Laporan lengkap
+    siap dalam 30 menit." (Luwes)
   - Picture, an email: "Tim Nuave"; "AI Visibility Report untuk / Klinik
     Cantik Fiksi sudah siap"; button "Buka laporan".
 - **Caption:** "Nama klinik hanya ilustrasi."
@@ -176,8 +185,8 @@ Shown above the headline only when this browser has a saved journey:
   | --- | --- |
   | Skor | Muncul di berapa jawaban ChatGPT dan Google AI Overview. |
   | Jawaban AI | Jawaban utuh ChatGPT dan Google AI Overview beserta sumbernya. |
-  | Klinik lain | Menampilkan klinik lain yang muncul dalam jawaban AI. |
-  | Perbaikan | Tindak lanjut yang bisa dikerjakan, plus topik yang belum menyebut Anda. |
+  | Klinik lain | Klinik lain yang muncul dalam jawaban AI. (Luwes) |
+  | Perbaikan | Tindak lanjut yang bisa dikerjakan, beserta topik yang belum menyebut Anda. (Luwes) |
 
 - **Under the tabs:** "Download PDF, siap dibawa ke rapat." and the caption
   "Nama klinik hanya ilustrasi."
@@ -255,9 +264,9 @@ label and topic line.
 | Card | Text |
 | --- | --- |
 | Apa adanya | Jawaban AI ditampilkan utuh dengan sumbernya. |
-| Bahasa pasien | 10 pertanyaan dengan bahasa natural pasien. |
+| Bahasa pasien | 10 pertanyaan dalam bahasa sehari-hari pasien. (Luwes) |
 | Tanpa repot | Cukup alamat website atau Instagram. Tanpa daftar, tanpa kata sandi. |
-| Siap ditindaklanjuti | Ada penjelasan lengkap untuk setiap saran perbaikan. |
+| Siap ditindaklanjuti | Setiap saran disertai alasan, bukti, dan tanda selesainya. (Luwes) |
 
 ## S7 · Yang Anda dapat + harga (`#harga`)
 
@@ -268,20 +277,22 @@ label and topic line.
 
   | No. | Item | Text |
   | --- | --- | --- |
-  | 01 | 10 pertanyaan pasien | Berdasarkan volume pencarian di Google untuk jenis klinik dan kota Anda. |
-  | 02 | Jumlah pencarian | Data berapa kali topiknya dicari per bulan. |
-  | 03 | Jawaban ChatGPT | Ditanyakan langsung ke ChatGPT, dijawab lengkap dengan sumbernya. |
-  | 04 | Google AI Overview | Dicek dari kota Anda dan seberapa sering Google menampilkannya. |
-  | 05 | Skor | Disebut di berapa jawaban ChatGPT dan Google AI Overview. |
-  | 06 | Klinik lain | Menampilkan klinik lain yang muncul dalam jawaban AI. |
-  | 07 | Sumber AI | Situs apa saja yang menjadi referensi AI dalam membuat jawaban. |
-  | 08 | Topik terlewat | Topik yang dicari orang, tapi belum menyebut klinik Anda. |
-  | 09 | Perbaikan dan PDF | Apa tindak lanjut yang bisa dikerjakan. Siap dibahas dalam rapat. |
+  | 01 | 10 pertanyaan pasien | Disusun dari data pencarian Google untuk jenis klinik dan kota Anda. |
+  | 02 | Jumlah pencarian | Berapa kali tiap topik dicari di Google setiap bulan. |
+  | 03 | Jawaban ChatGPT | Ditanyakan langsung ke ChatGPT, dicatat utuh beserta sumber jika ada. |
+  | 04 | Google AI Overview | Dicari dari kota Anda. Tercatat juga seberapa sering AI Overview tampil. |
+  | 05 | Skor | Muncul di berapa jawaban ChatGPT dan Google AI Overview. |
+  | 06 | Klinik lain | Klinik lain yang muncul dalam jawaban AI. |
+  | 07 | Sumber AI | Situs yang dikutip ChatGPT dan Google AI Overview dalam jawabannya. |
+  | 08 | Topik terlewat | Topik yang banyak dicari, tetapi jawabannya belum menyebut klinik Anda. |
+  | 09 | Perbaikan dan PDF | Tindak lanjut yang bisa dikerjakan, dalam PDF yang siap dibawa ke rapat. |
+
+  All nine texts are Luwes.
 
 - **Price block:**
   - "Rp249.000"
   - "Sekali bayar. / Tanpa langganan. / Tanpa biaya tambahan."
-  - "Bayar setelah klinik Anda ketemu."
+  - "Bayar setelah Nuave menemukan klinik Anda." (Luwes)
   - "QRIS · Transfer bank · GoPay · DANA"
   - The form (see S1).
   - "Laporan siap dalam 30 menit setelah audit dimulai."
@@ -402,8 +413,8 @@ label and topic line.
   bertanya".
 - **Line:** "Mulai dari website atau Instagram klinik Anda."
 - **Form:** see S1.
-- **Line under the form:** "Cek apakah klinik Anda bisa ditemukan, gratis. /
-  Rp249.000 untuk mulai audit lengkap." (D-3: the hero's line)
+- **Line under the form:** "Nuave mencari klinik Anda, gratis. / Audit
+  lengkapnya Rp249.000." (D-3: the hero's line)
 - **Street picture:** the empty shop sign "Klinik Anda?" with "?".
 - **Contact:** "Ada pertanyaan lain? Hubungi kami di support@nuave.ai."
   The address is a `mailto:` link.

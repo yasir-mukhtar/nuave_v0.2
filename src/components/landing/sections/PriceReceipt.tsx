@@ -8,30 +8,30 @@ import styles from "./PriceReceipt.module.css";
 const ITEMS = [
   [
     "10 pertanyaan pasien",
-    "Berdasarkan volume pencarian di Google untuk jenis klinik dan kota Anda.",
+    "Disusun dari data pencarian Google untuk jenis klinik dan kota Anda.",
   ],
-  ["Jumlah pencarian", "Data berapa kali topiknya dicari per bulan."],
+  ["Jumlah pencarian", "Berapa kali tiap topik dicari di Google setiap bulan."],
   [
     "Jawaban ChatGPT",
-    "Ditanyakan langsung ke ChatGPT, dijawab lengkap dengan sumbernya.",
+    "Ditanyakan langsung ke ChatGPT, dicatat utuh beserta sumber jika ada.",
   ],
   [
     "Google AI Overview",
-    "Dicek dari kota Anda dan seberapa sering Google menampilkannya.",
+    "Dicari dari kota Anda. Tercatat juga seberapa sering AI Overview tampil.",
   ],
-  ["Skor", "Disebut di berapa jawaban ChatGPT dan Google AI Overview."],
-  ["Klinik lain", "Menampilkan klinik lain yang muncul dalam jawaban AI."],
+  ["Skor", "Muncul di berapa jawaban ChatGPT dan Google AI Overview."],
+  ["Klinik lain", "Klinik lain yang muncul dalam jawaban AI."],
   [
     "Sumber AI",
-    "Situs apa saja yang menjadi referensi AI dalam membuat jawaban.",
+    "Situs yang dikutip ChatGPT dan Google AI Overview dalam jawabannya.",
   ],
   [
     "Topik terlewat",
-    "Topik yang dicari orang, tapi belum menyebut klinik Anda.",
+    "Topik yang banyak dicari, tetapi jawabannya belum menyebut klinik Anda.",
   ],
   [
     "Perbaikan dan PDF",
-    "Apa tindak lanjut yang bisa dikerjakan. Siap dibahas dalam rapat.",
+    "Tindak lanjut yang bisa dikerjakan, dalam PDF yang siap dibawa ke rapat.",
   ],
 ] as const;
 
@@ -98,7 +98,9 @@ export function PriceReceipt() {
               </div>
             </div>
             <div className={styles.stub}>
-              <p className={styles.pay}>Bayar setelah klinik Anda ketemu.</p>
+              <p className={styles.pay}>
+                Bayar setelah Nuave menemukan klinik Anda.
+              </p>
               <p className={styles.methods}>
                 {METHODS.map((method, index) => (
                   <span key={method}>

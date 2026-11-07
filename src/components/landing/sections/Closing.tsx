@@ -21,8 +21,8 @@ export function Closing() {
         </p>
         <SourceForm className={styles.form} />
         <p className={styles.micro}>
-          Cek apakah klinik Anda bisa ditemukan, <b>gratis</b>.<br />
-          Rp249.000 untuk mulai audit lengkap.
+          Nuave mencari klinik Anda, <b>gratis</b>.<br />
+          Audit lengkapnya Rp249.000.
         </p>
       </div>
 

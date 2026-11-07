@@ -30,8 +30,8 @@ export function Reasons() {
             <span>Makin banyak pasien</span> <span>pilih dokter lewat AI</span>
           </h2>
           <p className={shell.line}>
-            Banyak pasien lebih mengikuti saran AI daripada hasil pencarian di
-            Google.
+            Kini banyak pasien tidak hanya mencari di Google, tetapi juga
+            bertanya ke AI.
           </p>
         </header>
 
