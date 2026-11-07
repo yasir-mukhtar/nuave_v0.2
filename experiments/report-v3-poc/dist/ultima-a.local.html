@@ -685,7 +685,7 @@ function pagesGrid() {
 function topics() {
   if (!(D.topics || []).length) return "";
   return band("celah", "Celah Topik", D.topics_lede, D.topics.map(t => `
-    <div class="topic"><div class="topic-h"><h3>${esc(t.name)}</h3><div class="topic-v tnum">${t.volume ? `±${fmt(t.volume)}<small>pencarian/bulan</small>` : t.ai_mentions ? `±${fmt(t.ai_mentions)}<small>sebutan di asisten AI/bulan</small>` : `${t.others}<small>klinik lain disebut ${t.others_src ? "di " + SRC[t.others_src] : "AI"}</small>`}</div></div>
+    <div class="topic"><div class="topic-h"><h3>${esc(t.name)}</h3><div class="topic-v tnum">${t.volume ? `±${fmt(t.volume)}<small>pencarian/bulan</small>` : t.ai_mentions ? `±${fmt(t.ai_mentions)}<small>sebutan di asisten AI/bulan</small>` : (t.others_src ? `${t.others}<small>klinik lain disebut di ${SRC[t.others_src]}</small>` : "")}</div></div>
     <p>${esc(t.status)} ${t.sources ? `<span class="src">Situs yang dikutip: ${esc(t.sources)}</span>` : ""} ${refs(t.refs)}</p></div>`).join(""));
 }
 function sourceMap() {

@@ -154,22 +154,37 @@ def check(d, label):
         if f"dari {len(pool)} {unit}" not in note:
             errors.append(f"words_note must say 'dari {len(pool)} {unit}' (rule 4: source and denominator)")
         listed = re.search(r"\((P\d+(?:, P\d+)*)\)", note)
-        if not listed or {int(x[1:]) for x in listed.group(1).split(", ")} != set(pool):
+        if not listed or sorted(int(x[1:]) for x in listed.group(1).split(", ")) != sorted(pool):
             errors.append(f"words_note must list the answers counted: ({', '.join(f'P{n}' for n in sorted(pool))})")
         def own_lines(a):
-            return [l for l in a.get("answer", "").split("\n") if any(o in l.lower() for o in own)]
+            # The clinic's passage: each line naming it, with the more deeply indented lines under it
+            # (sub-bullets). The product's spec counts within the passage (plan P2.3).
+            lines, out, i = a.get("answer", "").split("\n"), [], 0
+            while i < len(lines):
+                if not any(o in lines[i].lower() for o in own):
+                    i += 1
+                    continue
+                depth, block, i = len(lines[i]) - len(lines[i].lstrip()), [lines[i]], i + 1
+                while i < len(lines) and lines[i].strip() and len(lines[i]) - len(lines[i].lstrip()) > depth:
+                    block.append(lines[i])
+                    i += 1
+                out.append("\n".join(block))
+            return out
         for w, where, pattern in desc["words"]:
             rx = re.compile(pattern, re.I)
             for n in where:
                 if n not in pool:
                     errors.append(f"word '{w}': P{n} is not a {src} answer that names the clinic")
                 elif not any(rx.search(l) for l in own_lines(pool[n])):
-                    errors.append(f"word '{w}': not on a line naming the clinic in P{n} {src}")
+                    errors.append(f"word '{w}': not in the clinic's passage in P{n} {src}")
             for n, a in pool.items():
                 if n in where:
                     continue
                 if any(rx.search(l) for l in own_lines(a)):
-                    errors.append(f"word '{w}': on a line naming the clinic in P{n} {src}, but not counted")
+                    errors.append(f"word '{w}': in the clinic's passage in P{n} {src}, but not counted")
+    for t in d.get("topics", []):
+        if "others" in t and t.get("others_src") not in ("chatgpt", "google"):
+            errors.append(f"topic '{t['name']}': 'others' needs others_src (rule 4: a count names its source)")
     known = corpus(d)
     for key, text in strings(d):
         if "—" in text:

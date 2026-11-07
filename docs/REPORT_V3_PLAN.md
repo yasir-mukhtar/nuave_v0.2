@@ -160,10 +160,11 @@ Any later change of order comes from this plan or its specs.
 **Counts on the PDF pages** (rules 2 and 4; the design plan's D-6). Every
 number on a page is computed or confirmed by code and keeps its source and
 its denominator. Spec 021 B-05 keeps a writer's headline number only in a
-form code can confirm; counts of checked claims, technical checks and cited
-sources are not among those forms yet, so the specs of P1.2, P1.1 and P2.1
-each amend B-05 to confirm their counts, and until then such a number is
-left out. A finding's large number is one of three things:
+form code can confirm. It already confirms a count of distinct cited
+domains; counts of checked claims, of technical checks and of cited sites
+of one kind (such as list articles) are not among its forms yet, so the
+specs of P1.2, P1.1 and P2.1 each amend B-05 to confirm their counts, and
+until then such a number is left out. A finding's large number is one of three things:
 
 - one source's count ("2 dari 10 jawaban ChatGPT");
 - a count of questions, when the sentence is true in each source and each of
@@ -623,8 +624,9 @@ reading (`src/lib/reading/page-reader.ts`).
 
 **P2.3 How AI describes the clinic** (needs F-5). AI's one-line description
 of the clinic, built from quote-checked words, and the words AI attaches to
-it, counted by code on the lines that name the clinic (a list heading does
-not count), with a note naming the source, the answers counted and the
+it, counted by code within the clinic's own passage (its list item with
+its sub-items, its table row, or its sentence; a list heading does not
+count), with a note naming the source, the answers counted and the
 denominator. Next to it, labelled "Menurut Anda", the owner's own
 answer to "Apa yang membuat bisnis Anda berbeda?".
 
@@ -1182,7 +1184,8 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   that were run.
 - **Revision 6.4 review (round 2, 2026-11-07): PASS+NOTES on `5d04c86`,
   seven notes.** A and B counted "Kata AI" words by different rules, and the
-  check could pass a word listed where it is absent; B's "pertanyaan tanpa
+  check could pass a word listed where it only describes another clinic or
+  sits in a list heading, or a note listing the wrong answers; B's "pertanyaan tanpa
   AI Overview" counted a failed check in its denominator; the proofs called
   the "Butuh F-3" rows not run although they show results; the counting
   paragraph went beyond Spec 021 B-05; direction 3 contradicted rule 14 on
@@ -1192,5 +1195,17 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   the clinic, and `build.py` checks that and the note's answer list; the
   Google card uses the settled sentence "Google menampilkan AI Overview di Z
   dari M pertanyaan"; B-05's limit is stated; `build.py` reads the data
-  files from source, after a stale cached copy made a negative test pass.
-  The design plan's two rows are with its session.
+  files from source, after a stale cached copy kept a restored data file
+  failing during a negative test. The design plan's two rows are with its
+  session.
+- **Revision 6.4 review (round 3, 2026-11-07): PASS+NOTES on `d9e2240`,
+  four notes.** The line rule missed a word on a sub-bullet under the
+  clinic's line; the B-05 sentence said cited-source counts are not
+  confirmable, though B-05 confirms distinct cited domains; two
+  review-history statements were inexact; and small items (B's topic order
+  under R-18, a topic count printed without its source, a note check that
+  compared sets). All are applied: P2.3 counts within the clinic's passage
+  and `build.py` reads the sub-items under its line; the sentence names
+  cited sites of one kind; the history is corrected; B's topics follow
+  demand, then question order; a topic count needs its source; the note's
+  answer list is compared in order.

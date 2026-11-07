@@ -420,10 +420,10 @@ DATA = {
     "topics": [
         {"name": "Bekas jerawat dan bopeng", "ai_mentions": 1146, "status": "Tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima tidak menulis harga.",
          "sources": "primavitaclinic.co.id, erhaultimate.co.id, aveiaclinic.com, alodokter.com", "refs": [2, 9]},
-        {"name": "Filler dan botox pertama kali", "others": 4, "others_src": "chatgpt", "status": "Tidak disebut di ChatGPT. Empat tempat yang disarankan dijelaskan lewat dokter spesialisnya.",
-         "sources": "rsudpasarminggu.jakarta.go.id, cderma.id, klinikbamed.com, perdoski.id", "refs": [3]},
         {"name": "Klinik kecantikan terbaik", "ai_mentions": 299, "status": "Tidak disebut di Google. Artikel daftar klinik di blog Ultima dikutip pada penjelasan tentang klinik lain.",
          "sources": "hadirr.com, koranindopos.com, ultimaclinic.example", "refs": [7]},
+        {"name": "Filler dan botox pertama kali", "others": 4, "others_src": "chatgpt", "status": "Tidak disebut di ChatGPT. Empat tempat yang disarankan dijelaskan lewat dokter spesialisnya.",
+         "sources": "rsudpasarminggu.jakarta.go.id, cderma.id, klinikbamed.com, perdoski.id", "refs": [3]},
         {"name": "Biaya laser flek hitam", "others": 3, "others_src": "google", "status": "Tidak disebut di Google; artikel harga di blog Ultima dikutip.",
          "sources": "erhaultimate.co.id, klinikmagna.com, hdmall.id, ultimaclinic.example", "refs": [8]},
     ],
