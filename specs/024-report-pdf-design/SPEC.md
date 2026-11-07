@@ -2,10 +2,13 @@
 
 > Status: **Draft**
 > Owner: founder; drafted by Claude on `claude/vigilant-cerf-e5kktf`
-> Updated: 2026-11-07, revision 2. Revision 2 applies the independent
-> review of `72660aa` (PASS+NOTES): Part 5 for the v3 Phase 0 page
-> templates, checkable AC-G2 and AC-G3, the ready rule split between Parts 1
-> and 3, S-01 to S-03 made exact, Q-2 and Q-5 to Q-9 settled.
+> Updated: 2026-11-07, revision 3. Revision 3 applies the review of
+> `f885989` (PASS+NOTES): AC-G3 limited to counts, the designed-print switch
+> (F-10), Rencana continued pages, one template-ownership rule, the font
+> failure rule, and dividers only for sections with a page. Revision 2
+> applied the review of `72660aa`: Part 5, checkable AC-G2 and AC-G3, the
+> ready rule split between Parts 1 and 3, S-01 to S-03 made exact, Q-2 and
+> Q-5 to Q-9 settled.
 > Implements: [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../docs/REPORT_PDF_DESIGN_PLAN.md)
 > (approved 2026-11-07, D-0 to D-10;
 > [decision](../../docs/DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)),
@@ -68,9 +71,9 @@ they can present and act on, without the web page beside it.
 | Part | Plan package | What it builds |
 | --- | --- | --- |
 | Part 0 | all | Rules every Part keeps, the limits, the budgets, the fixed text |
-| Part 1 | PR 1 | Fonts and tokens, the print request, the page box, the page list, the ready rule, the always-present pages |
+| Part 1 | PR 1 | Fonts and tokens, the print request, the designed-print switch, the page box, the page list, the ready rule, the always-present pages and the divider template |
 | Part 2 | PR 2 | The report pages filled from saved data, with code headlines |
-| Part 3 | PR 3 | The appendix (Lampiran) |
+| Part 3 | PR 3 | The appendix (Lampiran); turns the designed print on in production |
 | Part 4 | PR 4 | One line on the web report and in the report-ready email |
 | Part 4b | PR 4b | The "Unduh Lembar Kerja" button on the web report |
 | Part 5 | One PR with each v3 Phase 0 package | The page templates for v3 Phase 0: the moment page, the Cara membaca additions, the Rencana and Langkah tags, the Penutup decisions, the Lembar Kerja page |
@@ -80,14 +83,17 @@ they can present and act on, without the web page beside it.
 - A redesign of the web report. It stays frozen at Spec 021 v2 (D-1 A),
   except the line of Part 4 and the button of Part 4b.
 - The data, claims, counts and rules of every Report v3 package. They stay
-  with v3's specs (plan §5.3). Part 5 adds only the Phase 0 templates.
-- The pages of v3 packages after Phase 0: Cek fakta (P1.2), Kata AI dan kata
-  Anda (P2.3), Halaman mereka (P2.2), Situs yang dibaca AI (P2.1), Untuk tim
-  web Anda (P1.1), Bahan siap pakai (P2.4), the Titik Awal tab (P3.3), the stability box and re-asks (P3.2), v3's
-  answer notes on A0 and the two questions that name the clinic (F-4). This
-  spec only requires that such a page is left out until its saved data
-  exists (G-02). Each package's own spec adds its template (plan §7, "Later
-  PRs").
+  with v3's specs (plan §5.3).
+- The templates of v3 packages after Phase 0 are not written yet: Cek fakta
+  (P1.2), Kata AI dan kata Anda (P2.3), Halaman mereka (P2.2), Situs yang
+  dibaca AI (P2.1), Untuk tim web Anda (P1.1), Bahan siap pakai (P2.4), the
+  Titik Awal tab line (P3.3), the stability box and re-asks (P3.2), v3's
+  answer notes on A0 and the two questions that name the clinic (F-4).
+  Until then such a page or part is left out (G-02). **Template ownership,
+  one rule:** Spec 024 owns every PDF template; v3's specs own the data.
+  Each later template is added to this spec as a reviewed change (a new
+  Part, like Part 5) in the same PR as its v3 package (plan §7 "Later PRs",
+  §5.3 rule 3).
 - The worksheet file itself (v3 P0.10). Part 4b only adds its button.
 - Email changes beyond Part 4's one line.
 - D-1 options B and C (closing the web report).
@@ -154,16 +160,18 @@ and when it is shown.
 | Front | Ringkasan | Part 2 | Always |
 | Front | Saat calon pasien bertanya | Part 5, with v3 P0.1 to P0.3 | Only when its saved data exists |
 | Front | Peta jawaban | Part 2 | Always |
-| 01 | Divider | Part 1 | See Q-4 |
+| 01 | Divider | Part 1 | When section 01 has a page |
 | 01 | Temuan, one per finding and one for `google_finding` | Part 2 | One per saved finding |
 | 01 | Pesaing | Part 2 | When competitor rows exist |
 | 01 | Celah topik | Part 2 | When it has a row |
-| 02 | Divider, Cek fakta, Kata AI dan kata Anda | v3 P1.2, P2.3 | Only when their saved data exists |
-| 03 | Divider, Halaman mereka, Situs yang dibaca AI, Untuk tim web Anda | v3 P2.2, P2.1, P1.1 | Only when their saved data exists |
-| 04 | Divider | Part 1 | See Q-4 |
+| 02 | Divider | Part 1 | When section 02 has a page (none today) |
+| 02 | Cek fakta, Kata AI dan kata Anda | Later Parts, with v3 P1.2, P2.3 | Only when their saved data exists |
+| 03 | Divider | Part 1 | When section 03 has a page (none today) |
+| 03 | Halaman mereka, Situs yang dibaca AI, Untuk tim web Anda | Later Parts, with v3 P2.2, P2.1, P1.1 | Only when their saved data exists |
+| 04 | Divider | Part 1 | When section 04 has a page |
 | 04 | Rencana | Part 2 | When recommendations exist |
 | 04 | Langkah, one per recommendation | Part 2 | One per saved recommendation |
-| 04 | Bahan siap pakai | v3 P2.4 | Only when its saved data exists |
+| 04 | Bahan siap pakai | Later Part, with v3 P2.4 | Only when its saved data exists |
 | 04 | Lembar Kerja | Part 5, with v3 P0.10 | Only once the worksheet exists |
 | 04 | Penutup | Part 1 | Always |
 | 04 | Titik awal | Part 2 (Q-6, settled) | Always; v3 numbers only when saved |
@@ -172,7 +180,8 @@ and when it is shown.
 
 Parts of pages that wait for Phase 0 (Cara membaca's P0.8 lines, the P0.6
 and P0.7 tags on Rencana and Langkah, the P0.4 decisions on Penutup) are
-added by Part 5; later v3 parts by that package's spec.
+added by Part 5; later v3 parts by the later Part added with that package
+(Non-scope, template ownership).
 
 ### Requirements
 
@@ -205,7 +214,7 @@ added by Part 5; later v3 parts by that package's spec.
   cause.
 - **G-06: Nothing cut.** No text is cut off, set below the reference sizes,
   or placed outside its page box; no page is empty. Long text goes to
-  continued pages: by word count on report pages (F-06), by measuring in the
+  continued pages: by word count on report pages (F-06, S-06), by measuring in the
   appendix (L-05).
 - **G-07: Made fresh.** Each download is made from the saved, unchanging
   report; nothing is stored and nothing is regenerated (Spec 021 P-04, Spec
@@ -258,7 +267,7 @@ the writer's rule. The page-list function counts with `words()`.
 | Pesaing | "Menurut jawaban AI" reason, up to five | 20 words each | 15 | Q-3 |
 | Pesaing | Takeaways, up to three | 10 + 30 words each | 25 (text) | Q-3 |
 | Celah topik | Topic name, up to five rows | 6 words | not measured | Q-3 |
-| Rencana, Langkah | Recommendation title / paragraph | 14 / 100 words | 14 / 60 | Langkah: continued page (F-06); Rencana: Q-3 |
+| Rencana, Langkah | Recommendation title / paragraph | 14 / 100 words | 14 / 60 | Langkah: continued page (F-06); Rencana: continued page (S-06) |
 | Penutup | Conclusion; three plan steps | 70; 35 words each | 58; 23 | Continued page (F-06) |
 
 Reports written before Part B have no limits; the same budgets apply to
@@ -318,10 +327,17 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   page is empty, and no element's computed font size is below the minimum
   for its type role in the F-02 list.
 - **AC-G3:** Given any fixture, every count equals the saved per-source
-  counts. A test finds every "X dari Y" in the PDF text and checks that Y
-  equals one source's own denominator (ChatGPT N, Google M or Z, Spec 018) or
-  the number of questions the finding cites; the only exception is a writer
-  headline kept under B-05, shown as saved. No sum of the two sources
+  counts. A test finds every count element of the form "X dari Y" in the PDF
+  text (position labels such as "Temuan 1 dari 5", "Langkah 1 dari 6" or
+  "1 dari 5" on Bahan siap pakai are not counts and are skipped; the
+  templates mark which elements are counts) and checks that Y is one of:
+  one source's own denominator (ChatGPT N, Google M or Z, Spec 018); the
+  number of questions the finding cites; or a denominator the relevant v3
+  package spec defines, such as Kata AI's "x dari 4" (the ChatGPT answers
+  that name the clinic, P2.3), "dari 8 klaim yang diperiksa" (P1.2), "dari 5
+  pemeriksaan teknis yang dinilai" (P1.1) or the stability "2 dari 3"
+  (P3.2). The only other exception is a writer headline kept under B-05,
+  shown as saved. No sum of the two sources
   appears: no X or Y equals a ChatGPT count plus the Google count of the
   same kind (named, completed, failed, answers), except where the fixture's
   test lists that value as also a legitimate per-source or question count.
@@ -358,13 +374,15 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   (`preferCSSPageSize`), backgrounds, no Browser Run header or footer, and
   zero margins. The load wait (30 s, `networkidle0`), the ready selector and
   its 20 s wait, the print code, the cap and the file name
-  `Laporan-Nuave-<klinik>.pdf` stay as today.
+  `Laporan-Nuave-<klinik>.pdf` stay as today. While the switch (F-10) is
+  off, today's A4 request is used.
 - **F-04: Print page and page box.** `/r/print` gets a new body made of the
-  PDF pages for two-source reports; other reports keep today's print. Each
+  PDF pages for two-source reports while the switch (F-10) is on; other
+  reports keep today's print. Each
   page is one 1440 × 810 box with its own header (the official logo, D-11)
   and footer drawn by the page: the page number on report pages ("05") and
   the appendix label in the appendix ("A3 · 1/2") (D-10). The cover, the
-  five dividers, Penutup, Titik awal and the back cover are dark pages
+  section dividers shown, Penutup, Titik awal and the back cover are dark pages
   (D-10); all others use the light palette.
 - **F-05: Page-list function.** A pure function turns a saved report into
   the ordered list of pages, each with its kind, its label and its number,
@@ -384,14 +402,15 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   the page-list function on the saved report the route already reads.
   Numbers and codes only.
 - **F-08: Ready comes last.** The print page sets `[data-saved-report="ready"]`
-  only after the data has arrived and `document.fonts.ready` has resolved
-  with every PDF font loaded (`document.fonts.check` for each family and
-  weight used). If a font has failed, the marker is never set, so Browser
-  Run times out and the download shows the retry message (Q-9, settled:
-  fail closed; a PDF in a fallback font would break the design and the
-  embedded-font check, and the web report stays the full report, D-1 A).
-  Part 3 extends this rule to the appendix split (L-05). The web report's
-  marker is unchanged.
+  only after the data has arrived and `document.fonts.ready` has resolved,
+  and no face in `document.fonts` whose family is one of the PDF fonts
+  (matched by the family names `next/font` generates for them) has status
+  `"error"`. `document.fonts.check()` is not used: it returns true for a
+  family with no face in the set. If a font has failed, the marker is never
+  set (Q-9, settled: fail closed; a PDF in a fallback font would break the
+  design and the embedded-font check, and the web report stays the full
+  report, D-1 A). Part 3 extends this rule to the appendix split (L-05). The
+  web report's marker is unchanged.
 - **F-09: Always-present pages.** As in the reference, filled from saved
   data where they show data:
   - **Sampul**, with the logo.
@@ -400,13 +419,26 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   - **Cara membaca laporan:** the method facts (places, dates,
     `checked_from`, `checked_to`), the per-source denominators and the dot
     legend; the method line chosen by `search_data_available`. v3 P0.8's
-    lines come with Part 5; the P3.2 stability box with that package.
-  - **The section dividers** (shown as Q-4 decides).
+    lines come with Part 5; the P3.2 stability box with its later Part.
+  - **The section divider template**, owned by this Part: one dark page
+    per section, with the approved title (D-12). A section shows its divider
+    and its Daftar isi row only when it has at least one page (settled in
+    revision 3: a divider followed by nothing is an empty section; today
+    sections 02 and 03 have none). Whether the numbers then keep gaps is
+    Q-4.
   - **Penutup:** the saved `conclusion` always, and `two_source_writing.plan`
     as three phase columns; a report without a plan falls back as the web
     Penutup does (Spec 021 A-07). P0.4's decisions come with Part 5.
   - **Sampul belakang** as the last page: the logo, nuave.ai and the
     approved sentence (D-11).
+- **F-10: Designed-print switch.** A server-side setting per deployment
+  turns the designed print (the F-04 body and the F-03 request together) on
+  or off. It is on in PR previews and off in production until Part 3 turns
+  it on; with it off, two-source reports print exactly as today (body and
+  A4 request). Part 3 turns it on in production and removes the setting, so
+  it does not stay as a test-only switch (`AGENTS.md`, engineering
+  guardrail 6). If the founder picks Q-10's other option, the PR the
+  founder names turns it on instead.
 
 ### Acceptance criteria
 
@@ -430,10 +462,17 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   outside `fonts.ts`.
 - **AC-F7:** A route test shows the `report_pdf` line carries `long_texts`
   and only numbers and codes.
-- **AC-F8:** `verify-nuave` on a preview downloads the designed PDF; the
+- **AC-F8:** With the switch on in a PR preview (F-10), `verify-nuave`
+  downloads the designed PDF; the
   largest fixture's PDF through the real Browser Run path is inside the 30 s
   and 20 s limits, and its time and size are recorded.
 - **AC-F9:** A report saved before Spec 018 still prints with today's print.
+- **AC-F10:** With the switch off (the production setting until Part 3), a
+  test shows a two-source report's print page and `pdfRequest` are exactly
+  today's (body, A4, footer, margins), and the production configuration
+  has the switch off.
+- **AC-F11:** Given the fixtures, no divider appears for a section without
+  a page, and Daftar isi has no row for it.
 
 ## Part 2: the report pages from saved data (PR 2)
 
@@ -470,11 +509,19 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   send Browser Run's requests to them and could delay `networkidle0`).
 - **S-05: Celah topik.** The rows the web report's Celah Topik shows (Spec
   021 A-05), at most five.
-- **S-06: Rencana.** Every recommendation in one list. v3 P0.6's who, time
-  and done-when and P0.7's tags come with Part 5.
+- **S-06: Rencana.** Every recommendation in one list. When the rows are
+  over the page's budget (its recommendation titles at 14 words each, plus
+  the tags once Part 5 adds them), the list continues on a Rencana
+  "lanjutan" page, decided by the page-list function before printing,
+  between rows, as F-06 does. Chosen over a fixture-only test because ten
+  rows with tags is at risk, a fixture proves only the cases it holds, and a
+  continued page is decidable before printing so Daftar isi stays right.
+  This extends plan §6.3's list (Temuan, Langkah, Penutup) by one page kind;
+  the founder confirms it with Q-3. v3 P0.6's who, time and done-when and
+  P0.7's tags come with Part 5.
 - **S-07: Langkah.** One page per recommendation in the "Detail langkah"
   layout: title and paragraph. P0.6 and P0.7 parts come with Part 5; P1.1's
-  evidence block with that package's spec.
+  evidence block with its later Part.
 - **S-08: Code headlines (D-6).** A page headline that states a conclusion
   is a code template built on the settled sentences, in the code's own words,
   for example "ChatGPT: Klinik Anda muncul di 4 dari 10 pertanyaan dan
@@ -505,6 +552,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 - **AC-S7:** Given a report written before Part B and a non-clinic report,
   the pages fall back as the web does and say "Bisnis Anda" where AC-20
   requires.
+- **AC-S8:** Given ten recommendations with titles at 1.5 times their
+  budget, Rencana continues onto a "lanjutan" page between rows, nothing
+  overflows, and Daftar isi is correct.
 
 ## Part 3: the appendix (PR 3)
 
@@ -533,6 +583,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   This Part extends the ready rule (F-08): the marker is also held until the
   split has finished. Only the appendix splits this way, so the report pages
   and Daftar isi do not move.
+- **L-07: Switch on.** This Part turns the designed print on in production
+  and removes the switch (F-10).
 - **L-06: Long answers and long source lists.** The appendix holds answers
   of about 700 words (ChatGPT) and 450 (Google), the saved maxima, and
   longer. A source list of 40 or more items (saved maximum: 44) stays a
@@ -559,6 +611,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 - **AC-L6:** `verify-nuave` on a preview downloads a PDF with the appendix;
   the 76-page-class fixture prints through the real path inside the limits,
   with time and size recorded.
+- **AC-L7:** After this Part, production serves the designed print for
+  two-source reports, and no switch setting remains.
 
 ## Part 4: the PDF line on the web report (PR 4)
 
@@ -568,7 +622,9 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   (`src/lib/orders/mail.ts`) saying the PDF is the full designed report. The
   founder approves the wording; it goes in the fixed-text file.
 - **W-02:** The line shows only on two-source reports. Nothing else on the
-  frozen web report or in the email changes.
+  frozen web report or in the email changes. It ships only once production
+  serves the designed print (F-10, Part 3), because before that it is not
+  true.
 
 ### Acceptance criteria
 
@@ -605,7 +661,8 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
 
 Plan §7 and §5.3 rule 3: when v3 adds a page or part of a page, this plan
 maps it to a template. Spec 024 owns these templates; v3's specs own their
-data, claims, counts, labels, row limits and when they show.
+data, claims, counts, labels, row limits and when they show. Later v3
+packages follow the same rule with a new Part (Non-scope).
 
 ### Requirements
 
@@ -657,12 +714,18 @@ For two-source reports, from the Part that ships each:
   Where Browser Run is missing, the button uses the browser's print of the
   web page, as today.
 - **A font fails to load in Browser Run:** the ready marker is not set
-  (F-08), the download shows the retry message, and the web report stays the
-  full report (D-1 A). The founder confirms this fail-closed rule at approval.
+  (F-08), so the failure shows as a Browser Run ready timeout after about
+  20 s, then the retry message. Each attempt still counts against
+  `PDF_DAILY_CAP`. The `report_pdf` log line records the cause the route can
+  see (for example a ready timeout as its own code); telling a font failure
+  apart from another timeout is not required. A font outage therefore stops
+  every designed PDF while the web report stays up as the full report,
+  which D-1 option A accepts. The founder confirms this fail-closed rule at
+  approval.
 - **A page's data is missing:** the page is left out (G-02); nothing is
   inferred, invented or filled with sample content.
-- **A writer text is over budget:** continued pages on Temuan, Langkah and
-  Penutup (F-06); other pages per Q-3. Text is never cut.
+- **A writer text is over budget:** continued pages on Temuan, Langkah,
+  Penutup (F-06) and Rencana (S-06); other pages per Q-3. Text is never cut.
 - **Never:** a pooled number, a cause, a promised date or re-check, a number
   with no denominator, or content from the Figma sample.
 
@@ -691,32 +754,37 @@ Still open:
   the check when more orders are saved and before this spec is marked
   Verified, counting with the writer's `words()`, not by spaces. If a saved
   text exceeds its budget, `long_texts` and the continued pages cover it on
-  Temuan, Langkah and Penutup, and the budget table is updated.
+  Temuan, Langkah, Penutup and Rencana, and the budget table is updated.
 - **Q-3 (founder, before approval): over budget on pages without continued
   pages.** Plan §6.3 gives continued pages only to Temuan, Langkah and
-  Penutup; Ringkasan's plan step, Pesaing's reasons and takeaways, Celah
-  topik's topic names and Rencana's titles can also be saved over budget,
-  and cutting is forbidden. Recommendation: lay these pages out to fit at
-  1.5 times their budget (all saved texts are under 1.0 today), tested on a
-  fixture, and give Pesaing a continued page when it is still over.
-  Trade-off: a roomier layout is less dense than the reference; continued
-  pages on more page kinds add page-list cases. Step 0 shows Pesaing
-  overflows at 1.25 times.
-- **Q-4 (founder): dividers of sections with no page.** Today sections 02
-  and 03 have no page with data. Recommendation: leave the divider and its
-  Daftar isi row out until one of its pages exists, and keep the approved
-  numbers, so the PDF goes 01, 04, 05. Trade-off: the gap shows that
-  sections are missing, but the approved titles (D-12) stay fixed and a
-  later section never renumbers the others; renumbering (01, 02, 03) reads
-  more smoothly but changes the approved fixed text with each package.
+  Penutup; this spec adds Rencana (S-06). Ringkasan's plan step, Pesaing's
+  reasons and takeaways and Celah topik's topic names can also be saved over
+  budget, and cutting is forbidden. The basis: no saved text has exceeded
+  its limit by space count, but the recommendation title is 14 of 14 and
+  may already be over by `words()`; topic names were not measured; and
+  Pesaing overflows at 1.25 times its budget in the spike. Recommendation:
+  lay these pages out to fit at 1.5 times their budget, tested on a
+  fixture, and give Pesaing a continued page when it is still over. The
+  1.5 factor is a judgement, not derived from data: it is a margin above
+  the 1.25 case that already overflowed. Trade-off: a roomier layout is less
+  dense than the reference; continued pages on more page kinds add
+  page-list cases.
+- **Q-4 (founder): section numbers when a section has no page.** A section
+  without a page shows no divider (F-09, settled in revision 3). Today
+  sections 02 and 03 have none. Recommendation: keep the approved numbers,
+  so the PDF goes 01, 04, 05. Trade-off: the gap shows that sections are
+  missing, but the approved titles (D-12) stay fixed and a later section
+  never renumbers the others; renumbering (01, 02, 03) reads more smoothly
+  but changes the approved fixed text with each package.
 - **Q-10 (founder, before approval): when customers get the new PDF.** Part
   1 alone would ship a PDF without Ringkasan, findings or answers, a loss
-  against today's PDF and finish line 2. Recommendation: Parts 1 and 2 build
-  the new print body without turning it on; Part 3 turns it on for
+  against today's PDF and finish line 2. The switch (F-10) keeps production
+  on today's print until Part 3 either way. Recommendation: Parts 1 and 2
+  merge with the switch off in production; Part 3 turns it on for
   customers, and Part 4 ships after it, because its line is true only then.
   Trade-off: three PRs reach customers at once, so a fault shows late;
-  merging and deploying each Part live gives earlier feedback but a worse
-  PDF in between.
+  turning the switch on in production with Part 1 or Part 2 gives earlier
+  feedback but a thinner PDF in between.
 - **Q-11 (founder): reports already delivered.** Plan §6.1 gives the new
   print body to every Spec 018 report, while §3 speaks of "every new
   two-source order". Recommendation: follow §6.1 (G-01), so every
@@ -740,6 +808,11 @@ Settled in revision 2, as recommended by the review of `72660aa`:
   already does; no third-party request during printing.
 - **Q-9:** fail closed on a font that fails (F-08); the founder confirms at
   approval.
+
+Settled in revision 3, from the review of `f885989`:
+
+- A section without a page shows no divider (F-09); its numbering is Q-4.
+- Rencana gets continued pages (S-06); the founder confirms with Q-3.
 
 ## Implementation notes
 
