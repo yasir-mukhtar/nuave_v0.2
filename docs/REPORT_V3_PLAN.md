@@ -80,7 +80,7 @@ change parts of this plan:
   page is frozen; and Phase 0's phone check is replaced by the PDF checks of
   the design plan (its §8).
 - **D-2:** pages are 16:9 landscape (1440 × 810), not A4. P0.9 is done by
-  the design plan's packages (Step 0 spike, PR 1 to PR 4), and Phase 0's
+  the design plan's packages (Step 0 spike, PR 1 to PR 3), and Phase 0's
   layout work is planned together with them, so the report is built once.
 - **D-6 and D-9:** counts stay per source in the settled sentences, and the
   PDF's Ringkasan is filled from saved fields. Nothing here changes.
@@ -331,7 +331,7 @@ document the decision would change.
 | F-10 | Keep the USD 5.00 order hold, and design every package within it. | — | Yes. Raise it only if a package cannot fit: at USD 6.00 the USD 50 daily cap allows 8 orders in progress at once, not 10. |
 | F-11 | **Moved to the next improvement project.** A price or offer test. | Landing page; terms | Decide in that project, from customer data. |
 | F-12 | **Moved to the next improvement project.** Google AI Mode or Gemini as another source. | Landing page, terms and FAQ ("ChatGPT dan Google AI Overview") | Decide in that project, after a trial of the provider. |
-| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7). Download is delivery, which the founder assigned to the PDF design plan's session on 2026-11-07, so F-13 is decided with that session. **Option A:** an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line. **Option B:** a link in the report-ready email; it needs a server route that builds the file from the link's secret, which rules out building the file in the browser (P0.10), and, as a new use of the order email, the privacy page updated first with the founder approving the wording (§4 rule 7). | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4. B: the approved report-ready email (`src/lib/orders/mail.ts`), a new route, and the privacy page if its wording does not cover it | A, decided with the PDF design session before P0.10's spec. The PDF names the worksheet and its tabs in either case. |
+| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7). Download is delivery, which the founder assigned to the PDF design plan's session on 2026-11-07, so F-13 is decided with that session. **Option A:** an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line. **Option B:** a link in the report-ready email; it needs a server route that builds the file from the link's secret, which rules out building the file in the browser (P0.10), and, as a new use of the order email, the privacy page updated first with the founder approving the wording (§4 rule 7), unless its "link laporan" wording already covers a worksheet link. | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4. B: the approved report-ready email (`src/lib/orders/mail.ts`), a new route, and the privacy page if its wording does not cover it | A, decided with the PDF design session before P0.10's spec. The PDF names the worksheet and its tabs in either case. |
 
 ## 6. Phases
 
@@ -410,7 +410,7 @@ asked, from where, when and how many times; what "disebut",
 each; what ten questions cannot show.
 
 **P0.9 PDF.** *Done by the PDF design plan (D-2: 16:9; its Step 0 and PR 1
-to PR 4); the A4 text in this item is kept only as history.* A cover page with the moment of truth; a contents box ("Baca 3
+to PR 3); the A4 text in this item is kept only as history.* A cover page with the moment of truth; a contents box ("Baca 3
 menit: halaman 1"); page-break rules that avoid half-empty pages (pages 6 and
 8 of the prototype PDF); the owner's part first.
 

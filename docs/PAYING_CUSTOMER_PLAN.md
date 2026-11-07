@@ -48,7 +48,7 @@ done.
 | S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
 | **Stage 3** | **Go live** | | | | |
-| R3 | Report v3 before launch: Phases 0 to 3 and the launch gate ([`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md)), with the PDF design plan (PR #207) | Orchestrator + workers + founder | Plan approved 2026-11-07 (F-1); Phase 0 spec next | [#205](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205) (plan) | Plan: independent review PASS (revision 6.1) |
+| R3 | Report v3 before launch: Phases 0 to 3 and the launch gate ([`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md)), with the PDF design plan (PR #207) | Orchestrator + workers + founder | Plan approved 2026-11-07 (F-1); runs now, alongside Stage 2; only G1's last step waits for its launch gate; Phase 0 spec next | [#205](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205) (plan) | Plan: independent review PASS (revision 6.1) |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
 | V | Show reports to 3–5 real owners | Founder | Optional | — | — |
@@ -585,8 +585,8 @@ only if asked.
 **R3 — Report v3 before launch** (approved by the founder 2026-11-07, F-1).
 Phases 0 to 3 of [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md), each behind a
 gate the founder judges, built together with the PDF design plan (PR #207).
-Every package needs its own approved spec. G1's last step waits for R3's
-launch gate.
+Every package needs its own approved spec. R3 runs now, alongside Stage 2
+(it does not wait for S6); only G1's last step waits for R3's launch gate.
 
 **G1 — One real purchase and refund** (founder + worker, ~1 day)
 
