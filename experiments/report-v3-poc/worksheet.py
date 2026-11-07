@@ -133,7 +133,7 @@ def build_workbook(d, out):
         ("2. Ubah kolom Status dari daftar pilihan. Progres di bagian atas terhitung sendiri.", False),
         ("3. Tab Cek Fakta, Website, dan Situs AI juga punya kolom status untuk perbaikan yang sedang berjalan.", False),
         ("4. Angka di tab Ringkasan dihitung ulang dari tab Pertanyaan & Hasil. Jangan ubah tab itu kecuali untuk koreksi.", False),
-        ("5. Setelah sekitar delapan minggu, pesan audit ulang dengan sepuluh pertanyaan yang sama, lalu isi kolom Audit ulang di tab Titik Awal.", False),
+        ("5. Setelah sekitar delapan minggu, pesan audit ulang dengan sepuluh pertanyaan yang sama, lalu isi kolom Audit ulang dan pembaginya di tab Titik Awal.", False),
         ("", False),
         ("Arti hasil", True),
         ("Direkomendasikan: jawaban menyarankan klinik untuk kebutuhan yang ditanyakan.", False),
@@ -335,37 +335,42 @@ def build_workbook(d, out):
 
     # ---------------- Titik Awal ----------------
     wt = wb.create_sheet("Titik Awal")
-    title(wt, "Titik Awal", "Angka hari ini, untuk dibandingkan dengan audit ulang memakai sepuluh pertanyaan yang sama.", 5)
-    hdr = ["Ukuran", f"Hari ini ({m['date']})", "Audit ulang (isi nanti)", "Perubahan", "Catatan"]
-    for i, (h, w) in enumerate(zip(hdr, [46, 20, 22, 14, 50]), start=1):
+    title(wt, "Titik Awal", "Angka hari ini, untuk dibandingkan dengan audit ulang memakai sepuluh pertanyaan yang sama.", 6)
+    # Every count keeps its denominator (plan rule 4); the re-audit gets its own, since it can differ.
+    hdr = ["Ukuran", f"Hari ini ({m['date']})", "Dari", "Audit ulang (isi nanti)", "Dari (isi nanti)", "Catatan"]
+    for i, (h, w) in enumerate(zip(hdr, [46, 18, 10, 22, 16, 50]), start=1):
         c = wt.cell(row=4, column=i, value=h)
         c.font = font(10, True, "FFFFFF")
         c.fill = fill(VIOLET)
         c.border = BORDER
         wt.column_dimensions[get_column_letter(i)].width = w
     base = [
-        (f"ChatGPT: jawaban yang menyebut {short}", "=Ringkasan!B8", "Dari jawaban ChatGPT yang selesai"),
-        (f"ChatGPT: jawaban yang merekomendasikan {short}", "=Ringkasan!B9", ""),
-        (f"Google AI Overview: ringkasan yang menyebut {short}", "=Ringkasan!B10", "Dari ringkasan AI yang tampil"),
-        ("Google: pertanyaan tanpa AI Overview", "=Ringkasan!B12", ""),
+        (f"ChatGPT: jawaban yang menyebut {short}", "=Ringkasan!B8", "=Ringkasan!C8", "Dari jawaban ChatGPT yang selesai"),
+        (f"ChatGPT: jawaban yang merekomendasikan {short}", "=Ringkasan!B9", "=Ringkasan!C9", "Dari jawaban ChatGPT yang selesai"),
+        (f"Google AI Overview: ringkasan yang menyebut {short}", "=Ringkasan!B10", "=Ringkasan!C10", "Dari ringkasan AI yang tampil"),
+        ("Google: pertanyaan tanpa AI Overview", "=Ringkasan!B12", "=Ringkasan!C12", "Dari pertanyaan yang diperiksa di Google"),
     ]
     if d.get("facts"):
         nb = sum(1 for f in d["facts"] if f["verdict"] == "berbeda")
-        base.append(("Cek fakta: klaim yang berbeda", nb, "Dari tab Cek Fakta"))
+        base.append(("Cek fakta: klaim yang berbeda", nb, len(d["facts"]), "Dari klaim yang diperiksa, tab Cek Fakta"))
     if d.get("webcheck"):
         nf = sum(1 for w in d["webcheck"] if w["result"] in ("gagal", "sebagian", "tidakcocok"))
-        base.append(("Website: pemeriksaan yang perlu diperbaiki", nf, "Gagal, sebagian, atau tidak cocok, dari tab Website"))
-    for i, (label, val, note) in enumerate(base, start=5):
+        run = sum(1 for w in d["webcheck"] if w["result"] != "f3")  # "Butuh F-3" rows were not run
+        base.append(("Website: pemeriksaan yang perlu diperbaiki", nf, run, "Gagal, sebagian, atau tidak cocok, dari pemeriksaan yang dijalankan di tab Website"))
+    for i, (label, val, den, note) in enumerate(base, start=5):
         wt.cell(row=i, column=1, value=label).font = font(10)
         c = wt.cell(row=i, column=2, value=val)
         c.font = font(11, True, VIOLET_INK)
         c.alignment = Alignment(horizontal="center")
-        wt.cell(row=i, column=3).fill = fill(WASH)
-        wt.cell(row=i, column=4, value=f'=IF(C{i}="","",C{i}-B{i})').alignment = Alignment(horizontal="center")
-        wt.cell(row=i, column=5, value=note).font = font(10, color=MUTED)
-        for col in range(1, 6):
+        c = wt.cell(row=i, column=3, value=den)
+        c.font = font(10, color=MUTED)
+        c.alignment = Alignment(horizontal="center")
+        wt.cell(row=i, column=4).fill = fill(WASH)
+        wt.cell(row=i, column=5).fill = fill(WASH)
+        wt.cell(row=i, column=6, value=note).font = font(10, color=MUTED)
+        for col in range(1, 7):
             wt.cell(row=i, column=col).border = BORDER
-    wt[f"A{len(base) + 6}"] = "Perubahan dicatat; pengaruh perbaikan tidak bisa dipastikan dari perbandingan ini saja."
+    wt[f"A{len(base) + 6}"] = "Bandingkan setiap angka dengan pembaginya, karena pembagi audit ulang bisa berbeda. Perubahan dicatat; pengaruh perbaikan tidak bisa dipastikan dari perbandingan ini saja."
     wt[f"A{len(base) + 6}"].font = font(10, color=MUTED, italic=True)
 
     for sheet in wb.worksheets:

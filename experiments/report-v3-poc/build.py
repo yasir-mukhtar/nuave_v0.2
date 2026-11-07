@@ -139,6 +139,32 @@ def check(d, label):
             errors.append(f"recommendation uses playbook item {r['item']} with no tags")
         if r["title"].split()[0] in ("Periksa", "Pertahankan", "Pertimbangkan", "Pastikan"):
             errors.append(f"recommendation title starts with a banned verb: {r['title']}")
+    desc = d.get("description") or {}
+    if desc.get("words"):
+        # Plan P2.3: the words AI attaches to the clinic are counted by code; rule 4: the note names the
+        # source and the denominator. Each word lists the answers that use it; the pattern must be in each
+        # of them and on no line naming the clinic in the other answers of the pool.
+        src = desc.get("words_source", "chatgpt")
+        own = [d["meta"]["clinic"], d["meta"].get("short", "")] + d["meta"].get("aliases", [])
+        own = [n.lower() for n in own if n]
+        pool = {q["n"]: q[src] for q in d["questions"]
+                if not q.get("brand") and (q.get(src) or {}).get("status") in ("mentioned", "recommended")}
+        unit = {"chatgpt": "jawaban ChatGPT", "google": "ringkasan Google"}[src]
+        if f"dari {len(pool)} {unit}" not in desc.get("words_note", ""):
+            errors.append(f"words_note must say 'dari {len(pool)} {unit}' (rule 4: source and denominator)")
+        for w, where, pattern in desc["words"]:
+            rx = re.compile(pattern, re.I)
+            for n in where:
+                if n not in pool:
+                    errors.append(f"word '{w}': P{n} is not a {src} answer that names the clinic")
+                elif not rx.search(pool[n].get("answer", "")):
+                    errors.append(f"word '{w}': not found in P{n} {src}")
+            for n, a in pool.items():
+                if n in where:
+                    continue
+                lines = [l for l in a.get("answer", "").split("\n") if any(o in l.lower() for o in own)]
+                if any(rx.search(l) for l in lines):
+                    errors.append(f"word '{w}': on a line naming the clinic in P{n} {src}, but not counted")
     known = corpus(d)
     for key, text in strings(d):
         if "—" in text:

@@ -384,8 +384,13 @@ DATA = {
     "description": {
         "lede": "Kata-kata yang dipakai AI untuk Ultima, dibandingkan dengan yang ditonjolkan situs Ultima.",
         "ai_line": "Jaringan klinik dengan banyak cabang dan harga promo, cocok untuk facial dan perawatan dasar.",
-        "words": [["promo", 2], ["laser", 2], ["terjangkau", 2], ["facial", 1], ["cabang banyak", 1], ["luar Jawa", 1], ["dokter spesialis", 0]],
-        "words_note": "Angka: berapa dari dua jawaban yang menyebut Ultima tanpa ditanya namanya (P1, P4) memakai kata itu untuk Ultima.",
+        "words_source": "chatgpt",
+        # Each word: the answers that use it for Ultima, and the pattern build.py looks for (plan P2.3: counted by code).
+        # "terjangkau" heads the shortlist that holds Ultima in both answers ("relatif terjangkau").
+        "words": [["promo", [1, 4], "promo"], ["laser", [1, 4], "laser"], ["terjangkau", [1, 4], "terjangkau"], ["facial", [4], "facial"],
+                  ["cabang banyak", [4], "cabang cukup luas|cabangnya banyak|banyak cabang"], ["luar Jawa", [4], "luar (Pulau )?Jawa"],
+                  ["dokter spesialis", [], "dokter spesialis|spesialis kulit"]],
+        "words_note": "Angka: berapa dari 2 jawaban ChatGPT yang menyebut Ultima tanpa ditanya namanya (P1, P4) memakai kata itu untuk Ultima.",
         "owner_head": "Menurut situs Anda",
         "owner_line": "Perawatan premium dengan harga terjangkau, oleh dokter estetika dan dokter spesialis kulit (Sp.DVE) berlisensi, di lebih dari 70 lokasi.",
         "owner_src": "Dirangkum dari beranda dan halaman Tentang Kami. Data uji ini tidak punya jawaban pemilik untuk “Apa yang membuat bisnis Anda berbeda?”.",
@@ -411,7 +416,7 @@ DATA = {
         ],
         "note": "Tidak ada nomor SIP di halaman mana pun yang dibuka. Harga di artikel ERHA adalah kisaran pasar umum, bukan daftar harga ERHA. Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
     },
-    "topics_lede": "Empat topik yang jawabannya tidak merekomendasikan Ultima.",
+    "topics_lede": "Topik yang jawabannya tidak merekomendasikan Ultima.",
     "topics": [
         {"name": "Bekas jerawat dan bopeng", "ai_mentions": 1146, "status": "Tidak disebut di ChatGPT (P2) maupun Google (P9). Halaman bopeng Ultima tidak menulis harga.",
          "sources": "primavitaclinic.co.id, erhaultimate.co.id, aveiaclinic.com, alodokter.com", "refs": [2, 9]},

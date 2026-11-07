@@ -634,27 +634,27 @@ function facts() {
   return band("cek-fakta", "Cek fakta: apa kata AI tentang " + SHORT, D.facts_lede, body);
 }
 function competitors() {
-  // Mentions per source for every business; "recommended" only for the clinic, the one count the
-  // product saves (other businesses' recommendations are not saved, so no package shows them).
+  // Mentions per source for every business; "recommended" only for the clinic and only in ChatGPT, the one
+  // recommendation count the product saves (counts.chatgpt.recommended). Google's is a per-answer reading.
   const cc = businessCounts("chatgpt"), gc = businessCounts("google");
   const youC = stats("chatgpt").named, youG = stats("google").named;
-  const youRecC = stats("chatgpt").rec, youRecG = stats("google").rec;
+  const youRecC = stats("chatgpt").rec;
   const den = { c: stats("chatgpt").done, g: stats("google").shown };
   const all = (D.businesses || []).map(b => {
     const you = b.name === CLINIC;
     const c = you ? youC : (cc[b.name] || 0), g = you ? youG : (gc[b.name] || 0);
-    return { ...b, you, c, g, rC: you ? youRecC : 0, rG: you ? youRecG : 0 };
+    return { ...b, you, c, g, rC: you ? youRecC : 0 };
   }).filter(b => b.c + b.g > 0)
     // The web report's order (report-v2-data.ts sortRows): both sources' mentions together, the clinic
-    // first on a tie, then by name. The sum only orders the rows; it is never shown.
-    .sort((a, b) => (b.c + b.g) - (a.c + a.g) || (a.you ? -1 : b.you ? 1 : 0) || a.name.localeCompare(b.name));
+    // first on a tie, then ChatGPT cards, then the name. The sum only orders the rows; it is never shown.
+    .sort((a, b) => (b.c + b.g) - (a.c + a.g) || (a.you ? -1 : b.you ? 1 : 0) || (b.cards || 0) - (a.cards || 0) || a.name.localeCompare(b.name));
   const full = all.filter(b => b.full || b.you).slice(0, 6);
   const rest = all.filter(b => !full.includes(b));
   const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const rows = full.map(b => `<div class="comp ${b.you ? "you" : ""}"><div class="logo-i">${esc(initials(b.name))}</div>
     <div><div class="comp-name">${esc(b.name)}${b.you ? '<span class="pill acc">Klinik Anda</span>' : ""}</div><div class="comp-site">${b.domain ? esc(b.domain) : "situs tidak tercatat"}${b.rating ? ` · ${esc(b.rating)}` : ""}</div></div>
     <div class="comp-count"><div class="cc-row"><span class="cc"><small>ChatGPT</small><b class="tnum">${b.c}</b><small>dari ${den.c}</small></span><span class="cc"><small>Google</small><b class="tnum">${b.g}</b><small>dari ${den.g}</small></span></div></div>
-    ${b.you && (b.rC || b.rG) ? `<div class="comp-rec">Direkomendasikan: ChatGPT ${b.rC} dari ${den.c} · Google ${b.rG} dari ${den.g}</div>` : ""}
+    ${b.you && b.rC ? `<div class="comp-rec">Direkomendasikan di ChatGPT: ${b.rC} dari ${den.c} jawaban</div>` : ""}
     ${b.why ? `<div class="comp-why"><em>Menurut jawaban AI:</em> ${esc(b.why)}</div>` : ""}</div>`).join("");
   const chips = rest.length ? `<div class="chips"><span class="small" style="width:100%">${rest.length} bisnis lain disebut lebih jarang:</span>${rest.map(b => `<span class="chip">${esc(b.name)} · ChatGPT ${b.c} · Google ${b.g}</span>`).join("")}</div>` : "";
   const takes = (D.takeaways || []).length ? `<div class="cards3">${D.takeaways.map(t => `<div class="take"><b>${esc(t.title)}</b><p>${esc(t.text)}</p></div>`).join("")}</div>` : "";
@@ -662,10 +662,12 @@ function competitors() {
 }
 function description() {
   const d = D.description; if (!d) return "";
-  const words = (d.words || []).map(([w, k]) => `<span class="word ${k === 0 ? "zero" : ""}">${esc(w)}<b class="tnum">${k}×</b></span>`).join("");
+  // A count shows only with a note that names its source and denominator (plan rule 4).
+  const words = (d.words || []).map(([w, where]) => { const k = Array.isArray(where) ? where.length : where;
+    return `<span class="word ${k === 0 ? "zero" : ""}">${esc(w)}${d.words_note ? `<b class="tnum">${k}×</b>` : ""}</span>`; }).join("");
   const rivals = (d.rivals || []).map(r => `<div class="rival"><b>${esc(r.name)}</b><span>${esc(r.line)}</span></div>`).join("");
   return band("gambaran", `Bagaimana AI menggambarkan ${SHORT}`, d.lede, `
-    <div class="desc"><div class="desc-box"><h4>Kata AI</h4><p class="desc-line">${esc(d.ai_line)}</p><div class="words">${words}</div><p class="small">${esc(d.words_note || `Angka: berapa jawaban yang memakai kata itu untuk ${SHORT}.`)}</p></div>
+    <div class="desc"><div class="desc-box"><h4>Kata AI</h4><p class="desc-line">${esc(d.ai_line)}</p><div class="words">${words}</div>${d.words_note ? `<p class="small">${esc(d.words_note)}</p>` : ""}</div>
     <div class="desc-box owner"><h4>${esc(d.owner_head || "Menurut Anda")}</h4><p class="desc-line">${d.owner_line ? esc(d.owner_line) : '<span class="small">Belum diisi.</span>'}</p>${d.owner_src ? `<p class="small">${esc(d.owner_src)}</p>` : ""}</div></div>
     ${d.gap ? `<p class="gap-line">${esc(d.gap)}</p>` : ""}
     ${rivals ? `<div><div class="small" style="margin-bottom:6px">Gambaran AI untuk klinik lain</div><div class="rivals">${rivals}</div></div>` : ""}`);
@@ -714,8 +716,8 @@ function closing() {
     <div class="inkcards"><div class="inkcard"><h3>Titik awal</h3><ul class="tnum">
       <li>ChatGPT: <b>${cs.named} dari ${cs.done}</b> jawaban menyebut ${esc(SHORT)}</li>
       <li>Google AI Overview: <b>${gs.named} dari ${gs.shown}</b> ringkasan menyebut ${esc(SHORT)}</li>
-      ${(D.facts || []).length ? `<li>Cek fakta: <b>${nb}</b> klaim berbeda</li>` : ""}
-      ${(D.webcheck || []).length ? `<li>Untuk tim web: <b>${wf}</b> pemeriksaan perlu diperbaiki</li>` : ""}
+      ${(D.facts || []).length ? `<li>Cek fakta: <b>${nb} dari ${D.facts.length}</b> klaim yang diperiksa berbeda dari situs ${esc(SHORT)}</li>` : ""}
+      ${(D.webcheck || []).length ? `<li>Untuk tim web: <b>${wf} dari ${D.webcheck.filter(w => w.result !== "f3").length}</b> pemeriksaan teknis yang dijalankan perlu diperbaiki</li>` : ""}
     </ul><p>Angka ini tersimpan di Lembar Kerja, tab Titik Awal, untuk dibandingkan nanti.</p></div>
     <div class="inkcard"><h3>Audit ulang setelah 8 minggu</h3><p>${esc(c.recheck)}</p></div></div>`, "ink", true);
 }

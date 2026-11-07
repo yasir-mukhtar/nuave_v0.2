@@ -53,7 +53,8 @@
   stays frozen. Proofs of concept:
   [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md).
   Next: the Phase 0 spec, planned with the PDF design plan's Step 0 and PR 1
-  to PR 3; F-13 (where the worksheet is downloaded) before P0.10. This bullet
+  to PR 3. F-13 is decided: the worksheet downloads from a button next to
+  "Unduh PDF" (2026-11-07, recorded on PR #207). This bullet
   was updated on 2026-11-07; the rest of this page is as of 2026-10-30.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):

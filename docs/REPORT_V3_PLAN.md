@@ -7,7 +7,8 @@
 > Layout belongs to the PDF design plan (see "Approval and alignment" below).
 > Author: Claude (orchestrator role), 2026-11-06, branch
 > `claude/inspiring-tesla-yox17h`. Revision 6.4 states how the PDF pages
-> count ("Counts on the PDF pages" below). Revision 6.3: 6.2 recorded the approval
+> count ("Counts on the PDF pages" below), adopts Titik awal as its own page,
+> and records the founder's decisions on F-13 and the section titles. Revision 6.3: 6.2 recorded the approval
 > and aligned the plan with the PDF design plan; 6.3 applies its review. Revision 6.1: revision 6 followed the
 > founder's direction of 2026-11-06 (below), and 6.1 applies its first
 > independent review. Revision 5.1 passed independent review (rounds 1 to 4
@@ -86,8 +87,10 @@ change parts of this plan:
 - **D-6 and D-9:** counts stay per source in the settled sentences, and the
   PDF's Ringkasan is filled from saved fields. Nothing here changes.
 - **The worksheet** is outside the design plan (its §11). The PDF names it
-  and lists its tabs, but has no download button (its D-7); where the owner
-  downloads it is F-13.
+  and lists its tabs, but has no download button (its D-7). The owner
+  downloads it with an "Unduh Lembar Kerja" button next to "Unduh PDF" on
+  the web report: F-13 option A, decided by the founder on 2026-11-07 (the
+  design plan's decision log and its PR 4b).
 
 **Who decides what.** The founder wrote on 2026-11-07: "secara substansi
 dan format kamu punya hak menentukan dan mengarahkan, namun secara estetika
@@ -107,16 +110,17 @@ the design plan's §5.1 maps to it:
 - 01 "Posisi <klinik> hari ini": the Temuan pages, Pesaing, Celah topik;
 - 02 "Apa kata AI tentang <klinik>": Cek fakta (P1.2), Kata AI next to
   Menurut Anda (P2.3);
-- 03: Halaman mereka (P2.2), Situs yang dibaca AI (P2.1), Untuk tim web
-  Anda (P1.1, printable or sendable on its own);
+- 03 "Apa yang dibaca AI": Halaman mereka (P2.2), Situs yang dibaca AI
+  (P2.1), Untuk tim web Anda (P1.1, printable or sendable on its own);
 - 04 "Rencana delapan minggu": Rencana, one Langkah page per
-  recommendation, Bahan siap pakai (P2.4), Lembar Kerja, Penutup;
+  recommendation, Bahan siap pakai (P2.4), Lembar Kerja, Penutup, Titik
+  awal;
 - 05 "Lampiran": A0 (the questions), one page per question with both full
   answers, their sources and code notes, and the two questions that name the
   clinic apart, if F-4 is approved; then the back cover.
 
 A page whose data does not exist yet is left out (the design plan's §5.2).
-This plan adds two format directions:
+This plan adds three format directions:
 
 1. **"Saat calon pasien bertanya" (P0.1) gets its own page, right after
    Ringkasan:** one real answer in which the clinic is not named, chosen by
@@ -126,26 +130,57 @@ This plan adds two format directions:
    Temuan evidence card stays as the design plan's §5.1 defines it.
 2. **Section titles state no cause** (rule 3; Appendix B, idea 14). The
    drawn divider "03 Mengapa klinik lain dipilih" says why other clinics are
-   chosen; it gets a title about what its pages show, such as "03 Apa yang
-   dibaca AI". Fixed titles are approved once (the design plan's D-7).
+   chosen; it gets a title about what its pages show. The founder approved
+   the five titles as fixed text on 2026-11-07 (the design plan's D-7 and
+   its decision log): "01 Posisi <klinik> hari ini", "02 Apa kata AI
+   tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu",
+   "05 Lampiran".
+3. **"Titik awal" gets its own page, after Penutup** (adopted on 2026-11-07
+   from the design plan's §5.3 proposal; the starting point of P3.3). It
+   holds the numbers to compare at a later audit, and the advice to audit
+   again:
+   - today's counts per source with their denominators ("4 dari 10 jawaban
+     ChatGPT menyebut <klinik>"), the claims that differ out of those
+     checked (P1.2), and the technical checks that need fixing out of those
+     run (P1.1). Each number appears once its data exists and equals the
+     same number elsewhere in the report. No target, forecast or promised
+     result.
+   - The advice is fixed text: about eight weeks after the changes, an
+     audit with the same ten questions, so that the two reports can be
+     compared; the differences are recorded, and the comparison alone does
+     not show what caused them. No promised date or service (D-7).
+   - The line naming the worksheet's "Titik Awal" tab appears once that tab
+     exists (P3.3).
+   - The limits stay on Cara membaca laporan (rule 14). This page states
+     only the date its numbers come from.
 
 Any later change of order comes from this plan or its specs.
 
-**Counts on the PDF pages** (rule 4; the design plan's D-6). Every number on
-a page keeps its source and its denominator. A finding's large number is one
-source's count ("2 dari 10 jawaban ChatGPT"); a count of questions when the
-sentence is true in each source ("0 dari 3 pertanyaan ... di ChatGPT maupun
-Google"); or a count of something other than answers, such as checked claims
-(P1.2) or cited articles, with the split per source next to it. Answers are
-never added across the two sources. Pesaing shows each business's mentions
-per source; "Direkomendasikan" appears for the clinic only, because the saved
-report keeps other businesses' mentions and ChatGPT cards but not whether an
-answer recommended them (`CompetitorFact` in
-`src/lib/audit/two-source-report.ts`), and no package in this plan adds that.
+**Counts on the PDF pages** (rules 2 and 4; the design plan's D-6). Every
+number on a page is computed by code and keeps its source and its
+denominator. A finding's large number is one of three things:
+
+- one source's count ("2 dari 10 jawaban ChatGPT");
+- a count of questions, when the sentence is true in each source and each of
+  those questions has a completed answer in both (for Google, an AI Overview
+  was shown): "0 dari 3 pertanyaan ... di ChatGPT maupun Google";
+- a count of something other than answers, such as checked claims (P1.2),
+  technical checks that were run (P1.1) or cited articles, with the split
+  per source next to it where there is one.
+
+Answers are never added across the two sources. "Direkomendasikan" is
+counted for the clinic only, and for ChatGPT only: the saved report counts
+ChatGPT recommendations (`counts.chatgpt.recommended` in
+`src/lib/audit/two-source-report.ts`), while Google's is the writer's
+reading of each AI Overview, applied when the page opens and never counted
+(Spec 021 Part B). For other businesses the saved report keeps mentions and
+ChatGPT cards, not whether an answer recommended them (`CompetitorFact`), and
+no package in this plan adds that, so Pesaing shows mentions per source.
 Rows may keep the web report's order (both sources' mentions together, the
-clinic first on a tie: `sortRows` in `src/app/audit/report/report-v2-data.ts`);
-that sum orders the rows and is never printed. The proofs of concept follow
-this from revision 6.4 on.
+clinic first on a tie, then ChatGPT cards, then the name: `sortRows` in
+`src/app/audit/report/report-v2-data.ts`). On the PDF that sum only orders
+the rows and is never printed; the frozen web report prints it as "N×". The
+proofs of concept follow this from revision 6.4 on.
 
 ## 1. Why
 
@@ -348,7 +383,7 @@ document the decision would change.
 | F-10 | Keep the USD 5.00 order hold, and design every package within it. | — | Yes. Raise it only if a package cannot fit: at USD 6.00 the USD 50 daily cap allows 8 orders in progress at once, not 10. |
 | F-11 | **Moved to the next improvement project.** A price or offer test. | Landing page; terms | Decide in that project, from customer data. |
 | F-12 | **Moved to the next improvement project.** Google AI Mode or Gemini as another source. | Landing page, terms and FAQ ("ChatGPT dan Google AI Overview") | Decide in that project, after a trial of the provider. |
-| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7). Download is delivery, which the founder assigned to the PDF design plan's session on 2026-11-07, so F-13 is decided with that session. **Option A:** an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line. **Option B:** a link in the report-ready email; it needs a server route that builds the file from the link's secret, which rules out building the file in the browser (P0.10), and, as a new use of the order email, the privacy page updated first with the founder approving the wording (§4 rule 7), unless its "link laporan" wording already covers a worksheet link. | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4. B: the approved report-ready email (`src/lib/orders/mail.ts`), a new route, and the privacy page if its wording does not cover it | A, decided with the PDF design session before P0.10's spec. The PDF names the worksheet and its tabs in either case. |
+| F-13 | Where the owner downloads the worksheet, now that the web report is frozen (PDF design plan D-1 option A) and the PDF has no download button (its D-7). Download is delivery, which the founder assigned to the PDF design plan's session on 2026-11-07, so F-13 is decided with that session. **Option A:** an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report, a second small exception to the freeze beside the design plan's PR 4 line. **Option B:** a link in the report-ready email; it needs a server route that builds the file from the link's secret, which rules out building the file in the browser (P0.10), and, as a new use of the order email, the privacy page updated first with the founder approving the wording (§4 rule 7), unless its "link laporan" wording already covers a worksheet link. | A: Spec 021 (one button on the frozen web report) and the design plan's PR 4. B: the approved report-ready email (`src/lib/orders/mail.ts`), a new route, and the privacy page if its wording does not cover it | **Decided 2026-11-07: A.** The founder decided it in the PDF design session (its decision log); the button is the design plan's PR 4b, shipped with P0.10. |
 
 ## 6. Phases
 
@@ -432,7 +467,7 @@ menit: halaman 1"); page-break rules that avoid half-empty pages (pages 6 and
 8 of the prototype PDF); the owner's part first.
 
 **P0.10 "Lembar Kerja", first version.** An "Unduh Lembar Kerja" button next to
-"Unduh PDF" gives an Excel file (it also opens in Google Sheets), made on
+"Unduh PDF" (F-13 option A; the button is the design plan's PR 4b) gives an Excel file (it also opens in Google Sheets), made on
 request from the saved report and not stored, like the PDF. Its first tabs:
 
 - **Panduan:** how to use the file, in five lines;
@@ -1123,4 +1158,18 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   product does not save. Both proofs now count per source; proof A's
   findings and takeaways that had no denominator have one; the worksheet's
   "Pertanyaan & Hasil" tab lists the businesses named (as P0.10 says); and
-  "Counts on the PDF pages" states the rule for the PDF.
+  "Counts on the PDF pages" states the rule for the PDF. The same revision
+  adopts the design plan's proposal of a Titik awal page, and records the
+  founder's decisions of 2026-11-07 on F-13 (option A) and the five section
+  titles.
+- **Revision 6.4 review (round 1, 2026-11-07): PASS+NOTES on `0c1f34c`,
+  five notes.** Proof A's "Kata AI" counts named no source or denominator; a
+  Google "Direkomendasikan" count that the report does not save; `sortRows`
+  described without its cards key, and the web report's printed "N×" left
+  out; the question-count form missing its condition; and "Tiga posisi"
+  adding the two sources. All five are applied. The author also found that
+  proof A counted "melasma" as 0 where P4's ChatGPT answer uses it for
+  Ultima; `build.py` now checks every counted word against the answers and
+  the note's source and denominator. The worksheet's "Titik Awal" tab gains
+  each count's denominator, and its technical checks count only the checks
+  that were run.

@@ -277,9 +277,9 @@ DATA = {
          "title": "Satu artikel daftar klinik terbaik dikutip di kedua sumber",
          "text": "Artikel “10 Klinik Kecantikan Terbaik di Jakarta 2026” di majalahcantik.example dikutip di jawaban ChatGPT untuk P1 dan P2, serta di ringkasan Google untuk P1 dan P10. Artikel itu menyebut Nirmala Derma, Velora Clinic, dan Maison Aurelle. Ultima tidak ada di dalamnya.",
          "refs": [1, 2, 10]},
-        {"num": "2 dari 10", "cap": "jawaban ChatGPT yang merekomendasikan Ultima; di Google, 1 dari 7 ringkasan",
+        {"num": "2 dari 10", "cap": "jawaban ChatGPT yang merekomendasikan Ultima",
          "title": "Untuk pico laser, HIFU, dan layanan berbahasa Inggris, Ultima sudah direkomendasikan",
-         "text": "ChatGPT merekomendasikan Ultima untuk pico laser dan untuk dokter yang bisa berbahasa Inggris; jawaban pico mengutip daftar harga 2026 di situs Ultima. Ringkasan Google merekomendasikan Ultima untuk HIFU dan mengutip halaman HIFU-nya. Tiga posisi ini sudah ada; rekomendasi di bawah tidak mengubah halaman-halaman tersebut.",
+         "text": "ChatGPT merekomendasikan Ultima untuk pico laser dan untuk dokter yang bisa berbahasa Inggris; jawaban pico mengutip daftar harga 2026 di situs Ultima. Ringkasan Google merekomendasikan Ultima untuk HIFU dan mengutip halaman HIFU-nya. Posisi-posisi ini sudah ada; rekomendasi di bawah tidak mengubah halaman-halaman tersebut.",
          "refs": [4, 6, 8]},
     ],
     "facts_lede": "Setiap klaim tentang Ultima di jawaban AI, dibandingkan dengan situs Ultima dan data yang Anda konfirmasi. Nuave membandingkan; Nuave tidak menilai mana yang benar.",
@@ -340,10 +340,15 @@ DATA = {
     "description": {
         "lede": "Kata-kata yang dipakai AI untuk Ultima belum sama dengan yang Anda tonjolkan.",
         "ai_line": "Klinik laser yang sudah lama berdiri dan cabangnya banyak; untuk pasien berbahasa Inggris, ChatGPT merekomendasikannya.",
-        "words": [["laser", 3], ["sudah lama berdiri", 3], ["cabang banyak", 1], ["berbahasa Inggris", 1], ["promo", 1], ["dokter spesialis", 1], ["melasma", 0]],
+        "words_source": "chatgpt",
+        # Each word: the answers that use it for Ultima, and the pattern build.py looks for (plan P2.3: counted by code).
+        "words": [["laser", [1, 4, 7], "laser"], ["sudah lama berdiri", [1, 4, 7], "berdiri sejak|paling lama|sudah lama"],
+                  ["cabang banyak", [1], "cabangnya banyak|banyak cabang"], ["berbahasa Inggris", [8], "bahasa Inggris"],
+                  ["promo", [1], "promo"], ["dokter spesialis", [4], "dokter spesialis|spesialis kulit"], ["melasma", [4], "melasma"]],
+        "words_note": "Angka: berapa dari 4 jawaban ChatGPT yang menyebut Ultima (P1, P4, P7, P8) memakai kata itu untuk Ultima.",
         "owner_line": "Ditangani dokter spesialis kulit (Sp.DVE), program melasma jangka panjang, dan layanan berbahasa Inggris.",
         "owner_src": "Jawaban Anda untuk “Apa yang membuat bisnis Anda berbeda?” saat mengisi data bisnis.",
-        "gap": "Dari tiga hal yang Anda tonjolkan, layanan berbahasa Inggris sudah terdengar. Dokter spesialis baru muncul di satu jawaban, dan melasma belum muncul sama sekali.",
+        "gap": "Dari tiga hal yang Anda tonjolkan, layanan berbahasa Inggris sudah terdengar. Dokter spesialis dan melasma masing-masing muncul di 1 dari 4 jawaban ChatGPT, keduanya di jawaban tentang pico laser (P4). Program melasma jangka panjangnya tidak disebut.",
         "rivals": [
             {"name": "Nirmala Derma", "line": "dokter spesialis kulit; andalan untuk jerawat dan melasma"},
             {"name": "Velora Clinic", "line": "terjangkau, cabang di banyak tempat, sering promo"},
@@ -365,7 +370,7 @@ DATA = {
         ],
         "note": "Ini perbedaan isi halaman, bukan alasan AI memilih mereka; audit ini tidak bisa membuktikan sebab. “Tidak terdeteksi” berarti tidak ditemukan di halaman yang dibaca Nuave.",
     },
-    "topics_lede": "Lima topik yang jawabannya belum menyebut Ultima. Bopeng dan melasma paling banyak dicari.",
+    "topics_lede": "Di lima dari sepuluh topik yang ditanyakan, tidak ada jawaban AI yang menyebut Ultima. Bopeng dan melasma paling banyak dicari.",
     "topics": [
         {"name": "Bekas jerawat dan bopeng", "volume": 4400, "status": "Tidak disebut di ChatGPT maupun Google. Google mengutip artikel bopeng di blog Ultima tanpa menyebut namanya.", "sources": "halodokter.example, veloraclinic.example, nirmaladerma.example", "refs": [3]},
         {"name": "Flek dan melasma", "volume": 3600, "status": "Tidak disebut di ChatGPT maupun Google.", "sources": "nirmaladerma.example, halodokter.example, majalahcantik.example", "refs": [2]},
