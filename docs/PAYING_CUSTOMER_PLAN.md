@@ -48,6 +48,7 @@ done.
 | S5 | Terms, price and promise wording | Worker | Done; wording approved by the founder 2026-10-25 | [#159](https://github.com/yasir-mukhtar/nuave_v0.2/pull/159) | Independent review PASS (round 5) |
 | S6 | Landing page | Founder | Not started | — | — |
 | **Stage 3** | **Go live** | | | | |
+| R3 | Report v3 before launch: Phases 0 to 3 and the launch gate ([`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md)), with the PDF design plan (PR #207) | Orchestrator + workers + founder | Plan approved 2026-11-07 (F-1); runs now, alongside Stage 2; only G1's last step waits for its launch gate; Phase 0 spec next | [#205](https://github.com/yasir-mukhtar/nuave_v0.2/pull/205) (plan) | Plan: independent review PASS (revision 6.1) |
 | G1 | One real purchase and refund | Founder + worker | Not started | — | — |
 | **Parallel** | | | | | |
 | V | Show reports to 3–5 real owners | Founder | Optional | — | — |
@@ -581,6 +582,12 @@ only if asked.
 
 ### Stage 3 — Go live
 
+**R3 — Report v3 before launch** (approved by the founder 2026-11-07, F-1).
+Phases 0 to 3 of [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md), each behind a
+gate the founder judges, built together with the PDF design plan (PR #207).
+Every package needs its own approved spec. R3 runs now, alongside Stage 2
+(it does not wait for S6); only G1's last step waits for R3's launch gate.
+
 **G1 — One real purchase and refund** (founder + worker, ~1 day)
 
 1. Worker runs the full sandbox journey with `verify-nuave` and records
@@ -589,7 +596,9 @@ only if asked.
 3. Founder buys one real audit for a business they own or have permission for
    (Rp249.000), reaches the report on a phone, and refunds it from the Midtrans
    dashboard.
-4. Founder records "open for paying customers" in `DECISION_LOG.md`.
+4. Founder records "open for paying customers" in `DECISION_LOG.md`, after
+   the founder's verdict at the Report v3 launch gate
+   ([`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) §3, approved 2026-11-07).
 
 ### Track V — Owner feedback (optional, founder)
 
@@ -619,6 +628,13 @@ founder moves it into a milestone.
   2026-10-26.
 
 **Question generation and engine**
+- The question screen's split message says "Minimal 7 pertanyaan harus
+  tentang memilih tempat", but the rule also allows at most two advice
+  questions (`MIN_PROVIDER_QUESTIONS` 7, `MAX_ADVICE_QUESTIONS` 2 in
+  `src/lib/discovery/question-rules.ts`). With ten questions, at least eight
+  must be about choosing a place, so an edit leaving seven is refused under
+  a message that says seven is enough. Found in the Report v3 plan review,
+  2026-11-06.
 - GLM model name and billing field (copied from the former `NOW.md`,
   2026-09-17 connection check): the provider returned model name
   `zai/glm-5.3-flash` where `glm-5.3-flash` was requested, so the runner

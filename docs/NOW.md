@@ -55,6 +55,20 @@
   limits (7 reports); at real answer lengths the PDF is 76 pages, 2.4 s.
   [Spec 024](../specs/024-report-pdf-design/SPEC.md) is approved
   (2026-11-07). Next: Part 1 (PR 1, the page frame).
+- **Report v3 plan, approved** (2026-11-07,
+  [decision](./DECISION_LOG.md#2026-11-07--approve-the-report-v3-plan-f-1)):
+  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.4) sets the report
+  and worksheet work the founder wants done before launch (the last step of
+  G1), with gates the founder judges. It is aligned with the PDF design plan
+  and Spec 024 (bullet above): the new sections appear in the 16:9 PDF, and
+  the web report stays frozen. Proofs of concept:
+  [`experiments/report-v3-poc/`](../experiments/report-v3-poc/README.md).
+  Next: the Phase 0 spec, planned with Spec 024's Parts 1 to 3 and Part 5
+  (the page templates of v3 Phase 0). F-13 is decided: the worksheet
+  downloads from a button next to "Unduh PDF" (2026-11-07,
+  [decision](./DECISION_LOG.md#2026-11-07--report-section-titles-approved-worksheet-download-is-a-button)).
+  This bullet and the one above are as of 2026-11-07; the rest of this
+  page is as of 2026-10-30.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):
   [Spec 023](../specs/023-report-writing-quality/SPEC.md) is approved. The
@@ -383,6 +397,7 @@ Dependency alerts remain unassessed by the JZ acceptance, not waived or resolved
 - Standing task exclusions remain in [AGENTS.md](../AGENTS.md#parked-work); broad cleanup does not reactivate them.
 - The plan's [parking lot](./PAYING_CUSTOMER_PLAN.md#6-parking-lot-after-we-have-paying-customers),
   including the open questions, waits until after the first paying customer.
+  Report v3 left it on 2026-11-07: it is milestone R3 in Stage 3.
 - Non-scope: [`END_TO_END_PLAN.md` §12](./END_TO_END_PLAN.md#12-explicit-non-scope-through-initial-launch),
   plus an agency or white-label reseller layer, advanced brand controls,
   automated recurring monitoring (a re-check the customer buys is allowed),
