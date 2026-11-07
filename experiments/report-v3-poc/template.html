@@ -448,15 +448,6 @@ function businessCounts(src) {
   });
   return m;
 }
-function recCounts(src) {
-  const m = {};
-  QS.forEach(q => {
-    const a = q[src];
-    if (!a || a.status === "notasked" || a.status === "failed" || a.status === "noaio") return;
-    new Set(a.rec || []).forEach(n => { m[n] = (m[n] || 0) + 1; });
-  });
-  return m;
-}
 function avgNamed(src) {
   const per = QS.map(q => q[src]).filter(a => a && !["notasked", "failed", "noaio"].includes(a.status))
     .map(a => new Set([...(a.named || []), ...(namedIn(a) ? [CLINIC] : [])]).size).filter(n => n > 0);
@@ -643,23 +634,27 @@ function facts() {
   return band("cek-fakta", "Cek fakta: apa kata AI tentang " + SHORT, D.facts_lede, body);
 }
 function competitors() {
-  const cc = businessCounts("chatgpt"), gc = businessCounts("google"), rcc = recCounts("chatgpt"), rcg = recCounts("google");
+  // Mentions per source for every business; "recommended" only for the clinic, the one count the
+  // product saves (other businesses' recommendations are not saved, so no package shows them).
+  const cc = businessCounts("chatgpt"), gc = businessCounts("google");
   const youC = stats("chatgpt").named, youG = stats("google").named;
   const youRecC = stats("chatgpt").rec, youRecG = stats("google").rec;
   const den = { c: stats("chatgpt").done, g: stats("google").shown };
   const all = (D.businesses || []).map(b => {
     const you = b.name === CLINIC;
     const c = you ? youC : (cc[b.name] || 0), g = you ? youG : (gc[b.name] || 0);
-    const rC = you ? youRecC : (rcc[b.name] || 0), rG = you ? youRecG : (rcg[b.name] || 0);
-    return { ...b, you, c, g, rC, rG, total: c + g, rec: rC + rG };
-  }).filter(b => b.total > 0).sort((a, b) => b.total - a.total || b.rec - a.rec);
+    return { ...b, you, c, g, rC: you ? youRecC : 0, rG: you ? youRecG : 0 };
+  }).filter(b => b.c + b.g > 0)
+    // The web report's order (report-v2-data.ts sortRows): both sources' mentions together, the clinic
+    // first on a tie, then by name. The sum only orders the rows; it is never shown.
+    .sort((a, b) => (b.c + b.g) - (a.c + a.g) || (a.you ? -1 : b.you ? 1 : 0) || a.name.localeCompare(b.name));
   const full = all.filter(b => b.full || b.you).slice(0, 6);
   const rest = all.filter(b => !full.includes(b));
   const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const rows = full.map(b => `<div class="comp ${b.you ? "you" : ""}"><div class="logo-i">${esc(initials(b.name))}</div>
     <div><div class="comp-name">${esc(b.name)}${b.you ? '<span class="pill acc">Klinik Anda</span>' : ""}</div><div class="comp-site">${b.domain ? esc(b.domain) : "situs tidak tercatat"}${b.rating ? ` · ${esc(b.rating)}` : ""}</div></div>
     <div class="comp-count"><div class="cc-row"><span class="cc"><small>ChatGPT</small><b class="tnum">${b.c}</b><small>dari ${den.c}</small></span><span class="cc"><small>Google</small><b class="tnum">${b.g}</b><small>dari ${den.g}</small></span></div></div>
-    ${b.rec ? `<div class="comp-rec">Direkomendasikan: ChatGPT ${b.rC} dari ${den.c} · Google ${b.rG} dari ${den.g}</div>` : ""}
+    ${b.you && (b.rC || b.rG) ? `<div class="comp-rec">Direkomendasikan: ChatGPT ${b.rC} dari ${den.c} · Google ${b.rG} dari ${den.g}</div>` : ""}
     ${b.why ? `<div class="comp-why"><em>Menurut jawaban AI:</em> ${esc(b.why)}</div>` : ""}</div>`).join("");
   const chips = rest.length ? `<div class="chips"><span class="small" style="width:100%">${rest.length} bisnis lain disebut lebih jarang:</span>${rest.map(b => `<span class="chip">${esc(b.name)} · ChatGPT ${b.c} · Google ${b.g}</span>`).join("")}</div>` : "";
   const takes = (D.takeaways || []).length ? `<div class="cards3">${D.takeaways.map(t => `<div class="take"><b>${esc(t.title)}</b><p>${esc(t.text)}</p></div>`).join("")}</div>` : "";
@@ -691,13 +686,12 @@ function topics() {
 }
 function sourceMap() {
   const S = D.sitemap; if (!S) return "";
-  const counts = {};
-  D.questions.forEach(q => ["chatgpt", "google"].forEach(src => { const a = q[src]; if (!a || !a.sources) return; new Set(a.sources.map(s => s.domain)).forEach(dm => { counts[dm] = (counts[dm] || 0) + 1; }); }));
+  const counts = { chatgpt: {}, google: {} };
+  D.questions.forEach(q => ["chatgpt", "google"].forEach(src => { const a = q[src]; if (!a || !a.sources) return; new Set(a.sources.map(s => s.domain)).forEach(dm => { counts[src][dm] = (counts[src][dm] || 0) + 1; }); }));
   const groups = S.groups.map(gp => {
-    const rows = gp.sites.map(s => ({ ...s, k: counts[s.domain] || 0 })).sort((a, b) => b.k - a.k);
-    const total = rows.reduce((x, r) => x + r.k, 0);
-    return `<div class="smap-group"><h3><span>${esc(gp.name)}</span><span class="small tnum">${total} kutipan</span></h3>${rows.map(r => `
-      <div class="smap-row"><div class="dom">${esc(r.domain)}${r.title ? `<small>${esc(r.title)}</small>` : ""}</div><div class="tnum small">${r.k} jawaban</div>
+    const rows = gp.sites.map(s => ({ ...s, c: counts.chatgpt[s.domain] || 0, g: counts.google[s.domain] || 0 })).sort((a, b) => (b.c + b.g) - (a.c + a.g) || a.domain.localeCompare(b.domain));
+    return `<div class="smap-group"><h3><span>${esc(gp.name)}</span></h3>${rows.map(r => `
+      <div class="smap-row"><div class="dom">${esc(r.domain)}${r.title ? `<small>${esc(r.title)}</small>` : ""}</div><div class="tnum small">ChatGPT ${r.c}<br>Google ${r.g}</div>
       <div class="act">${r.present ? `<span class="pill ${r.present_cls || ""}">${esc(r.present)}</span> ` : ""}${esc(r.action || "")}</div></div>`).join("")}</div>`;
   }).join("");
   return band("situs-ai", "Situs yang dibaca AI", S.lede, groups + (S.note ? `<p class="small">${esc(S.note)}</p>` : ""));

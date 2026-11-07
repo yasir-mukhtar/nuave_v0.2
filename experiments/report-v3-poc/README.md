@@ -38,17 +38,22 @@ build needs `openpyxl`; the render uses the pre-installed Playwright.
 
 - `template.html`: one page for both data sets. Every count (cards, bars,
   competitor counts, cited sites, the starting point) is computed from the
-  answers' statuses, not written by hand.
+  answers' statuses, not written by hand, and kept per source (plan,
+  "Counts on the PDF pages"). Competitor cards show mentions per source;
+  "Direkomendasikan" appears for the clinic only, because the product saves
+  no recommendations for other businesses.
 - `data/ultima_a.py`, `data/ultima_b.py`: the two data sets. B reads the saved
   answers at build time and renames the clinic; links that would reveal it
   stay as plain text.
 - `worksheet.py`: the worksheet, built from the same data as the page. Its
-  summary numbers are live formulas over the "Pertanyaan & Hasil" tab, status
-  cells are drop-down lists, and progress counts itself. Both worksheets were
+  summary numbers are live formulas over the "Pertanyaan & Hasil" tab (which
+  lists the businesses each answer names, as plan P0.10 says), status cells
+  are drop-down lists, and progress counts itself. Both worksheets were
   recalculated in LibreOffice and match their reports.
 - `build.py`: stops the build when a report breaks one of these checks:
   - every business an answer is said to name or recommend is in the business
-    list and appears, by name or alias, in that answer's text;
+    list and appears, by name or alias, in that answer's text (the data's
+    `rec` lists are checked but not shown);
   - every fact quote appears word for word in its answer, and every other
     quotation (in curly or straight double quotes) in the report's own text
     appears in the answers, the questions,

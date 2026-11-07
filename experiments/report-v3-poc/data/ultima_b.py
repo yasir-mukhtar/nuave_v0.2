@@ -480,7 +480,7 @@ DATA = {
                 {"domain": "rsudbudhiasih.jakarta.go.id", "title": "rawat jalan", "present": "", "action": ""},
             ]},
         ],
-        "note": "Kolom tengah menghitung berapa jawaban yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan bisa dibuka Nuave; Traveloka, tiket.com, Tokopedia, dan keenam tautan Instagram tidak terbaca: satu meminta login, lima tidak dibuka.",
+        "note": "Kolom tengah menghitung, terpisah per sumber, jawaban ChatGPT dan ringkasan Google yang mengutip situs itu. “Ada” atau “tidak ada” diperiksa pada halaman yang dikutip dan bisa dibuka Nuave; Traveloka, tiket.com, Tokopedia, dan keenam tautan Instagram tidak terbaca: satu meminta login, lima tidak dibuka.",
     },
     "playbook": {
         1: {"who": "Tim konten, ditinjau dokter", "effort": "±1 minggu per halaman", "check": "halaman terbuka tanpa login dan teksnya bukan gambar",

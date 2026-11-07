@@ -163,19 +163,18 @@ def build_workbook(d, out):
             if a["status"] == "notasked":
                 continue
             rows.append([f"P{q['n']}", q["q"], q["topic"], q.get("volume") or (f"{q['ai_mentions']:,} sebutan AI".replace(",", ".") if q.get("ai_mentions") else ""), SRC[src], a.get("label") or RESULT[a["status"]],
-                         ", ".join(a.get("named", [])), ", ".join(a.get("rec", [])),
+                         ", ".join(a.get("named", [])),
                          ", ".join(dict.fromkeys(s["domain"] for s in a.get("sources", []))),
                          "Tidak, menyebut nama klinik" if q.get("brand") else "Ya"])
-    qf, ql = table(wq, 4, ["No", "Pertanyaan", "Topik", "Volume per bulan", "Sumber", f"Hasil untuk {short}", "Bisnis lain yang disebut", "Bisnis lain yang direkomendasikan", "Situs yang dikutip", "Dihitung di ringkasan"],
-                   rows, [6, 52, 22, 13, 18, 24, 40, 30, 40, 18], wrap_cols=(2, 7, 8, 9, 10), center_cols=(1, 4))
+    qf, ql = table(wq, 4, ["No", "Pertanyaan", "Topik", "Volume per bulan", "Sumber", f"Hasil untuk {short}", "Bisnis lain yang disebut", "Situs yang dikutip", "Dihitung di ringkasan"],
+                   rows, [6, 52, 22, 13, 18, 24, 40, 40, 18], wrap_cols=(2, 7, 8, 9), center_cols=(1, 4))
     for r in range(qf, ql + 1):
         wq.cell(row=r, column=4).number_format = "#,##0"
     color_words(wq, f"F{qf}:F{ql}", {"Direkomendasikan": (VIOLET_INK, SOFT), "Disebut": (VIOLET_INK, WASH), "Tidak disebut": (BAD, BAD_W)})
     QR = f"'Pertanyaan & Hasil'!$E${qf}:$E${ql}"
     HR = f"'Pertanyaan & Hasil'!$F${qf}:$F${ql}"
     NR = f"'Pertanyaan & Hasil'!$G${qf}:$G${ql}"
-    RR = f"'Pertanyaan & Hasil'!$H${qf}:$H${ql}"
-    CR = f"'Pertanyaan & Hasil'!$J${qf}:$J${ql}"
+    CR = f"'Pertanyaan & Hasil'!$I${qf}:$I${ql}"
 
     # ---------------- Ringkasan ----------------
     wr = wb.create_sheet("Ringkasan", 1)
@@ -308,22 +307,22 @@ def build_workbook(d, out):
     if d.get("sitemap"):
         wsm = wb.create_sheet("Situs AI")
         title(wsm, "Situs yang dibaca AI", d["sitemap"].get("lede", ""), 7)
-        counts = {}
+        counts = {"chatgpt": {}, "google": {}}
         for q in qs:
             for src in ("chatgpt", "google"):
                 for dm in {s["domain"] for s in (q.get(src) or {}).get("sources", [])}:
-                    counts[dm] = counts.get(dm, 0) + 1
+                    counts[src][dm] = counts[src].get(dm, 0) + 1
         rows = []
         for g in d["sitemap"]["groups"]:
             for sdata in g["sites"]:
-                rows.append([g["name"], sdata["domain"], sdata.get("title", ""), counts.get(sdata["domain"], 0), sdata.get("present", ""),
+                rows.append([g["name"], sdata["domain"], sdata.get("title", ""), counts["chatgpt"].get(sdata["domain"], 0), counts["google"].get(sdata["domain"], 0), sdata.get("present", ""),
                              sdata.get("action", ""), "Belum mulai" if sdata.get("action", "").startswith(("Minta", "Daftar")) else "Tidak perlu"])
-        sf, sl = table(wsm, 4, ["Kelompok", "Situs", "Halaman", "Dikutip di (jawaban)", "Klinik ada di sana?", "Langkah berikut", "Status"],
-                       rows, [24, 28, 40, 14, 24, 50, 18], wrap_cols=(3, 5, 6), center_cols=(4,))
+        sf, sl = table(wsm, 4, ["Kelompok", "Situs", "Halaman", "Jawaban ChatGPT yang mengutip", "Ringkasan Google yang mengutip", "Klinik ada di sana?", "Langkah berikut", "Status"],
+                       rows, [24, 28, 40, 14, 14, 24, 50, 18], wrap_cols=(3, 6, 7), center_cols=(4, 5))
         dv = DataValidation(type="list", formula1='"' + ",".join(STATUS + ["Tidak perlu"]) + '"', allow_blank=True)
         wsm.add_data_validation(dv)
-        dv.add(f"G{sf}:G{sl}")
-        color_words(wsm, f"G{sf}:G{sl}", {"Selesai": (GOOD, GOOD_W), "Sedang dikerjakan": (WARN, WARN_W)})
+        dv.add(f"H{sf}:H{sl}")
+        color_words(wsm, f"H{sf}:H{sl}", {"Selesai": (GOOD, GOOD_W), "Sedang dikerjakan": (WARN, WARN_W)})
 
     # ---------------- Bahan Siap Pakai ----------------
     if d.get("kit"):

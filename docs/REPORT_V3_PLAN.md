@@ -6,7 +6,8 @@
 > ([`WORKFLOW.md`](./WORKFLOW.md)); nothing is built from this file directly.
 > Layout belongs to the PDF design plan (see "Approval and alignment" below).
 > Author: Claude (orchestrator role), 2026-11-06, branch
-> `claude/inspiring-tesla-yox17h`. Revision 6.3: 6.2 recorded the approval
+> `claude/inspiring-tesla-yox17h`. Revision 6.4 states how the PDF pages
+> count ("Counts on the PDF pages" below). Revision 6.3: 6.2 recorded the approval
 > and aligned the plan with the PDF design plan; 6.3 applies its review. Revision 6.1: revision 6 followed the
 > founder's direction of 2026-11-06 (below), and 6.1 applies its first
 > independent review. Revision 5.1 passed independent review (rounds 1 to 4
@@ -129,6 +130,22 @@ This plan adds two format directions:
    dibaca AI". Fixed titles are approved once (the design plan's D-7).
 
 Any later change of order comes from this plan or its specs.
+
+**Counts on the PDF pages** (rule 4; the design plan's D-6). Every number on
+a page keeps its source and its denominator. A finding's large number is one
+source's count ("2 dari 10 jawaban ChatGPT"); a count of questions when the
+sentence is true in each source ("0 dari 3 pertanyaan ... di ChatGPT maupun
+Google"); or a count of something other than answers, such as checked claims
+(P1.2) or cited articles, with the split per source next to it. Answers are
+never added across the two sources. Pesaing shows each business's mentions
+per source; "Direkomendasikan" appears for the clinic only, because the saved
+report keeps other businesses' mentions and ChatGPT cards but not whether an
+answer recommended them (`CompetitorFact` in
+`src/lib/audit/two-source-report.ts`), and no package in this plan adds that.
+Rows may keep the web report's order (both sources' mentions together, the
+clinic first on a tie: `sortRows` in `src/app/audit/report/report-v2-data.ts`);
+that sum orders the rows and is never printed. The proofs of concept follow
+this from revision 6.4 on.
 
 ## 1. Why
 
@@ -1098,3 +1115,12 @@ The 2026-11-06 analysis listed 22 ideas. Where each went:
   the page order, with two directions (P0.1's own page, a title without a
   cause); the founder is quoted verbatim; the plan moves into Stage 3 of
   `PAYING_CUSTOMER_PLAN.md`; F-13 is decided with the PDF design session.
+- **Revision 6.3 review (rounds 2 and 3, 2026-11-07):** three notes on
+  `9a74bb9`, applied in `a7afe17`, which the reviewer passed.
+- **Revision 6.4 (2026-11-07):** the PDF design session found that proof A
+  added answers across the two sources (its verdict and three finding
+  numbers) and showed recommendation counts for other businesses, which the
+  product does not save. Both proofs now count per source; proof A's
+  findings and takeaways that had no denominator have one; the worksheet's
+  "Pertanyaan & Hasil" tab lists the businesses named (as P0.10 says); and
+  "Counts on the PDF pages" states the rule for the PDF.

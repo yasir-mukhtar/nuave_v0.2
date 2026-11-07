@@ -46,7 +46,7 @@
 
 - **Report v3 plan, approved** (2026-11-07,
   [decision](./DECISION_LOG.md#2026-11-07--approve-the-report-v3-plan-f-1)):
-  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.3) sets the report
+  [`REPORT_V3_PLAN.md`](./REPORT_V3_PLAN.md) (revision 6.4) sets the report
   and worksheet work the founder wants done before launch (the last step of
   G1), with gates the founder judges. It is aligned with the PDF design plan
   (PR #207): the new sections appear in the 16:9 PDF, and the web report
