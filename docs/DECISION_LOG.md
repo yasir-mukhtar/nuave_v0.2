@@ -36,8 +36,8 @@ Yasir also decided three points:
 Later the same day the Report v3 plan, approved at revision 6.1 (F-1), added
 in revision 6.3 a "Format of the report PDF" that adopts both proposals: Cara membaca laporan comes
 before Ringkasan, and Peta jawaban is a front page. The design plan's page
-order follows that list (§5.2), with five sections. One proposal is open:
-Titik awal as its own page after Penutup.
+order follows that list (§5.2), with five sections. Titik awal as its own
+page after Penutup was adopted in v3 revision 6.4.
 The plan's §5.2 and §5.3 hold the page map and the rules.
 
 ## 2026-11-07 — Approve the PDF report design plan (D-0 to D-10)

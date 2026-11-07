@@ -164,7 +164,7 @@ waits for that package. A page whose data does not exist yet is left out.
 | 04 | Bahan siap pakai | v3 P2.4 (F-7a) | |
 | 04 | Lembar Kerja | v3 P0.10 | Names the worksheet and its tabs; the owner downloads it with the "Unduh Lembar Kerja" button on the web report (v3 F-13 option A, PR 4b). The work-plan preview rows are this report's own recommendations; the person, date and status columns start empty, and the reference fills them only as a labelled example |
 | 04 | Penutup | Today; decisions with v3 P0.4 | The closing paragraph and the three phases |
-| 04 | Titik awal | Today, partly | Today's counts and the re-audit advice (D-7); v3 P3.3 adds the comparison with a later audit. A page of its own is an open proposal to v3 (§5.3 rule 4); if v3 declines, it folds back into Penutup |
+| 04 | Titik awal | Today, partly | Today's counts and the re-audit advice (D-7); v3 P3.3 adds the comparison with a later audit. A page of its own, adopted by v3 (revision 6.4, direction 3); its numbers carry denominators and appear once their data exists |
 | 05 Lampiran | A0, the questions | Today | With v3's answer notes |
 | 05 | A1 to A10, one question per page | Today | Both full answers, their sources and the code notes; continued pages as needed (§6.4); the two questions that name the clinic, if v3 F-4 is approved |
 | End | Sampul belakang | Design only | |
@@ -192,11 +192,8 @@ session; aesthetics and delivery belong to this plan.**
    template.
 4. **Proposals to v3** are listed here until v3 adopts or rejects them.
    The two earlier ones (Cara membaca laporan before Ringkasan; Peta
-   jawaban) were adopted in v3 revision 6.3. Open:
-   - Titik awal as its own page after Penutup. v3's list has Penutup as the
-     last page of section 04, and in the reference export the starting
-     point was part of it; the Figma gives it a page so the counts to
-     compare in eight weeks stand alone.
+   jawaban) were adopted in v3 revision 6.3, and Titik awal as its own page
+   after Penutup in revision 6.4. None is open.
 5. **In code,** the page-list function takes the v3 page order as its input,
    and a test asserts that the PDF's page order equals it.
 6. **Sample content:** the Figma's sample text comes from proof of concept
@@ -362,7 +359,8 @@ preview.
   (USD 1.5452 before the report plus three report calls at USD 1.08,
   `src/lib/spending/spend-worst-case.test.ts`), under the USD 5.00 hold.
 - Browser Run time grows with the page count; the spike measures the
-  maximum-length PDF (about 47 pages plus continued pages) against the
+  maximum-length PDF (about 57 pages before continued pages, 86 with them in
+  the local run) against the
   30-second and 20-second limits before PR 1.
 - `PDF_DAILY_CAP` (20 PDFs per report per day) stays.
 
@@ -404,6 +402,7 @@ preview.
 
 - **2026-11-07, founder:** the five section titles are approved as fixed text (D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran". v3 F-13 is decided as option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (PR 4b). The reference was exported again from the Figma the same day: `experiments/report-pdf-design/reference.pdf`, 39 pages in the §5.2 order.
 
+- **2026-11-07, Report v3 revision 6.4 (commit `5d04c86`):** Titik awal is adopted as its own page after Penutup (v3 direction 3): its numbers carry their denominators ("4 dari 8 klaim yang diperiksa", "3 dari 5 pemeriksaan teknis yang dijalankan"), its footer keeps only the date the numbers come from and the confidential label (limits are said once, on Cara membaca), and the Lembar Kerja line shows only once that tab exists (v3 P3.3). "Direkomendasikan" is ChatGPT only. The Figma and the reference follow, with v3's Kata AI counts ("x dari 4 jawaban ChatGPT") and the Celah topik lede.
 - **2026-11-07, Report v3 revision 6.4:** "Counts on the PDF pages" becomes the counting rule (§5.3 rule 0). The Figma follows it: finding numbers with their source, Pesaing's "Direkomendasikan" only on the clinic's row, Situs yang dibaca AI counted per source without group totals, and the takeaways with denominators. The reference was exported again.
 
 ## Review history
@@ -420,4 +419,7 @@ preview.
 | 8 | `f0756c7` | PASS | All round 7 notes resolved. |
 | 9 | `3f8a0ca` | PASS+NOTES | Two exported pages with overlapping text (divider 02, Titik awal); the Lembar Kerja row and D-1 still treating the download as open; no checks for the button. All addressed in `f0efe5c`. |
 | 10 | `f0efe5c` | PASS | All round 9 notes resolved. |
-| 11 | `f4878bd` | PASS+NOTES | Situs counts verified; Temuan 4's number also has no B-05 form; tight spacing on Temuan 1. Both addressed in the next head. |
+| 11 | `f4878bd` | PASS+NOTES | Situs counts verified; Temuan 4's number also has no B-05 form; tight spacing on Temuan 1. Both addressed in `07f97ca`. |
+| 12 | `07f97ca` | PASS | Both round 11 notes resolved. |
+| 13 | `e2092ac` | PASS+NOTES | Step 0 spike, local part: README claims beyond the scripts (font download, run steps, the appendix layout), unstated limits of the run, Bahan siap pakai pages, page-size units, the page maximum in §7, the direct Browser Run call. Addressed in `8d6cfad`. |
+| 14 | `8d6cfad` | PASS+NOTES | §9's page count; the word-limit spec name in the spike. Addressed in the next head. |

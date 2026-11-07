@@ -4,7 +4,7 @@ A throwaway test for [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../../docs/REPORT_PDF
 §7, Step 0. It is not product code and nothing in the app uses it.
 
 - `build.py` writes one HTML file with every page the §5.2 page list can
-  hold at its largest. Each writer text is filled to its Spec 023 word limit
+  hold at its largest. Each writer text is filled to its Spec 021 B-04 word limit
   (`src/lib/audit/two-source-writing.ts`), times a scale factor.
 - `measure.mjs` prints that file in Chromium with the PDF options the new
   print request needs (`preferCSSPageSize`, `printBackground`, zero margins).

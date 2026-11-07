@@ -25,7 +25,7 @@ served by the app and nothing reads it at run time.
   Situs yang dibaca AI, Untuk tim web Anda.
 - **Pages 22 to 29, 04 "Rencana delapan minggu":** divider, Rencana, two
   Langkah pages, Bahan siap pakai, Lembar Kerja, Penutup, Titik awal. Titik
-  awal on its own page is an open proposal to v3 (plan §5.3).
+  awal is its own page (v3 revision 6.4).
 - **Pages 30 to 38, 05 "Lampiran":** divider, an index (A0) and sample answer
   pages for the likely cases:
   - a question asked three times;

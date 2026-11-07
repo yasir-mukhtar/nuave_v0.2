@@ -4,7 +4,7 @@ maximum-length report PDF page set. Not product code.
 It writes one HTML file with every page the §5.2 page list can hold at its
 largest: 10 findings plus google_finding, 10 recommendations, every v3 page,
 ten appendix questions with continued pages for long answers, and the back
-cover. Each writer text is filled to its Spec 023 word limit
+cover. Each writer text is filled to its Spec 021 B-04 word limit
 (src/lib/audit/two-source-writing.ts) times SCALE, so SCALE=1.25 tests text
 over the soft limit.
 
