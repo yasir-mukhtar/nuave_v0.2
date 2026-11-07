@@ -47,8 +47,9 @@
 - **Report PDF design** (2026-11-07,
   [decision](./DECISION_LOG.md#2026-11-07--approve-the-pdf-report-design-plan-d-0-to-d-10)):
   [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md) is approved
-  (D-0 to D-10); the corrected reference is exported
-  (`experiments/report-pdf-design/reference.pdf`). Next: the Step 0 spike (a
+  (D-0 to D-10) and follows the approved Report v3 page order; the
+  reference is exported (`experiments/report-pdf-design/reference.pdf`, 39
+  pages). Next: the Step 0 spike (a
   maximum-length PDF through Browser Run), then the spec.
 - **Report writing quality** (2026-10-28,
   [decision](./DECISION_LOG.md#2026-10-28--spec-023-approved-report-writing-quality)):

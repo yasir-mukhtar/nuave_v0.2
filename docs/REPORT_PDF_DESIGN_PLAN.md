@@ -304,8 +304,11 @@ saved answer splits cleanly.
 
 **PR 4: the web page line (D-1 option A).** One line on the web report and in
 the report-ready email that the PDF is the full designed report; the founder
-approves the wording. If the founder later picks B or C, that becomes its own
-spec.
+approves the wording. It also adds the "Unduh Lembar Kerja" button next to
+"Unduh PDF" on the web report (v3 F-13 option A, founder 2026-11-07), a second
+small exception to the freeze; the button downloads the worksheet that v3
+P0.10 builds and ships with P0.10. If the founder later picks B or C, that
+becomes its own spec.
 *Done when:* the line shows only on two-source reports (a new test asserts
 it), the email test output carries it, the pre-Spec-018 snapshots stay
 unchanged, and `verify-nuave` passes on a preview.
@@ -386,7 +389,9 @@ unchanged, and `verify-nuave` passes on a preview.
 
 - **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The same day the founder added two pages from the Report v3 structure (Untuk tim web Anda; Lembar Kerja), and the reference was exported to `experiments/report-pdf-design/reference.pdf` (33 pages; see its [README](../experiments/report-pdf-design/README.md)). D-10 now lists every dark page shown in the approved design (the section dividers, Penutup and the back cover), not only the cover.
 - **2026-11-07, founder:** substance and format follow the Report v3 session, and aesthetics and delivery belong to this plan (§5.3). The Figma was restructured to v3's content: a Ringkasan with the verdict and the two source cards, a moment page, five Temuan pages from v3's findings, a Rencana page with v3's six steps, and a Penutup with v3's three phases.
-- **2026-11-07, Report v3 revision 6.3** (the plan was approved at 6.1, F-1, and the approval recorded in 6.2): its "Format of the report PDF" sets the page order, and the Figma now follows it (§5.2): Cara membaca laporan before Ringkasan and Peta jawaban as a front page (both had been this plan's proposals, and v3 adopted them), five sections ("Posisi <klinik> hari ini", "Apa kata AI tentang <klinik>", "Apa yang dibaca AI", "Rencana delapan minggu", "Lampiran"), and section titles that state no cause. The "Untuk dikerjakan" divider is gone; its pages sit in sections 03 and 04. Temuan pages now lead with the writer's meaning sentence and show the count beneath it (v3 rule 14). The sample counts are per question or per source (D-6), Cek fakta and A1 keep v3's wording ("…, yang dikutip jawaban ini"; "Tanpa penilaian"), Cara membaca carries all of v3's method lines, and Ringkasan shows the first plan step (D-9 A). The reference export of earlier the same day no longer matches the Figma; it is exported again once the founder has seen the Figma.
+- **2026-11-07, Report v3 revision 6.3** (the plan was approved at 6.1, F-1, and the approval recorded in 6.2): its "Format of the report PDF" sets the page order, and the Figma now follows it (§5.2): Cara membaca laporan before Ringkasan and Peta jawaban as a front page (both had been this plan's proposals, and v3 adopted them), five sections ("Posisi <klinik> hari ini", "Apa kata AI tentang <klinik>", "Apa yang dibaca AI", "Rencana delapan minggu", "Lampiran"), and section titles that state no cause. The "Untuk dikerjakan" divider is gone; its pages sit in sections 03 and 04. Temuan pages now lead with the writer's meaning sentence and show the count beneath it (v3 rule 14). The sample counts are per question or per source (D-6), Cek fakta and A1 keep v3's wording ("…, yang dikutip jawaban ini"; "Tanpa penilaian"), Cara membaca carries all of v3's method lines, and Ringkasan shows the first plan step (D-9 A). The reference was exported again afterwards (39 pages; see the entry below).
+
+- **2026-11-07, founder:** the five section titles are approved as fixed text (D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang <klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu", "05 Lampiran". v3 F-13 is decided as option A: an "Unduh Lembar Kerja" button next to "Unduh PDF" on the web report (PR 4). The reference was exported again from the Figma the same day: `experiments/report-pdf-design/reference.pdf`, 39 pages in the §5.2 order.
 
 ## Review history
 

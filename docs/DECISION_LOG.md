@@ -6,6 +6,17 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-11-07 — Report section titles approved; worksheet download is a button
+
+Yasir approved the five section titles of the report PDF as fixed text
+(design plan D-7): "01 Posisi <klinik> hari ini", "02 Apa kata AI tentang
+<klinik>", "03 Apa yang dibaca AI", "04 Rencana delapan minggu" and
+"05 Lampiran". Yasir also decided Report v3 F-13 as option A: the owner
+downloads the Lembar Kerja with an "Unduh Lembar Kerja" button next to
+"Unduh PDF" on the web report, a second small exception to the web report
+freeze (design plan PR 4, shipped with v3 P0.10). The reference export in
+`experiments/report-pdf-design/` was redone from the Figma.
+
 ## 2026-11-07 — Report substance follows the Report v3 session; the design plan owns how it looks
 
 Yasir decided that the report's substance and format follow the Report v3
