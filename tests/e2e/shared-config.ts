@@ -70,6 +70,9 @@ export function offlineE2EServerEnv(
     // `dev` environment, and never inherits a developer's own limit or list.
     NUAVE_ENVIRONMENT: "",
     NUAVE_SITE_URL: "",
+    // Spec 024 F-10: blank, so the offline server takes the designed-print
+    // switch from wrangler.jsonc's `dev` environment ("on").
+    NUAVE_DESIGNED_PRINT: "",
     NUAVE_ORDER_SPEND_LIMIT_USD: "",
     NUAVE_ORDER_EMAIL_ALLOWLIST: "",
     // Spec 016 R-25: the real mail sender is never configured offline.

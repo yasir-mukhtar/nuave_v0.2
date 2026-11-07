@@ -14,9 +14,14 @@ import { pdfFileName } from "../../app/audit/report/report-pdf";
 import { openFileD1 } from "../spending/sqlite-d1.test-helper";
 import { newLinkSecret, sha256Hex } from "./config";
 import { makeOrder, T0 } from "./orders.test-helper";
+import { FIXTURES } from "../report-pdf/fixtures.test-helper";
+import { reportPdfPages, type PageListInput } from "../report-pdf/page-list";
 import {
   PDF_DAILY_CAP,
+  designedPdfRequest,
   escapeHtml,
+  isReadyTimeout,
+  pdfRequest,
   fileNamePart,
   pdfContentDisposition,
   pdfFooterTemplate,
@@ -360,8 +365,10 @@ describe("when there is no server PDF (P-05)", () => {
 
   it("a Browser Run failure answers pdf_failed and logs only its status", async () => {
     const { secret } = await reportOrder();
+    // Spec 024 F-07: a failure that is not a ready timeout stays
+    // browser_failed (a ready timeout has its own code, AC-F12).
     browserAnswer = async () =>
-      new Response("timeout waiting for selector", {
+      new Response("page crashed", {
         status: 422,
         headers: { "X-Browser-Ms-Used": "20500" },
       });
@@ -444,5 +451,162 @@ describe("footer and file name", () => {
       "Laporan-Nuave-Klinik-Céline.pdf",
     );
     expect(pdfFileName(null)).toBe("Laporan-Nuave.pdf");
+  });
+});
+
+/* ---------------------- Spec 024 Part 1 (PR 1) ---------------------- */
+
+/** Today's A4 request (Spec 021 Part P), written out: the switch-off
+ * output must equal it exactly (AC-F10). */
+function todaysRequest(url: string, name: string) {
+  return {
+    url,
+    gotoOptions: { waitUntil: "networkidle0", timeout: 30_000 },
+    waitForSelector: {
+      selector: '[data-saved-report="ready"]',
+      timeout: 20_000,
+    },
+    pdfOptions: {
+      format: "a4",
+      printBackground: true,
+      displayHeaderFooter: true,
+      headerTemplate: "<span></span>",
+      footerTemplate: pdfFooterTemplate(name),
+      margin: { top: "14mm", right: "14mm", bottom: "16mm", left: "14mm" },
+    },
+  };
+}
+
+describe("Spec 024: the print request (F-03, AC-F1)", () => {
+  it("the designed request asks for the CSS page size, backgrounds, no header or footer, zero margins, and keeps the waits", () => {
+    expect(designedPdfRequest({ url: "https://x.test/r/print#c" })).toEqual({
+      url: "https://x.test/r/print#c",
+      gotoOptions: { waitUntil: "networkidle0", timeout: 30_000 },
+      waitForSelector: {
+        selector: '[data-saved-report="ready"]',
+        timeout: 20_000,
+      },
+      pdfOptions: {
+        preferCSSPageSize: true,
+        printBackground: true,
+        displayHeaderFooter: false,
+        margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      },
+    });
+    const options = designedPdfRequest({ url: "u" }).pdfOptions as Record<
+      string,
+      unknown
+    >;
+    expect(options.headerTemplate).toBeUndefined();
+    expect(options.footerTemplate).toBeUndefined();
+    expect(options.format).toBeUndefined();
+  });
+
+  it("with the switch on, the route sends the designed request to /r/print", async () => {
+    vi.stubEnv("NUAVE_DESIGNED_PRINT", "on");
+    const { secret } = await reportOrder();
+    expect((await askPdf({ secret })).status).toBe(200);
+    const { url } = printCode();
+    expect(browserCalls[0]!.options).toEqual(
+      designedPdfRequest({ url: url.href }),
+    );
+  });
+});
+
+describe("Spec 024: with the switch off, today's print (F-10, AC-F10)", () => {
+  it("pdfRequest is exactly today's A4 request", () => {
+    expect(pdfRequest({ url: "https://x.test/r/print#c", name: NAME })).toEqual(
+      todaysRequest("https://x.test/r/print#c", NAME),
+    );
+    expect(
+      JSON.stringify(
+        pdfRequest({ url: "https://x.test/r/print#c", name: NAME }),
+      ),
+    ).toBe(JSON.stringify(todaysRequest("https://x.test/r/print#c", NAME)));
+  });
+
+  for (const value of [undefined, "", "off", "ON", "true", "1"]) {
+    it(`the route sends today's request when the switch is ${JSON.stringify(value)}`, async () => {
+      if (value !== undefined) vi.stubEnv("NUAVE_DESIGNED_PRINT", value);
+      const { secret } = await reportOrder();
+      expect((await askPdf({ secret })).status).toBe(200);
+      const { url } = printCode();
+      expect(JSON.stringify(browserCalls[0]!.options)).toBe(
+        JSON.stringify(todaysRequest(url.href, NAME)),
+      );
+    });
+  }
+});
+
+describe("Spec 024: the report_pdf log line (F-07, AC-F7, AC-F12)", () => {
+  const maximum = FIXTURES.maximum().report;
+  const expected = reportPdfPages(maximum as PageListInput).longTexts;
+
+  it("carries long_texts, worked out by the page list, and only numbers and codes", async () => {
+    expect(expected).toBe(44);
+    const { secret } = await reportOrder(maximum);
+    await askPdf({ secret });
+    expect(logs).toEqual([
+      JSON.stringify({
+        event: "report_pdf",
+        status: "ok",
+        browser_ms: 4321,
+        long_texts: 44,
+      }),
+    ]);
+    const line = JSON.parse(logs[0]!) as Record<string, unknown>;
+    for (const [key, value] of Object.entries(line))
+      if (key !== "event" && key !== "status")
+        expect(typeof value, key).toBe("number");
+    expect(logs[0]).not.toContain("Klinik");
+  });
+
+  it("a report at its budgets logs long_texts 0", async () => {
+    const { secret } = await reportOrder(FIXTURES.at_budget().report);
+    await askPdf({ secret });
+    expect(JSON.parse(logs[0]!)).toMatchObject({ long_texts: 0 });
+  });
+
+  it("a ready timeout gets its own code, numbers and codes only, and the retry answer (AC-F12)", async () => {
+    const { secret } = await reportOrder(maximum);
+    // How Browser Run answers when the ready marker never appears: HTTP
+    // 422 with the browser's selector-wait error (isReadyTimeout).
+    browserAnswer = async () =>
+      new Response(
+        'Waiting for selector `[data-saved-report="ready"]` failed: Waiting failed: 20000ms exceeded',
+        { status: 422, headers: { "X-Browser-Ms-Used": "20480" } },
+      );
+    const response = await askPdf({ secret });
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      error: "PDF belum bisa dibuat. Coba lagi.",
+      code: "pdf_failed",
+    });
+    expect(logs).toEqual([
+      JSON.stringify({
+        event: "report_pdf",
+        status: "ready_timeout",
+        http: 422,
+        browser_ms: 20480,
+        long_texts: 44,
+      }),
+    ]);
+    expect(logs[0]).not.toContain("selector");
+  });
+
+  it("tells a ready timeout from other failures", () => {
+    expect(
+      isReadyTimeout(
+        422,
+        "TimeoutError: waiting for selector `x` failed: timeout 20000ms exceeded",
+      ),
+    ).toBe(true);
+    expect(isReadyTimeout(422, "timeout waiting for selector")).toBe(true);
+    expect(isReadyTimeout(422, "Navigation timeout of 30000 ms exceeded")).toBe(
+      false,
+    );
+    expect(isReadyTimeout(500, "waiting for selector timed out")).toBe(false);
+    expect(isReadyTimeout(422, "page crashed")).toBe(false);
+    expect(isReadyTimeout(429, "")).toBe(false);
   });
 });

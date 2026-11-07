@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { SpendDb } from "../spending/spend-ledger";
-import { siteOrigin } from "./config";
+import { setting, siteOrigin } from "./config";
 import type { OrderEnvironment } from "./store";
 
 /**
@@ -212,4 +212,58 @@ export function pdfRequest(input: { url: string; name: string }) {
       margin: { top: "14mm", right: "14mm", bottom: "16mm", left: "14mm" },
     },
   };
+}
+
+/**
+ * Spec 024 F-10: the designed-print switch, a server-side setting per
+ * deployment (`NUAVE_DESIGNED_PRINT` in wrangler.jsonc). Exactly "on" turns
+ * on the designed 16:9 print (the F-04 body and the F-03 request together);
+ * anything else, or no value, keeps today's print. On in PR previews and
+ * local development, off in production until Part 3 turns it on and
+ * removes this setting (Q-10, L-07).
+ */
+export function designedPrintOn(): boolean {
+  return (
+    setting(
+      "NUAVE_DESIGNED_PRINT",
+      process.env.NUAVE_DESIGNED_PRINT,
+    )?.trim() === "on"
+  );
+}
+
+/** Spec 024 F-03: the designed print. The page's own CSS page size
+ * (1440 x 810 px), its backgrounds, no Browser Run header or footer (each
+ * page draws its own), and zero margins. The waits, the ready selector and
+ * the print code are today's. */
+export function designedPdfRequest(input: { url: string }) {
+  return {
+    url: input.url,
+    gotoOptions: { waitUntil: "networkidle0", timeout: 30_000 },
+    waitForSelector: { selector: PRINT_READY_SELECTOR, timeout: 20_000 },
+    pdfOptions: {
+      preferCSSPageSize: true,
+      printBackground: true,
+      displayHeaderFooter: false,
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+    },
+  };
+}
+
+/**
+ * Spec 024 F-07: whether Browser Run's failed answer is the ready marker
+ * never appearing. Browser Run answers a Quick Action that ran out of time
+ * with HTTP 422 (Browser Run FAQ, "422 unprocessable entity": "most often
+ * ... a timeout"), and its body carries the browser's error for the wait,
+ * which names the selector wait and its timeout ("Waiting for selector
+ * `...` failed: 20000ms exceeded", "TimeoutError: waiting for selector").
+ * The body is read here only to classify it; it is never logged. Anything
+ * else stays `browser_failed`.
+ */
+export function isReadyTimeout(status: number, body: string): boolean {
+  const text = body.slice(0, 4_000);
+  return (
+    status === 422 &&
+    /wait(?:ing)?\s*for\s*selector|waitForSelector/i.test(text) &&
+    /time(?:d)?\s*out|timeout|exceeded/i.test(text)
+  );
 }

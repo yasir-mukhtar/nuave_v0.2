@@ -39,6 +39,12 @@ describe("wrangler.jsonc environments", () => {
     expect(previewDb.database_id).toBe("5613a4a7-7a86-432a-810c-7ccef7e80a25");
   });
 
+  it("the designed-print switch is off in production and on in previews and local development (Spec 024 F-10, AC-F10)", () => {
+    expect(config.vars?.NUAVE_DESIGNED_PRINT).toBe("off");
+    expect(config.env?.preview?.vars?.NUAVE_DESIGNED_PRINT).toBe("on");
+    expect(config.env?.dev?.vars?.NUAVE_DESIGNED_PRINT).toBe("on");
+  });
+
   it("production keeps no automatic per-request log (Spec 022 R-22, AC-14)", () => {
     const observability = (
       config as unknown as {

@@ -4,6 +4,9 @@ import { sha256Hex } from "@/lib/orders/config";
 import { orderRuntime } from "@/lib/orders/http";
 import {
   countPdf,
+  designedPdfRequest,
+  designedPrintOn,
+  isReadyTimeout,
   issuePrintToken,
   pdfBrowser,
   pdfContentDisposition,
@@ -17,6 +20,7 @@ import {
   neutral,
   unavailable,
 } from "@/lib/orders/report-route";
+import { reportPdfPages, type PageListInput } from "@/lib/report-pdf/page-list";
 
 export const runtime = "nodejs";
 
@@ -90,10 +94,10 @@ export async function POST(request: Request) {
   }
   if (!saved) return neutral();
   let twoSource = false;
+  let report: unknown;
   try {
-    twoSource = Boolean(
-      (JSON.parse(saved.report_json) as { two_source?: unknown }).two_source,
-    );
+    report = JSON.parse(saved.report_json);
+    twoSource = Boolean((report as { two_source?: unknown }).two_source);
   } catch {
     return neutral();
   }
@@ -110,11 +114,22 @@ export async function POST(request: Request) {
   // never costs browser time.
   const name = businessName(saved.intake_json);
   const disposition = pdfContentDisposition(name);
+  // Spec 024 F-07: texts over their page budget, from the same page list
+  // the designed print uses. A count only; left out when the saved report
+  // cannot be read as a page list.
+  const counts: Record<string, number> = {};
+  try {
+    counts.long_texts = reportPdfPages(report as PageListInput).longTexts;
+  } catch {
+    // An incomplete saved report: no count.
+  }
+  // F-10: the designed print (F-03 request, F-04 body) or today's.
+  const designed = designedPrintOn();
 
   let token: string;
   try {
     if (!(await countPdf(server.db, { orderId: saved.order_id, now }))) {
-      logPdf("daily_limit");
+      logPdf("daily_limit", counts);
       return answer(
         429,
         "pdf_daily_limit",
@@ -132,12 +147,13 @@ export async function POST(request: Request) {
 
   let pdf: Response;
   try {
+    const url = `${origin}/r/print#${token}`;
     pdf = await browser.quickAction(
       "pdf",
-      pdfRequest({ url: `${origin}/r/print#${token}`, name }),
+      designed ? designedPdfRequest({ url }) : pdfRequest({ url, name }),
     );
   } catch {
-    logPdf("browser_error");
+    logPdf("browser_error", counts);
     return answer(502, "pdf_failed", "PDF belum bisa dibuat. Coba lagi.");
   }
   // Browser time for this PDF, from Browser Run's own header.
@@ -147,11 +163,19 @@ export async function POST(request: Request) {
       ? { browser_ms: Number(used) }
       : {};
   if (!pdf.ok) {
-    await pdf.body?.cancel();
-    logPdf("browser_failed", { http: pdf.status, ...timing });
+    // F-07: read only to tell a ready timeout apart; never logged.
+    const body = await pdf.text().catch(() => "");
+    logPdf(
+      isReadyTimeout(pdf.status, body) ? "ready_timeout" : "browser_failed",
+      {
+        http: pdf.status,
+        ...timing,
+        ...counts,
+      },
+    );
     return answer(502, "pdf_failed", "PDF belum bisa dibuat. Coba lagi.");
   }
-  logPdf("ok", timing);
+  logPdf("ok", { ...timing, ...counts });
   return new Response(pdf.body, {
     headers: {
       ...PRIVATE_HEADERS,

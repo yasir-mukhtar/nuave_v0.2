@@ -21,6 +21,9 @@
   "vars": {
     "NUAVE_ENVIRONMENT": "production",
     "NUAVE_SITE_URL": "https://v2.nuave.ai",
+    // Spec 024 F-10: the designed 16:9 report PDF stays off in production
+    // until Spec 024 Part 3 turns it on and removes this setting (Q-10).
+    "NUAVE_DESIGNED_PRINT": "off",
   },
   "ratelimits": [
     {
@@ -130,6 +133,8 @@
       },
       "vars": {
         "NUAVE_ENVIRONMENT": "preview",
+        // Spec 024 F-10: PR previews print the designed 16:9 PDF.
+        "NUAVE_DESIGNED_PRINT": "on",
       },
       "ratelimits": [
         {
@@ -202,6 +207,8 @@
       "vars": {
         "NUAVE_ENVIRONMENT": "preview",
         "NUAVE_SITE_URL": "http://localhost:3000",
+        // Spec 024 F-10: local development shows the designed print too.
+        "NUAVE_DESIGNED_PRINT": "on",
       },
       "ratelimits": [
         {
