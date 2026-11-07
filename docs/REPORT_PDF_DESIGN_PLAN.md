@@ -42,7 +42,7 @@ corrections the Figma needs before it becomes the reference.
 | Spec 018 | The ten questions, the two sources, the states, the per-source counts and their sentences (AC-20: "Klinik Anda muncul di X dari N pertanyaan", on screen and in the PDF) | Uses them unchanged |
 | Spec 021 | Report v2: the web report (Part A, phone first), answers (Part D), the server PDF (Part P: A4, light palette, footer "<n> / <total>") | Proposes changes to Part P only (D-2, D-3, D-10). Part A stays unless the founder picks D-1 option B or C |
 | Spec 023 | The writer's prose; R-13 keeps the code count sentences as they are | Unchanged |
-| Report v3 plan (PR #205, draft) | New content: moment of truth, fact check, website check, sites AI reads, kit, worksheet, stability | Each v3 section gets its designed PDF page when that package ships. Several v3 packages are written for the web page (P0.1, P0.8, P1.2, P2.5, Phase 0's phone check); D-1 says what that means for them |
+| Report v3 plan (PR #205, draft) | New content: moment of truth, fact check, website check, sites AI reads, kit, worksheet, stability | **Owns the substance and format** (founder, 2026-11-07; §5.3): sections, order, claims, counts, labels and row limits. This plan follows its order (§5.2) and owns only how it looks. Several v3 packages are written for the web page (P0.1, P0.8, P1.2, P2.5, Phase 0's phone check); D-1 says what that means for them |
 | `AUDIT.md` | "counts use per-source denominators" (line 22) | Binding on every page |
 | `DESIGN.md` | Fonts (`src/app/fonts.ts` is the only loader), report tokens in `tokens.css`, the report exception | D-3 lists each rule it touches |
 | `VOICE.md`, writing skill | Words and settled labels (for example **Download PDF**) | All fixed text follows them (D-7) |
@@ -117,51 +117,91 @@ pages that need it fall back as the web page does today.
 
 | Saved field | PDF page |
 | --- | --- |
-| Per-source counts and failed checks (`two_source.counts`) | Cover orbit; Ringkasan figures; Penutup |
+| Per-source counts and failed checks (`two_source.counts`) | Cover orbit; Ringkasan cards; the moment page's per-source bars; Titik awal |
 | `two_source_writing.verdict` | Ringkasan statement (D-9 option A) |
 | `conclusion` | Penutup's paragraph, always (as the web Penutup shows it); also Ringkasan's statement when there is no verdict |
-| `key_findings` (with `headline`) | One **Temuan** page per finding, in the Figma 07 layout: the headline, the finding's text, and an evidence card showing the first question in the finding's `evidence_prompt_ids` whose answer exists, from the source its headline's basis names (a basis starting with `chatgpt_` gives ChatGPT, one starting with `google_` gives Google), otherwise ChatGPT; a question whose check failed or showed no AI Overview is skipped, and the card is left out when no cited question has an answer from that source; with the businesses that answer names. The Figma card's short description per business has no saved field and is left out until a spec adds one |
+| `key_findings` (with `headline`) | One **Temuan** page per finding, in the Temuan template (reference pages 7 to 11): the headline's number and caption (shown as saved, D-6), the title, the text, and the questions it cites (`evidence_prompt_ids`) as chips that point to their appendix pages |
 | `google_finding` | Its own Temuan page, as on the web page today |
 | `two_source_writing.takeaways` | Pesaing page, the right column (at most three, Spec 021) |
-| `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source for the first five businesses and the clinic's own row, chips for the rest, as the web page does, and the "Menurut jawaban AI" line for those five) and the Peta jawaban grid |
+| `two_source.competitors` (Part C; derived from the answers for older reports, as `competitorRows` does today), `competitor_reasons` ("Menurut jawaban AI") | Pesaing page (bars per source for the first five businesses and the clinic's own row, chips for the rest, as the web page does, and the "Menurut jawaban AI" line for those five) |
 | `other_businesses` per source | Pesaing page, "disebut lebih jarang" line |
-| `topics_missing` (Celah Topik) | A **Celah topik** page (new in the Figma, same grid as Peta jawaban rows) |
-| `priorities` (each recommendation's title and paragraph) | One **Langkah** page per recommendation, in the Figma "Detail langkah" layout (title and paragraph today; who, effort, evidence block and "Dasarnya" added by v3 P0.6, P1.1 and P0.7); the Rencana page lists their titles |
-| `two_source_writing.plan` (three steps with weeks) | Rencana page, as the three phase columns; Penutup |
-| Questions, states, topic, volume | Peta jawaban; Lampiran A0 |
+| `topics_missing` (Celah Topik) | The **Celah topik** page |
+| `priorities` (each recommendation's title and paragraph) | One **Langkah** page per recommendation, in the Figma "Detail langkah" layout (title and paragraph today; who, effort, evidence block and "Dasarnya" added by v3 P0.6, P1.1 and P0.7); the Rekomendasi page lists them, with who, time and done-when once v3 P0.6 adds them |
+| `two_source_writing.plan` (three steps with weeks) | Penutup, as the three phase columns, with the owner's decision under a step once v3 P0.4 adds it |
+| Questions, states, topic, volume | Ringkasan cards (the dots); Lampiran A0 |
 | Each question's origin label (`label_text`) | Its appendix page, under the question |
 | Both full answers (ChatGPT: the observation's `raw_answer`; Google: `google.text`), Google `references`, the ChatGPT observation's `sources` | Lampiran A1 to A10 |
 | Method facts (places, dates, `checked_from`, `checked_to`) | Cara membaca laporan |
 
-### 5.2 Designed pages and their data
+### 5.2 The report's sections, in the Report v3 order
 
-| Page | Status | Notes |
-| --- | --- | --- |
-| Cover with the orbit of 20 answers | Today | Uses only each answer's state |
-| Daftar isi | Today | Lists the pages this report has |
-| Cara membaca laporan | Today | Stability rows only with v3 P3.2 |
-| Ringkasan | Today, partly | D-9 option A; the "klaim berbeda" figure only with v3 P1.2 |
-| Peta jawaban | Today | Each grid cell shows the ChatGPT and Google result side by side, never a summed count (D-4) |
-| Section dividers | Fixed | Shown when the section has a page |
-| Temuan pages | Today | From `key_findings` and `google_finding` (§5.1). The Figma "0 dari 6" group with summed volume needs a code definition in a later spec; until then it is not shown |
-| Pesaing | Today | Two bars per business, one per source, each with its own denominator; no ratio headline |
-| Celah topik | Today | New page to draw (§5.1) |
-| Rencana | Today, partly | `plan` and `priorities`; who, effort and the six-step weekly chart need v3 P0.6 and F-2 |
-| Langkah pages (Detail langkah) | Today, partly | One per recommendation with its title and paragraph; the robots.txt evidence needs the website check (P1.1), "Dasarnya" needs P0.7, the tags need P0.6 |
-| Cek fakta | v3 P1.2 | |
-| Kata AI vs Menurut Anda | v3 P2.3 (F-5) | Word counts need a definition in that spec |
-| Halaman mereka | v3 P2.2 | |
-| Situs yang dibaca AI | v3 P2.1 | Until then, appendix sources show the address only, without "Artikel daftar" and similar labels |
-| Untuk tim web Anda | v3 P1.1 | The last page of section 03, made to be shared alone with the web vendor |
-| Bahan siap pakai | v3 P2.4 (F-7a) | |
-| Lembar Kerja | v3 P0.10 | One page after Bahan siap pakai: what the worksheet holds and its tabs, with a preview of its work plan whose rows are this report's own recommendations (the person, date and status columns start empty; the reference fills them only as a labelled example); shown once the worksheet ships |
-| Lampiran A0 and A1 to A10 | Today | One question per page; continued pages as needed (§6.4) |
-| Penutup | Today, partly | Counts today; "3 pemeriksaan teknis" only with v3 P1.1; the saved starting point with v3 P3.3 |
-| Back cover | Fixed | The Nuave logo, the website address, one sentence on what Nuave does, and the confidentiality line with the business name and month (founder, 2026-11-07) |
+The section order and content follow the Report v3 plan and its proof of
+concept A (`experiments/report-v3-poc/template.html`, `render()`, and
+`data/ultima_a.py` on PR #205's head). "Today" means saved data fills it now;
+a v3 package number means the section waits for that package.
 
-Numbers the Figma shows that are not defined yet ("3,4 nama per jawaban",
-the "0 dari 6" group and its summed volume, word counts) appear only after a
-spec defines them with their denominators.
+| v3 section | Data | PDF page (template) | Notes |
+| --- | --- | --- | --- |
+| Header: verdict and the two source cards | Today | Ringkasan | The verdict as the statement; each card with its count, its sentence and ten dots |
+| Header: moment of truth, counts side by side, why it matters | v3 P0.1 to P0.3 | Saat calon pasien bertanya | The answer card, per-source bars for the most-named business and the clinic, and the average-names box |
+| Header: stability | v3 P3.2 | Cara membaca laporan, and the appendix question it covers | |
+| Contents | Today | Daftar isi | Points to each chapter's divider |
+| Cara membaca angka ini | v3 P0.8 | Cara membaca laporan | Placed after Daftar isi, before Ringkasan (founder decision, 2026-11-07); v3 places it after Jawaban AI. Recorded as a proposal to v3 (§5.3) |
+| Temuan Utama | Today | One Temuan page per finding | |
+| Cek fakta | v3 P1.2 | Cek fakta | Up to eight rows, "berbeda" first, and the "sesuai" claims in one line |
+| Peta Pesaing | Today (Part C) | Peta Pesaing | Per-source counts and recommendation counts, "Menurut jawaban AI", the rarer names, and the takeaways |
+| Gambaran AI | v3 P2.3 (F-5) | Gambaran AI | AI's line and word counts, "Menurut Anda", and the other clinics' lines |
+| Halaman pesaing | v3 P2.2 | Halaman pesaing | |
+| Celah Topik | Today | Celah topik | |
+| Situs yang dibaca AI | v3 P2.1 | Situs yang dibaca AI | Key sites as rows, the rest in one line |
+| Rekomendasi | Today; tags with v3 P0.6, P0.7 | Rekomendasi (all steps), then one Langkah page per step | |
+| Penutup | Today; decisions with v3 P0.4 | Penutup | The closing paragraph and the three phases |
+| Titik awal and audit ulang | v3 P3.3 | Titik awal | |
+| Untuk dikerjakan: Untuk tim web Anda | v3 P1.1 | Untuk tim web Anda | Made to be shared alone with the web vendor |
+| Untuk dikerjakan: Bahan siap pakai | v3 P2.4 (F-7a) | Bahan siap pakai | |
+| Untuk dikerjakan: Lembar Kerja | v3 P0.10 | Lembar Kerja | The work-plan preview rows are this report's own recommendations; the person, date and status columns start empty, and the reference fills them only as a labelled example |
+| Jawaban AI | Today | Lampiran A0 | With the v3 answer notes |
+| Lampiran: jawaban lengkap | Today | Lampiran A1 to A10 | One question per page; continued pages as needed (§6.4) |
+
+**Design-only pages:** the cover, the six chapter dividers and the back
+cover. The chapters group v3 sections without reordering them: Ringkasan;
+01 Temuan utama (Temuan Utama, Cek fakta); 02 Pesaing dan gambaran AI (Peta
+Pesaing, Gambaran AI, Halaman pesaing); 03 Celah topik dan sumber (Celah
+Topik, Situs yang dibaca AI); 04 Rekomendasi (Rekomendasi, Penutup, Titik
+awal); 05 Untuk dikerjakan; 06 Lampiran.
+
+### 5.3 Keeping the design in step with Report v3
+
+Founder direction, 2026-11-07: **substance and format follow the Report v3
+session; aesthetics and delivery belong to this plan.**
+
+1. **What v3 owns:** which sections exist and in what order, every claim,
+   number, count rule and denominator, labels and what they mean, row limits,
+   and when a section is shown. This plan never adds, drops or reorders a
+   section, or changes a claim to fit a page.
+2. **What this plan owns:** page templates, chapters and dividers (grouping
+   only), type, colour, charts, page breaks, and the wording polish of v3's
+   text with the writing skill, without changing a fact or a claim.
+3. **When v3 changes a section,** the design maps it to a template; if no
+   template fits, this plan adds one. A section is never changed to fit a
+   template.
+4. **Exceptions are proposals to v3,** listed here until v3 adopts or rejects
+   them:
+   - Cara membaca laporan placed before Ringkasan (founder, 2026-11-07).
+   - Peta jawaban, a topic by clinic grid with ChatGPT and Google cells. It
+     stays outside the report, as a frame marked "USULAN UNTUK v3" in the
+     Figma.
+5. **In code,** the page-list function takes the v3 section order as its
+   input, and a test asserts that the PDF's section order equals it, apart
+   from the exceptions above.
+6. **Sample content:** the Figma's sample text comes from proof of concept
+   A's data file. When v3 changes that file, the Figma sample is refreshed.
+
+Numbers the Figma shows come from proof of concept A. Each appears in a real
+report only after the v3 spec that brings it defines it with its denominator
+(for example "3,4 nama per jawaban", v3 P0.3, and the word counts, v3 P2.3).
+Finding headlines such as "0 dari 6" are writer headlines kept under Spec
+021 B-05 and show as saved (D-6).
 
 ## 6. How the PDF is made
 
@@ -334,6 +374,7 @@ unchanged, and `verify-nuave` passes on a preview.
 ## Changes after approval
 
 - **2026-11-07, founder:** the official Nuave logo (`src/components/product/journey/NuaveLogo.tsx`) replaces the "nuave." wordmark text on the cover and in every page header; a back cover is added as the last page (§5.2); Penutup moves before the Lampiran so the back cover closes the PDF (§6.3). The D-4 corrections were applied in the Figma the same day (pooled counts replaced by per-source forms, the re-check promise and the unmeasured and causal lines rewritten, the help line, the Celah topik and Langkah frames added). The same day the founder added two pages from the Report v3 structure (Untuk tim web Anda; Lembar Kerja), and the reference was exported to `experiments/report-pdf-design/reference.pdf` (33 pages; see its [README](../experiments/report-pdf-design/README.md)). D-10 now lists every dark page shown in the approved design (the section dividers, Penutup and the back cover), not only the cover.
+- **2026-11-07, founder:** substance and format follow the Report v3 session, and aesthetics and delivery belong to this plan (§5.3). The Figma was restructured to the v3 section order, with six chapters, a Ringkasan with the verdict and the two source cards, a moment page, five Temuan pages from v3's findings, a Rekomendasi page with v3's six steps, and a Penutup with v3's three phases. Peta jawaban became a proposal to v3, and Cara membaca stays before Ringkasan. The reference export of earlier the same day no longer matches the Figma; it is exported again once the founder has seen the restructured Figma.
 
 ## Review history
 

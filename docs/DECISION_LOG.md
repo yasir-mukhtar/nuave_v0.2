@@ -6,6 +6,24 @@
 The newest founder-approved entry governs when decisions conflict. Do not edit
 old rows to make history cleaner; add a superseding row.
 
+## 2026-11-07 — Report substance follows the Report v3 session; the design plan owns how it looks
+
+Yasir decided that the report's substance and format follow the Report v3
+session (PR #205): which sections exist, their order, claims, counts, labels
+and row limits. Its aesthetics and delivery belong to
+[`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md). That covers
+templates, chapters, type, colour, charts, page breaks, and polishing v3's
+wording with the writing skill without changing a fact.
+
+He also decided three points:
+
+- "Cara membaca laporan" stays before Ringkasan, his earlier choice. It is
+  recorded as a proposal to v3, which places it after Jawaban AI.
+- The Peta jawaban grid leaves the report and becomes a proposal to v3.
+- Facts come from v3, and the sentences are polished.
+
+The plan's §5.2 and §5.3 hold the section map and the rules.
+
 ## 2026-11-07 — Approve the PDF report design plan (D-0 to D-10)
 
 Yasir approved [`REPORT_PDF_DESIGN_PLAN.md`](./REPORT_PDF_DESIGN_PLAN.md)

@@ -1,5 +1,10 @@
 # Report PDF design reference (D-4)
 
+> **Out of date since 2026-11-07, later the same day:** the Figma was
+> restructured to the Report v3 section order (plan §5.2 and §5.3). This
+> export shows the earlier structure and is replaced once the founder has
+> seen the new one.
+
 The visual reference for [`docs/REPORT_PDF_DESIGN_PLAN.md`](../../docs/REPORT_PDF_DESIGN_PLAN.md),
 exported once from the founder's Figma page "Redesain Report Nuave" (file
 `W66XEpO1rKQY8vbKyvo7xq`, page `1:156`) on 2026-11-07, after the D-4
