@@ -99,10 +99,22 @@ they can present and act on, without the web page beside it.
   exactly as today (Spec 018 R-29, Spec 021 AC-A5 and P-05).
 - Prices, refunds, the delivery promise.
 
+## Experience
+
+The owner opens the private link from the report-ready email and sees the
+frozen web report. "Unduh PDF" behaves exactly as Spec 021 "Experience",
+"PDF" says: a spinner for a few seconds, then the file
+`Laporan-Nuave-<klinik>.pdf`; on failure a short retry message, with the
+page itself unaffected. What changes is the file: 16:9 pages in the Part 0
+order, in Indonesian, read on a screen, in a meeting or printed on A4
+landscape with "fit to page" (D-2). Part 4 adds one line saying the PDF is
+the full designed report; Part 4b adds "Unduh Lembar Kerja" beside "Unduh
+PDF" once the worksheet exists.
+
 ## Decisions recorded
 
-Settled by the founder on 2026-11-07. The plan's §4 holds the full text;
-this spec does not reopen them.
+D-1 to D-13 were settled by the founder on 2026-11-07; D-14 is Report v3's.
+The plan's §4 holds the full text; this spec does not reopen them.
 
 | # | Decision |
 | --- | --- |
@@ -140,7 +152,7 @@ and when it is shown.
 | Front | Daftar isi | Part 1 | Always |
 | Front | Cara membaca laporan | Part 1 | Always; v3 parts only when saved |
 | Front | Ringkasan | Part 2 | Always |
-| Front | Saat calon pasien bertanya | v3 P0.1 | Only when its saved data exists |
+| Front | Saat calon pasien bertanya | Part 5, with v3 P0.1 to P0.3 | Only when its saved data exists |
 | Front | Peta jawaban | Part 2 | Always |
 | 01 | Divider | Part 1 | See Q-4 |
 | 01 | Temuan, one per finding and one for `google_finding` | Part 2 | One per saved finding |
@@ -151,11 +163,16 @@ and when it is shown.
 | 04 | Divider | Part 1 | See Q-4 |
 | 04 | Rencana | Part 2 | When recommendations exist |
 | 04 | Langkah, one per recommendation | Part 2 | One per saved recommendation |
-| 04 | Bahan siap pakai, Lembar Kerja | v3 P2.4, P0.10 | Only when their saved data exists |
+| 04 | Bahan siap pakai | v3 P2.4 | Only when its saved data exists |
+| 04 | Lembar Kerja | Part 5, with v3 P0.10 | Only once the worksheet exists |
 | 04 | Penutup | Part 1 | Always |
-| 04 | Titik awal | Part 2 (Q-6) | Always; v3 numbers only when saved |
+| 04 | Titik awal | Part 2 (Q-6, settled) | Always; v3 numbers only when saved |
 | 05 | Divider, A0, A1 to A10 with continued pages | Part 3 | Always |
-| End | Sampul belakang | Part 1 (Q-6) | Always |
+| End | Sampul belakang | Part 1 (Q-6, settled) | Always |
+
+Parts of pages that wait for Phase 0 (Cara membaca's P0.8 lines, the P0.6
+and P0.7 tags on Rencana and Langkah, the P0.4 decisions on Penutup) are
+added by Part 5; later v3 parts by that package's spec.
 
 ### Requirements
 
@@ -212,7 +229,7 @@ Set from Step 0 (spike README, 2026-11-07; each case ran once).
 | Route rate limit | unchanged | Spec 021 P-02 |
 | Page size | CSS `1440px × 810px`, zero margins; the PDF page measures 1080 × 607.9 pt | D-2; spike finding 5 (the reference export is 1440 × 810 pt, the same shape at a larger size) |
 | Measured worst cases | 86 pages at the word limits with assumed 1,200 and 400 word answers: 2.2 s whole request, 0.87 s browser time, 851 KB. At real saved maxima (680 and 450 word answers): 76 pages, 2.4 s, 1.57 s browser time, about 785 KB | spike, Browser Run REST endpoint with inline HTML |
-| File size and render time thresholds for fixture checks | Not set by the plan | Q-2 |
+| Fixture thresholds (engineering) | Whole request at most 10 s; PDF at most 3 MB, on every fixture | Q-2, settled: about four times the largest measured time (2.4 s) and size (851 KB), leaving room for the real print path and source lists while staying far inside the 30 s and 20 s limits |
 
 The measured cases did not go through the Worker's binding opening the
 print page, did not draw source lists, and used simpler layouts than the
@@ -226,9 +243,16 @@ Budgets are the Spec 021 B-04 writer limits
 (spike README, "The longest texts saved on Nuave's orders"). Seven reports
 is a small sample; Q-1 re-checks the budgets as orders grow.
 
+The "Longest saved" numbers are approximate: `saved_lengths.py` counts words
+by spaces, while the budgets are counted by the writer's `words()`
+(`two-source-writing.ts`), which counts letter and number runs, so
+"Sp.DVE" is two words and words joined by a line break count separately.
+The 14-word recommendation title may already be over its 14-word limit by
+the writer's rule. The page-list function counts with `words()`.
+
 | Page | Text | Budget | Longest saved | Over budget |
 | --- | --- | --- | --- | --- |
-| Ringkasan | Verdict | 220 characters, 2 sentences (cut by code today) | 30 words | Code cuts it as the web does |
+| Ringkasan | Verdict | 220 characters and 2 sentences (no word limit; cut by code today) | 30 words | Code cuts it as the web does |
 | Ringkasan | "Yang dikerjakan dulu" (first plan step) | 35 words | 23 | Q-3 |
 | Temuan | Finding title / text | 12 / 80 words | 10 / 64 | Continued page (F-06) |
 | Pesaing | "Menurut jawaban AI" reason, up to five | 20 words each | 15 | Q-3 |
@@ -247,7 +271,10 @@ Q-3. Cek fakta's spec (v3 P1.2) must set its own budget or overflow rule.
 ### Fixed text (D-7)
 
 All fixed strings live in one file (path chosen in Part 1), written with
-`VOICE.md` and the writing skill, approved once by the founder (when: Q-5).
+`VOICE.md` and the writing skill, and approved once by the founder, in Part
+1's review, for Parts 1 to 3 (Q-5, settled). Later strings (Part 4's line,
+Part 5 and later templates) are added to the same file and approved in the
+review of the PR that adds them.
 No em or en dash appears in Indonesian prose; the only en dash allowed is in
 a range such as "Minggu 1–2" or "08.00–21.00" (`VOICE.md` §3). This spec does
 not write new customer-facing copy. The strings already settled or named by
@@ -288,10 +315,15 @@ Each Part runs these on its fixture PDFs, for the pages it has built.
   (1080 × 607.9 pt), and its page count and page labels equal the page list
   after splitting.
 - **AC-G2:** Given any fixture, no element lies outside its page box, no
-  page is empty, and no computed font size is below the reference sizes.
+  page is empty, and no element's computed font size is below the minimum
+  for its type role in the F-02 list.
 - **AC-G3:** Given any fixture, every count equals the saved per-source
-  counts, and no pooled number (plan D-6) appears outside a B-05 writer
-  headline.
+  counts. A test finds every "X dari Y" in the PDF text and checks that Y
+  equals one source's own denominator (ChatGPT N, Google M or Z, Spec 018) or
+  the number of questions the finding cites; the only exception is a writer
+  headline kept under B-05, shown as saved. No number in the PDF equals the
+  sum of a ChatGPT and a Google count of the same thing unless that sum is
+  also one source's own count or a question count of that kind.
 - **AC-G4:** Given the fixed-text file, it holds no em dash and no en dash
   outside the allowed ranges, and every page's fixed strings come from it.
 - **AC-G5:** `npm run verify` passes; the Spec 021 AC-A5 snapshots and the
